@@ -8,8 +8,8 @@
 //! planned `fonts` option) will register into this same context; host/system
 //! fonts are intentionally never consulted.
 
-use parley::FontContext;
 use parley::fontique::{Blob, Collection, CollectionOptions, FamilyId, GenericFamily, SourceCache};
+use parley::FontContext;
 use std::sync::Arc;
 
 /// DejaVu Sans, regular + bold, vendored under `fonts/`. License (free,
