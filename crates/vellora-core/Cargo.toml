@@ -42,4 +42,4 @@ krilla = "0.8.2"
 # PDF inspection for tests: text extraction (selectable text / ToUnicode) and
 # low-level structure (page count, font subsetting, metadata).
 pdf-extract = "0.10"
-lopdf = "0.41"
+lopdf = "0.42"
