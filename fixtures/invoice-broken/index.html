@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Fatura {{ invoice.number }}</title>
+  <style>
+    body { font-family: sans-serif; color: #1a1a1a; margin: 40px; }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-size: 22px; font-weight: bold; }
+    table.items { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    table.items th, table.items td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    table.items th { background: #f0f0f0; }
+    .totals { margin-top: 16px; width: 100%; text-align: right; }
+    .muted { color: #777; font-size: 12px; }
+
+    <!-- RULE 5 (NON-AUTO-FIXABLE): CSS @keyframes + animation property is outside the static PDF subset -->
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    .badge-paid {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #d8f5d8;
+      color: #1a7f1a;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">
+      <!-- RULE 1 (AUTO-FIXABLE: svg -> PNG): inline SVG logo must be rasterized for the PDF subset -->
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="36" height="36" rx="6" fill="#2b5fbf" />
+        <path d="M12 26 L20 12 L28 26 Z" fill="#ffffff" />
+      </svg>
+      {{ seller.name }}
+    </div>
+    <div>
+      <!-- RULE 3 (AUTO-FIXABLE: img dims -> CSS): width/height as HTML attributes instead of CSS -->
+      <img src="assets/stamp.png" alt="Carimbo Pago" width="80" height="80" />
+    </div>
+  </div>
+
+  <p class="muted">
+    {{ seller.address }}<br />
+    CNPJ {{ seller.cnpj }}
+  </p>
+
+  <h1>Fatura {{ invoice.number }}</h1>
+  <p>
+    Emitida em {{ invoice.issued_at | date("DD/MM/YYYY") }} &middot;
+    Vencimento {{ invoice.due_at | date("DD/MM/YYYY") }}
+    {% if invoice.paid %}<span class="badge-paid">PAGO</span>{% endif %}
+  </p>
+
+  <h2>Cliente</h2>
+  <!-- RULE 4 (AUTO-FIXABLE: sanitize): mis-nested inline tags <b><i>...</b></i> -->
+  <p><b><i>{{ customer.name }}</b></i> ({{ customer.id }})</p>
+  <p class="muted">{{ customer.address }}</p>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Qtd.</th>
+        <th>Valor unit.</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.description }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.unit_price | currency("BRL") }}</td>
+        <!-- RULE 2 (AUTO-FIXABLE: flex/grid-in-td -> table): a <td> using display:flex -->
+        <td style="display:flex; justify-content:flex-end;">{{ item.total | currency("BRL") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    <tr>
+      <td class="muted">Subtotal</td>
+      <td>{{ totals.subtotal | currency("BRL") }}</td>
+    </tr>
+    <tr>
+      <td class="muted">Impostos ({{ totals.tax_rate }}%)</td>
+      <td>{{ totals.tax | currency("BRL") }}</td>
+    </tr>
+    <tr>
+      <td><strong>Total a pagar</strong></td>
+      <td><strong>{{ totals.grand_total | currency("BRL") }}</strong></td>
+    </tr>
+  </table>
+
+  <p class="muted">Obrigado pela preferência. Pagamento via PIX para a chave {{ seller.pix_key }}.</p>
+
+  <!-- RULE 5 (NON-AUTO-FIXABLE): inline <script> with JS has no meaning in a static PDF and is rejected by the strict gate -->
+  <script>
+    document.querySelectorAll('.badge-paid').forEach(function (el) {
+      el.addEventListener('click', function () {
+        el.textContent = 'PAGO ✓';
+      });
+    });
+  </script>
+
+</body>
+</html>

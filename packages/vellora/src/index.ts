@@ -1,0 +1,35 @@
+/**
+ * vellora — public API.
+ *
+ * Pass document HTML (and optional data) in, get a deterministic PDF out, strict by default.
+ *
+ *   import { renderPdf } from "vellora";
+ *   const pdf = await renderPdf(html, data);
+ *
+ * Input is always **content** (string | Uint8Array | Readable), never a file path. Templating
+ * (`{{ var }}`, `{% for %}`, `{% if %}`, `currency`/`number`/`date` helpers) runs before render.
+ * Strict mode validates and never mutates; `{ strict: false }` runs `@vellora/lint` fixers first.
+ */
+export {
+  isUnsupportedDiagnostic,
+  unsupportedFromDiagnostic,
+  type UnsupportedDiagnostic,
+  VelloraError,
+  type VelloraErrorCode,
+  VelloraInputError,
+  VelloraTemplateError,
+  VelloraUnsupportedError,
+} from "./errors.js";
+export { MockNativeBridge, type MockRenderCall } from "./mock-bridge.js";
+export { NativeAddonBridge } from "./native-bridge.js";
+export { DEFAULT_CREATION_DATE, resolveOptions } from "./orchestrate.js";
+export { renderPdf, renderPdfToStream, setNativeBridge } from "./render.js";
+export { renderTemplate } from "./template/index.js";
+export type {
+  BridgeRenderOptions,
+  HtmlInput,
+  NativeBridge,
+  RenderData,
+  RenderMetadata,
+  RenderOptions,
+} from "./types.js";

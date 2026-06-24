@@ -1,0 +1,37 @@
+{
+  "reference": "NOT-2026-00187",
+  "process_number": "PROC-2026-0432",
+  "issued_at": "2026-06-22",
+  "subject": "Notificação para regularização de débito contratual",
+  "matter_summary": "pendência financeira relativa à prestação de serviços de manutenção predial",
+  "contract_number": "CTR-2025-1184",
+  "contract_date": "2025-03-10",
+  "amount_due": 4875.5,
+  "original_due_date": "2026-05-15",
+  "deadline_days": 15,
+  "deadline_days_text": "quinze",
+  "deadline_date": "2026-07-07",
+  "has_attachment": true,
+  "sender": {
+    "name": "Acme Serviços Prediais Ltda.",
+    "role": "credora e prestadora dos serviços",
+    "address": "Avenida das Laranjeiras, 1200, Sala 45, Bairro Centro",
+    "city": "São Paulo",
+    "cnpj": "12.345.678/0001-90",
+    "email": "cobranca@exemplo-acme.test",
+    "phone": "(11) 4000-0000"
+  },
+  "recipient": {
+    "name": "Comércio Faro Azul Ltda. ME",
+    "document_label": "CNPJ",
+    "document": "98.765.432/0001-21",
+    "address": "Rua das Flores, 123, Conjunto 7",
+    "city": "Campinas",
+    "state": "SP",
+    "zip": "13010-000"
+  },
+  "signer": {
+    "name": "Mariana Oliveira Souza",
+    "title": "Gerente do Departamento de Cobrança"
+  }
+}

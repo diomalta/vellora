@@ -1,0 +1,30 @@
+# Build outputs — rebuilt inside the image
+node_modules
+**/node_modules
+target
+**/dist
+*.node
+**/*.node
+*.tsbuildinfo
+
+# VCS + local agent/tooling state — not needed to build or run
+.git
+.remember
+.claude
+.codex
+openspec
+
+# Docs site build output + generated API reference
+docs/.vitepress/dist
+docs/.vitepress/cache
+docs/reference
+
+# Example output + transient test scratch
+examples/out
+.determinism-native-*
+
+# Env / OS / logs
+.env
+.env.local
+*.log
+.DS_Store

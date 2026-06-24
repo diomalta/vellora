@@ -1,0 +1,64 @@
+{
+  "receipt_number": "REC-2026-000482",
+  "issued_at": "2026-06-22T14:37:00",
+  "cashier": "Joana Pereira",
+  "customer": {
+    "name": "Cliente Final",
+    "id": "CUST-00042"
+  },
+  "merchant": {
+    "name": "Cafeteria Aurora Ltda",
+    "tagline": "Cafés especiais e padaria artesanal",
+    "logo_url": "./logo.png",
+    "cnpj": "12.345.678/0001-90",
+    "website": "www.cafeteria-aurora.example",
+    "address": {
+      "street": "Rua das Flores, 123",
+      "district": "Centro",
+      "city": "São Paulo",
+      "state": "SP",
+      "zip": "01001-000"
+    }
+  },
+  "items": [
+    {
+      "name": "Café Espresso Duplo",
+      "sku": "CAF-ESP-002",
+      "qty": 2,
+      "unit_price": 9.5,
+      "line_total": 19.0
+    },
+    {
+      "name": "Pão na Chapa com Manteiga",
+      "sku": "PAD-PCH-014",
+      "qty": 1,
+      "unit_price": 7.0,
+      "line_total": 7.0
+    },
+    {
+      "name": "Croissant de Amêndoas",
+      "sku": "PAD-CRO-008",
+      "qty": 3,
+      "unit_price": 12.0,
+      "line_total": 36.0
+    },
+    {
+      "name": "Suco Natural de Laranja 300ml",
+      "sku": "BEB-SUC-021",
+      "qty": 1,
+      "unit_price": 11.5,
+      "line_total": 11.5
+    }
+  ],
+  "subtotal": 73.5,
+  "discount": 5.0,
+  "total": 68.5,
+  "payment": {
+    "method": "Cartão de crédito",
+    "detail": "Aurora Card •••• 4242",
+    "authorization": "AUTH-7F3A9C21",
+    "status": "Pago"
+  },
+  "thank_you_note": "Volte sempre — seu próximo café especial já está esperando por você.",
+  "show_footer": true
+}

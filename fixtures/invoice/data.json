@@ -1,0 +1,82 @@
+{
+  "invoice": {
+    "number": "INV-2026-00417",
+    "issueDate": "2026-06-22",
+    "dueDate": "2026-07-22",
+    "status": "Em aberto",
+    "notes": "Em caso de divergência nos itens, entre em contato em até 5 dias úteis após o recebimento desta fatura."
+  },
+  "seller": {
+    "name": "Acme Widgets LON",
+    "tagline": "Soluções industriais sob medida",
+    "taxId": "12.345.678/0001-90",
+    "email": "faturamento@acmewidgets.example",
+    "address": {
+      "street": "Rua das Flores, 123 — Sala 4B",
+      "city": "São Paulo",
+      "region": "SP",
+      "postal": "01001-000",
+      "country": "Brasil"
+    }
+  },
+  "buyer": {
+    "name": "Borges & Pinto Comércio Ltda.",
+    "customerId": "CUST-00042",
+    "taxId": "98.765.432/0001-21",
+    "address": {
+      "street": "Avenida Central, 4500 — Conjunto 12",
+      "city": "Campinas",
+      "region": "SP",
+      "postal": "13010-111",
+      "country": "Brasil"
+    }
+  },
+  "payment": {
+    "bankName": "Banco Fictício S.A.",
+    "branch": "0001",
+    "account": "00012345-6"
+  },
+  "totals": {
+    "subtotal": 48217.5,
+    "discount": 1250,
+    "taxRate": "8%",
+    "tax": 3757.4,
+    "total": 50724.9
+  },
+  "items": [
+    { "name": "Suporte de fixação em alumínio A20", "sku": "WX-A20", "qty": 40, "unitPrice": 32.5, "total": 1300 },
+    { "name": "Parafuso sextavado M8 (caixa 100)", "sku": "FS-M8-100", "qty": 25, "unitPrice": 18.9, "total": 472.5 },
+    { "name": "Arruela de pressão M8 (caixa 200)", "sku": "FS-W8-200", "qty": 18, "unitPrice": 9.75, "total": 175.5 },
+    { "name": "Perfil estrutural 40x40 — barra 3m", "sku": "PR-4040-3", "qty": 60, "unitPrice": 47.2, "total": 2832 },
+    { "name": "Conector de canto reforçado", "sku": "CN-RF-01", "qty": 120, "unitPrice": 6.4, "total": 768 },
+    { "name": "Roldana industrial Ø50mm", "sku": "RL-50", "qty": 30, "unitPrice": 28.0, "total": 840 },
+    { "name": "Trilho linear 500mm", "sku": "TL-500", "qty": 22, "unitPrice": 89.9, "total": 1977.8 },
+    { "name": "Bloco deslizante para trilho linear", "sku": "BD-TL", "qty": 44, "unitPrice": 34.5, "total": 1518 },
+    { "name": "Motor de passo NEMA 23", "sku": "MT-N23", "qty": 12, "unitPrice": 156.0, "total": 1872 },
+    { "name": "Acoplamento flexível 6.35x8mm", "sku": "AC-FL-68", "qty": 24, "unitPrice": 21.3, "total": 511.2 },
+    { "name": "Fonte chaveada 24V 10A", "sku": "FN-24-10", "qty": 8, "unitPrice": 142.5, "total": 1140 },
+    { "name": "Cabo flexível 1.5mm² — rolo 100m", "sku": "CB-15-100", "qty": 10, "unitPrice": 98.0, "total": 980 },
+    { "name": "Terminal tubular 1.5mm (caixa 500)", "sku": "TM-15-500", "qty": 6, "unitPrice": 27.4, "total": 164.4 },
+    { "name": "Sensor indutivo M12 PNP", "sku": "SN-M12-P", "qty": 30, "unitPrice": 38.9, "total": 1167 },
+    { "name": "Relé de estado sólido 25A", "sku": "RL-SS-25", "qty": 14, "unitPrice": 64.0, "total": 896 },
+    { "name": "Disjuntor termomagnético 16A", "sku": "DJ-TM-16", "qty": 20, "unitPrice": 33.7, "total": 674 },
+    { "name": "Painel de comando 600x400mm", "sku": "PN-6040", "qty": 5, "unitPrice": 410.0, "total": 2050 },
+    { "name": "Borneira de passagem 4mm² (barra)", "sku": "BR-4", "qty": 35, "unitPrice": 12.8, "total": 448 },
+    { "name": "Canaleta perfurada 40x40 — barra 2m", "sku": "CA-4040-2", "qty": 50, "unitPrice": 19.6, "total": 980 },
+    { "name": "Eixo retificado Ø12 — barra 1m", "sku": "EX-12-1", "qty": 28, "unitPrice": 54.3, "total": 1520.4 },
+    { "name": "Mancal com rolamento Ø12", "sku": "MC-R12", "qty": 56, "unitPrice": 22.9, "total": 1282.4 },
+    { "name": "Correia dentada GT2 — rolo 5m", "sku": "CR-GT2-5", "qty": 16, "unitPrice": 41.0, "total": 656 },
+    { "name": "Polia GT2 20 dentes", "sku": "PL-GT2-20", "qty": 64, "unitPrice": 14.5, "total": 928 },
+    { "name": "Esticador de correia ajustável", "sku": "ES-AJ", "qty": 18, "unitPrice": 26.7, "total": 480.6 },
+    { "name": "Ventilador axial 120mm 24V", "sku": "VT-120", "qty": 22, "unitPrice": 31.2, "total": 686.4 },
+    { "name": "Filtro de ar para painel 120mm", "sku": "FL-120", "qty": 22, "unitPrice": 17.4, "total": 382.8 },
+    { "name": "Botão de emergência cogumelo", "sku": "BT-EM", "qty": 15, "unitPrice": 29.9, "total": 448.5 },
+    { "name": "Sinaleiro LED 22mm verde", "sku": "SL-22-V", "qty": 40, "unitPrice": 8.6, "total": 344 },
+    { "name": "Prensa-cabo PG13.5 (caixa 50)", "sku": "PC-135-50", "qty": 8, "unitPrice": 36.0, "total": 288 },
+    { "name": "Fita isolante 19mm (pacote 10)", "sku": "FI-19-10", "qty": 30, "unitPrice": 22.5, "total": 675 },
+    { "name": "Graxa industrial — pote 1kg", "sku": "GX-1KG", "qty": 12, "unitPrice": 44.9, "total": 538.8 },
+    { "name": "Kit manutenção preventiva trimestral", "sku": "KT-MNT-3", "qty": 5, "unitPrice": 380.0, "total": 1900 },
+    { "name": "Serviço de instalação e comissionamento", "sku": "SV-INST", "qty": 1, "unitPrice": 6800.0, "total": 6800 },
+    { "name": "Treinamento operacional (turma 8h)", "sku": "SV-TRN-8", "qty": 2, "unitPrice": 1450.0, "total": 2900 }
+  ]
+}

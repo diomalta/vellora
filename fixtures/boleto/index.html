@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Boleto Bancário — {{ documento.nossoNumero }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm;
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Vellora Sans", Arial, sans-serif;
+      font-size: 9pt;
+      color: #111;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .doc-footer {
+      margin-top: 6mm;
+      padding-top: 2mm;
+      border-top: 1px solid #ccc;
+      font-size: 7.5pt;
+      color: #555;
+      text-align: center;
+    }
+
+    /* ---- Banco header ---- */
+    table.banco-head {
+      width: 100%;
+      border-collapse: collapse;
+      border-bottom: 2px solid #111;
+      margin-bottom: 4mm;
+    }
+    table.banco-head td {
+      vertical-align: middle;
+      padding: 0 0 2mm 0;
+    }
+    .banco-logo {
+      width: 36mm;
+      height: 12mm;
+      object-fit: contain;
+    }
+    .banco-codigo {
+      font-size: 16pt;
+      font-weight: bold;
+      text-align: center;
+      border-left: 2px solid #111;
+      border-right: 2px solid #111;
+      padding: 0 4mm;
+      letter-spacing: 1px;
+    }
+    .linha-digitavel {
+      font-size: 12pt;
+      font-weight: bold;
+      text-align: right;
+      letter-spacing: 0.5px;
+    }
+
+    .recibo-titulo {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #444;
+      margin: 0 0 1.5mm 0;
+    }
+
+    /* ---- Boleto field grid ---- */
+    table.boleto {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    table.boleto td {
+      border: 0.5px solid #555;
+      padding: 1mm 2mm 2mm 2mm;
+      vertical-align: top;
+    }
+    .label {
+      display: block;
+      font-size: 6.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 0.5mm;
+    }
+    .value {
+      font-size: 9pt;
+      color: #111;
+    }
+    .value.strong {
+      font-weight: bold;
+    }
+    .value.big {
+      font-size: 11pt;
+      font-weight: bold;
+    }
+    td.right .value,
+    td.right .label {
+      text-align: right;
+    }
+
+    .demonstrativo td {
+      border: 0.5px solid #999;
+    }
+    .demonstrativo .value {
+      font-size: 8.5pt;
+    }
+
+    .corte {
+      border: 0 !important;
+      border-top: 1px dashed #999 !important;
+      font-size: 7pt;
+      color: #888;
+      text-align: right;
+      padding: 1mm 0 3mm 0 !important;
+    }
+
+    /* ---- Código de barras (representado como texto owned) ---- */
+    .codigo-barras {
+      margin-top: 3mm;
+      font-family: "Vellora Mono", monospace;
+      font-size: 8pt;
+      letter-spacing: 2px;
+      color: #111;
+      word-break: break-all;
+    }
+    .codigo-barras .label {
+      margin-bottom: 1mm;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== RECIBO DO PAGADOR ===================== -->
+  <p class="recibo-titulo">Recibo do Pagador</p>
+
+  <table class="banco-head">
+    <tr>
+      <td style="width: 38mm;">
+        <img class="banco-logo" src="{{ banco.logoUrl }}" alt="{{ banco.nome }}">
+      </td>
+      <td class="banco-codigo" style="width: 28mm;">{{ banco.codigoCompensacao }}</td>
+      <td class="linha-digitavel">{{ documento.linhaDigitavel }}</td>
+    </tr>
+  </table>
+
+  <table class="boleto">
+    <tr>
+      <td colspan="2">
+        <span class="label">Beneficiário</span>
+        <span class="value strong">{{ beneficiario.nome }}</span>
+      </td>
+      <td class="right">
+        <span class="label">Agência / Código do Beneficiário</span>
+        <span class="value">{{ beneficiario.agencia }} / {{ beneficiario.codigo }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">Nosso Número</span>
+        <span class="value">{{ documento.nossoNumero }}</span>
+      </td>
+      <td>
+        <span class="label">Vencimento</span>
+        <span class="value strong">{{ documento.vencimento | date("DD/MM/YYYY") }}</span>
+      </td>
+      <td class="right">
+        <span class="label">Valor do Documento</span>
+        <span class="value strong">{{ documento.valor | currency("BRL") }}</span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ===================== FICHA DE COMPENSAÇÃO ===================== -->
+  <table class="boleto" style="margin-top: 8mm;">
+    <tr>
+      <td class="corte" colspan="3">Corte na linha pontilhada — Ficha de Compensação</td>
+    </tr>
+  </table>
+
+  <table class="banco-head">
+    <tr>
+      <td style="width: 38mm;">
+        <img class="banco-logo" src="{{ banco.logoUrl }}" alt="{{ banco.nome }}">
+      </td>
+      <td class="banco-codigo" style="width: 28mm;">{{ banco.codigoCompensacao }}</td>
+      <td class="linha-digitavel">{{ documento.linhaDigitavel }}</td>
+    </tr>
+  </table>
+
+  <table class="boleto">
+    <tr>
+      <td colspan="3">
+        <span class="label">Local de Pagamento</span>
+        <span class="value">{{ documento.localPagamento }}</span>
+      </td>
+      <td class="right">
+        <span class="label">Vencimento</span>
+        <span class="value big">{{ documento.vencimento | date("DD/MM/YYYY") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <span class="label">Beneficiário</span>
+        <span class="value strong">{{ beneficiario.nome }}</span>
+        <span class="value"> — CNPJ {{ beneficiario.cnpj }}</span>
+      </td>
+      <td class="right">
+        <span class="label">Agência / Código do Beneficiário</span>
+        <span class="value">{{ beneficiario.agencia }} / {{ beneficiario.codigo }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">Data do Documento</span>
+        <span class="value">{{ documento.dataDocumento | date("DD/MM/YYYY") }}</span>
+      </td>
+      <td>
+        <span class="label">Número do Documento</span>
+        <span class="value">{{ documento.numero }}</span>
+      </td>
+      <td>
+        <span class="label">Espécie Doc.</span>
+        <span class="value">{{ documento.especie }}</span>
+      </td>
+      <td class="right">
+        <span class="label">Nosso Número</span>
+        <span class="value">{{ documento.nossoNumero }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">Carteira</span>
+        <span class="value">{{ documento.carteira }}</span>
+      </td>
+      <td>
+        <span class="label">Espécie Moeda</span>
+        <span class="value">{{ documento.moeda }}</span>
+      </td>
+      <td>
+        <span class="label">Quantidade</span>
+        <span class="value">{{ documento.quantidade }}</span>
+      </td>
+      <td class="right">
+        <span class="label">(=) Valor do Documento</span>
+        <span class="value strong">{{ documento.valor | currency("BRL") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" rowspan="4" style="vertical-align: top;">
+        <span class="label">Instruções (texto de responsabilidade do beneficiário)</span>
+        {% for instrucao in instrucoes %}
+          <span class="value">• {{ instrucao }}</span><br>
+        {% endfor %}
+        {% if documento.descontoDisponivel %}
+          <span class="value strong">Desconto de {{ documento.descontoValor | currency("BRL") }} para pagamento até {{ documento.descontoAteData | date("DD/MM/YYYY") }}.</span>
+        {% endif %}
+      </td>
+      <td class="right">
+        <span class="label">(-) Desconto / Abatimento</span>
+        <span class="value">{{ documento.desconto | currency("BRL") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="right">
+        <span class="label">(-) Outras Deduções</span>
+        <span class="value">{{ documento.deducoes | currency("BRL") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="right">
+        <span class="label">(+) Mora / Multa</span>
+        <span class="value">{{ documento.mora | currency("BRL") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="right">
+        <span class="label">(=) Valor Cobrado</span>
+        <span class="value strong">{{ documento.valorCobrado | currency("BRL") }}</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4">
+        <span class="label">Pagador</span>
+        <span class="value strong">{{ pagador.nome }}</span>
+        <span class="value"> — CPF {{ pagador.cpf }}</span><br>
+        <span class="value">{{ pagador.endereco.logradouro }}, {{ pagador.endereco.numero }} — {{ pagador.endereco.bairro }}</span><br>
+        <span class="value">{{ pagador.endereco.cidade }} / {{ pagador.endereco.uf }} — CEP {{ pagador.endereco.cep }}</span>
+      </td>
+    </tr>
+  </table>
+
+  <table class="boleto demonstrativo" style="margin-top: 4mm;">
+    <thead>
+      <tr>
+        <td><span class="label">Referência</span></td>
+        <td><span class="label">Descrição</span></td>
+        <td class="right"><span class="label">Valor</span></td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in demonstrativo %}
+        <tr>
+          <td><span class="value">{{ item.referencia }}</span></td>
+          <td><span class="value">{{ item.descricao }}</span></td>
+          <td class="right"><span class="value">{{ item.valor | currency("BRL") }}</span></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="codigo-barras">
+    <span class="label">Código de Barras (representação textual — não escaneável)</span>
+    {{ documento.codigoBarras }}
+  </div>
+
+  <div class="doc-footer">
+    Documento de cobrança fictício gerado por vellora para fins de teste — {{ beneficiario.nome }}.
+    Autenticação mecânica: {{ documento.autenticacao }}.
+  </div>
+
+</body>
+</html>

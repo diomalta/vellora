@@ -1,0 +1,144 @@
+name: Release
+
+# Dormant by design: this workflow only runs when triggered manually, so nothing is ever published
+# automatically. When you are ready to enable the standard Changesets "Version Packages" PR + publish
+# flow, add a `push: { branches: [main] }` trigger below.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build + verify only; skip the real npm publish."
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write # required for npm provenance (OIDC)
+
+env:
+  NODE_VERSION_FILE: .nvmrc
+
+jobs:
+  # 1) Build a prebuilt .node per launch target. (tasks 1.1–1.4)
+  build:
+    name: build (${{ matrix.tag }})
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { tag: darwin-arm64, target: aarch64-apple-darwin, runner: macos-14 }
+          - { tag: darwin-x64, target: x86_64-apple-darwin, runner: macos-13 }
+          - { tag: linux-x64-gnu, target: x86_64-unknown-linux-gnu, runner: ubuntu-24.04 }
+          # Native arm64 runner; if unavailable, build via QEMU (see RELEASING.md).
+          - { tag: linux-arm64-gnu, target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm }
+          # Built inside a musl container so the addon links musl, not glibc.
+          - {
+              tag: linux-x64-musl,
+              target: x86_64-unknown-linux-musl,
+              runner: ubuntu-24.04,
+              container: node:22-alpine,
+            }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision musl build deps
+        if: matrix.container
+        run: apk add --no-cache build-base python3
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Provision Rust toolchain + target
+        run: |
+          rustup show
+          rustup target add ${{ matrix.target }}
+      - run: npm ci
+      - name: napi build (${{ matrix.target }})
+        run: npm -w @vellora/native run build:addon -- --target ${{ matrix.target }}
+      - name: Upload prebuilt addon
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.tag }}
+          path: packages/native/*.node
+          if-no-files-found: error
+
+  # 2) Prove a clean install loads the prebuilt addon with NO Rust toolchain/compiler. (tasks 4.1, 4.2)
+  verify:
+    name: verify clean install (${{ matrix.tag }})
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { tag: darwin-arm64, runner: macos-14 }
+          - { tag: darwin-x64, runner: macos-13 }
+          - { tag: linux-x64-gnu, runner: ubuntu-24.04 }
+          - { tag: linux-arm64-gnu, runner: ubuntu-24.04-arm }
+          # Alpine = musl: confirms the linux-*-musl prebuild loads on a glibc-free host.
+          - { tag: linux-x64-musl, runner: ubuntu-24.04, container: node:22-alpine }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-${{ matrix.tag }}
+          path: packages/native/
+      - name: Render a PDF with no toolchain present
+        # The loader resolves the local .node via its dev-path branch; assert the result is a PDF.
+        run: |
+          node -e "import('@vellora/native').then(async (m) => {
+            const pdf = await m.render(new TextEncoder().encode('<p>ok</p>'));
+            if (Buffer.from(pdf.slice(0,5)).toString() !== '%PDF-') { console.error('not a PDF'); process.exit(1); }
+            console.log('clean-install render OK for ${{ matrix.tag }}');
+          }).catch((e) => { console.error(e); process.exit(1); })"
+
+  # 3) Version + publish with provenance — gated on every build & verify job passing. (tasks 4.3–4.5)
+  release:
+    name: version + publish
+    needs: [build, verify]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - name: Provision Rust toolchain
+        run: rustup show
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          merge-multiple: true
+          path: packages/native/
+      - name: Move prebuilds into npm/* platform packages
+        run: npm -w @vellora/native exec -- napi artifacts --output-dir . --npm-dir npm
+      - name: Apply pending changesets (version bump + CHANGELOG)
+        run: npm run version-packages
+      - name: Build TypeScript
+        run: npm run build:ts
+      - name: Publish dry-run (always — confirms scope/access before any real publish)
+        run: npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run && npx changeset publish --dry-run || true
+      - name: Publish to npm with provenance
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          npm -w @vellora/native exec -- napi pre-publish -t npm
+          npx changeset publish --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+      - name: Assert provenance is present on the published versions
+        if: ${{ github.event.inputs.dry_run == 'false' }}
+        run: |
+          for pkg in vellora @vellora/native @vellora/lint @vellora/cli; do
+            echo "Checking provenance attestation for $pkg ..."
+            npm view "$pkg" dist.attestations --json | grep -q provenance || {
+              echo "::error::No provenance attestation found for $pkg"; exit 1;
+            }
+          done

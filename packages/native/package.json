@@ -1,0 +1,70 @@
+{
+  "name": "@vellora/native",
+  "version": "0.1.0-alpha.0",
+  "description": "Prebuilt napi-rs addon loader for vellora — alpha.",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "boleto",
+    "receipt",
+    "pdfa",
+    "pdfua",
+    "tagged-pdf",
+    "no-puppeteer",
+    "no-chromium",
+    "serverless",
+    "wkhtmltopdf-alternative",
+    "napi-rs",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/native"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "README.md", "LICENSE", "THIRD-PARTY-NOTICES.md", "LICENSE-DejaVu.txt"],
+  "napi": {
+    "binaryName": "vellora",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ]
+  },
+  "scripts": {
+    "build:addon": "napi build --release --platform --manifest-path ../../crates/vellora-napi/Cargo.toml --output-dir . --no-js",
+    "build": "tsc"
+  },
+  "optionalDependencies": {
+    "@vellora/native-darwin-arm64": "0.1.0-alpha.0",
+    "@vellora/native-darwin-x64": "0.1.0-alpha.0",
+    "@vellora/native-linux-x64-gnu": "0.1.0-alpha.0",
+    "@vellora/native-linux-arm64-gnu": "0.1.0-alpha.0",
+    "@vellora/native-linux-x64-musl": "0.1.0-alpha.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

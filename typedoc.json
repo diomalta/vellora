@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown"],
+  "entryPoints": ["packages/vellora/src/index.ts", "packages/vellora/src/types.ts"],
+  "tsconfig": "packages/vellora/tsconfig.json",
+  "out": "docs/reference",
+  "entryFileName": "index",
+  "readme": "none",
+  "githubPages": false,
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "excludeInternal": true,
+  "excludePrivate": true
+}

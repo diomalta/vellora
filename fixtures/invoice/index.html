@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fatura {{ invoice.number }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm;
+        @bottom-center {
+          content: "Página " counter(page) " de " counter(pages);
+        }
+      }
+
+      :root {
+        --ink: #1a1d24;
+        --muted: #5b6472;
+        --line: #d7dce4;
+        --accent: #2f5d8a;
+        --zebra: #f4f6fa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: var(--ink);
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      /* --- Header --- */
+      table.header {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10mm;
+      }
+
+      table.header td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .brand {
+        font-size: 18pt;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.5px;
+      }
+
+      .brand-mark {
+        width: 14mm;
+        height: 14mm;
+        margin-bottom: 3mm;
+      }
+
+      .doc-title {
+        font-size: 16pt;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .doc-meta {
+        margin-top: 4mm;
+        font-size: 10pt;
+      }
+
+      .doc-meta .label {
+        color: var(--muted);
+        padding-right: 6mm;
+      }
+
+      /* --- Parties --- */
+      table.parties {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 9mm;
+      }
+
+      table.parties td {
+        vertical-align: top;
+        width: 50%;
+        padding: 4mm 5mm;
+        border: 0.4pt solid var(--line);
+      }
+
+      .party-role {
+        font-size: 8.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--accent);
+        margin-bottom: 2mm;
+      }
+
+      .party-name {
+        font-size: 11.5pt;
+        font-weight: 600;
+        margin-bottom: 1.5mm;
+      }
+
+      .party-line {
+        margin: 0;
+        font-size: 9.5pt;
+        color: var(--muted);
+      }
+
+      /* --- Line items --- */
+      table.items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8mm;
+      }
+
+      table.items thead th {
+        background: var(--accent);
+        color: #fff;
+        font-size: 9pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 2.6mm 3mm;
+      }
+
+      table.items thead th.num {
+        text-align: right;
+      }
+
+      table.items tbody td {
+        padding: 2.2mm 3mm;
+        border-bottom: 0.4pt solid var(--line);
+        font-size: 10pt;
+        vertical-align: top;
+      }
+
+      table.items tbody tr:nth-child(even) td {
+        background: var(--zebra);
+      }
+
+      table.items td.num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .item-sku {
+        display: block;
+        font-size: 8pt;
+        color: var(--muted);
+      }
+
+      /* --- Totals --- */
+      table.totals {
+        width: 70mm;
+        border-collapse: collapse;
+        margin-left: auto;
+      }
+
+      table.totals td {
+        padding: 1.8mm 3mm;
+        font-size: 10pt;
+      }
+
+      table.totals td.label {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      table.totals td.value {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      table.totals tr.grand td {
+        border-top: 0.8pt solid var(--accent);
+        font-size: 12pt;
+        font-weight: 700;
+        color: var(--accent);
+        padding-top: 3mm;
+      }
+
+      /* --- Notes --- */
+      .notes {
+        margin-top: 10mm;
+        padding-top: 4mm;
+        border-top: 0.4pt solid var(--line);
+        font-size: 9pt;
+        color: var(--muted);
+      }
+
+      .notes h3 {
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ink);
+        margin-bottom: 2mm;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 1mm 3mm;
+        border: 0.6pt solid var(--accent);
+        border-radius: 2mm;
+        color: var(--accent);
+        font-size: 8.5pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <table class="header">
+      <tr>
+        <td>
+          <img
+            class="brand-mark"
+            src="assets/logo.png"
+            alt="Marca da empresa emissora"
+          />
+          <div class="brand">{{ seller.name }}</div>
+          <p class="party-line">{{ seller.tagline }}</p>
+        </td>
+        <td class="right">
+          <div class="doc-title">Fatura</div>
+          <div class="doc-meta">
+            <div>
+              <span class="label">Número</span>{{ invoice.number }}
+            </div>
+            <div>
+              <span class="label">Emissão</span>{{ invoice.issueDate | date("DD/MM/YYYY") }}
+            </div>
+            <div>
+              <span class="label">Vencimento</span>{{ invoice.dueDate | date("DD/MM/YYYY") }}
+            </div>
+            {% if invoice.status %}
+            <div style="margin-top: 3mm">
+              <span class="badge">{{ invoice.status }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table class="parties">
+      <tr>
+        <td>
+          <div class="party-role">Emitente</div>
+          <div class="party-name">{{ seller.name }}</div>
+          <p class="party-line">{{ seller.address.street }}</p>
+          <p class="party-line">
+            {{ seller.address.city }} — {{ seller.address.region }}
+          </p>
+          <p class="party-line">{{ seller.address.postal }}, {{ seller.address.country }}</p>
+          <p class="party-line">CNPJ {{ seller.taxId }}</p>
+          <p class="party-line">{{ seller.email }}</p>
+        </td>
+        <td>
+          <div class="party-role">Destinatário</div>
+          <div class="party-name">{{ buyer.name }}</div>
+          <p class="party-line">Cliente {{ buyer.customerId }}</p>
+          <p class="party-line">{{ buyer.address.street }}</p>
+          <p class="party-line">
+            {{ buyer.address.city }} — {{ buyer.address.region }}
+          </p>
+          <p class="party-line">{{ buyer.address.postal }}, {{ buyer.address.country }}</p>
+          <p class="party-line">CNPJ {{ buyer.taxId }}</p>
+        </td>
+      </tr>
+    </table>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th class="num">Qtd.</th>
+          <th class="num">Preço unit.</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            {{ item.name }}
+            <span class="item-sku">SKU {{ item.sku }}</span>
+          </td>
+          <td class="num">{{ item.qty | number(0) }}</td>
+          <td class="num">{{ item.unitPrice | currency("BRL") }}</td>
+          <td class="num">{{ item.total | currency("BRL") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="label">Subtotal</td>
+        <td class="value">{{ totals.subtotal | currency("BRL") }}</td>
+      </tr>
+      {% if totals.discount %}
+      <tr>
+        <td class="label">Desconto</td>
+        <td class="value">- {{ totals.discount | currency("BRL") }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td class="label">Imposto ({{ totals.taxRate }})</td>
+        <td class="value">{{ totals.tax | currency("BRL") }}</td>
+      </tr>
+      <tr class="grand">
+        <td class="label">Total a pagar</td>
+        <td class="value">{{ totals.total | currency("BRL") }}</td>
+      </tr>
+    </table>
+
+    <div class="notes">
+      <h3>Instruções de pagamento</h3>
+      <p>
+        Pagamento via transferência para a conta {{ payment.bankName }},
+        agência {{ payment.branch }}, conta {{ payment.account }}.
+        Favor informar o número da fatura {{ invoice.number }} no campo de
+        identificação.
+      </p>
+      <p>{{ invoice.notes }}</p>
+    </div>
+  </body>
+</html>

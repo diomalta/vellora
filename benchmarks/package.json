@@ -1,0 +1,26 @@
+{
+  "name": "@vellora/benchmarks",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reproducible, version-pinned HTML->PDF benchmark suite (NOT published; competitor deps live here so they never touch the runtime graph of any vellora package).",
+  "scripts": {
+    "bench": "node run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.48.2",
+    "puppeteer": "23.6.0"
+  },
+  "comment-non-npm-tools": {
+    "_note": "Gotenberg and WeasyPrint are NOT npm packages. Their pinned versions are documented here and consumed by config.mjs / the adapters. They are installed out-of-band (Docker image / pip) by CI; see README.md.",
+    "gotenberg": {
+      "image": "gotenberg/gotenberg:8.11.1",
+      "mode": "standing HTTP service"
+    },
+    "weasyprint": {
+      "version": "62.3",
+      "python": ">=3.10",
+      "mode": "in-process in a warm long-lived worker"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@vellora/lint",
+  "version": "0.1.0-alpha.0",
+  "description": "Dev-time HTML diagnose + fix for the vellora HTML/CSS subset (parse5 + resvg).",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "boleto",
+    "receipt",
+    "pdfa",
+    "pdfua",
+    "tagged-pdf",
+    "no-puppeteer",
+    "no-chromium",
+    "serverless",
+    "wkhtmltopdf-alternative",
+    "napi-rs",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/lint"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "parse5": "8.0.1"
+  },
+  "devDependencies": {
+    "@vellora/test-harness": "*"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

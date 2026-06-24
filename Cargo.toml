@@ -1,0 +1,18 @@
+# vellora Cargo workspace (foundation).
+# Members are buildable stubs; rendering crates (Blitz/Stylo/Taffy/Parley/krilla/resvg)
+# arrive with `core-render-invoice` and `native-render-bridge`.
+[workspace]
+resolver = "2"
+members = ["crates/vellora-core", "crates/vellora-napi"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+# IMPORTANT: do NOT set `panic = "abort"`. `panic` is workspace-wide and not
+# per-member overridable, and native-render-bridge's napi cdylib panic-to-rejection
+# contract depends on unwinding across the FFI boundary (cross-change precondition).
+[profile.release]
+panic = "unwind"

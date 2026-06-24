@@ -1,0 +1,60 @@
+{
+  "name": "vellora",
+  "version": "0.1.0-alpha.0",
+  "description": "HTML to PDF for Node.js — no browser. Public API + templating + strict orchestration.",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "boleto",
+    "receipt",
+    "pdfa",
+    "pdfua",
+    "tagged-pdf",
+    "no-puppeteer",
+    "no-chromium",
+    "serverless",
+    "wkhtmltopdf-alternative",
+    "napi-rs",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/vellora"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@vellora/lint": "0.1.0-alpha.0",
+    "@vellora/native": "0.1.0-alpha.0"
+  },
+  "devDependencies": {
+    "@vellora/test-harness": "*",
+    "esbuild": "^0.21.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

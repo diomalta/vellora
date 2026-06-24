@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fatura INV-2026-00417</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 16mm;
+        @bottom-center {
+          content: "Página " counter(page) " de " counter(pages);
+        }
+      }
+
+      :root {
+        --ink: #1a1d24;
+        --muted: #5b6472;
+        --line: #d7dce4;
+        --accent: #2f5d8a;
+        --zebra: #f4f6fa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.45;
+        color: var(--ink);
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      /* --- Header --- */
+      table.header {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10mm;
+      }
+
+      table.header td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .brand {
+        font-size: 18pt;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.5px;
+      }
+
+      .brand-mark {
+        width: 14mm;
+        height: 14mm;
+        margin-bottom: 3mm;
+      }
+
+      .doc-title {
+        font-size: 16pt;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .doc-meta {
+        margin-top: 4mm;
+        font-size: 10pt;
+      }
+
+      .doc-meta .label {
+        color: var(--muted);
+        padding-right: 6mm;
+      }
+
+      /* --- Parties --- */
+      table.parties {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 9mm;
+      }
+
+      table.parties td {
+        vertical-align: top;
+        width: 50%;
+        padding: 4mm 5mm;
+        border: 0.4pt solid var(--line);
+      }
+
+      .party-role {
+        font-size: 8.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--accent);
+        margin-bottom: 2mm;
+      }
+
+      .party-name {
+        font-size: 11.5pt;
+        font-weight: 600;
+        margin-bottom: 1.5mm;
+      }
+
+      .party-line {
+        margin: 0;
+        font-size: 9.5pt;
+        color: var(--muted);
+      }
+
+      /* --- Line items --- */
+      table.items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 8mm;
+      }
+
+      table.items thead th {
+        background: var(--accent);
+        color: #fff;
+        font-size: 9pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 2.6mm 3mm;
+      }
+
+      table.items thead th.num {
+        text-align: right;
+      }
+
+      table.items tbody td {
+        padding: 2.2mm 3mm;
+        border-bottom: 0.4pt solid var(--line);
+        font-size: 10pt;
+        vertical-align: top;
+      }
+
+      table.items tbody tr:nth-child(even) td {
+        background: var(--zebra);
+      }
+
+      table.items td.num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .item-sku {
+        display: block;
+        font-size: 8pt;
+        color: var(--muted);
+      }
+
+      /* --- Totals --- */
+      table.totals {
+        width: 70mm;
+        border-collapse: collapse;
+        margin-left: auto;
+      }
+
+      table.totals td {
+        padding: 1.8mm 3mm;
+        font-size: 10pt;
+      }
+
+      table.totals td.label {
+        color: var(--muted);
+        text-align: right;
+      }
+
+      table.totals td.value {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      table.totals tr.grand td {
+        border-top: 0.8pt solid var(--accent);
+        font-size: 12pt;
+        font-weight: 700;
+        color: var(--accent);
+        padding-top: 3mm;
+      }
+
+      /* --- Notes --- */
+      .notes {
+        margin-top: 10mm;
+        padding-top: 4mm;
+        border-top: 0.4pt solid var(--line);
+        font-size: 9pt;
+        color: var(--muted);
+      }
+
+      .notes h3 {
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ink);
+        margin-bottom: 2mm;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 1mm 3mm;
+        border: 0.6pt solid var(--accent);
+        border-radius: 2mm;
+        color: var(--accent);
+        font-size: 8.5pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <table class="header">
+      <tr>
+        <td>
+          
+          <div class="brand">Acme Widgets LON</div>
+          <p class="party-line">Soluções industriais sob medida</p>
+        </td>
+        <td class="right">
+          <div class="doc-title">Fatura</div>
+          <div class="doc-meta">
+            <div>
+              <span class="label">Número</span>INV-2026-00417
+            </div>
+            <div>
+              <span class="label">Emissão</span>22/06/2026
+            </div>
+            <div>
+              <span class="label">Vencimento</span>22/07/2026
+            </div>
+            
+            <div style="margin-top: 3mm">
+              <span class="badge">Em aberto</span>
+            </div>
+            
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table class="parties">
+      <tr>
+        <td>
+          <div class="party-role">Emitente</div>
+          <div class="party-name">Acme Widgets LON</div>
+          <p class="party-line">Rua das Flores, 123 — Sala 4B</p>
+          <p class="party-line">
+            São Paulo — SP
+          </p>
+          <p class="party-line">01001-000, Brasil</p>
+          <p class="party-line">CNPJ 12.345.678/0001-90</p>
+          <p class="party-line">faturamento@acmewidgets.example</p>
+        </td>
+        <td>
+          <div class="party-role">Destinatário</div>
+          <div class="party-name">Borges & Pinto Comércio Ltda.</div>
+          <p class="party-line">Cliente CUST-00042</p>
+          <p class="party-line">Avenida Central, 4500 — Conjunto 12</p>
+          <p class="party-line">
+            Campinas — SP
+          </p>
+          <p class="party-line">13010-111, Brasil</p>
+          <p class="party-line">CNPJ 98.765.432/0001-21</p>
+        </td>
+      </tr>
+    </table>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th class="num">Qtd.</th>
+          <th class="num">Preço unit.</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+                <tr>
+          <td>Suporte de fixação em alumínio A20<span class="item-sku">SKU WX-A20</span></td>
+          <td class="num">40</td>
+          <td class="num">R$ 32,50</td>
+          <td class="num">R$ 1300,00</td>
+        </tr>
+        <tr>
+          <td>Parafuso sextavado M8 (caixa 100)<span class="item-sku">SKU FS-M8-100</span></td>
+          <td class="num">25</td>
+          <td class="num">R$ 18,90</td>
+          <td class="num">R$ 472,50</td>
+        </tr>
+        <tr>
+          <td>Arruela de pressão M8 (caixa 200)<span class="item-sku">SKU FS-W8-200</span></td>
+          <td class="num">18</td>
+          <td class="num">R$ 9,75</td>
+          <td class="num">R$ 175,50</td>
+        </tr>
+        <tr>
+          <td>Perfil estrutural 40x40 — barra 3m<span class="item-sku">SKU PR-4040-3</span></td>
+          <td class="num">60</td>
+          <td class="num">R$ 47,20</td>
+          <td class="num">R$ 2832,00</td>
+        </tr>
+        <tr>
+          <td>Conector de canto reforçado<span class="item-sku">SKU CN-RF-01</span></td>
+          <td class="num">120</td>
+          <td class="num">R$ 6,40</td>
+          <td class="num">R$ 768,00</td>
+        </tr>
+        <tr>
+          <td>Roldana industrial Ø50mm<span class="item-sku">SKU RL-50</span></td>
+          <td class="num">30</td>
+          <td class="num">R$ 28,00</td>
+          <td class="num">R$ 840,00</td>
+        </tr>
+        <tr>
+          <td>Trilho linear 500mm<span class="item-sku">SKU TL-500</span></td>
+          <td class="num">22</td>
+          <td class="num">R$ 89,90</td>
+          <td class="num">R$ 1977,80</td>
+        </tr>
+        <tr>
+          <td>Bloco deslizante para trilho linear<span class="item-sku">SKU BD-TL</span></td>
+          <td class="num">44</td>
+          <td class="num">R$ 34,50</td>
+          <td class="num">R$ 1518,00</td>
+        </tr>
+        <tr>
+          <td>Motor de passo NEMA 23<span class="item-sku">SKU MT-N23</span></td>
+          <td class="num">12</td>
+          <td class="num">R$ 156,00</td>
+          <td class="num">R$ 1872,00</td>
+        </tr>
+        <tr>
+          <td>Acoplamento flexível 6.35x8mm<span class="item-sku">SKU AC-FL-68</span></td>
+          <td class="num">24</td>
+          <td class="num">R$ 21,30</td>
+          <td class="num">R$ 511,20</td>
+        </tr>
+        <tr>
+          <td>Fonte chaveada 24V 10A<span class="item-sku">SKU FN-24-10</span></td>
+          <td class="num">8</td>
+          <td class="num">R$ 142,50</td>
+          <td class="num">R$ 1140,00</td>
+        </tr>
+        <tr>
+          <td>Cabo flexível 1.5mm² — rolo 100m<span class="item-sku">SKU CB-15-100</span></td>
+          <td class="num">10</td>
+          <td class="num">R$ 98,00</td>
+          <td class="num">R$ 980,00</td>
+        </tr>
+        <tr>
+          <td>Terminal tubular 1.5mm (caixa 500)<span class="item-sku">SKU TM-15-500</span></td>
+          <td class="num">6</td>
+          <td class="num">R$ 27,40</td>
+          <td class="num">R$ 164,40</td>
+        </tr>
+        <tr>
+          <td>Sensor indutivo M12 PNP<span class="item-sku">SKU SN-M12-P</span></td>
+          <td class="num">30</td>
+          <td class="num">R$ 38,90</td>
+          <td class="num">R$ 1167,00</td>
+        </tr>
+        <tr>
+          <td>Relé de estado sólido 25A<span class="item-sku">SKU RL-SS-25</span></td>
+          <td class="num">14</td>
+          <td class="num">R$ 64,00</td>
+          <td class="num">R$ 896,00</td>
+        </tr>
+        <tr>
+          <td>Disjuntor termomagnético 16A<span class="item-sku">SKU DJ-TM-16</span></td>
+          <td class="num">20</td>
+          <td class="num">R$ 33,70</td>
+          <td class="num">R$ 674,00</td>
+        </tr>
+        <tr>
+          <td>Painel de comando 600x400mm<span class="item-sku">SKU PN-6040</span></td>
+          <td class="num">5</td>
+          <td class="num">R$ 410,00</td>
+          <td class="num">R$ 2050,00</td>
+        </tr>
+        <tr>
+          <td>Borneira de passagem 4mm² (barra)<span class="item-sku">SKU BR-4</span></td>
+          <td class="num">35</td>
+          <td class="num">R$ 12,80</td>
+          <td class="num">R$ 448,00</td>
+        </tr>
+        <tr>
+          <td>Canaleta perfurada 40x40 — barra 2m<span class="item-sku">SKU CA-4040-2</span></td>
+          <td class="num">50</td>
+          <td class="num">R$ 19,60</td>
+          <td class="num">R$ 980,00</td>
+        </tr>
+        <tr>
+          <td>Eixo retificado Ø12 — barra 1m<span class="item-sku">SKU EX-12-1</span></td>
+          <td class="num">28</td>
+          <td class="num">R$ 54,30</td>
+          <td class="num">R$ 1520,40</td>
+        </tr>
+        <tr>
+          <td>Mancal com rolamento Ø12<span class="item-sku">SKU MC-R12</span></td>
+          <td class="num">56</td>
+          <td class="num">R$ 22,90</td>
+          <td class="num">R$ 1282,40</td>
+        </tr>
+        <tr>
+          <td>Correia dentada GT2 — rolo 5m<span class="item-sku">SKU CR-GT2-5</span></td>
+          <td class="num">16</td>
+          <td class="num">R$ 41,00</td>
+          <td class="num">R$ 656,00</td>
+        </tr>
+        <tr>
+          <td>Polia GT2 20 dentes<span class="item-sku">SKU PL-GT2-20</span></td>
+          <td class="num">64</td>
+          <td class="num">R$ 14,50</td>
+          <td class="num">R$ 928,00</td>
+        </tr>
+        <tr>
+          <td>Esticador de correia ajustável<span class="item-sku">SKU ES-AJ</span></td>
+          <td class="num">18</td>
+          <td class="num">R$ 26,70</td>
+          <td class="num">R$ 480,60</td>
+        </tr>
+        <tr>
+          <td>Ventilador axial 120mm 24V<span class="item-sku">SKU VT-120</span></td>
+          <td class="num">22</td>
+          <td class="num">R$ 31,20</td>
+          <td class="num">R$ 686,40</td>
+        </tr>
+        <tr>
+          <td>Filtro de ar para painel 120mm<span class="item-sku">SKU FL-120</span></td>
+          <td class="num">22</td>
+          <td class="num">R$ 17,40</td>
+          <td class="num">R$ 382,80</td>
+        </tr>
+        <tr>
+          <td>Botão de emergência cogumelo<span class="item-sku">SKU BT-EM</span></td>
+          <td class="num">15</td>
+          <td class="num">R$ 29,90</td>
+          <td class="num">R$ 448,50</td>
+        </tr>
+        <tr>
+          <td>Sinaleiro LED 22mm verde<span class="item-sku">SKU SL-22-V</span></td>
+          <td class="num">40</td>
+          <td class="num">R$ 8,60</td>
+          <td class="num">R$ 344,00</td>
+        </tr>
+        <tr>
+          <td>Prensa-cabo PG13.5 (caixa 50)<span class="item-sku">SKU PC-135-50</span></td>
+          <td class="num">8</td>
+          <td class="num">R$ 36,00</td>
+          <td class="num">R$ 288,00</td>
+        </tr>
+        <tr>
+          <td>Fita isolante 19mm (pacote 10)<span class="item-sku">SKU FI-19-10</span></td>
+          <td class="num">30</td>
+          <td class="num">R$ 22,50</td>
+          <td class="num">R$ 675,00</td>
+        </tr>
+        <tr>
+          <td>Graxa industrial — pote 1kg<span class="item-sku">SKU GX-1KG</span></td>
+          <td class="num">12</td>
+          <td class="num">R$ 44,90</td>
+          <td class="num">R$ 538,80</td>
+        </tr>
+        <tr>
+          <td>Kit manutenção preventiva trimestral<span class="item-sku">SKU KT-MNT-3</span></td>
+          <td class="num">5</td>
+          <td class="num">R$ 380,00</td>
+          <td class="num">R$ 1900,00</td>
+        </tr>
+        <tr>
+          <td>Serviço de instalação e comissionamento<span class="item-sku">SKU SV-INST</span></td>
+          <td class="num">1</td>
+          <td class="num">R$ 6800,00</td>
+          <td class="num">R$ 6800,00</td>
+        </tr>
+        <tr>
+          <td>Treinamento operacional (turma 8h)<span class="item-sku">SKU SV-TRN-8</span></td>
+          <td class="num">2</td>
+          <td class="num">R$ 1450,00</td>
+          <td class="num">R$ 2900,00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="totals">
+      <tr>
+        <td class="label">Subtotal</td>
+        <td class="value">R$ 48217,50</td>
+      </tr>
+      
+      <tr>
+        <td class="label">Desconto</td>
+        <td class="value">- R$ 1250,00</td>
+      </tr>
+      
+      <tr>
+        <td class="label">Imposto (8%)</td>
+        <td class="value">R$ 3757,40</td>
+      </tr>
+      <tr class="grand">
+        <td class="label">Total a pagar</td>
+        <td class="value">R$ 50724,90</td>
+      </tr>
+    </table>
+
+    <div class="notes">
+      <h3>Instruções de pagamento</h3>
+      <p>
+        Pagamento via transferência para a conta Banco Fictício S.A.,
+        agência 0001, conta 00012345-6.
+        Favor informar o número da fatura INV-2026-00417 no campo de
+        identificação.
+      </p>
+      <p>Em caso de divergência nos itens, entre em contato em até 5 dias úteis após o recebimento desta fatura.</p>
+    </div>
+  </body>
+</html>

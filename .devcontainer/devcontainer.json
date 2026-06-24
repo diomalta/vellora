@@ -1,0 +1,21 @@
+{
+  "name": "vellora",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "none"
+    }
+  },
+  "postCreateCommand": "rustup toolchain install --profile minimal $(grep -m1 channel rust-toolchain.toml | cut -d'\"' -f2) && rustup component add rustfmt clippy && npm install",
+  "remoteEnv": {
+    "RUST_BACKTRACE": "1"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer", "biomejs.biome"]
+    }
+  }
+}

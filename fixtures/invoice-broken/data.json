@@ -1,0 +1,45 @@
+{
+  "seller": {
+    "name": "Acme Widgets LON",
+    "address": "Rua das Flores, 123, Sala 4 - Centro, Porto Alegre/RS",
+    "cnpj": "12.345.678/0001-90",
+    "pix_key": "pagamentos@acmewidgets.example"
+  },
+  "customer": {
+    "name": "Cliente Exemplo Ltda.",
+    "id": "CUST-00042",
+    "address": "Avenida Sintetica, 4567 - Bairro Ficticio, Sao Paulo/SP"
+  },
+  "invoice": {
+    "number": "INV-2026-0142",
+    "issued_at": "2026-06-22",
+    "due_at": "2026-07-22",
+    "paid": false
+  },
+  "items": [
+    {
+      "description": "Widget Padrao (azul)",
+      "quantity": 10,
+      "unit_price": 25.0,
+      "total": 250.0
+    },
+    {
+      "description": "Widget Premium (dourado)",
+      "quantity": 4,
+      "unit_price": 79.9,
+      "total": 319.6
+    },
+    {
+      "description": "Servico de configuracao",
+      "quantity": 1,
+      "unit_price": 150.0,
+      "total": 150.0
+    }
+  ],
+  "totals": {
+    "subtotal": 719.6,
+    "tax_rate": 10,
+    "tax": 71.96,
+    "grand_total": 791.56
+  }
+}

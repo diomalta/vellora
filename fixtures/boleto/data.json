@@ -1,0 +1,57 @@
+{
+  "banco": {
+    "nome": "Banco Vellora Fictício",
+    "codigoCompensacao": "999-9",
+    "logoUrl": "./assets/banco-fake-logo.png"
+  },
+  "beneficiario": {
+    "nome": "Acme Widgets Comércio LTDA",
+    "cnpj": "12.345.678/0001-90",
+    "agencia": "0042",
+    "codigo": "00012345-6"
+  },
+  "pagador": {
+    "nome": "Maria das Couves Exemplo",
+    "cpf": "123.456.789-09",
+    "endereco": {
+      "logradouro": "Rua das Flores",
+      "numero": "123",
+      "bairro": "Jardim Sintético",
+      "cidade": "Cidade Exemplo",
+      "uf": "SP",
+      "cep": "01234-567"
+    }
+  },
+  "documento": {
+    "numero": "DOC-00042",
+    "nossoNumero": "00000000000123456-7",
+    "linhaDigitavel": "99990.00001 23456.700001 00000.000420 1 99990000012345",
+    "codigoBarras": "99991999900000123459990000012345670000004200",
+    "localPagamento": "Pagável em qualquer banco até o vencimento (boleto fictício de teste).",
+    "vencimento": "2026-07-15",
+    "dataDocumento": "2026-06-22",
+    "especie": "DM",
+    "carteira": "17",
+    "moeda": "R$",
+    "quantidade": "1",
+    "valor": 1842.5,
+    "desconto": 0,
+    "deducoes": 0,
+    "mora": 0,
+    "valorCobrado": 1842.5,
+    "descontoDisponivel": true,
+    "descontoValor": 92.13,
+    "descontoAteData": "2026-07-05",
+    "autenticacao": "FAKE-AUTH-0000-XXXX-TESTE"
+  },
+  "instrucoes": [
+    "Não receber após 30 dias do vencimento.",
+    "Após o vencimento, cobrar multa de 2% e mora de 1% ao mês.",
+    "Em caso de dúvida sobre este documento de teste, contate o emissor fictício."
+  ],
+  "demonstrativo": [
+    { "referencia": "06/2026", "descricao": "Assinatura plano Widget Pro", "valor": 1499.0 },
+    { "referencia": "06/2026", "descricao": "Usuários adicionais (3x)", "valor": 297.0 },
+    { "referencia": "06/2026", "descricao": "Taxa de processamento", "valor": 46.5 }
+  ]
+}

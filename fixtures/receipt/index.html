@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Recibo {{ receipt_number }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm;
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+      }
+    }
+
+    body {
+      font-family: "Vellora Sans", sans-serif;
+      font-size: 11pt;
+      color: #1a1a1a;
+      line-height: 1.45;
+    }
+
+    .receipt {
+      max-width: 110mm;
+      margin: 0 auto;
+    }
+
+    header.merchant {
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 8mm;
+      margin-bottom: 8mm;
+    }
+
+    .merchant img.logo {
+      display: block;
+      width: 18mm;
+      height: 18mm;
+      margin-bottom: 4mm;
+    }
+
+    .merchant h1 {
+      font-size: 16pt;
+      margin: 0 0 1mm 0;
+    }
+
+    .merchant .tagline {
+      font-size: 9pt;
+      color: #6b6b6b;
+      margin: 0 0 3mm 0;
+    }
+
+    .merchant address {
+      font-style: normal;
+      font-size: 9pt;
+      color: #555;
+    }
+
+    .meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 7mm;
+      font-size: 9.5pt;
+    }
+
+    .meta td {
+      padding: 0.5mm 0;
+      vertical-align: top;
+    }
+
+    .meta td.label {
+      color: #6b6b6b;
+      width: 38%;
+    }
+
+    .meta td.value {
+      text-align: right;
+      font-weight: 600;
+    }
+
+    h2.section {
+      font-size: 10pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6pt;
+      color: #6b6b6b;
+      border-bottom: 1px solid #d8d8d8;
+      padding-bottom: 1.5mm;
+      margin: 0 0 3mm 0;
+    }
+
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6mm;
+    }
+
+    table.items thead th {
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4pt;
+      color: #6b6b6b;
+      text-align: left;
+      border-bottom: 1px solid #d8d8d8;
+      padding: 1.5mm 2mm;
+    }
+
+    table.items thead th.num {
+      text-align: right;
+    }
+
+    table.items tbody td {
+      padding: 2mm;
+      border-bottom: 1px solid #efefef;
+      vertical-align: top;
+    }
+
+    table.items tbody td.num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    table.items tbody td .sku {
+      display: block;
+      font-size: 8pt;
+      color: #9a9a9a;
+    }
+
+    table.items tfoot td {
+      padding: 2mm;
+    }
+
+    table.items tfoot tr.sub td {
+      color: #555;
+      font-size: 10pt;
+    }
+
+    table.items tfoot tr.total td {
+      border-top: 2px solid #1a1a1a;
+      font-size: 12.5pt;
+      font-weight: 700;
+    }
+
+    table.items tfoot td.num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .payment {
+      background: #f6f6f6;
+      padding: 4mm;
+      margin-bottom: 7mm;
+    }
+
+    .payment table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+    }
+
+    .payment td {
+      padding: 0.5mm 0;
+    }
+
+    .payment td.label {
+      color: #6b6b6b;
+    }
+
+    .payment td.value {
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .status-paid {
+      color: #1f7a3d;
+      font-weight: 700;
+    }
+
+    .thanks {
+      text-align: center;
+      font-size: 10pt;
+      color: #444;
+      margin-top: 8mm;
+    }
+
+    .thanks .big {
+      display: block;
+      font-size: 13pt;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 2mm;
+    }
+
+    footer.fine {
+      margin-top: 9mm;
+      padding-top: 3mm;
+      border-top: 1px solid #d8d8d8;
+      font-size: 8pt;
+      color: #9a9a9a;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <header class="merchant">
+      {% if merchant.logo_url %}
+        <img class="logo" src="{{ merchant.logo_url }}" alt="{{ merchant.name }}">
+      {% endif %}
+      <h1>{{ merchant.name }}</h1>
+      <p class="tagline">{{ merchant.tagline }}</p>
+      <address>
+        {{ merchant.address.street }}<br>
+        {{ merchant.address.district }} — {{ merchant.address.city }}/{{ merchant.address.state }}<br>
+        CEP {{ merchant.address.zip }}<br>
+        CNPJ {{ merchant.cnpj }}
+      </address>
+    </header>
+
+    <table class="meta">
+      <tbody>
+        <tr>
+          <td class="label">Recibo nº</td>
+          <td class="value">{{ receipt_number }}</td>
+        </tr>
+        <tr>
+          <td class="label">Data</td>
+          <td class="value">{{ issued_at | date("DD/MM/YYYY HH:mm") }}</td>
+        </tr>
+        <tr>
+          <td class="label">Atendente</td>
+          <td class="value">{{ cashier }}</td>
+        </tr>
+        <tr>
+          <td class="label">Cliente</td>
+          <td class="value">{{ customer.name }} ({{ customer.id }})</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section">Itens</h2>
+    <table class="items">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th class="num">Qtd</th>
+          <th class="num">Unitário</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in items %}
+          <tr>
+            <td>
+              {{ row.name }}
+              <span class="sku">SKU {{ row.sku }}</span>
+            </td>
+            <td class="num">{{ row.qty }}</td>
+            <td class="num">{{ row.unit_price | currency("BRL") }}</td>
+            <td class="num">{{ row.line_total | currency("BRL") }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="sub">
+          <td colspan="3">Subtotal</td>
+          <td class="num">{{ subtotal | currency("BRL") }}</td>
+        </tr>
+        {% if discount %}
+          <tr class="sub">
+            <td colspan="3">Desconto</td>
+            <td class="num">- {{ discount | currency("BRL") }}</td>
+          </tr>
+        {% endif %}
+        <tr class="total">
+          <td colspan="3">Total pago</td>
+          <td class="num">{{ total | currency("BRL") }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="payment">
+      <h2 class="section">Pagamento</h2>
+      <table>
+        <tbody>
+          <tr>
+            <td class="label">Forma de pagamento</td>
+            <td class="value">{{ payment.method }}</td>
+          </tr>
+          <tr>
+            <td class="label">Bandeira / detalhe</td>
+            <td class="value">{{ payment.detail }}</td>
+          </tr>
+          <tr>
+            <td class="label">Autorização</td>
+            <td class="value">{{ payment.authorization }}</td>
+          </tr>
+          <tr>
+            <td class="label">Situação</td>
+            <td class="value"><span class="status-paid">{{ payment.status }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="thanks">
+      <span class="big">Obrigado pela sua compra!</span>
+      {{ thank_you_note }}
+    </p>
+
+    <footer class="fine">
+      Este recibo é um comprovante simplificado e não substitui documento fiscal.<br>
+      {{ merchant.name }} · {{ merchant.website }}
+    </footer>
+  </div>
+</body>
+</html>

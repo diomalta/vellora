@@ -1,0 +1,55 @@
+{
+  "name": "@vellora/cli",
+  "version": "0.1.0-alpha.0",
+  "description": "vellora render / lint / fix commands — alpha, not yet functional.",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "boleto",
+    "receipt",
+    "pdfa",
+    "pdfua",
+    "tagged-pdf",
+    "no-puppeteer",
+    "no-chromium",
+    "serverless",
+    "wkhtmltopdf-alternative",
+    "napi-rs",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "vellora": "dist/cli.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

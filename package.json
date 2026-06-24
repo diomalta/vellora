@@ -1,0 +1,48 @@
+{
+  "name": "vellora-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "cargo build --release && npm -w @vellora/native run build:addon && npm run build:ts",
+    "build:ts": "npm run build --workspaces --if-present",
+    "test": "npm run test:rust && npm run test:ts",
+    "test:rust": "cargo test",
+    "test:ts": "vitest run",
+    "lint": "npm run lint:rust && npm run lint:ts",
+    "lint:rust": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
+    "lint:ts": "biome check .",
+    "format": "biome format --write . && cargo fmt",
+    "clean": "rm -rf target packages/*/dist && rm -f packages/native/*.node packages/native/index.d.ts packages/native/index.js",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "example": "tsx examples/render-invoice.ts",
+    "render-receipt": "tsx examples/render-receipt.ts",
+    "render-boleto": "tsx examples/render-boleto.ts",
+    "render-notification": "tsx examples/render-notification.ts",
+    "render-to-http-stream": "tsx examples/render-to-http-stream.ts",
+    "batch-concurrency": "tsx examples/batch-concurrency.ts",
+    "compat:gen": "node scripts/gen-compatibility.mjs",
+    "compat:check": "node scripts/gen-compatibility.mjs --check",
+    "docs:api": "typedoc",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "npm run docs:api && vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.9",
+    "@napi-rs/cli": "^3.7.2",
+    "@types/node": "^22",
+    "tsx": "^4.19.2",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.4.0",
+    "typescript": "^5.6.0",
+    "vitepress": "^1.6.3",
+    "vitest": "^2.1.0"
+  }
+}

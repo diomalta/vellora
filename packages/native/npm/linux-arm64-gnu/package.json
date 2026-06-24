@@ -1,0 +1,39 @@
+{
+  "name": "@vellora/native-linux-arm64-gnu",
+  "version": "0.1.0-alpha.0",
+  "cpu": ["arm64"],
+  "main": "vellora.linux-arm64-gnu.node",
+  "files": ["vellora.linux-arm64-gnu.node"],
+  "description": "Prebuilt napi-rs addon loader for vellora — alpha.",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "boleto",
+    "receipt",
+    "pdfa",
+    "pdfua",
+    "tagged-pdf",
+    "no-puppeteer",
+    "no-chromium",
+    "serverless",
+    "wkhtmltopdf-alternative",
+    "napi-rs",
+    "nodejs"
+  ],
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/native"
+  },
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": ["linux"],
+  "libc": ["glibc"]
+}

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    name: ci (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-14 = macOS arm64, ubuntu-24.04 = linux x64 — the two dev/CI platforms.
+        os: [macos-14, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provision pinned Rust toolchain
+        # `rustup show` installs the channel + components declared in rust-toolchain.toml.
+        run: rustup show
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install npm workspace
+        run: npm ci
+
+      - name: Lint (cargo fmt/clippy + biome)
+        run: npm run lint
+
+      - name: Check generated COMPATIBILITY.md is in sync with the subset gate
+        run: npm run compat:check
+
+      - name: Build (cargo workspace + native addon + TypeScript)
+        run: npm run build
+
+      - name: Test (cargo + TypeScript incl. in-process addon load)
+        run: npm test

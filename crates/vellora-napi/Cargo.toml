@@ -1,0 +1,17 @@
+[package]
+name = "vellora-napi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3", default-features = false, features = ["napi8"] }
+napi-derive = "3"
+vellora-core = { path = "../vellora-core" }
+
+[build-dependencies]
+napi-build = "2"

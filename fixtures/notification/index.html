@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Notificação Extrajudicial — {{ reference }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm;
+    }
+
+    @page {
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+      }
+    }
+
+    body {
+      font-family: "Liberation Serif", Georgia, serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+      margin: 0;
+    }
+
+    .letterhead {
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 10pt;
+      margin-bottom: 18pt;
+    }
+
+    .letterhead .org {
+      font-size: 16pt;
+      font-weight: bold;
+      letter-spacing: 0.5pt;
+    }
+
+    .letterhead .org-detail {
+      font-size: 9pt;
+      color: #555;
+      line-height: 1.4;
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16pt;
+    }
+
+    .meta-table td {
+      vertical-align: top;
+      font-size: 9pt;
+      color: #555;
+    }
+
+    .meta-table td.place-date {
+      text-align: right;
+      font-size: 10pt;
+      color: #1a1a1a;
+    }
+
+    .recipient {
+      margin-bottom: 16pt;
+      font-size: 10pt;
+      line-height: 1.45;
+    }
+
+    .recipient .label {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6pt;
+      color: #777;
+      margin-bottom: 3pt;
+    }
+
+    .recipient .name {
+      font-weight: bold;
+    }
+
+    .subject {
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.4pt;
+      margin: 18pt 0 14pt 0;
+      font-size: 10.5pt;
+    }
+
+    .body p {
+      margin: 0 0 11pt 0;
+      text-align: justify;
+    }
+
+    .deadline-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+    }
+
+    .deadline-table td {
+      border: 1px solid #ccc;
+      padding: 6pt 8pt;
+      font-size: 10pt;
+    }
+
+    .deadline-table td.k {
+      width: 38%;
+      background: #f2f2f2;
+      font-weight: bold;
+    }
+
+    .signature {
+      margin-top: 32pt;
+    }
+
+    .signature .rule {
+      border-top: 1px solid #1a1a1a;
+      width: 60mm;
+      margin-bottom: 4pt;
+    }
+
+    .signature .signer {
+      font-weight: bold;
+      font-size: 10.5pt;
+    }
+
+    .signature .signer-detail {
+      font-size: 9pt;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="letterhead">
+    <div class="org">{{ sender.name }}</div>
+    <div class="org-detail">
+      {{ sender.address }}<br />
+      CNPJ {{ sender.cnpj }} &middot; {{ sender.email }} &middot; {{ sender.phone }}
+    </div>
+  </div>
+
+  <table class="meta-table">
+    <tr>
+      <td>
+        Ref.: {{ reference }}<br />
+        {% if process_number %}Processo nº {{ process_number }}{% endif %}
+      </td>
+      <td class="place-date">
+        {{ sender.city }}, {{ issued_at | date("DD/MM/YYYY") }}
+      </td>
+    </tr>
+  </table>
+
+  <div class="recipient">
+    <div class="label">Ao(À) destinatário(a)</div>
+    <div class="name">{{ recipient.name }}</div>
+    <div>{{ recipient.document_label }}: {{ recipient.document }}</div>
+    <div>{{ recipient.address }}</div>
+    <div>{{ recipient.city }} — {{ recipient.state }}, CEP {{ recipient.zip }}</div>
+  </div>
+
+  <div class="subject">
+    Assunto: {{ subject }}
+  </div>
+
+  <div class="body">
+    <p>
+      Prezado(a) {{ recipient.name }}, na qualidade de {{ sender.role }},
+      vimos por meio desta NOTIFICAR Vossa Senhoria a respeito de
+      {{ matter_summary }}, referente ao contrato nº {{ contract_number }},
+      firmado em {{ contract_date | date("DD/MM/YYYY") }} entre as partes.
+    </p>
+
+    <p>
+      Conforme os registros em nosso poder, encontra-se pendente o valor de
+      {{ amount_due | currency("BRL") }}, com vencimento original em
+      {{ original_due_date | date("DD/MM/YYYY") }}. Solicitamos a regularização
+      da referida obrigação no prazo improrrogável de {{ deadline_days }}
+      ({{ deadline_days_text }}) dias corridos, contados a partir do recebimento
+      desta notificação.
+    </p>
+
+    <table class="deadline-table">
+      <tr>
+        <td class="k">Valor em aberto</td>
+        <td>{{ amount_due | currency("BRL") }}</td>
+      </tr>
+      <tr>
+        <td class="k">Vencimento original</td>
+        <td>{{ original_due_date | date("DD/MM/YYYY") }}</td>
+      </tr>
+      <tr>
+        <td class="k">Prazo para regularização</td>
+        <td>{{ deadline_days }} dias corridos (até {{ deadline_date | date("DD/MM/YYYY") }})</td>
+      </tr>
+    </table>
+
+    <p>
+      Permanecendo a situação sem a devida regularização após o prazo acima
+      indicado, informamos que serão adotadas as providências cabíveis previstas
+      em contrato e na legislação aplicável, sem prejuízo de quaisquer outras
+      medidas. Em caso de pagamento já efetuado, favor desconsiderar esta
+      comunicação e encaminhar o respectivo comprovante para
+      {{ sender.email }}.
+    </p>
+
+    {% if has_attachment %}
+    <p>
+      Segue, em anexo, demonstrativo detalhado do débito para sua conferência.
+    </p>
+    {% endif %}
+
+    <p>
+      Sendo o que se apresenta para o momento, colocamo-nos à disposição para
+      os esclarecimentos que se fizerem necessários.
+    </p>
+  </div>
+
+  <div class="signature">
+    <p>Atenciosamente,</p>
+    <div class="rule"></div>
+    <div class="signer">{{ signer.name }}</div>
+    <div class="signer-detail">{{ signer.title }}</div>
+    <div class="signer-detail">{{ sender.name }}</div>
+  </div>
+</body>
+</html>

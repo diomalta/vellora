@@ -1,0 +1,45 @@
+[package]
+name = "vellora-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# =====================================================================
+# Pinned upstream revisions (see ARCHITECTURE.md "Honest risks": Blitz is
+# pre-alpha and churns; pin exact revs so an upstream break touches one place).
+#
+# Blitz (DioxusLabs/blitz) is NOT on crates.io. We pin a git rev. All Blitz
+# contact is funneled through `src/blitz_engine.rs` so a bump touches one file.
+#
+#   Blitz git rev: 2003ba5fc2d8931da9213ef26a813b0d24c83ca6  (v0.3.0-alpha.5 line)
+#     - bundles html5ever + Stylo (cascade) + Taffy (layout) + Parley (text)
+#   krilla 0.8.2 (crates.io) — PDF emit, font subsetting, ToUnicode, metadata.
+#     - NOTE: krilla depends on parley only as a DEV-dependency (its example),
+#       so there is NO parley version conflict with Blitz's parley 0.10:
+#       we hand krilla raw font bytes via `Font::new(Data, index)`.
+# =====================================================================
+
+[dependencies]
+# --- Blitz: parse -> Stylo cascade -> Taffy layout -> Parley text ---
+# NOTE: `system_fonts` is intentionally OFF. vellora bundles its own font and
+# supplies a self-contained `FontContext` (see `src/fonts.rs`), so it never links
+# `libfontconfig` or reads host fonts — that is what makes output deterministic
+# across machines and lets it run on slim/Alpine/Lambda with no system deps.
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6" }
+# Parley/Taffy types re-exported by Blitz; we read (never construct) layouts.
+parley = { version = "0.10", default-features = false, features = ["std"] }
+# Stylo's `style` crate (package `stylo`), pinned to the version Blitz's rev
+# resolves, so we can name `style::color::ColorSpace` for computed-color reads.
+style = { package = "stylo", version = "=0.18.0" }
+
+# --- krilla: paginated display list -> PDF ---
+krilla = "0.8.2"
+
+[dev-dependencies]
+# PDF inspection for tests: text extraction (selectable text / ToUnicode) and
+# low-level structure (page count, font subsetting, metadata).
+pdf-extract = "0.10"
+lopdf = "0.41"
