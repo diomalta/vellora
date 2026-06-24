@@ -19,6 +19,9 @@ const docsearch =
 
 export default defineConfig({
   title: "vellora",
+  // Project-page deploy: served at https://diomalta.github.io/vellora/, so all asset/link
+  // URLs need the repo name as a base prefix. Drop to "/" only if a custom domain is added.
+  base: "/vellora/",
   description:
     "HTML to PDF for Node.js via a native addon — in-process, no Chromium. Bring your own HTML and get a deterministic PDF.",
   cleanUrls: true,
