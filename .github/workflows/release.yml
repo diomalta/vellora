@@ -1,15 +1,13 @@
 name: Release
 
-# Dormant by design: this workflow only runs when triggered manually, so nothing is ever published
-# automatically. When you are ready to enable the standard Changesets "Version Packages" PR + publish
-# flow, add a `push: { branches: [main] }` trigger below.
+# Tag-driven publish: publishing a GitHub Release publishes that release's tag version to npm.
+# The tag is the single source of truth for the version (see scripts/set-release-version.mjs) —
+# `gh release create v0.1.0-alpha.1 --prerelease` publishes 0.1.0-alpha.1.
+# Manual `workflow_dispatch` runs build + verify + a publish dry-run only; it never publishes.
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Build + verify only; skip the real npm publish."
-        type: boolean
-        default: true
+  release:
+    types: [published]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -119,14 +117,19 @@ jobs:
           path: packages/native/
       - name: Move prebuilds into npm/* platform packages
         run: npm -w @vellora/native exec -- napi artifacts --output-dir . --npm-dir npm
-      - name: Apply pending changesets (version bump + CHANGELOG)
-        run: npm run version-packages
+      - name: Set every published package to the release tag version
+        if: ${{ github.event_name == 'release' }}
+        env:
+          # Passed via env (not inlined into the shell) to avoid command injection from the tag name;
+          # set-release-version.mjs additionally rejects anything that isn't a semver version.
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node scripts/set-release-version.mjs "$RELEASE_TAG"
       - name: Build TypeScript
         run: npm run build:ts
       - name: Publish dry-run (always — confirms scope/access before any real publish)
         run: npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run && npx changeset publish --dry-run || true
       - name: Publish to npm with provenance
-        if: ${{ github.event.inputs.dry_run == 'false' }}
+        if: ${{ github.event_name == 'release' }}
         run: |
           npm -w @vellora/native exec -- napi pre-publish -t npm
           npx changeset publish --provenance
@@ -134,7 +137,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
       - name: Assert provenance is present on the published versions
-        if: ${{ github.event.inputs.dry_run == 'false' }}
+        if: ${{ github.event_name == 'release' }}
         run: |
           for pkg in vellora @vellora/native @vellora/lint @vellora/cli; do
             echo "Checking provenance attestation for $pkg ..."
