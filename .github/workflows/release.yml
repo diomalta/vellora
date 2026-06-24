@@ -19,7 +19,7 @@ env:
   NODE_VERSION_FILE: .nvmrc
 
 jobs:
-  # 1) Build a prebuilt .node per launch target. (tasks 1.1–1.4)
+  # 1) Build a prebuilt .node per launch target.
   build:
     name: build (${{ matrix.tag }})
     runs-on: ${{ matrix.runner }}
@@ -62,7 +62,7 @@ jobs:
           path: packages/native/*.node
           if-no-files-found: error
 
-  # 2) Prove a clean install loads the prebuilt addon with NO Rust toolchain/compiler. (tasks 4.1, 4.2)
+  # 2) Prove a clean install loads the prebuilt addon with NO Rust toolchain/compiler.
   verify:
     name: verify clean install (${{ matrix.tag }})
     needs: build
@@ -96,7 +96,7 @@ jobs:
             console.log('clean-install render OK for ${{ matrix.tag }}');
           }).catch((e) => { console.error(e); process.exit(1); })"
 
-  # 3) Version + publish with provenance — gated on every build & verify job passing. (tasks 4.3–4.5)
+  # 3) Version + publish with provenance — gated on every build & verify job passing.
   release:
     name: version + publish
     needs: [build, verify]

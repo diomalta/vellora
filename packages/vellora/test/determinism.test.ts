@@ -1,7 +1,7 @@
 /**
- * Quality + determinism gates (tasks 8.1–8.4).
+ * Quality + determinism gates.
  *
- * 8.1 renders the invoice fixture under two different `TZ`/`LANG` environments — in real child
+ * The determinism gate renders the invoice fixture under two different `TZ`/`LANG` environments — in real child
  * processes, since `TZ` is read at process start — and asserts byte-identical output, plus that an
  * omitted creation date injects the fixed default (never wall-clock). The source is bundled to a
  * temp ESM file with esbuild so the gate does not depend on a freshly-built `dist/`.
@@ -29,7 +29,7 @@ function fixture(id: string): { html: string; data: RenderData } {
   return { html, data };
 }
 
-describe("determinism gate (task 8.1): byte-identical across TZ/LANG", () => {
+describe("determinism gate: byte-identical across TZ/LANG", () => {
   let workdir: string;
   let bundlePath: string;
   let runnerPath: string;
@@ -87,10 +87,10 @@ process.stdout.write(Buffer.from(pdf).toString("base64"));
   });
 });
 
-// Regression (F7 / TQ-1): the mock gate above only proves the TS layer ignores TZ/LANG. This gate
+// Regression: the mock gate above only proves the TS layer ignores TZ/LANG. This gate
 // runs renderPdf over the REAL @vellora/native bridge in two child processes under different TZ/LANG
 // envs and asserts byte-identical PDFs — exercising the real ICU/Intl/krilla path the mock skips.
-describe("determinism gate (task 8.1): byte-identical across TZ/LANG over the REAL native stack", () => {
+describe("determinism gate: byte-identical across TZ/LANG over the REAL native stack", () => {
   let workdir: string;
   let bundlePath: string;
   let runnerPath: string;
@@ -150,7 +150,7 @@ process.stdout.write(Buffer.from(pdf).toString("base64"));
   });
 });
 
-describe("determinism gate (task 8.1): creation-date default", () => {
+describe("determinism gate: creation-date default", () => {
   test("omitting creationDate injects the fixed default, never wall-clock", async () => {
     const bridge = new MockNativeBridge();
     await renderPdf("<p>x</p>", undefined, { _bridge: bridge } as never);
@@ -163,7 +163,7 @@ describe("determinism gate (task 8.1): creation-date default", () => {
   });
 });
 
-describe("strict-no-mutation gate (task 8.2)", () => {
+describe("strict-no-mutation gate", () => {
   test("across fixtures, the HTML reaching the bridge equals the templating output byte-for-byte", async () => {
     const { renderTemplate } = await import("../src/index");
     for (const id of ["invoice", "receipt", "boleto", "notification"]) {
@@ -180,7 +180,7 @@ describe("strict-no-mutation gate (task 8.2)", () => {
   });
 });
 
-describe("dependency-hygiene gate (task 8.3)", () => {
+describe("dependency-hygiene gate", () => {
   test("the strict hot path never imports/loads @vellora/lint", async () => {
     fixMock.mockClear();
     const bridge = new MockNativeBridge();
@@ -190,7 +190,7 @@ describe("dependency-hygiene gate (task 8.3)", () => {
   });
 });
 
-describe("public API surface gate (task 8.4)", () => {
+describe("public API surface gate", () => {
   test("exports the documented surface with strict defaulting to true", async () => {
     const api = await import("../src/index");
     expect(typeof api.renderPdf).toBe("function");

@@ -2,8 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 import { MockNativeBridge, VelloraError } from "../src/index";
 import { orchestrate } from "../src/orchestrate";
 
-// Regression (TS-1): if `@vellora/lint` resolves with a `fix` that returns the OLD `{ html }`
-// shape (the exact version-skew/mis-resolution class EH-2 cites), dereferencing `result.report.findings`
+// Regression: if `@vellora/lint` resolves with a `fix` that returns the OLD `{ html }`
+// shape (the exact version-skew/mis-resolution class), dereferencing `result.report.findings`
 // would otherwise throw an opaque `TypeError: Cannot read properties of undefined (reading 'findings')`.
 // The shape guard must instead fail loudly with the same typed VelloraError. Mock a wrong-shape `fix`
 // for this whole file.

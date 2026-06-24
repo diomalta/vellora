@@ -50,7 +50,7 @@ describe("error contract", () => {
   });
 });
 
-describe("unsupported diagnostic adapter (task 2.3)", () => {
+describe("unsupported diagnostic adapter", () => {
   test("preserves feature/line/col/hint verbatim", () => {
     const err = new VelloraUnsupportedError(diagnostic);
     expect(err.feature).toBe("inline-script");
@@ -91,7 +91,7 @@ describe("unsupported diagnostic adapter (task 2.3)", () => {
     expect(unsupportedFromDiagnostic("oops")).toBeUndefined();
   });
 
-  // Regression (EH-1): the core emits null line/col when the source position is unknown. The guard
+  // Regression: the core emits null line/col when the source position is unknown. The guard
   // and adapter must accept that so the typed error is not lost and a raw error does not leak.
   test("a diagnostic with null line/col is still recognized and mapped", () => {
     const located: UnsupportedDiagnostic = {

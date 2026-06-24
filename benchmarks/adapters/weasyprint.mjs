@@ -8,8 +8,8 @@
  * length-prefixed stdio protocol.
  *
  * We deliberately do NOT spawn a subprocess per render — that strawman (the
- * pdf4.dev flaw) measures Python startup, not rendering. See design D2 and the
- * spec scenario "WeasyPrint runs in-process, not subprocess-per-render".
+ * pdf4.dev flaw) measures Python startup, not rendering: WeasyPrint runs
+ * in-process, not subprocess-per-render.
  *
  * WeasyPrint is installed out-of-band (pip install weasyprint==62.3); if the
  * worker fails to import it, create() throws ADAPTER_PENDING.

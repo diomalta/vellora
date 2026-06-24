@@ -1,11 +1,11 @@
 /**
- * Reporting (design D6).
+ * Reporting.
  *
  * Emits:
  *   1. A machine-readable results JSON (benchmarks/results/*.json).
  *   2. A human-readable table that includes EVERY measured axis for EVERY tool
  *      and EXPLICITLY FLAGS every axis where vellora is NOT the winner. Axes are
- *      never filtered to hide a vellora loss (D6) — disclosing losses is what
+ *      never filtered to hide a vellora loss — disclosing losses is what
  *      makes the wins believable.
  */
 import { mkdirSync, writeFileSync } from "node:fs";

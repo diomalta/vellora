@@ -3,7 +3,7 @@
  *
  * Both wire input handling → templating → strict orchestration → native bridge. Input is always
  * content (string | Uint8Array | Readable), never a path, and a `Readable` is buffered in full
- * before templating. Currently the native bridge is the deterministic mock; `native-render-bridge`
+ * before templating. Currently the native bridge is the deterministic mock; the native bridge
  * swaps in the real `@vellora/native` with no change to these signatures.
  */
 import type { Writable } from "node:stream";

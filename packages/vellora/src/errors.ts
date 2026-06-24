@@ -5,7 +5,7 @@
  * (never a bare `Error`). `VelloraError` is the base; consumers branch on `instanceof` and on the
  * stable, machine-readable `code`. `VelloraUnsupportedError` surfaces the core's located
  * out-of-subset diagnostic verbatim — node location and remediation hint — and is the single
- * cross-change contract shape mapped from the bridge in `unsupportedFromDiagnostic`.
+ * contract shape mapped from the bridge in `unsupportedFromDiagnostic`.
  */
 
 /** Stable, machine-readable error codes. Consumers and CI branch on these. */
@@ -55,7 +55,7 @@ export class VelloraInputError extends VelloraError {
 
 /**
  * The located out-of-subset diagnostic the bridge/core emits, flattened across the FFI. This exact
- * shape is the cross-change contract with `native-render-bridge`.
+ * shape is the contract with the napi binding.
  */
 export interface UnsupportedDiagnostic {
   /** The out-of-subset feature in the core's colon-namespaced taxonomy, e.g. `"css:animation"` or
@@ -118,7 +118,7 @@ export function isUnsupportedDiagnostic(value: unknown): value is UnsupportedDia
 }
 
 /**
- * Adapter (task 2.3 / the single seam): reconstruct a `VelloraUnsupportedError` from a core/native
+ * Adapter (the single seam): reconstruct a `VelloraUnsupportedError` from a core/native
  * located diagnostic, preserving node location + remediation hint verbatim. The bridge may reject
  * either with a `VelloraUnsupportedError` already, or with an error/object carrying the structured
  * `{ feature, line, col, hint }` fields; both map to the same typed error.

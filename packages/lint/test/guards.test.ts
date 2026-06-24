@@ -2,7 +2,7 @@
  * Negative / guard tests: `@vellora/lint` performs no network or filesystem access during
  * `diagnose`/`fix`, and importing the package is side-effect-free (it is dev-time tooling that must
  * never run on, nor be pulled into, the render hot path). Maps to the lint-diagnostics "No network
- * or filesystem access" scenario and tasks 6.6 / 7.3.
+ * or filesystem access" scenario.
  *
  * Interception strategy: spy on the *default* exports of `node:fs`/`node:net` (configurable objects;
  * the `import * as` namespace is frozen and cannot be spied). `net.Socket.prototype.connect` is the

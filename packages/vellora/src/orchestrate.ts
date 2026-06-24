@@ -22,8 +22,8 @@ import type { BridgeRenderOptions, NativeBridge, RenderOptions } from "./types.j
  * Map a `@vellora/lint` `RuleId` (kebab-case) onto the SAME colon-namespaced `feature` taxonomy the
  * `vellora-core` strict path emits (`element:<tag>`, `css:<feature>`), so the typed
  * `VelloraUnsupportedError.feature` is identical for a given out-of-subset construct whether it is
- * surfaced via best-effort lint or via the strict/core gate (EH-3). The `{ feature, line, col, hint }`
- * shape is a single cross-change contract; consumers/CI key on `feature`, so the two paths must not
+ * surfaced via best-effort lint or via the strict/core gate. The `{ feature, line, col, hint }`
+ * shape is a single contract; consumers/CI key on `feature`, so the two paths must not
  * diverge.
  */
 const RULE_ID_TO_CORE_FEATURE: Record<RuleId, string> = {
@@ -46,7 +46,7 @@ export const DEFAULT_CREATION_DATE = "2000-01-01T00:00:00.000Z";
  * (`[year, month, day]`), so a year outside `1..=65535` would otherwise pass public validation yet be
  * silently dropped at the FFI checked-conversion (extended-ISO years run to +275760). Rejecting it
  * here keeps the two validation layers in agreement and turns the failure into a typed
- * `VelloraInputError` instead of a silent FFI drop (EH-5). */
+ * `VelloraInputError` instead of a silent FFI drop. */
 const MIN_CREATION_YEAR = 1;
 const MAX_CREATION_YEAR = 65535;
 
@@ -55,7 +55,7 @@ const MAX_CREATION_YEAR = 65535;
  * `Date`-parseable ISO-8601 instant whose UTC year fits the FFI `u16`; an empty, non-parseable, or
  * out-of-`u16`-range value rejects with `VelloraInputError` rather than being forwarded as a `NaN`
  * date (which the core would otherwise coerce to a silently-wrong year-0 date) or silently dropped at
- * the FFI (EH-5).
+ * the FFI.
  */
 function validateCreationDate(creationDate: string): void {
   const date = new Date(creationDate);
@@ -101,13 +101,13 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
  *
  * `@vellora/lint` is a declared dependency that exports `fix`, so a missing `fix` indicates a real
  * resolution/version/config failure of the requested best-effort operation — fail loudly instead of
- * silently rendering the un-fixed HTML (EH-2). It must also return the current `{ html, report }`
+ * silently rendering the un-fixed HTML. It must also return the current `{ html, report }`
  * shape; an old/version-skewed `fix` that resolves but returns the old `{ html }` shape would
  * otherwise throw an opaque `TypeError` on `report.findings`, so its return is shape-guarded with the
- * same loud message (TS-1). The fixer also already computes the residual, non-auto-fixable findings;
+ * same loud message. The fixer also already computes the residual, non-auto-fixable findings;
  * rather than discard them and rely on a later core gate, surface the first error-severity finding as
  * the same typed `VelloraUnsupportedError` the core path uses, normalized to the core `feature`
- * taxonomy (EH-3).
+ * taxonomy.
  */
 async function applyFixers(html: string): Promise<string> {
   const lint = await import("@vellora/lint");
@@ -125,7 +125,7 @@ async function applyFixers(html: string): Promise<string> {
   // Guard the return SHAPE before dereferencing `report.findings`: the static cast above makes the
   // structural fields look total to tsc, but a mis-resolved/old-version `fix` could resolve and
   // return a different runtime shape. Fail loudly with a meaningful message instead of leaking a raw
-  // `TypeError: Cannot read properties of undefined (reading 'findings')` (TS-1).
+  // `TypeError: Cannot read properties of undefined (reading 'findings')`.
   if (
     !result ||
     typeof result.html !== "string" ||
@@ -137,12 +137,12 @@ async function applyFixers(html: string): Promise<string> {
     );
   }
   // The fixer already located every remaining, non-auto-fixable diagnostic. Surface the first
-  // error-severity one as the typed cross-change error contract rather than dropping it. Normalize
+  // error-severity one as the typed error contract rather than dropping it. Normalize
   // the lint `RuleId` to the core `feature` taxonomy so the best-effort and strict/core paths emit the
-  // IDENTICAL `feature` for the same construct (EH-3). The lint `location` is in the FIXED/re-serialized
+  // IDENTICAL `feature` for the same construct. The lint `location` is in the FIXED/re-serialized
   // output coordinate space (see `@vellora/lint.fix`), but the caller holds the ORIGINAL HTML and the
   // orchestrator has no mapping back, so report `null` line/col rather than a coordinate that may point
-  // into the rewritten document — matching the core path's honest-None behavior (EH3-LOC-COORDS-6).
+  // into the rewritten document — matching the core path's honest-None behavior.
   const unfixable = result.report.findings.find((f) => f.severity === "error" && !f.applied);
   if (unfixable) {
     throw new VelloraUnsupportedError({

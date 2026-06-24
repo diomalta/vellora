@@ -91,17 +91,17 @@ pub struct DeniedElement {
     /// number of `<tag` boundaries in the source, html5ever reparented/injected
     /// elements (e.g. a denied tag fostered out of table context), so the
     /// ordinal cannot be trusted to map to the same source occurrence and the
-    /// locator degrades to `None` rather than pointing at the wrong element (F11).
+    /// locator degrades to `None` rather than pointing at the wrong element.
     pub dom_total: usize,
 }
 
 /// Parse the HTML once and walk the tree IMMUTABLY looking for the first denied
-/// element in document order (D6 / subset-validation). Returns `None` if all
+/// element in document order (subset-validation). Returns `None` if all
 /// elements are in-subset. This reuses Blitz's parse and never mutates the tree.
 ///
 /// Standalone helper kept for direct gate tests; the render path uses
 /// [`validate_then_lay_out`], which parses ONCE and reuses that parse for both
-/// validation and layout (the D6 cost model).
+/// validation and layout (the cost model).
 pub fn find_denied_element(html: &str, denied: &[&str]) -> Option<DeniedElement> {
     let doc = build_document(html);
     let base: &BaseDocument = doc.as_ref();
@@ -116,7 +116,7 @@ fn find_denied_in_document(base: &BaseDocument, denied: &[&str]) -> Option<Denie
     walk_for_denied(base, root_id, denied, &mut counts, &mut found);
     found.map(|mut d| {
         // Total DOM occurrences of this tag, so the source locator can detect a
-        // reparent-induced ordinal mismatch and degrade to None (F11).
+        // reparent-induced ordinal mismatch and degrade to None.
         d.dom_total = count_tag_in_document(base, &d.tag);
         d
     })
@@ -150,7 +150,7 @@ fn count_tag_in_document(base: &BaseDocument, tag: &str) -> usize {
 /// overflow the worker-thread stack here. Parses once; the depth gate
 /// ([`crate::validation`]) calls this BEFORE any recursive resolve/layout/walk,
 /// rejecting over-deep input cleanly instead of letting Stylo/Taffy/our own walk
-/// abort the process (SEC-1). Element depth only (text nodes are not counted).
+/// abort the process. Element depth only (text nodes are not counted).
 pub fn max_nesting_depth(html: &str) -> usize {
     let doc = build_document(html);
     let base: &BaseDocument = doc.as_ref();
@@ -231,7 +231,7 @@ fn walk_for_denied(
 }
 
 /// Parse + style + layout + text in one call. Owns and drops the `!Send`
-/// `BaseDocument` entirely within this function (D1 lifetime contract).
+/// `BaseDocument` entirely within this function (lifetime contract).
 pub fn lay_out(html: &str) -> LaidOutDoc {
     let doc = build_document(html);
     // Standalone/test helper: lay out against the full A4 width. The render path
@@ -240,7 +240,7 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
 }
 
 /// Parse ONCE, run the subset-validation walk over that single parsed tree
-/// (D6 cost model: no second parse), and only if it passes, resolve + walk into
+/// (cost model: no second parse), and only if it passes, resolve + walk into
 /// a [`LaidOutDoc`]. The `denied` allowlist is supplied by the validation gate.
 ///
 /// Returns `Err(DeniedElement)` for the first out-of-subset element; the caller
@@ -282,8 +282,7 @@ fn resolve_and_walk(mut doc: HtmlDocument, content_width_px: f64) -> LaidOutDoc 
     // is a process-global allocation-order counter, not a content hash; dedup
     // correctness relies on fontique handing back clones of the same Blob (stable
     // id) for a face WITHIN a single FontContext. This key is valid only within
-    // this one walk — never persist, serialize, or compare it across renders
-    // (RUST-2/RUST-6).
+    // this one walk — never persist, serialize, or compare it across renders.
     let mut face_cache: std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>> =
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
@@ -300,7 +299,7 @@ fn resolve_and_walk(mut doc: HtmlDocument, content_width_px: f64) -> LaidOutDoc 
 }
 
 /// Recursively read the laid-out tree, accumulating parent-relative
-/// `final_layout` offsets into absolute document coordinates (task 4.2a).
+/// `final_layout` offsets into absolute document coordinates.
 fn walk(
     base: &BaseDocument,
     node_id: usize,
@@ -342,7 +341,7 @@ fn walk(
     }
 }
 
-/// Read Parley glyph runs out of an inline-root node (D5: real glyph runs, not
+/// Read Parley glyph runs out of an inline-root node (real glyph runs, not
 /// rasterized). Mirrors `blitz-paint`'s `text.rs` access path and krilla's
 /// `parley.rs` example for cluster->byte-range mapping.
 fn read_text_runs(
@@ -385,7 +384,7 @@ fn read_text_runs(
             // face once (keyed by the Blob's process-global allocation-order id,
             // NOT a content hash) and share the Arc across runs so the emitter's
             // per-face cache hits once per face. See the FontContext-scoped
-            // invariant note at `resolve_and_walk` (RUST-2/RUST-6).
+            // invariant note at `resolve_and_walk`.
             let font_data = face_cache
                 .entry(font.data.id())
                 .or_insert_with(|| std::sync::Arc::new(font.data.as_ref().to_vec()))

@@ -149,7 +149,7 @@ describe("format helpers", () => {
     expect(renderTemplate(`{{ d | date("HH:mm") }}`, { d: "2026-06-22T14:37:00" })).toBe("14:37");
   });
 
-  // TQ-3: this only proves currency() returns "" for a non-numeric value (toNumber → NaN), NOT that
+  // This only proves currency() returns "" for a non-numeric value (toNumber → NaN), NOT that
   // escaping runs — the empty result happens before the escape layer. Escaping of direct
   // interpolation is covered by the "HTML-escapes interpolated values by default" test above; no
   // built-in helper can emit markup (currency/number return "" on NaN; date emits only safe chars).
@@ -168,7 +168,7 @@ describe("format helpers", () => {
   });
 });
 
-// Regression (TS-03 / ROB-2): a built-in helper given an out-of-range arg must reject with a located
+// Regression: a built-in helper given an out-of-range arg must reject with a located
 // VelloraTemplateError, never a raw V8 RangeError that escapes the "never a bare Error" contract.
 describe("helpers never leak a raw RangeError", () => {
   const cases: { template: string; data: Record<string, unknown> }[] = [
@@ -219,7 +219,7 @@ describe("templating runs before render and never executes data", () => {
     expect(out).not.toContain("EXECUTED()");
   });
 
-  // Regression (SEC-4): a dotted path must not walk the JS prototype chain. Every segment is gated on
+  // Regression: a dotted path must not walk the JS prototype chain. Every segment is gated on
   // own-property access, so prototype/constructor reads resolve to "" instead of leaking internals.
   test("prototype-chain keys resolve to empty, never engine internals", () => {
     expect(renderTemplate("{{ x.constructor }}", { x: {} })).toBe("");

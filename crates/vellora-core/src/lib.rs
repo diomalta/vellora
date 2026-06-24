@@ -5,9 +5,9 @@
 //! emits a PDF via krilla. All Blitz contact is funneled through
 //! [`blitz_engine`] so upstream churn touches one file.
 //!
-//! # Established core API surface (task 7.5 — cross-change contract)
+//! # Established core API surface (stable contract)
 //!
-//! `native-render-bridge` wraps this core without re-specifying it. The stable
+//! The napi binding wraps this core without re-specifying it. The stable
 //! surface is:
 //!
 //! - **Entry point**: [`render`]`(html_bytes: &[u8], opts: &`[`RenderOptions`]`)
@@ -19,8 +19,8 @@
 //!   `"vellora"`; the creation date is caller-supplied and never wall-clock.
 //! - **Send-in / Send-out & lifetime**: inputs and outputs are `Send`; the
 //!   `!Send` Blitz `BaseDocument` is created, used, and dropped entirely within
-//!   the single synchronous [`render`] call and never escapes it (design D1).
-//!   This is what lets `native-render-bridge` call [`render`] on the libuv pool.
+//!   the single synchronous [`render`] call and never escapes it.
+//!   This is what lets the napi binding call [`render`] on the libuv pool.
 //! - **Located-diagnostic shape** ([`VelloraError::Unsupported`] carries a
 //!   [`Diagnostic`]): serialized across the napi boundary as
 //!   `{ feature: string, line: number | null, col: number | null, hint: string }`.
@@ -43,7 +43,7 @@ pub use validation::{Diagnostic, VelloraError};
 
 /// Options accepted by [`render`] (current surface). Producer is fixed to
 /// `vellora`; only the document title and a deterministic creation date are
-/// caller-supplied. `native-render-bridge` records this `(bytes, opts)`
+/// caller-supplied. The napi binding records this `(bytes, opts)`
 /// contract verbatim.
 #[derive(Clone, Default)]
 pub struct RenderOptions {
@@ -54,7 +54,7 @@ pub struct RenderOptions {
 }
 
 /// The stable render entry point. Takes `Send` inputs and returns `Send`
-/// outputs; the `!Send` Blitz `BaseDocument` never escapes this call (D1).
+/// outputs; the `!Send` Blitz `BaseDocument` never escapes this call.
 ///
 /// Pipeline: validate (strict gate) -> Blitz layout -> vellora pagination ->
 /// krilla PDF emit. Returns the PDF bytes or a [`VelloraError`].
@@ -67,13 +67,13 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
 
     // 1a') Depth gate: reject pathologically deep nesting BEFORE the recursive
     // resolve/layout/walk, which would otherwise overflow the worker-thread stack
-    // and ABORT the process (SEC-1). Uses an explicit-stack measure, not recursion.
+    // and ABORT the process. Uses an explicit-stack measure, not recursion.
     validation::validate_nesting_depth(html)?;
 
     // 2) @page box (size/margins + running header/footer templates).
     let page_box = page_css::parse_page_box(html);
 
-    // 1b + 3) Single parse shared by the element gate AND layout (D6 cost
+    // 1b + 3) Single parse shared by the element gate AND layout (cost
     // model): parse once, walk the parsed tree for out-of-subset elements
     // BEFORE layout, then resolve + read the layout tree from that same parse.
     let laid_out = blitz_engine::validate_then_lay_out(

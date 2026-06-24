@@ -54,7 +54,7 @@ describe("render", () => {
     expect(startsWithPdfMagic(pdf)).toBe(true);
   });
 
-  // TQ-8: pairwise inequality alone does not prove isolation (one result partly overwritten by
+  // Pairwise inequality alone does not prove isolation (one result partly overwritten by
   // another could still differ). Build a per-input sequential golden and assert each concurrent
   // result is byte-IDENTICAL to its own golden, catching partial cross-call corruption.
   test("isolates concurrent renders with distinct inputs (each matches its own golden)", async () => {
@@ -79,7 +79,7 @@ describe("render", () => {
 
   test("concurrent renders are byte-identical to sequential renders (incl. a multi-page input)", async () => {
     // Include a genuinely multi-page body so byte-equality exercises pagination under concurrency,
-    // not just single-page docs (TQ-8).
+    // not just single-page docs.
     const multiPage = `<h1>Report</h1>${"<p>A paragraph of body text that fills the page.</p>".repeat(120)}`;
     const inputs = [doc("<h1>One</h1>"), doc("<h1>Two</h1><p>x</p>"), doc(multiPage)];
 
@@ -95,7 +95,7 @@ describe("render", () => {
     }
   });
 
-  // TQ-8: N concurrent calls sharing the SAME large multi-page input must all equal one sequential
+  // N concurrent calls sharing the SAME large multi-page input must all equal one sequential
   // golden — the most direct check for buffer aliasing/interleaving across the worker pool.
   test("N concurrent renders of one shared multi-page input all match a single sequential golden", async () => {
     const html = doc(
@@ -164,7 +164,7 @@ describe("render", () => {
     expect(startsWithPdfMagic(pdf)).toBe(true);
   });
 
-  // SEC-8: this proves only the RECOVERABLE (unwinding) panic → rejection path that `catch_unwind`
+  // This proves only the RECOVERABLE (unwinding) panic → rejection path that `catch_unwind`
   // handles by design. It does NOT prove survival of non-unwinding aborts (e.g. a stack overflow
   // from deep recursion); that abort-class is guarded by the recursion-depth limits in the core, not
   // by this test.

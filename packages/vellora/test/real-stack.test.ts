@@ -32,7 +32,7 @@ describe("renderPdf over the real @vellora/native stack", () => {
     expect(pdf.length).toBeGreaterThan(3000);
   });
 
-  // Regression (TQ-9): the only end-to-end test asserted just magic + size. This proves the TS layer
+  // Regression: the only end-to-end test asserted just magic + size. This proves the TS layer
   // (resolveOptions → isoToYmd → napi to_render_options) actually threads metadata into the PDF: a
   // TS-supplied title lands in the Info dict and the creationDate maps to the expected y/m/d.
   test("TS-supplied metadata.title and creationDate land in the produced PDF", async () => {
@@ -56,11 +56,11 @@ describe("renderPdf over the real @vellora/native stack", () => {
   });
 });
 
-// Regression (TQ-7): the golden primitive was exercised only on synthetic toy strings; no real
+// Regression: the golden primitive was exercised only on synthetic toy strings; no real
 // rendered PDF was ever fed through it. This drives an actual invoice render through `compareGolden`
 // in a temp dir (record the first render, then match the second), enforcing the "same input ⇒
 // byte-stable PDF" invariant through the golden harness WITHOUT committing an ICU-pinned artifact.
-describe("golden harness over a real rendered PDF (TQ-7)", () => {
+describe("golden harness over a real rendered PDF", () => {
   let goldenDir: string;
   beforeAll(() => {
     goldenDir = mkdtempSync(join(tmpdir(), "vellora-real-golden-"));
@@ -75,7 +75,7 @@ describe("golden harness over a real rendered PDF (TQ-7)", () => {
     const first = await renderPdf(html, data as Record<string, unknown>, opts as never);
     // Record the first render as the golden. The `update` branch returns `{ pass: true }`
     // unconditionally, so assert the record side-effect (the golden file now exists) rather than the
-    // tautological `.pass` (TQ-NEW-3).
+    // tautological `.pass`.
     compareGolden("invoice", first, { goldenDir, update: true });
     expect(existsSync(join(goldenDir, "invoice.golden"))).toBe(true);
     // A second render with the SAME input must match the recorded golden byte-for-byte.
@@ -85,7 +85,7 @@ describe("golden harness over a real rendered PDF (TQ-7)", () => {
     expect(cmp.diff).toBeUndefined();
   });
 
-  // Regression (TQ-NEW-3): drive a real rendered PDF through compareGolden's MISMATCH path so the
+  // Regression: drive a real rendered PDF through compareGolden's MISMATCH path so the
   // structured-diff branch is actually exercised on real renderer output, not just toy strings. A
   // render with a DIFFERENT creationDate must NOT match the golden recorded above.
   test("a real render with different input does not match the golden (structured diff)", async () => {

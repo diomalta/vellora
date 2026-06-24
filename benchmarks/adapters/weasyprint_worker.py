@@ -5,7 +5,7 @@ CRITICAL FAIRNESS CONTRACT: WeasyPrint is imported ONCE, at worker startup, and
 then renders MANY documents in-process over the worker's lifetime. We never
 spawn a new Python interpreter (or re-import WeasyPrint) per render — that was
 the pdf4.dev methodology flaw (it measured interpreter startup, not rendering)
-and reproducing it, even in our favor, would be dishonest (see design D2).
+and reproducing it, even in our favor, would be dishonest.
 
 Protocol (one warm worker, many renders):
   - On startup, print a single JSON line: {"ready": true, "version": "<x.y>"}

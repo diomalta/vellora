@@ -1,9 +1,9 @@
 /**
- * Statistics + environment capture (design D3, D4).
+ * Statistics + environment capture.
  *
  * - median AND p95 of the WARM samples. We NEVER headline best-of-N (the min)
  *   — best-of-N hides tail latency and is the classic way to lie with
- *   benchmarks (D3). The min is retained only as a labeled, non-headline field.
+ *   benchmarks. The min is retained only as a labeled, non-headline field.
  * - environment metadata so a number is interpretable without external context
  *   (CPU, cores, RAM, OS/kernel, container-vs-native, tool versions, run date).
  */
@@ -55,7 +55,7 @@ function inContainer() {
 
 /**
  * Capture the measured environment. The presence of `container: false` on a
- * macOS host is what flags a run as indicative-only (see D4 / report.mjs).
+ * macOS host is what flags a run as indicative-only (see report.mjs).
  * @param {{ id: string, label: string, pinnedVersion: string }[]} tools
  * @param {Record<string, { version?: string }>} runtimeVersions per-tool versions reported by adapters
  */
@@ -72,7 +72,7 @@ export function captureEnv(tools, runtimeVersions = {}) {
     arch: os.arch(),
     container,
     // The deployment surface is a Linux container; a native non-Linux,
-    // non-container run is indicative-only (D4).
+    // non-container run is indicative-only.
     authoritative: container && platform === "linux",
     indicativeOnly: !(container && platform === "linux"),
     nodeVersion: process.version,

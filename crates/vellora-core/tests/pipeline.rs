@@ -1,5 +1,5 @@
 //! End-to-end core pipeline tests: HTML -> validated -> laid out -> paginated
-//! -> PDF, against the multi-page invoice fixture (tasks 3.x, 4.x, 6.x, 7.x).
+//! -> PDF, against the multi-page invoice fixture.
 
 use vellora_core::page_css::{self, ContentPart};
 use vellora_core::pagination;
@@ -43,7 +43,7 @@ fn page_css_parses_at_page_size_margins_and_footer() {
 
 #[test]
 fn synthetic_at_page_drives_usable_rect() {
-    // task 4.6: @page size/margins -> usable content rectangle.
+    // @page size/margins -> usable content rectangle.
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: 400px 600px; margin: 50px; }
     </style></head><body><p>x</p></body></html>"#;
@@ -56,7 +56,7 @@ fn synthetic_at_page_drives_usable_rect() {
 
 #[test]
 fn counter_template_survives_multibyte_argument() {
-    // R7/SEC-3 (+ TEST-QUALITY-2 / INV-3 / EDGE-1 / TQ-NEW-1): a multibyte char
+    // A multibyte char
     // inside counter(...) must not desync the char-indexed cursor and drop the
     // trailing literal. The earlier `counter(pàge) " end"` input was too weak —
     // a single 2-byte char overshoots by exactly 1 char, landing harmlessly on
@@ -101,7 +101,7 @@ fn counter_template_survives_multibyte_argument() {
 
 #[test]
 fn at_page_block_with_non_ascii_declarations_is_utf8_clean() {
-    // F4/SEC-5: a non-ASCII char in the @page block's plain declarations must not
+    // A non-ASCII char in the @page block's plain declarations must not
     // be mojibaked by a per-byte `as char` cast. The footer literal "Pàg " must
     // round-trip its multibyte `à` through split_margin_boxes -> the parsed parts.
     let html = "<!DOCTYPE html><html><head><style>\
@@ -126,7 +126,7 @@ fn at_page_block_with_non_ascii_declarations_is_utf8_clean() {
 
 #[test]
 fn at_page_size_with_overflowing_length_falls_back() {
-    // SEC-6: `1e400px` parses to f64::INFINITY; the finiteness guard must drop the
+    // `1e400px` parses to f64::INFINITY; the finiteness guard must drop the
     // token so no infinite dimension propagates into pagination/krilla. With a
     // single overflowing token the size keeps its A4 default.
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -148,7 +148,7 @@ fn at_page_size_with_overflowing_length_falls_back() {
 
 #[test]
 fn at_page_multi_token_size_with_one_overflow_does_not_collapse_to_square() {
-    // RUST-DIFF-2 / INV-4 / EDGE-3: a two-value `size` where ONE token overflows
+    // A two-value `size` where ONE token overflows
     // must NOT drop the bad token and reinterpret the survivor as a square page.
     // `size: 1e400px 297mm` must fall back to the documented A4 default
     // (793.7 x 1122.5), NOT a 1122.5 x 1122.5 square.
@@ -179,7 +179,7 @@ fn at_page_multi_token_size_with_one_overflow_does_not_collapse_to_square() {
 
 #[test]
 fn at_page_margin_with_one_overflow_keeps_prior_margins() {
-    // RUST-DIFF-2 / INV-4: a four-value `margin` where ONE token overflows must be
+    // A four-value `margin` where ONE token overflows must be
     // abandoned wholesale (keep the 16mm A4 default) rather than dropping the bad
     // token and reindexing survivors (which would give t=20 r=30 b=40 l=30).
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -203,7 +203,7 @@ fn at_page_margin_with_one_overflow_keeps_prior_margins() {
 
 #[test]
 fn invoice_paginates_into_multiple_pages() {
-    // task 4.7: invoice paginates into N>1 pages.
+    // invoice paginates into N>1 pages.
     let doc = blitz_engine::lay_out(INVOICE);
     let pb = page_css::parse_page_box(INVOICE);
     let paginated = pagination::paginate(&doc, &pb);
@@ -221,7 +221,7 @@ fn invoice_paginates_into_multiple_pages() {
 
 #[test]
 fn footer_reads_pagina_x_de_y() {
-    // task 4.8: footer "Página 1 de N" on page 1, "Página N de N" on last.
+    // footer "Página 1 de N" on page 1, "Página N de N" on last.
     let doc = blitz_engine::lay_out(INVOICE);
     let pb = page_css::parse_page_box(INVOICE);
     let paginated = pagination::paginate(&doc, &pb);
@@ -247,7 +247,7 @@ fn footer_reads_pagina_x_de_y() {
 
 #[test]
 fn render_emits_valid_multipage_pdf() {
-    // task 6.5 / 7.4: full render produces a valid N-page PDF.
+    // full render produces a valid N-page PDF.
     let bytes = render(INVOICE.as_bytes(), &opts()).expect("render succeeds");
     assert!(bytes.starts_with(b"%PDF-"), "valid PDF header");
     let doc = lopdf::Document::load_mem(&bytes).expect("lopdf parses output");
@@ -273,7 +273,7 @@ fn render_emits_valid_multipage_pdf() {
 
 #[test]
 fn rendered_text_is_selectable_and_contains_invoice_content() {
-    // task 6.6: extracted text contains line items, totals, and page label.
+    // extracted text contains line items, totals, and page label.
     let bytes = render(INVOICE.as_bytes(), &opts()).unwrap();
     let text = pdf_extract::extract_text_from_mem(&bytes).expect("extract text");
     assert!(
@@ -289,7 +289,7 @@ fn rendered_text_is_selectable_and_contains_invoice_content() {
 
 #[test]
 fn rendered_font_is_embedded_and_subset() {
-    // task 6.7: embedded subset font + metadata.
+    // embedded subset font + metadata.
     let bytes = render(INVOICE.as_bytes(), &opts()).unwrap();
     let doc = lopdf::Document::load_mem(&bytes).unwrap();
     let mut subset = false;
@@ -312,7 +312,7 @@ fn rendered_font_is_embedded_and_subset() {
 
 #[test]
 fn each_face_is_embedded_exactly_once_across_pages() {
-    // RUST-2: the per-face dedup (face_cache keyed by Blob id in blitz_engine +
+    // The per-face dedup (face_cache keyed by Blob id in blitz_engine +
     // font_cache keyed by Arc ptr in pdf::emit) must embed each distinct face
     // ONCE, no matter how many runs/pages draw from it. If the Blob-id dedup
     // ever stopped hitting, the same multi-hundred-KB face would be embedded
@@ -348,7 +348,7 @@ fn each_face_is_embedded_exactly_once_across_pages() {
 
 #[test]
 fn metadata_is_deterministic() {
-    // task 6.4: producer=vellora, supplied title + creation date recorded.
+    // producer=vellora, supplied title + creation date recorded.
     let bytes = render(INVOICE.as_bytes(), &opts()).unwrap();
     let doc = lopdf::Document::load_mem(&bytes).unwrap();
     let info_id = doc
@@ -379,7 +379,7 @@ fn metadata_is_deterministic() {
 
 #[test]
 fn render_is_byte_stable() {
-    // task 7.2: two renders -> byte-identical PDF (deterministic).
+    // two renders -> byte-identical PDF (deterministic).
     let a = render(INVOICE.as_bytes(), &opts()).unwrap();
     let b = render(INVOICE.as_bytes(), &opts()).unwrap();
     assert_eq!(a, b, "render is byte-stable");
@@ -387,7 +387,7 @@ fn render_is_byte_stable() {
 
 #[test]
 fn input_buffer_is_not_mutated() {
-    // task 7.1: input bytes byte-identical before and after a render.
+    // input bytes byte-identical before and after a render.
     let input = INVOICE.as_bytes().to_vec();
     let snapshot = input.clone();
     let _ = render(&input, &opts()).unwrap();
@@ -396,7 +396,7 @@ fn input_buffer_is_not_mutated() {
 
 #[test]
 fn out_of_subset_is_rejected_before_any_pdf() {
-    // task 5.x integration: out-of-subset input -> error, no PDF.
+    // out-of-subset input -> error, no PDF.
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; }
         .x { animation: spin 1s; }
@@ -410,7 +410,7 @@ fn out_of_subset_is_rejected_before_any_pdf() {
 
 #[test]
 fn render_path_uses_single_shared_parse_for_validation_and_layout() {
-    // task 7.3: the gate runs over the SAME parse used for layout (no second
+    // the gate runs over the SAME parse used for layout (no second
     // HTML parse). `validate_then_lay_out` validates the parsed tree before
     // resolve; in-subset input flows straight to a laid-out tree.
     let clean = blitz_engine::validate_then_lay_out(

@@ -10,7 +10,7 @@ the five axes that back vellora's README claims.
 > the Gotenberg image, installing WeasyPrint, and running) happens in CI on a
 > pinned Linux container. Until that CI job runs, `benchmarks/results/` holds no
 > authoritative data. vellora's own adapter is additionally gated behind the
-> render path (`core-render-invoice` / `native-render-bridge`) landing.
+> full render path landing.
 
 This suite lives under `benchmarks/` with its **own `package.json`** so that
 competitor dependencies (Puppeteer, Playwright) never enter the dependency graph
@@ -109,7 +109,7 @@ benchmarks/
   config.mjs           tool set, concurrency N, run count, equivalence baseline (fixtures/invoice)
   run.mjs              the single end-to-end entry / reproduction command
   adapters/
-    vellora.mjs        public `vellora` API, in-process (gated on render path)
+    vellora.mjs        public `vellora` API, in-process (gated on the render path)
     puppeteer.mjs      one browser reused across renders
     playwright.mjs     one browser reused across renders
     gotenberg.mjs      standing HTTP service over the network

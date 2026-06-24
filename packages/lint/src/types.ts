@@ -1,6 +1,6 @@
 /**
  * Stable public contract for `@vellora/lint`. These shapes are consumed programmatically by AI
- * agents and by `public-api-templating`'s best-effort mode, so the field set is fixed and the `rule`
+ * agents and by the public API's best-effort mode, so the field set is fixed and the `rule`
  * ids are stable kebab-case. Do not reshape without a versioned change.
  */
 

@@ -1,4 +1,4 @@
-//! Targeted pagination + layout edge tests (tasks 3.4, 4.9, exact-fill,
+//! Targeted pagination + layout edge tests (exact-fill,
 //! oversize row, blank page).
 
 use vellora_core::blitz_engine;
@@ -20,7 +20,7 @@ fn page(width: f64, height: f64, margin: f64) -> PageBox {
 
 #[test]
 fn each_element_type_yields_a_positioned_box() {
-    // task 3.4: block/inline/table/img/text each produce a positioned box.
+    // block/inline/table/img/text each produce a positioned box.
     let html = r#"<!DOCTYPE html><html><body style="margin:0">
         <div style="width:100px;height:30px">block</div>
         <p><span>inline</span> text</p>
@@ -59,7 +59,7 @@ fn content_fitting_one_page_emits_no_trailing_blank() {
 
 #[test]
 fn oversize_row_gets_its_own_page_and_terminates() {
-    // task 4.9: a single fragment taller than a full usable page is placed on
+    // a single fragment taller than a full usable page is placed on
     // its own page (clipped), never split, and pagination terminates.
     let big = 5000;
     let html = format!(
@@ -93,7 +93,7 @@ fn no_renderable_content_yields_one_blank_page() {
 
 #[test]
 fn empty_body_footer_report_is_in_lockstep_with_emission() {
-    // ROB-7: a whitespace-only document with a @bottom-center footer has no body
+    // A whitespace-only document with a @bottom-center footer has no body
     // font to shape the footer with, so no MarginText is emitted. The reported
     // footer string must then be empty too — report and output must agree.
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -119,7 +119,7 @@ fn empty_body_footer_report_is_in_lockstep_with_emission() {
 
 #[test]
 fn validation_does_not_double_parse_or_mutate_tree() {
-    // task 5.6 / 7.3: validate over an in-subset doc leaves it parseable and the
+    // validate over an in-subset doc leaves it parseable and the
     // gate is a single traversal (no panic, deterministic). We assert it twice
     // reports identically and that layout afterwards still succeeds.
     let html = r#"<!DOCTYPE html><html><head><style>@page{size:A4}</style></head>

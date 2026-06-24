@@ -3,7 +3,7 @@
  *
  * `NativeBridge` is the single, narrow boundary the orchestration calls to render. A mock backs all
  * current tests; `@vellora/native` provides the real, drop-in implementation once
- * `native-render-bridge` lands. The interface matches that eventual contract: async, content +
+ * the napi binding lands. The interface matches that eventual contract: async, content +
  * resolved options in, PDF bytes out.
  */
 import type { Readable } from "node:stream";

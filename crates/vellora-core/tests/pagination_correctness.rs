@@ -1,6 +1,6 @@
 //! Regression tests for the table-row pagination correctness bugs
-//! (R1 row-span collapse, R2 missing first-page header, R3 header repetition
-//! stopping partway, TQ-4 content-level invariants). Each of these FAILS against
+//! (row-span collapse, missing first-page header, header repetition
+//! stopping partway, content-level invariants). Each of these FAILS against
 //! the pre-fix paginator (which collapsed every <tr> fragment to the table top,
 //! inflating per-row heights → ~30 pages with off-page text and a missing/
 //! intermittent header) and PASSES after deriving row spans from <td>/<th>
@@ -25,7 +25,7 @@ fn has_item_row(page: &vellora_core::pdf::PdfPage) -> bool {
 
 #[test]
 fn invoice_paginates_into_a_sane_page_count() {
-    // R1: a 35-row invoice on an A4 page (~1001px usable, ~55px rows → ~17
+    // A 35-row invoice on an A4 page (~1001px usable, ~55px rows → ~17
     // rows/page) must NOT explode into dozens of pages. Pre-fix this was 30.
     let doc = blitz_engine::lay_out(INVOICE);
     let pb = page_css::parse_page_box(INVOICE);
@@ -44,7 +44,7 @@ fn invoice_paginates_into_a_sane_page_count() {
 
 #[test]
 fn every_page_keeps_all_content_within_the_page_box() {
-    // R1: the cumulative-span bug pushed text origins far past the page bottom
+    // The cumulative-span bug pushed text origins far past the page bottom
     // (origin_y > page height on later pages). Assert every emitted text-run
     // origin AND every box extent lies within [0, page height] on EVERY page.
     let doc = blitz_engine::lay_out(INVOICE);
@@ -77,7 +77,7 @@ fn every_page_keeps_all_content_within_the_page_box() {
 
 #[test]
 fn every_table_page_carries_the_header_labels() {
-    // R2 + R3: the header must lead the table's FIRST page and EVERY continuation
+    // The header must lead the table's FIRST page and EVERY continuation
     // page. Pre-fix the header was missing on page 1 and stopped repeating
     // partway through. Assert on the actual emitted header TEXT, not a flag.
     let doc = blitz_engine::lay_out(INVOICE);
@@ -103,7 +103,7 @@ fn every_table_page_carries_the_header_labels() {
 
 #[test]
 fn totals_block_appears_exactly_once_on_the_last_table_page() {
-    // TQ-4: the totals block ("Total a pagar") must be kept once — not repeated
+    // The totals block ("Total a pagar") must be kept once — not repeated
     // across continuation pages, and present on exactly one page.
     let doc = blitz_engine::lay_out(INVOICE);
     let pb = page_css::parse_page_box(INVOICE);
@@ -138,7 +138,7 @@ fn totals_block_appears_exactly_once_on_the_last_table_page() {
 
 #[test]
 fn no_item_row_is_split_across_two_pages() {
-    // R1/TQ-4: each line item's SKU code is unique, so a given SKU must appear on
+    // Each line item's SKU code is unique, so a given SKU must appear on
     // exactly one page (a row is never split). Pre-fix the inflated row heights
     // still kept rows whole, but this pins the invariant against future regressions.
     let doc = blitz_engine::lay_out(INVOICE);

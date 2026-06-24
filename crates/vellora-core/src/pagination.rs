@@ -1,11 +1,11 @@
-//! vellora's own pagination layer (D2/D3).
+//! vellora's own pagination layer.
 //!
 //! Blitz/Taffy produce ONE continuous flow. This pass consumes that laid-out
 //! tree (absolute document coordinates) and slices it into ordered pages
 //! against the `@page` content box, repeating `<thead>` on table continuation
 //! pages, never splitting a row, keeping the totals block once, and resolving
 //! `counter(page)`/`counter(pages)` for the running footer. Coordinates emitted
-//! into the display list are PAGE-LOCAL (task 4.2a).
+//! into the display list are PAGE-LOCAL.
 
 use crate::blitz_engine::{LaidOutBox, LaidOutDoc};
 use crate::page_css::{resolve_content, MarginBox, PageBox};
@@ -68,7 +68,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut oversize_hit = false;
     // Tracks whether the current page already carries the header band. Reset on
     // every page break and re-set whenever a tbody row injects the header, so the
-    // header leads the table-start page (R2) AND every continuation page (R3) —
+    // header leads the table-start page AND every continuation page —
     // including the oversize-branch page — exactly once each.
     let mut header_on_current = false;
 
@@ -101,7 +101,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
 
         // A table row that lands on a page without the header yet needs the
         // header band placed above it; account for its height in the fit test so
-        // the header is never stranded at the bottom of a page (R2/R3).
+        // the header is never stranded at the bottom of a page.
         let header_needed = is_table_row && !header_on_current;
         let lead_h = if header_needed { thead_height } else { 0.0 };
 
@@ -109,7 +109,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // own page, then terminate that fragment (never split mid-row). The
         // fragment is placed in full and bleeds past the page box — krilla does
         // not clip to the media box, so over-height content is emitted, not
-        // trimmed (F9). A future clip pass would live in pdf::emit.
+        // trimmed. A future clip pass would live in pdf::emit.
         if frag_height + lead_h > usable_h && (frag_height > usable_h || lead_h == 0.0) {
             if !current.is_empty() {
                 push_page(
@@ -184,7 +184,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let total = page_slices.len();
 
     // Phase two: build PdfPages, resolving running header/footer counters now
-    // that the total page count is known (D3).
+    // that the total page count is known.
     let mut pages = Vec::with_capacity(total);
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
@@ -196,7 +196,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // string is only recorded when its `MarginText` was actually produced
         // (build_margin_text returns None when there is no body font to shape
         // with, e.g. an empty document), so a reported footer always
-        // corresponds to a rendered one (ROB-7).
+        // corresponds to a rendered one.
         let mut margin_texts = Vec::new();
         let mut footer_text = String::new();
         for mc in &page_box.margins_content {
@@ -273,7 +273,7 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
         // fragmentation units that get header repetition. Every other top-level
         // child (including a trailing thead-less totals table) is one block
         // fragment; classification is structural, never natural-language text
-        // (no locale coupling — see F3/ROB-5).
+        // (no locale coupling).
         let is_items_table = b.tag.as_deref() == Some("table")
             && subtree.iter().any(|x| x.tag.as_deref() == Some("thead"));
 
@@ -310,7 +310,7 @@ fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
                 // table content-top (height 0, y == table top); only the <td>/<th>
                 // cells carry the true row geometry. Derive the row span from the
                 // cells so per-row fragment heights reflect ONLY that row, not the
-                // whole table's accumulated bottom (R1/R3).
+                // whole table's accumulated bottom.
                 let (top, bottom) = row_span(group);
                 out.push(Fragment {
                     boxes: group.to_vec(),
@@ -326,7 +326,7 @@ fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
                 // are expected to be structural chrome with no renderable text;
                 // assert that so a future change putting content on them (e.g.
                 // a styled background, a <tfoot> cell) fails loudly in tests
-                // rather than silently dropping its visual contribution (R5).
+                // rather than silently dropping its visual contribution.
                 debug_assert!(
                     b.text_runs.is_empty(),
                     "dropped table-structure box {:?} carried text",

@@ -70,7 +70,7 @@ describe("Inline SVG to PNG codemod", () => {
     expect(dataUriA).toBe(dataUriB);
   });
 
-  // Regression (ROB-3 fix b): an SVG resvg cannot render (here, a zero-size SVG resvg rejects as an
+  // Regression: an SVG resvg cannot render (here, a zero-size SVG resvg rejects as an
   // "invalid size") must NOT crash fix(); the <svg> is left unconverted so a downstream strict
   // re-detect surfaces a located diagnostic instead of a raw resvg Error escaping the render.
   test("an unrenderable SVG leaves the <svg> unconverted instead of throwing", () => {
@@ -201,7 +201,7 @@ describe("Integration: fix produces a document diagnose finds free of auto-fixab
 
   test("a document with only auto-fixable violations fixes to an empty diagnose report", () => {
     // The broken fixture deliberately also carries non-auto-fixable violations (script, animation);
-    // remove them so this exercise covers task 6.3's "fix -> conformant -> empty report" path.
+    // remove them so this exercise covers the "fix -> conformant -> empty report" path.
     const html = broken()
       .replace(/<script>[\s\S]*?<\/script>/, "")
       .replace(/@keyframes[\s\S]*?\n {4}}/, "")

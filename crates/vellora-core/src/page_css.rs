@@ -2,7 +2,7 @@
 //!
 //! Stylo does NOT retain CSS Paged Media margin boxes or page-context counters
 //! (no Gecko/Servo engine does), so vellora runs its OWN small pass over the
-//! source stylesheet to extract them (design Risk: "@page margin-box support").
+//! source stylesheet to extract them.
 //! The `@page` rule in our document subset is narrow and well-shaped, so a
 //! focused parse is simpler and more testable than a general CSS tokenizer.
 
@@ -129,7 +129,7 @@ pub fn parse_page_box(html: &str) -> PageBox {
 
 /// Extract the body between the braces of the first well-formed `@page` rule.
 /// Scans ONLY `<style>` element CSS (never body text or attributes), so a
-/// literal `@page { … }` in prose cannot hijack the page box (F5/R6). If the
+/// literal `@page { … }` in prose cannot hijack the page box. If the
 /// first `@page` match has an unbalanced brace block, the scan continues to a
 /// later well-formed `@page` rather than silently falling back to A4.
 fn extract_at_page_block(html: &str) -> Option<String> {
@@ -182,7 +182,7 @@ fn split_margin_boxes(block: &str) -> (String, Vec<(String, String)>) {
     // Start of the current run of plain (non-at-rule) text. All split
     // boundaries (`@`, `{`, `}`) are ASCII, so every boundary index falls on a
     // char boundary and `&block[plain_start..i]` is always a valid UTF-8 slice
-    // — UTF-8-clean, unlike a per-byte `as char` cast (F4/SEC-5).
+    // — UTF-8-clean, unlike a per-byte `as char` cast.
     let mut plain_start = 0;
     while i < bytes.len() {
         if bytes[i] == b'@' {
@@ -197,7 +197,7 @@ fn split_margin_boxes(block: &str) -> (String, Vec<(String, String)>) {
             if j >= bytes.len() {
                 // Unterminated inner at-rule (no `{`). The pre-`@` plain run was
                 // already flushed above; mark it consumed so the final flush at
-                // the end of this function does not re-emit it (RUST-DIFF-3).
+                // the end of this function does not re-emit it.
                 plain_start = i;
                 break;
             }
@@ -266,8 +266,8 @@ fn apply_size(page: &mut PageBox, value: &str) {
         // abandoned, keeping the documented default. `filter_map` would instead
         // DROP the bad token and shift survivors into the wrong slots — e.g.
         // `size: 1e400px 297mm` would collapse to `[297mm]` and the `[a] =>
-        // (a, a)` arm would silently produce a 297mm SQUARE page (RUST-DIFF-2 /
-        // INV-4 / EDGE-3). This also closes the unknown-unit slot-shift for free.
+        // (a, a)` arm would silently produce a 297mm SQUARE page. This also
+        // closes the unknown-unit slot-shift for free.
         let nums: Option<Vec<f64>> = v.split_whitespace().map(length_px).collect();
         match nums.as_deref() {
             Some([a, b]) => (*a, *b),
@@ -287,7 +287,7 @@ fn apply_margin_shorthand(page: &mut PageBox, value: &str) {
     // whole `margin` shorthand and keeps the prior margins, rather than dropping
     // the bad token and reindexing survivors into the wrong sides — e.g.
     // `margin: 1e400px 20px 30px 40px` must NOT silently become a 3-value
-    // shorthand t=20 r=30 b=40 l=30 (RUST-DIFF-2 / INV-4).
+    // shorthand t=20 r=30 b=40 l=30.
     let vals: Option<Vec<f64>> = value.split_whitespace().map(length_px).collect();
     let (t, r, b, l) = match vals.as_deref() {
         Some([a]) => (*a, *a, *a, *a),
@@ -310,7 +310,7 @@ fn length_px(token: &str) -> Option<f64> {
     // Reject `inf`/`infinity` and overflowing exponents (e.g. `1e400px`) that
     // f64::from_str saturates to infinity, so an attacker-controlled @page
     // length can never propagate an infinite page dimension into layout/krilla.
-    // Returning None drops the token and keeps the existing dimension (SEC-6).
+    // Returning None drops the token and keeps the existing dimension.
     if !n.is_finite() {
         return None;
     }
@@ -362,7 +362,7 @@ fn parse_content_template(value: &str) -> Vec<ContentPart> {
         {
             // Consume up to ')'. Stay in CHAR units: `close` is the char count
             // to the closing paren (not a byte offset) so a multibyte char
-            // inside the counter() arguments cannot desync `i` (R7/SEC-3).
+            // inside the counter() arguments cannot desync `i`.
             let close = chars[i..]
                 .iter()
                 .position(|c| *c == ')')
@@ -404,7 +404,7 @@ mod tests {
 
     #[test]
     fn split_margin_boxes_keeps_plain_region_utf8_clean() {
-        // F4/SEC-5 (TQ-NEW-2): a non-ASCII char in the PLAIN-declaration region —
+        // A non-ASCII char in the PLAIN-declaration region —
         // the path the buggy per-byte `as char` cast actually processed — must
         // round-trip cleanly. The earlier integration test only put the multibyte
         // char inside a margin-box body, which uses UTF-8-safe slicing and was
@@ -424,7 +424,7 @@ mod tests {
 
     #[test]
     fn split_margin_boxes_does_not_duplicate_plain_before_unterminated_at_rule() {
-        // RUST-DIFF-3: when an inner at-rule has no `{` (unterminated), the pre-`@`
+        // When an inner at-rule has no `{` (unterminated), the pre-`@`
         // plain run must be emitted exactly ONCE. Pre-fix the early break left
         // `plain_start` unchanged, so the final flush re-emitted the span (e.g.
         // ` color: red;  color: red; `).

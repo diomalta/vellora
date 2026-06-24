@@ -1,15 +1,15 @@
-//! Strict subset-validation gate (D6).
+//! Strict subset-validation gate.
 //!
 //! Walks the already-parsed Blitz tree IMMUTABLY before layout and rejects HTML
 //! elements / CSS features outside vellora's documented subset. On the first
 //! violation (document order) it returns a [`VelloraError::Unsupported`]
-//! carrying the cross-change diagnostic contract `{ feature, line, col, hint }`.
+//! carrying the diagnostic contract `{ feature, line, col, hint }`.
 
 use crate::blitz_engine;
 use crate::css_scan;
 
 /// The error type the render entry point returns. The `Unsupported` variant is
-/// the Rust-side `VelloraUnsupportedError` that `native-render-bridge`
+/// the Rust-side `VelloraUnsupportedError` that the napi binding
 /// serializes across napi as `{ feature, line, col, hint }`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum VelloraError {
@@ -30,7 +30,7 @@ impl std::fmt::Display for VelloraError {
 
 impl std::error::Error for VelloraError {}
 
-/// Located diagnostic — the exact cross-change contract shape. `line`/`col` are
+/// Located diagnostic — the exact contract shape. `line`/`col` are
 /// nullable because Blitz parses with html5ever's default tokenizer, which does
 /// not retain per-node source positions; we recover them by locating the
 /// element in the source when possible, else leave them `None`.
@@ -68,7 +68,7 @@ const FIX_HINT: &str = "outside vellora's document subset; run `vellora fix`";
 /// the worker-thread stack and ABORT the process (a stack overflow is fatal and
 /// not catchable by `catch_unwind`). The strict gate rejects over-deep documents
 /// here, BEFORE any recursion runs, so the napi "a single bad render can never
-/// abort the process" guarantee holds (SEC-1).
+/// abort the process" guarantee holds.
 ///
 /// The cap is deliberately conservative: the recursive Stylo/Taffy/walk pass
 /// overflows a 2 MiB thread stack at roughly ~240 levels of nesting, so the cap
@@ -107,7 +107,7 @@ const DENIED_CSS_TOKENS: &[(&str, &str)] = &[
 ];
 
 /// The HTML element denylist (subset complement). Exposed so the render path can
-/// validate against the SAME parse it uses for layout (D6 cost model).
+/// validate against the SAME parse it uses for layout (cost model).
 pub fn denied_elements() -> &'static [&'static str] {
     DENIED_ELEMENTS
 }
@@ -120,7 +120,7 @@ pub fn denied_elements() -> &'static [&'static str] {
 pub fn validate(html: &str) -> Result<(), VelloraError> {
     // 1) Depth gate FIRST: reject over-deep nesting before any recursive walk
     // (the element walk below and downstream layout both recurse and would
-    // overflow the stack → process abort on pathologically deep input, SEC-1).
+    // overflow the stack → process abort on pathologically deep input).
     validate_nesting_depth(html)?;
 
     // 2) HTML element allowlist via an immutable walk of the parsed tree.
@@ -144,7 +144,7 @@ pub fn validate_css(html: &str) -> Result<(), VelloraError> {
 /// Reject documents whose element nesting exceeds [`MAX_NESTING_DEPTH`]. Runs on
 /// an EXPLICIT-stack walk of the parsed tree (no native recursion), so it cannot
 /// itself overflow, and must be called BEFORE the recursive layout walk so the
-/// over-deep input is rejected cleanly instead of aborting the process (SEC-1).
+/// over-deep input is rejected cleanly instead of aborting the process.
 pub fn validate_nesting_depth(html: &str) -> Result<(), VelloraError> {
     let depth = blitz_engine::max_nesting_depth(html);
     if depth > MAX_NESTING_DEPTH {
@@ -181,7 +181,7 @@ fn diag_for_element(found: &blitz_engine::DeniedElement, html: &str) -> Diagnost
 /// Scan ONLY the document's CSS regions (`<style>` element text + `style=`
 /// attribute values) for denied CSS. Prose, attributes, and code samples are
 /// never scanned, so a denied keyword appearing in body text is not a false
-/// rejection (F1/RUST-5). Reports the earliest-occurring violation in original
+/// rejection. Reports the earliest-occurring violation in original
 /// source order (deterministic). `best` carries the byte offset in the ORIGINAL
 /// html so line/col map to the real document.
 fn scan_css(html: &str) -> Option<Diagnostic> {
@@ -191,7 +191,7 @@ fn scan_css(html: &str) -> Option<Diagnostic> {
         // Strip CSS comments AND quoted-string interiors (replaced with spaces
         // to preserve byte offsets) so `display:/*x*/grid` is still caught while
         // a denied word inside a string value — e.g.
-        // `content: "see animation: details"` — is NOT falsely flagged (ROB-6).
+        // `content: "see animation: details"` — is NOT falsely flagged.
         let stripped = strip_css_comments_and_strings(&region.text);
         let lower = stripped.to_ascii_lowercase();
         let bytes = lower.as_bytes();
@@ -254,7 +254,7 @@ fn scan_css(html: &str) -> Option<Diagnostic> {
 /// with equal-length spaces, preserving all byte offsets so a later match still
 /// maps to the right source position. Blanking string interiors prevents a
 /// denied keyword inside a value (e.g. `content: "filter results"`) from being
-/// mistaken for a real declaration (ROB-6); blanking comments keeps
+/// mistaken for a real declaration; blanking comments keeps
 /// `display:/*x*/grid` catchable.
 fn strip_css_comments_and_strings(css: &str) -> String {
     let bytes = css.as_bytes();
@@ -284,7 +284,7 @@ fn strip_css_comments_and_strings(css: &str) -> String {
         } else if bytes[i] == b'"' || bytes[i] == b'\'' {
             // A CSS string. We blank its interior to spaces so a denied keyword
             // *inside a value* (e.g. `content: "see animation: details"`) is not
-            // mistaken for a real declaration (ROB-6). But the gate must FAIL
+            // mistaken for a real declaration. But the gate must FAIL
             // CLOSED: a malformed/unterminated string must never swallow a denied
             // declaration that follows it. We classify how the string ends and
             // only commit the blanking when it is a real, terminated value.
@@ -294,12 +294,12 @@ fn strip_css_comments_and_strings(css: &str) -> String {
             //   * unescaped newline (\n \r \f) or `}` -> CSS *bad-string* / block
             //     terminator: blank the interior up to it, then leave the
             //     terminator and everything after it as literal text so a later
-            //     declaration is still scanned (EH-2 / SEC-BYPASS-1 / RUST-DIFF-1).
+            //     declaration is still scanned.
             //   * end-of-region, no close quote, no newline/`}` -> a genuinely
             //     unterminated single-line string: do NOT blank at all — emit the
             //     opening quote then leave the rest as literal, so a following
             //     denied declaration (e.g. `content:"abc\";animation:spin`) is
-            //     still scanned rather than blanked away (EDGE-4).
+            //     still scanned rather than blanked away.
             //
             // A `\` escapes the next byte (including a `\<newline>` line
             // continuation, which is consumed, not a bad-string terminator), so we
@@ -499,13 +499,13 @@ fn mask_html_noise(html: &str) -> String {
 /// (e.g. `<div title="use <script>">`, `<!-- <input> -->`) does not add a phantom
 /// `<tag` boundary. Without this, such a mention inflated the source count, made
 /// `offsets.len() != dom_total`, and forced a recoverable position to `(None,
-/// None)` (EH-1 / INV-1).
+/// None)`.
 ///
 /// After masking, if the source still has a different number of `<tag` boundaries
 /// than the DOM, html5ever genuinely reparented/injected elements (e.g. a denied
 /// tag fostered out of table context), so the DOM ordinal cannot be trusted to
 /// map to the same source occurrence — we return `(None, None)` rather than point
-/// at the wrong element (F11). `None` is the honest, contract-sanctioned output
+/// at the wrong element. `None` is the honest, contract-sanctioned output
 /// when the position is unrecoverable.
 fn locate_tag(
     html: &str,

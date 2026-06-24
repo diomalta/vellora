@@ -5,10 +5,9 @@
  * no browser to launch and no worker to warm, which is the entire point of the
  * cold-start axis.
  *
- * GATED: the full render path (`core-render-invoice` / `native-render-bridge`)
- * must land before this produces a real PDF. Until then create() throws a
- * clearly-labeled "not yet available" so the runner records vellora as
- * pending rather than fabricating a number.
+ * GATED: the full render path landing must happen before this produces a real
+ * PDF. Until then create() throws a clearly-labeled "not yet available" so the
+ * runner records vellora as pending rather than fabricating a number.
  */
 export const meta = {
   id: "vellora",
@@ -26,7 +25,7 @@ export async function create() {
     version = pkg?.default?.version ?? "0.1.0-alpha.0";
   } catch (err) {
     const e = new Error(
-      `vellora adapter unavailable: the public render path is not built/published yet (depends on core-render-invoice / native-render-bridge). Underlying: ${err?.message ?? err}`,
+      `vellora adapter unavailable: the public render path is not built/published yet (depends on the full render path landing). Underlying: ${err?.message ?? err}`,
     );
     e.code = "ADAPTER_PENDING";
     throw e;

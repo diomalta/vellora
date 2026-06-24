@@ -2,11 +2,11 @@
  * Benchmark suite — single end-to-end entry point. Reproduce with:
  * `node benchmarks/run.mjs`
  *
- * Per tool: create the long-lived handle, then verify output equivalence (D1)
+ * Per tool: create the long-lived handle, then verify output equivalence
  * BEFORE recording any timing — non-equivalent tools are flagged not-comparable
  * and skipped from the head-to-head. Comparable tools are measured across the
- * five axes; warm stats are median + p95, never best-of-N (D3); the report
- * flags every axis where vellora is not the winner (D6).
+ * five axes; warm stats are median + p95, never best-of-N; the report
+ * flags every axis where vellora is not the winner.
  *
  * Tools whose adapter is not yet available (ADAPTER_PENDING) are recorded as
  * pending with the reason, NOT fabricated.
@@ -66,7 +66,7 @@ async function benchTool(tool, html, data, referencePages) {
     const cold = await measureColdStart(handle, html, data);
     record.coldStartMs = cold.ms;
 
-    // Equivalence BEFORE any further timing (D1).
+    // Equivalence BEFORE any further timing.
     const eq = verify(cold.pdf, { ...baseline, referencePages });
     record.pages = eq.pages;
     record.contentStatus = eq.contentStatus;
@@ -105,7 +105,7 @@ async function main() {
   const { html, data } = await loadBaseline();
 
   // The reference page count comes from the subject (vellora) when available,
-  // so every other tool is held to vellora's exact page count (D1). If vellora
+  // so every other tool is held to vellora's exact page count. If vellora
   // is pending, equivalence falls back to baseline.minPages.
   let referencePages = null;
 

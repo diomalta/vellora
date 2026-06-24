@@ -182,7 +182,7 @@ describe("Detected violation rules", () => {
   });
 });
 
-// Regression (SEC-2): the element walk is iterative, so a pathologically deep document returns a
+// Regression: the element walk is iterative, so a pathologically deep document returns a
 // structured report instead of overflowing the JS call stack with an uncaught RangeError.
 describe("Deeply-nested HTML does not overflow the stack", () => {
   const deep = `${"<div>".repeat(20000)}x${"</div>".repeat(20000)}`;

@@ -15,7 +15,7 @@ const repoRoot = join(__dirname, "..");
 /**
  * The equivalence baseline: the neutral multi-page invoice fixture. Every tool
  * renders THIS, and its output is checked against the baseline page count +
- * expected content before any timing is recorded (D1).
+ * expected content before any timing is recorded.
  */
 export const baseline = {
   name: "invoice",
@@ -33,7 +33,7 @@ export const baseline = {
 
 /**
  * Run shape. N drives the concurrency RSS axis AND the warm sample count that
- * median/p95 are computed over (D3). Kept modest so a local indicative run is
+ * median/p95 are computed over. Kept modest so a local indicative run is
  * quick; CI can override via env.
  */
 export const run = {
@@ -101,7 +101,7 @@ export const tools = [
 /**
  * The pdf4.dev "~3ms warm" figure. Treated as an UNVERIFIED external bar — it
  * is NEVER quoted as fact and is only ever compared against vellora's own warm
- * distribution (see D3 / Risks). The reporter prints it labeled as unverified.
+ * distribution. The reporter prints it labeled as unverified.
  */
 export const externalReference = {
   source: "pdf4.dev",

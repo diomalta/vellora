@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { MockNativeBridge, VelloraError } from "../src/index";
 import { orchestrate } from "../src/orchestrate";
 
-// Regression (EH-2): if `@vellora/lint` resolves WITHOUT a `fix` export (mis-resolution, wrong
+// Regression: if `@vellora/lint` resolves WITHOUT a `fix` export (mis-resolution, wrong
 // version, or tree-shaking), best-effort mode must fail loudly with a typed VelloraError instead of
 // silently rendering the un-fixed HTML. Mock the module as empty (no `fix`) for this whole file.
 vi.mock("@vellora/lint", () => ({ fix: undefined }));

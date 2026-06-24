@@ -4,13 +4,13 @@
 //! `render(html, opts) -> Promise<Uint8Array>`. The actual `vellora-core` work
 //! runs on a libuv worker thread (via napi-rs [`Task`]) so the Node event loop
 //! is never blocked. The binding holds no shared mutable state — each call owns
-//! its inputs and output, so N concurrent renders behave like N sequential ones
-//! (design D1/D2). Core errors and *unwinding* Rust panics are caught at the
-//! boundary and surfaced as rejected promises (design D5). This does NOT protect
+//! its inputs and output, so N concurrent renders behave like N sequential ones.
+//! Core errors and *unwinding* Rust panics are caught at the
+//! boundary and surfaced as rejected promises. This does NOT protect
 //! against non-unwinding aborts such as a stack overflow; that class is headed
 //! off upstream by the recursion-depth gate in `vellora_core::validation`
 //! (`MAX_NESTING_DEPTH`), which rejects over-deep input before any recursion
-//! runs (SEC-1/SEC-8).
+//! runs.
 
 use std::panic::AssertUnwindSafe;
 
@@ -60,7 +60,7 @@ impl Task for RenderTask {
     /// render surfaces as a rejected promise rather than a process abort. Note
     /// this does not protect against non-unwinding aborts such as a stack
     /// overflow — that class is prevented by the recursion-depth gate in
-    /// `vellora_core::validation` (see SEC-1/SEC-8).
+    /// `vellora_core::validation`.
     fn compute(&mut self) -> Result<Self::Output> {
         let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
             vellora_core::render(&self.html, &self.opts)
@@ -84,7 +84,7 @@ impl Task for RenderTask {
 
     /// Runs on the main thread. Copies the PDF bytes out of the Rust `Vec` into a
     /// fresh JS-owned `Uint8Array`, so the consumer can hold/slice/mutate it with
-    /// no lifetime coupling to Rust memory (design D3).
+    /// no lifetime coupling to Rust memory.
     fn resolve(&mut self, _env: Env, output: Self::Output) -> Result<Self::JsValue> {
         Ok(Uint8Array::new(output))
     }
@@ -92,7 +92,7 @@ impl Task for RenderTask {
     /// Runs on the main thread when `compute` returned `Err`. Builds a JS `Error`
     /// whose message carries the core diagnostic AND, for a located diagnostic,
     /// exposes `{ feature, line, col, hint }` as machine-readable properties so the
-    /// public-API adapter can reconstruct the located error verbatim (design D5).
+    /// public-API adapter can reconstruct the located error verbatim.
     fn reject(&mut self, env: Env, err: Error) -> Result<Self::JsValue> {
         let Some(diag) = self.located.take() else {
             return Err(err);
@@ -128,13 +128,13 @@ pub fn render(html: Uint8Array, opts: Option<RenderOpts>) -> AsyncTask<RenderTas
 /// component that does not fit its integer width (year > 65535, or month/day >
 /// 255) — is dropped (treated as "no date"), matching the deterministic,
 /// non-wall-clock contract. Checked conversions avoid silently truncating such an
-/// out-of-range component to a wrong-but-plausible date via `as` (R8).
+/// out-of-range component to a wrong-but-plausible date via `as`.
 ///
 /// Note: this boundary validates only the integer WIDTH, not calendar semantics.
 /// An in-range but invalid component (e.g. month 13 or day 200) still passes here
 /// and is clamped — not dropped — downstream by krilla (e.g. `[2021, 13, 200]`
 /// renders as 2021-12-31, NOT "no date"). The stronger "treated as no date"
-/// guarantee holds only for width-overflowing values (EDGE-5).
+/// guarantee holds only for width-overflowing values.
 fn to_render_options(opts: Option<RenderOpts>) -> RenderOptions {
     let Some(opts) = opts else {
         return RenderOptions::default();
@@ -197,7 +197,7 @@ impl Task for PanicTask {
 /// promise and the process survives. Mirrors the render path's
 /// `catch_unwind`-in-`compute`. This exercises only the recoverable
 /// (unwinding-panic) path, NOT the non-unwinding abort class (stack overflow),
-/// which is headed off by the recursion-depth gate instead (SEC-8).
+/// which is headed off by the recursion-depth gate instead.
 #[napi(js_name = "__forcePanicForTest", ts_return_type = "Promise<void>")]
 pub fn force_panic_for_test() -> AsyncTask<PanicTask> {
     AsyncTask::new(PanicTask)

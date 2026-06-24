@@ -1,4 +1,4 @@
-//! Subset-validation gate tests (tasks 5.4-5.6).
+//! Subset-validation gate tests.
 
 use vellora_core::validation::{validate, VelloraError};
 
@@ -79,7 +79,7 @@ fn first_reported_violation_is_deterministic() {
     }
 }
 
-// SEC-1: pathologically deep nesting must be REJECTED cleanly, not crash the
+// Pathologically deep nesting must be REJECTED cleanly, not crash the
 // process via a fatal stack overflow (which catch_unwind cannot recover).
 
 #[test]
@@ -112,7 +112,7 @@ fn shallow_document_passes_the_depth_gate() {
     assert!(validate(html).is_ok(), "shallow doc passes the depth gate");
 }
 
-// F1 / RUST-5: the CSS subset gate must scan ONLY real CSS regions (<style>
+// The CSS subset gate must scan ONLY real CSS regions (<style>
 // text and style= attributes), never body prose or arbitrary attributes.
 
 #[test]
@@ -169,7 +169,7 @@ fn denied_keyword_inside_style_attribute_is_rejected() {
 
 #[test]
 fn grid_with_whitespace_or_comments_around_colon_is_rejected() {
-    // RUST-5 bypass class: `display : grid` and `display:/*x*/grid` are the same
+    // Bypass class: `display : grid` and `display:/*x*/grid` are the same
     // violation as `display:grid` and must not slip through.
     let spaced = r#"<!DOCTYPE html><html><head><style>
         .x { display : grid }
@@ -186,7 +186,7 @@ fn grid_with_whitespace_or_comments_around_colon_is_rejected() {
     }
 }
 
-// F11: a denied tag reparented by html5ever (e.g. <input> fostered out of
+// A denied tag reparented by html5ever (e.g. <input> fostered out of
 // <table> context) must not be mislocated. When the source/DOM tag counts
 // diverge, the locator degrades to None rather than pointing at the wrong tag.
 
@@ -219,9 +219,9 @@ fn reparented_denied_tag_is_located_correctly_or_none_never_wrong() {
 
 #[test]
 fn carriage_return_after_tag_name_is_a_boundary() {
-    // EDGE-2: `<input\r>` is legal HTML (CR is whitespace) and html5ever parses it
+    // `<input\r>` is legal HTML (CR is whitespace) and html5ever parses it
     // as the element, but the source `<tag` boundary set omitted `\r`, so the
-    // source count (0) diverged from dom_total (1) and the F11 guard degraded the
+    // source count (0) diverged from dom_total (1) and the guard degraded the
     // diagnostic to None. With `\r` in the boundary set the location is recovered.
     let html = "<!DOCTYPE html><html><body><input\r></body></html>";
     let err = validate(html).expect_err("input is denied");
@@ -241,7 +241,7 @@ fn carriage_return_after_tag_name_is_a_boundary() {
 
 #[test]
 fn genuine_source_dom_count_divergence_degrades_location_to_none() {
-    // TQ-NEW-4 / INV-2 / RUST-REV-2: the F11 guard's whole purpose is the
+    // The guard's whole purpose is the
     // count-mismatch -> None branch, which the reparented_... test above NEVER
     // exercises (foster-parenting moves <input> but keeps the count equal). Here
     // two source `<form` boundaries collapse to ONE DOM <form> (html5ever ignores
@@ -267,8 +267,8 @@ fn genuine_source_dom_count_divergence_degrades_location_to_none() {
 
 #[test]
 fn denied_tag_mentioned_in_comment_or_attribute_is_still_located() {
-    // EH-1 / INV-1: a denied tag literal inside an HTML comment or an attribute
-    // value must NOT add a phantom `<tag` boundary that defeats the F11 guard. The
+    // A denied tag literal inside an HTML comment or an attribute
+    // value must NOT add a phantom `<tag` boundary that defeats the guard. The
     // real denied element stays locatable — the reported line must contain a REAL
     // `<input>`, never the commented/attribute mention.
     let cases = [
@@ -313,7 +313,7 @@ fn denied_tag_mentioned_in_comment_or_attribute_is_still_located() {
     }
 }
 
-// ROB-6: a denied keyword inside a quoted CSS value/comment is NOT a real
+// A denied keyword inside a quoted CSS value/comment is NOT a real
 // declaration — string interiors must be blanked before the property scan.
 
 #[test]
@@ -343,7 +343,7 @@ fn denied_keyword_inside_quoted_css_value_passes_the_gate() {
 
 #[test]
 fn unterminated_css_string_does_not_blank_a_later_denied_declaration() {
-    // EH-2 / SEC-BYPASS-1 / RUST-DIFF-1: an unterminated/newline-spanning CSS
+    // An unterminated/newline-spanning CSS
     // string must NOT swallow declarations that follow it. Per CSS, a string is a
     // bad-string at an unescaped newline (and `}` ends the block), so a denied
     // declaration after such a terminator is REAL and the gate must still reject
@@ -403,7 +403,7 @@ fn unterminated_css_string_does_not_blank_a_later_denied_declaration() {
 
 #[test]
 fn escaped_final_quote_then_denied_declaration_is_rejected() {
-    // EDGE-4: `content:"abc\"` ends with an ESCAPED quote, so the string is
+    // `content:"abc\"` ends with an ESCAPED quote, so the string is
     // unterminated. The blanker must not consume the rest of the stylesheet — a
     // genuine denied declaration after it (no newline/`}` separator) must still be
     // scanned and rejected (fail-closed).
@@ -464,7 +464,7 @@ fn real_declaration_after_a_quoted_value_is_still_rejected() {
     }
 }
 
-// F5 / R6: the @page reader must scan only <style> CSS, not body text/attrs.
+// The @page reader must scan only <style> CSS, not body text/attrs.
 
 #[test]
 fn at_page_in_body_text_does_not_hijack_the_page_box() {
@@ -499,7 +499,7 @@ fn at_page_in_style_still_applies_with_body_text_decoy() {
 fn unbalanced_decoy_at_page_does_not_discard_a_later_valid_rule() {
     use vellora_core::page_css;
     // An earlier @page with an unbalanced brace must not swallow the rest and
-    // silently fall back to A4 — the later well-formed rule still applies (F5).
+    // silently fall back to A4 — the later well-formed rule still applies.
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: 400px 600px; margin: 10px }
     </style></head><body><p>x</p></body></html>"#;

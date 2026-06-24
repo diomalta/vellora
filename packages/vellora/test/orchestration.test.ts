@@ -13,7 +13,7 @@ import {
 import { orchestrate } from "../src/orchestrate";
 
 // Mock @vellora/lint so the best-effort path is exercised hermetically (the real fixers are owned by
-// `lint-diagnose-fix` and tested there). The mocked `fix` contract matches the real one.
+// `@vellora/lint` and tested there). The mocked `fix` contract matches the real one.
 const fixMock = vi.fn((html: string) => ({ html, report: { findings: [] } }));
 vi.mock("@vellora/lint", () => ({ fix: (html: string) => fixMock(html) }));
 
@@ -95,7 +95,7 @@ describe("best-effort mode runs lint fixers before core", () => {
     expect(fixMock).not.toHaveBeenCalled();
   });
 
-  // Regression (ROB-3 fix a): a fixer crash (e.g. resvg failing to rasterize an SVG) now happens
+  // Regression: a fixer crash (e.g. resvg failing to rasterize an SVG) now happens
   // INSIDE the try/catch, so it maps to a VelloraError instead of escaping as a bare Error.
   test("a fixer crash maps to a VelloraError, never a raw Error", async () => {
     fixMock.mockImplementation(() => {
@@ -107,12 +107,12 @@ describe("best-effort mode runs lint fixers before core", () => {
     expect(bridge.calls).toHaveLength(0);
   });
 
-  // Regression (EH-3): the fixer's residual error-severity findings are no longer discarded — the
+  // Regression: the fixer's residual error-severity findings are no longer discarded — the
   // first one is surfaced as a located VelloraUnsupportedError before the bridge is ever called. Its
   // `feature` is normalized to the core's colon-namespaced taxonomy (`element:script`), NOT the lint
   // RuleId (`script-element`), so best-effort and strict/core agree. The lint location is in the
   // FIXED-output coordinate space, which does not map to the caller's original HTML, so line/col are
-  // reported as null rather than a misleading rewritten-document position (EH3-LOC-COORDS-6).
+  // reported as null rather than a misleading rewritten-document position.
   test("best-effort surfaces a residual error-severity fixer finding without rendering", async () => {
     fixMock.mockImplementation((html: string) => ({
       html,
@@ -140,7 +140,7 @@ describe("best-effort mode runs lint fixers before core", () => {
     expect(bridge.calls).toHaveLength(0);
   });
 
-  // Regression (EH-3): a given out-of-subset construct (a `<script>`) yields the IDENTICAL `feature`
+  // Regression: a given out-of-subset construct (a `<script>`) yields the IDENTICAL `feature`
   // string whether it surfaces via best-effort lint or via the strict/core bridge rejection. A
   // consumer keyed on the core value must not silently miss the best-effort variant.
   test("best-effort and strict/core emit the identical feature for the same construct", async () => {
@@ -183,7 +183,7 @@ describe("best-effort mode runs lint fixers before core", () => {
     expect(bestEffortErr.feature).toBe("element:script");
   });
 
-  // Regression (TQ-NEW-5): the residual-finding filter is `severity === "error" && !f.applied`. An
+  // Regression: the residual-finding filter is `severity === "error" && !f.applied`. An
   // auto-fixed error-severity finding (which fix() marks `applied: true`, e.g. a rasterized inline-svg)
   // must NOT be surfaced — orchestrate proceeds to render. This pins the `!f.applied` half of the
   // predicate: removing that guard would re-throw an already-fixed finding and never reach the bridge.
@@ -240,7 +240,7 @@ describe("swappable native bridge", () => {
     expect(call?.options.metadata.creationDate).toBe(DEFAULT_CREATION_DATE);
   });
 
-  // Regression (EH-1): a rejection whose line/col are null (unknown source position) still maps to
+  // Regression: a rejection whose line/col are null (unknown source position) still maps to
   // the typed VelloraUnsupportedError instead of leaking the raw rejection.
   test("a {feature,null,null,hint} rejection maps to VelloraUnsupportedError", async () => {
     const diagnostic: UnsupportedDiagnostic = {
@@ -282,7 +282,7 @@ describe("resolveOptions", () => {
     expect(resolveOptions({ metadata: { creationDate } }).metadata.creationDate).toBe(creationDate);
   });
 
-  // Regression (TS-02 / TS-01 / ROB-4): an invalid or empty creationDate must reject at the public
+  // Regression: an invalid or empty creationDate must reject at the public
   // boundary with VelloraInputError, never forward a NaN date across the FFI.
   test("rejects a non-parseable or empty creationDate with VelloraInputError", () => {
     for (const creationDate of ["not-a-date", ""]) {
@@ -290,7 +290,7 @@ describe("resolveOptions", () => {
     }
   });
 
-  // Regression (EH-5): a year outside the FFI u16 range (1..=65535) would pass the old parseable-only
+  // Regression: a year outside the FFI u16 range (1..=65535) would pass the old parseable-only
   // check yet be silently dropped at the napi checked-conversion (extended-ISO years run to +275760).
   // The public boundary now rejects it with a typed VelloraInputError so the two layers agree, while a
   // year at the u16 edge (65535) still passes.
@@ -318,7 +318,7 @@ describe("renderPdf honors the default mock bridge", () => {
     expect(err.feature).toBe("inline-script");
   });
 
-  // Regression (TS-02 / ROB-4): an invalid creationDate rejects through the public surface, and the
+  // Regression: an invalid creationDate rejects through the public surface, and the
   // bridge is never reached (the validation happens before render).
   test("an invalid creationDate rejects with VelloraInputError before reaching the bridge", async () => {
     const bridge = new MockNativeBridge();

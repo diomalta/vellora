@@ -12,7 +12,7 @@ const OPTIONS: BridgeRenderOptions = {
   metadata: { creationDate: "2000-01-01T00:00:00.000Z" },
 };
 
-describe("mock native bridge (task 7.1)", () => {
+describe("mock native bridge", () => {
   test("records the final HTML and resolved options per call", async () => {
     const bridge = new MockNativeBridge();
     await bridge.render("<p>a</p>", OPTIONS);
@@ -37,7 +37,7 @@ describe("mock native bridge (task 7.1)", () => {
   });
 });
 
-describe("bridge interface contract (task 7.2)", () => {
+describe("bridge interface contract", () => {
   test("MockNativeBridge satisfies the NativeBridge type (drop-in)", () => {
     const bridge: NativeBridge = new MockNativeBridge();
     expectTypeOf(bridge).toMatchTypeOf<NativeBridge>();

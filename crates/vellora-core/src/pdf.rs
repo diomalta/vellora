@@ -1,9 +1,9 @@
 //! krilla PDF emission — the only module that touches krilla.
 //!
 //! Takes a paginated display list (pages of positioned boxes + text runs in
-//! page-local CSS px, top-left origin) and emits a PDF. Implements D4 (one
-//! krilla page per paginated page, px->pt flip) and D5 (real Parley glyph runs
-//! with ToUnicode, never rasterized).
+//! page-local CSS px, top-left origin) and emits a PDF. Emits one
+//! krilla page per paginated page (px->pt flip) with real Parley glyph runs
+//! with ToUnicode, never rasterized.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ use krilla::{Document, SerializeSettings};
 
 use crate::blitz_engine::TextRun;
 
-/// px -> pt scale (D4: layout px @96dpi -> PDF pt @72dpi).
+/// px -> pt scale (layout px @96dpi -> PDF pt @72dpi).
 const PX_TO_PT: f64 = 0.75;
 
 /// Map a layout Y (CSS px, top-left origin) to a krilla surface Y (pt).
@@ -149,7 +149,7 @@ fn set_solid_fill(surface: &mut krilla::surface::Surface, color: [u8; 3]) {
 /// identity + face index. Loads once per distinct face; reused across pages and
 /// runs so subsetting picks up every glyph drawn from it. The key is the `Arc`
 /// heap address — identity-based and valid ONLY within this single `emit` call;
-/// never persist, serialize, or compare it across renders (RUST-6).
+/// never persist, serialize, or compare it across renders.
 fn cached_font(
     cache: &mut HashMap<(usize, u32), Font>,
     data: &Arc<Vec<u8>>,
@@ -172,7 +172,7 @@ fn draw_rect(surface: &mut krilla::surface::Surface, r: &FilledRect) {
     // bug that emits a non-positive-area or non-finite rect fails loudly rather
     // than vanishing silently below (the `Rect::from_ltrb`/`finish` None arms
     // return without a trace). No FilledRect is emitted today, so this is a
-    // forward-looking guard for when background-fill lowering lands (EH-4).
+    // forward-looking guard for when background-fill lowering lands.
     debug_assert!(
         r.x.is_finite()
             && r.y.is_finite()

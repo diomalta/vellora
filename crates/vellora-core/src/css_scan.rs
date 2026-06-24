@@ -5,7 +5,7 @@
 //! Scanning raw HTML wholesale produces false rejections (prose like
 //! `<p>Status: transition: done</p>` looks like a denied declaration) and a
 //! mis-parsed `@page` (a literal `@page { … }` in body text hijacks the page
-//! box). Restricting to these regions fixes both classes (F1/RUST-5/F5/R6).
+//! box). Restricting to these regions fixes both classes.
 //!
 //! Each region is returned as `(byte_offset_in_html, text)` so a caller can map
 //! a match back to a 1-based source line/column in the ORIGINAL document.

@@ -9,7 +9,7 @@ import {
   renderPdf,
 } from "../src/index";
 
-// Mock @vellora/lint so the best-effort path is hermetic (real fixers are owned by lint-diagnose-fix).
+// Mock @vellora/lint so the best-effort path is hermetic (real fixers are owned by @vellora/lint).
 const fixMock = vi.fn((html: string) => ({ html, report: { findings: [] } }));
 vi.mock("@vellora/lint", () => ({ fix: (html: string) => fixMock(html) }));
 

@@ -51,8 +51,8 @@ describe("renderPdf", () => {
   });
 
   // Scenario: Empty/whitespace/empty-loop HTML render to valid PDF-shaped bytes without crashing.
-  // (TQ-2: the prior `/Count 1` assertion proved nothing — the default mock hardcodes `/Count 1` for
-  // EVERY input, so it could never fail. Single-page output is proven in the Rust suite instead.)
+  // The prior `/Count 1` assertion proved nothing — the default mock hardcodes `/Count 1` for
+  // EVERY input, so it could never fail. Single-page output is proven in the Rust suite instead.
   test("empty, whitespace, and empty-loop HTML each render valid PDF-shaped bytes", async () => {
     for (const html of ["", "   \n\t ", "{% for x in xs %}<p>{{ x }}</p>{% endfor %}"]) {
       const pdf = await renderPdf(html, { xs: [] });
@@ -158,7 +158,7 @@ describe("renderPdfToStream", () => {
     );
   });
 
-  // Regression (TQ-10): a destination whose write callback SUCCEEDS but then emits 'error'
+  // Regression: a destination whose write callback SUCCEEDS but then emits 'error'
   // asynchronously (after cb) exercises the `settled`-guarded late-error absorption in writeAndEnd.
   // The promise must settle exactly once (it resolves, since end() resolved first) and the late
   // 'error' must not surface as an unhandled rejection.
@@ -184,7 +184,7 @@ describe("renderPdfToStream", () => {
     expect(settlements).toBe(1);
   });
 
-  // Regression (TQ-10): a backpressured destination (write returns false via a small highWaterMark)
+  // Regression: a backpressured destination (write returns false via a small highWaterMark)
   // still receives the complete PDF and the promise resolves.
   test("a backpressured destination still receives the full PDF and resolves", async () => {
     const chunks: Buffer[] = [];

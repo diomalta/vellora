@@ -40,7 +40,7 @@ describe("input normalization", () => {
     expect(await normalizeInput("./invoice.html")).toBe("./invoice.html");
   });
 
-  // Regression (ROB-1): malformed UTF-8 must reject with VelloraInputError, not silently substitute
+  // Regression: malformed UTF-8 must reject with VelloraInputError, not silently substitute
   // U+FFFD (which would re-encode as valid UTF-8 and hide the corruption from the native core).
   test("a Uint8Array with invalid UTF-8 rejects with VelloraInputError", async () => {
     const badBytes = new Uint8Array([0x3c, 0x70, 0x3e, 0xff, 0xfe, 0x3c, 0x2f, 0x70, 0x3e]);

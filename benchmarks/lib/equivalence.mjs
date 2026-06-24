@@ -1,5 +1,5 @@
 /**
- * Output equivalence verification (design D1).
+ * Output equivalence verification.
  *
  * Before ANY timing is recorded, the suite checks the produced PDF is
  * equivalent to the baseline on a tool-agnostic axis: same page count + the
