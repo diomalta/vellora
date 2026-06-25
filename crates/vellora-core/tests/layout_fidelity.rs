@@ -34,6 +34,27 @@ fn run_width(run: &vellora_core::blitz_engine::TextRun) -> f64 {
     run.glyphs.iter().map(|g| g.advance as f64).sum()
 }
 
+fn first_pdf_media_box_size(bytes: &[u8]) -> (f32, f32) {
+    let doc = lopdf::Document::load_mem(bytes).expect("lopdf parses output");
+    let (_, page_id) = doc
+        .get_pages()
+        .into_iter()
+        .next()
+        .expect("PDF has a first page");
+    let dict = doc.get_dictionary(page_id).expect("page dictionary");
+    let media_box = dict
+        .get(b"MediaBox")
+        .expect("page has MediaBox")
+        .as_array()
+        .expect("MediaBox is an array");
+    let read = |idx: usize| {
+        media_box[idx]
+            .as_float()
+            .unwrap_or(media_box[idx].as_i64().unwrap_or(0) as f32)
+    };
+    (read(2) - read(0), read(3) - read(1))
+}
+
 fn text_run_covered_range(run: &vellora_core::blitz_engine::TextRun) -> Option<(usize, usize)> {
     let start = run.glyphs.iter().map(|g| g.text_start).min()?;
     let end = run.glyphs.iter().map(|g| g.text_end).max()?;
@@ -193,6 +214,137 @@ fn table_header_background_resolves_css_variables_to_pdf_rects() {
             .rects
             .iter()
             .map(|r| (r.x, r.y, r.width, r.height, r.color))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn a4_pdf_media_box_matches_chromium_print_a4_dimensions() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 16mm; }
+        body { margin: 0; font-family: sans-serif; }
+    </style></head><body>Documento</body></html>"#;
+
+    let bytes = render(html.as_bytes(), &opts()).expect("render succeeds");
+    let (width_pt, height_pt) = first_pdf_media_box_size(&bytes);
+
+    assert!(
+        (width_pt - 594.96).abs() <= 0.06,
+        "A4 PDF width should match Chromium print output, got {width_pt}"
+    );
+    assert!(
+        (height_pt - 841.92).abs() <= 0.06,
+        "A4 PDF height should match Chromium print output, got {height_pt}"
+    );
+}
+
+#[test]
+fn right_aligned_table_text_ends_at_cell_content_edge() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 10pt; }
+        table { width: 260px; border-collapse: collapse; }
+        td { padding: 8px 12px; }
+        td.num { text-align: right; white-space: nowrap; }
+    </style></head><body>
+        <table><tr><td>Descricao</td><td class="num">40</td></tr></table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let numeric_cell = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .nth(1)
+        .expect("numeric cell exists");
+    let value = text_run_containing(&laid, "40");
+    let value_right = value.origin_x + run_width(value);
+    let expected_right = numeric_cell.x + numeric_cell.width - 12.0;
+
+    assert!(
+        (value_right - expected_right).abs() <= 1.0,
+        "right-aligned text should end at cell content edge, got value_right={value_right}, expected_right={expected_right}, cell=({}, {})",
+        numeric_cell.x,
+        numeric_cell.width
+    );
+}
+
+#[test]
+fn auto_table_keeps_short_numeric_columns_compact() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 16mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 10.5pt; line-height: 1.45; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+            padding: 2.6mm 3mm;
+        }
+        th.num { text-align: right; }
+        td {
+            padding: 2.2mm 3mm;
+            font-size: 10pt;
+            vertical-align: top;
+        }
+        td.num {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .sku { display: block; font-size: 8pt; }
+    </style></head><body>
+        <table>
+            <thead><tr><th>Item</th><th class="num">Qtd.</th><th class="num">Preco unit.</th><th class="num">Total</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Suporte de fixacao em aluminio A20<span class="sku">SKU WX-A20</span></td>
+                    <td class="num">40</td>
+                    <td class="num">R$ 32,50</td>
+                    <td class="num">R$ 1.300,00</td>
+                </tr>
+            </tbody>
+        </table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let first_row_cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .take(4)
+        .collect();
+    assert_eq!(
+        first_row_cells.len(),
+        4,
+        "expected four body cells, got {first_row_cells:?}"
+    );
+    let row_left = first_row_cells
+        .iter()
+        .map(|cell| cell.x)
+        .fold(f64::INFINITY, f64::min);
+    let row_right = first_row_cells
+        .iter()
+        .map(|cell| cell.x + cell.width)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let row_width = row_right - row_left;
+    let description_ratio = first_row_cells[0].width / row_width;
+    let quantity_ratio = first_row_cells[1].width / row_width;
+
+    assert!(
+        description_ratio >= 0.50,
+        "description column should keep the spare auto-table width, got ratio={description_ratio:.3}; cells={:?}",
+        first_row_cells
+            .iter()
+            .map(|cell| (cell.x, cell.width))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        quantity_ratio <= 0.12,
+        "short quantity column should stay compact, got ratio={quantity_ratio:.3}; cells={:?}",
+        first_row_cells
+            .iter()
+            .map(|cell| (cell.x, cell.width))
             .collect::<Vec<_>>()
     );
 }

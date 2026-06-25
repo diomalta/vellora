@@ -11,9 +11,14 @@ const PX_PER_MM: f64 = 96.0 / 25.4;
 const PX_PER_PT: f64 = 96.0 / 72.0;
 const PX_PER_IN: f64 = 96.0;
 
-/// A4 in CSS px (210mm x 297mm).
-const A4_W: f64 = 210.0 * PX_PER_MM;
-const A4_H: f64 = 297.0 * PX_PER_MM;
+/// Chromium print-compatible A4 in CSS px.
+///
+/// Chromium's `page.pdf({ format: "A4" })` emits a MediaBox of roughly
+/// 594.96 x 841.92 pt. Use the same canonical named-size values for `size: A4`
+/// so Vellora and the browser reference rasterize to the same page grid. Authors
+/// who need exact physical dimensions can still specify `size: 210mm 297mm`.
+const A4_W: f64 = 594.96 / 0.75;
+const A4_H: f64 = 841.92 / 0.75;
 /// US Letter in CSS px (8.5in x 11in).
 const LETTER_W: f64 = 8.5 * PX_PER_IN;
 const LETTER_H: f64 = 11.0 * PX_PER_IN;

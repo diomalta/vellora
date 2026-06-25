@@ -182,6 +182,169 @@ pub(crate) fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
     }
 }
 
+pub(crate) fn normalize_auto_table_compact_columns(boxes: &mut [LaidOutBox]) {
+    let mut i = 0;
+    while i < boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
+            let end = subtree_end_by_depth(boxes, i);
+            normalize_auto_table_compact_columns_in_range(boxes, i, end);
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn normalize_auto_table_compact_columns_in_range(
+    boxes: &mut [LaidOutBox],
+    table_idx: usize,
+    end: usize,
+) {
+    let table_depth = boxes[table_idx].depth;
+    let mut rows: Vec<Vec<usize>> = Vec::new();
+    let mut column_count = 0usize;
+    let mut i = table_idx + 1;
+
+    while i < end {
+        match boxes[i].tag.as_deref() {
+            Some("table") if boxes[i].depth > table_depth => {
+                i = subtree_end_by_depth(boxes, i).min(end);
+            }
+            Some("tr") => {
+                let row_end = subtree_end_by_depth(boxes, i).min(end);
+                let cell_depth = boxes[i].depth + 1;
+                let cells: Vec<usize> = (i + 1..row_end)
+                    .filter(|idx| {
+                        boxes[*idx].depth == cell_depth
+                            && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
+                    })
+                    .collect();
+                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
+                column_count = column_count.max(row_columns);
+                rows.push(cells);
+                i = row_end;
+            }
+            _ => i += 1,
+        }
+    }
+
+    if column_count < 3
+        || rows.is_empty()
+        || rows
+            .iter()
+            .flatten()
+            .any(|idx| boxes[*idx].colspan != 1 || boxes[*idx].width_pct_hint.is_some())
+    {
+        return;
+    }
+
+    let mut row_left = f64::INFINITY;
+    let mut row_right = f64::NEG_INFINITY;
+    for row in &rows {
+        if row.len() != column_count {
+            return;
+        }
+        for &idx in row {
+            row_left = row_left.min(boxes[idx].x);
+            row_right = row_right.max(boxes[idx].x + boxes[idx].width);
+        }
+    }
+    let row_width = row_right - row_left;
+    if !row_width.is_finite() || row_width <= 0.0 {
+        return;
+    }
+
+    let mut compact = vec![false; column_count];
+    let mut min_widths = vec![0.0; column_count];
+    let mut current_widths = vec![0.0; column_count];
+    for row in &rows {
+        for (column, &idx) in row.iter().enumerate() {
+            current_widths[column] = f64::max(current_widths[column], boxes[idx].width);
+            compact[column] |= boxes[idx].text_align_right;
+            min_widths[column] = f64::max(min_widths[column], intrinsic_cell_width(&boxes[idx]));
+        }
+    }
+
+    let compact_count = compact.iter().filter(|&&is_compact| is_compact).count();
+    if compact_count == 0 || compact_count == column_count {
+        return;
+    }
+
+    let mut target_widths = current_widths.clone();
+    let mut compact_total = 0.0;
+    for column in 0..column_count {
+        if compact[column] {
+            let target = (min_widths[column] * 1.25)
+                .min(current_widths[column])
+                .max(min_widths[column]);
+            target_widths[column] = target;
+            compact_total += target;
+        }
+    }
+
+    let flexible_columns: Vec<usize> = (0..column_count)
+        .filter(|column| !compact[*column])
+        .collect();
+    let flexible_total = row_width - compact_total;
+    if flexible_total <= 0.0 || flexible_columns.is_empty() {
+        return;
+    }
+    let current_flexible_total: f64 = flexible_columns
+        .iter()
+        .map(|column| current_widths[*column])
+        .sum();
+    for &column in &flexible_columns {
+        target_widths[column] = if current_flexible_total > 0.0 {
+            flexible_total * (current_widths[column] / current_flexible_total)
+        } else {
+            flexible_total / flexible_columns.len() as f64
+        };
+    }
+
+    for row in rows {
+        let mut cursor = row_left;
+        for (column, idx) in row.into_iter().enumerate() {
+            adjust_subtree_inline_geometry(boxes, idx, cursor, target_widths[column]);
+            cursor += target_widths[column];
+        }
+    }
+}
+
+fn intrinsic_cell_width(cell: &LaidOutBox) -> f64 {
+    let text_width = cell
+        .text_runs
+        .iter()
+        .map(text_run_width)
+        .fold(0.0_f64, f64::max);
+    if text_width <= 0.0 {
+        return cell.width;
+    }
+
+    let left_gap = cell
+        .text_runs
+        .iter()
+        .map(|run| run.origin_x - cell.x)
+        .filter(|gap| gap.is_finite() && *gap >= 0.0)
+        .fold(f64::INFINITY, f64::min);
+    let right_gap = cell
+        .text_runs
+        .iter()
+        .map(|run| cell.x + cell.width - (run.origin_x + text_run_width(run)))
+        .filter(|gap| gap.is_finite() && *gap >= 0.0)
+        .fold(f64::INFINITY, f64::min);
+    let padding = if cell.text_align_right {
+        right_gap
+    } else {
+        left_gap
+    };
+    let padding = if padding.is_finite() { padding } else { 0.0 };
+    text_width + padding * 2.0
+}
+
+fn text_run_width(run: &crate::blitz_engine::TextRun) -> f64 {
+    run.glyphs.iter().map(|glyph| glyph.advance as f64).sum()
+}
+
 fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
     let table_depth = boxes[table_idx].depth;
     let mut i = table_idx + 1;

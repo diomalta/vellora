@@ -12,12 +12,13 @@ use blitz_html::HtmlDocument;
 use blitz_traits::shell::{ColorScheme, Viewport};
 use style::computed_values::table_layout::T as TableLayout;
 
-/// A4 width in CSS px at 96dpi (210mm). Used as the layout viewport width so
-/// Taffy resolves percentage/`width:100%` boxes against a page-shaped canvas.
-pub const A4_WIDTH_PX: f64 = 793.7008;
-/// A4 height in CSS px at 96dpi (297mm). The viewport is tall so the whole
-/// single-flow document lays out; OUR pagination slices it afterwards.
-pub const A4_HEIGHT_PX: f64 = 1122.5197;
+/// Chromium print-compatible A4 width in CSS px. Used as the layout viewport
+/// width so Taffy resolves percentage/`width:100%` boxes against a page-shaped
+/// canvas.
+pub const A4_WIDTH_PX: f64 = 594.96 / 0.75;
+/// Chromium print-compatible A4 height in CSS px. The viewport is tall so the
+/// whole single-flow document lays out; OUR pagination slices it afterwards.
+pub const A4_HEIGHT_PX: f64 = 841.92 / 0.75;
 
 /// One positioned box read out of Blitz's laid-out tree.
 ///
@@ -40,6 +41,8 @@ pub struct LaidOutBox {
     pub width_pct_hint: Option<f64>,
     /// Whether this box is a table with `table-layout: fixed`.
     pub table_layout_fixed: bool,
+    /// Whether computed `text-align` resolves to a right/end alignment.
+    pub text_align_right: bool,
     /// Table-cell span in columns. Non-cell boxes use `1`.
     pub colspan: usize,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
@@ -362,6 +365,7 @@ fn resolve_and_walk(
     crate::layout_normalize::normalize_vertical_margin_collapse(&mut boxes);
     crate::layout_normalize::normalize_fixed_table_widths(&mut boxes);
     crate::layout_normalize::normalize_table_percent_widths(&mut boxes);
+    crate::layout_normalize::normalize_auto_table_compact_columns(&mut boxes);
 
     let content_height = base.root_element().final_layout.size.height as f64;
 
@@ -427,6 +431,7 @@ fn walk(
         margin_bottom: layout.margin.bottom as f64,
         width_pct_hint: width_percentage_hint(node),
         table_layout_fixed: table_layout_fixed(node),
+        text_align_right: text_align_right(node),
         colspan: colspan(node),
         depth,
         text_runs,
@@ -457,6 +462,17 @@ fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
 fn table_layout_fixed(node: &blitz_dom::Node) -> bool {
     node.primary_styles()
         .is_some_and(|styles| matches!(styles.clone_table_layout(), TableLayout::Fixed))
+}
+
+fn text_align_right(node: &blitz_dom::Node) -> bool {
+    node.primary_styles().is_some_and(|styles| {
+        use style::values::specified::TextAlignKeyword;
+
+        matches!(
+            styles.clone_text_align(),
+            TextAlignKeyword::Right | TextAlignKeyword::End | TextAlignKeyword::MozRight
+        )
+    })
 }
 
 fn colspan(node: &blitz_dom::Node) -> usize {
@@ -769,19 +785,9 @@ fn read_text_runs(
     let mut runs = Vec::new();
 
     for line in layout.lines() {
-        let total_inline_padding_px: f64 = line
-            .items()
-            .filter_map(|item| match item {
-                parley::PositionedLayoutItem::GlyphRun(gr) => {
-                    Some(inline_padding_right_px(base, gr.style().brush.id))
-                }
-                _ => None,
-            })
-            .sum();
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
-        let mut inline_advance_adjust_px =
-            line_alignment_adjust_px(base, node.id, total_inline_padding_px);
+        let mut inline_advance_adjust_px = 0.0;
         for item in line.items() {
             let glyph_run = match item {
                 parley::PositionedLayoutItem::GlyphRun(gr) => gr,
@@ -870,23 +876,6 @@ fn inline_padding_right_px(base: &BaseDocument, node_id: usize) -> f64 {
                 }
                 style::values::computed::length_percentage::Unpacked::Percentage(_) => 0.0,
                 style::values::computed::length_percentage::Unpacked::Calc(_) => 0.0,
-            }
-        })
-        .unwrap_or(0.0)
-}
-
-fn line_alignment_adjust_px(base: &BaseDocument, node_id: usize, total_padding_px: f64) -> f64 {
-    base.get_node(node_id)
-        .and_then(|n| n.primary_styles())
-        .map(|styles| {
-            use style::values::specified::TextAlignKeyword;
-
-            match styles.clone_text_align() {
-                TextAlignKeyword::Right | TextAlignKeyword::End | TextAlignKeyword::MozRight => {
-                    -total_padding_px
-                }
-                TextAlignKeyword::Center | TextAlignKeyword::MozCenter => -total_padding_px / 2.0,
-                _ => 0.0,
             }
         })
         .unwrap_or(0.0)
