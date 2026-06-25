@@ -7,7 +7,9 @@
 //! `counter(page)`/`counter(pages)` for the running footer. Coordinates emitted
 //! into the display list are PAGE-LOCAL.
 
-use crate::blitz_engine::{LaidOutBox, LaidOutDoc};
+use std::collections::{HashMap, HashSet};
+
+use crate::blitz_engine::{ImageRun, LaidOutBox, LaidOutDoc};
 use crate::page_css::{resolve_content, MarginBox, PageBox};
 use crate::pdf::{FilledRect, MarginText, PdfPage, RoundedStroke};
 
@@ -23,8 +25,7 @@ pub struct PaginationReport {
     pub page_count: usize,
     /// Resolved running-footer text per page (1-based index 0 = page 1).
     pub footers: Vec<String>,
-    /// True for each page that carries the items-table `<thead>` header band
-    /// (the table-start page and every continuation page alike).
+    /// True for each page that carries at least one repeated table `<thead>` band.
     pub thead_repeated: Vec<bool>,
     /// Whether the oversize-row branch was taken.
     pub oversize_hit: bool,
@@ -46,8 +47,16 @@ struct Fragment {
     top: f64,
     bottom: f64,
     trailing_gap: f64,
-    /// If this fragment is a `<thead>`, its boxes get repeated on continuation.
+    /// Root table node for table-row/header fragments.
+    table_id: Option<usize>,
+    /// If this fragment is a `<thead>`, its boxes get repeated for that table.
     is_thead: bool,
+}
+
+struct TableHeader {
+    boxes: Vec<LaidOutBox>,
+    top: f64,
+    height: f64,
 }
 
 /// Paginate a laid-out document against the `@page` box.
@@ -59,16 +68,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let fragments = build_fragments(doc);
     let table_row_fit_limit = usable_h + TABLE_ROW_BREAK_TOLERANCE_PX;
 
-    // Find the items-table thead so it can be repeated on continuation pages.
-    let thead_boxes: Vec<LaidOutBox> = fragments
-        .iter()
-        .find(|f| f.is_thead)
-        .map(|f| f.boxes.clone())
-        .unwrap_or_default();
-    // The header row's true top/bottom come from its <th> cells (the wrapper
-    // boxes are height-0 at the table top); height is the cell band, not 0.
-    let (thead_top, thead_bottom) = row_span(&thead_boxes);
-    let thead_height = (thead_bottom - thead_top).max(0.0);
+    let headers = table_headers_by_id(&fragments);
 
     // Phase one: break fragments into page slices.
     let mut page_slices: Vec<Vec<LaidOutBox>> = Vec::new();
@@ -81,7 +81,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     // every page break and re-set whenever a tbody row injects the header, so the
     // header leads the table-start page AND every continuation page —
     // including the oversize-branch page — exactly once each.
-    let mut header_on_current = false;
+    let mut headers_on_current: HashSet<usize> = HashSet::new();
 
     let push_page = |current: &mut Vec<LaidOutBox>,
                      page_slices: &mut Vec<Vec<LaidOutBox>>,
@@ -95,10 +95,10 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     // on this page — not at the page top. On a continuation page the cursor is 0
     // (page top, the desired place), but on the table's FIRST page the cursor sits
     // below the title/intro, so injecting at 0 would overlap that preceding content.
-    let inject_header = |current: &mut Vec<LaidOutBox>, cursor: &mut f64| {
-        let mut header = reposition(&thead_boxes, thead_top, *cursor);
-        current.append(&mut header);
-        *cursor += thead_height;
+    let inject_header = |current: &mut Vec<LaidOutBox>, cursor: &mut f64, header: &TableHeader| {
+        let mut header_boxes = reposition(&header.boxes, header.top, *cursor);
+        current.append(&mut header_boxes);
+        *cursor += header.height;
     };
 
     for frag in &fragments {
@@ -108,7 +108,8 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             continue;
         }
         let frag_height = frag.bottom - frag.top;
-        let is_table_row = frag.is_row() && !thead_boxes.is_empty();
+        let table_header = frag.table_id.and_then(|table_id| headers.get(&table_id));
+        let is_table_row = frag.is_row();
         let fit_limit = if is_table_row {
             table_row_fit_limit
         } else {
@@ -118,8 +119,16 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // A table row that lands on a page without the header yet needs the
         // header band placed above it; account for its height in the fit test so
         // the header is never stranded at the bottom of a page.
-        let header_needed = is_table_row && !header_on_current;
-        let lead_h = if header_needed { thead_height } else { 0.0 };
+        let header_needed = is_table_row
+            && table_header.is_some()
+            && frag
+                .table_id
+                .is_some_and(|table_id| !headers_on_current.contains(&table_id));
+        let lead_h = if header_needed {
+            table_header.map(|header| header.height).unwrap_or(0.0)
+        } else {
+            0.0
+        };
         let mut page_gap = if current.is_empty() { 0.0 } else { pending_gap };
         if page_gap > 0.0
             && cursor + frag_height + lead_h + page_gap > fit_limit
@@ -140,15 +149,15 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                     &mut current,
                     &mut page_slices,
                     &mut thead_repeated,
-                    header_on_current,
+                    !headers_on_current.is_empty(),
                 );
             }
             cursor = 0.0;
-            header_on_current = false;
+            headers_on_current.clear();
             // Even an oversize table row keeps its header band on its own page.
-            if is_table_row {
-                inject_header(&mut current, &mut cursor);
-                header_on_current = true;
+            if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
+                inject_header(&mut current, &mut cursor, header);
+                headers_on_current.insert(table_id);
             }
             let mut placed = reposition(&frag.boxes, frag.top, cursor);
             current.append(&mut placed);
@@ -156,10 +165,10 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 &mut current,
                 &mut page_slices,
                 &mut thead_repeated,
-                header_on_current,
+                !headers_on_current.is_empty(),
             );
             cursor = 0.0;
-            header_on_current = false;
+            headers_on_current.clear();
             oversize_hit = true;
             pending_gap = frag.trailing_gap;
             continue;
@@ -173,10 +182,10 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 &mut current,
                 &mut page_slices,
                 &mut thead_repeated,
-                header_on_current,
+                !headers_on_current.is_empty(),
             );
             cursor = 0.0;
-            header_on_current = false;
+            headers_on_current.clear();
             page_gap = 0.0;
         }
 
@@ -185,9 +194,11 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
 
         // A table row entering a page without the header (table start OR a
         // continuation page) gets the header band re-injected at the top first.
-        if is_table_row && !header_on_current {
-            inject_header(&mut current, &mut cursor);
-            header_on_current = true;
+        if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
+            if !headers_on_current.contains(&table_id) {
+                inject_header(&mut current, &mut cursor, header);
+                headers_on_current.insert(table_id);
+            }
         }
 
         let mut placed = reposition(&frag.boxes, frag.top, cursor);
@@ -201,7 +212,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             &mut current,
             &mut page_slices,
             &mut thead_repeated,
-            header_on_current,
+            !headers_on_current.is_empty(),
         );
     }
 
@@ -219,7 +230,8 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
         let page_num = i + 1;
-        let (rects, rounded_strokes, text_runs) = lower_to_display_list(slice, margin_l, margin_t);
+        let (rects, rounded_strokes, images, text_runs) =
+            lower_to_display_list(slice, margin_l, margin_t);
 
         // Resolve and place running header/footer margin-box content. Keep
         // `report.footers` in lock-step with what is actually emitted: a footer
@@ -245,6 +257,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             height_px: page_box.height,
             rects,
             rounded_strokes,
+            images,
             text_runs,
             margin_texts,
         });
@@ -259,6 +272,25 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         },
         pages,
     }
+}
+
+fn table_headers_by_id(fragments: &[Fragment]) -> HashMap<usize, TableHeader> {
+    fragments
+        .iter()
+        .filter(|fragment| fragment.is_thead)
+        .filter_map(|fragment| {
+            let table_id = fragment.table_id?;
+            let (top, bottom) = row_span(&fragment.boxes);
+            Some((
+                table_id,
+                TableHeader {
+                    boxes: fragment.boxes.clone(),
+                    top,
+                    height: (bottom - top).max(0.0),
+                },
+            ))
+        })
+        .collect()
 }
 
 impl Fragment {
@@ -320,6 +352,7 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
                 top,
                 bottom,
                 trailing_gap: b.margin_bottom,
+                table_id: None,
                 is_thead: false,
             });
         }
@@ -426,6 +459,7 @@ fn emit_wrapper_child_fragments(
             top: 0.0,
             bottom: 0.0,
             trailing_gap: 0.0,
+            table_id: None,
             is_thead: false,
         }) {
             let (top, bottom) = span(child);
@@ -434,6 +468,7 @@ fn emit_wrapper_child_fragments(
                 top,
                 bottom,
                 trailing_gap: child_root.margin_bottom,
+                table_id: None,
                 is_thead: false,
             });
         }
@@ -449,6 +484,7 @@ fn emit_wrapper_child_fragments(
 
 /// Break a table subtree into a thead fragment and per-row fragments.
 fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
+    let table_id = subtree.first().map(|b| b.node_id);
     // Group boxes by their nearest enclosing <tr>/<thead>.
     let mut j = 0;
     while j < subtree.len() {
@@ -468,6 +504,7 @@ fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
                     top,
                     bottom,
                     trailing_gap: 0.0,
+                    table_id,
                     is_thead: tag == "thead",
                 });
                 j = end;
@@ -559,6 +596,9 @@ fn reposition(boxes: &[LaidOutBox], from_top: f64, to_top: f64) -> Vec<LaidOutBo
             for run in &mut nb.text_runs {
                 run.origin_y += dy;
             }
+            for image in &mut nb.image_runs {
+                image.y += dy;
+            }
             nb
         })
         .collect()
@@ -575,12 +615,14 @@ fn lower_to_display_list(
 ) -> (
     Vec<FilledRect>,
     Vec<RoundedStroke>,
+    Vec<ImageRun>,
     Vec<crate::blitz_engine::TextRun>,
 ) {
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
     let mut rects = Vec::new();
     let mut rounded_strokes = Vec::new();
+    let mut images = Vec::new();
     let mut runs = Vec::new();
     for b in boxes {
         for rect in b.visual_rects {
@@ -604,13 +646,18 @@ fn lower_to_display_list(
                 color: border.color,
             });
         }
+        for mut image in b.image_runs {
+            image.x += margin_l;
+            image.y += margin_t;
+            images.push(image);
+        }
         for mut r in b.text_runs {
             r.origin_x += margin_l;
             r.origin_y += margin_t;
             runs.push(r);
         }
     }
-    (merge_adjacent_rects(rects), rounded_strokes, runs)
+    (merge_adjacent_rects(rects), rounded_strokes, images, runs)
 }
 
 fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {

@@ -9,10 +9,11 @@
 <!-- npm version badge — enable on first publish:
 [![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora) -->
 
-`npm install` and it works — a native, in-process renderer for **generated documents**
-(invoices, receipts, statements, boletos, notifications). No `apt install`, no Puppeteer
-browser download, no `npx playwright install`, no sidecar service. It produces a **smaller
-PDF** than a headless browser — there's no browser-engine overhead in the output.
+`npm install` and it works — a native, in-process renderer for **generated document HTML**:
+the input can be an invoice, receipt, statement, boleto, notification, or any other template
+that stays inside the supported subset. No `apt install`, no Puppeteer browser download,
+no `npx playwright install`, no sidecar service. It produces a **smaller PDF** than a
+headless browser — there's no browser-engine overhead in the output.
 
 ```bash
 npm install vellora
@@ -119,7 +120,8 @@ partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md
 |---|---|
 | Block & inline text, headings, lists | Supported |
 | Tables (incl. multi-page, repeated header) | Supported |
-| Images: PNG / JPEG / WebP | *Planned* |
+| Images: data URL PNG / JPEG / GIF / WebP | Supported |
+| Images: relative or remote URLs | *Planned* — bundle or inline before render |
 | Inline SVG | Via dev-time `fix` (rasterized to PNG) — *planned* |
 | `@page` margins, page numbers, running header/footer | Supported |
 | Fonts: text shaping + subset embedding | Supported — custom fonts *planned* |
@@ -157,11 +159,12 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
   header/footer; selectable text with subset-embedded fonts; deterministic (byte-identical) output;
   templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
   strict-by-default subset validation; `renderPdf` / `renderPdfToStream`; document metadata
-  (`title`, `creationDate`).
-- **In progress / next** — custom fonts (`fonts` option); image rendering (`<img>`, `images` /
-  `baseUrl`); `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
-  (`{ strict: false }`); more document fixtures (boleto, notification, receipt); bounded,
-  configurable concurrency; prebuilt binaries for macOS + Linux glibc via CI (musl/Alpine is a fast-follow).
+  (`title`, `creationDate`); embedded data-url images; representative HTML fixtures for invoice,
+  receipt, boleto, and notification inputs.
+- **In progress / next** — custom fonts (`fonts` option); image asset bundling/resolution
+  (`images` / `baseUrl`); `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
+  (`{ strict: false }`); bounded, configurable concurrency; prebuilt binaries for macOS + Linux
+  glibc via CI (musl/Alpine is a fast-follow).
 - **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
   benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and a published docs site.

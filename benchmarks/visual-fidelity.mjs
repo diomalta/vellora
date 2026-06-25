@@ -691,7 +691,7 @@ async function main() {
       threshold,
       pdftoppm,
       fontParity: "Puppeteer reference embeds Vellora bundled fonts for fixture aliases.",
-      localImages: "Puppeteer reference inlines local fixture image assets.",
+      localImages: "Both renderers receive local fixture image assets inlined as data URLs.",
       fixtures: selectedFixtures(),
       regions: {
         default: DEFAULT_REGIONS,
@@ -705,12 +705,11 @@ async function main() {
     for (const id of report.config.fixtures) {
       const fixture = loadFixture(id);
       const finalHtml = renderTemplate(fixture.html, fixture.data);
-      const browserHtml = injectBundledFonts(
-        injectBaseTag(inlineLocalImageSources(finalHtml, fixture.dir), fixture.dir),
-      );
+      const imageReadyHtml = inlineLocalImageSources(finalHtml, fixture.dir);
+      const browserHtml = injectBundledFonts(injectBaseTag(imageReadyHtml, fixture.dir));
       const metadata = { title: `visual-fidelity-${id}`, creationDate: FIXED_CREATION_DATE };
 
-      const velloraPdf = await renderPdf(fixture.html, fixture.data, {
+      const velloraPdf = await renderPdf(imageReadyHtml, undefined, {
         strict: true,
         metadata,
       });

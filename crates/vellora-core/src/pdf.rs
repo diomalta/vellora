@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use krilla::color::rgb;
-use krilla::geom::{Path, PathBuilder, Point, Rect};
+use krilla::geom::{Path, PathBuilder, Point, Rect, Size, Transform};
+use krilla::image::Image;
 use krilla::metadata::{DateTime, Metadata};
 use krilla::num::NormalizedF32;
 use krilla::page::PageSettings;
@@ -17,7 +18,7 @@ use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, GlyphId, KrillaGlyph};
 use krilla::{Document, SerializeSettings};
 
-use crate::blitz_engine::TextRun;
+use crate::blitz_engine::{ImageFormat, ImageRun, TextRun};
 
 /// px -> pt scale (layout px @96dpi -> PDF pt @72dpi).
 const PX_TO_PT: f64 = 0.75;
@@ -54,6 +55,8 @@ pub struct PdfPage {
     pub rects: Vec<FilledRect>,
     /// Rounded border strokes (e.g. small badges), page-local px.
     pub rounded_strokes: Vec<RoundedStroke>,
+    /// Raster images, page-local px.
+    pub images: Vec<ImageRun>,
     /// Positioned text runs, page-local px (baseline origin).
     pub text_runs: Vec<TextRun>,
     /// Running header/footer strings shaped by krilla itself (correct glyphs +
@@ -135,6 +138,10 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, String> {
         // Background rects first (painted under text).
         for r in &page.rects {
             draw_rect(&mut surface, r);
+        }
+
+        for image in &page.images {
+            draw_image_run(&mut surface, image)?;
         }
 
         for s in &page.rounded_strokes {
@@ -274,6 +281,37 @@ fn draw_rounded_stroke(surface: &mut krilla::surface::Surface, s: &RoundedStroke
     }));
     surface.draw_path(&path);
     surface.set_stroke(None);
+}
+
+fn draw_image_run(surface: &mut krilla::surface::Surface, run: &ImageRun) -> Result<(), String> {
+    if !run.x.is_finite()
+        || !run.y.is_finite()
+        || !run.width.is_finite()
+        || !run.height.is_finite()
+        || run.width <= 0.0
+        || run.height <= 0.0
+    {
+        return Ok(());
+    }
+
+    let bytes: Vec<u8> = (*run.data).clone();
+    let image = match run.format {
+        ImageFormat::Png => Image::from_png(bytes.into(), false),
+        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
+        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
+        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
+    }
+    .map_err(|e| format!("could not decode embedded image: {e}"))?;
+    let size = Size::from_wh(
+        (run.width * PX_TO_PT) as f32,
+        (run.height * PX_TO_PT) as f32,
+    )
+    .ok_or_else(|| "invalid image size".to_string())?;
+    let transform = Transform::from_translate(content_x_pt(run.x), content_y_pt(run.y));
+    surface.push_transform(&transform);
+    surface.draw_image(image, size);
+    surface.pop();
+    Ok(())
 }
 
 fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Option<Path> {

@@ -2,7 +2,10 @@
 //! table header bands, bordered cells, rounded badges, key-value rows, party
 //! blocks, and totals.
 
-use vellora_core::{blitz_engine, page_css, pagination, render, RenderOptions};
+use vellora_core::{
+    blitz_engine::{self, ImageFormat},
+    page_css, pagination, render, RenderOptions,
+};
 
 const INVOICE: &str = include_str!("fixtures/invoice.html");
 const LIBERATION_SERIF_REGULAR: &[u8] = include_bytes!("../src/fonts/LiberationSerif-Regular.ttf");
@@ -541,6 +544,49 @@ fn rounded_badge_border_lowers_to_pdf_stroke() {
 
     let bytes = render(html.as_bytes(), &opts()).expect("render succeeds");
     assert!(bytes.starts_with(b"%PDF-"), "valid PDF header");
+}
+
+#[test]
+fn data_url_png_image_lowers_to_pdf_image_run_and_xobject() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; }
+        img { width: 24px; height: 16px; }
+    </style></head><body>
+        <img alt="pixel" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==" />
+    </body></html>"#;
+
+    let (laid, pb) = lay_out_for_render(html);
+    let paginated = pagination::paginate(&laid, &pb);
+    assert_eq!(
+        paginated.pages[0].images.len(),
+        1,
+        "one embedded data-url image should be lowered"
+    );
+    let image = &paginated.pages[0].images[0];
+    assert_eq!(image.format, ImageFormat::Png);
+    assert!(
+        (image.width - 24.0).abs() <= 0.5 && (image.height - 16.0).abs() <= 0.5,
+        "image should preserve CSS dimensions, got {}x{}",
+        image.width,
+        image.height
+    );
+
+    let bytes = render(html.as_bytes(), &opts()).expect("render succeeds");
+    let doc = lopdf::Document::load_mem(&bytes).expect("lopdf parses output");
+    let has_image_xobject = doc.objects.values().any(|obj| {
+        let subtype_is_image = |dict: &lopdf::Dictionary| {
+            dict.get(b"Subtype")
+                .and_then(|subtype| subtype.as_name())
+                .is_ok_and(|name| name == b"Image")
+        };
+        obj.as_dict().ok().is_some_and(subtype_is_image)
+            || obj
+                .as_stream()
+                .ok()
+                .is_some_and(|stream| subtype_is_image(&stream.dict))
+    });
+    assert!(has_image_xobject, "PDF should contain an image XObject");
 }
 
 #[test]

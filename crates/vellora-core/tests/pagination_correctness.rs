@@ -233,3 +233,35 @@ fn first_page_table_header_sits_below_preceding_content() {
         "table header (y={header_y}) must sit BELOW the title (y={title_y}), not overlap it at the page top"
     );
 }
+
+#[test]
+fn independent_tables_keep_their_own_thead_headers() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        table { width: 100%; margin-bottom: 24px; }
+        th, td { padding: 4px; }
+    </style></head><body>
+        <table>
+          <thead><tr><th>FIRST TABLE HEADER</th></tr></thead>
+          <tbody><tr><td>first row</td></tr></tbody>
+        </table>
+        <table>
+          <thead><tr><th>SECOND TABLE HEADER</th></tr></thead>
+          <tbody><tr><td>second row</td></tr></tbody>
+        </table>
+    </body></html>"#;
+    let doc = blitz_engine::lay_out(html);
+    let pb = page_css::parse_page_box(html);
+    let paginated = pagination::paginate(&doc, &pb);
+    let page0 = &paginated.pages[0];
+    let has_text = |needle: &str| page0.text_runs.iter().any(|r| r.text.contains(needle));
+
+    assert!(
+        has_text("FIRST TABLE HEADER"),
+        "first table header should be present"
+    );
+    assert!(
+        has_text("SECOND TABLE HEADER"),
+        "second table header should be present; table header repetition must be scoped per table"
+    );
+}

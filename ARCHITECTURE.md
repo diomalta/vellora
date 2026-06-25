@@ -9,8 +9,9 @@
 vellora renders **HTML to PDF for Node.js without a browser** — no Chromium, Puppeteer,
 Playwright, wkhtmltopdf, or OS-level packages. `npm install` and it works.
 
-It is built for **generated documents** — invoices, receipts, statements, boletos,
-notifications — **not** arbitrary interactive web pages. The promise is narrow on purpose:
+It is built for **generated document HTML** — the input might be an invoice, receipt, statement,
+boleto, notification, or another static template — **not** arbitrary interactive web pages. The
+promise is narrow on purpose:
 > Pass document HTML in, get a deterministic PDF out, with zero external runtime dependencies.
 
 ## Principles

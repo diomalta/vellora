@@ -22,7 +22,7 @@ features:
   - title: First PDF with one install
     details: "npm install vellora pulls a prebuilt native addon. You reach a rendered PDF without ever touching a Rust toolchain."
   - title: Strict, documented subset
-    details: A strict-by-default HTML/CSS subset built for generated documents — invoices, receipts, boletos, notifications.
+    details: A strict-by-default HTML/CSS subset for generated document HTML, with fixtures that cover invoices, receipts, boletos, notifications, and similar inputs.
   - title: Deterministic output
     details: Identical inputs produce byte-identical PDFs, so output is reproducible and easy to test.
 ---
