@@ -311,6 +311,8 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
         if is_items_table {
             // Emit a thead fragment + one fragment per tbody <tr>.
             emit_table_fragments(subtree, &mut fragments);
+        } else if should_flatten_transparent_wrapper(b, subtree) {
+            emit_wrapper_child_fragments(subtree, b.margin_bottom, &mut fragments);
         } else {
             let (top, bottom) = span(subtree);
             fragments.push(Fragment {
@@ -326,6 +328,7 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
     }
 
     apply_inter_fragment_gaps(&mut fragments);
+    fragments.retain(fragment_has_renderables);
     fragments
 }
 
@@ -368,6 +371,80 @@ fn is_renderable_flow_tag(tag: &str) -> bool {
         tag,
         "html" | "head" | "meta" | "title" | "style" | "script" | "body"
     )
+}
+
+fn should_flatten_transparent_wrapper(root: &LaidOutBox, subtree: &[LaidOutBox]) -> bool {
+    let Some(tag) = root.tag.as_deref() else {
+        return false;
+    };
+    if !matches!(tag, "div" | "main" | "section" | "article") {
+        return false;
+    }
+    if !root.text_runs.is_empty()
+        || !root.visual_rects.is_empty()
+        || !root.rounded_borders.is_empty()
+    {
+        return false;
+    }
+    let child_depth = root.depth + 1;
+    subtree.iter().skip(1).any(|b| {
+        b.depth == child_depth
+            && b.tag.as_deref().is_some_and(|child_tag| {
+                !matches!(
+                    child_tag,
+                    "html" | "head" | "meta" | "title" | "style" | "script" | "body"
+                )
+            })
+    })
+}
+
+fn emit_wrapper_child_fragments(
+    subtree: &[LaidOutBox],
+    wrapper_trailing_gap: f64,
+    out: &mut Vec<Fragment>,
+) {
+    let root_depth = subtree[0].depth;
+    let child_depth = root_depth + 1;
+    let before = out.len();
+    let mut j = 1;
+    while j < subtree.len() {
+        if subtree[j].depth != child_depth {
+            j += 1;
+            continue;
+        }
+
+        let child_end = subtree_end(subtree, j);
+        let child = &subtree[j..child_end];
+        let child_root = &child[0];
+        let child_is_items_table = child_root.tag.as_deref() == Some("table")
+            && child.iter().any(|x| x.tag.as_deref() == Some("thead"));
+
+        if child_is_items_table {
+            emit_table_fragments(child, out);
+        } else if fragment_has_renderables(&Fragment {
+            boxes: child.to_vec(),
+            top: 0.0,
+            bottom: 0.0,
+            trailing_gap: 0.0,
+            is_thead: false,
+        }) {
+            let (top, bottom) = span(child);
+            out.push(Fragment {
+                boxes: child.to_vec(),
+                top,
+                bottom,
+                trailing_gap: child_root.margin_bottom,
+                is_thead: false,
+            });
+        }
+        j = child_end;
+    }
+
+    if out.len() > before && wrapper_trailing_gap > 0.0 {
+        if let Some(last) = out.last_mut() {
+            last.trailing_gap += wrapper_trailing_gap;
+        }
+    }
 }
 
 /// Break a table subtree into a thead fragment and per-row fragments.

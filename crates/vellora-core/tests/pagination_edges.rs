@@ -84,6 +84,70 @@ fn oversize_row_gets_its_own_page_and_terminates() {
 }
 
 #[test]
+fn oversize_top_level_block_ignores_surrounding_whitespace_fragments() {
+    // Pretty-printed HTML creates top-level whitespace text nodes around the
+    // real body child. Those nodes must not become blank pages when the real
+    // block is taller than the usable page.
+    let html = r#"<!DOCTYPE html><html><body style="margin:0">
+
+            <div style="height:500px">huge</div>
+
+        </body></html>"#;
+    let doc = blitz_engine::lay_out(html);
+    let pb = page(600.0, 240.0, 20.0);
+    let paginated = pagination::paginate(&doc, &pb);
+
+    assert!(paginated.report.oversize_hit, "oversize branch taken");
+    assert_eq!(
+        paginated.report.page_count, 1,
+        "whitespace-only fragments must not create blank pages"
+    );
+    assert!(
+        paginated.pages[0]
+            .text_runs
+            .iter()
+            .any(|run| run.text.contains("huge")),
+        "the real oversize block should be on the only emitted page"
+    );
+}
+
+#[test]
+fn transparent_top_level_wrapper_breaks_between_child_blocks() {
+    // A common document shape wraps the whole page body in a centering/layout
+    // div. If that wrapper has no own paint/text, pagination should split its
+    // block children rather than treating the wrapper as one indivisible
+    // oversize fragment.
+    let html = r#"<!DOCTYPE html><html><body style="margin:0">
+        <div style="width:300px">
+            <section style="height:140px">first block</section>
+            <section style="height:140px">second block</section>
+        </div>
+    </body></html>"#;
+    let doc = blitz_engine::lay_out(html);
+    let pb = page(600.0, 240.0, 20.0);
+    let paginated = pagination::paginate(&doc, &pb);
+
+    assert_eq!(
+        paginated.report.page_count, 2,
+        "transparent wrapper children should paginate as separate fragments"
+    );
+    assert!(
+        paginated.pages[0]
+            .text_runs
+            .iter()
+            .any(|run| run.text.contains("first block")),
+        "first block should be on page 1"
+    );
+    assert!(
+        paginated.pages[1]
+            .text_runs
+            .iter()
+            .any(|run| run.text.contains("second block")),
+        "second block should be on page 2"
+    );
+}
+
+#[test]
 fn no_renderable_content_yields_one_blank_page() {
     let doc = blitz_engine::lay_out("<!DOCTYPE html><html></html>");
     let pb = page(600.0, 800.0, 20.0);

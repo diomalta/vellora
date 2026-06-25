@@ -5,6 +5,8 @@
 use vellora_core::{blitz_engine, page_css, pagination, render, RenderOptions};
 
 const INVOICE: &str = include_str!("fixtures/invoice.html");
+const LIBERATION_SERIF_REGULAR: &[u8] = include_bytes!("../src/fonts/LiberationSerif-Regular.ttf");
+const LIBERATION_MONO_REGULAR: &[u8] = include_bytes!("../src/fonts/LiberationMono-Regular.ttf");
 
 fn opts() -> RenderOptions {
     RenderOptions {
@@ -60,6 +62,42 @@ fn text_run_containing<'a>(
         .flat_map(|b| b.text_runs.iter())
         .find(|run| run.text.contains(needle))
         .unwrap_or_else(|| panic!("missing text run containing {needle:?}"))
+}
+
+#[test]
+fn serif_generic_uses_bundled_serif_face() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: serif; font-size: 12pt; }
+    </style></head><body>
+        <p>Serif body text</p>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let run = text_run_containing(&laid, "Serif body text");
+    assert_eq!(
+        run.font_data.as_slice(),
+        LIBERATION_SERIF_REGULAR,
+        "CSS serif generic should resolve to bundled Liberation Serif regular, not the sans stack"
+    );
+}
+
+#[test]
+fn monospace_generic_uses_bundled_mono_face() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: monospace; font-size: 12pt; }
+    </style></head><body>
+        <p>000123456789</p>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let run = text_run_containing(&laid, "000123456789");
+    assert_eq!(
+        run.font_data.as_slice(),
+        LIBERATION_MONO_REGULAR,
+        "CSS monospace generic should resolve to bundled Liberation Mono regular, not the sans stack"
+    );
 }
 
 #[test]
@@ -153,6 +191,52 @@ fn table_header_background_resolves_css_variables_to_pdf_rects() {
             .iter()
             .map(|r| (r.x, r.y, r.width, r.height, r.color))
             .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn percentage_table_cell_width_preserves_column_proportion() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: serif; font-size: 11pt; }
+        table { width: 600px; border-collapse: collapse; }
+        td { border: 1px solid #ccc; padding: 6pt 8pt; }
+        td.k { width: 38%; font-weight: bold; }
+    </style></head><body>
+        <table>
+            <tr><td class="k">Valor em aberto</td><td>R$ 4.875,50</td></tr>
+            <tr><td class="k">Vencimento original</td><td>15/05/2026</td></tr>
+        </table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .collect();
+    assert!(
+        cells.len() >= 2,
+        "expected at least one two-cell row, got {cells:?}"
+    );
+    let first = cells[0];
+    let second = cells[1];
+    let row_width = second.x + second.width - first.x;
+    let first_ratio = first.width / row_width;
+
+    assert!(
+        (first_ratio - 0.38).abs() < 0.02,
+        "first cell should keep its CSS 38% width, got ratio {first_ratio:.3}; cells={:?}",
+        cells
+            .iter()
+            .map(|c| (c.x, c.width, c.width_pct_hint))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        (second.x - (first.x + first.width)).abs() < 0.5,
+        "second cell should begin at the corrected first-cell edge, got first={:?} second={:?}",
+        (first.x, first.width),
+        (second.x, second.width)
     );
 }
 

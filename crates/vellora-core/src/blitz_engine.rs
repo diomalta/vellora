@@ -31,6 +31,10 @@ pub struct LaidOutBox {
     pub width: f64,
     pub height: f64,
     pub margin_bottom: f64,
+    /// Explicit computed `width: <percentage>` hint from CSS. Blitz currently
+    /// loses this in some auto table layout cases; we keep the hint so the
+    /// post-walk table pass can preserve browser-like column proportions.
+    pub width_pct_hint: Option<f64>,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
@@ -327,6 +331,7 @@ fn resolve_and_walk(
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
     walk(base, root_id, 0.0, 0.0, 0, &mut boxes, &mut face_cache);
+    normalize_table_percent_widths(&mut boxes);
 
     let content_height = base.root_element().final_layout.size.height as f64;
 
@@ -376,6 +381,7 @@ fn walk(
         width: layout.size.width as f64,
         height: layout.size.height as f64,
         margin_bottom: layout.margin.bottom as f64,
+        width_pct_hint: width_percentage_hint(node),
         depth,
         text_runs,
         visual_rects,
@@ -385,6 +391,170 @@ fn walk(
     for &child in &node.children {
         walk(base, child, abs_x, abs_y, depth + 1, out, face_cache);
     }
+}
+
+fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
+    let styles = node.primary_styles()?;
+    match styles.get_position().clone_width() {
+        style::values::generics::length::Size::LengthPercentage(width) => match width.0.unpack() {
+            style::values::computed::length_percentage::Unpacked::Percentage(pct) => {
+                let value = pct.0 as f64;
+                (value > 0.0 && value <= 1.0).then_some(value)
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
+    let mut i = 0;
+    while i < boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") {
+            let end = subtree_end_by_depth(boxes, i);
+            normalize_table_percent_widths_in_range(boxes, i, end);
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
+    let table_depth = boxes[table_idx].depth;
+    let mut i = table_idx + 1;
+    while i < end {
+        match boxes[i].tag.as_deref() {
+            Some("table") if boxes[i].depth > table_depth => {
+                i = subtree_end_by_depth(boxes, i).min(end);
+            }
+            Some("tr") => {
+                let row_end = subtree_end_by_depth(boxes, i).min(end);
+                let cell_depth = boxes[i].depth + 1;
+                let cells: Vec<usize> = (i + 1..row_end)
+                    .filter(|idx| {
+                        boxes[*idx].depth == cell_depth
+                            && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
+                    })
+                    .collect();
+                normalize_row_percent_widths(boxes, &cells);
+                i = row_end;
+            }
+            _ => i += 1,
+        }
+    }
+}
+
+fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
+    if cells.len() < 2 || !cells.iter().any(|idx| boxes[*idx].width_pct_hint.is_some()) {
+        return;
+    }
+
+    let row_left = cells
+        .iter()
+        .map(|idx| boxes[*idx].x)
+        .fold(f64::INFINITY, f64::min);
+    let row_right = cells
+        .iter()
+        .map(|idx| boxes[*idx].x + boxes[*idx].width)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let row_width = row_right - row_left;
+    if !row_width.is_finite() || row_width <= 0.0 {
+        return;
+    }
+
+    let explicit_width: f64 = cells
+        .iter()
+        .filter_map(|idx| boxes[*idx].width_pct_hint)
+        .map(|pct| row_width * pct)
+        .sum();
+    if explicit_width >= row_width {
+        return;
+    }
+
+    let flexible_cells: Vec<usize> = cells
+        .iter()
+        .copied()
+        .filter(|idx| boxes[*idx].width_pct_hint.is_none())
+        .collect();
+    let flexible_current_width: f64 = flexible_cells.iter().map(|idx| boxes[*idx].width).sum();
+    let flexible_width = row_width - explicit_width;
+
+    let mut cursor = row_left;
+    for &idx in cells {
+        let target_width = if let Some(pct) = boxes[idx].width_pct_hint {
+            row_width * pct
+        } else if flexible_cells.is_empty() {
+            boxes[idx].width
+        } else if flexible_current_width > 0.0 {
+            flexible_width * (boxes[idx].width / flexible_current_width)
+        } else {
+            flexible_width / flexible_cells.len() as f64
+        };
+        let target_width = target_width.max(0.0);
+        adjust_subtree_inline_geometry(boxes, idx, cursor, target_width);
+        cursor += target_width;
+    }
+}
+
+fn adjust_subtree_inline_geometry(
+    boxes: &mut [LaidOutBox],
+    root_idx: usize,
+    target_x: f64,
+    target_width: f64,
+) {
+    let old_x = boxes[root_idx].x;
+    let old_width = boxes[root_idx].width;
+    let dx = target_x - old_x;
+    let dw = target_width - old_width;
+    let end = subtree_end_by_depth(boxes, root_idx);
+
+    for (offset, b) in boxes[root_idx..end].iter_mut().enumerate() {
+        let is_root = offset == 0;
+        adjust_visual_inline_geometry(&mut b.visual_rects, old_x, old_width, dx, dw);
+        for border in &mut b.rounded_borders {
+            border.x += dx;
+            if is_root {
+                border.width = (border.width + dw).max(0.0);
+            }
+        }
+        for run in &mut b.text_runs {
+            run.origin_x += dx;
+        }
+        b.x += dx;
+        if is_root {
+            b.width = target_width;
+        }
+    }
+}
+
+fn adjust_visual_inline_geometry(
+    rects: &mut [VisualRect],
+    old_x: f64,
+    old_width: f64,
+    dx: f64,
+    dw: f64,
+) {
+    let old_right = old_x + old_width;
+    for rect in rects {
+        let is_full_width = (rect.x - old_x).abs() < 0.5 && (rect.width - old_width).abs() < 0.5;
+        let is_right_edge = (rect.x + rect.width - old_right).abs() < 0.5;
+        rect.x += dx;
+        if is_full_width {
+            rect.width = (rect.width + dw).max(0.0);
+        } else if is_right_edge {
+            rect.x += dw;
+        }
+    }
+}
+
+fn subtree_end_by_depth(boxes: &[LaidOutBox], start: usize) -> usize {
+    let depth = boxes[start].depth;
+    let mut end = start + 1;
+    while end < boxes.len() && boxes[end].depth > depth {
+        end += 1;
+    }
+    end
 }
 
 /// Read paintable box visuals out of Blitz's computed style/layout, while

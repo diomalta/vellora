@@ -12,6 +12,25 @@ const FIXTURE_IDS = ["invoice", "receipt", "boleto", "notification"];
 const FIXED_CREATION_DATE = "2026-06-25T00:00:00.000Z";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const bundledFontDir = join(repoRoot, "crates", "vellora-core", "src", "fonts");
+
+const FONT_ALIASES = [
+  {
+    families: ["Vellora Sans", "Inter", "Helvetica Neue", "Arial", "Liberation Sans"],
+    regular: "LiberationSans-Regular.ttf",
+    bold: "LiberationSans-Bold.ttf",
+  },
+  {
+    families: ["Liberation Serif", "Georgia", "Times New Roman"],
+    regular: "LiberationSerif-Regular.ttf",
+    bold: "LiberationSerif-Bold.ttf",
+  },
+  {
+    families: ["Vellora Mono", "Liberation Mono", "Menlo", "Consolas", "Courier New"],
+    regular: "LiberationMono-Regular.ttf",
+    bold: "LiberationMono-Bold.ttf",
+  },
+];
 
 const DEFAULT_REGIONS = [
   { id: "page-top", label: "Top spacing and header", x: 0, y: 0, width: 1, height: 0.24 },
@@ -197,7 +216,78 @@ function injectBaseTag(html, fixtureDir) {
   if (/<base[\s>]/i.test(html)) {
     return html;
   }
-  return html.replace(/<head([^>]*)>/i, `<head$1>\n    <base href="${href}">`);
+  return injectIntoHead(html, `    <base href="${href}">`);
+}
+
+function injectIntoHead(html, markup) {
+  return html.replace(/<head([^>]*)>/i, `<head$1>\n${markup}`);
+}
+
+function fontDataUrl(fileName) {
+  const bytes = readFileSync(join(bundledFontDir, fileName)).toString("base64");
+  return `data:font/ttf;base64,${bytes}`;
+}
+
+function bundledFontFaceCss() {
+  const rules = [];
+  for (const alias of FONT_ALIASES) {
+    const regular = fontDataUrl(alias.regular);
+    const bold = fontDataUrl(alias.bold);
+    for (const family of alias.families) {
+      rules.push(
+        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${regular}) format("truetype"); font-weight: 400; font-style: normal; }`,
+      );
+      rules.push(
+        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${bold}) format("truetype"); font-weight: 700; font-style: normal; }`,
+      );
+    }
+  }
+  return rules.join("\n");
+}
+
+let bundledFontsStyle;
+
+function injectBundledFonts(html) {
+  bundledFontsStyle ??= `    <style data-vellora-benchmark-fonts>\n${bundledFontFaceCss()}\n    </style>`;
+  return injectIntoHead(html, bundledFontsStyle);
+}
+
+function imageMimeType(path) {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".png")) {
+    return "image/png";
+  }
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (lower.endsWith(".gif")) {
+    return "image/gif";
+  }
+  if (lower.endsWith(".webp")) {
+    return "image/webp";
+  }
+  if (lower.endsWith(".svg")) {
+    return "image/svg+xml";
+  }
+  return null;
+}
+
+function inlineLocalImageSources(html, fixtureDir) {
+  return html.replace(/\bsrc=(["'])([^"']+)\1/gi, (match, quote, src) => {
+    if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(src)) {
+      return match;
+    }
+    const imagePath = resolve(fixtureDir, src);
+    if (!existsSync(imagePath)) {
+      return match;
+    }
+    const mimeType = imageMimeType(imagePath);
+    if (!mimeType) {
+      return match;
+    }
+    const data = readFileSync(imagePath).toString("base64");
+    return `src=${quote}data:${mimeType};base64,${data}${quote}`;
+  });
 }
 
 function percent(value) {
@@ -600,6 +690,8 @@ async function main() {
       dpi,
       threshold,
       pdftoppm,
+      fontParity: "Puppeteer reference embeds Vellora bundled fonts for fixture aliases.",
+      localImages: "Puppeteer reference inlines local fixture image assets.",
       fixtures: selectedFixtures(),
       regions: {
         default: DEFAULT_REGIONS,
@@ -613,7 +705,9 @@ async function main() {
     for (const id of report.config.fixtures) {
       const fixture = loadFixture(id);
       const finalHtml = renderTemplate(fixture.html, fixture.data);
-      const browserHtml = injectBaseTag(finalHtml, fixture.dir);
+      const browserHtml = injectBundledFonts(
+        injectBaseTag(inlineLocalImageSources(finalHtml, fixture.dir), fixture.dir),
+      );
       const metadata = { title: `visual-fidelity-${id}`, creationDate: FIXED_CREATION_DATE };
 
       const velloraPdf = await renderPdf(fixture.html, fixture.data, {
