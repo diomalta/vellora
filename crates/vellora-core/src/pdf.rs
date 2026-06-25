@@ -23,9 +23,10 @@ use crate::blitz_engine::TextRun;
 const PX_TO_PT: f64 = 0.75;
 
 /// Parley exposes the line baseline used for layout. Chromium's print output
-/// paints the same bundled faces a few CSS px higher when rasterized by Poppler;
-/// compensate at PDF emission so body text aligns with browser print output.
-const TEXT_BASELINE_COMPENSATION_PX: f64 = 4.0;
+/// paints the same bundled faces slightly higher when rasterized by Poppler;
+/// compensate proportionally to the run size instead of using a fixture-sized
+/// absolute offset.
+const TEXT_BASELINE_COMPENSATION_EM: f64 = 0.30;
 
 /// Map a layout Y (CSS px, top-left origin) to a krilla surface Y (pt).
 ///
@@ -335,10 +336,8 @@ fn draw_text_run(
         .collect();
 
     // Baseline origin in krilla's top-left space (px->pt, no flip).
-    let start = Point::from_xy(
-        content_x_pt(run.origin_x),
-        content_y_pt(run.origin_y - TEXT_BASELINE_COMPENSATION_PX),
-    );
+    let baseline_y = run.origin_y - run.font_size as f64 * TEXT_BASELINE_COMPENSATION_EM;
+    let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(baseline_y));
 
     set_solid_fill(surface, run.color);
 
