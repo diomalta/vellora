@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Reproducible, version-pinned HTML->PDF benchmark suite (NOT published; competitor deps live here so they never touch the runtime graph of any vellora package).",
   "scripts": {
-    "bench": "node run.mjs"
+    "bench": "node run.mjs",
+    "visual:fidelity": "node visual-fidelity.mjs"
   },
   "devDependencies": {
     "playwright": "1.48.2",

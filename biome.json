@@ -10,6 +10,7 @@
       "packages/native/index.js",
       "openspec",
       "fixtures",
+      "benchmarks/results/visual-fidelity",
       ".remember",
       ".codex",
       ".claude"

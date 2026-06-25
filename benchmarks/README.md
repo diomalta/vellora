@@ -95,6 +95,28 @@ materially slower than native macOS. A run on a native macOS host is **labeled
 indicative-only** by the harness (`env.indicativeOnly`) and must not be
 published as authoritative.
 
+## Visual fidelity harness
+
+For layout-quality work, run the visual harness against Puppeteer:
+
+```bash
+npm --prefix benchmarks install
+npm run build
+npm run visual:fidelity -- --fixtures invoice,boleto
+```
+
+The harness renders the same finalized HTML through Puppeteer and vellora,
+rasterizes both PDFs with `pdftoppm`, then writes side-by-side PNGs, a red
+pixel-diff overlay, and region-level metrics to
+`benchmarks/results/visual-fidelity/index.html`.
+
+Useful options:
+
+- `--fixture invoice` or `--fixtures invoice,boleto,receipt,notification`
+- `--dpi 144` to control raster density
+- `--threshold 12` to control per-channel pixel mismatch sensitivity
+- `--fail-on-mismatch 0.02` to turn the run into a gate
+
 ## The pdf4.dev "~3 ms warm" figure
 
 Treated as an **unverified external bar**, not a fact: pdf4.dev is a vendor
