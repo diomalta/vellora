@@ -75,6 +75,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+      - run: npm ci
+      - name: Build TypeScript (tsc only — no Rust toolchain)
+        run: npm run build:ts
       - uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.tag }}
