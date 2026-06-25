@@ -31,20 +31,16 @@ jobs:
           - { tag: linux-x64-gnu, target: x86_64-unknown-linux-gnu, runner: ubuntu-24.04 }
           # Native arm64 runner; if unavailable, build via QEMU (see RELEASING.md).
           - { tag: linux-arm64-gnu, target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm }
-          # Built inside a musl container so the addon links musl, not glibc. The napi-rs alpine
-          # image bundles rustup + the musl Rust toolchain (plain node:22-alpine has no rust), and
-          # rustup honors rust-toolchain.toml (1.96.0). verify still uses bare node:22-alpine.
-          - {
-              tag: linux-x64-musl,
-              target: x86_64-unknown-linux-musl,
-              runner: ubuntu-24.04,
-              container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine,
-            }
+          # Cross-compile the musl target on ubuntu — same node 22 + preinstalled rustup (1.96.0)
+          # as the glibc builds; only the musl target + musl-gcc linker differ. (An alpine container
+          # instead hit a too-old bundled node for @napi-rs/cli.) The verify job runs the result on
+          # bare alpine to prove it loads on a real musl host.
+          - { tag: linux-x64-musl, target: x86_64-unknown-linux-musl, runner: ubuntu-24.04 }
     steps:
       - uses: actions/checkout@v4
-      - name: Provision musl build deps
-        if: matrix.container
-        run: apk add --no-cache build-base python3
+      - name: Provision musl cross toolchain
+        if: matrix.tag == 'linux-x64-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -54,6 +50,10 @@ jobs:
           rustup target add ${{ matrix.target }}
       - run: npm ci
       - name: napi build (${{ matrix.target }})
+        # The *_MUSL_* vars only take effect for the musl target; other targets ignore them.
+        env:
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+          CC_x86_64_unknown_linux_musl: musl-gcc
         run: npm -w @vellora/native run build:addon -- --target ${{ matrix.target }}
       - name: Upload prebuilt addon
         uses: actions/upload-artifact@v4
