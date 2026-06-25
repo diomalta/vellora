@@ -139,10 +139,11 @@ jobs:
           npm publish --dry-run --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli
       - name: Publish to npm with provenance
         if: ${{ github.event_name == 'release' }}
-        # Provenance comes from NPM_CONFIG_PROVENANCE (below) — `changeset publish` has no
-        # --provenance flag. napi pre-publish publishes the per-platform packages.
+        # TEMP (completion of the partial 0.1.0-alpha.0 publish): the 7 @vellora/* packages are
+        # already published and immutable, so napi pre-publish would 403 on them and abort. Run only
+        # changeset publish, which skips already-published packages and publishes the missing
+        # `vellora`. RESTORE the `napi pre-publish -t npm` line above this before the next release.
         run: |
-          npm -w @vellora/native exec -- napi pre-publish -t npm
           npx changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
