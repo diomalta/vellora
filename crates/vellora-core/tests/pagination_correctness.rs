@@ -102,6 +102,27 @@ fn every_table_page_carries_the_header_labels() {
 }
 
 #[test]
+fn invoice_first_page_keeps_browser_density_for_line_items() {
+    // Chromium's print layout keeps the 11th invoice row on page 1 for this
+    // fixture. A too-strict page-break threshold leaves a large blank band before
+    // the footer and moves FN-24-10 to page 2.
+    let doc = blitz_engine::lay_out(INVOICE);
+    let pb = page_css::parse_page_box(INVOICE);
+    let paginated = pagination::paginate(&doc, &pb);
+    let page_one = &paginated.pages[0];
+
+    let contains_sku = |sku: &str| page_one.text_runs.iter().any(|r| r.text.contains(sku));
+    assert!(
+        contains_sku("SKU FN-24-10"),
+        "page 1 should include the 11th browser-baseline row"
+    );
+    assert!(
+        !contains_sku("SKU CB-15-100"),
+        "page 1 should not pull in the following row"
+    );
+}
+
+#[test]
 fn totals_block_appears_exactly_once_on_the_last_table_page() {
     // The totals block ("Total a pagar") must be kept once — not repeated
     // across continuation pages, and present on exactly one page.

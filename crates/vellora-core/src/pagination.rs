@@ -30,6 +30,13 @@ pub struct PaginationReport {
     pub oversize_hit: bool,
 }
 
+/// Browser-print engines make page-break decisions after fractional layout and
+/// font fallback. Our deterministic bundled font can push a table row a few px
+/// past the content-box bottom even when Chromium keeps the same row on the
+/// page, leaving a visibly under-filled page. Keep this tolerance small and
+/// table-row-only so it absorbs metric drift without pulling another full row.
+const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
+
 /// A fragmentable unit: a top-level flow item, or a single table row. Each
 /// carries its absolute Y span so the breaker can place it on a page.
 struct Fragment {
@@ -49,6 +56,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let margin_t = page_box.margin_top;
 
     let fragments = build_fragments(doc);
+    let table_row_fit_limit = usable_h + TABLE_ROW_BREAK_TOLERANCE_PX;
 
     // Find the items-table thead so it can be repeated on continuation pages.
     let thead_boxes: Vec<LaidOutBox> = fragments
@@ -100,6 +108,11 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         }
         let frag_height = frag.bottom - frag.top;
         let is_table_row = frag.is_row() && !thead_boxes.is_empty();
+        let fit_limit = if is_table_row {
+            table_row_fit_limit
+        } else {
+            usable_h
+        };
 
         // A table row that lands on a page without the header yet needs the
         // header band placed above it; account for its height in the fit test so
@@ -108,8 +121,8 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         let lead_h = if header_needed { thead_height } else { 0.0 };
         let mut page_gap = if current.is_empty() { 0.0 } else { pending_gap };
         if page_gap > 0.0
-            && cursor + frag_height + lead_h + page_gap > usable_h
-            && cursor + frag_height + lead_h <= usable_h
+            && cursor + frag_height + lead_h + page_gap > fit_limit
+            && cursor + frag_height + lead_h <= fit_limit
         {
             page_gap = 0.0;
         }
@@ -119,7 +132,8 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // fragment is placed in full and bleeds past the page box — krilla does
         // not clip to the media box, so over-height content is emitted, not
         // trimmed. A future clip pass would live in pdf::emit.
-        if frag_height + lead_h + page_gap > usable_h && (frag_height > usable_h || lead_h == 0.0) {
+        if frag_height + lead_h + page_gap > fit_limit && (frag_height > fit_limit || lead_h == 0.0)
+        {
             if !current.is_empty() {
                 push_page(
                     &mut current,
@@ -152,7 +166,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
 
         // Does the fragment (plus any header it needs) fit in the remaining
         // space on the current page?
-        if cursor + frag_height + lead_h + page_gap > usable_h && !current.is_empty() {
+        if cursor + frag_height + lead_h + page_gap > fit_limit && !current.is_empty() {
             // Move whole fragment to next page (rows never split).
             push_page(
                 &mut current,
