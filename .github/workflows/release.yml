@@ -27,7 +27,9 @@ jobs:
       matrix:
         include:
           - { tag: darwin-arm64, target: aarch64-apple-darwin, runner: macos-14 }
-          - { tag: darwin-x64, target: x86_64-apple-darwin, runner: macos-13 }
+          # Cross-compiled on Apple Silicon (macos-14) — macos-13 (Intel) runners are scarce and
+          # being deprecated. darwin arm↔x86 is tier-1; no verify job (can't load x64 on an arm64 runner).
+          - { tag: darwin-x64, target: x86_64-apple-darwin, runner: macos-14 }
           - { tag: linux-x64-gnu, target: x86_64-unknown-linux-gnu, runner: ubuntu-24.04 }
           # Native arm64 runner; if unavailable, build via QEMU (see RELEASING.md).
           - { tag: linux-arm64-gnu, target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm }
@@ -64,7 +66,8 @@ jobs:
       matrix:
         include:
           - { tag: darwin-arm64, runner: macos-14 }
-          - { tag: darwin-x64, runner: macos-13 }
+          # darwin-x64 is cross-compiled on macos-14; no Intel runner to load-test it on, so it has
+          # no verify job (the cross-compile is tier-1 and trusted).
           - { tag: linux-x64-gnu, runner: ubuntu-24.04 }
           - { tag: linux-arm64-gnu, runner: ubuntu-24.04-arm }
     steps:
