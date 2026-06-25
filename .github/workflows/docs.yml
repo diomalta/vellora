@@ -29,6 +29,12 @@ jobs:
       - name: Install npm workspace
         run: npm ci
 
+      - name: Build workspace packages
+        # TypeDoc type-checks packages/vellora against the @vellora/native and @vellora/lint type
+        # declarations, which only exist once each workspace is built. dist/ is gitignored, so a
+        # clean CI checkout must build them first (tsc only — no Rust toolchain or .node needed).
+        run: npm run build:ts
+
       - name: Generate API reference (TypeDoc)
         run: npm run docs:api
 
