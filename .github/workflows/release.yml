@@ -131,13 +131,19 @@ jobs:
         run: node scripts/set-release-version.mjs "$RELEASE_TAG"
       - name: Build TypeScript
         run: npm run build:ts
-      - name: Publish dry-run (always — confirms scope/access before any real publish)
-        run: npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run && npx changeset publish --dry-run || true
+      - name: Publish dry-run (always — validate packaging without uploading)
+        # changeset publish has no --dry-run; pack each publishable package instead (no upload, no
+        # auth). napi pre-publish --dry-run validates the per-platform package prep.
+        run: |
+          npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run
+          npm publish --dry-run --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli
       - name: Publish to npm with provenance
         if: ${{ github.event_name == 'release' }}
+        # Provenance comes from NPM_CONFIG_PROVENANCE (below) — `changeset publish` has no
+        # --provenance flag. napi pre-publish publishes the per-platform packages.
         run: |
           npm -w @vellora/native exec -- napi pre-publish -t npm
-          npx changeset publish --provenance
+          npx changeset publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
