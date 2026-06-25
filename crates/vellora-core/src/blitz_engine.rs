@@ -30,10 +30,24 @@ pub struct LaidOutBox {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub margin_bottom: f64,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
     pub text_runs: Vec<TextRun>,
+    /// Visual box fragments owned by this node: backgrounds and visible borders.
+    pub visual_rects: Vec<VisualRect>,
+}
+
+/// A solid visual rectangle in document coordinates.
+#[derive(Debug, Clone)]
+pub struct VisualRect {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    /// sRGB color (r,g,b) 0..=255, alpha composited over white.
+    pub color: [u8; 3],
 }
 
 /// A shaped run of text (one Parley run within one line), with the glyphs and
@@ -230,18 +244,21 @@ fn walk_for_denied(
     }
 }
 
-/// Parse + style + layout + text in one call. Owns and drops the `!Send`
-/// `BaseDocument` entirely within this function (lifetime contract).
+/// Normalize browser-compatible mixed-flow table cells, then parse + style +
+/// layout + text in one call. Owns and drops the `!Send` `BaseDocument`
+/// entirely within this function (lifetime contract).
 pub fn lay_out(html: &str) -> LaidOutDoc {
-    let doc = build_document(html);
+    let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
+    let doc = build_document(&normalized);
     // Standalone/test helper: lay out against the full A4 width. The render path
     // uses `validate_then_lay_out` with the real @page content width.
     resolve_and_walk(doc, A4_WIDTH_PX)
 }
 
-/// Parse ONCE, run the subset-validation walk over that single parsed tree
-/// (cost model: no second parse), and only if it passes, resolve + walk into
-/// a [`LaidOutDoc`]. The `denied` allowlist is supplied by the validation gate.
+/// Normalize browser-compatible mixed-flow table cells, then parse one Blitz
+/// document, run the subset-validation walk over that single parsed tree, and
+/// only if it passes, resolve + walk into a [`LaidOutDoc`]. The `denied`
+/// allowlist is supplied by the validation gate.
 ///
 /// Returns `Err(DeniedElement)` for the first out-of-subset element; the caller
 /// turns it into a located diagnostic.
@@ -250,8 +267,11 @@ pub fn validate_then_lay_out(
     denied: &[&str],
     content_width_px: f64,
 ) -> Result<LaidOutDoc, DeniedElement> {
-    let doc = build_document(html);
-    // Validate over the SAME parsed document (no re-parse).
+    let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
+    let doc = build_document(&normalized);
+    // Validate and lay out the same Blitz parse. The table-cell normalizer may
+    // parse/serialize HTML before this point, but there is still one Blitz tree
+    // shared by validation and layout.
     if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
         return Err(found);
     }
@@ -324,6 +344,7 @@ fn walk(
         .map(|el| el.name.local.to_string());
 
     let text_runs = read_text_runs(base, node, abs_x, abs_y, face_cache);
+    let visual_rects = read_visual_rects(node, abs_x, abs_y);
 
     out.push(LaidOutBox {
         node_id,
@@ -332,13 +353,134 @@ fn walk(
         y: abs_y,
         width: layout.size.width as f64,
         height: layout.size.height as f64,
+        margin_bottom: layout.margin.bottom as f64,
         depth,
         text_runs,
+        visual_rects,
     });
 
     for &child in &node.children {
         walk(base, child, abs_x, abs_y, depth + 1, out, face_cache);
     }
+}
+
+/// Read paintable box visuals out of Blitz's computed style/layout, while
+/// keeping Blitz/Stylo/Taffy types sealed inside this module.
+fn read_visual_rects(node: &blitz_dom::Node, abs_x: f64, abs_y: f64) -> Vec<VisualRect> {
+    let styles = match node.primary_styles() {
+        Some(styles) => styles,
+        None => return Vec::new(),
+    };
+    let layout = &node.final_layout;
+    let width = layout.size.width as f64;
+    let height = layout.size.height as f64;
+    if width <= 0.0 || height <= 0.0 {
+        return Vec::new();
+    }
+
+    let mut rects = Vec::new();
+    let current_color = styles.clone_color();
+    let background_color = styles
+        .get_background()
+        .background_color
+        .resolve_to_absolute(&current_color);
+    if let Some(color) = absolute_color_to_srgb(background_color) {
+        rects.push(VisualRect {
+            x: abs_x,
+            y: abs_y,
+            width,
+            height,
+            color,
+        });
+    }
+
+    let border = styles.get_border();
+    let sides = [
+        BorderSide {
+            style: border.border_top_style,
+            width: border.border_top_width.0.to_f64_px(),
+            color: border.border_top_color.resolve_to_absolute(&current_color),
+            rect: (abs_x, abs_y, width, border.border_top_width.0.to_f64_px()),
+        },
+        BorderSide {
+            style: border.border_right_style,
+            width: border.border_right_width.0.to_f64_px(),
+            color: border
+                .border_right_color
+                .resolve_to_absolute(&current_color),
+            rect: (
+                abs_x + width - border.border_right_width.0.to_f64_px(),
+                abs_y,
+                border.border_right_width.0.to_f64_px(),
+                height,
+            ),
+        },
+        BorderSide {
+            style: border.border_bottom_style,
+            width: border.border_bottom_width.0.to_f64_px(),
+            color: border
+                .border_bottom_color
+                .resolve_to_absolute(&current_color),
+            rect: (
+                abs_x,
+                abs_y + height - border.border_bottom_width.0.to_f64_px(),
+                width,
+                border.border_bottom_width.0.to_f64_px(),
+            ),
+        },
+        BorderSide {
+            style: border.border_left_style,
+            width: border.border_left_width.0.to_f64_px(),
+            color: border.border_left_color.resolve_to_absolute(&current_color),
+            rect: (abs_x, abs_y, border.border_left_width.0.to_f64_px(), height),
+        },
+    ];
+
+    for side in sides {
+        if side.width <= 0.0 || side.style.none_or_hidden() {
+            continue;
+        }
+        let Some(color) = absolute_color_to_srgb(side.color) else {
+            continue;
+        };
+        let (x, y, width, height) = side.rect;
+        if width > 0.0 && height > 0.0 {
+            rects.push(VisualRect {
+                x,
+                y,
+                width,
+                height,
+                color,
+            });
+        }
+    }
+
+    rects
+}
+
+struct BorderSide {
+    style: style::values::specified::BorderStyle,
+    width: f64,
+    color: style::color::AbsoluteColor,
+    rect: (f64, f64, f64, f64),
+}
+
+/// Convert Stylo absolute colors to opaque sRGB. krilla currently receives
+/// solid rectangles only, so translucent CSS colors are composited over white.
+fn absolute_color_to_srgb(color: style::color::AbsoluteColor) -> Option<[u8; 3]> {
+    let srgb = color.to_color_space(style::color::ColorSpace::Srgb);
+    let comps = srgb.raw_components();
+    let alpha = comps[3].clamp(0.0, 1.0);
+    if alpha <= 0.0 {
+        return None;
+    }
+
+    let channel = |component: f32| -> u8 {
+        let over_white = component.clamp(0.0, 1.0) * alpha + (1.0 - alpha);
+        (over_white * 255.0).round().clamp(0.0, 255.0) as u8
+    };
+
+    Some([channel(comps[0]), channel(comps[1]), channel(comps[2])])
 }
 
 /// Read Parley glyph runs out of an inline-root node (real glyph runs, not
@@ -370,6 +512,19 @@ fn read_text_runs(
     let mut runs = Vec::new();
 
     for line in layout.lines() {
+        let total_inline_padding_px: f64 = line
+            .items()
+            .filter_map(|item| match item {
+                parley::PositionedLayoutItem::GlyphRun(gr) => {
+                    Some(inline_padding_right_px(base, gr.style().brush.id))
+                }
+                _ => None,
+            })
+            .sum();
+        let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
+            std::collections::HashMap::new();
+        let mut inline_advance_adjust_px =
+            line_alignment_adjust_px(base, node.id, total_inline_padding_px);
         for item in line.items() {
             let glyph_run = match item {
                 parley::PositionedLayoutItem::GlyphRun(gr) => gr,
@@ -393,20 +548,37 @@ fn read_text_runs(
 
             let style = glyph_run.style();
             let color = brush_color(base, style.brush.id);
+            let padding_right_px = inline_padding_right_px(base, style.brush.id);
 
+            let key = {
+                let range = run.text_range();
+                (run.index(), range.start, range.end)
+            };
+            let consumed = consumed_by_run.entry(key).or_insert(0);
+            let glyph_count = glyph_run.glyphs().count();
             let mut glyphs = Vec::new();
-            for cluster in run.clusters() {
-                let range = cluster.text_range();
-                for g in cluster.glyphs() {
-                    glyphs.push(Glyph {
-                        id: g.id,
-                        advance: g.advance,
-                        x_offset: g.x,
-                        y_offset: g.y,
-                        text_start: range.start,
-                        text_end: range.end,
-                    });
-                }
+            for (g, range) in run
+                .visual_clusters()
+                .flat_map(|cluster| {
+                    let range = cluster.text_range();
+                    cluster.glyphs().map(move |glyph| (glyph, range.clone()))
+                })
+                .skip(*consumed)
+                .take(glyph_count)
+            {
+                glyphs.push(Glyph {
+                    id: g.id,
+                    advance: g.advance,
+                    x_offset: g.x,
+                    y_offset: g.y,
+                    text_start: range.start,
+                    text_end: range.end,
+                });
+            }
+            *consumed += glyph_count;
+
+            if glyphs.is_empty() {
+                continue;
             }
 
             runs.push(TextRun {
@@ -414,15 +586,53 @@ fn read_text_runs(
                 font_data,
                 font_index,
                 font_size,
-                origin_x: abs_x + glyph_run.offset() as f64,
+                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
                 origin_y: abs_y + glyph_run.baseline() as f64,
                 glyphs,
                 color,
             });
+            inline_advance_adjust_px += padding_right_px;
         }
     }
 
     runs
+}
+
+/// Blitz's inline layout currently exposes glyph positions without advancing
+/// following glyph runs by inline `padding-right` on styled spans. The computed
+/// style is still attached to the run's brush node, so compensate absolute
+/// padding here until upstream starts including it in `GlyphRun::offset()`.
+fn inline_padding_right_px(base: &BaseDocument, node_id: usize) -> f64 {
+    base.get_node(node_id)
+        .and_then(|n| n.primary_styles())
+        .map(|styles| {
+            let padding = styles.get_padding();
+            match padding.padding_right.0.unpack() {
+                style::values::computed::length_percentage::Unpacked::Length(len) => {
+                    len.px() as f64
+                }
+                style::values::computed::length_percentage::Unpacked::Percentage(_) => 0.0,
+                style::values::computed::length_percentage::Unpacked::Calc(_) => 0.0,
+            }
+        })
+        .unwrap_or(0.0)
+}
+
+fn line_alignment_adjust_px(base: &BaseDocument, node_id: usize, total_padding_px: f64) -> f64 {
+    base.get_node(node_id)
+        .and_then(|n| n.primary_styles())
+        .map(|styles| {
+            use style::values::specified::TextAlignKeyword;
+
+            match styles.clone_text_align() {
+                TextAlignKeyword::Right | TextAlignKeyword::End | TextAlignKeyword::MozRight => {
+                    -total_padding_px
+                }
+                TextAlignKeyword::Center | TextAlignKeyword::MozCenter => -total_padding_px / 2.0,
+                _ => 0.0,
+            }
+        })
+        .unwrap_or(0.0)
 }
 
 /// Resolve the computed text color for a styled node into sRGB bytes.

@@ -37,6 +37,7 @@ struct Fragment {
     boxes: Vec<LaidOutBox>,
     top: f64,
     bottom: f64,
+    trailing_gap: f64,
     /// If this fragment is a `<thead>`, its boxes get repeated on continuation.
     is_thead: bool,
 }
@@ -66,6 +67,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut cursor = 0.0_f64; // used height on the current page
     let mut thead_repeated: Vec<bool> = Vec::new();
     let mut oversize_hit = false;
+    let mut pending_gap = 0.0_f64;
     // Tracks whether the current page already carries the header band. Reset on
     // every page break and re-set whenever a tbody row injects the header, so the
     // header leads the table-start page AND every continuation page —
@@ -104,13 +106,20 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // the header is never stranded at the bottom of a page.
         let header_needed = is_table_row && !header_on_current;
         let lead_h = if header_needed { thead_height } else { 0.0 };
+        let mut page_gap = if current.is_empty() { 0.0 } else { pending_gap };
+        if page_gap > 0.0
+            && cursor + frag_height + lead_h + page_gap > usable_h
+            && cursor + frag_height + lead_h <= usable_h
+        {
+            page_gap = 0.0;
+        }
 
         // Oversized single fragment (e.g. a row taller than an empty page):
         // own page, then terminate that fragment (never split mid-row). The
         // fragment is placed in full and bleeds past the page box — krilla does
         // not clip to the media box, so over-height content is emitted, not
         // trimmed. A future clip pass would live in pdf::emit.
-        if frag_height + lead_h > usable_h && (frag_height > usable_h || lead_h == 0.0) {
+        if frag_height + lead_h + page_gap > usable_h && (frag_height > usable_h || lead_h == 0.0) {
             if !current.is_empty() {
                 push_page(
                     &mut current,
@@ -137,12 +146,13 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             cursor = 0.0;
             header_on_current = false;
             oversize_hit = true;
+            pending_gap = frag.trailing_gap;
             continue;
         }
 
         // Does the fragment (plus any header it needs) fit in the remaining
         // space on the current page?
-        if cursor + frag_height + lead_h > usable_h && !current.is_empty() {
+        if cursor + frag_height + lead_h + page_gap > usable_h && !current.is_empty() {
             // Move whole fragment to next page (rows never split).
             push_page(
                 &mut current,
@@ -152,7 +162,11 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             );
             cursor = 0.0;
             header_on_current = false;
+            page_gap = 0.0;
         }
+
+        let page_gap = if current.is_empty() { 0.0 } else { page_gap };
+        cursor += page_gap;
 
         // A table row entering a page without the header (table start OR a
         // continuation page) gets the header band re-injected at the top first.
@@ -164,6 +178,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         let mut placed = reposition(&frag.boxes, frag.top, cursor);
         current.append(&mut placed);
         cursor += frag_height;
+        pending_gap = frag.trailing_gap;
     }
 
     if !current.is_empty() {
@@ -286,6 +301,7 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
                 boxes: subtree.to_vec(),
                 top,
                 bottom,
+                trailing_gap: b.margin_bottom,
                 is_thead: false,
             });
         }
@@ -316,6 +332,7 @@ fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
                     boxes: group.to_vec(),
                     top,
                     bottom,
+                    trailing_gap: 0.0,
                     is_thead: tag == "thead",
                 });
                 j = end;
@@ -398,6 +415,9 @@ fn reposition(boxes: &[LaidOutBox], from_top: f64, to_top: f64) -> Vec<LaidOutBo
         .map(|b| {
             let mut nb = b.clone();
             nb.y += dy;
+            for rect in &mut nb.visual_rects {
+                rect.y += dy;
+            }
             for run in &mut nb.text_runs {
                 run.origin_y += dy;
             }
@@ -417,15 +437,25 @@ fn lower_to_display_list(
 ) -> (Vec<FilledRect>, Vec<crate::blitz_engine::TextRun>) {
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
+    let mut rects = Vec::new();
     let mut runs = Vec::new();
     for b in boxes {
+        for rect in b.visual_rects {
+            rects.push(FilledRect {
+                x: rect.x + margin_l,
+                y: rect.y + margin_t,
+                width: rect.width,
+                height: rect.height,
+                color: rect.color,
+            });
+        }
         for mut r in b.text_runs {
             r.origin_x += margin_l;
             r.origin_y += margin_t;
             runs.push(r);
         }
     }
-    (Vec::new(), runs)
+    (rects, runs)
 }
 
 /// Build a running-header/footer `MarginText` centered in the top/bottom margin
