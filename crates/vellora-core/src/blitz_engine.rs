@@ -37,6 +37,8 @@ pub struct LaidOutBox {
     pub text_runs: Vec<TextRun>,
     /// Visual box fragments owned by this node: backgrounds and visible borders.
     pub visual_rects: Vec<VisualRect>,
+    /// Rounded border outlines owned by this node.
+    pub rounded_borders: Vec<RoundedBorder>,
 }
 
 /// A solid visual rectangle in document coordinates.
@@ -46,6 +48,20 @@ pub struct VisualRect {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    /// sRGB color (r,g,b) 0..=255, alpha composited over white.
+    pub color: [u8; 3],
+}
+
+/// A rounded, uniform border outline in document coordinates.
+#[derive(Debug, Clone)]
+pub struct RoundedBorder {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub radius_x: f64,
+    pub radius_y: f64,
+    pub stroke_width: f64,
     /// sRGB color (r,g,b) 0..=255, alpha composited over white.
     pub color: [u8; 3],
 }
@@ -344,7 +360,7 @@ fn walk(
         .map(|el| el.name.local.to_string());
 
     let text_runs = read_text_runs(base, node, abs_x, abs_y, face_cache);
-    let visual_rects = read_visual_rects(node, abs_x, abs_y);
+    let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y);
 
     out.push(LaidOutBox {
         node_id,
@@ -357,6 +373,7 @@ fn walk(
         depth,
         text_runs,
         visual_rects,
+        rounded_borders,
     });
 
     for &child in &node.children {
@@ -366,19 +383,24 @@ fn walk(
 
 /// Read paintable box visuals out of Blitz's computed style/layout, while
 /// keeping Blitz/Stylo/Taffy types sealed inside this module.
-fn read_visual_rects(node: &blitz_dom::Node, abs_x: f64, abs_y: f64) -> Vec<VisualRect> {
+fn read_visuals(
+    node: &blitz_dom::Node,
+    abs_x: f64,
+    abs_y: f64,
+) -> (Vec<VisualRect>, Vec<RoundedBorder>) {
     let styles = match node.primary_styles() {
         Some(styles) => styles,
-        None => return Vec::new(),
+        None => return (Vec::new(), Vec::new()),
     };
     let layout = &node.final_layout;
     let width = layout.size.width as f64;
     let height = layout.size.height as f64;
     if width <= 0.0 || height <= 0.0 {
-        return Vec::new();
+        return (Vec::new(), Vec::new());
     }
 
     let mut rects = Vec::new();
+    let mut rounded_borders = Vec::new();
     let current_color = styles.clone_color();
     let background_color = styles
         .get_background()
@@ -395,6 +417,13 @@ fn read_visual_rects(node: &blitz_dom::Node, abs_x: f64, abs_y: f64) -> Vec<Visu
     }
 
     let border = styles.get_border();
+    if let Some(outline) =
+        read_uniform_rounded_border(border, &current_color, abs_x, abs_y, width, height)
+    {
+        rounded_borders.push(outline);
+        return (rects, rounded_borders);
+    }
+
     let sides = [
         BorderSide {
             style: border.border_top_style,
@@ -455,7 +484,91 @@ fn read_visual_rects(node: &blitz_dom::Node, abs_x: f64, abs_y: f64) -> Vec<Visu
         }
     }
 
-    rects
+    (rects, rounded_borders)
+}
+
+fn read_uniform_rounded_border(
+    border: &style::properties::style_structs::Border,
+    current_color: &style::color::AbsoluteColor,
+    abs_x: f64,
+    abs_y: f64,
+    width: f64,
+    height: f64,
+) -> Option<RoundedBorder> {
+    let top_w = border.border_top_width.0.to_f64_px();
+    let right_w = border.border_right_width.0.to_f64_px();
+    let bottom_w = border.border_bottom_width.0.to_f64_px();
+    let left_w = border.border_left_width.0.to_f64_px();
+    if top_w <= 0.0
+        || (top_w - right_w).abs() > 0.01
+        || (top_w - bottom_w).abs() > 0.01
+        || (top_w - left_w).abs() > 0.01
+    {
+        return None;
+    }
+
+    let style = border.border_top_style;
+    if style.none_or_hidden()
+        || border.border_right_style != style
+        || border.border_bottom_style != style
+        || border.border_left_style != style
+    {
+        return None;
+    }
+
+    let top_color = border.border_top_color.resolve_to_absolute(current_color);
+    let right_color = border.border_right_color.resolve_to_absolute(current_color);
+    let bottom_color = border
+        .border_bottom_color
+        .resolve_to_absolute(current_color);
+    let left_color = border.border_left_color.resolve_to_absolute(current_color);
+    let color = absolute_color_to_srgb(top_color)?;
+    if absolute_color_to_srgb(right_color) != Some(color)
+        || absolute_color_to_srgb(bottom_color) != Some(color)
+        || absolute_color_to_srgb(left_color) != Some(color)
+    {
+        return None;
+    }
+
+    let radii = [
+        resolve_radius(&border.border_top_left_radius, width, height),
+        resolve_radius(&border.border_top_right_radius, width, height),
+        resolve_radius(&border.border_bottom_right_radius, width, height),
+        resolve_radius(&border.border_bottom_left_radius, width, height),
+    ];
+    let (rx, ry) = radii[0];
+    if rx <= 0.0
+        || ry <= 0.0
+        || radii
+            .iter()
+            .any(|(x, y)| (*x - rx).abs() > 0.01 || (*y - ry).abs() > 0.01)
+    {
+        return None;
+    }
+
+    Some(RoundedBorder {
+        x: abs_x,
+        y: abs_y,
+        width,
+        height,
+        radius_x: rx.min(width / 2.0),
+        radius_y: ry.min(height / 2.0),
+        stroke_width: top_w,
+        color,
+    })
+}
+
+fn resolve_radius(
+    radius: &style::values::computed::BorderCornerRadius,
+    width: f64,
+    height: f64,
+) -> (f64, f64) {
+    let resolve_w = style::values::computed::CSSPixelLength::new(width as f32);
+    let resolve_h = style::values::computed::CSSPixelLength::new(height as f32);
+    (
+        radius.0.width.0.resolve(resolve_w).px() as f64,
+        radius.0.height.0.resolve(resolve_h).px() as f64,
+    )
 }
 
 struct BorderSide {

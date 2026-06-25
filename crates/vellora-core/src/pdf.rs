@@ -13,7 +13,7 @@ use krilla::geom::{Path, PathBuilder, Point, Rect};
 use krilla::metadata::{DateTime, Metadata};
 use krilla::num::NormalizedF32;
 use krilla::page::PageSettings;
-use krilla::paint::Fill;
+use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, GlyphId, KrillaGlyph};
 use krilla::{Document, SerializeSettings};
 
@@ -46,6 +46,8 @@ pub struct PdfPage {
     pub height_px: f64,
     /// Filled rectangles (e.g. table header bands), page-local px.
     pub rects: Vec<FilledRect>,
+    /// Rounded border strokes (e.g. small badges), page-local px.
+    pub rounded_strokes: Vec<RoundedStroke>,
     /// Positioned text runs, page-local px (baseline origin).
     pub text_runs: Vec<TextRun>,
     /// Running header/footer strings shaped by krilla itself (correct glyphs +
@@ -72,6 +74,18 @@ pub struct FilledRect {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub color: [u8; 3],
+}
+
+/// A rounded rectangle outline drawn with a PDF stroke.
+pub struct RoundedStroke {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub radius_x: f64,
+    pub radius_y: f64,
+    pub stroke_width: f64,
     pub color: [u8; 3],
 }
 
@@ -115,6 +129,10 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, String> {
         // Background rects first (painted under text).
         for r in &page.rects {
             draw_rect(&mut surface, r);
+        }
+
+        for s in &page.rounded_strokes {
+            draw_rounded_stroke(&mut surface, s);
         }
 
         for run in &page.text_runs {
@@ -205,6 +223,78 @@ fn draw_rect(surface: &mut krilla::surface::Surface, r: &FilledRect) {
         }
     };
     surface.draw_path(&path);
+}
+
+fn draw_rounded_stroke(surface: &mut krilla::surface::Surface, s: &RoundedStroke) {
+    debug_assert!(
+        s.x.is_finite()
+            && s.y.is_finite()
+            && s.width.is_finite()
+            && s.height.is_finite()
+            && s.radius_x.is_finite()
+            && s.radius_y.is_finite()
+            && s.stroke_width.is_finite()
+            && s.width > 0.0
+            && s.height > 0.0
+            && s.radius_x > 0.0
+            && s.radius_y > 0.0
+            && s.stroke_width > 0.0,
+        "draw_rounded_stroke got degenerate geometry"
+    );
+
+    let half = s.stroke_width / 2.0;
+    let x0 = s.x + half;
+    let y0 = s.y + half;
+    let x1 = s.x + s.width - half;
+    let y1 = s.y + s.height - half;
+    if x1 <= x0 || y1 <= y0 {
+        return;
+    }
+    let rx = (s.radius_x - half).max(0.0).min((x1 - x0) / 2.0);
+    let ry = (s.radius_y - half).max(0.0).min((y1 - y0) / 2.0);
+    if rx <= 0.0 || ry <= 0.0 {
+        return;
+    }
+
+    let path = match rounded_rect_path(x0, y0, x1, y1, rx, ry) {
+        Some(path) => path,
+        None => return,
+    };
+    surface.set_fill(None);
+    surface.set_stroke(Some(Stroke {
+        paint: rgb::Color::new(s.color[0], s.color[1], s.color[2]).into(),
+        width: (s.stroke_width * PX_TO_PT) as f32,
+        ..Default::default()
+    }));
+    surface.draw_path(&path);
+    surface.set_stroke(None);
+}
+
+fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Option<Path> {
+    // Cubic approximation of a quarter ellipse.
+    const KAPPA: f64 = 0.552_284_749_830_793_6;
+
+    let x0 = content_x_pt(x0);
+    let y0 = content_y_pt(y0);
+    let x1 = content_x_pt(x1);
+    let y1 = content_y_pt(y1);
+    let rx = (rx * PX_TO_PT) as f32;
+    let ry = (ry * PX_TO_PT) as f32;
+    let ox = (rx as f64 * KAPPA) as f32;
+    let oy = (ry as f64 * KAPPA) as f32;
+
+    let mut pb = PathBuilder::new();
+    pb.move_to(x0 + rx, y0);
+    pb.line_to(x1 - rx, y0);
+    pb.cubic_to(x1 - rx + ox, y0, x1, y0 + ry - oy, x1, y0 + ry);
+    pb.line_to(x1, y1 - ry);
+    pb.cubic_to(x1, y1 - ry + oy, x1 - rx + ox, y1, x1 - rx, y1);
+    pb.line_to(x0 + rx, y1);
+    pb.cubic_to(x0 + rx - ox, y1, x0, y1 - ry + oy, x0, y1 - ry);
+    pb.line_to(x0, y0 + ry);
+    pb.cubic_to(x0, y0 + ry - oy, x0 + rx - ox, y0, x0 + rx, y0);
+    pb.close();
+    pb.finish()
 }
 
 fn draw_text_run(

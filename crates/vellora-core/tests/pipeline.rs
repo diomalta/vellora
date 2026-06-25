@@ -413,6 +413,44 @@ fn table_header_background_lowers_to_pdf_rects() {
 }
 
 #[test]
+fn table_header_background_merges_across_adjacent_cells() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { font-family: sans-serif; font-size: 12px; }
+        table { border-collapse: collapse; width: 420px; }
+        th { background: #2f5d8a; color: white; padding: 8px; }
+    </style></head><body>
+        <table>
+            <thead><tr><th>ITEM</th><th>QTD.</th><th>PRECO UNIT.</th><th>TOTAL</th></tr></thead>
+            <tbody><tr><td>Body</td><td>1</td><td>R$ 1,00</td><td>R$ 1,00</td></tr></tbody>
+        </table>
+    </body></html>"#;
+
+    let laid = blitz_engine::lay_out(html);
+    let pb = page_css::parse_page_box(html);
+    let paginated = pagination::paginate(&laid, &pb);
+    let header_rects: Vec<_> = paginated.pages[0]
+        .rects
+        .iter()
+        .filter(|r| r.color == [47, 93, 138] && r.height > 10.0)
+        .collect();
+    assert_eq!(
+        header_rects.len(),
+        1,
+        "adjacent header cell backgrounds should merge into one band, got {:?}",
+        header_rects
+            .iter()
+            .map(|r| (r.x, r.y, r.width, r.height, r.color))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        header_rects[0].width > 300.0,
+        "merged header band should cover the table width, got {:?}",
+        (header_rects[0].x, header_rects[0].width)
+    );
+}
+
+#[test]
 fn table_header_background_resolves_css_variables_to_pdf_rects() {
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; margin: 18mm; }
@@ -545,6 +583,46 @@ fn table_cell_borders_lower_to_pdf_rects() {
             .map(|r| (r.x, r.y, r.width, r.height, r.color))
             .collect::<Vec<_>>()
     );
+}
+
+#[test]
+fn rounded_badge_border_lowers_to_pdf_stroke() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { font-family: sans-serif; font-size: 12px; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border: 1px solid #2f5d8a;
+            border-radius: 8px;
+            color: #2f5d8a;
+            font-weight: 700;
+        }
+    </style></head><body>
+        <span class="badge">EM ABERTO</span>
+    </body></html>"#;
+
+    let laid = blitz_engine::lay_out(html);
+    let pb = page_css::parse_page_box(html);
+    let paginated = pagination::paginate(&laid, &pb);
+    assert!(
+        paginated.pages[0].rounded_strokes.iter().any(|s| {
+            s.color == [47, 93, 138]
+                && s.width > 40.0
+                && s.height > 10.0
+                && s.radius_x > 4.0
+                && s.radius_y > 4.0
+        }),
+        "expected rounded badge border stroke, got {:?}",
+        paginated.pages[0]
+            .rounded_strokes
+            .iter()
+            .map(|s| (s.x, s.y, s.width, s.height, s.radius_x, s.radius_y, s.color))
+            .collect::<Vec<_>>()
+    );
+
+    let bytes = render(html.as_bytes(), &opts()).expect("render succeeds");
+    assert!(bytes.starts_with(b"%PDF-"), "valid PDF header");
 }
 
 #[test]

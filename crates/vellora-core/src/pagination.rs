@@ -9,7 +9,7 @@
 
 use crate::blitz_engine::{LaidOutBox, LaidOutDoc};
 use crate::page_css::{resolve_content, MarginBox, PageBox};
-use crate::pdf::{FilledRect, MarginText, PdfPage};
+use crate::pdf::{FilledRect, MarginText, PdfPage, RoundedStroke};
 
 /// The result of pagination: ready-to-emit pages plus a small report used by
 /// tests/assertions (page count, per-page footer text, thead-repeat flags).
@@ -36,6 +36,7 @@ pub struct PaginationReport {
 /// page, leaving a visibly under-filled page. Keep this tolerance small and
 /// table-row-only so it absorbs metric drift without pulling another full row.
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
+const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
 
 /// A fragmentable unit: a top-level flow item, or a single table row. Each
 /// carries its absolute Y span so the breaker can place it on a page.
@@ -218,7 +219,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
         let page_num = i + 1;
-        let (rects, text_runs) = lower_to_display_list(slice, margin_l, margin_t);
+        let (rects, rounded_strokes, text_runs) = lower_to_display_list(slice, margin_l, margin_t);
 
         // Resolve and place running header/footer margin-box content. Keep
         // `report.footers` in lock-step with what is actually emitted: a footer
@@ -243,6 +244,7 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             width_px: page_box.width,
             height_px: page_box.height,
             rects,
+            rounded_strokes,
             text_runs,
             margin_texts,
         });
@@ -432,6 +434,9 @@ fn reposition(boxes: &[LaidOutBox], from_top: f64, to_top: f64) -> Vec<LaidOutBo
             for rect in &mut nb.visual_rects {
                 rect.y += dy;
             }
+            for border in &mut nb.rounded_borders {
+                border.y += dy;
+            }
             for run in &mut nb.text_runs {
                 run.origin_y += dy;
             }
@@ -448,10 +453,15 @@ fn lower_to_display_list(
     boxes: Vec<LaidOutBox>,
     margin_l: f64,
     margin_t: f64,
-) -> (Vec<FilledRect>, Vec<crate::blitz_engine::TextRun>) {
+) -> (
+    Vec<FilledRect>,
+    Vec<RoundedStroke>,
+    Vec<crate::blitz_engine::TextRun>,
+) {
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
     let mut rects = Vec::new();
+    let mut rounded_strokes = Vec::new();
     let mut runs = Vec::new();
     for b in boxes {
         for rect in b.visual_rects {
@@ -463,13 +473,51 @@ fn lower_to_display_list(
                 color: rect.color,
             });
         }
+        for border in b.rounded_borders {
+            rounded_strokes.push(RoundedStroke {
+                x: border.x + margin_l,
+                y: border.y + margin_t,
+                width: border.width,
+                height: border.height,
+                radius_x: border.radius_x,
+                radius_y: border.radius_y,
+                stroke_width: border.stroke_width,
+                color: border.color,
+            });
+        }
         for mut r in b.text_runs {
             r.origin_x += margin_l;
             r.origin_y += margin_t;
             runs.push(r);
         }
     }
-    (rects, runs)
+    (merge_adjacent_rects(rects), rounded_strokes, runs)
+}
+
+fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
+    rects.sort_by(|a, b| {
+        a.y.partial_cmp(&b.y)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal))
+    });
+
+    let mut merged: Vec<FilledRect> = Vec::new();
+    for rect in rects {
+        if let Some(prev) = merged.last_mut() {
+            let gap = rect.x - (prev.x + prev.width);
+            if prev.color == rect.color
+                && (prev.y - rect.y).abs() <= 0.5
+                && (prev.height - rect.height).abs() <= 0.5
+                && (-0.5..=RECT_MERGE_TOLERANCE_PX).contains(&gap)
+            {
+                let right = (rect.x + rect.width).max(prev.x + prev.width);
+                prev.width = right - prev.x;
+                continue;
+            }
+        }
+        merged.push(rect);
+    }
+    merged
 }
 
 /// Build a running-header/footer `MarginText` centered in the top/bottom margin
