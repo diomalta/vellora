@@ -31,16 +31,11 @@ jobs:
           - { tag: linux-x64-gnu, target: x86_64-unknown-linux-gnu, runner: ubuntu-24.04 }
           # Native arm64 runner; if unavailable, build via QEMU (see RELEASING.md).
           - { tag: linux-arm64-gnu, target: aarch64-unknown-linux-gnu, runner: ubuntu-24.04-arm }
-          # Cross-compile the musl target on ubuntu — same node 22 + preinstalled rustup (1.96.0)
-          # as the glibc builds; only the musl target + musl-gcc linker differ. (An alpine container
-          # instead hit a too-old bundled node for @napi-rs/cli.) The verify job runs the result on
-          # bare alpine to prove it loads on a real musl host.
-          - { tag: linux-x64-musl, target: x86_64-unknown-linux-musl, runner: ubuntu-24.04 }
+          # linux-x64-musl is a fast-follow: cross-compiling musl with panic=unwind needs libgcc_s
+          # that musl-gcc can't supply on a glibc host, and the native-musl (alpine) image ships a
+          # node too old for @napi-rs/cli. Reserved as null in the loader's RESOLUTION_TABLE.
     steps:
       - uses: actions/checkout@v4
-      - name: Provision musl cross toolchain
-        if: matrix.tag == 'linux-x64-musl'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -50,10 +45,6 @@ jobs:
           rustup target add ${{ matrix.target }}
       - run: npm ci
       - name: napi build (${{ matrix.target }})
-        # The *_MUSL_* vars only take effect for the musl target; other targets ignore them.
-        env:
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
-          CC_x86_64_unknown_linux_musl: musl-gcc
         run: npm -w @vellora/native run build:addon -- --target ${{ matrix.target }}
       - name: Upload prebuilt addon
         uses: actions/upload-artifact@v4
@@ -76,8 +67,6 @@ jobs:
           - { tag: darwin-x64, runner: macos-13 }
           - { tag: linux-x64-gnu, runner: ubuntu-24.04 }
           - { tag: linux-arm64-gnu, runner: ubuntu-24.04-arm }
-          # Alpine = musl: confirms the linux-*-musl prebuild loads on a glibc-free host.
-          - { tag: linux-x64-musl, runner: ubuntu-24.04, container: node:22-alpine }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

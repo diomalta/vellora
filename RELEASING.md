@@ -17,11 +17,10 @@ addon packages under `packages/native/npm/*`. Versioning is driven by
 | `darwin-x64`        | `x86_64-apple-darwin`         | `macos-13`                              |
 | `linux-x64-gnu`     | `x86_64-unknown-linux-gnu`    | `ubuntu-24.04`                          |
 | `linux-arm64-gnu`   | `aarch64-unknown-linux-gnu`   | `ubuntu-24.04-arm` (or QEMU — see below)|
-| `linux-x64-musl`    | `x86_64-unknown-linux-musl`   | `ubuntu-24.04` + `node:22-alpine`       |
 
 **Windows is not supported yet** — `win32-*` is a planned fast-follow. The loader throws an
 actionable error naming Windows as not-yet-supported, and `RESOLUTION_TABLE` reserves
-`linux-arm64-musl` (no published package yet).
+`linux-x64-musl` and `linux-arm64-musl` (no published package yet — musl needs a native-musl build host).
 
 ### arm64 build without a native runner (QEMU fallback)
 
@@ -48,7 +47,7 @@ Emulated builds are slower; prefer a native arm64 runner when available.
    ```
 3. **Run the release workflow** from the Actions tab (`workflow_dispatch`):
    - Leave `dry_run = true` first. This builds every target, verifies a **clean install renders a
-     PDF with no Rust toolchain** on each platform (including Alpine/musl), and runs a publish
+     PDF with no Rust toolchain** on each platform, and runs a publish
      dry-run — without publishing anything.
    - When the dry-run is green, run again with `dry_run = false` to publish.
 4. The publish step is **gated** on all `build` and `verify` jobs passing, applies the pending

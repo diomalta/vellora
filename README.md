@@ -1,6 +1,6 @@
 # vellora
 
-**HTML → PDF for Node.js. No Chromium. No browser. No system install — runs on Alpine/musl and AWS Lambda.**
+**HTML → PDF for Node.js. No Chromium. No browser. No system install — runs on slim Linux images and AWS Lambda.**
 
 [![CI](https://github.com/diomalta/vellora/actions/workflows/ci.yml/badge.svg)](https://github.com/diomalta/vellora/actions/workflows/ci.yml)
 ![license: MIT](https://img.shields.io/badge/license-MIT-blue)
@@ -34,7 +34,7 @@ of system libraries in your Docker image, multi-second cold starts, and a per-re
 footprint that can OOM-kill under concurrency. vellora takes a different path — a **native addon
 (napi-rs) that renders inside your Node process**:
 
-- ✅ `npm install`, nothing installed "outside" (runs on Alpine/musl + Lambda arm64)
+- ✅ `npm install`, nothing installed "outside" (slim Linux + Lambda arm64; musl/Alpine prebuilt is a fast-follow)
 - ✅ no browser to launch and no subprocess per render
 - ✅ designed for bounded memory + real concurrency on the libuv thread pool
 - ✅ selectable, searchable text + subset-embedded fonts (small PDFs)
@@ -161,7 +161,7 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 - **In progress / next** — custom fonts (`fonts` option); image rendering (`<img>`, `images` /
   `baseUrl`); `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
   (`{ strict: false }`); more document fixtures (boleto, notification, receipt); bounded,
-  configurable concurrency; prebuilt binaries for macOS + Linux gnu/musl via CI.
+  configurable concurrency; prebuilt binaries for macOS + Linux glibc via CI (musl/Alpine is a fast-follow).
 - **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
   benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and a published docs site.
@@ -176,7 +176,7 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 | Package | What |
 |---|---|
 | `vellora` | Public API + templating |
-| `@vellora/native` | Prebuilt napi addons (linux gnu+musl, macOS) |
+| `@vellora/native` | Prebuilt napi addons (linux glibc, macOS) |
 | `@vellora/lint` | Dev-time `diagnose` + `fix` *(stub)* |
 | `@vellora/cli` | `render` / `lint` / `fix` commands *(stub)* |
 

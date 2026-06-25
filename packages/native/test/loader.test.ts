@@ -46,13 +46,8 @@ test("resolution table publishes the launch matrix; later-phase key is reserved"
     .filter(([, pkg]) => pkg !== null)
     .map(([key]) => key)
     .sort();
-  expect(published).toEqual([
-    "darwin-arm64",
-    "darwin-x64",
-    "linux-arm64-gnu",
-    "linux-x64-gnu",
-    "linux-x64-musl",
-  ]);
+  expect(published).toEqual(["darwin-arm64", "darwin-x64", "linux-arm64-gnu", "linux-x64-gnu"]);
+  expect(RESOLUTION_TABLE["linux-x64-musl"]).toBeNull();
   expect(RESOLUTION_TABLE["linux-arm64-musl"]).toBeNull();
 });
 

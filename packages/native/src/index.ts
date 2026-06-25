@@ -22,22 +22,21 @@ export const SUPPORTED_PLATFORMS = [
   "macOS x64 (darwin-x64)",
   "linux x64 glibc (linux-x64-gnu)",
   "linux arm64 glibc (linux-arm64-gnu)",
-  "linux x64 musl/Alpine (linux-x64-musl)",
 ] as const;
 
 /**
  * Host-tag → prebuild package map. Pre-enumerates the full intended matrix so adding a target later
  * is purely additive (publish the package, flip its value from `null`): no loader-shape or consumer
  * change. Published in the launch matrix: `darwin-arm64`, `darwin-x64`, `linux-x64-gnu`,
- * `linux-arm64-gnu`, `linux-x64-musl`. Reserved (no published package yet): `linux-arm64-musl`.
+ * `linux-arm64-gnu`. Reserved (no published package yet): `linux-x64-musl`, `linux-arm64-musl`.
  */
 export const RESOLUTION_TABLE: Readonly<Record<string, string | null>> = {
   "darwin-arm64": "@vellora/native-darwin-arm64",
   "darwin-x64": "@vellora/native-darwin-x64",
   "linux-x64-gnu": "@vellora/native-linux-x64-gnu",
   "linux-arm64-gnu": "@vellora/native-linux-arm64-gnu",
-  "linux-x64-musl": "@vellora/native-linux-x64-musl",
-  // Reserved for a later phase: no published package yet.
+  // Reserved for a later phase: no published package yet (musl needs a native-musl build host).
+  "linux-x64-musl": null,
   "linux-arm64-musl": null,
 };
 
