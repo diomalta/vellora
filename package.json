@@ -26,6 +26,7 @@
     "render-notification": "tsx examples/render-notification.ts",
     "render-to-http-stream": "tsx examples/render-to-http-stream.ts",
     "batch-concurrency": "tsx examples/batch-concurrency.ts",
+    "visual:fixtures": "node scripts/render-visual-fixtures.mjs",
     "compat:gen": "node scripts/gen-compatibility.mjs",
     "compat:check": "node scripts/gen-compatibility.mjs --check",
     "docs:api": "typedoc",

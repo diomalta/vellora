@@ -750,6 +750,7 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         "<!DOCTYPE html><html><body><p>ok</p></body></html>",
         vellora_core::validation::denied_elements(),
         657.6, // content width; irrelevant to this element-gate test
+        986.4, // content height; irrelevant to this element-gate test
     );
     assert!(
         clean.is_ok(),
@@ -761,6 +762,7 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         "<!DOCTYPE html><html><body><script>x</script></body></html>",
         vellora_core::validation::denied_elements(),
         657.6, // content width; irrelevant to this element-gate test
+        986.4, // content height; irrelevant to this element-gate test
     );
     match denied {
         Err(found) => assert_eq!(found.tag, "script"),

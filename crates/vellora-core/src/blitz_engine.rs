@@ -267,7 +267,7 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
     let doc = build_document(&normalized);
     // Standalone/test helper: lay out against the full A4 width. The render path
     // uses `validate_then_lay_out` with the real @page content width.
-    resolve_and_walk(doc, A4_WIDTH_PX)
+    resolve_and_walk(doc, A4_WIDTH_PX, A4_HEIGHT_PX)
 }
 
 /// Normalize browser-compatible mixed-flow table cells, then parse one Blitz
@@ -281,6 +281,7 @@ pub fn validate_then_lay_out(
     html: &str,
     denied: &[&str],
     content_width_px: f64,
+    content_height_px: f64,
 ) -> Result<LaidOutDoc, DeniedElement> {
     let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
     let doc = build_document(&normalized);
@@ -290,7 +291,7 @@ pub fn validate_then_lay_out(
     if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
         return Err(found);
     }
-    Ok(resolve_and_walk(doc, content_width_px))
+    Ok(resolve_and_walk(doc, content_width_px, content_height_px))
 }
 
 /// Resolve style+layout on a parsed document and read it into a `LaidOutDoc`.
@@ -299,10 +300,14 @@ pub fn validate_then_lay_out(
 /// margins) — the box the document flows into. Laying out against the full page
 /// width instead would make `width:100%` boxes overflow once pagination offsets
 /// them by the left margin (the clipped-last-column bug).
-fn resolve_and_walk(mut doc: HtmlDocument, content_width_px: f64) -> LaidOutDoc {
+fn resolve_and_walk(
+    mut doc: HtmlDocument,
+    content_width_px: f64,
+    content_height_px: f64,
+) -> LaidOutDoc {
     let viewport = Viewport::new(
         content_width_px as u32,
-        A4_HEIGHT_PX as u32,
+        content_height_px.max(0.0) as u32,
         1.0,
         ColorScheme::Light,
     );
@@ -328,7 +333,7 @@ fn resolve_and_walk(mut doc: HtmlDocument, content_width_px: f64) -> LaidOutDoc 
     LaidOutDoc {
         boxes,
         viewport_width: content_width_px,
-        viewport_height: A4_HEIGHT_PX,
+        viewport_height: content_height_px,
         content_height,
     }
 }

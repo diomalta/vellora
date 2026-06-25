@@ -19,6 +19,7 @@ fn lay_out_for_render(html: &str) -> (blitz_engine::LaidOutDoc, page_css::PageBo
         html,
         vellora_core::validation::denied_elements(),
         pb.content_width(),
+        pb.content_height(),
     )
     .unwrap_or_else(|_| panic!("fixture is in the supported subset"));
     (laid, pb)
@@ -447,6 +448,36 @@ fn party_block_table_stays_inside_page_content_box() {
             .iter()
             .map(|r| (r.x, r.y, r.width, r.height, r.color))
             .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn page_content_height_drives_viewport_units() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; }
+        .vh-box { width: 100%; height: 100vh; background: #2f5d8a; }
+    </style></head><body>
+        <div class="vh-box"></div>
+    </body></html>"#;
+
+    let (laid, pb) = lay_out_for_render(html);
+    assert!(
+        (laid.viewport_height - pb.content_height()).abs() <= 1.0,
+        "layout viewport height should match the @page content height, viewport_height={}, content_height={}",
+        laid.viewport_height,
+        pb.content_height()
+    );
+    let vh_box = laid
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("div"))
+        .expect("vh box is laid out");
+    assert!(
+        (vh_box.height - pb.content_height()).abs() <= 1.0,
+        "100vh should resolve to the @page content height, box_height={}, content_height={}",
+        vh_box.height,
+        pb.content_height()
     );
 }
 

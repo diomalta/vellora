@@ -81,6 +81,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         html,
         validation::denied_elements(),
         page_box.content_width(),
+        page_box.content_height(),
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
 
