@@ -3,7 +3,7 @@
   "version": "0.1.0-alpha.0",
   "cpu": ["x64"],
   "main": "vellora.linux-x64-gnu.node",
-  "files": ["vellora.linux-x64-gnu.node"],
+  "files": ["vellora.linux-x64-gnu.node", "THIRD-PARTY-NOTICES.md", "LICENSE-DejaVu.txt"],
   "description": "Prebuilt napi-rs addon loader for vellora — alpha.",
   "keywords": [
     "html-to-pdf",
