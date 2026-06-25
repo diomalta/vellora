@@ -120,11 +120,11 @@ jobs:
         run: npm -w @vellora/native exec -- napi artifacts --output-dir . --npm-dir npm
       - name: Bundle license notices alongside each platform binary
         # Each per-platform package ships the addon, which statically links third-party crates and
-        # embeds DejaVu — so the attribution must travel in the same tarball (their files arrays
-        # list these). The canonical copies live in packages/native/.
+        # embeds bundled fonts — so the attribution must travel in the same tarball (their files
+        # arrays list these). The canonical copies live in packages/native/.
         run: |
           for d in packages/native/npm/*/; do
-            cp packages/native/THIRD-PARTY-NOTICES.md packages/native/LICENSE-DejaVu.txt "$d"
+            cp packages/native/THIRD-PARTY-NOTICES.md packages/native/LICENSE-DejaVu.txt packages/native/LICENSE-Liberation.txt "$d"
           done
       - name: Set every published package to the release tag version
         if: ${{ github.event_name == 'release' }}

@@ -20,10 +20,11 @@ Prebuilt binaries target the launch matrix: macOS (`arm64`, `x64`) and Linux (`x
 On an unsupported platform the loader throws an actionable error; you can still build locally with
 the Rust toolchain (`npm run build` at the repo root).
 
-## Bundled font
+## Bundled fonts
 
-The addon embeds **DejaVu Sans** (Regular + Bold) as its default font, so text renders
-deterministically with no system fonts or `libfontconfig` — see
+The addon embeds **Liberation Sans** (Regular + Bold) as its default browser-compatible
+font and **DejaVu Sans** as fallback coverage, so text renders deterministically with
+no system fonts or `libfontconfig` — see
 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
 
 ## License

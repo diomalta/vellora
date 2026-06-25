@@ -214,10 +214,9 @@ fn build_document(html: &str) -> HtmlDocument {
         html,
         DocumentConfig {
             base_url: Some("https://vellora.local/".to_string()),
-            // Self-contained, deterministic fonts: the bundled DejaVu faces with
-            // system-font discovery off (see `crate::fonts`). This is what removes
-            // the `libfontconfig` runtime dependency and makes output machine-
-            // independent.
+            // Self-contained, deterministic fonts: bundled faces with system-font
+            // discovery off (see `crate::fonts`). This is what removes the
+            // `libfontconfig` runtime dependency and makes output machine-independent.
             font_ctx: Some(crate::fonts::build_font_context()),
             ..Default::default()
         },

@@ -1,9 +1,19 @@
 # Third-party notices
 
-The prebuilt native addon distributed in this package embeds a default font so that
+The prebuilt native addon distributed in this package embeds default fonts so that
 text renders deterministically and with no system font dependency (no `libfontconfig`,
 no host-installed fonts) — which is what lets it run on slim, Alpine/musl, and AWS
 Lambda images out of the box.
+
+## Liberation Sans (Regular and Bold)
+
+- Source: https://github.com/liberationfonts/liberation-fonts
+- Copyright: Liberation Fonts contributors.
+- License: SIL Open Font License, Version 1.1. The full text is in
+  [`LICENSE-Liberation.txt`](./LICENSE-Liberation.txt).
+- Note: Liberation Sans is used as the primary bundled sans-serif face because it
+  targets layout compatibility with Arial, which is a common browser-resolved
+  font for invoice templates.
 
 ## DejaVu Sans (Regular and Bold)
 
@@ -12,6 +22,7 @@ Lambda images out of the box.
   public domain; glyphs imported from Arev fonts © Tavmjong Bah.
 - License: Bitstream Vera Fonts License (and the Arev addendum) — a free, permissive
   license. The full text is in [`LICENSE-DejaVu.txt`](./LICENSE-DejaVu.txt).
+- Note: DejaVu Sans remains bundled as fallback glyph coverage.
 
 Only the glyphs actually used by a document are subset into each output PDF; the full
 font is embedded in the addon binary, not in the PDFs you generate.
@@ -20,7 +31,7 @@ font is embedded in the addon binary, not in the PDFs you generate.
 
 ## Rust crates compiled into the addon
 
-The prebuilt `.node` statically links the following 220 third-party crates. Their
+The prebuilt `.node` statically links the following 221 third-party crates. Their
 copyright and permission notices are reproduced below as required by their licenses (MIT, Apache-2.0,
 MPL-2.0, BSD, ISC, Zlib, Unicode-3.0, and others). For crates that do not ship a license file, the
 SPDX identifier and upstream repository are listed; the canonical text of that license applies.
@@ -128,6 +139,7 @@ SPDX identifier and upstream repository are listed; the canonical text of that l
 - **log** 0.4.33 — MIT OR Apache-2.0 — https://github.com/rust-lang/log
 - **malloc_size_of_derive** 0.1.3 — MIT OR Apache-2.0 — https://github.com/bholley/malloc_size_of_derive
 - **markup5ever** 0.39.0 — MIT OR Apache-2.0 — https://github.com/servo/html5ever
+- **markup5ever_rcdom** 0.39.0+unofficial — MIT OR Apache-2.0 — https://github.com/servo/html5ever
 - **memchr** 2.8.2 — Unlicense OR MIT — https://github.com/BurntSushi/memchr
 - **memmap2** 0.9.11 — MIT OR Apache-2.0 — https://github.com/RazrFalcon/memmap2-rs
 - **mime** 0.3.17 — MIT OR Apache-2.0 — https://github.com/hyperium/mime
@@ -477,7 +489,7 @@ limitations under the License.
 
 ### Apache-2.0
 
-Applies to: arrayvec 0.7.7, atomic_refcell 0.1.14, base64 0.22.1, bitflags 2.13.0, bumpalo 3.20.3, bytemuck 1.25.0, bytemuck_derive 1.10.2, cfg-if 1.0.4, crossbeam-deque 0.8.6, crossbeam-epoch 0.9.18, crossbeam-utils 0.8.21, displaydoc 0.2.6, either 1.16.0, encoding_rs 0.8.35, equivalent 1.0.2, euclid 0.22.14, fastrand 2.4.1, flate2 1.1.9, fnv 1.0.7, fontique 0.10.0, form_urlencoded 1.2.2, gif 0.14.2, hashbrown 0.17.1, heck 0.5.0, hermit-abi 0.5.2, html5ever 0.39.0, idna 1.1.0, idna_adapter 1.2.2, indexmap 2.14.0, itertools 0.14.0, js-sys 0.3.102, keyboard-types 0.7.0, kurbo 0.13.1, lock_api 0.4.14, log 0.4.33, malloc_size_of_derive 0.1.3, markup5ever 0.39.0, mime 0.3.17, nohash-hasher 0.2.0, num-derive 0.4.2, num-integer 0.1.46, num-traits 0.2.19, num_cpus 1.17.0, once_cell 1.21.4, parking_lot 0.12.5, parking_lot_core 0.9.12, parlance 0.1.0, parley 0.10.0, parley_data 0.10.0, percent-encoding 2.3.2, png 0.18.1, polycool 0.4.0, rayon 1.12.0, rayon-core 1.13.0, scopeguard 1.2.0, servo_arc 0.4.3, smallbitvec 2.6.1, smallvec 1.15.2, smol_str 0.3.6, stable_deref_trait 1.2.1, static_assertions 1.1.0, string_cache 0.9.0, stylo_malloc_size_of 0.18.0, tendril 0.5.0, thread_local 1.1.9, ttf-parser 0.25.1, unicode-bidi-mirroring 0.4.0, unicode-ccc 0.4.0, unicode-properties 0.1.4, unicode-segmentation 1.13.3, url 2.5.8, utf8_iter 1.0.4, wasm-bindgen 0.2.125, wasm-bindgen-macro 0.2.125, wasm-bindgen-macro-support 0.2.125, wasm-bindgen-shared 0.2.125, web_atoms 0.2.5, weezl 0.1.12, xml5ever 0.39.0, zune-core 0.5.1, zune-jpeg 0.5.15
+Applies to: arrayvec 0.7.7, atomic_refcell 0.1.14, base64 0.22.1, bitflags 2.13.0, bumpalo 3.20.3, bytemuck 1.25.0, bytemuck_derive 1.10.2, cfg-if 1.0.4, crossbeam-deque 0.8.6, crossbeam-epoch 0.9.18, crossbeam-utils 0.8.21, displaydoc 0.2.6, either 1.16.0, encoding_rs 0.8.35, equivalent 1.0.2, euclid 0.22.14, fastrand 2.4.1, flate2 1.1.9, fnv 1.0.7, fontique 0.10.0, form_urlencoded 1.2.2, gif 0.14.2, hashbrown 0.17.1, heck 0.5.0, hermit-abi 0.5.2, html5ever 0.39.0, idna 1.1.0, idna_adapter 1.2.2, indexmap 2.14.0, itertools 0.14.0, js-sys 0.3.102, keyboard-types 0.7.0, kurbo 0.13.1, lock_api 0.4.14, log 0.4.33, malloc_size_of_derive 0.1.3, markup5ever 0.39.0, markup5ever_rcdom 0.39.0+unofficial, mime 0.3.17, nohash-hasher 0.2.0, num-derive 0.4.2, num-integer 0.1.46, num-traits 0.2.19, num_cpus 1.17.0, once_cell 1.21.4, parking_lot 0.12.5, parking_lot_core 0.9.12, parlance 0.1.0, parley 0.10.0, parley_data 0.10.0, percent-encoding 2.3.2, png 0.18.1, polycool 0.4.0, rayon 1.12.0, rayon-core 1.13.0, scopeguard 1.2.0, servo_arc 0.4.3, smallbitvec 2.6.1, smallvec 1.15.2, smol_str 0.3.6, stable_deref_trait 1.2.1, static_assertions 1.1.0, string_cache 0.9.0, stylo_malloc_size_of 0.18.0, tendril 0.5.0, thread_local 1.1.9, ttf-parser 0.25.1, unicode-bidi-mirroring 0.4.0, unicode-ccc 0.4.0, unicode-properties 0.1.4, unicode-segmentation 1.13.3, url 2.5.8, utf8_iter 1.0.4, wasm-bindgen 0.2.125, wasm-bindgen-macro 0.2.125, wasm-bindgen-macro-support 0.2.125, wasm-bindgen-shared 0.2.125, web_atoms 0.2.5, weezl 0.1.12, xml5ever 0.39.0, zune-core 0.5.1, zune-jpeg 0.5.15
 
 ```
                               Apache License
@@ -4043,7 +4055,7 @@ SOFTWARE.
 
 ### MIT
 
-Applies to: html5ever 0.39.0, markup5ever 0.39.0, web_atoms 0.2.5, xml5ever 0.39.0
+Applies to: html5ever 0.39.0, markup5ever 0.39.0, markup5ever_rcdom 0.39.0+unofficial, web_atoms 0.2.5, xml5ever 0.39.0
 
 ```
 Copyright (c) 2014 The html5ever Project Developers
