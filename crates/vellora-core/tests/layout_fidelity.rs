@@ -219,6 +219,40 @@ fn top_level_table_margin_before_items_header_is_preserved() {
 }
 
 #[test]
+fn top_level_margin_top_between_blocks_is_preserved() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { font-family: sans-serif; font-size: 10pt; margin: 0; }
+        .first { height: 24px; }
+        .second { margin-top: 30px; }
+    </style></head><body>
+        <div class="first">Before</div>
+        <div class="second">After</div>
+    </body></html>"#;
+
+    let (laid, pb) = lay_out_for_render(html);
+    let paginated = pagination::paginate(&laid, &pb);
+    let before = paginated.pages[0]
+        .text_runs
+        .iter()
+        .find(|r| r.text.contains("Before"))
+        .expect("before text exists");
+    let after = paginated.pages[0]
+        .text_runs
+        .iter()
+        .find(|r| r.text.contains("After"))
+        .expect("after text exists");
+
+    let gap = after.origin_y - before.origin_y;
+    assert!(
+        gap >= 50.0,
+        "margin-top on the following block should survive pagination repositioning; gap={gap}, before_y={}, after_y={}",
+        before.origin_y,
+        after.origin_y
+    );
+}
+
+#[test]
 fn table_cell_borders_lower_to_pdf_rects() {
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; margin: 18mm; }

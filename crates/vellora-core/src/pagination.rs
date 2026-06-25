@@ -325,7 +325,49 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
         i = subtree_end;
     }
 
+    apply_inter_fragment_gaps(&mut fragments);
     fragments
+}
+
+fn apply_inter_fragment_gaps(fragments: &mut [Fragment]) {
+    if fragments.len() < 2 {
+        return;
+    }
+
+    for i in 0..fragments.len() - 1 {
+        if fragments[i].trailing_gap > 0.0 || !fragment_has_renderables(&fragments[i]) {
+            continue;
+        }
+        let Some(next_i) =
+            ((i + 1)..fragments.len()).find(|idx| fragment_has_renderables(&fragments[*idx]))
+        else {
+            continue;
+        };
+        let current_is_table_part = fragments[i].is_thead || fragments[i].is_row();
+        let next_is_table_part = fragments[next_i].is_thead || fragments[next_i].is_row();
+        if current_is_table_part && next_is_table_part {
+            continue;
+        }
+        fragments[i].trailing_gap = (fragments[next_i].top - fragments[i].bottom).max(0.0);
+    }
+}
+
+fn fragment_has_renderables(fragment: &Fragment) -> bool {
+    fragment.boxes.iter().any(|b| {
+        !b.text_runs.is_empty()
+            || !b.visual_rects.is_empty()
+            || !b.rounded_borders.is_empty()
+            || b.tag
+                .as_deref()
+                .is_some_and(|tag| is_renderable_flow_tag(tag) && b.width > 0.0 && b.height > 0.0)
+    })
+}
+
+fn is_renderable_flow_tag(tag: &str) -> bool {
+    !matches!(
+        tag,
+        "html" | "head" | "meta" | "title" | "style" | "script" | "body"
+    )
 }
 
 /// Break a table subtree into a thead fragment and per-row fragments.
