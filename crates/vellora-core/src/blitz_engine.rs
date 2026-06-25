@@ -359,7 +359,9 @@ fn walk(
         .downcast_element()
         .map(|el| el.name.local.to_string());
 
-    let text_runs = read_text_runs(base, node, abs_x, abs_y, face_cache);
+    let content_x = abs_x + layout.border.left as f64 + layout.padding.left as f64;
+    let content_y = abs_y + layout.border.top as f64 + layout.padding.top as f64;
+    let text_runs = read_text_runs(base, node, content_x, content_y, face_cache);
     let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y);
 
     out.push(LaidOutBox {

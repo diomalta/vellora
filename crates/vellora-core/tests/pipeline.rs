@@ -605,20 +605,46 @@ fn rounded_badge_border_lowers_to_pdf_stroke() {
     let laid = blitz_engine::lay_out(html);
     let pb = page_css::parse_page_box(html);
     let paginated = pagination::paginate(&laid, &pb);
+    let stroke = paginated.pages[0].rounded_strokes.iter().find(|s| {
+        s.color == [47, 93, 138]
+            && s.width > 40.0
+            && s.height > 10.0
+            && s.radius_x > 4.0
+            && s.radius_y > 4.0
+    });
     assert!(
-        paginated.pages[0].rounded_strokes.iter().any(|s| {
-            s.color == [47, 93, 138]
-                && s.width > 40.0
-                && s.height > 10.0
-                && s.radius_x > 4.0
-                && s.radius_y > 4.0
-        }),
+        stroke.is_some(),
         "expected rounded badge border stroke, got {:?}",
         paginated.pages[0]
             .rounded_strokes
             .iter()
             .map(|s| (s.x, s.y, s.width, s.height, s.radius_x, s.radius_y, s.color))
             .collect::<Vec<_>>()
+    );
+    let stroke = stroke.unwrap();
+    let text_run = paginated.pages[0]
+        .text_runs
+        .iter()
+        .find(|r| r.text.contains("EM ABERTO"))
+        .expect("badge text run exists");
+    let text_mid_y = text_run.origin_y - text_run.font_size as f64 / 2.0;
+    let stroke_mid_y = stroke.y + stroke.height / 2.0;
+    assert!(
+        (text_mid_y - stroke_mid_y).abs() <= 2.0,
+        "badge text should be vertically centered inside rounded stroke; text_mid_y={text_mid_y}, stroke_mid_y={stroke_mid_y}, baseline={}, font_size={}, stroke=({}, {}, {}, {})",
+        text_run.origin_y,
+        text_run.font_size,
+        stroke.x,
+        stroke.y,
+        stroke.width,
+        stroke.height
+    );
+    let left_inset = text_run.origin_x - stroke.x;
+    assert!(
+        (10.0..=16.0).contains(&left_inset),
+        "badge text should honor horizontal padding; left_inset={left_inset}, text_x={}, stroke_x={}",
+        text_run.origin_x,
+        stroke.x
     );
 
     let bytes = render(html.as_bytes(), &opts()).expect("render succeeds");
