@@ -241,6 +241,108 @@ fn percentage_table_cell_width_preserves_column_proportion() {
 }
 
 #[test]
+fn fixed_table_layout_colspans_preserve_equal_tracks() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 9pt; }
+        table { width: 400px; table-layout: fixed; border-collapse: collapse; }
+        td { border: 1px solid #555; padding: 4px 8px; }
+    </style></head><body>
+        <table>
+            <tr><td colspan="3">Local de pagamento</td><td>Vencimento</td></tr>
+            <tr><td>Data</td><td>Número</td><td>Espécie</td><td>Valor</td></tr>
+        </table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .collect();
+
+    assert_eq!(cells.len(), 6, "expected six table cells, got {cells:?}");
+    let first_row_wide = cells[0];
+    let first_row_last = cells[1];
+    let second_row = &cells[2..];
+
+    assert!(
+        (first_row_wide.width - 300.0).abs() <= 1.0,
+        "colspan=3 should occupy three fixed 100px tracks, got width={}",
+        first_row_wide.width
+    );
+    assert!(
+        (first_row_last.width - 100.0).abs() <= 1.0,
+        "last cell should occupy one fixed 100px track, got width={}",
+        first_row_last.width
+    );
+    for (idx, cell) in second_row.iter().enumerate() {
+        assert!(
+            (cell.width - 100.0).abs() <= 1.0,
+            "second row cell {idx} should occupy one fixed 100px track, got width={}",
+            cell.width
+        );
+    }
+    assert!(
+        (first_row_last.x - (first_row_wide.x + first_row_wide.width)).abs() <= 1.0,
+        "fixed tracks should keep adjacent colspan cells flush, wide=({}, {}), last=({}, {})",
+        first_row_wide.x,
+        first_row_wide.width,
+        first_row_last.x,
+        first_row_last.width
+    );
+}
+
+#[test]
+fn adjacent_block_vertical_margins_collapse() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 12px; }
+        .first { margin: 0 0 20px 0; }
+        .second { margin: 30px 0 0 0; }
+    </style></head><body>
+        <div class="first">Primeiro bloco</div>
+        <div class="second">Segundo bloco</div>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let first = laid
+        .boxes
+        .iter()
+        .find(|b| {
+            b.tag.as_deref() == Some("div")
+                && b.text_runs
+                    .iter()
+                    .any(|run| run.text.contains("Primeiro bloco"))
+        })
+        .expect("first block exists");
+    let second = laid
+        .boxes
+        .iter()
+        .find(|b| {
+            b.tag.as_deref() == Some("div")
+                && b.text_runs
+                    .iter()
+                    .any(|run| run.text.contains("Segundo bloco"))
+        })
+        .expect("second block exists");
+    let gap = second.y - (first.y + first.height);
+
+    assert!(
+        (gap - 30.0).abs() <= 1.0,
+        "adjacent margins should collapse to max(20, 30), got gap={gap}, first=({}, {}, mt={}, mb={}), second=({}, {}, mt={}, mb={})",
+        first.y,
+        first.height,
+        first.margin_top,
+        first.margin_bottom,
+        second.y,
+        second.height,
+        second.margin_top,
+        second.margin_bottom
+    );
+}
+
+#[test]
 fn invoice_header_background_lowers_to_pdf_rects() {
     let (laid, pb) = lay_out_for_render(INVOICE);
     let paginated = pagination::paginate(&laid, &pb);

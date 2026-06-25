@@ -9,6 +9,7 @@
 use blitz_dom::{BaseDocument, DocumentConfig};
 use blitz_html::HtmlDocument;
 use blitz_traits::shell::{ColorScheme, Viewport};
+use style::computed_values::table_layout::T as TableLayout;
 
 /// A4 width in CSS px at 96dpi (210mm). Used as the layout viewport width so
 /// Taffy resolves percentage/`width:100%` boxes against a page-shaped canvas.
@@ -30,11 +31,16 @@ pub struct LaidOutBox {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub margin_top: f64,
     pub margin_bottom: f64,
     /// Explicit computed `width: <percentage>` hint from CSS. Blitz currently
     /// loses this in some auto table layout cases; we keep the hint so the
     /// post-walk table pass can preserve browser-like column proportions.
     pub width_pct_hint: Option<f64>,
+    /// Whether this box is a table with `table-layout: fixed`.
+    pub table_layout_fixed: bool,
+    /// Table-cell span in columns. Non-cell boxes use `1`.
+    pub colspan: usize,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
@@ -331,6 +337,8 @@ fn resolve_and_walk(
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
     walk(base, root_id, 0.0, 0.0, 0, &mut boxes, &mut face_cache);
+    normalize_vertical_margin_collapse(&mut boxes);
+    normalize_fixed_table_widths(&mut boxes);
     normalize_table_percent_widths(&mut boxes);
 
     let content_height = base.root_element().final_layout.size.height as f64;
@@ -380,8 +388,11 @@ fn walk(
         y: abs_y,
         width: layout.size.width as f64,
         height: layout.size.height as f64,
+        margin_top: layout.margin.top as f64,
         margin_bottom: layout.margin.bottom as f64,
         width_pct_hint: width_percentage_hint(node),
+        table_layout_fixed: table_layout_fixed(node),
+        colspan: colspan(node),
         depth,
         text_runs,
         visual_rects,
@@ -404,6 +415,179 @@ fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
             _ => None,
         },
         _ => None,
+    }
+}
+
+fn table_layout_fixed(node: &blitz_dom::Node) -> bool {
+    node.primary_styles()
+        .is_some_and(|styles| matches!(styles.clone_table_layout(), TableLayout::Fixed))
+}
+
+fn colspan(node: &blitz_dom::Node) -> usize {
+    node.attr(blitz_dom::local_name!("colspan"))
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(1)
+        .min(1000)
+}
+
+fn normalize_vertical_margin_collapse(boxes: &mut [LaidOutBox]) {
+    if boxes.is_empty() {
+        return;
+    }
+    let end = boxes.len();
+    normalize_vertical_margin_collapse_in_range(boxes, 0, end);
+}
+
+fn normalize_vertical_margin_collapse_in_range(
+    boxes: &mut [LaidOutBox],
+    parent_idx: usize,
+    end: usize,
+) {
+    let child_depth = boxes[parent_idx].depth + 1;
+    let mut previous_child: Option<usize> = None;
+    let mut cumulative_shift = 0.0;
+    let mut i = parent_idx + 1;
+
+    while i < end {
+        if boxes[i].depth != child_depth {
+            i += 1;
+            continue;
+        }
+
+        if let Some(prev) = previous_child {
+            cumulative_shift += sibling_margin_collapse_amount(&boxes[prev], &boxes[i]);
+        }
+        if cumulative_shift > 0.0 {
+            shift_subtree_y(boxes, i, -cumulative_shift);
+        }
+
+        let child_end = subtree_end_by_depth(boxes, i).min(end);
+        normalize_vertical_margin_collapse_in_range(boxes, i, child_end);
+        previous_child = Some(i);
+        i = child_end;
+    }
+}
+
+fn sibling_margin_collapse_amount(previous: &LaidOutBox, current: &LaidOutBox) -> f64 {
+    if !is_margin_collapsible_block(previous) || !is_margin_collapsible_block(current) {
+        return 0.0;
+    }
+    let bottom = previous.margin_bottom.max(0.0);
+    let top = current.margin_top.max(0.0);
+    if bottom <= 0.0 || top <= 0.0 {
+        return 0.0;
+    }
+    bottom.min(top)
+}
+
+fn is_margin_collapsible_block(b: &LaidOutBox) -> bool {
+    matches!(
+        b.tag.as_deref(),
+        Some(
+            "address"
+                | "article"
+                | "aside"
+                | "blockquote"
+                | "div"
+                | "footer"
+                | "h1"
+                | "h2"
+                | "h3"
+                | "h4"
+                | "h5"
+                | "h6"
+                | "header"
+                | "main"
+                | "p"
+                | "section"
+        )
+    )
+}
+
+fn shift_subtree_y(boxes: &mut [LaidOutBox], root_idx: usize, dy: f64) {
+    if dy == 0.0 {
+        return;
+    }
+    let end = subtree_end_by_depth(boxes, root_idx);
+    for b in &mut boxes[root_idx..end] {
+        b.y += dy;
+        for rect in &mut b.visual_rects {
+            rect.y += dy;
+        }
+        for border in &mut b.rounded_borders {
+            border.y += dy;
+        }
+        for run in &mut b.text_runs {
+            run.origin_y += dy;
+        }
+    }
+}
+
+fn normalize_fixed_table_widths(boxes: &mut [LaidOutBox]) {
+    let mut i = 0;
+    while i < boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_layout_fixed {
+            let end = subtree_end_by_depth(boxes, i);
+            normalize_fixed_table_widths_in_range(boxes, i, end);
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn normalize_fixed_table_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
+    let table_depth = boxes[table_idx].depth;
+    let table_x = boxes[table_idx].x;
+    let table_width = boxes[table_idx].width;
+    if !table_width.is_finite() || table_width <= 0.0 {
+        return;
+    }
+
+    let mut rows: Vec<Vec<usize>> = Vec::new();
+    let mut column_count = 0usize;
+    let mut i = table_idx + 1;
+    while i < end {
+        match boxes[i].tag.as_deref() {
+            Some("table") if boxes[i].depth > table_depth => {
+                i = subtree_end_by_depth(boxes, i).min(end);
+            }
+            Some("tr") => {
+                let row_end = subtree_end_by_depth(boxes, i).min(end);
+                let cell_depth = boxes[i].depth + 1;
+                let cells: Vec<usize> = (i + 1..row_end)
+                    .filter(|idx| {
+                        boxes[*idx].depth == cell_depth
+                            && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
+                    })
+                    .collect();
+                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
+                column_count = column_count.max(row_columns);
+                rows.push(cells);
+                i = row_end;
+            }
+            _ => i += 1,
+        }
+    }
+
+    if column_count < 2 {
+        return;
+    }
+
+    let track_width = table_width / column_count as f64;
+    for cells in rows {
+        let mut column = 0usize;
+        for idx in cells {
+            let span = boxes[idx].colspan.min(column_count - column).max(1);
+            let target_x = table_x + track_width * column as f64;
+            let target_width = track_width * span as f64;
+            adjust_subtree_inline_geometry(boxes, idx, target_x, target_width);
+            column += span;
+            if column >= column_count {
+                break;
+            }
+        }
     }
 }
 
