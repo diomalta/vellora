@@ -14,6 +14,39 @@ templating engine, and a dev-time HTML linter/codemod on top.
 > `images` / `baseUrl` are accepted and forwarded but **inert**. Don't assume a documented feature is
 > wired — check the code.
 
+## Research and evidence discipline
+
+This is a research-and-development project for a production HTML-to-PDF renderer. Facts are the core
+material. Every implementation choice, benchmark claim, compatibility statement, architecture direction,
+and recommendation must be traceable to current evidence.
+
+Use this protocol before explaining, fixing, recommending, or changing direction:
+
+- **Verify current reality first.** Read the actual code, tests, generated artifacts, benchmark output,
+  upstream source/docs, specifications, papers, package metadata, or reproducible command output. Do not
+  rely on docs alone; docs can describe the design target.
+- **Label claims when evidence matters.** Use `CONFIRMED` for facts checked in the current turn,
+  `UNVERIFIED ASSUMPTION` for plausible but unchecked claims, `HYPOTHESIS` for candidate explanations,
+  and `DESIGN TARGET` for intended behavior that may not be shipped.
+- **Say what is unknown.** If the evidence is missing, say "I don't know yet; here's how I'd find out"
+  and name the smallest concrete check, benchmark, source read, or experiment that would settle it.
+- **Research before selecting tools or approaches.** For engines, crates, PDF behavior, HTML/CSS support,
+  layout algorithms, accessibility/PDF-A/PDF-UA, performance claims, or competitor comparisons, prefer
+  primary sources: specs, upstream repos/docs, source code, reproducible benchmarks, issue trackers,
+  changelogs, and papers.
+- **Re-check drift-prone facts live.** Package availability, versions, licenses, maintainer activity,
+  benchmark results, security posture, and competitor behavior can change; verify them before treating
+  them as current.
+- **Keep benchmark honesty strict.** Only publish numbers from the repo's reproducible harness or clearly
+  label them as external/unverified. Include environment, versions, command, date, median/p95 where
+  relevant, and losses as well as wins.
+- **Root causes require proof.** A fix plan should identify the verified source of the behavior in code,
+  data, traces, or measurements. If the cause is not proven, call it a hypothesis and design the next
+  measurement before changing production logic.
+- **Separate shipped reality from roadmap.** The code and tests define what works today. README,
+  ARCHITECTURE, OpenSpec, and docs may describe the destination; keep that distinction explicit in every
+  answer and documentation change.
+
 ## Commands
 
 Run from the repo root. Node 22 (`.nvmrc`), Rust pinned to 1.96.0 (`rust-toolchain.toml`).
