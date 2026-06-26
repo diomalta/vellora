@@ -53,6 +53,14 @@ pub struct RenderOptions {
     pub title: Option<String>,
     /// Deterministic creation date `(year, month, day)`; never wall-clock.
     pub creation_date: Option<(u16, u8, u8)>,
+    /// Caller-supplied image bytes keyed by an `<img>`'s `src` string. An `<img>`
+    /// whose `src` is not a `data:` URL is resolved by looking up this map (its key
+    /// optionally normalized against [`base_url`](Self::base_url)); the format is
+    /// detected from the bytes. Resolution performs no network/filesystem access.
+    pub images: std::collections::HashMap<String, Vec<u8>>,
+    /// Optional base URL used ONLY to normalize a relative `<img>` `src` into the
+    /// [`images`](Self::images) lookup key (WHATWG URL join). Never fetched.
+    pub base_url: Option<String>,
 }
 
 /// The stable render entry point. Takes `Send` inputs and returns `Send`
@@ -83,8 +91,20 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         validation::denied_elements(),
         page_box.content_width(),
         page_box.content_height(),
+        &opts.images,
+        opts.base_url.as_deref(),
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
+
+    // Reject a renderable <img> whose source could not be resolved to image
+    // bytes (missing `images` entry, remote/unknown-scheme URL, or unsupported
+    // bytes). Carried as data on the laid-out doc so the gate + geometry helpers
+    // stay lenient; only this entry point enforces the reject.
+    if let Some(unresolved) = &laid_out.unresolved_image {
+        return Err(VelloraError::Unsupported(validation::image_diagnostic(
+            unresolved, html,
+        )));
+    }
 
     // 4) vellora pagination: page breaking + thead repeat + counters.
     let paginated = pagination::paginate(&laid_out, &page_box);

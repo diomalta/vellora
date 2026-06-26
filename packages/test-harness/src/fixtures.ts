@@ -3,7 +3,7 @@
  * `{ id, html, data, conformant }`. Renderer-agnostic and path-free so sibling changes drive the
  * renderer without hardcoding paths.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -53,6 +53,42 @@ export function listAll(): Fixture[] {
     ...CONFORMANT_FIXTURE_IDS.map((id) => readFixture(id, true)),
     ...BROKEN_FIXTURE_IDS.map((id) => readFixture(id, false)),
   ];
+}
+
+/** Image file extensions a fixture may carry as an `<img>` asset. */
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+
+/**
+ * Load a fixture's image assets into the `images` render-option map, keyed by the `src` strings the
+ * fixture's `<img>` elements use. Each asset (a top-level file or one under `assets/`) is registered
+ * under both its path relative to the fixture root (e.g. `assets/logo.png`) and the `./`-prefixed
+ * variant (e.g. `./logo.png`), so it matches whichever form the fixture HTML/data uses. Returns an
+ * empty map for a fixture with no image assets.
+ */
+export function fixtureImages(id: string): Record<string, Uint8Array> {
+  const dir = join(FIXTURES_DIR, id);
+  const images: Record<string, Uint8Array> = {};
+  const register = (relPath: string, absPath: string): void => {
+    if (!IMAGE_EXTENSIONS.some((ext) => relPath.toLowerCase().endsWith(ext))) {
+      return;
+    }
+    const bytes = new Uint8Array(readFileSync(absPath));
+    images[relPath] = bytes;
+    images[`./${relPath}`] = bytes;
+  };
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isFile()) {
+      register(entry.name, join(dir, entry.name));
+    } else if (entry.isDirectory() && entry.name === "assets") {
+      const assetsDir = join(dir, entry.name);
+      for (const asset of readdirSync(assetsDir, { withFileTypes: true })) {
+        if (asset.isFile()) {
+          register(`assets/${asset.name}`, join(assetsDir, asset.name));
+        }
+      }
+    }
+  }
+  return images;
 }
 
 /** Resolve a fixture by id (conformant or broken). Throws a clear error for an unknown id. */

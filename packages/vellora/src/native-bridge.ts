@@ -11,7 +11,12 @@ import type { BridgeRenderOptions, NativeBridge } from "./types.js";
 /** The async render surface exposed by `@vellora/native`. */
 type AddonRender = (
   html: Uint8Array,
-  opts?: { title?: string; creationDate?: [number, number, number] },
+  opts?: {
+    title?: string;
+    creationDate?: [number, number, number];
+    images?: Record<string, Uint8Array>;
+    baseUrl?: string;
+  },
 ) => Promise<Uint8Array>;
 
 /**
@@ -50,6 +55,8 @@ export class NativeAddonBridge implements NativeBridge {
     return render(bytes, {
       title: options.metadata.title,
       creationDate: isoToYmd(options.metadata.creationDate),
+      images: options.images,
+      baseUrl: options.baseUrl,
     });
   }
 }

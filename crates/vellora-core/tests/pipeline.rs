@@ -19,6 +19,7 @@ fn opts() -> RenderOptions {
     RenderOptions {
         title: Some("Fatura INV-2026-00417".to_string()),
         creation_date: Some((2026, 6, 23)),
+        ..Default::default()
     }
 }
 
@@ -751,6 +752,8 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         vellora_core::validation::denied_elements(),
         657.6, // content width; irrelevant to this element-gate test
         986.4, // content height; irrelevant to this element-gate test
+        &std::collections::HashMap::new(),
+        None,
     );
     assert!(
         clean.is_ok(),
@@ -763,6 +766,8 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         vellora_core::validation::denied_elements(),
         657.6, // content width; irrelevant to this element-gate test
         986.4, // content height; irrelevant to this element-gate test
+        &std::collections::HashMap::new(),
+        None,
     );
     match denied {
         Err(found) => assert_eq!(found.tag, "script"),

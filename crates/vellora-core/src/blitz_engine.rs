@@ -150,6 +150,23 @@ pub struct LaidOutDoc {
     pub viewport_height: f64,
     /// Total content height (root element height) in CSS px.
     pub content_height: f64,
+    /// The first renderable `<img>` (document order) whose `src` could not be
+    /// resolved to image bytes, if any. Carried as data so the validation gate
+    /// and standalone layout helpers stay lenient (they ignore it); only the
+    /// `render` entry point turns it into a rejection.
+    pub unresolved_image: Option<UnresolvedImage>,
+}
+
+/// A renderable `<img>` whose `src` could not be resolved to supported image
+/// bytes. Mirrors [`DeniedElement`] so the source locator can pinpoint it.
+pub struct UnresolvedImage {
+    /// 1-based ordinal of this `<img>` among all `<img>` in document order.
+    pub occurrence: usize,
+    /// Total `<img>` count in the parsed DOM (locator degrades to `None` on a
+    /// source/DOM count mismatch, exactly like [`DeniedElement::dom_total`]).
+    pub dom_total: usize,
+    /// Why resolution failed (folded into the diagnostic hint).
+    pub reason: &'static str,
 }
 
 /// A denied element located during the immutable validation walk.
@@ -306,9 +323,16 @@ fn walk_for_denied(
 pub fn lay_out(html: &str) -> LaidOutDoc {
     let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
     let doc = build_document(&normalized);
-    // Standalone/test helper: lay out against the full A4 width. The render path
-    // uses `validate_then_lay_out` with the real @page content width.
-    resolve_and_walk(doc, A4_WIDTH_PX, A4_HEIGHT_PX)
+    // Standalone/test helper: lay out against the full A4 width with no caller
+    // images (an unresolved `<img>` is recorded on the doc but not enforced here).
+    // The render path uses `validate_then_lay_out` with the real @page content width.
+    resolve_and_walk(
+        doc,
+        A4_WIDTH_PX,
+        A4_HEIGHT_PX,
+        &std::collections::HashMap::new(),
+        None,
+    )
 }
 
 /// Normalize browser-compatible mixed-flow table cells, then parse one Blitz
@@ -323,6 +347,8 @@ pub fn validate_then_lay_out(
     denied: &[&str],
     content_width_px: f64,
     content_height_px: f64,
+    images: &std::collections::HashMap<String, Vec<u8>>,
+    base_url: Option<&str>,
 ) -> Result<LaidOutDoc, DeniedElement> {
     let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
     let doc = build_document(&normalized);
@@ -332,7 +358,13 @@ pub fn validate_then_lay_out(
     if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
         return Err(found);
     }
-    Ok(resolve_and_walk(doc, content_width_px, content_height_px))
+    Ok(resolve_and_walk(
+        doc,
+        content_width_px,
+        content_height_px,
+        images,
+        base_url,
+    ))
 }
 
 /// Resolve style+layout on a parsed document and read it into a `LaidOutDoc`.
@@ -345,6 +377,8 @@ fn resolve_and_walk(
     mut doc: HtmlDocument,
     content_width_px: f64,
     content_height_px: f64,
+    images: &std::collections::HashMap<String, Vec<u8>>,
+    base_url: Option<&str>,
 ) -> LaidOutDoc {
     let viewport = Viewport::new(
         content_width_px as u32,
@@ -357,6 +391,14 @@ fn resolve_and_walk(
 
     let base: &BaseDocument = doc.as_ref();
     let mut boxes = Vec::new();
+    // Resolves each <img> source to bytes during the walk and records the first
+    // renderable-but-unresolved <img> in document order.
+    let mut img_resolve = ImageResolve {
+        images,
+        base_url,
+        img_count: 0,
+        first_unresolved: None,
+    };
     // Dedup font-face bytes across the whole walk: each distinct face (keyed by
     // its font Blob id) is materialized into one `Arc<Vec<u8>>` shared by every
     // run drawn from it, so krilla's per-face cache hits once per face. The id
@@ -367,7 +409,17 @@ fn resolve_and_walk(
     let mut face_cache: std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>> =
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
-    walk(base, root_id, 0.0, 0.0, 0, &mut boxes, &mut face_cache);
+    // Scope the sink so its `&mut` borrows of `boxes`/`img_resolve` are released
+    // before the post-walk normalize passes (which re-borrow `boxes`) and before
+    // we read `img_resolve.first_unresolved` below.
+    {
+        let mut sink = WalkSink {
+            out: &mut boxes,
+            face_cache: &mut face_cache,
+            img: &mut img_resolve,
+        };
+        walk(base, root_id, 0.0, 0.0, 0, &mut sink);
+    }
     crate::layout_normalize::normalize_vertical_margin_collapse(&mut boxes);
     crate::layout_normalize::normalize_collapsed_table_medium_border_insets(&mut boxes);
     crate::layout_normalize::normalize_painted_table_cell_text_baselines(&mut boxes);
@@ -383,12 +435,32 @@ fn resolve_and_walk(
 
     let content_height = base.root_element().final_layout.size.height as f64;
 
+    // Pair the first unresolved <img> with the DOM total so the source locator can
+    // pinpoint it (degrading to None on a source/DOM count mismatch).
+    let unresolved_image =
+        img_resolve
+            .first_unresolved
+            .map(|(occurrence, reason)| UnresolvedImage {
+                occurrence,
+                dom_total: count_tag_in_document(base, "img"),
+                reason,
+            });
+
     LaidOutDoc {
         boxes,
         viewport_width: content_width_px,
         viewport_height: content_height_px,
         content_height,
+        unresolved_image,
     }
+}
+
+/// Mutable sinks threaded through the layout walk, bundled to keep the walk's
+/// arity small: the output boxes, the per-face byte cache, and image resolution.
+struct WalkSink<'a, 'img> {
+    out: &'a mut Vec<LaidOutBox>,
+    face_cache: &'a mut std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>>,
+    img: &'a mut ImageResolve<'img>,
 }
 
 /// Recursively read the laid-out tree, accumulating parent-relative
@@ -399,8 +471,7 @@ fn walk(
     parent_x: f64,
     parent_y: f64,
     depth: usize,
-    out: &mut Vec<LaidOutBox>,
-    face_cache: &mut std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>>,
+    sink: &mut WalkSink,
 ) {
     let node = match base.get_node(node_id) {
         Some(n) => n,
@@ -430,11 +501,18 @@ fn walk(
         - layout.padding.top as f64
         - layout.padding.bottom as f64)
         .max(0.0);
-    let text_runs = read_text_runs(base, node, content_x, content_y, face_cache);
+    let text_runs = read_text_runs(base, node, content_x, content_y, sink.face_cache);
     let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y);
-    let image_runs = read_image_runs(node, content_x, content_y, content_width, content_height);
+    let image_runs = resolve_image_runs(
+        node,
+        content_x,
+        content_y,
+        content_width,
+        content_height,
+        sink.img,
+    );
 
-    out.push(LaidOutBox {
+    sink.out.push(LaidOutBox {
         node_id,
         tag,
         x: abs_x,
@@ -457,7 +535,7 @@ fn walk(
     });
 
     for &child in &node.children {
-        walk(base, child, abs_x, abs_y, depth + 1, out, face_cache);
+        walk(base, child, abs_x, abs_y, depth + 1, sink);
     }
 }
 
@@ -727,36 +805,147 @@ fn absolute_color_to_srgb(color: style::color::AbsoluteColor) -> Option<[u8; 3]>
     Some([channel(comps[0]), channel(comps[1]), channel(comps[2])])
 }
 
-fn read_image_runs(
+/// Image-source resolution state threaded through the layout walk. Holds the
+/// caller's `images` map + optional `base_url`, counts `<img>` elements (for the
+/// source locator), and records the FIRST renderable-but-unresolved `<img>` in
+/// document order (the walk is preorder DFS, so first-recorded == document-first).
+struct ImageResolve<'a> {
+    images: &'a std::collections::HashMap<String, Vec<u8>>,
+    base_url: Option<&'a str>,
+    img_count: usize,
+    first_unresolved: Option<(usize, &'static str)>,
+}
+
+impl ImageResolve<'_> {
+    fn record_unresolved(&mut self, occurrence: usize, reason: &'static str) {
+        if self.first_unresolved.is_none() {
+            self.first_unresolved = Some((occurrence, reason));
+        }
+    }
+}
+
+/// Resolve a node's `<img>` source to drawable image bytes.
+///
+/// Resolution order: inline `data:` URL (decoded in place) → lookup of the
+/// `base_url`-normalized `src` in the caller's `images` map (format sniffed from
+/// the bytes). A renderable `<img>` whose source does not resolve records an
+/// unresolved marker (the `render` entry point turns the first one into a
+/// rejection) and draws nothing. A non-renderable (zero or non-finite-sized) or
+/// src-less `<img>` is skipped silently — it would draw nothing regardless.
+fn resolve_image_runs(
     node: &blitz_dom::Node,
     x: f64,
     y: f64,
     width: f64,
     height: f64,
+    state: &mut ImageResolve,
 ) -> Vec<ImageRun> {
     let is_img = node
         .data
         .downcast_element()
         .is_some_and(|el| el.name.local.as_ref().eq_ignore_ascii_case("img"));
-    if !is_img || width <= 0.0 || height <= 0.0 || !width.is_finite() || !height.is_finite() {
+    if !is_img {
         return Vec::new();
     }
+    // Count every <img> element so `occurrence` is the DOM ordinal the source
+    // locator expects, regardless of whether this one is renderable.
+    state.img_count += 1;
+    let occurrence = state.img_count;
 
+    if width <= 0.0 || height <= 0.0 || !width.is_finite() || !height.is_finite() {
+        return Vec::new();
+    }
     let Some(src) = node.attr(blitz_dom::local_name!("src")) else {
         return Vec::new();
     };
-    let Some((format, data)) = parse_image_data_url(src) else {
+    // A missing-or-empty source has no key to resolve, so treat it the same as a
+    // src-less <img>: skip silently rather than reject with an unactionable
+    // "supply via images" hint (there is nothing to supply).
+    if src.trim().is_empty() {
+        return Vec::new();
+    }
+
+    // 1) Inline data: URL — decode in place (unchanged behavior).
+    if let Some((format, data)) = parse_image_data_url(src) {
+        return vec![ImageRun {
+            x,
+            y,
+            width,
+            height,
+            format,
+            data: std::sync::Arc::new(data),
+        }];
+    }
+    // A `data:` URL that failed to parse (unsupported MIME, non-base64, or corrupt
+    // payload) must NOT fall through to the images-map lookup — its key would be the
+    // whole data URL and the "no matching images entry" hint would misdirect. Reject
+    // with an actionable reason instead.
+    if src.trim_start().starts_with("data:") {
+        state.record_unresolved(
+            occurrence,
+            "unsupported or malformed data: URL — only base64-encoded PNG/JPEG/GIF/WebP are supported",
+        );
+        return Vec::new();
+    }
+
+    // 2) Look up the (base_url-normalized) src in the caller-provided images map.
+    let key = resolve_image_key(state.base_url, src);
+    let Some(bytes) = state.images.get(&key) else {
+        state.record_unresolved(
+            occurrence,
+            "no matching `images` entry for its `src` — supply the bytes via the `images` render \
+             option (optionally with `baseUrl`)",
+        );
         return Vec::new();
     };
-
+    let Some(format) = sniff_image_format(bytes) else {
+        state.record_unresolved(
+            occurrence,
+            "the supplied bytes are not a recognized PNG/JPEG/GIF/WebP image",
+        );
+        return Vec::new();
+    };
     vec![ImageRun {
         x,
         y,
         width,
         height,
         format,
-        data: std::sync::Arc::new(data),
+        data: std::sync::Arc::new(bytes.clone()),
     }]
+}
+
+/// Normalize a relative `<img>` `src` into the `images` lookup key. With a
+/// `base_url`, joins via WHATWG URL semantics (an absolute `src` joins to itself);
+/// without one — or if the join fails — the trimmed `src` is the key verbatim. No
+/// network or filesystem access occurs; this only builds a string.
+fn resolve_image_key(base_url: Option<&str>, src: &str) -> String {
+    let src = src.trim();
+    match base_url {
+        Some(base) => match url::Url::parse(base).and_then(|b| b.join(src)) {
+            Ok(joined) => joined.to_string(),
+            Err(_) => src.to_string(),
+        },
+        None => src.to_string(),
+    }
+}
+
+/// Detect a raster image format from its leading magic bytes. Returns `None` for
+/// bytes that are not one of the four supported formats (PNG/JPEG/GIF/WebP).
+pub fn sniff_image_format(bytes: &[u8]) -> Option<ImageFormat> {
+    if bytes.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) {
+        return Some(ImageFormat::Png);
+    }
+    if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return Some(ImageFormat::Jpeg);
+    }
+    if bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a") {
+        return Some(ImageFormat::Gif);
+    }
+    if bytes.len() >= 12 && bytes.starts_with(b"RIFF") && &bytes[8..12] == b"WEBP" {
+        return Some(ImageFormat::Webp);
+    }
+    None
 }
 
 fn parse_image_data_url(src: &str) -> Option<(ImageFormat, Vec<u8>)> {

@@ -10,12 +10,17 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compareGolden, resolveById } from "@vellora/test-harness";
+import { compareGolden, fixtureImages, resolveById } from "@vellora/test-harness";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { NativeAddonBridge, renderPdf } from "../src/index";
 
+// The invoice fixture carries `<img src="assets/logo.png">`; supply its bytes so the strict gate
+// resolves the image instead of rejecting it. Image source resolution is exercised end-to-end here.
+const INVOICE_IMAGES = fixtureImages("invoice");
+
 const realStack = (extra: Record<string, unknown> = {}): Record<string, unknown> => ({
   _bridge: new NativeAddonBridge(),
+  images: INVOICE_IMAGES,
   ...extra,
 });
 const latin1 = (bytes: Uint8Array): string => Buffer.from(bytes).toString("latin1");
@@ -53,6 +58,17 @@ describe("renderPdf over the real @vellora/native stack", () => {
     const a = await renderPdf(html, data as Record<string, unknown>, opts as never);
     const b = await renderPdf(html, data as Record<string, unknown>, opts as never);
     expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
+  });
+
+  test("a renderable <img> with no matching images entry rejects with a located image:unresolved", async () => {
+    const html =
+      '<!DOCTYPE html><html><head><style>@page{size:A4;margin:10mm}img{width:24px;height:24px}</style></head><body><img src="missing-logo.png" alt="x" /></body></html>';
+    // The invoice images map has no "missing-logo.png" key, so resolution fails and the strict gate
+    // rejects — proving the reject path surfaces across the real native boundary with its location.
+    await expect(renderPdf(html, {}, realStack() as never)).rejects.toMatchObject({
+      feature: "image:unresolved",
+      line: expect.any(Number),
+    });
   });
 });
 

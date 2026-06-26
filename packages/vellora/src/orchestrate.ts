@@ -72,6 +72,38 @@ function validateCreationDate(creationDate: string): void {
   }
 }
 
+/**
+ * Validate a caller-supplied `baseUrl` at the public boundary. It is used (in core) only to normalize
+ * a relative `<img>` `src` into the `images` lookup key via WHATWG URL join, so it must be a valid
+ * absolute base URL; an invalid value rejects with `VelloraInputError` rather than silently failing to
+ * resolve every relative image at render time.
+ */
+function validateBaseUrl(baseUrl: string): void {
+  try {
+    // `URL` requires an absolute URL with a scheme; a bare path (e.g. "/assets/") throws.
+    void new URL(baseUrl);
+  } catch {
+    throw new VelloraInputError(
+      `baseUrl must be a valid absolute URL (with a scheme); received ${JSON.stringify(baseUrl)}.`,
+    );
+  }
+}
+
+/**
+ * Shape-check the `images` map at the public boundary so a wrong value type fails loudly here rather
+ * than as an opaque error after crossing the FFI. Each value must be the raw image bytes
+ * (`Uint8Array`); the key is the `<img>` `src` string it resolves.
+ */
+function validateImages(images: Record<string, Uint8Array>): void {
+  for (const [key, value] of Object.entries(images)) {
+    if (!(value instanceof Uint8Array)) {
+      throw new VelloraInputError(
+        `images[${JSON.stringify(key)}] must be a Uint8Array of image bytes.`,
+      );
+    }
+  }
+}
+
 /** Resolve public `RenderOptions` into the fully-resolved config handed to the bridge. */
 export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
   const metadata = opts.metadata ?? {};
@@ -87,10 +119,12 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
   if ("fonts" in opts) {
     resolved.fonts = opts.fonts;
   }
-  if ("images" in opts) {
+  if (opts.images !== undefined) {
+    validateImages(opts.images);
     resolved.images = opts.images;
   }
   if (opts.baseUrl !== undefined) {
+    validateBaseUrl(opts.baseUrl);
     resolved.baseUrl = opts.baseUrl;
   }
   return resolved;

@@ -167,6 +167,26 @@ pub fn element_diagnostic(found: &blitz_engine::DeniedElement, html: &str) -> Di
     diag_for_element(found, html)
 }
 
+/// Build the located diagnostic for a renderable `<img>` whose `src` could not be
+/// resolved to image bytes. Reuses the same `<tag`-ordinal source locator as the
+/// element gate. Unlike the subset gate, this is a runtime, options-dependent
+/// failure (it depends on the caller's `images`/`baseUrl`), so it has no
+/// `@vellora/lint` counterpart — lint sees only the HTML, not the supplied bytes,
+/// so there is nothing to keep in sync in `RULE_ID_TO_CORE_FEATURE`.
+pub fn image_diagnostic(found: &blitz_engine::UnresolvedImage, html: &str) -> Diagnostic {
+    let (line, col) = locate_tag(html, "img", found.occurrence, found.dom_total);
+    Diagnostic {
+        feature: "image:unresolved".to_string(),
+        // `reason` carries the full, case-specific guidance (a missing map entry, a
+        // bad data: URL, or unrecognized bytes each need different advice), so the
+        // hint just frames it rather than appending a one-size tail that would
+        // misdirect (e.g. telling a data:-URL author to "supply via images").
+        line,
+        col,
+        hint: format!("<img> source could not be resolved: {}", found.reason),
+    }
+}
+
 /// A denied element found by the engine walk: its tag + DOM document order.
 fn diag_for_element(found: &blitz_engine::DeniedElement, html: &str) -> Diagnostic {
     let (line, col) = locate_tag(html, &found.tag, found.occurrence, found.dom_total);

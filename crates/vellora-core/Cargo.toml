@@ -41,6 +41,11 @@ style = { package = "stylo", version = "=0.18.0" }
 # --- krilla: paginated display list -> PDF ---
 krilla = "0.8.2"
 
+# WHATWG URL join, used ONLY to normalize a relative <img> `src` against an
+# optional `baseUrl` into the lookup key for the caller-supplied `images` map.
+# No network/filesystem access happens — this just builds a string key.
+url = "2"
+
 [dev-dependencies]
 # PDF inspection for tests: text extraction (selectable text / ToUnicode) and
 # low-level structure (page count, font subsetting, metadata).

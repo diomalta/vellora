@@ -2755,6 +2755,7 @@ dependencies = [
  "parley",
  "pdf-extract",
  "stylo",
+ "url",
 ]
 
 [[package]]

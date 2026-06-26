@@ -32,7 +32,8 @@ These are not on any denylist, so the strict gate accepts them.
 | Block & inline text, headings, lists | Supported | Rendered via the Blitz/Stylo/Taffy layout engine. |
 | Tables (incl. multi-page, repeated `<thead>`) | Supported | Headers repeat across page breaks. |
 | Images: data URL PNG / JPEG / GIF / WebP | Supported | Base64 `data:image/...` sources are embedded as PDF image XObjects when the `<img>` has finite laid-out dimensions. |
-| Images: relative or remote URLs | Planned | The core renderer does not fetch assets; bundle or inline them as data URLs before rendering. |
+| Images: `src` via the `images` option (with optional `baseUrl`) | Supported | A non-`data:` `<img src>` is resolved by looking up the caller-supplied `images` map (a `Record<string, Uint8Array>` keyed by `src`, optionally normalized against `baseUrl`); the format is detected from the bytes. A renderable `<img>` whose source does not resolve is rejected. |
+| Images: network fetching of remote URLs | Unsupported | The core renderer never fetches assets (determinism + no network). Provide the bytes via the `images` option, keyed by the `src` (or `baseUrl`-resolved) URL. |
 | `@page` margins, page numbers, running header/footer | Supported | Paged-media constructs are honoured. |
 | Fonts: text shaping + subset embedding | Supported | Text is shaped and the resolved font is subset and embedded into the PDF. Supplying custom fonts via the `fonts` option is planned and currently inert. |
 | `display: flex` | Partial | Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `vellora fix` (`flex/grid-in-td`) can convert it. |
