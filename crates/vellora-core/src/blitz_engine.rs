@@ -48,6 +48,9 @@ pub struct LaidOutBox {
     pub text_align_right: bool,
     /// Table-cell span in columns. Non-cell boxes use `1`.
     pub colspan: usize,
+    /// Table-cell span in rows. Non-cell boxes use `1`. The fixed-table column
+    /// pass needs this to skip columns a rowspan still occupies in later rows.
+    pub rowspan: usize,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
@@ -445,6 +448,7 @@ fn walk(
         table_border_collapse: table_border_collapse(node),
         text_align_right: text_align_right(node),
         colspan: colspan(node),
+        rowspan: rowspan(node),
         depth,
         text_runs,
         visual_rects,
@@ -494,6 +498,14 @@ fn text_align_right(node: &blitz_dom::Node) -> bool {
 
 fn colspan(node: &blitz_dom::Node) -> usize {
     node.attr(blitz_dom::local_name!("colspan"))
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
+        .unwrap_or(1)
+        .min(1000)
+}
+
+fn rowspan(node: &blitz_dom::Node) -> usize {
+    node.attr(blitz_dom::local_name!("rowspan"))
         .and_then(|value| value.parse::<usize>().ok())
         .filter(|value| *value > 0)
         .unwrap_or(1)

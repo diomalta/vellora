@@ -444,17 +444,35 @@ fn normalize_fixed_table_widths_in_range(boxes: &mut [LaidOutBox], table_idx: us
     }
 
     let track_width = table_width / column_count as f64;
+    // Per-column occupancy: how many further rows a rowspan from above keeps the
+    // column filled. Without this the column cursor resets to 0 every row, so a
+    // single-cell continuation row under a `rowspan` lands back in column 0 and
+    // overlaps the spanning cell instead of skipping to the first free column.
+    let mut occupancy = vec![0usize; column_count];
     for cells in rows {
         let mut column = 0usize;
         for idx in cells {
-            let span = boxes[idx].colspan.min(column_count - column).max(1);
-            let target_x = table_x + track_width * column as f64;
-            let target_width = track_width * span as f64;
-            adjust_subtree_inline_geometry(boxes, idx, target_x, target_width);
-            column += span;
+            while column < column_count && occupancy[column] > 0 {
+                column += 1;
+            }
             if column >= column_count {
                 break;
             }
+            let span = boxes[idx].colspan.min(column_count - column).max(1);
+            let rows_spanned = boxes[idx].rowspan.max(1);
+            let target_x = table_x + track_width * column as f64;
+            let target_width = track_width * span as f64;
+            adjust_subtree_inline_geometry(boxes, idx, target_x, target_width);
+            if rows_spanned > 1 {
+                for slot in occupancy.iter_mut().skip(column).take(span) {
+                    *slot = (*slot).max(rows_spanned);
+                }
+            }
+            column += span;
+        }
+        // Consume one row of every active rowspan now that this row is placed.
+        for slot in occupancy.iter_mut() {
+            *slot = slot.saturating_sub(1);
         }
     }
 }

@@ -1246,3 +1246,57 @@ fn totals_grand_label_stays_on_one_line_when_table_has_room() {
             .collect::<Vec<_>>()
     );
 }
+
+// Mirrors the boleto `.boleto` field grid: a `width:100%; table-layout:fixed;
+// border-collapse:collapse` table whose 4-column grid carries both colspan and a
+// `rowspan="4"` instruction cell. The three single-cell rows below the rowspan
+// must skip the columns the rowspan still occupies and land in the rightmost
+// column — not reset to column 0 (which overlaps the instruction cell).
+const BOLETO_ROWSPAN_GRID: &str = r#"<!DOCTYPE html><html><head><style>
+    @page { size: A4; margin: 16mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: sans-serif; font-size: 9pt; }
+    table.boleto { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.boleto td { border: 0.5px solid #555; padding: 1mm 2mm 2mm 2mm; vertical-align: top; }
+</style></head><body>
+    <table class="boleto">
+        <tr><td colspan="3">LocalPag</td><td class="right">Venc</td></tr>
+        <tr><td>DataDoc</td><td>NumDoc</td><td>Especie</td><td class="right">NossoNum</td></tr>
+        <tr><td colspan="3" rowspan="4">Instrucoes</td><td class="right">Desconto</td></tr>
+        <tr><td class="right">Deducoes</td></tr>
+        <tr><td class="right">Mora</td></tr>
+        <tr><td class="right">ValorCobrado</td></tr>
+    </table>
+</body></html>"#;
+
+#[test]
+fn fixed_table_rowspan_continuation_cells_skip_occupied_columns() {
+    let (laid, _pb) = lay_out_for_render(BOLETO_ROWSPAN_GRID);
+    let table = laid
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table box present");
+    let track = table.width / 4.0;
+    let col3_x = table.x + 3.0 * track;
+
+    let td_x = |text: &str| -> f64 {
+        laid.boxes
+            .iter()
+            .find(|b| {
+                b.tag.as_deref() == Some("td") && b.text_runs.iter().any(|r| r.text.contains(text))
+            })
+            .unwrap_or_else(|| panic!("missing td containing {text:?}"))
+            .x
+    };
+
+    // The rowspan="4" instruction cell occupies columns 0..3 across these rows;
+    // each continuation cell must therefore sit in column 3.
+    for text in ["Deducoes", "Mora", "ValorCobrado"] {
+        let x = td_x(text);
+        assert!(
+            (x - col3_x).abs() <= 1.0,
+            "rowspan continuation cell {text:?} should land in column 3 (x≈{col3_x:.2}), got x={x:.2}"
+        );
+    }
+}
