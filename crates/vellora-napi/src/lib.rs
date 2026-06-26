@@ -35,6 +35,11 @@ pub struct RenderOpts {
     /// Base URL used only to normalize a relative `<img>` `src` into the `images`
     /// lookup key. Never fetched.
     pub base_url: Option<String>,
+    /// Caller-supplied font faces (raw TTF/OTF bytes, a JS `Uint8Array[]`). Each
+    /// registers into the deterministic font context; family/weight/style are
+    /// read from the bytes in the core. An unparseable face rejects with
+    /// `font:invalid`.
+    pub fonts: Option<Vec<Uint8Array>>,
 }
 
 /// The structured located-diagnostic carried across the boundary on a core
@@ -163,11 +168,18 @@ fn to_render_options(opts: Option<RenderOpts>) -> RenderOptions {
                 .collect::<std::collections::HashMap<String, Vec<u8>>>()
         })
         .unwrap_or_default();
+    // Copy each JS `Uint8Array` face into an owned `Vec<u8>` (same outlives-the-JS
+    // reason as images). Registration is positional, so order is preserved.
+    let fonts = opts
+        .fonts
+        .map(|faces| faces.iter().map(|f| f.to_vec()).collect::<Vec<Vec<u8>>>())
+        .unwrap_or_default();
     RenderOptions {
         title: opts.title,
         creation_date,
         images,
         base_url: opts.base_url,
+        fonts,
     }
 }
 

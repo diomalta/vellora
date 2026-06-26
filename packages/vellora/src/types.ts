@@ -33,17 +33,24 @@ export interface RenderMetadata {
 
 /**
  * Public render options. `opts` is the single carrier for render configuration and is forwarded to
- * the orchestration and native layers. `metadata`, `images`, and `baseUrl` have a rendering effect;
- * `fonts` is accepted and forwarded but currently inert (it will take effect in a future release —
- * forwarding it MUST NOT change current output).
+ * the orchestration and native layers. `metadata`, `images`, `baseUrl`, and `fonts` all have a
+ * rendering effect.
  */
 export interface RenderOptions {
   /** Strict-by-default: validate, never mutate. `false` runs `@vellora/lint` fixers first. */
   strict?: boolean;
   /** Document metadata (title, creation date). */
   metadata?: RenderMetadata;
-  /** Planned: explicit fonts. Forwarded but currently inert. */
-  fonts?: unknown;
+  /**
+   * Custom font faces as raw TTF/OTF bytes. Each face registers into the deterministic font context
+   * (after the bundled faces) and is reachable from the document's CSS by its **intrinsic embedded
+   * family name** (`font-family: "Inter"`) — the caller does not declare a family alias. Custom faces
+   * never override the CSS generics (`sans-serif`/`serif`/`monospace` stay bundled), and no host/system
+   * font is ever consulted, so an unreferenced face leaves output byte-identical. A non-`Uint8Array`
+   * entry rejects with `VelloraInputError`; bytes that are not a parseable font reject with
+   * `font:invalid`.
+   */
+  fonts?: Uint8Array[];
   /**
    * Image bytes keyed by an `<img>`'s `src` string. A non-`data:` `<img src>` is resolved by looking
    * up this map (its key optionally normalized against `baseUrl`); the format is detected from the
@@ -60,7 +67,7 @@ export interface RenderOptions {
  */
 export interface BridgeRenderOptions {
   metadata: RenderMetadata & { creationDate: string };
-  fonts?: unknown;
+  fonts?: Uint8Array[];
   images?: Record<string, Uint8Array>;
   baseUrl?: string;
 }

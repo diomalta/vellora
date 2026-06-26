@@ -102,15 +102,30 @@ describe("renderPdf", () => {
     expect(bridge.calls[0]?.options.metadata).toEqual(metadata);
   });
 
-  test("an unimplemented fonts option is forwarded and does not change output", async () => {
+  test("a fonts list is forwarded to the bridge unchanged", async () => {
     const bridge = new MockNativeBridge();
-    await renderPdf(SAFE_HTML, { name: "x" }, { ...withBridge(bridge), fonts: ["Inter"] });
-    expect(bridge.calls[0]?.options.fonts).toEqual(["Inter"]);
+    const face = new Uint8Array([0x00, 0x01, 0x00, 0x00]); // sfnt-shaped; the mock models shape only
+    await renderPdf(SAFE_HTML, { name: "x" }, { ...withBridge(bridge), fonts: [face] });
+    expect(bridge.calls[0]?.options.fonts).toEqual([face]);
 
+    // The mock mirrors the contract SHAPE only — it never registers fonts, so a forwarded face leaves
+    // its stub bytes unchanged. Real registration (a custom face changing output) is proven over the
+    // real native stack in real-stack.test.ts.
     const withoutFonts = await renderPdf(SAFE_HTML, { name: "x" });
-    const withFonts = await renderPdf(SAFE_HTML, { name: "x" }, { fonts: ["Inter"] });
-    // fonts is forwarded but currently inert: the mock stub bytes do not include it.
+    const withFonts = await renderPdf(SAFE_HTML, { name: "x" }, { fonts: [face] });
     expect(Buffer.from(withFonts).equals(Buffer.from(withoutFonts))).toBe(true);
+  });
+
+  test("a non-Uint8Array fonts entry rejects with VelloraInputError", async () => {
+    const err = await renderPdf(
+      SAFE_HTML,
+      { name: "x" },
+      {
+        // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
+        fonts: ["Inter" as any],
+      },
+    ).catch((e) => e);
+    expect(err).toBeInstanceOf(VelloraInputError);
   });
 
   test("images and baseUrl are forwarded to the bridge unchanged", async () => {

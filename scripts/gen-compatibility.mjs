@@ -163,7 +163,17 @@ const allowedRows = [
   {
     feature: "Fonts: text shaping + subset embedding",
     status: "Supported",
-    note: "Text is shaped and the resolved font is subset and embedded into the PDF. Supplying custom fonts via the `fonts` option is planned and currently inert.",
+    note: "Text is shaped and the resolved font is subset and embedded into the PDF.",
+  },
+  {
+    feature: "Fonts: custom faces via the `fonts` option",
+    status: "Supported",
+    note: 'Caller-supplied font faces (a `Uint8Array[]` of raw TTF/OTF bytes) register into the deterministic font context and are reachable from CSS by each face\'s intrinsic embedded family name (`font-family: "Inter"`); family/weight/style are read from the bytes. Custom faces never override the CSS generics, no host/system font is consulted, and bytes that are not a parseable font reject with `font:invalid`.',
+  },
+  {
+    feature: "Fonts: declared family aliasing / `@font-face` `src` / subsetting config",
+    status: "Unsupported",
+    note: "A face is reachable only by its intrinsic embedded family name — the `@font-face` model (a caller-declared alias decoupled from the font's own name), resolving `@font-face` `src` URLs from the document CSS, weight/style overrides, variable-font axis selection, and font-subsetting configuration are not provided.",
   },
   {
     feature: "`display: flex`",

@@ -305,12 +305,13 @@ describe("resolveOptions", () => {
 
   test("forwards optional fonts/images/baseUrl options when present and omits them otherwise", () => {
     const images = { "logo.png": new Uint8Array([0x89, 0x50, 0x4e, 0x47]) };
+    const fonts = [new Uint8Array([0x00, 0x01, 0x00, 0x00])];
     const resolved = resolveOptions({
-      fonts: ["f"],
+      fonts,
       images,
       baseUrl: "https://example.test/assets/",
     });
-    expect(resolved.fonts).toEqual(["f"]);
+    expect(resolved.fonts).toBe(fonts);
     expect(resolved.images).toBe(images);
     expect(resolved.baseUrl).toBe("https://example.test/assets/");
     const bare = resolveOptions({});
@@ -328,6 +329,13 @@ describe("resolveOptions", () => {
     expect(() =>
       // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
       resolveOptions({ images: { "logo.png": "not-bytes" as any } }),
+    ).toThrow(VelloraInputError);
+  });
+
+  test("rejects a non-Uint8Array fonts entry with VelloraInputError", () => {
+    expect(() =>
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
+      resolveOptions({ fonts: ["not-bytes" as any] }),
     ).toThrow(VelloraInputError);
   });
 });

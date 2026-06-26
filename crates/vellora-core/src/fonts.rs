@@ -54,7 +54,16 @@ const MONO_GENERIC_FAMILIES: &[GenericFamily] =
 /// bullet font (for list markers), with system-font discovery disabled. Passed
 /// to every Blitz document via `DocumentConfig::font_ctx` so layout never
 /// touches the host's fonts or `libfontconfig`.
-pub fn build_font_context() -> FontContext {
+///
+/// `custom` carries caller-supplied font faces (raw TTF/OTF bytes). Each is
+/// registered AFTER the bundled faces, in order, as a named family only — its
+/// family/weight/style come from the font's own tables, and it is deliberately
+/// NOT mapped onto any CSS generic (so `sans-serif`/`serif`/`monospace` stay
+/// bundled and an unreferenced custom face leaves output byte-identical). A blob
+/// that registers no family is skipped here (lenient); `render` rejects it up
+/// front via [`first_unparseable_font`] so it never reaches this point on the
+/// render path.
+pub fn build_font_context(custom: &[Vec<u8>]) -> FontContext {
     let mut collection = Collection::new(CollectionOptions {
         shared: false,
         system_fonts: false,
@@ -106,10 +115,39 @@ pub fn build_font_context() -> FontContext {
         collection.set_generic_families(generic, mono_family_ids.iter().copied());
     }
 
+    // Caller faces register LAST, after the generic maps are bound to the bundled
+    // ids, so a custom face is reachable only by its intrinsic family name and
+    // never repoints a generic. Order is the caller's, kept deterministic.
+    for bytes in custom {
+        collection.register_fonts(Blob::new(Arc::new(bytes.clone()) as _), None);
+    }
+
     FontContext {
         collection,
         source_cache: SourceCache::new_shared(),
     }
+}
+
+/// Index of the first `custom` blob that registers no font family — corrupt or
+/// truncated bytes, a non-font payload, or an unsupported container. `render`
+/// calls this BEFORE layout to reject an unparseable face (`font:invalid`); the
+/// probe uses a throwaway, system-font-free collection so it never touches host
+/// fonts. Returns `None` when every blob is a usable font (or `custom` is empty).
+pub fn first_unparseable_font(custom: &[Vec<u8>]) -> Option<usize> {
+    let mut probe = Collection::new(CollectionOptions {
+        shared: false,
+        system_fonts: false,
+    });
+    // Probe via the SAME `register_fonts` path `build_font_context` uses, so "usable
+    // font" means exactly "registers ≥1 family" in both places. Do NOT swap in a
+    // lighter parser (e.g. ttf-parser): a face it accepts could still register zero
+    // families here and then silently vanish from the real context — the exact
+    // silent-omit this gate exists to prevent. The re-registration is intentional.
+    custom.iter().position(|bytes| {
+        probe
+            .register_fonts(Blob::new(Arc::new(bytes.clone()) as _), None)
+            .is_empty()
+    })
 }
 
 fn register_family(

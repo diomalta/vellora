@@ -28,6 +28,7 @@ fn lay_out_for_render(html: &str) -> (blitz_engine::LaidOutDoc, page_css::PageBo
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,
+        &[],
     )
     .unwrap_or_else(|_| panic!("fixture is in the supported subset"));
     (laid, pb)

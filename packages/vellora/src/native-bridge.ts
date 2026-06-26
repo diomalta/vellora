@@ -16,6 +16,7 @@ type AddonRender = (
     creationDate?: [number, number, number];
     images?: Record<string, Uint8Array>;
     baseUrl?: string;
+    fonts?: Uint8Array[];
   },
 ) => Promise<Uint8Array>;
 
@@ -57,6 +58,7 @@ export class NativeAddonBridge implements NativeBridge {
       creationDate: isoToYmd(options.metadata.creationDate),
       images: options.images,
       baseUrl: options.baseUrl,
+      fonts: options.fonts,
     });
   }
 }

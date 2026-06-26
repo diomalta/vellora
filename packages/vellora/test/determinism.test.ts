@@ -67,7 +67,7 @@ setNativeBridge(new MockNativeBridge());
 const [htmlPath, dataPath] = process.argv.slice(2);
 const html = readFileSync(htmlPath, "utf8");
 const data = JSON.parse(readFileSync(dataPath, "utf8"));
-const pdf = await renderPdf(html, data, { metadata: { creationDate: "2024-02-29T12:00:00.000Z" }, fonts: ["pinned"] });
+const pdf = await renderPdf(html, data, { metadata: { creationDate: "2024-02-29T12:00:00.000Z" }, fonts: [new Uint8Array([0, 1, 0, 0])] });
 process.stdout.write(Buffer.from(pdf).toString("base64"));
 `;
     writeFileSync(runnerPath, runner);

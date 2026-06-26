@@ -11,4 +11,12 @@ automatically on release (`changeset version`).
   normalizes a relative `src` into the lookup key (no network/filesystem access). Inline `data:` URLs
   continue to render. **BREAKING:** a renderable `<img>` whose `src` cannot be resolved (missing
   `images` entry, remote URL, or unsupported bytes) now rejects with a located `image:unresolved`
-  diagnostic instead of rendering blank. `fonts` remains forwarded-but-inert.
+  diagnostic instead of rendering blank.
+- **Custom fonts.** The `fonts` option is now live: a `Uint8Array[]` of raw TTF/OTF font faces. Each
+  registers into the deterministic font context (after the bundled faces) and is reachable from the
+  document's CSS by its **intrinsic embedded family name** (`font-family: "Inter"`); family/weight/style
+  are read from the bytes. Custom faces never override the CSS generics, no host/system font is ever
+  consulted, and an unreferenced face leaves output byte-identical. **BREAKING:** `fonts` was previously
+  forwarded-but-inert and accepted any value; it is now typed `Uint8Array[]` — a non-`Uint8Array` entry
+  rejects with `VelloraInputError`, and bytes that are not a parseable font reject with a `font:invalid`
+  diagnostic.

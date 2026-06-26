@@ -191,7 +191,7 @@ pub struct DeniedElement {
 /// [`validate_then_lay_out`], which parses ONCE and reuses that parse for both
 /// validation and layout (the cost model).
 pub fn find_denied_element(html: &str, denied: &[&str]) -> Option<DeniedElement> {
-    let doc = build_document(html);
+    let doc = build_document(html, &[]);
     let base: &BaseDocument = doc.as_ref();
     find_denied_in_document(base, denied)
 }
@@ -240,7 +240,7 @@ fn count_tag_in_document(base: &BaseDocument, tag: &str) -> usize {
 /// rejecting over-deep input cleanly instead of letting Stylo/Taffy/our own walk
 /// abort the process. Element depth only (text nodes are not counted).
 pub fn max_nesting_depth(html: &str) -> usize {
-    let doc = build_document(html);
+    let doc = build_document(html, &[]);
     let base: &BaseDocument = doc.as_ref();
     let root_id = base.root_element().id;
     let mut max_depth = 0usize;
@@ -266,8 +266,11 @@ pub fn max_nesting_depth(html: &str) -> usize {
     max_depth
 }
 
-/// Build a parsed Blitz document (parse only; no style/layout yet).
-fn build_document(html: &str) -> HtmlDocument {
+/// Build a parsed Blitz document (parse only; no style/layout yet). `custom`
+/// carries caller-supplied font faces registered alongside the bundled ones; the
+/// parse-only/geometry helpers pass `&[]` (they never measure text), only the
+/// layout path threads `opts.fonts`.
+fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
     HtmlDocument::from_html(
         html,
         DocumentConfig {
@@ -275,7 +278,7 @@ fn build_document(html: &str) -> HtmlDocument {
             // Self-contained, deterministic fonts: bundled faces with system-font
             // discovery off (see `crate::fonts`). This is what removes the
             // `libfontconfig` runtime dependency and makes output machine-independent.
-            font_ctx: Some(crate::fonts::build_font_context()),
+            font_ctx: Some(crate::fonts::build_font_context(custom)),
             ..Default::default()
         },
     )
@@ -322,7 +325,7 @@ fn walk_for_denied(
 /// entirely within this function (lifetime contract).
 pub fn lay_out(html: &str) -> LaidOutDoc {
     let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
-    let doc = build_document(&normalized);
+    let doc = build_document(&normalized, &[]);
     // Standalone/test helper: lay out against the full A4 width with no caller
     // images (an unresolved `<img>` is recorded on the doc but not enforced here).
     // The render path uses `validate_then_lay_out` with the real @page content width.
@@ -349,9 +352,10 @@ pub fn validate_then_lay_out(
     content_height_px: f64,
     images: &std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&str>,
+    fonts: &[Vec<u8>],
 ) -> Result<LaidOutDoc, DeniedElement> {
     let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
-    let doc = build_document(&normalized);
+    let doc = build_document(&normalized, fonts);
     // Validate and lay out the same Blitz parse. The table-cell normalizer may
     // parse/serialize HTML before this point, but there is still one Blitz tree
     // shared by validation and layout.
