@@ -19,6 +19,7 @@ fn opts(images: HashMap<String, Vec<u8>>, base_url: Option<&str>) -> RenderOptio
         creation_date: Some((2026, 6, 26)),
         images,
         base_url: base_url.map(str::to_string),
+        ..Default::default()
     }
 }
 
@@ -53,6 +54,7 @@ fn first_image_format(
         pb.content_height(),
         &images,
         base_url,
+        &[],
     )
     .unwrap_or_else(|_| panic!("fixture is in the supported subset"));
     let paginated = pagination::paginate(&laid, &pb);

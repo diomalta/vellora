@@ -10,7 +10,7 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compareGolden, fixtureImages, resolveById } from "@vellora/test-harness";
+import { compareGolden, fixtureFont, fixtureImages, resolveById } from "@vellora/test-harness";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { NativeAddonBridge, renderPdf } from "../src/index";
 
@@ -69,6 +69,37 @@ describe("renderPdf over the real @vellora/native stack", () => {
       feature: "image:unresolved",
       line: expect.any(Number),
     });
+  });
+
+  // A document naming a family the bundled context does NOT provide ("DejaVu Sans Mono"). Supplying
+  // that face via `fonts` must change the rendered bytes — proving the TS→napi→core thread actually
+  // registers the caller's face (not just forwards it inertly, as the mock does).
+  const fontDoc = (family: string): string =>
+    `<!DOCTYPE html><html><head><style>@page{size:A4;margin:10mm}p{font-family:${family};font-size:16px}</style></head><body><p>Sphinx of black quartz 0123456789</p></body></html>`;
+
+  test("a custom `fonts` face changes the rendered output over the real stack", async () => {
+    const html = fontDoc('"DejaVu Sans Mono"');
+    const bridge = new NativeAddonBridge();
+    const without = await renderPdf(html, {}, { _bridge: bridge } as never);
+    const withFont = await renderPdf(html, {}, {
+      _bridge: bridge,
+      fonts: [fixtureFont()],
+    } as never);
+    expect(latin1(without).startsWith("%PDF-")).toBe(true);
+    expect(Buffer.from(withFont).equals(Buffer.from(without))).toBe(false);
+  });
+
+  // The first diagnostic to cross napi with NO source location: `font:invalid` (an option-level
+  // failure, not a DOM node). Proves `line`/`col` cross the boundary as `null` (so the located-
+  // diagnostic contract still maps it to a VelloraUnsupportedError) rather than as `undefined`.
+  test("an unparseable `fonts` face rejects with font:invalid and a null source location", async () => {
+    const html = fontDoc("sans-serif");
+    await expect(
+      renderPdf(html, {}, {
+        _bridge: new NativeAddonBridge(),
+        fonts: [new Uint8Array([0x00, 0x01, 0x02, 0x03])],
+      } as never),
+    ).rejects.toMatchObject({ feature: "font:invalid", line: null, col: null });
   });
 });
 

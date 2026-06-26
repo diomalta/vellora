@@ -104,6 +104,23 @@ function validateImages(images: Record<string, Uint8Array>): void {
   }
 }
 
+/**
+ * Shape-check the `fonts` list at the public boundary so a wrong entry type fails loudly here rather
+ * than as an opaque error after crossing the FFI. Each entry must be the raw font-face bytes
+ * (`Uint8Array`); the family/weight/style are read from the bytes in core. Whether those bytes are a
+ * *parseable* font is a core-side decision (rejected as `font:invalid`); this only guards the JS type.
+ */
+function validateFonts(fonts: Uint8Array[]): void {
+  if (!Array.isArray(fonts)) {
+    throw new VelloraInputError("fonts must be an array of Uint8Array font faces.");
+  }
+  fonts.forEach((face, i) => {
+    if (!(face instanceof Uint8Array)) {
+      throw new VelloraInputError(`fonts[${i}] must be a Uint8Array of font-face bytes.`);
+    }
+  });
+}
+
 /** Resolve public `RenderOptions` into the fully-resolved config handed to the bridge. */
 export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
   const metadata = opts.metadata ?? {};
@@ -116,7 +133,8 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
       creationDate: metadata.creationDate ?? DEFAULT_CREATION_DATE,
     },
   };
-  if ("fonts" in opts) {
+  if (opts.fonts !== undefined) {
+    validateFonts(opts.fonts);
     resolved.fonts = opts.fonts;
   }
   if (opts.images !== undefined) {

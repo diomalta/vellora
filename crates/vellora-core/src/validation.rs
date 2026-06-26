@@ -187,6 +187,23 @@ pub fn image_diagnostic(found: &blitz_engine::UnresolvedImage, html: &str) -> Di
     }
 }
 
+/// Build the diagnostic for a caller-supplied `fonts` blob that did not register
+/// as a usable font face (corrupt/truncated bytes, a non-font payload, or an
+/// unsupported container). Unlike the element/image diagnostics this has NO
+/// source location: the failure is in a render *option*, not a DOM node, so
+/// `line`/`col` are `None` and the hint names the offending blob by its index.
+/// Like `image_diagnostic` this is a runtime, options-dependent failure with no
+/// `@vellora/lint` counterpart (lint sees only the HTML, never the `fonts`
+/// bytes), so there is nothing to keep in sync in `RULE_ID_TO_CORE_FEATURE`.
+pub fn font_diagnostic(index: usize) -> Diagnostic {
+    Diagnostic {
+        feature: "font:invalid".to_string(),
+        line: None,
+        col: None,
+        hint: format!("fonts[{index}] is not a parseable font face — supply valid TTF/OTF bytes"),
+    }
+}
+
 /// A denied element found by the engine walk: its tag + DOM document order.
 fn diag_for_element(found: &blitz_engine::DeniedElement, html: &str) -> Diagnostic {
     let (line, col) = locate_tag(html, &found.tag, found.occurrence, found.dom_total);

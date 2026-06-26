@@ -91,6 +91,16 @@ export function fixtureImages(id: string): Record<string, Uint8Array> {
   return images;
 }
 
+/**
+ * The shared custom-font test face: DejaVu Sans Mono (family "DejaVu Sans Mono"), a DejaVu family the
+ * bundled `vellora-core` context does NOT register — so naming it in CSS proves the caller-supplied
+ * `fonts` option takes effect. Covered by the already-vendored DejaVu license; lives under the repo
+ * root `fixtures/fonts/` alongside the other neutral test assets and is shared with the Rust suite.
+ */
+export function fixtureFont(): Uint8Array {
+  return new Uint8Array(readFileSync(join(FIXTURES_DIR, "fonts", "DejaVuSansMono.ttf")));
+}
+
 /** Resolve a fixture by id (conformant or broken). Throws a clear error for an unknown id. */
 export function resolveById(id: string): Fixture {
   const conformant = (CONFORMANT_FIXTURE_IDS as readonly string[]).includes(id);

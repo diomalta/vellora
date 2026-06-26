@@ -14,9 +14,10 @@
 //!   -> Result<Vec<u8>, `[`VelloraError`]`>`.
 //!   - `html_bytes` is always *content* (UTF-8), never a file path.
 //!   - Output `Vec<u8>` is the complete PDF byte stream.
-//! - **Options** ([`RenderOptions`], current surface): `title: Option<String>` and
-//!   `creation_date: Option<(year, month, day)>`. Producer is fixed to
-//!   `"vellora"`; the creation date is caller-supplied and never wall-clock.
+//! - **Options** ([`RenderOptions`], current surface): `title`, `creation_date`
+//!   `(year, month, day)`, caller-supplied `images` + `base_url` (`<img>` source
+//!   resolution), and `fonts` (custom faces). Producer is fixed to `"vellora"`;
+//!   the creation date is caller-supplied and never wall-clock.
 //! - **Send-in / Send-out & lifetime**: inputs and outputs are `Send`; the
 //!   `!Send` Blitz `BaseDocument` is created, used, and dropped entirely within
 //!   the single synchronous [`render`] call and never escapes it.
@@ -61,6 +62,14 @@ pub struct RenderOptions {
     /// Optional base URL used ONLY to normalize a relative `<img>` `src` into the
     /// [`images`](Self::images) lookup key (WHATWG URL join). Never fetched.
     pub base_url: Option<String>,
+    /// Caller-supplied font faces (raw TTF/OTF bytes), each registered into the
+    /// deterministic font context AFTER the bundled faces, in this order. A face's
+    /// family/weight/style are read from the font's own tables, so a document
+    /// reaches it by naming its intrinsic family in CSS. Custom faces never
+    /// override the CSS generics; an unparseable blob rejects the render
+    /// (`font:invalid`). Registration performs no network/filesystem/system-font
+    /// access. See `fonts::build_font_context`.
+    pub fonts: Vec<Vec<u8>>,
 }
 
 /// The stable render entry point. Takes `Send` inputs and returns `Send`
@@ -80,6 +89,15 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
     // and ABORT the process. Uses an explicit-stack measure, not recursion.
     validation::validate_nesting_depth(html)?;
 
+    // 1a'') Font gate: reject a caller `fonts` blob that is not a usable font
+    // face BEFORE layout. Option-level failure (no DOM node), so the diagnostic
+    // carries no line/col. `build_font_context` itself stays lenient — this is
+    // the single enforcement point, mirroring the `<img>` resolution reject.
+    if let Some(index) = fonts::first_unparseable_font(&opts.fonts) {
+        let diagnostic = validation::font_diagnostic(index);
+        return Err(VelloraError::Unsupported(diagnostic));
+    }
+
     // 2) @page box (size/margins + running header/footer templates).
     let page_box = page_css::parse_page_box(html);
 
@@ -93,6 +111,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         page_box.content_height(),
         &opts.images,
         opts.base_url.as_deref(),
+        &opts.fonts,
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
 

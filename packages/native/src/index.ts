@@ -52,6 +52,8 @@ export interface RenderOpts {
   images?: Record<string, Uint8Array>;
   /** Base URL used only to normalize a relative `<img>` `src` into the `images` lookup key. */
   baseUrl?: string;
+  /** Custom font faces (raw TTF/OTF bytes); family/weight/style are read from the bytes in the core. */
+  fonts?: Uint8Array[];
 }
 
 /** Surface of the native addon: the smoke export plus the async `render` binding. */

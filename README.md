@@ -125,7 +125,8 @@ partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md
 | Images: network fetching of remote URLs | Not supported (no network; provide bytes via `images`) |
 | Inline SVG | Via dev-time `fix` (rasterized to PNG) — *planned* |
 | `@page` margins, page numbers, running header/footer | Supported |
-| Fonts: text shaping + subset embedding | Supported — custom fonts *planned* |
+| Fonts: text shaping + subset embedding | Supported |
+| Fonts: custom faces via the `fonts` option | Supported — pass `Uint8Array[]` (TTF/OTF) |
 | PDF/A, PDF/UA, tagged, bookmarks, metadata | *Planned* |
 | `display: flex` / `grid` (general) | Limited — use tables |
 | JavaScript, browser APIs, animations, filters | Not supported (rejected by the strict gate) |
@@ -157,13 +158,13 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 
 - **Available now** — in-process HTML→PDF (no browser); multi-page layout (text, headings, lists,
   tables); table pagination with a repeated `<thead>`; `@page` margins, page numbers, running
-  header/footer; selectable text with subset-embedded fonts; deterministic (byte-identical) output;
+  header/footer; selectable text with subset-embedded fonts; custom fonts via the `fonts` option;
+  deterministic (byte-identical) output;
   templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
   strict-by-default subset validation; `renderPdf` / `renderPdfToStream`; document metadata
   (`title`, `creationDate`); embedded data-url images; representative HTML fixtures for invoice,
   receipt, boleto, and notification inputs.
-- **In progress / next** — custom fonts (`fonts` option); image asset bundling/resolution
-  (`images` / `baseUrl`); `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
+- **In progress / next** — `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
   (`{ strict: false }`); bounded, configurable concurrency; prebuilt binaries for macOS + Linux
   glibc via CI (musl/Alpine is a fast-follow).
 - **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching

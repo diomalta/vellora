@@ -754,6 +754,7 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         986.4, // content height; irrelevant to this element-gate test
         &std::collections::HashMap::new(),
         None,
+        &[],
     );
     assert!(
         clean.is_ok(),
@@ -768,6 +769,7 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         986.4, // content height; irrelevant to this element-gate test
         &std::collections::HashMap::new(),
         None,
+        &[],
     );
     match denied {
         Err(found) => assert_eq!(found.tag, "script"),
