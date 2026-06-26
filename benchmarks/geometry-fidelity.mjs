@@ -119,9 +119,15 @@ function matchWords(referenceWords, subjectWords) {
       continue;
     }
     const dx = subject.xMin - reference.xMin;
-    const dy = subject.yMin - reference.yMin;
-    const dRight = subject.xMax - reference.xMax;
+    const dTop = subject.yMin - reference.yMin;
     const dBottom = subject.yMax - reference.yMax;
+    // Vertical position error is measured at the box MIDPOINT (~ baseline), not the
+    // top edge. pdftotext derives the top edge from the embedded font's
+    // FontDescriptor /Ascent, and krilla emits OS/2 sTypo ascent while Chromium
+    // emits hhea ascent — so the reported top differs by ~0.177*size with NO glyph
+    // moving. The midpoint tracks real glyph placement (descent matches to ~1/1000).
+    const dy = (subject.yMin + subject.yMax) / 2 - (reference.yMin + reference.yMax) / 2;
+    const dRight = subject.xMax - reference.xMax;
     matched.push({
       text: reference.text,
       referenceIndex: reference.index,
@@ -131,6 +137,7 @@ function matchWords(referenceWords, subjectWords) {
       delta: {
         x: dx,
         y: dy,
+        top: dTop,
         right: dRight,
         bottom: dBottom,
         distance: Math.hypot(dx, dy),
@@ -162,12 +169,18 @@ function summarize(matches) {
   const absX = matches.map((match) => Math.abs(match.delta.x));
   const absY = matches.map((match) => Math.abs(match.delta.y));
   const distances = matches.map((match) => match.delta.distance);
+  // Box-height ratio makes the FontDescriptor ascent artifact explicit: it is a
+  // ~constant per-font value (~0.84 for the bundled sans) and means nothing moved.
+  const heightRatios = matches
+    .map((m) => (m.subject.yMax - m.subject.yMin) / (m.reference.yMax - m.reference.yMin))
+    .filter((r) => Number.isFinite(r) && r > 0);
   return {
     matchedWords: matches.length,
     meanAbsX: mean(absX),
     meanAbsY: mean(absY),
     p95Distance: percentile(distances, 95),
     maxDistance: Math.max(0, ...distances),
+    meanHeightRatio: mean(heightRatios),
   };
 }
 
