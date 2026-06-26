@@ -20,14 +20,21 @@ use napi_derive::napi;
 use vellora_core::{RenderOptions, VelloraError};
 
 /// JS-facing render options. Mirrors `vellora_core::RenderOptions`: producer is
-/// fixed to `vellora`; only the document title and a deterministic creation date
-/// `(year, month, day)` are caller-supplied.
+/// fixed to `vellora`; the document title, a deterministic creation date
+/// `(year, month, day)`, and optional image assets are caller-supplied.
 #[napi(object)]
 pub struct RenderOpts {
     /// Document title written to the PDF info dictionary.
     pub title: Option<String>,
     /// Deterministic creation date as `[year, month, day]`; never wall-clock.
     pub creation_date: Option<Vec<u32>>,
+    /// Image bytes keyed by an `<img>`'s `src` string (a JS `Record<string,
+    /// Uint8Array>`). Used to resolve non-`data:` image sources; the format is
+    /// detected from the bytes in the core.
+    pub images: Option<std::collections::HashMap<String, Uint8Array>>,
+    /// Base URL used only to normalize a relative `<img>` `src` into the `images`
+    /// lookup key. Never fetched.
+    pub base_url: Option<String>,
 }
 
 /// The structured located-diagnostic carried across the boundary on a core
@@ -146,9 +153,21 @@ fn to_render_options(opts: Option<RenderOpts>) -> RenderOptions {
         },
         _ => None,
     };
+    // Copy each JS `Uint8Array` into an owned `Vec<u8>` (the bytes must outlive the
+    // JS values on the worker thread). Lookup is by key, so map order is irrelevant.
+    let images = opts
+        .images
+        .map(|m| {
+            m.into_iter()
+                .map(|(k, v)| (k, v.to_vec()))
+                .collect::<std::collections::HashMap<String, Vec<u8>>>()
+        })
+        .unwrap_or_default();
     RenderOptions {
         title: opts.title,
         creation_date,
+        images,
+        base_url: opts.base_url,
     }
 }
 

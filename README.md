@@ -121,7 +121,8 @@ partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md
 | Block & inline text, headings, lists | Supported |
 | Tables (incl. multi-page, repeated header) | Supported |
 | Images: data URL PNG / JPEG / GIF / WebP | Supported |
-| Images: relative or remote URLs | *Planned* — bundle or inline before render |
+| Images: `src` via the `images` option (with optional `baseUrl`) | Supported — pass the bytes |
+| Images: network fetching of remote URLs | Not supported (no network; provide bytes via `images`) |
 | Inline SVG | Via dev-time `fix` (rasterized to PNG) — *planned* |
 | `@page` margins, page numbers, running header/footer | Supported |
 | Fonts: text shaping + subset embedding | Supported — custom fonts *planned* |

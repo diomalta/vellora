@@ -113,6 +113,29 @@ describe("renderPdf", () => {
     expect(Buffer.from(withFonts).equals(Buffer.from(withoutFonts))).toBe(true);
   });
 
+  test("images and baseUrl are forwarded to the bridge unchanged", async () => {
+    const bridge = new MockNativeBridge();
+    const images = { "logo.png": new Uint8Array([0x89, 0x50, 0x4e, 0x47]) };
+    const baseUrl = "https://example.test/assets/";
+    await renderPdf(SAFE_HTML, { name: "x" }, { ...withBridge(bridge), images, baseUrl });
+    expect(bridge.calls[0]?.options.images).toBe(images);
+    expect(bridge.calls[0]?.options.baseUrl).toBe(baseUrl);
+  });
+
+  test("an invalid baseUrl rejects with VelloraInputError", async () => {
+    // A bare path has no scheme, so it is not a valid absolute base URL.
+    await expect(
+      renderPdf(SAFE_HTML, { name: "x" }, { baseUrl: "/assets/" }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
+  });
+
+  test("a non-Uint8Array images value rejects with VelloraInputError", async () => {
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
+      renderPdf(SAFE_HTML, { name: "x" }, { images: { "logo.png": "not-bytes" as any } }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
+  });
+
   test("omitting creationDate injects a fixed, non-wall-clock default", async () => {
     const bridge = new MockNativeBridge();
     await renderPdf(SAFE_HTML, { name: "x" }, withBridge(bridge));
@@ -145,6 +168,21 @@ describe("renderPdfToStream", () => {
     await renderPdfToStream(SAFE_HTML, writable, { name: "Ada" });
     const buffered = await renderPdf(SAFE_HTML, { name: "Ada" });
     expect(Buffer.concat(chunks).equals(Buffer.from(buffered))).toBe(true);
+  });
+
+  test("an invalid baseUrl rejects with VelloraInputError (same option contract as renderPdf)", async () => {
+    const { writable } = collector();
+    await expect(
+      renderPdfToStream(SAFE_HTML, writable, { name: "x" }, { baseUrl: "/assets/" }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
+  });
+
+  test("a non-Uint8Array images value rejects with VelloraInputError", async () => {
+    const { writable } = collector();
+    await expect(
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
+      renderPdfToStream(SAFE_HTML, writable, { name: "x" }, { images: { "logo.png": "x" as any } }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
   });
 
   test("a destination error rejects the promise without hanging", async () => {

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { CONFORMANT_FIXTURE_IDS, list, listAll, resolveById } from "../src/fixtures";
+import { CONFORMANT_FIXTURE_IDS, fixtureImages, list, listAll, resolveById } from "../src/fixtures";
 
 test("list returns the four conformant fixtures with id, html, and data", () => {
   const fx = list();
@@ -27,4 +27,17 @@ test("resolveById returns html + data for a known id", () => {
 
 test("resolveById throws a clear error for an unknown id", () => {
   expect(() => resolveById("does-not-exist")).toThrow(/Unknown fixture id "does-not-exist"/);
+});
+
+test("fixtureImages keys the invoice logo by its <img src> (bare and ./-prefixed)", () => {
+  const images = fixtureImages("invoice");
+  // The invoice HTML uses `src="assets/logo.png"`, so that exact key must resolve to bytes.
+  expect(images["assets/logo.png"]).toBeInstanceOf(Uint8Array);
+  expect(images["./assets/logo.png"]).toBeInstanceOf(Uint8Array);
+  expect(images["assets/logo.png"]?.length).toBeGreaterThan(0);
+});
+
+test("fixtureImages returns an empty map for a fixture with no image assets", () => {
+  // The notification fixture is text-only (no <img>).
+  expect(Object.keys(fixtureImages("notification"))).toHaveLength(0);
 });

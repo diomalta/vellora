@@ -304,10 +304,31 @@ describe("resolveOptions", () => {
   });
 
   test("forwards optional fonts/images/baseUrl options when present and omits them otherwise", () => {
-    const resolved = resolveOptions({ fonts: ["f"], baseUrl: "x" });
+    const images = { "logo.png": new Uint8Array([0x89, 0x50, 0x4e, 0x47]) };
+    const resolved = resolveOptions({
+      fonts: ["f"],
+      images,
+      baseUrl: "https://example.test/assets/",
+    });
     expect(resolved.fonts).toEqual(["f"]);
-    expect(resolved.baseUrl).toBe("x");
-    expect("images" in resolveOptions({})).toBe(false);
+    expect(resolved.images).toBe(images);
+    expect(resolved.baseUrl).toBe("https://example.test/assets/");
+    const bare = resolveOptions({});
+    expect("images" in bare).toBe(false);
+    expect("baseUrl" in bare).toBe(false);
+    expect("fonts" in bare).toBe(false);
+  });
+
+  test("rejects an invalid baseUrl with VelloraInputError", () => {
+    // A bare path has no scheme, so it is not a valid absolute base URL.
+    expect(() => resolveOptions({ baseUrl: "/assets/" })).toThrow(VelloraInputError);
+  });
+
+  test("rejects a non-Uint8Array images value with VelloraInputError", () => {
+    expect(() =>
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime type.
+      resolveOptions({ images: { "logo.png": "not-bytes" as any } }),
+    ).toThrow(VelloraInputError);
   });
 });
 

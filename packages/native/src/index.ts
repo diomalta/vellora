@@ -41,12 +41,17 @@ export const RESOLUTION_TABLE: Readonly<Record<string, string | null>> = {
 };
 
 /**
- * Render options forwarded to `vellora-core`. Producer is fixed to `vellora`; only the document
- * title and a deterministic creation date `[year, month, day]` (never wall-clock) are caller-supplied.
+ * Render options forwarded to `vellora-core`. Producer is fixed to `vellora`; the document title, a
+ * deterministic creation date `[year, month, day]` (never wall-clock), and optional image assets are
+ * caller-supplied.
  */
 export interface RenderOpts {
   title?: string;
   creationDate?: [number, number, number];
+  /** Image bytes keyed by an `<img>`'s `src` string; the format is detected in the core. */
+  images?: Record<string, Uint8Array>;
+  /** Base URL used only to normalize a relative `<img>` `src` into the `images` lookup key. */
+  baseUrl?: string;
 }
 
 /** Surface of the native addon: the smoke export plus the async `render` binding. */

@@ -146,9 +146,14 @@ const allowedRows = [
     note: "Base64 `data:image/...` sources are embedded as PDF image XObjects when the `<img>` has finite laid-out dimensions.",
   },
   {
-    feature: "Images: relative or remote URLs",
-    status: "Planned",
-    note: "The core renderer does not fetch assets; bundle or inline them as data URLs before rendering.",
+    feature: "Images: `src` via the `images` option (with optional `baseUrl`)",
+    status: "Supported",
+    note: "A non-`data:` `<img src>` is resolved by looking up the caller-supplied `images` map (a `Record<string, Uint8Array>` keyed by `src`, optionally normalized against `baseUrl`); the format is detected from the bytes. A renderable `<img>` whose source does not resolve is rejected.",
+  },
+  {
+    feature: "Images: network fetching of remote URLs",
+    status: "Unsupported",
+    note: "The core renderer never fetches assets (determinism + no network). Provide the bytes via the `images` option, keyed by the `src` (or `baseUrl`-resolved) URL.",
   },
   {
     feature: "`@page` margins, page numbers, running header/footer",

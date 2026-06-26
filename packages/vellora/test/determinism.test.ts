@@ -11,9 +11,19 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fixtureImages } from "@vellora/test-harness";
 import { build } from "esbuild";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { DEFAULT_CREATION_DATE, MockNativeBridge, type RenderData, renderPdf } from "../src/index";
+
+/** Serialize a fixture's images map to a base64 JSON the subprocess runner can rebuild. */
+function serializeImages(id: string): string {
+  const entries = Object.entries(fixtureImages(id)).map(([key, bytes]) => [
+    key,
+    Buffer.from(bytes).toString("base64"),
+  ]);
+  return JSON.stringify(Object.fromEntries(entries));
+}
 
 // Mock @vellora/lint so the dependency-hygiene gate observes invocations hermetically.
 const fixMock = vi.fn((html: string) => ({ html, report: { findings: [] } }));
@@ -112,14 +122,18 @@ describe("determinism gate: byte-identical across TZ/LANG over the REAL native s
       // addon relative to its real path); the child resolves it from the repo node_modules.
       external: ["@vellora/lint", "@vellora/native", "node:*"],
     });
-    // The runner injects the REAL NativeAddonBridge via `_bridge` and uses a fixed creationDate.
+    // The runner injects the REAL NativeAddonBridge via `_bridge` and uses a fixed creationDate. It
+    // rebuilds the `images` map (the invoice carries an <img>) from a base64 JSON sidecar.
     const runner = `
 import { renderPdf, NativeAddonBridge } from ${JSON.stringify(bundlePath)};
 import { readFileSync } from "node:fs";
-const [htmlPath, dataPath] = process.argv.slice(2);
+const [htmlPath, dataPath, imagesPath] = process.argv.slice(2);
 const html = readFileSync(htmlPath, "utf8");
 const data = JSON.parse(readFileSync(dataPath, "utf8"));
-const pdf = await renderPdf(html, data, { _bridge: new NativeAddonBridge(), metadata: { creationDate: "2024-02-29T12:00:00.000Z" } });
+const rawImages = JSON.parse(readFileSync(imagesPath, "utf8"));
+const images = {};
+for (const [key, b64] of Object.entries(rawImages)) images[key] = new Uint8Array(Buffer.from(b64, "base64"));
+const pdf = await renderPdf(html, data, { _bridge: new NativeAddonBridge(), metadata: { creationDate: "2024-02-29T12:00:00.000Z" }, images });
 process.stdout.write(Buffer.from(pdf).toString("base64"));
 `;
     writeFileSync(runnerPath, runner);
@@ -133,11 +147,13 @@ process.stdout.write(Buffer.from(pdf).toString("base64"));
     const { html, data } = fixture("invoice");
     const htmlPath = join(workdir, "invoice.html");
     const dataPath = join(workdir, "invoice.json");
+    const imagesPath = join(workdir, "invoice-images.json");
     writeFileSync(htmlPath, html);
     writeFileSync(dataPath, JSON.stringify(data));
+    writeFileSync(imagesPath, serializeImages("invoice"));
 
     const run = (env: Record<string, string>): string =>
-      execFileSync(process.execPath, [runnerPath, htmlPath, dataPath], {
+      execFileSync(process.execPath, [runnerPath, htmlPath, dataPath, imagesPath], {
         env: { ...process.env, ...env },
         maxBuffer: 16 * 1024 * 1024,
       }).toString();

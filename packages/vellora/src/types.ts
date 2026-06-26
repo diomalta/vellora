@@ -33,9 +33,9 @@ export interface RenderMetadata {
 
 /**
  * Public render options. `opts` is the single carrier for render configuration and is forwarded to
- * the orchestration and native layers. Currently only `metadata` has a rendering effect;
- * `fonts`/`images`/`baseUrl` are accepted and forwarded but will take effect in a future release —
- * forwarding them MUST NOT change current output.
+ * the orchestration and native layers. `metadata`, `images`, and `baseUrl` have a rendering effect;
+ * `fonts` is accepted and forwarded but currently inert (it will take effect in a future release —
+ * forwarding it MUST NOT change current output).
  */
 export interface RenderOptions {
   /** Strict-by-default: validate, never mutate. `false` runs `@vellora/lint` fixers first. */
@@ -44,9 +44,13 @@ export interface RenderOptions {
   metadata?: RenderMetadata;
   /** Planned: explicit fonts. Forwarded but currently inert. */
   fonts?: unknown;
-  /** Planned: explicit images. Forwarded but currently inert. */
-  images?: unknown;
-  /** Planned: base URL for relative assets. Forwarded but currently inert. */
+  /**
+   * Image bytes keyed by an `<img>`'s `src` string. A non-`data:` `<img src>` is resolved by looking
+   * up this map (its key optionally normalized against `baseUrl`); the format is detected from the
+   * bytes. A renderable `<img>` whose source does not resolve rejects with `image:unresolved`.
+   */
+  images?: Record<string, Uint8Array>;
+  /** Base URL used only to normalize a relative `<img>` `src` into the `images` lookup key. Never fetched. */
   baseUrl?: string;
 }
 
@@ -57,7 +61,7 @@ export interface RenderOptions {
 export interface BridgeRenderOptions {
   metadata: RenderMetadata & { creationDate: string };
   fonts?: unknown;
-  images?: unknown;
+  images?: Record<string, Uint8Array>;
   baseUrl?: string;
 }
 
