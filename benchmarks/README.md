@@ -110,6 +110,12 @@ rasterizes both PDFs with `pdftoppm`, then writes side-by-side PNGs, a red
 pixel-diff overlay, and region-level metrics to
 `benchmarks/results/visual-fidelity/index.html`.
 
+For text-position debugging after a visual run, compare PDF word boxes:
+
+```bash
+npm run geometry:fidelity -- --fixture invoice --page 1
+```
+
 Useful options:
 
 - `--fixture invoice` or `--fixtures invoice,boleto,receipt,notification`

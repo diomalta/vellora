@@ -6,6 +6,7 @@
   "description": "Reproducible, version-pinned HTML->PDF benchmark suite (NOT published; competitor deps live here so they never touch the runtime graph of any vellora package).",
   "scripts": {
     "bench": "node run.mjs",
+    "geometry:fidelity": "node geometry-fidelity.mjs",
     "visual:fidelity": "node visual-fidelity.mjs"
   },
   "devDependencies": {

@@ -23,6 +23,7 @@ packages/native/index.js
 
 # Transient test scratch dirs (real-native determinism gate; auto-removed, ignored as a safety net)
 .determinism-native-*/
+benchmarks/results/geometry-fidelity/
 benchmarks/results/visual-fidelity/
 
 # OS
