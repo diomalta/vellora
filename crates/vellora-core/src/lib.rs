@@ -33,6 +33,8 @@
 pub mod blitz_engine;
 pub mod css_scan;
 mod fonts;
+mod html_normalize;
+mod layout_normalize;
 pub mod page_css;
 pub mod pagination;
 pub mod pdf;
@@ -80,6 +82,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         html,
         validation::denied_elements(),
         page_box.content_width(),
+        page_box.content_height(),
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
 

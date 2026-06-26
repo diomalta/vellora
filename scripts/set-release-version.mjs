@@ -2,7 +2,7 @@
 //
 // Tag-driven release: the GitHub Release tag is the single source of truth for the version
 // (replacing `changeset version`). This rewrites, in lockstep, the four fixed-group packages,
-// their exact internal cross-package pins, and the five per-platform addon packages + the
+// their exact internal cross-package pins, and the four per-platform addon packages + the
 // optionalDependency pins on `@vellora/native`. `napi pre-publish` and `changeset publish` then
 // publish the files as-is.
 //

@@ -1,14 +1,15 @@
 # Recipes
 
-Short, task-focused examples. The canonical runnable versions live in the repository's [`examples/`](https://github.com/diomalta/vellora/tree/main/examples) directory and the document [`fixtures/`](https://github.com/diomalta/vellora/tree/main/fixtures).
+Short, task-focused examples. The canonical runnable versions live in the repository's [`examples/`](https://github.com/diomalta/vellora/tree/main/examples) directory and the HTML input [`fixtures/`](https://github.com/diomalta/vellora/tree/main/fixtures).
 
 ## Runnable examples
 
 - **[Render an invoice](https://github.com/diomalta/vellora/blob/main/examples/render-invoice.ts)** — `examples/render-invoice.ts`: templating with loops, currency/date helpers, pagination with a repeating `<thead>`, and strict rejection of out-of-subset input. Walked through in the [Invoices guide](/guide/invoices).
 
-## Document fixtures
+## HTML Fixtures
 
-The repository ships fixtures for each target document type at `fixtures/<type>/{index.html,data.json}`:
+The repository ships representative HTML inputs at `fixtures/<scenario>/{index.html,data.json}`.
+These scenarios exercise layout capabilities; they are not domain entities or special render modes:
 
 - [`fixtures/invoice/`](https://github.com/diomalta/vellora/tree/main/fixtures/invoice)
 - [`fixtures/receipt/`](https://github.com/diomalta/vellora/tree/main/fixtures/receipt)

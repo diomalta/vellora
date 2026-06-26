@@ -22,6 +22,8 @@ fn one_page_from(html: &str) -> Vec<u8> {
         width_px: blitz_engine::A4_WIDTH_PX,
         height_px: blitz_engine::A4_HEIGHT_PX,
         rects: Vec::new(),
+        rounded_strokes: Vec::new(),
+        images: Vec::new(),
         text_runs,
         margin_texts: Vec::new(),
     };

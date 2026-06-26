@@ -141,9 +141,14 @@ const allowedRows = [
     note: "Headers repeat across page breaks.",
   },
   {
-    feature: "Images: PNG / JPEG / WebP",
+    feature: "Images: data URL PNG / JPEG / GIF / WebP",
+    status: "Supported",
+    note: "Base64 `data:image/...` sources are embedded as PDF image XObjects when the `<img>` has finite laid-out dimensions.",
+  },
+  {
+    feature: "Images: relative or remote URLs",
     status: "Planned",
-    note: "Designed but not yet implemented — `<img>` lays out but rasters are not drawn in the current release. Planned.",
+    note: "The core renderer does not fetch assets; bundle or inline them as data URLs before rendering.",
   },
   {
     feature: "`@page` margins, page numbers, running header/footer",

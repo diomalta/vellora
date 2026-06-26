@@ -9,18 +9,32 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use krilla::color::rgb;
-use krilla::geom::{Path, PathBuilder, Point, Rect};
+use krilla::geom::{Path, PathBuilder, Point, Rect, Size, Transform};
+use krilla::image::Image;
 use krilla::metadata::{DateTime, Metadata};
 use krilla::num::NormalizedF32;
 use krilla::page::PageSettings;
-use krilla::paint::Fill;
+use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, GlyphId, KrillaGlyph};
 use krilla::{Document, SerializeSettings};
 
-use crate::blitz_engine::TextRun;
+use crate::blitz_engine::{ImageFormat, ImageRun, TextRun};
 
 /// px -> pt scale (layout px @96dpi -> PDF pt @72dpi).
 const PX_TO_PT: f64 = 0.75;
+
+/// Parley exposes the line baseline used for layout. When the bundled faces are
+/// rasterized (Poppler) vs Chromium's print rasterizer, bulk text sits ~3pt
+/// lower; raise it by a CONSTANT amount. The residual is constant in pt, NOT
+/// proportional to font size — a size-proportional fudge (the former `0.30em`)
+/// over-raised large headings. 4.0px = 3.0pt keeps 10pt body unchanged.
+const TEXT_BASELINE_COMPENSATION_PX: f64 = 4.0;
+
+/// Raise a layout baseline (CSS px) by the constant compensation. `font_size_px`
+/// is accepted to document that the correction is deliberately size-independent.
+fn compensated_baseline_y(origin_y_px: f64, _font_size_px: f64) -> f64 {
+    origin_y_px - TEXT_BASELINE_COMPENSATION_PX
+}
 
 /// Map a layout Y (CSS px, top-left origin) to a krilla surface Y (pt).
 ///
@@ -46,6 +60,10 @@ pub struct PdfPage {
     pub height_px: f64,
     /// Filled rectangles (e.g. table header bands), page-local px.
     pub rects: Vec<FilledRect>,
+    /// Rounded border strokes (e.g. small badges), page-local px.
+    pub rounded_strokes: Vec<RoundedStroke>,
+    /// Raster images, page-local px.
+    pub images: Vec<ImageRun>,
     /// Positioned text runs, page-local px (baseline origin).
     pub text_runs: Vec<TextRun>,
     /// Running header/footer strings shaped by krilla itself (correct glyphs +
@@ -72,6 +90,18 @@ pub struct FilledRect {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub color: [u8; 3],
+}
+
+/// A rounded rectangle outline drawn with a PDF stroke.
+pub struct RoundedStroke {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub radius_x: f64,
+    pub radius_y: f64,
+    pub stroke_width: f64,
     pub color: [u8; 3],
 }
 
@@ -115,6 +145,14 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, String> {
         // Background rects first (painted under text).
         for r in &page.rects {
             draw_rect(&mut surface, r);
+        }
+
+        for image in &page.images {
+            draw_image_run(&mut surface, image)?;
+        }
+
+        for s in &page.rounded_strokes {
+            draw_rounded_stroke(&mut surface, s);
         }
 
         for run in &page.text_runs {
@@ -207,6 +245,109 @@ fn draw_rect(surface: &mut krilla::surface::Surface, r: &FilledRect) {
     surface.draw_path(&path);
 }
 
+fn draw_rounded_stroke(surface: &mut krilla::surface::Surface, s: &RoundedStroke) {
+    debug_assert!(
+        s.x.is_finite()
+            && s.y.is_finite()
+            && s.width.is_finite()
+            && s.height.is_finite()
+            && s.radius_x.is_finite()
+            && s.radius_y.is_finite()
+            && s.stroke_width.is_finite()
+            && s.width > 0.0
+            && s.height > 0.0
+            && s.radius_x > 0.0
+            && s.radius_y > 0.0
+            && s.stroke_width > 0.0,
+        "draw_rounded_stroke got degenerate geometry"
+    );
+
+    let half = s.stroke_width / 2.0;
+    let x0 = s.x + half;
+    let y0 = s.y + half;
+    let x1 = s.x + s.width - half;
+    let y1 = s.y + s.height - half;
+    if x1 <= x0 || y1 <= y0 {
+        return;
+    }
+    let rx = (s.radius_x - half).max(0.0).min((x1 - x0) / 2.0);
+    let ry = (s.radius_y - half).max(0.0).min((y1 - y0) / 2.0);
+    if rx <= 0.0 || ry <= 0.0 {
+        return;
+    }
+
+    let path = match rounded_rect_path(x0, y0, x1, y1, rx, ry) {
+        Some(path) => path,
+        None => return,
+    };
+    surface.set_fill(None);
+    surface.set_stroke(Some(Stroke {
+        paint: rgb::Color::new(s.color[0], s.color[1], s.color[2]).into(),
+        width: (s.stroke_width * PX_TO_PT) as f32,
+        ..Default::default()
+    }));
+    surface.draw_path(&path);
+    surface.set_stroke(None);
+}
+
+fn draw_image_run(surface: &mut krilla::surface::Surface, run: &ImageRun) -> Result<(), String> {
+    if !run.x.is_finite()
+        || !run.y.is_finite()
+        || !run.width.is_finite()
+        || !run.height.is_finite()
+        || run.width <= 0.0
+        || run.height <= 0.0
+    {
+        return Ok(());
+    }
+
+    let bytes: Vec<u8> = (*run.data).clone();
+    let image = match run.format {
+        ImageFormat::Png => Image::from_png(bytes.into(), false),
+        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
+        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
+        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
+    }
+    .map_err(|e| format!("could not decode embedded image: {e}"))?;
+    let size = Size::from_wh(
+        (run.width * PX_TO_PT) as f32,
+        (run.height * PX_TO_PT) as f32,
+    )
+    .ok_or_else(|| "invalid image size".to_string())?;
+    let transform = Transform::from_translate(content_x_pt(run.x), content_y_pt(run.y));
+    surface.push_transform(&transform);
+    surface.draw_image(image, size);
+    surface.pop();
+    Ok(())
+}
+
+fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Option<Path> {
+    // Cubic approximation of a quarter ellipse.
+    const KAPPA: f64 = 0.552_284_749_830_793_6;
+
+    let x0 = content_x_pt(x0);
+    let y0 = content_y_pt(y0);
+    let x1 = content_x_pt(x1);
+    let y1 = content_y_pt(y1);
+    let rx = (rx * PX_TO_PT) as f32;
+    let ry = (ry * PX_TO_PT) as f32;
+    let ox = (rx as f64 * KAPPA) as f32;
+    let oy = (ry as f64 * KAPPA) as f32;
+
+    let mut pb = PathBuilder::new();
+    pb.move_to(x0 + rx, y0);
+    pb.line_to(x1 - rx, y0);
+    pb.cubic_to(x1 - rx + ox, y0, x1, y0 + ry - oy, x1, y0 + ry);
+    pb.line_to(x1, y1 - ry);
+    pb.cubic_to(x1, y1 - ry + oy, x1 - rx + ox, y1, x1 - rx, y1);
+    pb.line_to(x0 + rx, y1);
+    pb.cubic_to(x0 + rx - ox, y1, x0, y1 - ry + oy, x0, y1 - ry);
+    pb.line_to(x0, y0 + ry);
+    pb.cubic_to(x0, y0 + ry - oy, x0 + rx - ox, y0, x0 + rx, y0);
+    pb.close();
+    pb.finish()
+}
+
 fn draw_text_run(
     surface: &mut krilla::surface::Surface,
     run: &TextRun,
@@ -240,7 +381,8 @@ fn draw_text_run(
         .collect();
 
     // Baseline origin in krilla's top-left space (px->pt, no flip).
-    let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(run.origin_y));
+    let baseline_y = compensated_baseline_y(run.origin_y, run.font_size as f64);
+    let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(baseline_y));
 
     set_solid_fill(surface, run.color);
 
@@ -279,7 +421,24 @@ fn draw_margin_text(
 
 #[cfg(test)]
 mod tests {
-    use super::{content_y_pt, PX_TO_PT};
+    use super::{compensated_baseline_y, content_y_pt, PX_TO_PT, TEXT_BASELINE_COMPENSATION_PX};
+
+    // Regression for d9cb15a: the baseline compensation must be a CONSTANT raise,
+    // not proportional to font size. The size-proportional 0.30em form over-raised
+    // large text (e.g. an 18pt title lifted 5.4pt), doubling the heading vs Chromium.
+    #[test]
+    fn baseline_compensation_is_constant_not_size_proportional() {
+        let small = 100.0 - compensated_baseline_y(100.0, 10.0);
+        let large = 100.0 - compensated_baseline_y(100.0, 30.0);
+        assert!(
+            (small - large).abs() < 1e-9,
+            "baseline raise must not depend on font size, got small={small}, large={large}"
+        );
+        assert!(
+            (small - TEXT_BASELINE_COMPENSATION_PX).abs() < 1e-9,
+            "raise must equal the constant compensation, got {small}"
+        );
+    }
 
     // Regression for the upside-down render: krilla's surface is top-left origin, so
     // content near the TOP of the document must map to a SMALLER surface y than

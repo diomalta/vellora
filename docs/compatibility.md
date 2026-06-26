@@ -1,6 +1,6 @@
 # Compatibility
 
-vellora supports a **strict-by-default, documented HTML/CSS subset** built for generated documents — invoices, receipts, boletos, notifications. In strict mode (the default), out-of-subset input is rejected with a `VelloraUnsupportedError` rather than rendered incorrectly.
+vellora supports a **strict-by-default, documented HTML/CSS subset** built for generated document HTML. Inputs such as invoices, receipts, boletos, and notifications are representative scenarios, not domain entities or special render modes. In strict mode (the default), out-of-subset input is rejected with a `VelloraUnsupportedError` rather than rendered incorrectly.
 
 ## The canonical subset table
 

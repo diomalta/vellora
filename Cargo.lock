@@ -1381,6 +1381,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "markup5ever_rcdom"
+version = "0.39.0+unofficial"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ac010f19d6c4af81eeb4018a39d7a115de9d285af45c126a4ac02e6fc5716b7"
+dependencies = [
+ "html5ever",
+ "markup5ever",
+ "tendril",
+ "xml5ever",
+]
+
+[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2732,11 +2744,14 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 name = "vellora-core"
 version = "0.0.0"
 dependencies = [
+ "base64",
  "blitz-dom",
  "blitz-html",
  "blitz-traits",
+ "html5ever",
  "krilla",
  "lopdf 0.41.0",
+ "markup5ever_rcdom",
  "parley",
  "pdf-extract",
  "stylo",

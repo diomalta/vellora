@@ -1,7 +1,8 @@
 # Fixtures
 
-Each fixture is a document `index.html` template plus a `data.json` it binds to. They double as
-the inputs for the runnable recipes in [`../examples/`](../examples). Every recipe reads the
+Each fixture is an HTML `index.html` template plus a `data.json` it binds to. They double as
+the inputs for the runnable recipes in [`../examples/`](../examples), not as domain entities or
+special render modes. Every recipe reads the
 fixture's `index.html` as the template string and `data.json` as the data, renders with
 `renderPdf` (strict by default), and asserts the output begins with `%PDF-`.
 

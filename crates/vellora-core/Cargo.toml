@@ -26,9 +26,12 @@ publish = false
 # supplies a self-contained `FontContext` (see `src/fonts.rs`), so it never links
 # `libfontconfig` or reads host fonts — that is what makes output deterministic
 # across machines and lets it run on slim/Alpine/Lambda with no system deps.
+base64 = "0.22.1"
 blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
 blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
 blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6" }
+html5ever = "0.39.0"
+markup5ever_rcdom = "0.39.0"
 # Parley/Taffy types re-exported by Blitz; we read (never construct) layouts.
 parley = { version = "0.10", default-features = false, features = ["std"] }
 # Stylo's `style` crate (package `stylo`), pinned to the version Blitz's rev

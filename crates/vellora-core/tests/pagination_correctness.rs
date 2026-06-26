@@ -102,6 +102,27 @@ fn every_table_page_carries_the_header_labels() {
 }
 
 #[test]
+fn invoice_first_page_keeps_browser_density_for_line_items() {
+    // Chromium's print layout keeps the 11th invoice row on page 1 for this
+    // fixture. A too-strict page-break threshold leaves a large blank band before
+    // the footer and moves FN-24-10 to page 2.
+    let doc = blitz_engine::lay_out(INVOICE);
+    let pb = page_css::parse_page_box(INVOICE);
+    let paginated = pagination::paginate(&doc, &pb);
+    let page_one = &paginated.pages[0];
+
+    let contains_sku = |sku: &str| page_one.text_runs.iter().any(|r| r.text.contains(sku));
+    assert!(
+        contains_sku("SKU FN-24-10"),
+        "page 1 should include the 11th browser-baseline row"
+    );
+    assert!(
+        !contains_sku("SKU CB-15-100"),
+        "page 1 should not pull in the following row"
+    );
+}
+
+#[test]
 fn totals_block_appears_exactly_once_on_the_last_table_page() {
     // The totals block ("Total a pagar") must be kept once — not repeated
     // across continuation pages, and present on exactly one page.
@@ -210,5 +231,37 @@ fn first_page_table_header_sits_below_preceding_content() {
     assert!(
         header_y > title_y,
         "table header (y={header_y}) must sit BELOW the title (y={title_y}), not overlap it at the page top"
+    );
+}
+
+#[test]
+fn independent_tables_keep_their_own_thead_headers() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        table { width: 100%; margin-bottom: 24px; }
+        th, td { padding: 4px; }
+    </style></head><body>
+        <table>
+          <thead><tr><th>FIRST TABLE HEADER</th></tr></thead>
+          <tbody><tr><td>first row</td></tr></tbody>
+        </table>
+        <table>
+          <thead><tr><th>SECOND TABLE HEADER</th></tr></thead>
+          <tbody><tr><td>second row</td></tr></tbody>
+        </table>
+    </body></html>"#;
+    let doc = blitz_engine::lay_out(html);
+    let pb = page_css::parse_page_box(html);
+    let paginated = pagination::paginate(&doc, &pb);
+    let page0 = &paginated.pages[0];
+    let has_text = |needle: &str| page0.text_runs.iter().any(|r| r.text.contains(needle));
+
+    assert!(
+        has_text("FIRST TABLE HEADER"),
+        "first table header should be present"
+    );
+    assert!(
+        has_text("SECOND TABLE HEADER"),
+        "second table header should be present; table header repetition must be scoped per table"
     );
 }

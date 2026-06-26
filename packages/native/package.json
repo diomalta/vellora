@@ -41,15 +41,21 @@
   "engines": {
     "node": ">=20"
   },
-  "files": ["dist", "README.md", "LICENSE", "THIRD-PARTY-NOTICES.md", "LICENSE-DejaVu.txt"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "LICENSE-DejaVu.txt",
+    "LICENSE-Liberation.txt"
+  ],
   "napi": {
     "binaryName": "vellora",
     "targets": [
       "aarch64-apple-darwin",
       "x86_64-apple-darwin",
       "x86_64-unknown-linux-gnu",
-      "aarch64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl"
+      "aarch64-unknown-linux-gnu"
     ]
   },
   "scripts": {
