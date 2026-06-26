@@ -10,6 +10,7 @@ use base64::Engine as _;
 use blitz_dom::{BaseDocument, DocumentConfig};
 use blitz_html::HtmlDocument;
 use blitz_traits::shell::{ColorScheme, Viewport};
+use style::computed_values::border_collapse::T as BorderCollapse;
 use style::computed_values::table_layout::T as TableLayout;
 
 /// Chromium print-compatible A4 width in CSS px. Used as the layout viewport
@@ -41,6 +42,8 @@ pub struct LaidOutBox {
     pub width_pct_hint: Option<f64>,
     /// Whether this box is a table with `table-layout: fixed`.
     pub table_layout_fixed: bool,
+    /// Whether this box computes `border-collapse: collapse`.
+    pub table_border_collapse: bool,
     /// Whether computed `text-align` resolves to a right/end alignment.
     pub text_align_right: bool,
     /// Table-cell span in columns. Non-cell boxes use `1`.
@@ -363,9 +366,17 @@ fn resolve_and_walk(
     let root_id = base.root_element().id;
     walk(base, root_id, 0.0, 0.0, 0, &mut boxes, &mut face_cache);
     crate::layout_normalize::normalize_vertical_margin_collapse(&mut boxes);
+    crate::layout_normalize::normalize_collapsed_table_medium_border_insets(&mut boxes);
+    crate::layout_normalize::normalize_painted_table_cell_text_baselines(&mut boxes);
     crate::layout_normalize::normalize_fixed_table_widths(&mut boxes);
     crate::layout_normalize::normalize_table_percent_widths(&mut boxes);
     crate::layout_normalize::normalize_auto_table_compact_columns(&mut boxes);
+    // Inline twin of the block inset pass. Runs LAST so it sees the final column
+    // positions: simple tables (e.g. the header) get their squeezed band stretched
+    // to the table edges; auto/compact tables (e.g. items) get the uniform inset
+    // shift — which the compact cursor anchored at the inset row-left — translated
+    // out. Both correct the synthetic Blitz "medium" border on the inline axis.
+    crate::layout_normalize::normalize_collapsed_table_medium_border_insets_x(&mut boxes);
 
     let content_height = base.root_element().final_layout.size.height as f64;
 
@@ -431,6 +442,7 @@ fn walk(
         margin_bottom: layout.margin.bottom as f64,
         width_pct_hint: width_percentage_hint(node),
         table_layout_fixed: table_layout_fixed(node),
+        table_border_collapse: table_border_collapse(node),
         text_align_right: text_align_right(node),
         colspan: colspan(node),
         depth,
@@ -462,6 +474,11 @@ fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
 fn table_layout_fixed(node: &blitz_dom::Node) -> bool {
     node.primary_styles()
         .is_some_and(|styles| matches!(styles.clone_table_layout(), TableLayout::Fixed))
+}
+
+fn table_border_collapse(node: &blitz_dom::Node) -> bool {
+    node.primary_styles()
+        .is_some_and(|styles| matches!(styles.clone_border_collapse(), BorderCollapse::Collapse))
 }
 
 fn text_align_right(node: &blitz_dom::Node) -> bool {
@@ -787,7 +804,22 @@ fn read_text_runs(
     for line in layout.lines() {
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
-        let mut inline_advance_adjust_px = 0.0;
+        let line_padding_right_px = if text_align_right(node) {
+            let mut paddings: Vec<f64> = line
+                .items()
+                .filter_map(|item| match item {
+                    parley::PositionedLayoutItem::GlyphRun(gr) => {
+                        Some(inline_padding_right_px(base, gr.style().brush.id))
+                    }
+                    _ => None,
+                })
+                .collect();
+            paddings.pop();
+            paddings.into_iter().sum()
+        } else {
+            0.0
+        };
+        let mut inline_advance_adjust_px = -line_padding_right_px;
         for item in line.items() {
             let glyph_run = match item {
                 parley::PositionedLayoutItem::GlyphRun(gr) => gr,

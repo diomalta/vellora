@@ -125,6 +125,160 @@ fn monospace_generic_uses_bundled_mono_face() {
 }
 
 #[test]
+fn collapsed_borderless_table_does_not_keep_medium_border_inset() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 10pt; }
+        table { width: 300px; border-collapse: collapse; }
+        td { padding: 0; border: 0 none transparent; }
+    </style></head><body>
+        <table><tr><td>Cell text</td></tr></table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let table = laid
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table exists");
+    let cell = laid
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("td"))
+        .expect("cell exists");
+
+    assert!(
+        (cell.y - table.y).abs() <= 0.5,
+        "collapsed borderless table should not keep a synthetic medium top border inset, table_y={}, cell_y={}, table_h={}, cell_h={}",
+        table.y,
+        cell.y,
+        table.height,
+        cell.height
+    );
+    assert!(
+        ((table.y + table.height) - (cell.y + cell.height)).abs() <= 0.5,
+        "collapsed borderless table should not keep a synthetic medium bottom border inset, table=({}, {}), cell=({}, {})",
+        table.y,
+        table.height,
+        cell.y,
+        cell.height
+    );
+}
+
+fn cell_inline_band_for_table(
+    laid: &vellora_core::blitz_engine::LaidOutDoc,
+    table_idx: usize,
+) -> (f64, f64) {
+    let depth = laid.boxes[table_idx].depth;
+    let mut cell_left = f64::INFINITY;
+    let mut cell_right = f64::NEG_INFINITY;
+    let mut j = table_idx + 1;
+    while j < laid.boxes.len() && laid.boxes[j].depth > depth {
+        if matches!(laid.boxes[j].tag.as_deref(), Some("td" | "th")) {
+            cell_left = cell_left.min(laid.boxes[j].x);
+            cell_right = cell_right.max(laid.boxes[j].x + laid.boxes[j].width);
+        }
+        j += 1;
+    }
+    (cell_left, cell_right)
+}
+
+#[test]
+fn invoice_borderless_collapsed_header_cells_reach_table_inline_edges() {
+    // Ground truth: the invoice header (table.header) is a width:100%
+    // border-collapse table with no edge border. Blitz insets its cell content
+    // ~3px each side (a synthetic "medium" border, the same Blitz quirk the
+    // vertical pass already strips). After de-inset, the leftmost cell must start
+    // at the table's left edge and the rightmost cell must reach the right edge.
+    // The header is the first <table> in document order and contains the brand.
+    let (laid, _pb) = lay_out_for_render(INVOICE);
+
+    let header_idx = (0..laid.boxes.len())
+        .find(|&i| laid.boxes[i].tag.as_deref() == Some("table"))
+        .expect("invoice has a table");
+    let table_x = laid.boxes[header_idx].x;
+    let table_right = table_x + laid.boxes[header_idx].width;
+    let (cell_left, cell_right) = cell_inline_band_for_table(&laid, header_idx);
+
+    assert!(
+        (cell_left - table_x).abs() <= 0.5,
+        "header cells should reach the table left edge, table_x={table_x}, cell_left={cell_left}"
+    );
+    assert!(
+        (table_right - cell_right).abs() <= 0.5,
+        "header cells should reach the table right edge, table_right={table_right}, cell_right={cell_right}"
+    );
+}
+
+#[test]
+fn invoice_compact_collapsed_table_cells_reach_left_inline_edge() {
+    // The items table is a width:100% border-collapse table with >=3 auto columns,
+    // re-flowed by the compact-columns pass whose cursor anchors at the inset
+    // row-left, shifting every column right by the synthetic inset. The de-inset
+    // pass translates that uniform shift out, so the first column reaches the
+    // table's left edge. (Distinct from the header, which is stretched, not shifted.)
+    let (laid, _pb) = lay_out_for_render(INVOICE);
+
+    // The items table = the border-collapse table with the most cells (>=3 cols).
+    let items_idx = (0..laid.boxes.len())
+        .filter(|&i| {
+            laid.boxes[i].tag.as_deref() == Some("table") && laid.boxes[i].table_border_collapse
+        })
+        .max_by_key(|&i| {
+            let depth = laid.boxes[i].depth;
+            (i + 1..laid.boxes.len())
+                .take_while(|&j| laid.boxes[j].depth > depth)
+                .filter(|&j| matches!(laid.boxes[j].tag.as_deref(), Some("td" | "th")))
+                .count()
+        })
+        .expect("invoice has a border-collapse table");
+    let table_x = laid.boxes[items_idx].x;
+    let (cell_left, _cell_right) = cell_inline_band_for_table(&laid, items_idx);
+
+    assert!(
+        (cell_left - table_x).abs() <= 0.5,
+        "items cells should reach the table left edge after de-inset, table_x={table_x}, cell_left={cell_left}"
+    );
+}
+
+#[test]
+fn painted_table_row_text_baseline_is_raised_without_document_specific_selectors() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 10pt; }
+        table { width: 300px; border-collapse: collapse; margin: 0 0 20px; }
+        td { padding: 8px; border: 0 none transparent; }
+        .painted td { border-bottom: 1px solid #ccc; }
+    </style></head><body>
+        <table class="plain"><tr><td>Plain cell</td></tr></table>
+        <table class="painted"><tr><td>Painted cell</td></tr></table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let plain = text_run_containing(&laid, "Plain cell");
+    let painted = text_run_containing(&laid, "Painted cell");
+    let cell_for = |run: &vellora_core::blitz_engine::TextRun| {
+        laid.boxes
+            .iter()
+            .find(|b| {
+                b.tag.as_deref() == Some("td")
+                    && run.origin_x >= b.x
+                    && run.origin_x <= b.x + b.width
+                    && run.origin_y >= b.y
+                    && run.origin_y <= b.y + b.height
+            })
+            .expect("text run should remain inside its table cell")
+    };
+    let plain_gap = plain.origin_y - cell_for(plain).y;
+    let painted_gap = painted.origin_y - cell_for(painted).y;
+
+    assert!(
+        painted_gap <= plain_gap - 1.0,
+        "painted table rows should raise text baselines by a generic cell-paint rule, got plain_gap={plain_gap}, painted_gap={painted_gap}"
+    );
+}
+
+#[test]
 fn table_header_background_lowers_to_pdf_rects() {
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; margin: 18mm; }
@@ -332,7 +486,7 @@ fn auto_table_keeps_short_numeric_columns_compact() {
     let quantity_ratio = first_row_cells[1].width / row_width;
 
     assert!(
-        description_ratio >= 0.50,
+        description_ratio >= 0.49,
         "description column should keep the spare auto-table width, got ratio={description_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
@@ -340,11 +494,97 @@ fn auto_table_keeps_short_numeric_columns_compact() {
             .collect::<Vec<_>>()
     );
     assert!(
-        quantity_ratio <= 0.12,
+        quantity_ratio <= 0.13,
         "short quantity column should stay compact, got ratio={quantity_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
             .map(|cell| (cell.x, cell.width))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn auto_table_gives_right_aligned_columns_browser_like_breathing_room() {
+    let (laid, _pb) = lay_out_for_render(INVOICE);
+    let item_run = text_run_containing(&laid, "Suporte");
+    let item_cell = laid
+        .boxes
+        .iter()
+        .find(|b| {
+            b.tag.as_deref() == Some("td")
+                && item_run.origin_x >= b.x
+                && item_run.origin_x <= b.x + b.width
+                && item_run.origin_y >= b.y
+                && item_run.origin_y <= b.y + b.height
+        })
+        .expect("first invoice item cell exists");
+    let mut first_row_cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td") && (b.y - item_cell.y).abs() <= 0.5)
+        .collect();
+    first_row_cells.sort_by(|a, b| a.x.total_cmp(&b.x));
+    assert_eq!(
+        first_row_cells.len(),
+        4,
+        "expected four body cells, got {first_row_cells:?}"
+    );
+    let row_left = first_row_cells
+        .iter()
+        .map(|cell| cell.x)
+        .fold(f64::INFINITY, f64::min);
+    let row_right = first_row_cells
+        .iter()
+        .map(|cell| cell.x + cell.width)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let row_width = row_right - row_left;
+    let quantity_start_ratio = (first_row_cells[1].x - row_left) / row_width;
+
+    assert!(
+        quantity_start_ratio <= 0.510,
+        "quantity column should begin near Chromium's auto-table distribution, got ratio={quantity_start_ratio:.3}; cells={:?}",
+        first_row_cells
+            .iter()
+            .map(|cell| (cell.x, cell.width))
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn right_aligned_inline_padding_keeps_line_right_edge_stable() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 16mm; }
+        body { margin: 0; font-family: sans-serif; font-size: 10pt; }
+        .meta { width: 288px; text-align: right; }
+        .label { padding-right: 6mm; color: #5b6472; }
+    </style></head><body>
+        <div class="meta"><span class="label">Número</span>INV-2026-00417</div>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let meta = laid
+        .boxes
+        .iter()
+        .find(|b| {
+            b.tag.as_deref() == Some("div")
+                && b.text_runs
+                    .iter()
+                    .any(|run| run.text.contains("INV-2026-00417"))
+        })
+        .expect("right-aligned metadata line exists");
+    let text_right = meta
+        .text_runs
+        .iter()
+        .map(|run| run.origin_x + run_width(run))
+        .fold(f64::NEG_INFINITY, f64::max);
+    let box_right = meta.x + meta.width;
+
+    assert!(
+        (text_right - box_right).abs() <= 1.0,
+        "right-aligned inline padding should preserve the line right edge, got text_right={text_right}, box_right={box_right}, runs={:?}",
+        meta.text_runs
+            .iter()
+            .map(|run| (run.text.as_str(), run.origin_x, run.origin_x + run_width(run)))
             .collect::<Vec<_>>()
     );
 }

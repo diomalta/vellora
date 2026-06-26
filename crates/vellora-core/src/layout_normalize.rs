@@ -6,6 +6,8 @@
 
 use crate::blitz_engine::{LaidOutBox, VisualRect};
 
+const PAINTED_TABLE_CELL_TEXT_RAISE_PX: f64 = 2.0;
+
 pub(crate) fn normalize_vertical_margin_collapse(boxes: &mut [LaidOutBox]) {
     if boxes.is_empty() {
         return;
@@ -85,7 +87,14 @@ fn shift_subtree_y(boxes: &mut [LaidOutBox], root_idx: usize, dy: f64) {
         return;
     }
     let end = subtree_end_by_depth(boxes, root_idx);
-    for b in &mut boxes[root_idx..end] {
+    shift_range_y(boxes, root_idx, end, dy);
+}
+
+fn shift_range_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
+    if dy == 0.0 || start >= end {
+        return;
+    }
+    for b in &mut boxes[start..end] {
         b.y += dy;
         for rect in &mut b.visual_rects {
             rect.y += dy;
@@ -98,6 +107,287 @@ fn shift_subtree_y(boxes: &mut [LaidOutBox], root_idx: usize, dy: f64) {
         }
         for image in &mut b.image_runs {
             image.y += dy;
+        }
+    }
+}
+
+fn shift_range_x(boxes: &mut [LaidOutBox], start: usize, end: usize, dx: f64) {
+    if dx == 0.0 || start >= end {
+        return;
+    }
+    for b in &mut boxes[start..end] {
+        b.x += dx;
+        for rect in &mut b.visual_rects {
+            rect.x += dx;
+        }
+        for border in &mut b.rounded_borders {
+            border.x += dx;
+        }
+        for run in &mut b.text_runs {
+            run.origin_x += dx;
+        }
+        for image in &mut b.image_runs {
+            image.x += dx;
+        }
+    }
+}
+
+pub(crate) fn normalize_collapsed_table_medium_border_insets(boxes: &mut [LaidOutBox]) {
+    for i in 0..boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_border_collapse {
+            let end = subtree_end_by_depth(boxes, i);
+            normalize_collapsed_table_medium_border_inset(boxes, i, end);
+        }
+    }
+}
+
+fn normalize_collapsed_table_medium_border_inset(
+    boxes: &mut [LaidOutBox],
+    table_idx: usize,
+    end: usize,
+) {
+    if table_has_visible_edge_border(&boxes[table_idx]) {
+        return;
+    }
+
+    let table_depth = boxes[table_idx].depth;
+    let table_y = boxes[table_idx].y;
+    let table_bottom = boxes[table_idx].y + boxes[table_idx].height;
+    let mut cells_top = f64::INFINITY;
+    let mut cells_bottom = f64::NEG_INFINITY;
+    let mut i = table_idx + 1;
+
+    while i < end {
+        match boxes[i].tag.as_deref() {
+            Some("table") if boxes[i].depth > table_depth => {
+                i = subtree_end_by_depth(boxes, i).min(end);
+            }
+            Some("td" | "th") => {
+                cells_top = cells_top.min(boxes[i].y);
+                cells_bottom = cells_bottom.max(boxes[i].y + boxes[i].height);
+                i += 1;
+            }
+            _ => i += 1,
+        }
+    }
+
+    if !cells_top.is_finite() || !cells_bottom.is_finite() {
+        return;
+    }
+
+    let top_inset = cells_top - table_y;
+    let bottom_inset = table_bottom - cells_bottom;
+    if !is_fake_medium_border_inset(top_inset) || !is_fake_medium_border_inset(bottom_inset) {
+        return;
+    }
+
+    let removed = top_inset + bottom_inset;
+    shift_range_y(boxes, table_idx + 1, end, -top_inset);
+    shrink_box_block_end(&mut boxes[table_idx], removed);
+
+    let parent_end = containing_subtree_end(boxes, table_idx);
+    shift_range_y(boxes, end, parent_end, -removed);
+}
+
+/// Horizontal twin of [`normalize_collapsed_table_medium_border_insets`]: Blitz
+/// also insets a borderless collapsed table's cell content ~3px on each *inline*
+/// edge (a synthetic "medium" border). The vertical pass only strips the block
+/// edges; this expands the cell band back out to the table's inline box so left-
+/// aligned text reaches the left edge and right-aligned text reaches the right
+/// edge, matching Chromium. Must run before the column-distribution passes.
+pub(crate) fn normalize_collapsed_table_medium_border_insets_x(boxes: &mut [LaidOutBox]) {
+    for i in 0..boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_border_collapse {
+            let end = subtree_end_by_depth(boxes, i);
+            normalize_collapsed_table_medium_border_inset_x(boxes, i, end);
+        }
+    }
+}
+
+fn normalize_collapsed_table_medium_border_inset_x(
+    boxes: &mut [LaidOutBox],
+    table_idx: usize,
+    end: usize,
+) {
+    if table_has_visible_edge_border(&boxes[table_idx]) || boxes[table_idx].table_layout_fixed {
+        return;
+    }
+
+    let table_depth = boxes[table_idx].depth;
+    let table_x = boxes[table_idx].x;
+    let table_right = boxes[table_idx].x + boxes[table_idx].width;
+
+    let mut cells: Vec<usize> = Vec::new();
+    let mut cells_left = f64::INFINITY;
+    let mut cells_right = f64::NEG_INFINITY;
+    let mut column_count = 0usize;
+    let mut any_percent_hint = false;
+    let mut i = table_idx + 1;
+    while i < end {
+        match boxes[i].tag.as_deref() {
+            Some("table") if boxes[i].depth > table_depth => {
+                i = subtree_end_by_depth(boxes, i).min(end);
+            }
+            Some("tr") => {
+                let row_end = subtree_end_by_depth(boxes, i).min(end);
+                let cell_depth = boxes[i].depth + 1;
+                let row_cells: Vec<usize> = (i + 1..row_end)
+                    .filter(|&j| {
+                        boxes[j].depth == cell_depth
+                            && matches!(boxes[j].tag.as_deref(), Some("td" | "th"))
+                    })
+                    .collect();
+                let mut row_columns = 0usize;
+                for &j in &row_cells {
+                    cells.push(j);
+                    cells_left = cells_left.min(boxes[j].x);
+                    cells_right = cells_right.max(boxes[j].x + boxes[j].width);
+                    row_columns += boxes[j].colspan;
+                    any_percent_hint |= boxes[j].width_pct_hint.is_some();
+                }
+                column_count = column_count.max(row_columns);
+                i = row_end;
+            }
+            _ => i += 1,
+        }
+    }
+
+    // Percent-width tables are re-flowed by `normalize_table_percent_widths`,
+    // which sets explicit column widths from the source; leave their geometry to
+    // that pass.
+    if any_percent_hint {
+        return;
+    }
+
+    if !cells_left.is_finite() || !cells_right.is_finite() {
+        return;
+    }
+    let left_inset = cells_left - table_x;
+    let right_inset = table_right - cells_right;
+    if !is_fake_medium_border_inset(left_inset) || !is_fake_medium_border_inset(right_inset) {
+        return;
+    }
+
+    if column_count >= 3 {
+        // Auto/compact tables are re-flowed by `normalize_auto_table_compact_columns`,
+        // whose cursor anchors at the inset `row_left`, shifting *every* column
+        // right by the inset. A pure left translation removes that uniform shift
+        // without touching column widths — a stretch would change them and amplify
+        // the compact distribution mismatch (measured: PRECO/TOTAL drift right).
+        shift_range_x(boxes, table_idx + 1, end, -left_inset);
+        return;
+    }
+
+    let band = cells_right - cells_left;
+    if !band.is_finite() || band <= 0.0 {
+        return;
+    }
+    // Simple tables (e.g. the 2-column header) are squeezed *symmetrically* (left
+    // edge pushed in, right edge pulled in); expand the cell band
+    // [cells_left, cells_right] to fill the table inline box [table_x, table_right].
+    let scale = (table_right - table_x) / band;
+
+    // Each cell subtree is disjoint, so per-cell transforms are order-independent;
+    // capture each cell's pre-transform geometry from immutable inputs.
+    for &idx in &cells {
+        let old_x = boxes[idx].x;
+        let old_width = boxes[idx].width;
+        let new_x = table_x + (old_x - cells_left) * scale;
+        let new_width = old_width * scale;
+        let right_aligned = boxes[idx].text_align_right;
+        adjust_subtree_inline_geometry(boxes, idx, new_x, new_width);
+        if right_aligned {
+            // `adjust_subtree_inline_geometry` shifts text by the left-edge delta;
+            // right-aligned text must track the right edge, so add the width delta.
+            let dw = new_width - old_width;
+            let cell_end = subtree_end_by_depth(boxes, idx);
+            for b in &mut boxes[idx..cell_end] {
+                for run in &mut b.text_runs {
+                    run.origin_x += dw;
+                }
+            }
+        }
+    }
+}
+
+fn table_has_visible_edge_border(table: &LaidOutBox) -> bool {
+    table
+        .rounded_borders
+        .iter()
+        .any(|border| border.stroke_width > 0.0)
+        || table.visual_rects.iter().any(|rect| {
+            let table_bottom = table.y + table.height;
+            let rect_bottom = rect.y + rect.height;
+            let spans_inline_edge =
+                (rect.x - table.x).abs() <= 0.5 && (rect.width - table.width).abs() <= 0.5;
+            let is_edge_stroke = rect.height > 0.0
+                && rect.height <= 6.0
+                && ((rect.y - table.y).abs() <= 0.5 || (rect_bottom - table_bottom).abs() <= 0.5);
+            spans_inline_edge && is_edge_stroke
+        })
+}
+
+fn is_fake_medium_border_inset(value: f64) -> bool {
+    (2.0..=4.5).contains(&value)
+}
+
+fn shrink_box_block_end(b: &mut LaidOutBox, amount: f64) {
+    if amount <= 0.0 {
+        return;
+    }
+    let old_height = b.height;
+    b.height = (b.height - amount).max(0.0);
+    for rect in &mut b.visual_rects {
+        if (rect.y - b.y).abs() <= 0.5 && (rect.height - old_height).abs() <= 0.5 {
+            rect.height = b.height;
+        }
+    }
+    for border in &mut b.rounded_borders {
+        if (border.y - b.y).abs() <= 0.5 && (border.height - old_height).abs() <= 0.5 {
+            border.height = b.height;
+        }
+    }
+}
+
+pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBox]) {
+    let mut i = 0;
+    while i < boxes.len() {
+        if boxes[i].tag.as_deref() == Some("tr") {
+            let row_end = subtree_end_by_depth(boxes, i);
+            let cell_depth = boxes[i].depth + 1;
+            let cells: Vec<usize> = (i + 1..row_end)
+                .filter(|idx| {
+                    boxes[*idx].depth == cell_depth
+                        && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
+                })
+                .collect();
+            if cells
+                .iter()
+                .any(|idx| table_cell_has_own_paint(&boxes[*idx]))
+            {
+                for idx in cells {
+                    let cell_end = subtree_end_by_depth(boxes, idx).min(row_end);
+                    shift_text_runs_y(boxes, idx, cell_end, -PAINTED_TABLE_CELL_TEXT_RAISE_PX);
+                }
+            }
+            i = row_end;
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn table_cell_has_own_paint(cell: &LaidOutBox) -> bool {
+    !cell.visual_rects.is_empty() || !cell.rounded_borders.is_empty()
+}
+
+fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
+    if dy == 0.0 || start >= end {
+        return;
+    }
+    for b in &mut boxes[start..end] {
+        for run in &mut b.text_runs {
+            run.origin_y += dy;
         }
     }
 }
@@ -272,9 +562,11 @@ fn normalize_auto_table_compact_columns_in_range(
 
     let mut target_widths = current_widths.clone();
     let mut compact_total = 0.0;
+    let compact_floor = row_width / (column_count as f64 * 2.0);
     for column in 0..column_count {
         if compact[column] {
             let target = (min_widths[column] * 1.25)
+                .max(compact_floor)
                 .min(current_widths[column])
                 .max(min_widths[column]);
             target_widths[column] = target;
@@ -477,6 +769,14 @@ fn adjust_visual_inline_geometry(
             rect.x += dw;
         }
     }
+}
+
+fn containing_subtree_end(boxes: &[LaidOutBox], start: usize) -> usize {
+    let depth = boxes[start].depth;
+    let Some(parent_idx) = (0..start).rev().find(|idx| boxes[*idx].depth + 1 == depth) else {
+        return boxes.len();
+    };
+    subtree_end_by_depth(boxes, parent_idx)
 }
 
 fn subtree_end_by_depth(boxes: &[LaidOutBox], start: usize) -> usize {

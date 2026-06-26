@@ -23,11 +23,18 @@ use crate::blitz_engine::{ImageFormat, ImageRun, TextRun};
 /// px -> pt scale (layout px @96dpi -> PDF pt @72dpi).
 const PX_TO_PT: f64 = 0.75;
 
-/// Parley exposes the line baseline used for layout. Chromium's print output
-/// paints the same bundled faces slightly higher when rasterized by Poppler;
-/// compensate proportionally to the run size instead of using a fixture-sized
-/// absolute offset.
-const TEXT_BASELINE_COMPENSATION_EM: f64 = 0.30;
+/// Parley exposes the line baseline used for layout. When the bundled faces are
+/// rasterized (Poppler) vs Chromium's print rasterizer, bulk text sits ~3pt
+/// lower; raise it by a CONSTANT amount. The residual is constant in pt, NOT
+/// proportional to font size — a size-proportional fudge (the former `0.30em`)
+/// over-raised large headings. 4.0px = 3.0pt keeps 10pt body unchanged.
+const TEXT_BASELINE_COMPENSATION_PX: f64 = 4.0;
+
+/// Raise a layout baseline (CSS px) by the constant compensation. `font_size_px`
+/// is accepted to document that the correction is deliberately size-independent.
+fn compensated_baseline_y(origin_y_px: f64, _font_size_px: f64) -> f64 {
+    origin_y_px - TEXT_BASELINE_COMPENSATION_PX
+}
 
 /// Map a layout Y (CSS px, top-left origin) to a krilla surface Y (pt).
 ///
@@ -374,7 +381,7 @@ fn draw_text_run(
         .collect();
 
     // Baseline origin in krilla's top-left space (px->pt, no flip).
-    let baseline_y = run.origin_y - run.font_size as f64 * TEXT_BASELINE_COMPENSATION_EM;
+    let baseline_y = compensated_baseline_y(run.origin_y, run.font_size as f64);
     let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(baseline_y));
 
     set_solid_fill(surface, run.color);
@@ -414,7 +421,24 @@ fn draw_margin_text(
 
 #[cfg(test)]
 mod tests {
-    use super::{content_y_pt, PX_TO_PT};
+    use super::{compensated_baseline_y, content_y_pt, PX_TO_PT, TEXT_BASELINE_COMPENSATION_PX};
+
+    // Regression for d9cb15a: the baseline compensation must be a CONSTANT raise,
+    // not proportional to font size. The size-proportional 0.30em form over-raised
+    // large text (e.g. an 18pt title lifted 5.4pt), doubling the heading vs Chromium.
+    #[test]
+    fn baseline_compensation_is_constant_not_size_proportional() {
+        let small = 100.0 - compensated_baseline_y(100.0, 10.0);
+        let large = 100.0 - compensated_baseline_y(100.0, 30.0);
+        assert!(
+            (small - large).abs() < 1e-9,
+            "baseline raise must not depend on font size, got small={small}, large={large}"
+        );
+        assert!(
+            (small - TEXT_BASELINE_COMPENSATION_PX).abs() < 1e-9,
+            "raise must equal the constant compensation, got {small}"
+        );
+    }
 
     // Regression for the upside-down render: krilla's surface is top-left origin, so
     // content near the TOP of the document must map to a SMALLER surface y than
