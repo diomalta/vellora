@@ -34,12 +34,59 @@ export interface RenderMetadata {
 /** Exact PDF/A profiles currently supported by vellora. */
 export type PdfAProfile = "PDF/A-2b";
 
+/** Rendering backend selected for one call. Omitted means `"native"` for backward compatibility. */
+export type RenderEngine = "native" | "chromium" | "auto";
+
+/** Concrete engines a fidelity policy may route to. */
+export type PolicySelectedEngine = Exclude<RenderEngine, "auto">;
+
+/** Policy used by `engine: "auto"` to make template-level routing explicit and reviewable. */
+export interface RenderEnginePolicy {
+  version: 1;
+  templates: Record<string, RenderEnginePolicyEntry>;
+}
+
+/** One template decision inside a render-engine policy file. */
+export interface RenderEnginePolicyEntry {
+  selectedEngine: PolicySelectedEngine;
+  reason?: string;
+  reviewedAt?: string;
+}
+
+/** Fidelity routing metadata for `engine: "auto"` and CLI doctor reports. */
+export interface FidelityOptions {
+  /** Stable template or document class id used to look up the routing decision in the policy. */
+  templateId?: string;
+  /** JSON policy file path. Omitted => `vellora.fidelity.json` from the current working directory. */
+  policyPath?: string;
+}
+
+/** Options forwarded only to the optional browser-fidelity engine. */
+export interface ChromiumEngineOptions {
+  /** Chromium/Chrome executable path. Omitted => `VELLORA_CHROMIUM_EXECUTABLE` or PATH lookup. */
+  executablePath?: string;
+  /** Extra Chromium CLI flags appended after vellora's required headless PDF flags. */
+  args?: string[];
+  /** Milliseconds to wait for the Chromium subprocess before aborting. */
+  timeoutMs?: number;
+  /** Minimal Chromium print-to-PDF options implemented by the direct binary adapter. */
+  pdf?: {
+    landscape?: boolean;
+  };
+}
+
 /**
  * Public render options. `opts` is the single carrier for render configuration and is forwarded to
  * the orchestration and native layers. `metadata`, `images`, `baseUrl`, and `fonts` all have a
  * rendering effect.
  */
 export interface RenderOptions {
+  /** Rendering backend. Omitted => `"native"`; `"chromium"` requires the optional Chromium engine. */
+  engine?: RenderEngine;
+  /** Template-level routing metadata used by `engine: "auto"`. */
+  fidelity?: FidelityOptions;
+  /** Browser-engine options forwarded only when the selected engine is `"chromium"`. */
+  chromium?: ChromiumEngineOptions;
   /** Strict-by-default: validate, never mutate. `false` runs `@vellora/lint` fixers first. */
   strict?: boolean;
   /** Emit an archival PDF using the named PDF/A profile. Currently only `PDF/A-2b` is supported. */
@@ -92,6 +139,7 @@ export interface BridgeRenderOptions {
   fonts?: Uint8Array[];
   images?: Record<string, Uint8Array>;
   baseUrl?: string;
+  chromium?: ChromiumEngineOptions;
 }
 
 /**

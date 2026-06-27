@@ -23,7 +23,7 @@ export default defineConfig({
   // URLs need the repo name as a base prefix. Drop to "/" only if a custom domain is added.
   base: "/vellora/",
   description:
-    "HTML to PDF for Node.js via a native addon — in-process, no Chromium. Bring your own HTML and get a deterministic PDF.",
+    "HTML to PDF for Node.js via a native addon by default, with optional Chromium fidelity mode for selected templates.",
   cleanUrls: true,
   themeConfig: {
     // Top navigation is capped at 3–5 entries (Diataxis); deeper structure lives in the sidebar.
@@ -45,6 +45,7 @@ export default defineConfig({
             { text: "Invoices", link: "/guide/invoices" },
             { text: "Streaming", link: "/guide/streaming" },
             { text: "Fonts", link: "/guide/fonts" },
+            { text: "Rendering fidelity", link: "/guide/fidelity" },
             { text: "PDF/A", link: "/guide/pdfa" },
             { text: "Concurrency", link: "/guide/concurrency" },
           ],

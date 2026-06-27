@@ -8,6 +8,7 @@
  */
 import type { Writable } from "node:stream";
 import { VelloraError, VelloraInputError } from "./errors.js";
+import { DEFAULT_FIDELITY_POLICY_PATH, loadRenderEnginePolicy } from "./fidelity-policy.js";
 import { normalizeInput } from "./input.js";
 import { NativeAddonBridge } from "./native-bridge.js";
 import { orchestrate } from "./orchestrate.js";
@@ -18,8 +19,17 @@ import type {
   RenderBatchItem,
   RenderBatchOptions,
   RenderData,
+  RenderEngine,
+  RenderEnginePolicy,
   RenderOptions,
 } from "./types.js";
+
+type DynamicImport = (specifier: string) => Promise<unknown>;
+
+const importOptionalPackage = new Function(
+  "specifier",
+  "return import(specifier)",
+) as DynamicImport;
 
 /**
  * Internal: the active native bridge. The production default is the real `@vellora/native` addon
@@ -46,6 +56,74 @@ export function setNativeBridge(bridge: NativeBridge): NativeBridge {
 interface InternalRenderOptions extends RenderOptions {
   /** Test-only: override the native bridge for this call. */
   _bridge?: NativeBridge;
+  /** Test-only: override the optional Chromium bridge for this call. */
+  _chromiumBridge?: NativeBridge;
+  /** Test-only: inject a parsed auto-routing policy without touching the filesystem. */
+  _policy?: RenderEnginePolicy;
+  /** Test-only: inject policy-file reading for deterministic policy errors. */
+  _policyReader?: (path: string) => Promise<string>;
+}
+
+function assertRenderEngine(engine: unknown): asserts engine is RenderEngine {
+  if (engine === undefined || engine === "native" || engine === "chromium" || engine === "auto") {
+    return;
+  }
+  throw new VelloraInputError(
+    `render engine must be "native", "chromium", or "auto"; received ${JSON.stringify(engine)}.`,
+  );
+}
+
+async function loadChromiumBridge(opts: InternalRenderOptions): Promise<NativeBridge> {
+  if (opts._chromiumBridge) {
+    return opts._chromiumBridge;
+  }
+  let mod: unknown;
+  try {
+    mod = await importOptionalPackage("@vellora/engine-chromium");
+  } catch (cause) {
+    throw new VelloraInputError(
+      'engine: "chromium" requires installing optional package @vellora/engine-chromium.',
+      { cause },
+    );
+  }
+  const chromiumEngine = (mod as { chromiumEngine?: (options?: unknown) => NativeBridge })
+    .chromiumEngine;
+  if (typeof chromiumEngine !== "function") {
+    throw new VelloraInputError("@vellora/engine-chromium did not export chromiumEngine(options).");
+  }
+  return chromiumEngine(opts.chromium);
+}
+
+async function loadPolicy(opts: InternalRenderOptions): Promise<RenderEnginePolicy> {
+  if (opts._policy) {
+    return opts._policy;
+  }
+  const path = opts.fidelity?.policyPath ?? DEFAULT_FIDELITY_POLICY_PATH;
+  return loadRenderEnginePolicy(path, opts._policyReader);
+}
+
+async function selectedAutoEngine(
+  opts: InternalRenderOptions,
+): Promise<Exclude<RenderEngine, "auto">> {
+  const templateId = opts.fidelity?.templateId;
+  if (!templateId) {
+    throw new VelloraInputError('engine: "auto" requires fidelity.templateId.');
+  }
+  const policy = await loadPolicy(opts);
+  const entry = policy.templates[templateId];
+  if (!entry) {
+    throw new VelloraInputError(
+      `No fidelity policy entry found for templateId ${JSON.stringify(templateId)}.`,
+    );
+  }
+  return entry.selectedEngine;
+}
+
+async function selectBridge(opts: InternalRenderOptions): Promise<NativeBridge> {
+  const engine = opts.engine ?? "native";
+  assertRenderEngine(engine);
+  const selected = engine === "auto" ? await selectedAutoEngine(opts) : engine;
+  return selected === "chromium" ? loadChromiumBridge(opts) : (opts._bridge ?? getDefaultBridge());
 }
 
 /** Run the shared pipeline: normalize → template → orchestrate, resolving to PDF bytes. */
@@ -56,7 +134,7 @@ async function pipeline(
 ): Promise<Uint8Array> {
   const content = await normalizeInput(html);
   const templated = renderTemplate(content, data);
-  const bridge = opts._bridge ?? getDefaultBridge();
+  const bridge = await selectBridge(opts);
   return orchestrate(templated, opts, bridge);
 }
 

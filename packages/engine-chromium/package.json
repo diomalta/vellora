@@ -1,0 +1,43 @@
+{
+  "name": "@vellora/engine-chromium",
+  "version": "0.1.0-alpha.0",
+  "description": "Optional Chromium-backed browser-fidelity renderer for vellora.",
+  "keywords": ["html-to-pdf", "pdf", "chromium", "browser-fidelity"],
+  "homepage": "https://github.com/diomalta/vellora#readme",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/engine-chromium"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "vellora": "0.1.0-alpha.0"
+  },
+  "devDependencies": {
+    "@vellora/test-harness": "*",
+    "vellora": "0.1.0-alpha.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

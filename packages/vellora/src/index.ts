@@ -27,16 +27,29 @@ export {
 export { MockNativeBridge, type MockRenderCall } from "./mock-bridge.js";
 export { NativeAddonBridge } from "./native-bridge.js";
 export { DEFAULT_CREATION_DATE, resolveOptions } from "./orchestrate.js";
+export {
+  DEFAULT_FIDELITY_POLICY_PATH,
+  loadRenderEnginePolicy,
+  parseRenderEnginePolicy,
+  summarizeRenderEnginePolicy,
+} from "./fidelity-policy.js";
+export type { RenderEnginePolicySummary } from "./fidelity-policy.js";
 export { renderPdf, renderPdfBatch, renderPdfToStream, setNativeBridge } from "./render.js";
 export { renderTemplate } from "./template/index.js";
 export type {
   BridgeRenderOptions,
+  ChromiumEngineOptions,
+  FidelityOptions,
   HtmlInput,
   NativeBridge,
   PdfAProfile,
+  PolicySelectedEngine,
   RenderBatchItem,
   RenderBatchOptions,
   RenderData,
+  RenderEngine,
+  RenderEnginePolicy,
+  RenderEnginePolicyEntry,
   RenderMetadata,
   RenderOptions,
 } from "./types.js";
