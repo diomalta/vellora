@@ -65,6 +65,7 @@ You now have `first.pdf` on disk. `renderPdf` resolves to a `Uint8Array` whose b
 
 - [Render an invoice](/guide/invoices) with loops and currency formatting.
 - [Stream a PDF](/guide/streaming) to an HTTP response.
+- Run `npx vellora lint templates/invoice.html` in CI to keep templates inside the supported subset.
 - Browse the [API Reference](/reference/).
 
 ## Compiling from source (advanced)

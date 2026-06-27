@@ -20,8 +20,9 @@ is produced (unless you opt into runtime fixing with `{ strict: false }`).
 - **Partial** — in the subset (the gate accepts it), but with a documented caveat.
 - **Planned** — designed but not yet implemented; accepted by the gate but has no effect on output in the current release.
 - **Unsupported** — on a denylist; the strict gate rejects it. Rewrite required.
-- **Dev-time-fixable** — rejected at render time, but `vellora fix` can transform
-  it automatically (the applicable rule is named in the Notes column).
+- **Dev-time-fixable** — rejected at render time, but `@vellora/lint.fix()` can
+  transform it automatically (the applicable rule is named in the Notes column).
+  The `vellora fix` CLI wraps the same library rule.
 
 ## Allowed and best-effort features
 
@@ -38,9 +39,9 @@ These are not on any denylist, so the strict gate accepts them.
 | Fonts: text shaping + subset embedding | Supported | Text is shaped and the resolved font is subset and embedded into the PDF. |
 | Fonts: custom faces via the `fonts` option | Supported | Caller-supplied font faces (a `Uint8Array[]` of raw TTF/OTF bytes) register into the deterministic font context and are reachable from CSS by each face's intrinsic embedded family name (`font-family: "Inter"`); family/weight/style are read from the bytes. Custom faces never override the CSS generics, no host/system font is consulted, and bytes that are not a parseable font reject with `font:invalid`. |
 | Fonts: declared family aliasing / `@font-face` `src` / subsetting config | Unsupported | A face is reachable only by its intrinsic embedded family name — the `@font-face` model (a caller-declared alias decoupled from the font's own name), resolving `@font-face` `src` URLs from the document CSS, weight/style overrides, variable-font axis selection, and font-subsetting configuration are not provided. |
-| `display: flex` | Partial | Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `vellora fix` (`flex/grid-in-td`) can convert it. |
-| Inline SVG (`<svg>`) | Dev-time-fixable | Not handled at render time; `vellora fix` rule `inline-svg` rasterizes it to PNG. |
-| `<img>` without explicit dimensions | Dev-time-fixable | `vellora fix` rule `img-dimension-attrs` adds intrinsic `width`/`height` so layout is deterministic. |
+| `display: flex` | Partial | Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex/grid-in-td`) can convert common table-cell cases. |
+| Inline SVG (`<svg>`) | Dev-time-fixable | Not handled at render time; `@vellora/lint.fix()` rule `inline-svg` rasterizes it to PNG. The CLI `vellora fix` wraps the same rule. |
+| `<img>` without explicit dimensions | Dev-time-fixable | `@vellora/lint.fix()` rule `img-dimension-attrs` adds intrinsic `width`/`height` so layout is deterministic. The CLI `vellora fix` wraps the same rule. |
 
 ## Unsupported HTML elements
 
@@ -87,7 +88,7 @@ These tokens are in `DENIED_CSS_TOKENS` and are rejected by the strict gate.
 | Feature | Status | Notes |
 |---|---|---|
 | `@keyframes` (css:keyframes) | Unsupported | Rejected by the strict gate. |
-| `display:grid` (css:grid) | Dev-time-fixable | Auto-fixable via `vellora fix` rule `flex/grid-in-td`. |
+| `display:grid` (css:grid) | Dev-time-fixable | Auto-fixable via `@vellora/lint.fix()` rule `flex/grid-in-td`; the CLI `vellora fix` wraps the same rule. |
 
 ## Nesting depth limit
 

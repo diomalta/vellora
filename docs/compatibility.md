@@ -11,7 +11,9 @@ This page intentionally does **not** duplicate that table — consult `COMPATIBI
 ## How strictness works
 
 - **`strict: true` (default)** — your HTML/CSS is validated against the subset and never mutated. Anything outside the subset throws `VelloraUnsupportedError`, which carries a located diagnostic (`feature`, `line`, `col`, `hint`) so you can find and fix the offending markup.
-- **`strict: false`** — `@vellora/lint` fixers run first to bring common out-of-subset input back inside the supported set before rendering.
+- **`@vellora/lint`** — `diagnose(html)` reports subset issues at authoring/CI time, and `fix(html)` rewrites common mechanical violations deterministically.
+- **`strict: false`** — the public renderer runs the same `@vellora/lint` fixers first to bring common out-of-subset input back inside the supported set before rendering.
+- **`vellora lint` / `vellora fix`** — CLI wrappers for the same lint library when you want file-based checks or in-place rewrites.
 
 ```js
 import { renderPdf, VelloraUnsupportedError } from "vellora";
