@@ -5,7 +5,7 @@ Optional Chromium-backed renderer for [vellora](https://github.com/diomalta/vell
 Use this package only for templates that need browser print fidelity. The default `vellora` path stays
 native, in-process, and browserless.
 
-> **Pre-release (alpha)** — the bridge is implemented and evolving with the fidelity workflow.
+> **0.x pre-1.0** — the bridge is implemented and evolving with the fidelity workflow.
 
 ## Install
 

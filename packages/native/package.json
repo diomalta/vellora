@@ -1,7 +1,7 @@
 {
   "name": "@vellora/native",
   "version": "0.1.0-alpha.0",
-  "description": "Prebuilt napi-rs addon loader for vellora — alpha.",
+  "description": "Prebuilt napi-rs addon loader for vellora.",
   "keywords": [
     "html-to-pdf",
     "pdf",

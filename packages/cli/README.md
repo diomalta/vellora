@@ -3,7 +3,7 @@
 The `vellora` command line: `render`, `lint`, `fix`, `doctor`, and `fidelity` for the
 [vellora](https://github.com/diomalta/vellora) HTML→PDF renderer.
 
-> **Pre-release (alpha)** — commands are implemented and evolving with the public API.
+> **0.x pre-1.0** — commands are implemented and evolving with the public API.
 
 ## Install
 
