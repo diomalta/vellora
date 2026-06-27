@@ -14,6 +14,9 @@ This page intentionally does **not** duplicate that table — consult `COMPATIBI
 - **`@vellora/lint`** — `diagnose(html)` reports subset issues at authoring/CI time, and `fix(html)` rewrites common mechanical violations deterministically.
 - **`strict: false`** — the public renderer runs the same `@vellora/lint` fixers first to bring common out-of-subset input back inside the supported set before rendering.
 - **`vellora lint` / `vellora fix`** — CLI wrappers for the same lint library when you want file-based checks or in-place rewrites.
+- **Assets are explicit.** Images come from `data:` URLs or the `images` map; fonts come from the
+  `fonts` option. Native rendering does not fetch remote assets. See [Images](/guide/images) and
+  [Fonts](/guide/fonts).
 
 ```js
 import { renderPdf, VelloraUnsupportedError } from "vellora";

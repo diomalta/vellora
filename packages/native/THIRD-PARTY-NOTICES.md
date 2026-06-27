@@ -2,8 +2,8 @@
 
 The prebuilt native addon distributed in this package embeds default fonts so that
 text renders deterministically and with no system font dependency (no `libfontconfig`,
-no host-installed fonts) — which is what lets it run on slim, Alpine/musl, and AWS
-Lambda images out of the box.
+no host-installed fonts) — which is what lets it run on supported slim Linux glibc
+and AWS Lambda images out of the box. Alpine/musl prebuilds are not published yet.
 
 ## Liberation Sans (Regular and Bold)
 
@@ -6181,4 +6181,3 @@ freely, subject to the following restrictions:
    misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 ```
-

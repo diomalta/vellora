@@ -5,4 +5,4 @@ automatically on release (`changeset version`).
 
 ## Unreleased
 
-- Initial public prerelease — see `.changeset/native-prebuild-launch.md`.
+- Initial public prerelease.

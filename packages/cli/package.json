@@ -1,7 +1,7 @@
 {
   "name": "@vellora/cli",
   "version": "0.1.0-alpha.0",
-  "description": "vellora render / lint / fix commands — alpha.",
+  "description": "vellora render / lint / fix / doctor / fidelity commands — alpha.",
   "keywords": [
     "html-to-pdf",
     "pdf",
