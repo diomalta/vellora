@@ -6,6 +6,9 @@ automatically on release (`changeset version`).
 ## Unreleased
 
 - Initial public prerelease — see `.changeset/native-prebuild-launch.md`.
+- **Bounded batch rendering.** `renderPdfBatch(items, { concurrency })` renders many documents with a
+  positive safe-integer concurrency cap, keeps output order aligned with the input order, and rejects
+  with the first render error without starting additional queued items.
 - **Image source resolution.** The `images` option is now live: a `Record<string, Uint8Array>` mapping
   an `<img>`'s `src` to raw image bytes (PNG/JPEG/GIF/WebP, format detected from the bytes). `baseUrl`
   normalizes a relative `src` into the lookup key (no network/filesystem access). Inline `data:` URLs

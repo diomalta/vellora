@@ -5,7 +5,9 @@ import {
   type NativeBridge,
   VelloraInputError,
   renderPdf,
+  renderPdfBatch,
   renderPdfToStream,
+  setNativeBridge,
 } from "../src/index";
 
 const SAFE_HTML = "<p>{{ name }}</p>";
@@ -165,6 +167,49 @@ describe("renderPdf", () => {
     const b = await renderPdf(SAFE_HTML, { name: "x" }, { metadata });
     expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
     expect(decode(a)).toContain("2029-09-09T09:09:09.000Z");
+  });
+});
+
+describe("renderPdfBatch", () => {
+  test("caps active renders and preserves input order", async () => {
+    class DelayedBridge implements NativeBridge {
+      active = 0;
+      maxActive = 0;
+
+      async render(html: string): Promise<Uint8Array> {
+        this.active++;
+        this.maxActive = Math.max(this.maxActive, this.active);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        this.active--;
+        return new TextEncoder().encode(`%PDF-${html}-%%EOF`);
+      }
+    }
+
+    const bridge = new DelayedBridge();
+    setNativeBridge(bridge);
+
+    const pdfs = await renderPdfBatch(
+      Array.from({ length: 5 }, (_, n) => ({ html: "<p>{{ n }}</p>", data: { n } })),
+      { concurrency: 2 },
+    );
+
+    expect(bridge.maxActive).toBe(2);
+    expect(pdfs.map(decode)).toEqual([
+      "%PDF-<p>0</p>-%%EOF",
+      "%PDF-<p>1</p>-%%EOF",
+      "%PDF-<p>2</p>-%%EOF",
+      "%PDF-<p>3</p>-%%EOF",
+      "%PDF-<p>4</p>-%%EOF",
+    ]);
+  });
+
+  test("rejects an invalid concurrency limit", async () => {
+    await expect(renderPdfBatch([{ html: "<p>x</p>" }], { concurrency: 0 })).rejects.toBeInstanceOf(
+      VelloraInputError,
+    );
+    await expect(
+      renderPdfBatch([{ html: "<p>x</p>" }], { concurrency: 1.5 }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
   });
 });
 

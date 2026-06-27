@@ -1,10 +1,10 @@
 /**
- * Public render functions: `renderPdf` and `renderPdfToStream`.
+ * Public render functions: `renderPdf`, `renderPdfBatch`, and `renderPdfToStream`.
  *
- * Both wire input handling → templating → strict orchestration → native bridge. Input is always
- * content (string | Uint8Array | Readable), never a path, and a `Readable` is buffered in full
- * before templating. Currently the native bridge is the deterministic mock; the native bridge
- * swaps in the real `@vellora/native` with no change to these signatures.
+ * These wire input handling → templating → strict orchestration → native bridge. Input is always
+ * content (string | Uint8Array | Readable), never a path, and a `Readable` is buffered in full before
+ * templating. The production default is the real `@vellora/native`; tests swap in the deterministic
+ * mock without changing these signatures.
  */
 import type { Writable } from "node:stream";
 import { VelloraError, VelloraInputError } from "./errors.js";
@@ -12,7 +12,14 @@ import { normalizeInput } from "./input.js";
 import { NativeAddonBridge } from "./native-bridge.js";
 import { orchestrate } from "./orchestrate.js";
 import { renderTemplate } from "./template/index.js";
-import type { HtmlInput, NativeBridge, RenderData, RenderOptions } from "./types.js";
+import type {
+  HtmlInput,
+  NativeBridge,
+  RenderBatchItem,
+  RenderBatchOptions,
+  RenderData,
+  RenderOptions,
+} from "./types.js";
 
 /**
  * Internal: the active native bridge. The production default is the real `@vellora/native` addon
@@ -66,6 +73,55 @@ export function renderPdf(
   opts: RenderOptions = {},
 ): Promise<Uint8Array> {
   return pipeline(html, data, opts);
+}
+
+/**
+ * Render many documents with a bounded number of active native renders.
+ *
+ * Results keep the same order as the input items. If any render fails, the batch rejects with that
+ * error after already-active renders settle; no additional items are started after the first failure.
+ */
+export async function renderPdfBatch(
+  items: Iterable<RenderBatchItem>,
+  opts: RenderBatchOptions = {},
+): Promise<Uint8Array[]> {
+  const batch = Array.from(items);
+  const concurrency = resolveBatchConcurrency(opts.concurrency);
+  const results = new Array<Uint8Array>(batch.length);
+  let next = 0;
+  let failure: unknown;
+
+  async function worker(): Promise<void> {
+    while (failure === undefined) {
+      const index = next++;
+      if (index >= batch.length) {
+        return;
+      }
+      const item = batch[index] as RenderBatchItem;
+      try {
+        results[index] = await pipeline(item.html, item.data, item.opts ?? {});
+      } catch (err) {
+        failure = err;
+        return;
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, batch.length) }, () => worker()));
+  if (failure !== undefined) {
+    throw failure;
+  }
+  return results;
+}
+
+function resolveBatchConcurrency(value: number | undefined): number {
+  const concurrency = value ?? 4;
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1) {
+    throw new VelloraInputError(
+      `renderPdfBatch concurrency must be a positive safe integer; received ${JSON.stringify(value)}.`,
+    );
+  }
+  return concurrency;
 }
 
 /**

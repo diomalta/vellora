@@ -61,6 +61,22 @@ export interface RenderOptions {
   baseUrl?: string;
 }
 
+/** One document in a bounded batch render. */
+export interface RenderBatchItem {
+  html: HtmlInput;
+  data?: RenderData;
+  opts?: RenderOptions;
+}
+
+/** Batch-level controls for `renderPdfBatch`. */
+export interface RenderBatchOptions {
+  /**
+   * Maximum number of renders active at once. Omitted ⇒ 4, matching Node's default libuv pool size
+   * while still keeping JavaScript-side work bounded for large batches.
+   */
+  concurrency?: number;
+}
+
 /**
  * The fully-resolved configuration handed to the bridge. Derived from `RenderOptions` with the
  * deterministic creation-date default applied. This is what the native addon receives.

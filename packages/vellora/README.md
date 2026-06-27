@@ -20,6 +20,8 @@ const pdf = await renderPdf(html, data);
 // pdf: Uint8Array — page size comes from CSS in your HTML: @page { size: A4 }
 ```
 
+For batches, cap active native renders with `renderPdfBatch(items, { concurrency })`.
+
 See the [project README](https://github.com/diomalta/vellora#readme) for the full
 guide, compatibility table, and roadmap.
 
