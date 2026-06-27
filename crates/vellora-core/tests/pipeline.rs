@@ -3,7 +3,7 @@
 
 use vellora_core::page_css::{self, ContentPart};
 use vellora_core::pagination;
-use vellora_core::{blitz_engine, render, RenderOptions};
+use vellora_core::{blitz_engine, render, PdfAProfile, RenderOptions};
 
 const INVOICE: &str = include_str!("fixtures/invoice.html");
 
@@ -20,6 +20,13 @@ fn opts() -> RenderOptions {
         title: Some("Fatura INV-2026-00417".to_string()),
         creation_date: Some((2026, 6, 23)),
         ..Default::default()
+    }
+}
+
+fn pdfa_opts() -> RenderOptions {
+    RenderOptions {
+        pdfa: Some(PdfAProfile::A2B),
+        ..opts()
     }
 }
 
@@ -717,6 +724,39 @@ fn render_is_byte_stable() {
     let a = render(INVOICE.as_bytes(), &opts()).unwrap();
     let b = render(INVOICE.as_bytes(), &opts()).unwrap();
     assert_eq!(a, b, "render is byte-stable");
+}
+
+#[test]
+fn pdfa_2b_writes_identification_metadata_and_output_intent() {
+    let bytes = render(INVOICE.as_bytes(), &pdfa_opts()).unwrap();
+    let text = String::from_utf8_lossy(&bytes);
+    assert!(
+        text.contains("pdfaid:part") && text.contains(">2<"),
+        "PDF/A XMP part=2 missing"
+    );
+    assert!(
+        text.contains("pdfaid:conformance") && text.contains(">B<"),
+        "PDF/A XMP conformance=B missing"
+    );
+    assert!(
+        text.contains("/OutputIntents") || text.contains("/OutputIntent"),
+        "PDF/A output intent missing"
+    );
+
+    let doc = lopdf::Document::load_mem(&bytes).unwrap();
+    let embedded = doc
+        .objects
+        .values()
+        .filter_map(|obj| obj.as_dict().ok())
+        .any(|d| d.has(b"FontFile") || d.has(b"FontFile2") || d.has(b"FontFile3"));
+    assert!(embedded, "PDF/A output still embeds fonts");
+}
+
+#[test]
+fn pdfa_2b_render_is_byte_stable() {
+    let a = render(INVOICE.as_bytes(), &pdfa_opts()).unwrap();
+    let b = render(INVOICE.as_bytes(), &pdfa_opts()).unwrap();
+    assert_eq!(a, b, "PDF/A render is byte-stable");
 }
 
 #[test]

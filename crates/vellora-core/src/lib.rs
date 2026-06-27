@@ -41,7 +41,7 @@ pub mod pagination;
 pub mod pdf;
 pub mod validation;
 
-pub use pdf::DocMeta;
+pub use pdf::{DocMeta, PdfAProfile};
 pub use validation::{Diagnostic, VelloraError};
 
 /// Options accepted by [`render`] (current surface). Producer is fixed to
@@ -52,6 +52,8 @@ pub use validation::{Diagnostic, VelloraError};
 pub struct RenderOptions {
     /// Document title written to the PDF info dictionary.
     pub title: Option<String>,
+    /// Optional archival output profile.
+    pub pdfa: Option<PdfAProfile>,
     /// Deterministic creation date `(year, month, day)`; never wall-clock.
     pub creation_date: Option<(u16, u8, u8)>,
     /// Caller-supplied image bytes keyed by an `<img>`'s `src` string. An `<img>`
@@ -132,8 +134,15 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
     let meta = DocMeta {
         title: opts.title.clone(),
         creation_date: opts.creation_date,
+        pdfa: opts.pdfa,
     };
-    pdf::emit(&paginated.pages, &meta).map_err(VelloraError::Render)
+    pdf::emit(&paginated.pages, &meta).map_err(|err| match err {
+        pdf::PdfEmitError::Conformance { profile, errors } => VelloraError::Conformance {
+            profile: profile.as_str().to_string(),
+            errors,
+        },
+        pdf::PdfEmitError::Render(message) => VelloraError::Render(message),
+    })
 }
 
 /// Returns the crate name. Retained from the initial scaffold so existing

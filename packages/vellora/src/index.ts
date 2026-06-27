@@ -11,9 +11,13 @@
  * Strict mode validates and never mutates; `{ strict: false }` runs `@vellora/lint` fixers first.
  */
 export {
+  conformanceFromDiagnostic,
+  isConformanceDiagnostic,
   isUnsupportedDiagnostic,
   unsupportedFromDiagnostic,
+  type ConformanceDiagnostic,
   type UnsupportedDiagnostic,
+  VelloraConformanceError,
   VelloraError,
   type VelloraErrorCode,
   VelloraInputError,
@@ -29,6 +33,7 @@ export type {
   BridgeRenderOptions,
   HtmlInput,
   NativeBridge,
+  PdfAProfile,
   RenderBatchItem,
   RenderBatchOptions,
   RenderData,

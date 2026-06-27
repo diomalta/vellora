@@ -15,6 +15,11 @@ use crate::css_scan;
 pub enum VelloraError {
     /// Input used a feature outside the documented subset.
     Unsupported(Diagnostic),
+    /// The final PDF could not satisfy the requested conformance profile.
+    Conformance {
+        profile: String,
+        errors: Vec<String>,
+    },
     /// Rendering failed downstream (layout/pagination/PDF).
     Render(String),
 }
@@ -23,6 +28,13 @@ impl std::fmt::Display for VelloraError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VelloraError::Unsupported(d) => write!(f, "{d}"),
+            VelloraError::Conformance { profile, errors } => {
+                let first = errors
+                    .first()
+                    .map(String::as_str)
+                    .unwrap_or("unknown validation error");
+                write!(f, "{profile} conformance failed: {first}")
+            }
             VelloraError::Render(m) => write!(f, "render error: {m}"),
         }
     }

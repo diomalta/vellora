@@ -11,6 +11,10 @@ import {
 const OPTIONS: BridgeRenderOptions = {
   metadata: { creationDate: "2000-01-01T00:00:00.000Z" },
 };
+const PDFA_OPTIONS: BridgeRenderOptions = {
+  metadata: { creationDate: "2000-01-01T00:00:00.000Z" },
+  pdfa: "PDF/A-2b",
+};
 
 describe("mock native bridge", () => {
   test("records the final HTML and resolved options per call", async () => {
@@ -34,6 +38,12 @@ describe("mock native bridge", () => {
     const a = await new MockNativeBridge().render("<p>a</p>", OPTIONS);
     const b = await new MockNativeBridge().render("<p>b</p>", OPTIONS);
     expect(Buffer.from(a).equals(Buffer.from(b))).toBe(false);
+  });
+
+  test("different PDF/A options yield different deterministic stub bytes", async () => {
+    const without = await new MockNativeBridge().render("<p>a</p>", OPTIONS);
+    const withPdfA = await new MockNativeBridge().render("<p>a</p>", PDFA_OPTIONS);
+    expect(Buffer.from(withPdfA).equals(Buffer.from(without))).toBe(false);
   });
 });
 

@@ -40,7 +40,7 @@ footprint that can OOM-kill under concurrency. vellora takes a different path �
 - ✅ designed for bounded memory + real concurrency on the libuv thread pool
 - ✅ selectable, searchable text + subset-embedded fonts (small PDFs)
 - ✅ `@page` page numbers and running headers/footers (which `chrome --print-to-pdf` can't do via CSS)
-- ✅ PDF/A, PDF/UA, tagged PDF for compliance *(planned)*
+- ✅ PDF/A-2b for archival output; PDF/UA and tagged PDF are planned
 - ✅ **deterministic** output — same template + data ⇒ byte-stable PDF
 
 > **Performance claims are evidence-gated.** Reproducible benchmarks vs Puppeteer, Playwright,
@@ -154,7 +154,8 @@ partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md
 | `@page` margins, page numbers, running header/footer | Supported |
 | Fonts: text shaping + subset embedding | Supported |
 | Fonts: custom faces via the `fonts` option | Supported — pass `Uint8Array[]` (TTF/OTF) |
-| PDF/A, PDF/UA, tagged, bookmarks, metadata | *Planned* |
+| PDF/A-2b archival output | Supported |
+| PDF/UA, tagged PDF, bookmarks | *Planned* |
 | `display: flex` / `grid` (general) | Limited — use tables |
 | JavaScript, browser APIs, animations, filters | Not supported (rejected by the strict gate) |
 
@@ -189,13 +190,13 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
   deterministic (byte-identical) output;
   templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
   strict-by-default subset validation; `renderPdf` / `renderPdfBatch` / `renderPdfToStream`; document metadata
-  (`title`, `creationDate`); embedded data-url images; representative HTML fixtures for invoice,
+	  (`title`, `creationDate`); PDF/A-2b archival output; embedded data-url images; representative HTML fixtures for invoice,
   receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
   `render` / `lint` / `fix`; bounded, configurable concurrency; best-effort mode
   (`{ strict: false }`).
 - **In progress / next** — prebuilt binaries for macOS + Linux glibc via CI (musl/Alpine is a
   fast-follow).
-- **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching
+- **Planned for a stable release** — broader PDF/A profiles · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
   benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and a published docs site.
 - **Future (post-1.0, demand-driven)** — password / encryption; attachments (PDF/A-3, e.g. embedding
