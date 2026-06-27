@@ -1,7 +1,7 @@
 {
   "name": "@vellora/cli",
   "version": "0.1.0-alpha.0",
-  "description": "vellora render / lint / fix commands — alpha, not yet functional.",
+  "description": "vellora render / lint / fix commands — alpha.",
   "keywords": [
     "html-to-pdf",
     "pdf",
@@ -47,6 +47,10 @@
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc"
+  },
+  "dependencies": {
+    "@vellora/lint": "0.1.0-alpha.0",
+    "vellora": "0.1.0-alpha.0"
   },
   "publishConfig": {
     "access": "public",

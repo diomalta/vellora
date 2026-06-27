@@ -56,8 +56,8 @@ const deniedProps = extractPairArray(src, "DENIED_CSS_PROPERTIES");
 const deniedTokensRaw = extractPairArray(src, "DENIED_CSS_TOKENS");
 const maxNesting = extractConstUsize(src, "MAX_NESTING_DEPTH");
 
-// Only features with a real `vellora fix` rule are Dev-time-fixable; everything
-// else denied is plain Unsupported.
+// Only features with a real `@vellora/lint.fix()` rule are Dev-time-fixable;
+// everything else denied is plain Unsupported.
 const FIX_RULES = {
   "css:grid": "flex/grid-in-td",
 };
@@ -92,7 +92,7 @@ const elementRows = deniedElements.map((tag) => {
   const reason = ELEMENT_REASON[tag] ?? "outside subset";
   const note =
     status === "Dev-time-fixable"
-      ? `Auto-fixable via \`vellora fix\` rule \`${FIX_RULES[feature]}\`.`
+      ? `Auto-fixable via \`@vellora/lint.fix()\` rule \`${FIX_RULES[feature]}\`; the CLI \`vellora fix\` wraps the same rule.`
       : `Rejected by the strict gate (${reason}).`;
   return { feature: `\`<${tag}>\``, status, note };
 });
@@ -108,7 +108,7 @@ const propRows = deniedProps.map(([prop, feature]) => {
       : `Matched at a property boundary only — a longer property name that merely contains \`${prop}\` as a substring is unaffected.`;
   const note =
     status === "Dev-time-fixable"
-      ? `Auto-fixable via \`vellora fix\` rule \`${FIX_RULES[feature]}\`.`
+      ? `Auto-fixable via \`@vellora/lint.fix()\` rule \`${FIX_RULES[feature]}\`; the CLI \`vellora fix\` wraps the same rule.`
       : `Rejected by the strict gate. ${boundaryNote}`;
   return { feature: `\`${prop}\` (${feature})`, status, note };
 });
@@ -121,7 +121,7 @@ for (const [token, feature] of deniedTokensRaw) {
   const status = statusFor(feature);
   const note =
     status === "Dev-time-fixable"
-      ? `Auto-fixable via \`vellora fix\` rule \`${FIX_RULES[feature]}\`.`
+      ? `Auto-fixable via \`@vellora/lint.fix()\` rule \`${FIX_RULES[feature]}\`; the CLI \`vellora fix\` wraps the same rule.`
       : "Rejected by the strict gate.";
   tokenRows.push({ feature: `\`${token}\` (${feature})`, status, note });
 }
@@ -178,17 +178,17 @@ const allowedRows = [
   {
     feature: "`display: flex`",
     status: "Partial",
-    note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `vellora fix` (`flex/grid-in-td`) can convert it.",
+    note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex/grid-in-td`) can convert common table-cell cases.",
   },
   {
     feature: "Inline SVG (`<svg>`)",
     status: "Dev-time-fixable",
-    note: "Not handled at render time; `vellora fix` rule `inline-svg` rasterizes it to PNG.",
+    note: "Not handled at render time; `@vellora/lint.fix()` rule `inline-svg` rasterizes it to PNG. The CLI `vellora fix` wraps the same rule.",
   },
   {
     feature: "`<img>` without explicit dimensions",
     status: "Dev-time-fixable",
-    note: "`vellora fix` rule `img-dimension-attrs` adds intrinsic `width`/`height` so layout is deterministic.",
+    note: "`@vellora/lint.fix()` rule `img-dimension-attrs` adds intrinsic `width`/`height` so layout is deterministic. The CLI `vellora fix` wraps the same rule.",
   },
 ];
 
@@ -220,8 +220,9 @@ is produced (unless you opt into runtime fixing with \`{ strict: false }\`).
 - **Partial** — in the subset (the gate accepts it), but with a documented caveat.
 - **Planned** — designed but not yet implemented; accepted by the gate but has no effect on output in the current release.
 - **Unsupported** — on a denylist; the strict gate rejects it. Rewrite required.
-- **Dev-time-fixable** — rejected at render time, but \`vellora fix\` can transform
-  it automatically (the applicable rule is named in the Notes column).
+- **Dev-time-fixable** — rejected at render time, but \`@vellora/lint.fix()\` can
+  transform it automatically (the applicable rule is named in the Notes column).
+  The \`vellora fix\` CLI wraps the same library rule.
 
 ## Allowed and best-effort features
 

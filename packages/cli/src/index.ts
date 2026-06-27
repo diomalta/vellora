@@ -1,7 +1,3 @@
-/**
- * @vellora/cli — stub.
- *
- * The `render` / `lint` / `fix --write` commands arrive with later changes. This entry exists so
- * the package builds, types, and tests cleanly; `cli.ts` is the executable bin.
- */
+/** @vellora/cli — command-line entry points for vellora render/lint/fix workflows. */
+export { EXIT_CODES, type ExitCode } from "./cli.js";
 export const name = "@vellora/cli";

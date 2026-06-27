@@ -58,8 +58,8 @@ documents, and tells you — precisely — when your input leaves it. **Strict b
 | `renderPdf(html, data?, opts)` — render + built-in templating, strict subset | **Implemented** |
 | `renderPdfToStream(...)` — render to a writable/HTTP response | **Implemented** (PDF buffered then written; progressive emission is planned) |
 | `renderTemplate(...)` — templating only | **Implemented** |
-| `@vellora/lint` `diagnose()` / `fix()` | **Planned — stub**, not yet usable |
-| `npx vellora lint` / `vellora fix` (CLI) | **Planned — stub**, not yet usable |
+| `@vellora/lint` `diagnose()` / `fix()` | **Implemented alpha** — dev-time/CI diagnostics and codemods |
+| `npx vellora render` / `lint` / `fix` (CLI) | **Implemented alpha** |
 
 ## Quick start
 
@@ -97,17 +97,32 @@ Runnable recipes live in [`examples/`](./examples) — `npm run example` (invoic
 `npm run render-receipt`, `render-boleto`, `render-notification`, `render-to-http-stream`,
 `batch-concurrency`.
 
-## Keep your templates in the subset (dev-time, not runtime) — *planned*
+## Keep your templates in the subset (dev-time, not runtime)
 
-> ⚠️ **Stub:** the `@vellora/lint` API and the `vellora` CLI below are the design target and
-> are **not usable yet**. Today, strict mode at render time tells you precisely when input leaves the
-> subset (`VelloraUnsupportedError` with `{ feature, line, col, hint }`).
+`@vellora/lint` is the dev-time/CI companion to the strict renderer. It reports every supported
+lint finding with stable `{ rule, severity, autoFixable, location, suggestedFix, snippet,
+compatLink }` fields, and `fix()` applies deterministic codemods for the common mechanical cases.
+Strict rendering still never mutates your HTML; best-effort rendering (`strict: false`) uses the
+same lint fixers before handing the result to the core.
 
-The plan: fixing happens at **authoring/CI time**, like a linter — never silently at render time.
+Use the library directly from tests or template build steps:
+
+```ts
+import { diagnose, fix } from "@vellora/lint";
+
+const report = diagnose(html);
+if (!report.conformant) {
+  console.log(report.findings);
+}
+
+const { html: fixedHtml } = fix(html);
+```
+
+Or use the CLI for file-based workflows:
 
 ```bash
-npx vellora lint   templates/invoice.html        # report only      (planned)
-npx vellora fix    templates/invoice.html --write # auto-fix         (planned)
+npx vellora lint templates/invoice.html
+npx vellora fix  templates/invoice.html --write
 ```
 
 ## Compatibility
@@ -123,7 +138,7 @@ partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md
 | Images: data URL PNG / JPEG / GIF / WebP | Supported |
 | Images: `src` via the `images` option (with optional `baseUrl`) | Supported — pass the bytes |
 | Images: network fetching of remote URLs | Not supported (no network; provide bytes via `images`) |
-| Inline SVG | Via dev-time `fix` (rasterized to PNG) — *planned* |
+| Inline SVG | Via dev-time `@vellora/lint.fix()` / `vellora fix` (rasterized to PNG) |
 | `@page` margins, page numbers, running header/footer | Supported |
 | Fonts: text shaping + subset embedding | Supported |
 | Fonts: custom faces via the `fonts` option | Supported — pass `Uint8Array[]` (TTF/OTF) |
@@ -163,9 +178,9 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
   templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
   strict-by-default subset validation; `renderPdf` / `renderPdfToStream`; document metadata
   (`title`, `creationDate`); embedded data-url images; representative HTML fixtures for invoice,
-  receipt, boleto, and notification inputs.
-- **In progress / next** — `@vellora/lint` + `@vellora/cli` (currently stubs); best-effort mode
-  (`{ strict: false }`); bounded, configurable concurrency; prebuilt binaries for macOS + Linux
+  receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
+  `render` / `lint` / `fix`; best-effort mode (`{ strict: false }`).
+- **In progress / next** — bounded, configurable concurrency; prebuilt binaries for macOS + Linux
   glibc via CI (musl/Alpine is a fast-follow).
 - **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
@@ -182,8 +197,8 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 |---|---|
 | `vellora` | Public API + templating |
 | `@vellora/native` | Prebuilt napi addons (linux glibc, macOS) |
-| `@vellora/lint` | Dev-time `diagnose` + `fix` *(stub)* |
-| `@vellora/cli` | `render` / `lint` / `fix` commands *(stub)* |
+| `@vellora/lint` | Dev-time `diagnose` + `fix` |
+| `@vellora/cli` | `render` / `lint` / `fix` commands |
 
 ## Try it without installing
 
