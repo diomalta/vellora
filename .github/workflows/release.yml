@@ -151,6 +151,7 @@ jobs:
           npx changeset publish --tag "$NPM_DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_ACCESS: public
           NPM_CONFIG_PROVENANCE: "true"
           # napi pre-publish shells out to `npm publish` for per-platform packages.
           NPM_CONFIG_TAG: ${{ env.NPM_DIST_TAG }}
@@ -159,13 +160,14 @@ jobs:
         # The registry read API lags behind a publish, so retry before failing — otherwise this
         # false-negatives on a freshly published package that isn't queryable yet.
         run: |
+          version="${GITHUB_REF_NAME#v}"
           for pkg in vellora @vellora/native @vellora/lint @vellora/cli @vellora/engine-chromium; do
-            echo "Checking provenance attestation for $pkg ..."
-            for attempt in 1 2 3 4 5 6; do
-              if npm view "$pkg" dist.attestations --json 2>/dev/null | grep -q provenance; then
+            echo "Checking provenance attestation for $pkg@$version ..."
+            for attempt in $(seq 1 20); do
+              if npm view "$pkg@$version" dist.attestations --json 2>/dev/null | grep -q provenance; then
                 echo "  ok"; break
               fi
-              if [ "$attempt" = 6 ]; then echo "::error::No provenance attestation found for $pkg"; exit 1; fi
+              if [ "$attempt" = 20 ]; then echo "::error::No provenance attestation found for $pkg@$version"; exit 1; fi
               echo "  not visible yet (attempt $attempt); registry read lag — retrying in 15s"
               sleep 15
             done
