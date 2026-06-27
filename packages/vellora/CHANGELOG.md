@@ -5,7 +5,7 @@ automatically on release (`changeset version`).
 
 ## Unreleased
 
-- Initial public prerelease — see `.changeset/native-prebuild-launch.md`.
+- Initial public prerelease.
 - **Bounded batch rendering.** `renderPdfBatch(items, { concurrency })` renders many documents with a
   positive safe-integer concurrency cap, keeps output order aligned with the input order, and rejects
   with the first render error without starting additional queued items.
@@ -23,3 +23,6 @@ automatically on release (`changeset version`).
   forwarded-but-inert and accepted any value; it is now typed `Uint8Array[]` — a non-`Uint8Array` entry
   rejects with `VelloraInputError`, and bytes that are not a parseable font reject with a `font:invalid`
   diagnostic.
+- **Explicit render-engine routing.** `engine: "native"` remains the default no-browser path;
+  `engine: "chromium"` routes through optional `@vellora/engine-chromium`, and `engine: "auto"` uses a
+  checked-in fidelity policy keyed by `fidelity.templateId`.

@@ -4,15 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**vellora** renders document HTML → PDF for Node.js **in-process, with no browser** (no Chromium /
-Puppeteer / wkhtmltopdf / subprocess). It is a Rust + TypeScript monorepo: a thin Rust glue layer over
-Blitz (layout) + krilla (PDF emit), exposed to Node through a napi-rs addon, with a TS public API,
-templating engine, and a dev-time HTML linter/codemod on top.
+**vellora** renders document HTML → PDF for Node.js. The default renderer is **native and
+in-process, with no browser** (no Chromium / Puppeteer / wkhtmltopdf / subprocess). It is a Rust +
+TypeScript monorepo: a thin Rust glue layer over Blitz (layout) + krilla (PDF emit), exposed to Node
+through a napi-rs addon, with a TS public API, templating engine, dev-time HTML linter/codemod, CLI,
+and an optional Chromium/Chrome fidelity engine for templates that explicitly opt into browser output.
 
-> **Pre-release.** `README.md` / `ARCHITECTURE.md` describe the **design target**, not all shipped.
-> Current reality: only `metadata` (`title`, `creationDate`) affects output; `fonts` /
-> `images` / `baseUrl` are accepted and forwarded but **inert**. Don't assume a documented feature is
-> wired — check the code.
+> **Pre-release.** `README.md` / `ARCHITECTURE.md` can describe both shipped behavior and roadmap.
+> Current code/tests are the source of truth. As of this worktree, the implemented surface includes
+> `metadata` (`title`, `creationDate`), `pdfa: "PDF/A-2b"`, `images` + `baseUrl`, `fonts`,
+> `renderPdfBatch`, `renderPdfToStream` (buffered write), `engine: "chromium"`, and
+> `engine: "auto"` fidelity policies. Don't assume a documented feature is wired — check code/tests.
 
 ## Research and evidence discipline
 
@@ -86,23 +88,27 @@ packages/vellora      TS, published: public API (renderPdf), templating, strict 
 packages/native       TS, published: loads the per-platform .node; exposes async render().
 packages/lint         TS, published: DEV-TIME diagnose()/fix() codemods (parse5 + resvg).
 packages/cli          TS, published: vellora render/lint/fix.
+packages/engine-chromium TS, published: optional Chromium/Chrome bridge for explicit fidelity mode.
 packages/test-harness  TS, private: fixture loader + byte-exact golden harness.
 fixtures/             Neutral, owned HTML+JSON fixtures (invoice/receipt/boleto/notification).
 openspec/             Spec-driven change workflow — see "How changes are made".
 ```
 
-Dependency direction: `cli` → `vellora` → {`@vellora/native`, `@vellora/lint`}; `@vellora/native` loads
-the `.node` from `vellora-napi` → `vellora-core`.
+Dependency direction: `cli` → `vellora` → {`@vellora/native`, `@vellora/lint`, optional
+`@vellora/engine-chromium`}; `@vellora/native` loads the `.node` from `vellora-napi` →
+`vellora-core`.
 
 ## Architecture
 
 **Runtime pipeline** (`renderPdf`, the hot path):
 `normalizeInput` → `renderTemplate` (`{{var}}`, `{% for/if %}`, currency/date/number helpers) →
-`orchestrate` (strict gate) → `NativeBridge.render` → PDF `Uint8Array`.
+engine selection (`native`, `chromium`, or `auto` policy) → `orchestrate` (strict gate) →
+`NativeBridge.render` → PDF `Uint8Array`.
 
 **Rust core** (`crates/vellora-core/src/lib.rs::render`): `validate_css` (cheap byte scan) →
-`validate_nesting_depth` (stack-overflow guard, SEC-1) → `page_css::parse_page_box` →
-`blitz_engine::validate_then_lay_out` (**one** Blitz parse shared by the element gate *and* layout) →
+`validate_nesting_depth` (stack-overflow guard, SEC-1) → font validation →
+`page_css::parse_page_box` → `blitz_engine::validate_then_lay_out` (**one** Blitz parse shared by
+the element gate *and* layout, with caller-supplied images/fonts) → unresolved-image rejection →
 `pagination::paginate` (page breaks, repeated `<thead>`, `counter(pages)`) → `pdf::emit` (krilla).
 
 **napi binding** (`crates/vellora-napi/src/lib.rs`): one async `render(html, opts) → Promise<Uint8Array>`
@@ -113,9 +119,10 @@ into a rejected promise (relies on `panic = "unwind"`).
 ### The swappable native bridge (most important pattern to know)
 
 `NativeBridge` (`packages/vellora/src/types.ts`) is the single, narrow seam between TS and Rust:
-`render(html: string, opts) → Promise<Uint8Array>`. Two implementations:
+`render(html: string, opts) → Promise<Uint8Array>`. Main implementations:
 - `NativeAddonBridge` — production default; lazy-loads `@vellora/native` on first render.
 - `MockNativeBridge` — deterministic stub PDF bytes; backs almost all TS tests.
+- `@vellora/engine-chromium` — optional browser-fidelity bridge for explicit Chromium routing.
 
 Swap it with `setNativeBridge(...)` or per-call via the internal `_bridge` option.
 

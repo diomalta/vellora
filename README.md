@@ -1,19 +1,18 @@
 # vellora
 
-**HTML → PDF for Node.js. No Chromium. No browser. No system install — runs on slim Linux images and AWS Lambda.**
+**HTML → PDF for Node.js. No Puppeteer on the native path. No browser install by default — built for
+generated documents in slim Linux images and AWS Lambda.**
 
 [![CI](https://github.com/diomalta/vellora/actions/workflows/ci.yml/badge.svg)](https://github.com/diomalta/vellora/actions/workflows/ci.yml)
 ![license: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![status: alpha](https://img.shields.io/badge/status-alpha-orange)
-<!-- npm version badge — enable on first publish:
 [![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora) -->
 
 `npm install` and it works — a native, in-process renderer for **generated document HTML**:
 the input can be an invoice, receipt, statement, boleto, notification, or any other template
 that stays inside the supported subset. No `apt install`, no Puppeteer browser download,
-no `npx playwright install`, no sidecar service. It produces a **smaller PDF** than a
-headless browser — there's no browser-engine overhead in the output.
+no `npx playwright install`, no sidecar service.
 
 ```bash
 npm install vellora
@@ -24,21 +23,21 @@ npm install vellora
   <br><em>A multi-page invoice template rendered to PDF — in-process, selectable text, repeated table header.</em>
 </p>
 
-> 🚧 **Status: pre-release / alpha — in active development.** Some of the API below is the **design
-> target**, not yet shipped (see the *What works today* note). Track progress in
-> [Status & roadmap](#status--roadmap) and the design in [ARCHITECTURE.md](./ARCHITECTURE.md).
+> 🚧 **Status: pre-release / alpha — in active development.** The native document renderer, CLI, lint
+> workflow, PDF/A-2b, images, fonts, batch rendering, streaming helper, and optional Chromium fidelity
+> engine are implemented. Roadmap items are marked separately in [Status & roadmap](#status--roadmap).
 
 ## Why
 
-Browser-based PDF (Puppeteer/Playwright) means shipping Chromium: a large browser download, dozens
-of system libraries in your Docker image, multi-second cold starts, and a per-render memory
-footprint that can OOM-kill under concurrency. vellora takes a different path — a **native addon
+Browser-based PDF (Puppeteer/Playwright) means shipping Chromium: a large browser download, system
+libraries in your Docker image, browser launch cost, and a per-render memory footprint that can
+OOM-kill under concurrency. vellora's default path takes a different route — a **native addon
 (napi-rs) that renders inside your Node process**:
 
-- ✅ `npm install`, nothing installed "outside" (slim Linux + Lambda arm64; musl/Alpine prebuilt is a fast-follow)
+- ✅ `npm install`, nothing installed "outside" on supported platforms (macOS + Linux glibc; musl/Alpine prebuilt is a fast-follow)
 - ✅ no browser to launch and no subprocess per render
 - ✅ designed for bounded memory + real concurrency on the libuv thread pool
-- ✅ selectable, searchable text + subset-embedded fonts (small PDFs)
+- ✅ selectable, searchable text + subset-embedded fonts
 - ✅ `@page` page numbers and running headers/footers (which `chrome --print-to-pdf` can't do via CSS)
 - ✅ PDF/A-2b for archival output; PDF/UA and tagged PDF are planned
 - ✅ **deterministic** output — same template + data ⇒ byte-stable PDF
@@ -50,6 +49,9 @@ footprint that can OOM-kill under concurrency. vellora takes a different path �
 
 vellora is **not** a browser clone. It renders a documented HTML/CSS **subset** built for
 documents, and tells you — precisely — when your input leaves it. **Strict by default.**
+For the minority of templates that must match Chromium print output, install the separate
+`@vellora/engine-chromium` package and route only those templates to `engine: "chromium"` or a
+checked-in fidelity policy.
 
 ## What works today vs. design target
 
@@ -60,7 +62,9 @@ documents, and tells you — precisely — when your input leaves it. **Strict b
 | `renderPdfToStream(...)` — render to a writable/HTTP response | **Implemented** (PDF buffered then written; progressive emission is planned) |
 | `renderTemplate(...)` — templating only | **Implemented** |
 | `@vellora/lint` `diagnose()` / `fix()` | **Implemented alpha** — dev-time/CI diagnostics and codemods |
-| `npx vellora render` / `lint` / `fix` (CLI) | **Implemented alpha** |
+| `npx vellora render` / `lint` / `fix` / `doctor` / `fidelity` (CLI) | **Implemented alpha** |
+| `engine: "chromium"` via optional `@vellora/engine-chromium` | **Implemented alpha** — explicit browser-fidelity tier |
+| `engine: "auto"` with `vellora.fidelity.json` | **Implemented alpha** — template-level routing policy |
 
 ## Quick start
 
@@ -166,7 +170,8 @@ Honest positioning — including where vellora is **weaker**. *Found something i
 
 | Tool | Engine / runtime | In-process? | Headless browser? | License | Best for |
 |---|---|---|---|---|---|
-| **vellora** | Rust (napi addon) | ✅ yes | ❌ no | MIT | Generated documents, serverless/Alpine, small deterministic PDFs |
+| **vellora** | Rust (napi addon) | ✅ yes | ❌ no by default | MIT | Generated documents, serverless/slim containers, deterministic PDFs |
+| `@vellora/engine-chromium` | Chrome/Chromium executable | ❌ no (browser process) | ✅ explicit opt-in | MIT | Template-specific Chromium print fidelity without Puppeteer |
 | Puppeteer / Playwright | Chromium | ❌ no (browser) | ✅ yes | Apache-2.0 | Full-fidelity web pages, screenshots, JS-driven content |
 | Gotenberg | Chromium + LibreOffice (Docker) | ❌ no (HTTP sidecar) | ✅ yes | MIT | Office docs + HTML via a standalone service |
 | WeasyPrint | Python | ✅ (in Python) | ❌ no | BSD | HTML/CSS→PDF in Python stacks |
@@ -184,7 +189,7 @@ for **generated documents** whose markup you control.
 vellora is **pre-release (alpha)**. The *What works today* table above is the API surface; this is
 the broader feature view. Order is roughly build order, not a delivery commitment.
 
-- **Available now** — in-process HTML→PDF (no browser); multi-page layout (text, headings, lists,
+- **Available now** — in-process HTML→PDF (no browser by default); multi-page layout (text, headings, lists,
   tables); table pagination with a repeated `<thead>`; `@page` margins, page numbers, running
   header/footer; selectable text with subset-embedded fonts; custom fonts via the `fonts` option;
   deterministic (byte-identical) output;
@@ -192,18 +197,18 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
   strict-by-default subset validation; `renderPdf` / `renderPdfBatch` / `renderPdfToStream`; document metadata
 	  (`title`, `creationDate`); PDF/A-2b archival output; embedded data-url images; representative HTML fixtures for invoice,
   receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
-  `render` / `lint` / `fix`; bounded, configurable concurrency; best-effort mode
-  (`{ strict: false }`).
-- **In progress / next** — prebuilt binaries for macOS + Linux glibc via CI (musl/Alpine is a
-  fast-follow).
+  `render` / `lint` / `fix` / `doctor` / `fidelity`; bounded, configurable concurrency; best-effort
+  mode (`{ strict: false }`); optional Chromium engine and `engine: "auto"` fidelity policies.
+- **In progress / next** — musl/Alpine prebuilt binaries, Windows prebuilds, stronger release notes
+  and launch docs.
 - **Planned for a stable release** — broader PDF/A profiles · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
-  benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and a published docs site.
+  benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and deeper docs/site examples.
 - **Future (post-1.0, demand-driven)** — password / encryption; attachments (PDF/A-3, e.g. embedding
-  NF-e XML); watermark / stamp; broader CSS subset; more `fix` rules; more image formats; an optional
-  `@vellora/chromium` fallback **only if** real demand appears for templates outside the subset.
+  NF-e XML); watermark / stamp; broader CSS subset; more `fix` rules; more image formats; a managed
+  Chromium package **only if** real demand appears for zero-config browser fidelity.
 - **Out of scope** — JavaScript execution · arbitrary-website fidelity · WASM build · Windows
-  prebuilds · bundled Chromium by default.
+  support today · bundled Chromium by default.
 
 ## Packages
 
@@ -213,6 +218,7 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 | `@vellora/native` | Prebuilt napi addons (linux glibc, macOS) |
 | `@vellora/lint` | Dev-time `diagnose` + `fix` |
 | `@vellora/cli` | `render` / `lint` / `fix` commands |
+| `@vellora/engine-chromium` | Optional Chromium/Chrome fidelity engine |
 
 ## Try it without installing
 
@@ -230,7 +236,7 @@ A one-command Docker demo is in [`Dockerfile.example`](./Dockerfile.example).
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — toolchain, dev loop, how to help
 - [SECURITY.md](./SECURITY.md) — disclosure policy + native-addon threat model
 - [RELEASING.md](./RELEASING.md) — release pipeline (Changesets + prebuilds + provenance)
-- A full documentation site (VitePress) is scaffolded in [`docs/`](./docs).
+- [Docs site](https://diomalta.github.io/vellora/) — VitePress guide, recipes, compatibility, and API reference
 
 ## Contributing
 

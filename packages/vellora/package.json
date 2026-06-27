@@ -1,7 +1,7 @@
 {
   "name": "vellora",
   "version": "0.1.0-alpha.0",
-  "description": "HTML to PDF for Node.js — no browser. Public API + templating + strict orchestration.",
+  "description": "HTML to PDF for Node.js — native and browserless by default, with templating and strict document validation.",
   "keywords": [
     "html-to-pdf",
     "pdf",

@@ -2,7 +2,7 @@
   "name": "@vellora/engine-chromium",
   "version": "0.1.0-alpha.0",
   "description": "Optional Chromium-backed browser-fidelity renderer for vellora.",
-  "keywords": ["html-to-pdf", "pdf", "chromium", "browser-fidelity"],
+  "keywords": ["html-to-pdf", "pdf", "chromium", "browser-fidelity", "puppeteer-alternative"],
   "homepage": "https://github.com/diomalta/vellora#readme",
   "bugs": "https://github.com/diomalta/vellora/issues",
   "repository": {

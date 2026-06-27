@@ -6,18 +6,20 @@
 
 ## What vellora is
 
-vellora renders **HTML to PDF for Node.js without a browser** — no Chromium, Puppeteer,
-Playwright, wkhtmltopdf, or OS-level packages. `npm install` and it works.
+vellora renders **HTML to PDF for Node.js without a browser by default** — no Chromium, Puppeteer,
+Playwright, wkhtmltopdf, or OS-level packages on the native path. `npm install vellora` installs the
+native renderer; projects that need browser print fidelity can add the separate
+`@vellora/engine-chromium` package and route only those templates to Chromium.
 
 It is built for **generated document HTML** — the input might be an invoice, receipt, statement,
 boleto, notification, or another static template — **not** arbitrary interactive web pages. The
 promise is narrow on purpose:
-> Pass document HTML in, get a deterministic PDF out, with zero external runtime dependencies.
+> Pass document HTML in, get a deterministic PDF out on the native path, with zero external runtime dependencies.
 
 ## Principles
 
-1. **No browser, no `apt`, no sidecar.** A native addon ships inside the npm package; install just works.
-2. **In-process.** Rendering runs *inside* the Node process via a napi-rs addon — no subprocess per render. Result: ~0 cold start, bounded memory, real concurrency. (This is the core difference from CLI-based tools that spawn a process per render.)
+1. **No browser, no `apt`, no sidecar by default.** A native addon ships inside the npm package; install just works on supported platforms.
+2. **In-process.** Native rendering runs *inside* the Node process via a napi-rs addon — no subprocess per render. It avoids browser launch work, keeps concurrency bounded, and does not block the Node event loop.
 3. **Honest, curated subset.** vellora is not a browser clone. It renders a documented HTML/CSS subset and tells you — precisely — when your input leaves it. **Strict by default.**
 4. **Deterministic.** Same template + data ⇒ byte-stable PDF. Fonts are bundled explicitly; system-font fallback is a warning/error, never silent.
 5. **Own the glue, reuse the engine.** vellora owns a *thin* Rust integration layer over broad, battle-tested crates. It does **not** reimplement a layout engine.
@@ -28,9 +30,11 @@ promise is narrow on purpose:
 ```
 ┌─ TypeScript (published) ─────────────────────────────────────────┐
 │  vellora            renderPdf(html, data?, opts) → Uint8Array     │
+│                     renderPdfBatch(items, { concurrency })         │
 │                     renderPdfToStream(html, writable, data?, opts) │
 │                     templating: {{var}} · {% for/if %} ·          │
 │                       helpers (currency / date / number)           │
+│                     engine: native (default) · chromium · auto     │
 │                     strict (default: validate, never mutate)       │
 │                       · best-effort opt-in { strict: false }       │
 │                                                                    │
@@ -41,12 +45,18 @@ promise is narrow on purpose:
 │                       td→table · img dims→CSS · asset bundling ·    │
 │                       sanitize invalid markup                      │
 │                                                                    │
-│  @vellora/cli       vellora render · lint · fix --write            │
+│  @vellora/cli       vellora render · lint · fix --write · doctor   │
+│                     · fidelity                                     │
+│                                                                    │
+│  @vellora/engine-   OPTIONAL browser-fidelity bridge. Launches a   │
+│  chromium           Chrome/Chromium executable directly when a      │
+│                     template is routed to engine: "chromium".       │
 ├─ native bridge ──────────────────────────────────────────────────┤
 │  @vellora/native    napi-rs addon, in-process, async (libuv pool), │
 │                     bounded + configurable concurrency, thread-safe │
-│                     prebuilt: linux gnu+musl (x64/arm64), macOS     │
-│                     (x64/arm64). No WASM, no Windows (for now).     │
+│                     prebuilt: linux glibc (x64/arm64), macOS        │
+│                     (x64/arm64). No musl/Alpine, WASM, or Windows   │
+│                     prebuilds yet.                                  │
 ├─ Rust core (ours) ───────────────────────────────────────────────┤
 │  vellora-core       Blitz (html5ever + Stylo + Taffy + Parley)     │
 │                       → OUR pagination layer (@page, fragmentation)│
@@ -65,6 +75,7 @@ promise is narrow on purpose:
 | `vellora` | TS | yes | Public API + templating engine. Orchestrates validation → native render. | @vellora/native, (@vellora/lint for best-effort) |
 | `@vellora/lint` | TS | yes | **Dev-time** diagnose + fix (codemod). parse5 DOM + the fix rules. | parse5, @resvg/resvg-js |
 | `@vellora/cli` | TS | yes | `render` / `lint` / `fix` commands for dev + CI. | vellora, @vellora/lint |
+| `@vellora/engine-chromium` | TS | yes | Optional Chromium/Chrome bridge implementing the same `NativeBridge` contract. | vellora |
 
 ## Two pipelines, two moments
 
@@ -72,11 +83,12 @@ promise is narrow on purpose:
 ```
 HTML + data
   → templating (interpolate {{var}}, {% for/if %}, format helpers)
+  → engine selection (native default, chromium opt-in, or auto policy)
   → strict validation gate (in vellora-core; cheap, parse already happens)
       └─ out-of-subset ⇒ throw VelloraUnsupportedError (points at node + "run vellora fix")
   → Blitz: parse → style (Stylo) → layout (Taffy) → text (Parley)
   → pagination: @page boxes (Página X de Y, running header/footer), fragmentation
-  → krilla: font subset, selectable text, metadata (tagged / PDF-A / PDF-UA, bookmarks — planned)
+  → krilla: font subset, selectable text, metadata, PDF/A-2b (tagged / PDF/UA, bookmarks — planned)
   → Uint8Array  (or streamed)
 ```
 `{ strict: false }` (best-effort) runs the `@vellora/lint` fixers *before* the core — for previews / non-critical output, paying the cost knowingly.
@@ -138,7 +150,7 @@ vellora composes these crates itself behind an **in-process napi addon**, rather
 
 ## Non-goals
 
-JavaScript execution · arbitrary web pages / pixel-parity with Chrome · CSS features outside the documented subset (full Grid, advanced multicol, 3D transforms, filters, animations) · a bundled-Chromium fallback (intentionally excluded) · a WASM build (Node-native only for now) · Windows prebuilds (for now).
+JavaScript execution · arbitrary web pages on the native engine · CSS features outside the documented subset (full Grid, advanced multicol, 3D transforms, filters, animations) · bundled Chromium in the default package · a WASM build (Node-native only for now) · Windows prebuilds (for now).
 
 ## Honest risks
 
