@@ -3,12 +3,14 @@
  *
  * From the repo root (after `npm install && npm run build`): `npm run batch-concurrency`.
  *
- * Each `renderPdf` is independent and returns a promise, so a batch is just `Promise.all`.
+ * `renderPdfBatch` keeps a bounded number of native renders active at once and returns results in
+ * input order.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderPdf } from "vellora";
+import { fixtureImages } from "@vellora/test-harness";
+import { renderPdfBatch } from "vellora";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = join(here, "out");
@@ -24,24 +26,34 @@ function loadFixture(type: string): { template: string; data: Record<string, unk
   };
 }
 
-const results = await Promise.all(
-  types.map(async (type) => {
+const pdfs = await renderPdfBatch(
+  types.map((type) => {
     const { template, data } = loadFixture(type);
-    const pdf = await renderPdf(template, data, {
-      metadata: { title: type, creationDate: "2026-06-22T00:00:00.000Z" },
-      strict: true,
-    });
-    const header = new TextDecoder().decode(pdf.subarray(0, 8));
-    if (!header.startsWith("%PDF-")) {
-      throw new Error(`${type}: expected a %PDF- header, got ${JSON.stringify(header)}`);
-    }
-    const outPath = join(outDir, `${type}.pdf`);
-    writeFileSync(outPath, pdf);
-    return { type, bytes: pdf.length, outPath };
+    return {
+      html: template,
+      data,
+      opts: {
+        metadata: { title: type, creationDate: "2026-06-22T00:00:00.000Z" },
+        images: fixtureImages(type),
+        strict: true,
+      },
+    };
   }),
+  { concurrency: 2 },
 );
+
+const results = types.map((type, index) => {
+  const pdf = pdfs[index];
+  const header = new TextDecoder().decode(pdf.subarray(0, 8));
+  if (!header.startsWith("%PDF-")) {
+    throw new Error(`${type}: expected a %PDF- header, got ${JSON.stringify(header)}`);
+  }
+  const outPath = join(outDir, `${type}.pdf`);
+  writeFileSync(outPath, pdf);
+  return { type, bytes: pdf.length, outPath };
+});
 
 for (const { type, bytes, outPath } of results) {
   console.log(`✓ ${type}: ${bytes} bytes → ${outPath}`);
 }
-console.log(`✓ rendered ${results.length} documents concurrently, all valid %PDF-`);
+console.log(`✓ rendered ${results.length} documents with concurrency=2, all valid %PDF-`);

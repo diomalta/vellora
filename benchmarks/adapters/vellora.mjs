@@ -17,10 +17,12 @@ export const meta = {
 
 export async function create() {
   let renderPdf;
+  let fixtureImages;
   let version = "unknown";
   try {
     // The public entry point, exactly as a consumer would import it.
     ({ renderPdf } = await import("vellora"));
+    ({ fixtureImages } = await import("@vellora/test-harness"));
     const pkg = await import("vellora/package.json", { with: { type: "json" } }).catch(() => null);
     version = pkg?.default?.version ?? "0.1.0-alpha.0";
   } catch (err) {
@@ -38,7 +40,7 @@ export async function create() {
     async render(html, data) {
       return renderPdf(html, data, {
         strict: true,
-        page: { size: "A4" },
+        images: fixtureImages("invoice"),
         metadata: { title: "benchmark-invoice", creationDate: "2026-01-01T00:00:00.000Z" },
       });
     },

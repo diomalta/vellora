@@ -20,18 +20,18 @@ Each call is independent and produces its own `Uint8Array`.
 
 ## Bounding concurrency
 
-Unbounded `Promise.all` over a very large batch will start every render at once. For large batches, cap concurrency — for example, process in fixed-size chunks:
+Unbounded `Promise.all` over a very large batch will start every render at once. For large batches, use `renderPdfBatch` to cap the number of active renders while preserving the input order:
 
 ```js
-async function renderInChunks(template, batch, size = 8) {
-  const out = [];
-  for (let i = 0; i < batch.length; i += size) {
-    const chunk = batch.slice(i, i + size);
-    out.push(...(await Promise.all(chunk.map((d) => renderPdf(template, d)))));
-  }
-  return out;
-}
+import { renderPdfBatch } from "vellora";
+
+const pdfs = await renderPdfBatch(
+  invoices.map((data) => ({ html: template, data })),
+  { concurrency: 8 },
+);
 ```
+
+If `concurrency` is omitted, vellora uses `4`. The value must be a positive safe integer.
 
 ## Determinism under concurrency
 

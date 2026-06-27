@@ -56,6 +56,7 @@ documents, and tells you — precisely — when your input leaves it. **Strict b
 | Surface | Status |
 |---|---|
 | `renderPdf(html, data?, opts)` — render + built-in templating, strict subset | **Implemented** |
+| `renderPdfBatch(items, { concurrency })` — bounded batch rendering | **Implemented** |
 | `renderPdfToStream(...)` — render to a writable/HTTP response | **Implemented** (PDF buffered then written; progressive emission is planned) |
 | `renderTemplate(...)` — templating only | **Implemented** |
 | `@vellora/lint` `diagnose()` / `fix()` | **Implemented alpha** — dev-time/CI diagnostics and codemods |
@@ -91,6 +92,17 @@ Stream straight to an HTTP response or upload:
 ```ts
 import { renderPdfToStream } from "vellora";
 await renderPdfToStream(invoiceHtml, res, data);
+```
+
+Render large batches without starting every native render at once:
+
+```ts
+import { renderPdfBatch } from "vellora";
+
+const pdfs = await renderPdfBatch(
+  invoices.map((data) => ({ html: invoiceHtml, data })),
+  { concurrency: 4 },
+);
 ```
 
 Runnable recipes live in [`examples/`](./examples) — `npm run example` (invoice),
@@ -176,12 +188,13 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
   header/footer; selectable text with subset-embedded fonts; custom fonts via the `fonts` option;
   deterministic (byte-identical) output;
   templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
-  strict-by-default subset validation; `renderPdf` / `renderPdfToStream`; document metadata
+  strict-by-default subset validation; `renderPdf` / `renderPdfBatch` / `renderPdfToStream`; document metadata
   (`title`, `creationDate`); embedded data-url images; representative HTML fixtures for invoice,
   receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
-  `render` / `lint` / `fix`; best-effort mode (`{ strict: false }`).
-- **In progress / next** — bounded, configurable concurrency; prebuilt binaries for macOS + Linux
-  glibc via CI (musl/Alpine is a fast-follow).
+  `render` / `lint` / `fix`; bounded, configurable concurrency; best-effort mode
+  (`{ strict: false }`).
+- **In progress / next** — prebuilt binaries for macOS + Linux glibc via CI (musl/Alpine is a
+  fast-follow).
 - **Planned for a stable release** — PDF/A · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
   benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and a published docs site.

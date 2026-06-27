@@ -23,12 +23,14 @@ export {
 export { MockNativeBridge, type MockRenderCall } from "./mock-bridge.js";
 export { NativeAddonBridge } from "./native-bridge.js";
 export { DEFAULT_CREATION_DATE, resolveOptions } from "./orchestrate.js";
-export { renderPdf, renderPdfToStream, setNativeBridge } from "./render.js";
+export { renderPdf, renderPdfBatch, renderPdfToStream, setNativeBridge } from "./render.js";
 export { renderTemplate } from "./template/index.js";
 export type {
   BridgeRenderOptions,
   HtmlInput,
   NativeBridge,
+  RenderBatchItem,
+  RenderBatchOptions,
   RenderData,
   RenderMetadata,
   RenderOptions,

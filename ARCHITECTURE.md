@@ -131,7 +131,7 @@ vellora composes these crates itself behind an **in-process napi addon**, rather
 ## Performance model
 
 - **Async on the libuv threadpool** — the addon never blocks the Node event loop; each render is isolated and thread-safe.
-- **Bounded, configurable concurrency** — _planned_; per-render isolation and thread-safety already hold, which is what avoids the Puppeteer OOM failure mode.
+- **Bounded, configurable concurrency** — `renderPdfBatch(items, { concurrency })` caps active native renders from JavaScript while the native bridge keeps each render isolated and thread-safe.
 - **Cache by content hash** — _planned_; parsed CSS, font metrics, and decoded image dimensions reused across renders of the same template/font/image (e.g. mass boleto generation from one template).
 - **Streaming output** — _planned_; large documents written progressively (pairs with `renderPdfToStream`).
 - **Phase timings** (`parse / style / layout / pagination / pdf`) — _planned_; available on demand, off the hot path.
