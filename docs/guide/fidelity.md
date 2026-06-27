@@ -36,7 +36,8 @@ import { renderPdf } from "vellora";
 const pdf = await renderPdf(html, data);
 ```
 
-Use Chromium only when a template needs browser print fidelity:
+Use environment Chromium when a template needs browser print fidelity and your host/container already
+provides Chrome or Chromium:
 
 ```js
 import { renderPdf } from "vellora";
@@ -46,7 +47,7 @@ const pdf = await renderPdf(html, data, {
 });
 ```
 
-Install the optional engine package only in projects that use browser fidelity:
+Install the optional environment engine package only in projects that use host-supplied browser fidelity:
 
 ```sh
 npm install vellora @vellora/engine-chromium
@@ -85,10 +86,6 @@ Use one of these tiers intentionally:
 | --- | --- | --- | --- |
 | Native default | `vellora` | None | Fast, browserless document rendering for templates inside the supported subset. |
 | Environment Chromium | `vellora` + `@vellora/engine-chromium` | Chrome/Chromium supplied by the environment | Exact browser print fidelity without adding Puppeteer to the runtime graph. |
-| Managed Chromium | Roadmap | Bundled or downloaded Chromium managed by a future Vellora package | Zero-config browser fidelity when install size and binary ownership are acceptable. |
-
-The managed tier is intentionally not part of the main `vellora` package. Keeping it separate preserves
-the default "no browser" install while leaving room for a heavier zero-config option.
 
 Use `auto` when you want production routing to come from a checked-in policy:
 
@@ -184,4 +181,5 @@ vellora doctor invoice.html \
 
 ## Practical migration rule
 
-Use native vellora when the template fits the subset and the PDF passes your visual review. Keep Puppeteer or another browser-backed renderer for templates whose acceptance criterion is exact Chromium output.
+Use native vellora when the template fits the subset and the PDF passes your visual review. Use
+environment Chromium when your deployment already owns the browser and exact Chromium output matters.

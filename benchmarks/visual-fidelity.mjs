@@ -6,6 +6,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { countPages } from "./lib/equivalence.mjs";
+import { rendererFor, rendererVersions } from "./lib/visual-renderers.mjs";
 
 const execFileAsync = promisify(execFile);
 const FIXTURE_IDS = ["invoice", "receipt", "boleto", "notification"];
@@ -298,6 +299,23 @@ function ratio(value) {
   return Number.isFinite(value) ? value.toFixed(4) : "n/a";
 }
 
+async function gitInfo() {
+  try {
+    const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: repoRoot });
+    let dirty = true;
+    try {
+      await execFileAsync("git", ["diff", "--quiet"], { cwd: repoRoot });
+      await execFileAsync("git", ["diff", "--cached", "--quiet"], { cwd: repoRoot });
+      dirty = false;
+    } catch {
+      dirty = true;
+    }
+    return { commit: stdout.trim(), dirty };
+  } catch (err) {
+    return { commit: "unknown", dirty: true, error: err?.message ?? String(err) };
+  }
+}
+
 function regionsForFixture(id) {
   return [...(FIXTURE_REGIONS[id] ?? []), ...DEFAULT_REGIONS];
 }
@@ -494,6 +512,8 @@ async function comparePagePngs(browser, { referencePath, subjectPath, regions, t
 }
 
 function renderReport(report) {
+  const referenceLabel = report.reference.label;
+  const subjectLabel = report.subject.label;
   const fixtureSections = report.fixtures
     .map((fixture) => {
       const pageSections = fixture.pages
@@ -518,12 +538,12 @@ function renderReport(report) {
             </div>
             <div class="comparison">
               <figure>
-                <figcaption>Puppeteer reference</figcaption>
-                <img src="${htmlEscape(page.referencePng)}" alt="${htmlEscape(fixture.id)} Puppeteer page ${page.page}">
+                <figcaption>${htmlEscape(referenceLabel)} reference</figcaption>
+                <img src="${htmlEscape(page.referencePng)}" alt="${htmlEscape(fixture.id)} ${htmlEscape(referenceLabel)} page ${page.page}">
               </figure>
               <figure>
-                <figcaption>Vellora</figcaption>
-                <img src="${htmlEscape(page.subjectPng)}" alt="${htmlEscape(fixture.id)} Vellora page ${page.page}">
+                <figcaption>${htmlEscape(subjectLabel)} subject</figcaption>
+                <img src="${htmlEscape(page.subjectPng)}" alt="${htmlEscape(fixture.id)} ${htmlEscape(subjectLabel)} page ${page.page}">
               </figure>
               <figure>
                 <figcaption>Diff</figcaption>
@@ -543,10 +563,10 @@ function renderReport(report) {
       return `<section class="fixture">
         <h2>${htmlEscape(fixture.id)}</h2>
         <div class="fixture-meta">
-          <span>Vellora pages: ${fixture.vellora.pages}</span>
-          <span>Puppeteer pages: ${fixture.puppeteer.pages}</span>
-          <span>Vellora PDF: <a href="${htmlEscape(fixture.vellora.pdfPath)}">${htmlEscape(fixture.vellora.sha256.slice(0, 12))}</a></span>
-          <span>Puppeteer PDF: <a href="${htmlEscape(fixture.puppeteer.pdfPath)}">${htmlEscape(fixture.puppeteer.sha256.slice(0, 12))}</a></span>
+          <span>${htmlEscape(subjectLabel)} pages: ${fixture.subject.pages}</span>
+          <span>${htmlEscape(referenceLabel)} pages: ${fixture.reference.pages}</span>
+          <span>${htmlEscape(subjectLabel)} PDF: <a href="${htmlEscape(fixture.subject.pdfPath)}">${htmlEscape(fixture.subject.sha256.slice(0, 12))}</a></span>
+          <span>${htmlEscape(referenceLabel)} PDF: <a href="${htmlEscape(fixture.reference.pdfPath)}">${htmlEscape(fixture.reference.sha256.slice(0, 12))}</a></span>
         </div>
         ${fixture.pageCountMismatch ? `<p class="warning">Page count mismatch: only comparable pages are shown.</p>` : ""}
         ${pageSections}
@@ -631,8 +651,8 @@ function renderReport(report) {
 <body>
   <h1>Vellora Visual Fidelity</h1>
   <div class="summary">
-    <span>Reference: Puppeteer</span>
-    <span>Subject: Vellora</span>
+    <span>Reference: ${htmlEscape(referenceLabel)}</span>
+    <span>Subject: ${htmlEscape(subjectLabel)}</span>
     <span>DPI: ${report.config.dpi}</span>
     <span>Pixel threshold: ${report.config.threshold}</span>
     <span>Generated: ${htmlEscape(report.generatedAt)}</span>
@@ -648,6 +668,11 @@ async function main() {
   const dpi = numberArg("--dpi", 144);
   const threshold = numberArg("--threshold", 12);
   const failOnMismatch = Number(argValue("--fail-on-mismatch", "NaN"));
+  const referenceRenderer = rendererFor(argValue("--reference", "puppeteer"));
+  const subjectRenderer = rendererFor(argValue("--subject", "vellora"));
+  if (referenceRenderer.id === subjectRenderer.id) {
+    throw new Error("--reference and --subject must be different renderers");
+  }
   const pdftoppm = await findExecutable("pdftoppm", "PDFTOPPM_BIN");
 
   let puppeteer;
@@ -669,28 +694,47 @@ async function main() {
   }
 
   rmSync(outDir, { recursive: true, force: true });
-  mkdirSync(join(outDir, "pdf", "vellora"), { recursive: true });
-  mkdirSync(join(outDir, "pdf", "puppeteer"), { recursive: true });
-  mkdirSync(join(outDir, "png", "vellora"), { recursive: true });
-  mkdirSync(join(outDir, "png", "puppeteer"), { recursive: true });
+  const referenceDirName = referenceRenderer.directory;
+  const subjectDirName = subjectRenderer.directory;
+  mkdirSync(join(outDir, "pdf", subjectDirName), { recursive: true });
+  mkdirSync(join(outDir, "pdf", referenceDirName), { recursive: true });
+  mkdirSync(join(outDir, "png", subjectDirName), { recursive: true });
+  mkdirSync(join(outDir, "png", referenceDirName), { recursive: true });
   mkdirSync(join(outDir, "png", "diff"), { recursive: true });
 
-  const browser = await puppeteer.launch({
+  const browserLaunchOptions = {
     headless: true,
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
-  });
+  };
+  const puppeteerExecutablePath =
+    process.env.PUPPETEER_EXECUTABLE_PATH ?? process.env.VELLORA_CHROMIUM_EXECUTABLE;
+  if (puppeteerExecutablePath) {
+    browserLaunchOptions.executablePath = puppeteerExecutablePath;
+  }
+
+  const browser = await puppeteer.launch(browserLaunchOptions);
 
   const report = {
     schemaVersion: 1,
     suite: "vellora-visual-fidelity",
     generatedAt: new Date().toISOString(),
-    reference: "puppeteer",
-    subject: "vellora",
+    reference: {
+      id: referenceRenderer.id,
+      label: referenceRenderer.label,
+    },
+    subject: {
+      id: subjectRenderer.id,
+      label: subjectRenderer.label,
+    },
     config: {
       dpi,
       threshold,
       pdftoppm,
-      fontParity: "Puppeteer reference embeds Vellora bundled fonts for fixture aliases.",
+      command: `npm run visual:fidelity -- ${process.argv.slice(2).join(" ")}`,
+      git: await gitInfo(),
+      rendererVersions: await rendererVersions([referenceRenderer, subjectRenderer], repoRoot),
+      fontParity:
+        "Browser renderers embed Vellora bundled fonts for fixture aliases; native Vellora uses its bundled font path.",
       localImages: "Both renderers receive local fixture image assets inlined as data URLs.",
       fixtures: selectedFixtures(),
       regions: {
@@ -709,45 +753,51 @@ async function main() {
       const browserHtml = injectBundledFonts(injectBaseTag(imageReadyHtml, fixture.dir));
       const metadata = { title: `visual-fidelity-${id}`, creationDate: FIXED_CREATION_DATE };
 
-      const velloraPdf = await renderPdf(imageReadyHtml, undefined, {
-        strict: true,
+      const renderContext = {
+        browser,
+        browserHtml,
         metadata,
-      });
-      const puppeteerPdf = await renderWithPuppeteer(browser, browserHtml);
-      ensurePdf(velloraPdf, `${id} vellora`);
-      ensurePdf(puppeteerPdf, `${id} puppeteer`);
+        nativeHtml: imageReadyHtml,
+        renderPdf,
+        renderWithPuppeteer,
+      };
+      const renderReference = referenceRenderer.render(renderContext);
+      const renderSubject = subjectRenderer.render(renderContext);
+      const [referencePdf, subjectPdf] = await Promise.all([renderReference, renderSubject]);
+      ensurePdf(referencePdf, `${id} ${referenceRenderer.id}`);
+      ensurePdf(subjectPdf, `${id} ${subjectRenderer.id}`);
 
-      const velloraPdfPath = join(outDir, "pdf", "vellora", `${id}.pdf`);
-      const puppeteerPdfPath = join(outDir, "pdf", "puppeteer", `${id}.pdf`);
-      writeFileSync(velloraPdfPath, velloraPdf);
-      writeFileSync(puppeteerPdfPath, puppeteerPdf);
+      const subjectPdfPath = join(outDir, "pdf", subjectDirName, `${id}.pdf`);
+      const referencePdfPath = join(outDir, "pdf", referenceDirName, `${id}.pdf`);
+      writeFileSync(subjectPdfPath, subjectPdf);
+      writeFileSync(referencePdfPath, referencePdf);
 
-      const velloraPages = countPages(velloraPdf);
-      const puppeteerPages = countPages(puppeteerPdf);
-      const comparablePages = Math.min(velloraPages, puppeteerPages);
+      const subjectPages = countPages(subjectPdf);
+      const referencePages = countPages(referencePdf);
+      const comparablePages = Math.min(subjectPages, referencePages);
       const regions = regionsForFixture(id);
-      const velloraPngs = await rasterizePdf({
+      const subjectPngs = await rasterizePdf({
         pdftoppm,
-        pdfPath: velloraPdfPath,
-        outDir: join(outDir, "png", "vellora"),
+        pdfPath: subjectPdfPath,
+        outDir: join(outDir, "png", subjectDirName),
         id,
-        pages: velloraPages,
+        pages: subjectPages,
         dpi,
       });
-      const puppeteerPngs = await rasterizePdf({
+      const referencePngs = await rasterizePdf({
         pdftoppm,
-        pdfPath: puppeteerPdfPath,
-        outDir: join(outDir, "png", "puppeteer"),
+        pdfPath: referencePdfPath,
+        outDir: join(outDir, "png", referenceDirName),
         id,
-        pages: puppeteerPages,
+        pages: referencePages,
         dpi,
       });
 
       const pages = [];
       for (let page = 1; page <= comparablePages; page += 1) {
         const comparison = await comparePagePngs(browser, {
-          referencePath: puppeteerPngs[page - 1],
-          subjectPath: velloraPngs[page - 1],
+          referencePath: referencePngs[page - 1],
+          subjectPath: subjectPngs[page - 1],
           regions,
           threshold,
         });
@@ -758,40 +808,44 @@ async function main() {
           dimensions: comparison.dimensions,
           overall: comparison.overall,
           regions: comparison.regions,
-          referencePng: relative(outDir, puppeteerPngs[page - 1]),
-          subjectPng: relative(outDir, velloraPngs[page - 1]),
+          referencePng: relative(outDir, referencePngs[page - 1]),
+          subjectPng: relative(outDir, subjectPngs[page - 1]),
           diffPng: relative(outDir, diffPath),
         });
       }
 
       const fixtureRecord = {
         id,
-        pageCountMismatch: velloraPages !== puppeteerPages,
-        vellora: {
-          pages: velloraPages,
-          bytes: velloraPdf.length,
-          sha256: sha256(velloraPdf),
-          pdfPath: relative(outDir, velloraPdfPath),
+        pageCountMismatch: subjectPages !== referencePages,
+        subject: {
+          renderer: subjectRenderer.id,
+          pages: subjectPages,
+          bytes: subjectPdf.length,
+          sha256: sha256(subjectPdf),
+          pdfPath: relative(outDir, subjectPdfPath),
         },
-        puppeteer: {
-          pages: puppeteerPages,
-          bytes: puppeteerPdf.length,
-          sha256: sha256(puppeteerPdf),
-          pdfPath: relative(outDir, puppeteerPdfPath),
+        reference: {
+          renderer: referenceRenderer.id,
+          pages: referencePages,
+          bytes: referencePdf.length,
+          sha256: sha256(referencePdf),
+          pdfPath: relative(outDir, referencePdfPath),
         },
         pages,
       };
       report.fixtures.push(fixtureRecord);
       const worst = pages.reduce((max, page) => Math.max(max, page.overall.mismatchRatio), 0);
       console.log(
-        `${id}: ${velloraPages} Vellora pages, ${puppeteerPages} Puppeteer pages, worst page mismatch ${percent(worst)}`,
+        `${id}: ${subjectPages} ${subjectRenderer.label} pages, ${referencePages} ${referenceRenderer.label} pages, worst page mismatch ${percent(worst)}`,
       );
     }
   } finally {
     await browser.close();
   }
 
-  writeFileSync(join(outDir, "summary.json"), `${JSON.stringify(report, null, 2)}\n`);
+  const reportJson = `${JSON.stringify(report, null, 2)}\n`;
+  writeFileSync(join(outDir, "summary.json"), reportJson);
+  writeFileSync(join(outDir, "manifest.json"), reportJson);
   writeFileSync(join(outDir, "index.html"), renderReport(report));
   console.log(`Visual fidelity report: ${join(outDir, "index.html")}`);
 

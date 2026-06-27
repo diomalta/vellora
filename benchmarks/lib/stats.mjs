@@ -63,6 +63,10 @@ export function captureEnv(tools, runtimeVersions = {}) {
   const cpus = os.cpus();
   const container = inContainer();
   const platform = os.platform();
+  const forcedAuthoritative = process.env.BENCH_AUTHORITATIVE === "1";
+  const authoritative = forcedAuthoritative
+    ? platform === "linux"
+    : container && platform === "linux";
   return {
     runDate: new Date().toISOString(),
     cpuModel: cpus[0]?.model ?? "unknown",
@@ -71,10 +75,13 @@ export function captureEnv(tools, runtimeVersions = {}) {
     os: `${platform} ${os.release()}`,
     arch: os.arch(),
     container,
-    // The deployment surface is a Linux container; a native non-Linux,
-    // non-container run is indicative-only.
-    authoritative: container && platform === "linux",
-    indicativeOnly: !(container && platform === "linux"),
+    authoritative,
+    authority: forcedAuthoritative
+      ? "pinned-linux-ci"
+      : container && platform === "linux"
+        ? "linux-container"
+        : "local-indicative",
+    indicativeOnly: !authoritative,
     nodeVersion: process.version,
     toolVersions: tools.map((t) => ({
       id: t.id,

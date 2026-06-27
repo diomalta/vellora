@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vellora Visual Fidelity</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #657184;
+      --line: #d8dee8;
+      --panel: #f7f9fc;
+      --accent: #255f8f;
+    }
+    body {
+      margin: 24px;
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #fff;
+    }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+    h3 { font-size: 16px; margin: 18px 0 8px; }
+    .summary, .fixture-meta, .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      color: var(--muted);
+      margin: 10px 0 16px;
+    }
+    .warning {
+      color: #8a4b00;
+      background: #fff8e8;
+      border: 1px solid #ead6a5;
+      padding: 8px 10px;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: start;
+    }
+    figure { margin: 0; }
+    figcaption { font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: left;
+    }
+    th {
+      background: var(--panel);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    a { color: var(--accent); }
+    @media (max-width: 900px) {
+      .comparison { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Vellora Visual Fidelity</h1>
+  <div class="summary">
+    <span>Reference: Vellora Chromium</span>
+    <span>Subject: Vellora</span>
+    <span>DPI: 96</span>
+    <span>Pixel threshold: 12</span>
+    <span>Generated: 2026-06-27T20:28:21.053Z</span>
+  </div>
+  <section class="fixture">
+        <h2>invoice</h2>
+        <div class="fixture-meta">
+          <span>Vellora pages: 3</span>
+          <span>Vellora Chromium pages: 3</span>
+          <span>Vellora PDF: <a href="pdf/vellora/invoice.pdf">ce1a5aa3c4e5</a></span>
+          <span>Vellora Chromium PDF: <a href="pdf/chromium/invoice.pdf">7b21757e367c</a></span>
+        </div>
+        
+        <article class="page">
+            <h3>Page 1</h3>
+            <div class="metrics">
+              <span>Mismatch 7.29%</span>
+              <span>MAE 0.0241</span>
+              <span>794x1123px</span>
+            </div>
+            <div class="comparison">
+              <figure>
+                <figcaption>Vellora Chromium reference</figcaption>
+                <img src="png/chromium/invoice-1.png" alt="invoice Vellora Chromium page 1">
+              </figure>
+              <figure>
+                <figcaption>Vellora subject</figcaption>
+                <img src="png/vellora/invoice-1.png" alt="invoice Vellora page 1">
+              </figure>
+              <figure>
+                <figcaption>Diff</figcaption>
+                <img src="png/diff/invoice-page-1.png" alt="invoice diff page 1">
+              </figure>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Region</th><th>Focus</th><th>Mismatch</th><th>MAE</th></tr>
+              </thead>
+              <tbody><tr>
+                <td>invoice-meta</td>
+                <td>Invoice metadata and status badge</td>
+                <td>3.36%</td>
+                <td>0.0087</td>
+              </tr>
+<tr>
+                <td>invoice-parties</td>
+                <td>Party cards and gutters</td>
+                <td>10.95%</td>
+                <td>0.0354</td>
+              </tr>
+<tr>
+                <td>invoice-items</td>
+                <td>Items table rhythm</td>
+                <td>8.95%</td>
+                <td>0.0309</td>
+              </tr>
+<tr>
+                <td>page-top</td>
+                <td>Top spacing and header</td>
+                <td>3.97%</td>
+                <td>0.0129</td>
+              </tr>
+<tr>
+                <td>content-flow</td>
+                <td>Main content flow</td>
+                <td>9.03%</td>
+                <td>0.0311</td>
+              </tr>
+<tr>
+                <td>page-bottom</td>
+                <td>Footer and bottom spacing</td>
+                <td>6.41%</td>
+                <td>0.0179</td>
+              </tr></tbody>
+            </table>
+          </article>
+<article class="page">
+            <h3>Page 2</h3>
+            <div class="metrics">
+              <span>Mismatch 7.61%</span>
+              <span>MAE 0.0299</span>
+              <span>794x1123px</span>
+            </div>
+            <div class="comparison">
+              <figure>
+                <figcaption>Vellora Chromium reference</figcaption>
+                <img src="png/chromium/invoice-2.png" alt="invoice Vellora Chromium page 2">
+              </figure>
+              <figure>
+                <figcaption>Vellora subject</figcaption>
+                <img src="png/vellora/invoice-2.png" alt="invoice Vellora page 2">
+              </figure>
+              <figure>
+                <figcaption>Diff</figcaption>
+                <img src="png/diff/invoice-page-2.png" alt="invoice diff page 2">
+              </figure>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Region</th><th>Focus</th><th>Mismatch</th><th>MAE</th></tr>
+              </thead>
+              <tbody><tr>
+                <td>invoice-meta</td>
+                <td>Invoice metadata and status badge</td>
+                <td>8.88%</td>
+                <td>0.0357</td>
+              </tr>
+<tr>
+                <td>invoice-parties</td>
+                <td>Party cards and gutters</td>
+                <td>10.05%</td>
+                <td>0.0379</td>
+              </tr>
+<tr>
+                <td>invoice-items</td>
+                <td>Items table rhythm</td>
+                <td>9.42%</td>
+                <td>0.0372</td>
+              </tr>
+<tr>
+                <td>page-top</td>
+                <td>Top spacing and header</td>
+                <td>7.71%</td>
+                <td>0.0282</td>
+              </tr>
+<tr>
+                <td>content-flow</td>
+                <td>Main content flow</td>
+                <td>8.59%</td>
+                <td>0.0340</td>
+              </tr>
+<tr>
+                <td>page-bottom</td>
+                <td>Footer and bottom spacing</td>
+                <td>4.77%</td>
+                <td>0.0205</td>
+              </tr></tbody>
+            </table>
+          </article>
+<article class="page">
+            <h3>Page 3</h3>
+            <div class="metrics">
+              <span>Mismatch 5.18%</span>
+              <span>MAE 0.0182</span>
+              <span>794x1123px</span>
+            </div>
+            <div class="comparison">
+              <figure>
+                <figcaption>Vellora Chromium reference</figcaption>
+                <img src="png/chromium/invoice-3.png" alt="invoice Vellora Chromium page 3">
+              </figure>
+              <figure>
+                <figcaption>Vellora subject</figcaption>
+                <img src="png/vellora/invoice-3.png" alt="invoice Vellora page 3">
+              </figure>
+              <figure>
+                <figcaption>Diff</figcaption>
+                <img src="png/diff/invoice-page-3.png" alt="invoice diff page 3">
+              </figure>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Region</th><th>Focus</th><th>Mismatch</th><th>MAE</th></tr>
+              </thead>
+              <tbody><tr>
+                <td>invoice-meta</td>
+                <td>Invoice metadata and status badge</td>
+                <td>9.17%</td>
+                <td>0.0371</td>
+              </tr>
+<tr>
+                <td>invoice-parties</td>
+                <td>Party cards and gutters</td>
+                <td>8.75%</td>
+                <td>0.0286</td>
+              </tr>
+<tr>
+                <td>invoice-items</td>
+                <td>Items table rhythm</td>
+                <td>5.62%</td>
+                <td>0.0190</td>
+              </tr>
+<tr>
+                <td>page-top</td>
+                <td>Top spacing and header</td>
+                <td>8.07%</td>
+                <td>0.0299</td>
+              </tr>
+<tr>
+                <td>content-flow</td>
+                <td>Main content flow</td>
+                <td>5.68%</td>
+                <td>0.0192</td>
+              </tr>
+<tr>
+                <td>page-bottom</td>
+                <td>Footer and bottom spacing</td>
+                <td>0.33%</td>
+                <td>0.0015</td>
+              </tr></tbody>
+            </table>
+          </article>
+      </section>
+<section class="fixture">
+        <h2>boleto</h2>
+        <div class="fixture-meta">
+          <span>Vellora pages: 1</span>
+          <span>Vellora Chromium pages: 1</span>
+          <span>Vellora PDF: <a href="pdf/vellora/boleto.pdf">8592d43b8080</a></span>
+          <span>Vellora Chromium PDF: <a href="pdf/chromium/boleto.pdf">cb70e177b23d</a></span>
+        </div>
+        
+        <article class="page">
+            <h3>Page 1</h3>
+            <div class="metrics">
+              <span>Mismatch 12.42%</span>
+              <span>MAE 0.0633</span>
+              <span>794x1123px</span>
+            </div>
+            <div class="comparison">
+              <figure>
+                <figcaption>Vellora Chromium reference</figcaption>
+                <img src="png/chromium/boleto-1.png" alt="boleto Vellora Chromium page 1">
+              </figure>
+              <figure>
+                <figcaption>Vellora subject</figcaption>
+                <img src="png/vellora/boleto-1.png" alt="boleto Vellora page 1">
+              </figure>
+              <figure>
+                <figcaption>Diff</figcaption>
+                <img src="png/diff/boleto-page-1.png" alt="boleto diff page 1">
+              </figure>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Region</th><th>Focus</th><th>Mismatch</th><th>MAE</th></tr>
+              </thead>
+              <tbody><tr>
+                <td>boleto-bank-header</td>
+                <td>Bank header alignment</td>
+                <td>14.90%</td>
+                <td>0.0831</td>
+              </tr>
+<tr>
+                <td>boleto-field-grid</td>
+                <td>Dense field grid</td>
+                <td>16.78%</td>
+                <td>0.0848</td>
+              </tr>
+<tr>
+                <td>boleto-barcode-footer</td>
+                <td>Barcode and footer spacing</td>
+                <td>11.52%</td>
+                <td>0.0434</td>
+              </tr>
+<tr>
+                <td>page-top</td>
+                <td>Top spacing and header</td>
+                <td>9.46%</td>
+                <td>0.0511</td>
+              </tr>
+<tr>
+                <td>content-flow</td>
+                <td>Main content flow</td>
+                <td>14.74%</td>
+                <td>0.0767</td>
+              </tr>
+<tr>
+                <td>page-bottom</td>
+                <td>Footer and bottom spacing</td>
+                <td>9.48%</td>
+                <td>0.0404</td>
+              </tr></tbody>
+            </table>
+          </article>
+      </section>
+</body>
+</html>

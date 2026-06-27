@@ -123,7 +123,10 @@ async function selectBridge(opts: InternalRenderOptions): Promise<NativeBridge> 
   const engine = opts.engine ?? "native";
   assertRenderEngine(engine);
   const selected = engine === "auto" ? await selectedAutoEngine(opts) : engine;
-  return selected === "chromium" ? loadChromiumBridge(opts) : (opts._bridge ?? getDefaultBridge());
+  if (selected === "chromium") {
+    return loadChromiumBridge(opts);
+  }
+  return opts._bridge ?? getDefaultBridge();
 }
 
 /** Run the shared pipeline: normalize → template → orchestrate, resolving to PDF bytes. */

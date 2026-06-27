@@ -55,10 +55,10 @@ export interface DoctorReport {
   lint: Report;
   renders: DoctorRenderResult[];
   visualDiff?: PdfPixelDiffReport;
-  recommendation: "native" | "chromium" | "manual-review";
+  recommendation: EngineName | "manual-review";
   policySuggestion?: {
     version: 1;
-    templates: Record<string, { selectedEngine: "native" | "chromium"; reason: string }>;
+    templates: Record<string, { selectedEngine: EngineName; reason: string }>;
   };
 }
 
@@ -80,7 +80,7 @@ function parseReferenceEngine(value: string | undefined): "chromium" | undefined
     return value;
   }
   throw new UsageError(
-    `--reference currently supports only chromium; received ${JSON.stringify(value)}.`,
+    `--reference currently supports chromium; received ${JSON.stringify(value)}.`,
   );
 }
 
@@ -247,17 +247,23 @@ function buildDoctorReport(input: {
   const subjectVisuallyAccepted = input.visualDiff === undefined || input.visualDiff.ok;
   const subjectAccepted =
     subject?.result.ok === true &&
-    (input.plan.subject === "chromium" || input.lint.conformant) &&
+    (input.plan.subject !== "native" || input.lint.conformant) &&
     subjectVisuallyAccepted;
   const chromium = input.renders.get("chromium");
+  const referenceEngine =
+    input.plan.reference?.type === "engine" ? input.plan.reference.engine : undefined;
+  const referenceFallback = referenceEngine ? input.renders.get(referenceEngine) : undefined;
+  const referenceFallbackRecommendation =
+    input.plan.subject === "native" && referenceEngine && referenceFallback?.result.ok
+      ? referenceEngine
+      : undefined;
   const recommendation =
     input.visualDiff?.available === false
       ? "manual-review"
       : subjectAccepted
         ? input.plan.subject
-        : input.plan.subject === "native" && chromium?.result.ok
-          ? "chromium"
-          : "manual-review";
+        : (referenceFallbackRecommendation ??
+          (input.plan.subject === "native" && chromium?.result.ok ? "chromium" : "manual-review"));
   const chromiumUnavailable = Array.from(input.renders.values()).some(
     (render) => render.result.chromiumUnavailable,
   );
@@ -301,7 +307,7 @@ function buildDoctorReport(input: {
           reason:
             recommendation === "native"
               ? "native lint and render checks passed"
-              : "Chromium output matched the selected fidelity reference",
+              : `${recommendation} output matched the selected fidelity reference`,
         },
       },
     };

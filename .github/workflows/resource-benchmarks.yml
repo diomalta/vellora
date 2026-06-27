@@ -1,0 +1,80 @@
+name: Resource Benchmarks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "benchmarks/**"
+      - "packages/**"
+      - "crates/**"
+      - "fixtures/**"
+      - "package-lock.json"
+      - "package.json"
+      - ".github/workflows/resource-benchmarks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "benchmarks/**"
+      - "packages/**"
+      - "crates/**"
+      - "fixtures/**"
+      - "package-lock.json"
+      - "package.json"
+      - ".github/workflows/resource-benchmarks.yml"
+
+jobs:
+  resource-benchmarks:
+    name: resource benchmarks (ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provision pinned Rust toolchain
+        run: rustup show
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install npm workspace
+        run: npm ci
+
+      - name: Build workspace and native addon
+        run: npm run build
+
+      - name: Materialize current-platform prebuild package for footprint measurement
+        run: |
+          mkdir -p packages/native/npm/linux-x64-gnu
+          cp packages/native/vellora.linux-x64-gnu.node packages/native/npm/linux-x64-gnu/
+          cp packages/native/THIRD-PARTY-NOTICES.md packages/native/LICENSE-DejaVu.txt packages/native/LICENSE-Liberation.txt packages/native/npm/linux-x64-gnu/
+
+      - name: Install benchmark dependencies and Chromium
+        run: |
+          npm --prefix benchmarks install
+          npm --prefix benchmarks exec -- playwright install chromium --with-deps
+
+      - name: Resolve Playwright Chromium executable
+        run: |
+          CHROME_PATH="$(node -e "const { chromium } = require('./benchmarks/node_modules/playwright'); console.log(chromium.executablePath())")"
+          echo "VELLORA_CHROMIUM_EXECUTABLE=$CHROME_PATH" >> "$GITHUB_ENV"
+          echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE=$CHROME_PATH" >> "$GITHUB_ENV"
+
+      - name: Run authoritative resource benchmark
+        env:
+          BENCH_AUTHORITATIVE: "1"
+          BENCH_CONCURRENCY: "8"
+          BENCH_WARM_RUNS: "50"
+          BENCH_WARMUP_RUNS: "5"
+        run: npm --prefix benchmarks run bench
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: resource-benchmark-results
+          path: |
+            benchmarks/results/latest.json
+            benchmarks/results/latest.md
+            benchmarks/results/results-*.json
+          if-no-files-found: error

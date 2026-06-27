@@ -22,6 +22,38 @@ const fmtThr = (t) => (t == null ? "—" : `${t.toFixed(1)}/s`);
  */
 const AXES = [
   {
+    key: "packageFootprint",
+    label: "Package tarballs",
+    lowerBetter: true,
+    get: (r) => r.packageFootprint?.tarballBytes,
+    fmt: fmtBytes,
+    na: (r) => r.packageFootprint?.na,
+  },
+  {
+    key: "freshInstall",
+    label: "Fresh install",
+    lowerBetter: true,
+    get: (r) => r.packageFootprint?.freshInstall?.installedBytes,
+    fmt: fmtBytes,
+    na: (r) => r.packageFootprint?.freshInstall?.na,
+  },
+  {
+    key: "nativeAddon",
+    label: "Native addon",
+    lowerBetter: true,
+    get: (r) => r.packageFootprint?.nativeAddon?.bytes,
+    fmt: fmtBytes,
+    na: (r) => r.packageFootprint?.nativeAddon?.na,
+  },
+  {
+    key: "externalRuntime",
+    label: "External binary",
+    lowerBetter: true,
+    get: (r) => r.externalRuntime?.bytes,
+    fmt: fmtBytes,
+    na: (r) => r.externalRuntime?.na,
+  },
+  {
     key: "imageSize",
     label: "Docker image",
     lowerBetter: true,
@@ -44,6 +76,14 @@ const AXES = [
     get: (r) => r.rss?.peakRssBytes,
     fmt: fmtBytes,
     na: (r) => r.rss?.na,
+  },
+  {
+    key: "externalRss",
+    label: "External RSS @N",
+    lowerBetter: true,
+    get: (r) => r.externalRss?.peakRssBytes,
+    fmt: fmtBytes,
+    na: (r) => r.externalRss?.na,
   },
   {
     key: "outputSize",
@@ -134,11 +174,11 @@ export function renderTable(report) {
   lines.push("");
   if (env.indicativeOnly) {
     lines.push(
-      "> INDICATIVE ONLY — this run was NOT produced in a pinned Linux container. " +
+      "> INDICATIVE ONLY — this run was NOT produced in the pinned Linux CI environment. " +
         "Authoritative numbers come from CI on the pinned Linux runner (see README).",
     );
   } else {
-    lines.push("> AUTHORITATIVE — produced in a pinned Linux container.");
+    lines.push("> AUTHORITATIVE — produced in a pinned Linux CI environment.");
   }
   lines.push("");
   lines.push(
