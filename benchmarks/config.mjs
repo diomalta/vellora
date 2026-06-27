@@ -10,7 +10,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(__dirname, "..");
+export const repoRoot = join(__dirname, "..");
 
 /**
  * The equivalence baseline: the neutral multi-page invoice fixture. Every tool
@@ -44,10 +44,11 @@ export const run = {
 
 /**
  * The tool set. `kind` distinguishes how an axis applies:
- *   - "in-process"  : runs inside this Node process or a worker; Docker image
- *                     size is N/A (recorded with a reason, never zeroed).
- *   - "browser"     : long-lived browser reused across renders.
- *   - "http-service": standing HTTP service (its own container image).
+ *   - "in-process"        : runs inside this Node process.
+ *   - "browser"           : long-lived browser reused across renders.
+ *   - "browser-subprocess": browser executable launched by the adapter/engine.
+ *   - "worker-subprocess" : long-lived non-Node worker process.
+ *   - "http-service"      : standing HTTP service (its own container image).
  *
  * `pinnedVersion` is the documented pin; adapters also self-report the version
  * actually loaded at runtime so drift is detectable.
@@ -60,7 +61,22 @@ export const tools = [
     adapter: "./adapters/vellora.mjs",
     pinnedVersion: "0.1.0-alpha.0",
     longLivedMode: "in-process (public vellora API, no worker/browser)",
+    packages: ["vellora", "@vellora/native", "@vellora/lint"],
+    installPackages: ["vellora", "@vellora/native", "@vellora/lint"],
+    nativeAddon: true,
     isSubject: true,
+  },
+  {
+    id: "vellora-chromium",
+    label: "Vellora Chromium (environment)",
+    kind: "browser-subprocess",
+    adapter: "./adapters/vellora-chromium.mjs",
+    pinnedVersion: "0.1.0-alpha.0",
+    longLivedMode:
+      "direct Chrome/Chromium executable per render; executable supplied by environment",
+    packages: ["vellora", "@vellora/native", "@vellora/lint", "@vellora/engine-chromium"],
+    installPackages: ["vellora", "@vellora/native", "@vellora/lint", "@vellora/engine-chromium"],
+    nativeAddon: true,
   },
   {
     id: "puppeteer",
@@ -91,7 +107,7 @@ export const tools = [
   {
     id: "weasyprint",
     label: "WeasyPrint",
-    kind: "in-process",
+    kind: "worker-subprocess",
     adapter: "./adapters/weasyprint.mjs",
     pinnedVersion: "62.3",
     longLivedMode: "in-process inside a warm long-lived Python worker (NOT subprocess-per-render)",

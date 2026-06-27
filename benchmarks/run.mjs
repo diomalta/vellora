@@ -12,12 +12,15 @@
  * pending with the reason, NOT fabricated.
  */
 import { readFile } from "node:fs/promises";
-import { baseline, externalReference, results, run, tools } from "./config.mjs";
+import { baseline, externalReference, repoRoot, results, run, tools } from "./config.mjs";
 import { verify } from "./lib/equivalence.mjs";
 import {
   measureColdStart,
+  measureExternalRssUnderLoad,
+  measureExternalRuntime,
   measureImageSize,
   measureOutputSize,
+  measurePackageFootprint,
   measureRssUnderLoad,
   measureWarm,
 } from "./lib/measure.mjs";
@@ -40,6 +43,7 @@ async function benchTool(tool, html, data, referencePages) {
     declaredMode: tool.longLivedMode,
     comparable: false,
   };
+  record.packageFootprint = await measurePackageFootprint(tool, repoRoot);
 
   let handle;
   try {
@@ -62,6 +66,7 @@ async function benchTool(tool, html, data, referencePages) {
   try {
     record.version = handle.version;
     record.mode = handle.mode;
+    record.externalRuntime = await measureExternalRuntime(handle, tool);
 
     const cold = await measureColdStart(handle, html, data);
     record.coldStartMs = cold.ms;
@@ -85,6 +90,13 @@ async function benchTool(tool, html, data, referencePages) {
     record.throughputPerSec = warm.throughputPerSec;
 
     record.rss = await measureRssUnderLoad(handle, html, data, run.concurrency, tool);
+    record.externalRss = await measureExternalRssUnderLoad(
+      handle,
+      html,
+      data,
+      run.concurrency,
+      tool,
+    );
 
     return record;
   } catch (err) {
@@ -137,7 +149,7 @@ async function main() {
 
   if (env.indicativeOnly) {
     process.stdout.write(
-      "\nNOTE: indicative-only run (not a pinned Linux container). " +
+      "\nNOTE: indicative-only run (not the pinned Linux CI environment). " +
         "Authoritative numbers come from CI.\n",
     );
   }

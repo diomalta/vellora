@@ -15,10 +15,15 @@ export async function create() {
   const version = (await import("playwright/package.json", { with: { type: "json" } })).default
     .version;
 
-  const browser = await chromium.launch({
+  const launchOptions = {
     headless: true,
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
-  });
+  };
+  if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? process.env.VELLORA_CHROMIUM_EXECUTABLE) {
+    launchOptions.executablePath =
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? process.env.VELLORA_CHROMIUM_EXECUTABLE;
+  }
+  const browser = await chromium.launch(launchOptions);
 
   return {
     mode: meta.longLivedMode,

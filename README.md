@@ -14,14 +14,25 @@ the input can be an invoice, receipt, statement, boleto, notification, or any ot
 that stays inside the supported subset. No `apt install`, no Puppeteer browser download,
 no `npx playwright install`, no sidecar service.
 
+Browser fidelity is an explicit opt-in tier: `@vellora/engine-chromium` uses a Chrome/Chromium binary
+you provide.
+
 ```bash
 npm install vellora
 ```
 
 <p align="center">
-  <img src="./docs/assets/invoice-preview.png" alt="An invoice template rendered to PDF by vellora" width="420">
-  <br><em>A multi-page invoice template rendered to PDF — in-process, selectable text, repeated table header.</em>
+  <strong>Current visual evidence</strong><br>
+  <em>Vellora native compared against Vellora Chromium for representative fixtures.</em>
 </p>
+
+| Fixture | Vellora native | Vellora Chromium | Diff |
+|---|---|---|---|
+| Invoice p.1 | <img src="./docs/assets/visual-evidence/png/vellora/invoice-1.png" alt="Invoice page 1 rendered by Vellora native" width="220"> | <img src="./docs/assets/visual-evidence/png/chromium/invoice-1.png" alt="Invoice page 1 rendered by Vellora Chromium" width="220"> | <img src="./docs/assets/visual-evidence/png/diff/invoice-page-1.png" alt="Invoice page 1 pixel diff between Vellora native and Vellora Chromium" width="220"> |
+| Boleto p.1 | <img src="./docs/assets/visual-evidence/png/vellora/boleto-1.png" alt="Boleto page 1 rendered by Vellora native" width="220"> | <img src="./docs/assets/visual-evidence/png/chromium/boleto-1.png" alt="Boleto page 1 rendered by Vellora Chromium" width="220"> | <img src="./docs/assets/visual-evidence/png/diff/boleto-page-1.png" alt="Boleto page 1 pixel diff between Vellora native and Vellora Chromium" width="220"> |
+
+Generated with `npm run visual:fidelity -- --fixtures invoice,boleto --reference chromium --subject vellora --out docs/assets/visual-evidence --dpi 96`.
+See the full [visual report](./docs/assets/visual-evidence/index.html) and [manifest](./docs/assets/visual-evidence/manifest.json).
 
 > 🚧 **Status: pre-release / alpha — in active development.** The native document renderer, CLI, lint
 > workflow, PDF/A-2b, images, fonts, batch rendering, streaming helper, and optional Chromium fidelity
@@ -46,6 +57,21 @@ OOM-kill under concurrency. vellora's default path takes a different route — a
 > Gotenberg, and WeasyPrint (cold start, RSS under concurrency, output size, throughput, image size)
 > live in [`benchmarks/`](./benchmarks/). Numbers are published here once the suite runs in CI —
 > we measure our own, we don't borrow them.
+
+**Current resource evidence.** Source:
+[Resource Benchmarks run 28302496101](https://github.com/diomalta/vellora/actions/runs/28302496101),
+`authority=pinned-linux-ci`, linux x64, Node v22.23.0, 4 cores, generated 2026-06-27T21:42:34Z.
+
+| Path | Package tarballs | Fresh install | Native addon | External runtime | Cold start | RSS @8 | External RSS @8 | Warm median / p95 | Throughput | PDF size |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `vellora` native | 97.1 kB | 28.93 MB | 23.07 MB | N/A | 43.68 ms | 116.69 MB | N/A | 17.02 / 21.05 ms | 56.2/s | 38.8 kB |
+| Vellora Chromium (environment) | 102.6 kB | 28.94 MB | 23.07 MB | 412.28 MB | 529.38 ms | N/A | 6300.04 MB | 495.23 / 524.63 ms | 1.9/s | 156.2 kB |
+
+The Chromium runtime above is the environment-provided Chromium 130.0.6723.31 executable, not a
+browser bundled in the default `vellora` package.
+
+Puppeteer and Playwright are measured in the artifact, but this summary does not quote them as
+comparable because the run marked both as non-comparable for the fixture (`page count 1 != reference 3`).
 
 vellora is **not** a browser clone. It renders a documented HTML/CSS **subset** built for
 documents, and tells you — precisely — when your input leaves it. **Strict by default.**
@@ -112,6 +138,17 @@ const pdfs = await renderPdfBatch(
 Runnable recipes live in [`examples/`](./examples) — `npm run example` (invoice),
 `npm run render-receipt`, `render-boleto`, `render-notification`, `render-to-http-stream`,
 `batch-concurrency`.
+
+Use a Chromium engine only for templates that need browser print fidelity:
+
+```ts
+import { renderPdf } from "vellora";
+
+const pdf = await renderPdf(html, data, {
+  engine: "chromium",
+  chromium: { executablePath: "/path/to/chrome", timeoutMs: 30_000 },
+});
+```
 
 ## Keep your templates in the subset (dev-time, not runtime)
 
@@ -198,12 +235,20 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 	  (`title`, `creationDate`); PDF/A-2b archival output; embedded data-url images; representative HTML fixtures for invoice,
   receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
   `render` / `lint` / `fix` / `doctor` / `fidelity`; bounded, configurable concurrency; best-effort
-  mode (`{ strict: false }`); optional Chromium engine and `engine: "auto"` fidelity policies.
+  mode (`{ strict: false }`); optional Chromium engine and `engine: "auto"` fidelity policies;
+  visual evidence artifacts for invoice and boleto against Vellora Chromium.
 - **In progress / next** — musl/Alpine prebuilt binaries, Windows prebuilds, stronger release notes
-  and launch docs.
+  and launch docs; authoritative resource reports.
 - **Planned for a stable release** — broader PDF/A profiles · PDF/UA · tagged PDF · bookmarks; content-hash caching
   and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
   benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and deeper docs/site examples.
+- **Release goal** — a non-alpha `0.x` release can be promoted once visual evidence, resource
+  benchmarks, compatibility generation, and CI gates are current and linked. Native rendering remains
+  a separate maturity decision from the Chromium fidelity lane.
+- **Alpha-exit checklist** — before removing alpha language, confirm: generated compatibility is fresh;
+  visual evidence is current; authoritative resource benchmark artifacts exist; README claims link to
+  generated evidence; CI/release gates cover compatibility, visual, and resource evidence; API/semver
+  maturity is reviewed; native Blitz dependency risk is stated separately from the Chromium escape hatch.
 - **Future (post-1.0, demand-driven)** — password / encryption; attachments (PDF/A-3, e.g. embedding
   NF-e XML); watermark / stamp; broader CSS subset; more `fix` rules; more image formats; a managed
   Chromium package **only if** real demand appears for zero-config browser fidelity.
@@ -216,9 +261,9 @@ the broader feature view. Order is roughly build order, not a delivery commitmen
 |---|---|
 | `vellora` | Public API + templating |
 | `@vellora/native` | Prebuilt napi addons (linux glibc, macOS) |
+| `@vellora/engine-chromium` | Optional browser-fidelity engine using a host-supplied Chrome/Chromium |
 | `@vellora/lint` | Dev-time `diagnose` + `fix` |
 | `@vellora/cli` | `render` / `lint` / `fix` commands |
-| `@vellora/engine-chromium` | Optional Chromium/Chrome fidelity engine |
 
 ## Try it without installing
 

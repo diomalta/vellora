@@ -15,6 +15,23 @@ without uploading anything.
 Alpha releases currently publish with the explicit npm dist-tag `latest`, because npm requires an
 explicit tag for prerelease versions and the public install path is still `npm install vellora`.
 
+## Non-alpha release gate
+
+Do not cut a non-alpha `0.x` release until the evidence gates below are current:
+
+- `npm run compat:check` passes against the generated `COMPATIBILITY.md`.
+- README visual evidence has been regenerated from the current checkout and links to its manifest.
+- [Resource Benchmarks](.github/workflows/resource-benchmarks.yml) has produced an authoritative
+  `benchmarks/results/latest.json` and `latest.md` artifact on the pinned Linux CI environment.
+- README numeric resource claims, if present, are sourced from that authoritative benchmark artifact.
+- CI or release review checks compatibility, visual evidence, resource evidence, and package provenance.
+- API/semver maturity has been reviewed for a beta/final `0.x` release.
+- Native renderer maturity and Blitz dependency risk are stated separately from the optional
+  environment-Chromium fidelity route.
+
+Passing this gate supports wording like "production-oriented beta" for the documented subset. It does
+not make the native renderer `1.0 stable`.
+
 ## Launch matrix
 
 | Platform tag        | Rust target                   | Runner                                  |

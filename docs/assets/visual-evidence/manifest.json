@@ -1,0 +1,766 @@
+{
+  "schemaVersion": 1,
+  "suite": "vellora-visual-fidelity",
+  "generatedAt": "2026-06-27T20:28:21.053Z",
+  "reference": {
+    "id": "chromium",
+    "label": "Vellora Chromium"
+  },
+  "subject": {
+    "id": "vellora",
+    "label": "Vellora"
+  },
+  "config": {
+    "dpi": 96,
+    "threshold": 12,
+    "pdftoppm": "/Users/diomalta/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/pdftoppm",
+    "command": "npm run visual:fidelity -- --fixtures invoice,boleto --reference chromium --subject vellora --out docs/assets/visual-evidence --dpi 96",
+    "git": {
+      "commit": "50a98249b7f8a84dd158ca6afa32ac2d7a268c57",
+      "dirty": true
+    },
+    "rendererVersions": {
+      "vellora": "0.1.0-alpha.0",
+      "@vellora/engine-chromium": "0.1.0-alpha.0"
+    },
+    "fontParity": "Browser renderers embed Vellora bundled fonts for fixture aliases; native Vellora uses its bundled font path.",
+    "localImages": "Both renderers receive local fixture image assets inlined as data URLs.",
+    "fixtures": ["invoice", "boleto"],
+    "regions": {
+      "default": [
+        {
+          "id": "page-top",
+          "label": "Top spacing and header",
+          "x": 0,
+          "y": 0,
+          "width": 1,
+          "height": 0.24
+        },
+        {
+          "id": "content-flow",
+          "label": "Main content flow",
+          "x": 0,
+          "y": 0.24,
+          "width": 1,
+          "height": 0.56
+        },
+        {
+          "id": "page-bottom",
+          "label": "Footer and bottom spacing",
+          "x": 0,
+          "y": 0.8,
+          "width": 1,
+          "height": 0.2
+        }
+      ],
+      "fixtureSpecific": {
+        "invoice": [
+          {
+            "id": "invoice-meta",
+            "label": "Invoice metadata and status badge",
+            "x": 0.52,
+            "y": 0.04,
+            "width": 0.43,
+            "height": 0.18
+          },
+          {
+            "id": "invoice-parties",
+            "label": "Party cards and gutters",
+            "x": 0.05,
+            "y": 0.2,
+            "width": 0.9,
+            "height": 0.2
+          },
+          {
+            "id": "invoice-items",
+            "label": "Items table rhythm",
+            "x": 0.05,
+            "y": 0.38,
+            "width": 0.9,
+            "height": 0.42
+          }
+        ],
+        "receipt": [
+          {
+            "id": "receipt-header",
+            "label": "Receipt header density",
+            "x": 0.08,
+            "y": 0.02,
+            "width": 0.84,
+            "height": 0.22
+          },
+          {
+            "id": "receipt-items",
+            "label": "Item rows and totals",
+            "x": 0.04,
+            "y": 0.22,
+            "width": 0.92,
+            "height": 0.56
+          }
+        ],
+        "boleto": [
+          {
+            "id": "boleto-bank-header",
+            "label": "Bank header alignment",
+            "x": 0.05,
+            "y": 0.06,
+            "width": 0.9,
+            "height": 0.16
+          },
+          {
+            "id": "boleto-field-grid",
+            "label": "Dense field grid",
+            "x": 0.05,
+            "y": 0.32,
+            "width": 0.9,
+            "height": 0.36
+          },
+          {
+            "id": "boleto-barcode-footer",
+            "label": "Barcode and footer spacing",
+            "x": 0.05,
+            "y": 0.82,
+            "width": 0.9,
+            "height": 0.14
+          }
+        ],
+        "notification": [
+          {
+            "id": "notification-heading",
+            "label": "Heading and opening spacing",
+            "x": 0.06,
+            "y": 0.06,
+            "width": 0.88,
+            "height": 0.18
+          },
+          {
+            "id": "notification-body",
+            "label": "Paragraph rhythm",
+            "x": 0.06,
+            "y": 0.22,
+            "width": 0.88,
+            "height": 0.5
+          },
+          {
+            "id": "notification-signature",
+            "label": "Signature block",
+            "x": 0.06,
+            "y": 0.72,
+            "width": 0.88,
+            "height": 0.2
+          }
+        ]
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "id": "invoice",
+      "pageCountMismatch": false,
+      "subject": {
+        "renderer": "vellora",
+        "pages": 3,
+        "bytes": 38778,
+        "sha256": "ce1a5aa3c4e5eda8119639a990e093857afce4e73ec56b8983dc73ea42c834a8",
+        "pdfPath": "pdf/vellora/invoice.pdf"
+      },
+      "reference": {
+        "renderer": "chromium",
+        "pages": 3,
+        "bytes": 109622,
+        "sha256": "7b21757e367ce7e7ade2eb93337420e334d70fbe33cc8db75d10eee4c07b4d62",
+        "pdfPath": "pdf/chromium/invoice.pdf"
+      },
+      "pages": [
+        {
+          "page": 1,
+          "dimensions": {
+            "referenceWidth": 794,
+            "referenceHeight": 1123,
+            "subjectWidth": 794,
+            "subjectHeight": 1123,
+            "comparedWidth": 794,
+            "comparedHeight": 1123
+          },
+          "overall": {
+            "pixels": 891662,
+            "mismatchPixels": 64988,
+            "mismatchRatio": 0.07288411976735579,
+            "meanAbsoluteError": 0.024055746203409507
+          },
+          "regions": [
+            {
+              "id": "invoice-meta",
+              "label": "Invoice metadata and status badge",
+              "x": 0.52,
+              "y": 0.04,
+              "width": 0.43,
+              "height": 0.18,
+              "bounds": {
+                "x": 413,
+                "y": 45,
+                "width": 341,
+                "height": 202
+              },
+              "metrics": {
+                "pixels": 68882,
+                "mismatchPixels": 2313,
+                "mismatchRatio": 0.03357916436804971,
+                "meanAbsoluteError": 0.008699351908625372
+              }
+            },
+            {
+              "id": "invoice-parties",
+              "label": "Party cards and gutters",
+              "x": 0.05,
+              "y": 0.2,
+              "width": 0.9,
+              "height": 0.2,
+              "bounds": {
+                "x": 40,
+                "y": 225,
+                "width": 714,
+                "height": 224
+              },
+              "metrics": {
+                "pixels": 159936,
+                "mismatchPixels": 17509,
+                "mismatchRatio": 0.1094750400160064,
+                "meanAbsoluteError": 0.03538679360632932
+              }
+            },
+            {
+              "id": "invoice-items",
+              "label": "Items table rhythm",
+              "x": 0.05,
+              "y": 0.38,
+              "width": 0.9,
+              "height": 0.42,
+              "bounds": {
+                "x": 40,
+                "y": 427,
+                "width": 714,
+                "height": 471
+              },
+              "metrics": {
+                "pixels": 336294,
+                "mismatchPixels": 30098,
+                "mismatchRatio": 0.08949906926677252,
+                "meanAbsoluteError": 0.03092261980074569
+              }
+            },
+            {
+              "id": "page-top",
+              "label": "Top spacing and header",
+              "x": 0,
+              "y": 0,
+              "width": 1,
+              "height": 0.24,
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 794,
+                "height": 270
+              },
+              "metrics": {
+                "pixels": 214380,
+                "mismatchPixels": 8509,
+                "mismatchRatio": 0.039691202537550145,
+                "meanAbsoluteError": 0.0129254814156269
+              }
+            },
+            {
+              "id": "content-flow",
+              "label": "Main content flow",
+              "x": 0,
+              "y": 0.24,
+              "width": 1,
+              "height": 0.56,
+              "bounds": {
+                "x": 0,
+                "y": 270,
+                "width": 794,
+                "height": 628
+              },
+              "metrics": {
+                "pixels": 498632,
+                "mismatchPixels": 45022,
+                "mismatchRatio": 0.09029103627524908,
+                "meanAbsoluteError": 0.03106383509727625
+              }
+            },
+            {
+              "id": "page-bottom",
+              "label": "Footer and bottom spacing",
+              "x": 0,
+              "y": 0.8,
+              "width": 1,
+              "height": 0.2,
+              "bounds": {
+                "x": 0,
+                "y": 898,
+                "width": 794,
+                "height": 225
+              },
+              "metrics": {
+                "pixels": 178650,
+                "mismatchPixels": 11457,
+                "mismatchRatio": 0.06413098236775819,
+                "meanAbsoluteError": 0.017851709169535764
+              }
+            }
+          ],
+          "referencePng": "png/chromium/invoice-1.png",
+          "subjectPng": "png/vellora/invoice-1.png",
+          "diffPng": "png/diff/invoice-page-1.png"
+        },
+        {
+          "page": 2,
+          "dimensions": {
+            "referenceWidth": 794,
+            "referenceHeight": 1123,
+            "subjectWidth": 794,
+            "subjectHeight": 1123,
+            "comparedWidth": 794,
+            "comparedHeight": 1123
+          },
+          "overall": {
+            "pixels": 891662,
+            "mismatchPixels": 67896,
+            "mismatchRatio": 0.07614544524719008,
+            "meanAbsoluteError": 0.029894187608210488
+          },
+          "regions": [
+            {
+              "id": "invoice-meta",
+              "label": "Invoice metadata and status badge",
+              "x": 0.52,
+              "y": 0.04,
+              "width": 0.43,
+              "height": 0.18,
+              "bounds": {
+                "x": 413,
+                "y": 45,
+                "width": 341,
+                "height": 202
+              },
+              "metrics": {
+                "pixels": 68882,
+                "mismatchPixels": 6118,
+                "mismatchRatio": 0.08881855927528237,
+                "meanAbsoluteError": 0.03565166763355659
+              }
+            },
+            {
+              "id": "invoice-parties",
+              "label": "Party cards and gutters",
+              "x": 0.05,
+              "y": 0.2,
+              "width": 0.9,
+              "height": 0.2,
+              "bounds": {
+                "x": 40,
+                "y": 225,
+                "width": 714,
+                "height": 224
+              },
+              "metrics": {
+                "pixels": 159936,
+                "mismatchPixels": 16074,
+                "mismatchRatio": 0.10050270108043217,
+                "meanAbsoluteError": 0.037921336835386406
+              }
+            },
+            {
+              "id": "invoice-items",
+              "label": "Items table rhythm",
+              "x": 0.05,
+              "y": 0.38,
+              "width": 0.9,
+              "height": 0.42,
+              "bounds": {
+                "x": 40,
+                "y": 427,
+                "width": 714,
+                "height": 471
+              },
+              "metrics": {
+                "pixels": 336294,
+                "mismatchPixels": 31692,
+                "mismatchRatio": 0.09423896947313957,
+                "meanAbsoluteError": 0.03721821604042254
+              }
+            },
+            {
+              "id": "page-top",
+              "label": "Top spacing and header",
+              "x": 0,
+              "y": 0,
+              "width": 1,
+              "height": 0.24,
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 794,
+                "height": 270
+              },
+              "metrics": {
+                "pixels": 214380,
+                "mismatchPixels": 16539,
+                "mismatchRatio": 0.07714805485586342,
+                "meanAbsoluteError": 0.028234038025444556
+              }
+            },
+            {
+              "id": "content-flow",
+              "label": "Main content flow",
+              "x": 0,
+              "y": 0.24,
+              "width": 1,
+              "height": 0.56,
+              "bounds": {
+                "x": 0,
+                "y": 270,
+                "width": 794,
+                "height": 628
+              },
+              "metrics": {
+                "pixels": 498632,
+                "mismatchPixels": 42835,
+                "mismatchRatio": 0.0859050361789857,
+                "meanAbsoluteError": 0.033965166604327024
+              }
+            },
+            {
+              "id": "page-bottom",
+              "label": "Footer and bottom spacing",
+              "x": 0,
+              "y": 0.8,
+              "width": 1,
+              "height": 0.2,
+              "bounds": {
+                "x": 0,
+                "y": 898,
+                "width": 794,
+                "height": 225
+              },
+              "metrics": {
+                "pixels": 178650,
+                "mismatchPixels": 8522,
+                "mismatchRatio": 0.047702211027148056,
+                "meanAbsoluteError": 0.020523812398361447
+              }
+            }
+          ],
+          "referencePng": "png/chromium/invoice-2.png",
+          "subjectPng": "png/vellora/invoice-2.png",
+          "diffPng": "png/diff/invoice-page-2.png"
+        },
+        {
+          "page": 3,
+          "dimensions": {
+            "referenceWidth": 794,
+            "referenceHeight": 1123,
+            "subjectWidth": 794,
+            "subjectHeight": 1123,
+            "comparedWidth": 794,
+            "comparedHeight": 1123
+          },
+          "overall": {
+            "pixels": 891662,
+            "mismatchPixels": 46224,
+            "mismatchRatio": 0.05184027131356949,
+            "meanAbsoluteError": 0.018221718968717507
+          },
+          "regions": [
+            {
+              "id": "invoice-meta",
+              "label": "Invoice metadata and status badge",
+              "x": 0.52,
+              "y": 0.04,
+              "width": 0.43,
+              "height": 0.18,
+              "bounds": {
+                "x": 413,
+                "y": 45,
+                "width": 341,
+                "height": 202
+              },
+              "metrics": {
+                "pixels": 68882,
+                "mismatchPixels": 6318,
+                "mismatchRatio": 0.09172207543334979,
+                "meanAbsoluteError": 0.03706110649015577
+              }
+            },
+            {
+              "id": "invoice-parties",
+              "label": "Party cards and gutters",
+              "x": 0.05,
+              "y": 0.2,
+              "width": 0.9,
+              "height": 0.2,
+              "bounds": {
+                "x": 40,
+                "y": 225,
+                "width": 714,
+                "height": 224
+              },
+              "metrics": {
+                "pixels": 159936,
+                "mismatchPixels": 13992,
+                "mismatchRatio": 0.08748499399759904,
+                "meanAbsoluteError": 0.02858079506312206
+              }
+            },
+            {
+              "id": "invoice-items",
+              "label": "Items table rhythm",
+              "x": 0.05,
+              "y": 0.38,
+              "width": 0.9,
+              "height": 0.42,
+              "bounds": {
+                "x": 40,
+                "y": 427,
+                "width": 714,
+                "height": 471
+              },
+              "metrics": {
+                "pixels": 336294,
+                "mismatchPixels": 18887,
+                "mismatchRatio": 0.05616216762713578,
+                "meanAbsoluteError": 0.019000185450864373
+              }
+            },
+            {
+              "id": "page-top",
+              "label": "Top spacing and header",
+              "x": 0,
+              "y": 0,
+              "width": 1,
+              "height": 0.24,
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 794,
+                "height": 270
+              },
+              "metrics": {
+                "pixels": 214380,
+                "mismatchPixels": 17298,
+                "mismatchRatio": 0.08068849706129304,
+                "meanAbsoluteError": 0.029891677291618086
+              }
+            },
+            {
+              "id": "content-flow",
+              "label": "Main content flow",
+              "x": 0,
+              "y": 0.24,
+              "width": 1,
+              "height": 0.56,
+              "bounds": {
+                "x": 0,
+                "y": 270,
+                "width": 794,
+                "height": 628
+              },
+              "metrics": {
+                "pixels": 498632,
+                "mismatchPixels": 28337,
+                "mismatchRatio": 0.056829485472252084,
+                "meanAbsoluteError": 0.019180118634649176
+              }
+            },
+            {
+              "id": "page-bottom",
+              "label": "Footer and bottom spacing",
+              "x": 0,
+              "y": 0.8,
+              "width": 1,
+              "height": 0.2,
+              "bounds": {
+                "x": 0,
+                "y": 898,
+                "width": 794,
+                "height": 225
+              },
+              "metrics": {
+                "pixels": 178650,
+                "mismatchPixels": 589,
+                "mismatchRatio": 0.0032969493422893925,
+                "meanAbsoluteError": 0.0015427690247663607
+              }
+            }
+          ],
+          "referencePng": "png/chromium/invoice-3.png",
+          "subjectPng": "png/vellora/invoice-3.png",
+          "diffPng": "png/diff/invoice-page-3.png"
+        }
+      ]
+    },
+    {
+      "id": "boleto",
+      "pageCountMismatch": false,
+      "subject": {
+        "renderer": "vellora",
+        "pages": 1,
+        "bytes": 42937,
+        "sha256": "8592d43b80803655597f55682d1431ddb388a5966b57b933d7b4635b42dc0ffc",
+        "pdfPath": "pdf/vellora/boleto.pdf"
+      },
+      "reference": {
+        "renderer": "chromium",
+        "pages": 1,
+        "bytes": 69154,
+        "sha256": "cb70e177b23d3fe8f1ccd9653cf7acb68bf07bd6948d1ee5e370c44e0763021d",
+        "pdfPath": "pdf/chromium/boleto.pdf"
+      },
+      "pages": [
+        {
+          "page": 1,
+          "dimensions": {
+            "referenceWidth": 794,
+            "referenceHeight": 1123,
+            "subjectWidth": 794,
+            "subjectHeight": 1123,
+            "comparedWidth": 794,
+            "comparedHeight": 1123
+          },
+          "overall": {
+            "pixels": 891662,
+            "mismatchPixels": 110706,
+            "mismatchRatio": 0.12415691147542454,
+            "meanAbsoluteError": 0.06329207836203943
+          },
+          "regions": [
+            {
+              "id": "boleto-bank-header",
+              "label": "Bank header alignment",
+              "x": 0.05,
+              "y": 0.06,
+              "width": 0.9,
+              "height": 0.16,
+              "bounds": {
+                "x": 40,
+                "y": 67,
+                "width": 714,
+                "height": 180
+              },
+              "metrics": {
+                "pixels": 128520,
+                "mismatchPixels": 19151,
+                "mismatchRatio": 0.1490118269530034,
+                "meanAbsoluteError": 0.08311711612749878
+              }
+            },
+            {
+              "id": "boleto-field-grid",
+              "label": "Dense field grid",
+              "x": 0.05,
+              "y": 0.32,
+              "width": 0.9,
+              "height": 0.36,
+              "bounds": {
+                "x": 40,
+                "y": 359,
+                "width": 714,
+                "height": 405
+              },
+              "metrics": {
+                "pixels": 289170,
+                "mismatchPixels": 48530,
+                "mismatchRatio": 0.16782515475325932,
+                "meanAbsoluteError": 0.08481871373581615
+              }
+            },
+            {
+              "id": "boleto-barcode-footer",
+              "label": "Barcode and footer spacing",
+              "x": 0.05,
+              "y": 0.82,
+              "width": 0.9,
+              "height": 0.14,
+              "bounds": {
+                "x": 40,
+                "y": 921,
+                "width": 714,
+                "height": 157
+              },
+              "metrics": {
+                "pixels": 112098,
+                "mismatchPixels": 12909,
+                "mismatchRatio": 0.11515816517689878,
+                "meanAbsoluteError": 0.043409425716078864
+              }
+            },
+            {
+              "id": "page-top",
+              "label": "Top spacing and header",
+              "x": 0,
+              "y": 0,
+              "width": 1,
+              "height": 0.24,
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 794,
+                "height": 270
+              },
+              "metrics": {
+                "pixels": 214380,
+                "mismatchPixels": 20272,
+                "mismatchRatio": 0.09456105980035451,
+                "meanAbsoluteError": 0.051085245367856295
+              }
+            },
+            {
+              "id": "content-flow",
+              "label": "Main content flow",
+              "x": 0,
+              "y": 0.24,
+              "width": 1,
+              "height": 0.56,
+              "bounds": {
+                "x": 0,
+                "y": 270,
+                "width": 794,
+                "height": 628
+              },
+              "metrics": {
+                "pixels": 498632,
+                "mismatchPixels": 73490,
+                "mismatchRatio": 0.14738324054613422,
+                "meanAbsoluteError": 0.07673747530105604
+              }
+            },
+            {
+              "id": "page-bottom",
+              "label": "Footer and bottom spacing",
+              "x": 0,
+              "y": 0.8,
+              "width": 1,
+              "height": 0.2,
+              "bounds": {
+                "x": 0,
+                "y": 898,
+                "width": 794,
+                "height": 225
+              },
+              "metrics": {
+                "pixels": 178650,
+                "mismatchPixels": 16944,
+                "mismatchRatio": 0.0948446683459278,
+                "meanAbsoluteError": 0.04041268116538002
+              }
+            }
+          ],
+          "referencePng": "png/chromium/boleto-1.png",
+          "subjectPng": "png/vellora/boleto-1.png",
+          "diffPng": "png/diff/boleto-page-1.png"
+        }
+      ]
+    }
+  ]
+}
