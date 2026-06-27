@@ -9,7 +9,7 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "cargo build --release && npm -w @vellora/native run build:addon && npm run build:ts",
-    "build:ts": "npm -w @vellora/lint run build && npm -w @vellora/native run build && npm -w @vellora/test-harness run build && npm -w vellora run build && npm -w @vellora/cli run build",
+    "build:ts": "npm -w @vellora/lint run build && npm -w @vellora/native run build && npm -w @vellora/test-harness run build && npm -w vellora run build && npm -w @vellora/engine-chromium run build && npm -w @vellora/cli run build",
     "test": "npm run test:rust && npm run test:ts",
     "test:rust": "cargo test",
     "test:ts": "vitest run",

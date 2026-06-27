@@ -1,8 +1,8 @@
 # Releasing vellora
 
-vellora publishes four packages — `vellora`, `@vellora/native`, `@vellora/lint`, `@vellora/cli` —
-as a **fixed** version group (they always share one version), plus the per-platform prebuilt
-addon packages under `packages/native/npm/*`.
+vellora publishes five workspace packages — `vellora`, `@vellora/native`, `@vellora/lint`,
+`@vellora/cli`, `@vellora/engine-chromium` — as a **fixed** version group (they always share one
+version), plus the per-platform prebuilt addon packages under `packages/native/npm/*`.
 
 Releases are tag-driven. Publishing runs from [`.github/workflows/release.yml`](.github/workflows/release.yml)
 with **npm provenance** after a GitHub Release is published. The release tag is the single source
@@ -82,7 +82,8 @@ To roll back a bad release:
 1. **Deprecate** the bad version with a message pointing at the fix:
    ```bash
    npm deprecate vellora@<bad-version> "Broken release — upgrade to <good-version>."
-   # repeat for @vellora/native, @vellora/lint, @vellora/cli and the affected @vellora/native-* prebuilds
+   # repeat for @vellora/native, @vellora/lint, @vellora/cli, @vellora/engine-chromium,
+   # and the affected @vellora/native-* prebuilds
    ```
 2. **Publish a superseding patch** (new changeset → new version) with the correction.
 3. Optionally move the `latest` dist-tag back to the last known-good version:

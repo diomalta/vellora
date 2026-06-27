@@ -17,7 +17,12 @@ import {
   conformanceFromDiagnostic,
   unsupportedFromDiagnostic,
 } from "./errors.js";
-import type { BridgeRenderOptions, NativeBridge, RenderOptions } from "./types.js";
+import type {
+  BridgeRenderOptions,
+  ChromiumEngineOptions,
+  NativeBridge,
+  RenderOptions,
+} from "./types.js";
 
 /**
  * Map a `@vellora/lint` `RuleId` (kebab-case) onto the SAME colon-namespaced `feature` taxonomy the
@@ -132,6 +137,42 @@ function validateFonts(fonts: Uint8Array[]): void {
   });
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Shape-check browser-engine options at the public boundary. The Chromium engine still owns
+ * browser-specific semantics; this only prevents obviously wrong runtime values from crossing the
+ * bridge as opaque data.
+ */
+function validateChromiumOptions(chromium: ChromiumEngineOptions): void {
+  if (!isPlainObject(chromium)) {
+    throw new VelloraInputError("chromium must be an object when provided.");
+  }
+  const value = chromium as Record<string, unknown>;
+  if (value.executablePath !== undefined && typeof value.executablePath !== "string") {
+    throw new VelloraInputError("chromium.executablePath must be a string when provided.");
+  }
+  if (value.args !== undefined && !Array.isArray(value.args)) {
+    throw new VelloraInputError("chromium.args must be an array of strings when provided.");
+  }
+  if (Array.isArray(value.args) && value.args.some((arg) => typeof arg !== "string")) {
+    throw new VelloraInputError("chromium.args entries must be strings.");
+  }
+  if (
+    value.timeoutMs !== undefined &&
+    (typeof value.timeoutMs !== "number" ||
+      !Number.isFinite(value.timeoutMs) ||
+      value.timeoutMs <= 0)
+  ) {
+    throw new VelloraInputError("chromium.timeoutMs must be a positive finite number.");
+  }
+  if (value.pdf !== undefined && !isPlainObject(value.pdf)) {
+    throw new VelloraInputError("chromium.pdf must be an object when provided.");
+  }
+}
+
 /** Resolve public `RenderOptions` into the fully-resolved config handed to the bridge. */
 export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
   const metadata = opts.metadata ?? {};
@@ -159,6 +200,10 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
   if (opts.baseUrl !== undefined) {
     validateBaseUrl(opts.baseUrl);
     resolved.baseUrl = opts.baseUrl;
+  }
+  if (opts.chromium !== undefined) {
+    validateChromiumOptions(opts.chromium);
+    resolved.chromium = opts.chromium;
   }
   return resolved;
 }

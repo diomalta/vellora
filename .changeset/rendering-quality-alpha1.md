@@ -3,6 +3,7 @@
 "@vellora/native": patch
 "@vellora/lint": patch
 "@vellora/cli": patch
+"@vellora/engine-chromium": patch
 ---
 
 Improve browser-compatible document rendering for invoice and boleto templates.

@@ -140,12 +140,12 @@ jobs:
         # auth). napi pre-publish --dry-run validates the per-platform package prep.
         run: |
           npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run
-          npm publish --dry-run --tag "$NPM_DIST_TAG" --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli
+          npm publish --dry-run --tag "$NPM_DIST_TAG" --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli --workspace @vellora/engine-chromium
       - name: Publish to npm with provenance
         if: ${{ github.event_name == 'release' }}
         # Provenance comes from NPM_CONFIG_PROVENANCE (below) — `changeset publish` has no
         # --provenance flag. napi pre-publish publishes the per-platform packages; changeset publish
-        # publishes the four main packages (and skips any already on the registry).
+        # publishes the fixed-version workspace packages (and skips any already on the registry).
         run: |
           npm -w @vellora/native exec -- napi pre-publish -t npm
           npx changeset publish --tag "$NPM_DIST_TAG"
@@ -159,7 +159,7 @@ jobs:
         # The registry read API lags behind a publish, so retry before failing — otherwise this
         # false-negatives on a freshly published package that isn't queryable yet.
         run: |
-          for pkg in vellora @vellora/native @vellora/lint @vellora/cli; do
+          for pkg in vellora @vellora/native @vellora/lint @vellora/cli @vellora/engine-chromium; do
             echo "Checking provenance attestation for $pkg ..."
             for attempt in 1 2 3 4 5 6; do
               if npm view "$pkg" dist.attestations --json 2>/dev/null | grep -q provenance; then

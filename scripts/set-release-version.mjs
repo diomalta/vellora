@@ -1,7 +1,7 @@
 // Set every published package to one version, from a release tag.
 //
 // Tag-driven release: the GitHub Release tag is the single source of truth for the version
-// (replacing `changeset version`). This rewrites, in lockstep, the four fixed-group packages,
+// (replacing `changeset version`). This rewrites, in lockstep, the fixed-group packages,
 // their exact internal cross-package pins, and the four per-platform addon packages + the
 // optionalDependency pins on `@vellora/native`. `napi pre-publish` and `changeset publish` then
 // publish the files as-is.
@@ -31,10 +31,12 @@ if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
   process.exit(1);
 }
 
-// The four fixed-group packages always share one version; the per-platform prebuilt addon
+// The fixed-group workspace packages always share one version; the per-platform prebuilt addon
 // packages (not workspaces; published by napi) track it too.
 const FILES = [
-  ...["vellora", "native", "cli", "lint"].map((p) => `packages/${p}/package.json`),
+  ...["vellora", "native", "cli", "lint", "engine-chromium"].map(
+    (p) => `packages/${p}/package.json`,
+  ),
   ...readdirSync(join(ROOT, "packages/native/npm")).map(
     (d) => `packages/native/npm/${d}/package.json`,
   ),

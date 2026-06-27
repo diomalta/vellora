@@ -63,6 +63,26 @@ function harness(files: Record<string, string | Uint8Array> = {}) {
         report: report(),
       };
     },
+    async diffPdfs() {
+      return {
+        available: true,
+        ok: true,
+        dpi: 144,
+        threshold: 12,
+        budget: 0.02,
+        referencePages: 1,
+        subjectPages: 1,
+        comparedPages: 1,
+        pageCountMismatch: false,
+        dimensionMismatch: false,
+        pixels: 100,
+        mismatchPixels: 0,
+        mismatchRatio: 0,
+        meanAbsoluteError: 0,
+        maxChannelDelta: 0,
+        pages: [],
+      };
+    },
   };
   return {
     io,
@@ -99,6 +119,8 @@ describe("help and command discovery", () => {
     expect(h.stdout).toContain("render");
     expect(h.stdout).toContain("lint");
     expect(h.stdout).toContain("fix");
+    expect(h.stdout).toContain("doctor");
+    expect(h.stdout).toContain("fidelity");
   });
 
   test("unknown command fails with usage", async () => {
@@ -261,6 +283,39 @@ describe("render command", () => {
       fonts: [new Uint8Array([4, 5, 6])],
     });
   });
+
+  test("forwards engine and fidelity routing options", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+    let optsSeen: unknown;
+    h.deps.renderPdf = async (_html, _data, opts) => {
+      optsSeen = opts;
+      return new TextEncoder().encode("%PDF-AUTO");
+    };
+    const code = await runCli(
+      [
+        "render",
+        "template.html",
+        "--out",
+        "out.pdf",
+        "--engine",
+        "auto",
+        "--template-id",
+        "invoice",
+        "--policy",
+        "vellora.fidelity.json",
+      ],
+      h.io,
+      h.deps,
+    );
+    expect(code).toBe(EXIT_CODES.success);
+    expect(optsSeen).toMatchObject({
+      engine: "auto",
+      fidelity: {
+        templateId: "invoice",
+        policyPath: "vellora.fidelity.json",
+      },
+    });
+  });
 });
 
 describe("lint command", () => {
@@ -362,5 +417,409 @@ describe("fix command", () => {
       html: '<img src="data:image/png;base64,x">',
       report: { conformant: true },
     });
+  });
+});
+
+describe("doctor command", () => {
+  test("writes render artifacts, a report, and a policy suggestion", async () => {
+    const h = harness({ "template.html": "<svg></svg>" });
+    h.deps.diagnose = () => report([{ rule: "inline-svg" }]);
+    h.deps.renderPdf = async (_html, _data, opts) =>
+      new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+
+    const code = await runCli(
+      [
+        "doctor",
+        "template.html",
+        "--out",
+        "artifacts",
+        "--reference",
+        "chromium",
+        "--template-id",
+        "invoice",
+        "--json",
+      ],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.diagnosticsFound);
+    expect(new TextDecoder().decode(h.writes["artifacts/native.pdf"] as Uint8Array)).toBe(
+      "%PDF-native",
+    );
+    expect(new TextDecoder().decode(h.writes["artifacts/chromium.pdf"] as Uint8Array)).toBe(
+      "%PDF-chromium",
+    );
+    const reportJson = JSON.parse(h.writes["artifacts/report.json"] as string);
+    expect(reportJson).toMatchObject({
+      status: "needs-browser",
+      recommendation: "chromium",
+    });
+    const policyJson = JSON.parse(h.writes["artifacts/vellora.fidelity.json"] as string);
+    expect(policyJson.templates.invoice.selectedEngine).toBe("chromium");
+    expect(JSON.parse(h.stdout)).toMatchObject({ status: "needs-browser" });
+  });
+
+  test("returns reference-unavailable when Chromium cannot be loaded", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+    h.deps.renderPdf = async (_html, _data, opts) => {
+      if (opts?.engine === "chromium") {
+        throw Object.assign(new Error("Set chromium.executablePath"), {
+          code: "VELLORA_CHROMIUM_UNAVAILABLE",
+        });
+      }
+      return new TextEncoder().encode("%PDF-native");
+    };
+
+    const code = await runCli(
+      ["doctor", "template.html", "--reference", "chromium", "--json"],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.referenceUnavailable);
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      status: "reference-unavailable",
+      recommendation: "native",
+    });
+  });
+
+  test("pixel diff implies a Chromium reference and recommends Chromium when over budget", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+    h.deps.renderPdf = async (_html, _data, opts) =>
+      new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+    const diffCalls: unknown[] = [];
+    h.deps.diffPdfs = async (referencePdf, subjectPdf, options) => {
+      diffCalls.push({
+        reference: new TextDecoder().decode(referencePdf),
+        subject: new TextDecoder().decode(subjectPdf),
+        options,
+      });
+      return {
+        available: true,
+        ok: false,
+        dpi: 144,
+        threshold: 12,
+        budget: 0.02,
+        referencePages: 1,
+        subjectPages: 1,
+        comparedPages: 1,
+        pageCountMismatch: false,
+        dimensionMismatch: false,
+        pixels: 100,
+        mismatchPixels: 8,
+        mismatchRatio: 0.08,
+        meanAbsoluteError: 0.03,
+        maxChannelDelta: 90,
+        pages: [{ page: 1, dimensions: {}, metrics: {} }],
+      } as never;
+    };
+
+    const code = await runCli(
+      [
+        "doctor",
+        "template.html",
+        "--pixel-diff",
+        "--pixel-budget",
+        "0.02",
+        "--out",
+        "artifacts",
+        "--json",
+      ],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.diagnosticsFound);
+    expect(diffCalls).toMatchObject([
+      {
+        reference: "%PDF-chromium",
+        subject: "%PDF-native",
+        options: { outDir: "artifacts", budget: 0.02, threshold: 12, dpi: 144 },
+      },
+    ]);
+    expect(JSON.parse(h.writes["artifacts/report.json"] as string)).toMatchObject({
+      status: "needs-browser",
+      recommendation: "chromium",
+      visualDiff: { mismatchRatio: 0.08 },
+    });
+  });
+
+  test("pixel diff keeps native recommendation when inside budget", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+    h.deps.renderPdf = async (_html, _data, opts) =>
+      new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+    h.deps.diffPdfs = async () => ({
+      available: true,
+      ok: true,
+      dpi: 144,
+      threshold: 12,
+      budget: 0.02,
+      referencePages: 1,
+      subjectPages: 1,
+      comparedPages: 1,
+      pageCountMismatch: false,
+      dimensionMismatch: false,
+      pixels: 100,
+      mismatchPixels: 1,
+      mismatchRatio: 0.01,
+      meanAbsoluteError: 0.002,
+      maxChannelDelta: 20,
+      pages: [],
+    });
+
+    const code = await runCli(["doctor", "template.html", "--pixel-diff", "--json"], h.io, h.deps);
+
+    expect(code).toBe(EXIT_CODES.success);
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      status: "pass",
+      recommendation: "native",
+      visualDiff: { ok: true },
+    });
+  });
+
+  test("pixel diff can compare against a local reference PDF without rendering Chromium", async () => {
+    const h = harness({
+      "template.html": "<p>x</p>",
+      "legacy-puppeteer.pdf": new TextEncoder().encode("%PDF-LEGACY"),
+    });
+    const renderEngines: unknown[] = [];
+    h.deps.renderPdf = async (_html, _data, opts) => {
+      renderEngines.push(opts?.engine ?? "native");
+      return new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+    };
+    const diffCalls: unknown[] = [];
+    h.deps.diffPdfs = async (referencePdf, subjectPdf) => {
+      diffCalls.push({
+        reference: new TextDecoder().decode(referencePdf),
+        subject: new TextDecoder().decode(subjectPdf),
+      });
+      return {
+        available: true,
+        ok: true,
+        dpi: 144,
+        threshold: 12,
+        budget: 0.02,
+        referencePages: 1,
+        subjectPages: 1,
+        comparedPages: 1,
+        pageCountMismatch: false,
+        dimensionMismatch: false,
+        pixels: 100,
+        mismatchPixels: 1,
+        mismatchRatio: 0.01,
+        meanAbsoluteError: 0.002,
+        maxChannelDelta: 20,
+        pages: [],
+      };
+    };
+
+    const code = await runCli(
+      [
+        "doctor",
+        "template.html",
+        "--pixel-diff",
+        "--reference-pdf",
+        "legacy-puppeteer.pdf",
+        "--out",
+        "artifacts",
+        "--json",
+      ],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.success);
+    expect(renderEngines).toEqual(["native"]);
+    expect(diffCalls).toEqual([{ reference: "%PDF-LEGACY", subject: "%PDF-native" }]);
+    expect(new TextDecoder().decode(h.writes["artifacts/reference.pdf"] as Uint8Array)).toBe(
+      "%PDF-LEGACY",
+    );
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      reference: { type: "pdf", path: "legacy-puppeteer.pdf" },
+      subject: { type: "engine", engine: "native" },
+      status: "pass",
+      recommendation: "native",
+    });
+  });
+
+  test("pixel diff can compare a local Puppeteer PDF against the Chromium subject", async () => {
+    const h = harness({
+      "template.html": "<p>x</p>",
+      "legacy-puppeteer.pdf": new TextEncoder().encode("%PDF-PUPPETEER"),
+    });
+    const renderEngines: unknown[] = [];
+    h.deps.renderPdf = async (_html, _data, opts) => {
+      renderEngines.push(opts?.engine ?? "native");
+      return new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+    };
+    const diffCalls: unknown[] = [];
+    h.deps.diffPdfs = async (referencePdf, subjectPdf) => {
+      diffCalls.push({
+        reference: new TextDecoder().decode(referencePdf),
+        subject: new TextDecoder().decode(subjectPdf),
+      });
+      return {
+        available: true,
+        ok: true,
+        dpi: 144,
+        threshold: 12,
+        budget: 0.02,
+        referencePages: 1,
+        subjectPages: 1,
+        comparedPages: 1,
+        pageCountMismatch: false,
+        dimensionMismatch: false,
+        pixels: 100,
+        mismatchPixels: 0,
+        mismatchRatio: 0,
+        meanAbsoluteError: 0,
+        maxChannelDelta: 0,
+        pages: [],
+      };
+    };
+
+    const code = await runCli(
+      [
+        "doctor",
+        "template.html",
+        "--pixel-diff",
+        "--reference-pdf",
+        "legacy-puppeteer.pdf",
+        "--subject",
+        "chromium",
+        "--out",
+        "artifacts",
+        "--json",
+      ],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.diagnosticsFound);
+    expect(renderEngines).toEqual(["chromium"]);
+    expect(diffCalls).toEqual([{ reference: "%PDF-PUPPETEER", subject: "%PDF-chromium" }]);
+    expect(new TextDecoder().decode(h.writes["artifacts/chromium.pdf"] as Uint8Array)).toBe(
+      "%PDF-chromium",
+    );
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      comparison: {
+        reference: { type: "pdf", path: "legacy-puppeteer.pdf" },
+        subject: { type: "engine", engine: "chromium" },
+      },
+      status: "needs-browser",
+      recommendation: "chromium",
+    });
+  });
+
+  test("subject requires pixel diff", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+
+    const code = await runCli(["doctor", "template.html", "--subject", "chromium"], h.io, h.deps);
+
+    expect(code).toBe(EXIT_CODES.invalidUsage);
+    expect(h.stderr).toContain("--subject requires --pixel-diff");
+  });
+
+  test("reference-pdf requires pixel diff", async () => {
+    const h = harness({
+      "template.html": "<p>x</p>",
+      "legacy.pdf": new TextEncoder().encode("%PDF-LEGACY"),
+    });
+
+    const code = await runCli(
+      ["doctor", "template.html", "--reference-pdf", "legacy.pdf"],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.invalidUsage);
+    expect(h.stderr).toContain("--reference-pdf requires --pixel-diff");
+  });
+
+  test("reference-pdf cannot be combined with a live reference engine", async () => {
+    const h = harness({
+      "template.html": "<p>x</p>",
+      "legacy.pdf": new TextEncoder().encode("%PDF-LEGACY"),
+    });
+
+    const code = await runCli(
+      [
+        "doctor",
+        "template.html",
+        "--pixel-diff",
+        "--reference-pdf",
+        "legacy.pdf",
+        "--reference",
+        "chromium",
+      ],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.invalidUsage);
+    expect(h.stderr).toContain("cannot be combined");
+  });
+
+  test("pixel diff failure exits runtime failure with an explicit status", async () => {
+    const h = harness({ "template.html": "<p>x</p>" });
+    h.deps.renderPdf = async (_html, _data, opts) =>
+      new TextEncoder().encode(`%PDF-${opts?.engine ?? "native"}`);
+    h.deps.diffPdfs = async () => {
+      throw new Error("missing pdftoppm");
+    };
+
+    const code = await runCli(["doctor", "template.html", "--pixel-diff", "--json"], h.io, h.deps);
+
+    expect(code).toBe(EXIT_CODES.runtimeFailure);
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      status: "diff-unavailable",
+      recommendation: "manual-review",
+      visualDiff: { available: false, error: "missing pdftoppm" },
+    });
+  });
+});
+
+describe("fidelity command", () => {
+  test("validates a policy file", async () => {
+    const h = harness({
+      "vellora.fidelity.json": JSON.stringify({
+        version: 1,
+        templates: {
+          invoice: { selectedEngine: "native" },
+          dashboard: { selectedEngine: "chromium" },
+        },
+      }),
+    });
+
+    const code = await runCli(
+      ["fidelity", "--config", "vellora.fidelity.json", "--json"],
+      h.io,
+      h.deps,
+    );
+
+    expect(code).toBe(EXIT_CODES.success);
+    expect(JSON.parse(h.stdout)).toMatchObject({
+      valid: true,
+      templates: 2,
+      native: 1,
+      chromium: 1,
+    });
+  });
+
+  test("rejects invalid selectedEngine values", async () => {
+    const h = harness({
+      "vellora.fidelity.json": JSON.stringify({
+        version: 1,
+        templates: {
+          invoice: { selectedEngine: "auto" },
+        },
+      }),
+    });
+
+    const code = await runCli(["fidelity", "--config", "vellora.fidelity.json"], h.io, h.deps);
+
+    expect(code).toBe(EXIT_CODES.invalidUsage);
+    expect(h.stderr).toContain("selectedEngine");
   });
 });

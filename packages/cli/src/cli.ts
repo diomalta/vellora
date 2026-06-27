@@ -5,32 +5,17 @@ import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import type { Report } from "@vellora/lint";
-import type { RenderData, RenderOptions } from "vellora";
+import { asString, bool, requireSingleInput } from "./args.js";
+import { DOCTOR_USAGE, handleDoctor } from "./doctor.js";
+import { UsageError, formatRuntimeError, isParseArgsError, messageOf } from "./errors.js";
+import { FIDELITY_USAGE, handleFidelity } from "./fidelity.js";
+import { printJson } from "./format.js";
+import { diffPdfPixels } from "./pixel-diff.js";
+import { buildRenderInputs, readInput } from "./render-inputs.js";
+import { type CliDeps, type CliIo, EXIT_CODES, type ExitCode } from "./types.js";
 
-export const EXIT_CODES = {
-  success: 0,
-  diagnosticsFound: 1,
-  invalidUsage: 2,
-  runtimeFailure: 3,
-} as const;
-
-export type ExitCode = (typeof EXIT_CODES)[keyof typeof EXIT_CODES];
-
-export interface CliDeps {
-  renderPdf(html: string, data?: RenderData, opts?: RenderOptions): Promise<Uint8Array>;
-  diagnose(html: string): Report | Promise<Report>;
-  fix(html: string): { html: string; report: Report } | Promise<{ html: string; report: Report }>;
-}
-
-export interface CliIo {
-  stdout(text: string): void;
-  stderr(text: string): void;
-  readFile(path: string): Promise<Uint8Array>;
-  writeFile(path: string, data: string | Uint8Array): Promise<void>;
-  replaceFile(path: string, data: string | Uint8Array): Promise<void>;
-  mkdir(path: string): Promise<void>;
-  readStdin(): Promise<string>;
-}
+export { EXIT_CODES } from "./types.js";
+export type { CliDeps, CliIo, ExitCode } from "./types.js";
 
 const defaultDeps: CliDeps = {
   async renderPdf(html, data, opts) {
@@ -45,6 +30,7 @@ const defaultDeps: CliDeps = {
     const mod = await import("@vellora/lint");
     return mod.fix(html);
   },
+  diffPdfs: diffPdfPixels,
 };
 
 const defaultIo: CliIo = {
@@ -92,108 +78,43 @@ async function replaceFile(path: string, data: string | Uint8Array): Promise<voi
 
 function usage(): string {
   return `Usage:
-  vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--base-url url] [--image key=path] [--font path]
+  vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]
   vellora lint <input|-> [--json]
   vellora fix <input|-> [--write] [--json]
+  vellora doctor <input|-> [--out dir] [--json] [--reference chromium] [--reference-pdf file] [--subject native|chromium] [--pixel-diff] [--pixel-budget ratio] [--template-id id] [--policy file]
+  vellora fidelity --config vellora.fidelity.json [--json]
 
 Commands:
   render   Render HTML to PDF using the public vellora API
   lint     Diagnose template subset issues via @vellora/lint
   fix      Rewrite common subset issues via @vellora/lint
+  doctor   Render fidelity artifacts, optionally pixel-diff them, and emit a routing report
+  fidelity Validate a fidelity policy file
 
 Exit codes:
   0 success
   1 diagnostics found by lint
   2 invalid usage, missing input, or invalid file/JSON input
   3 render/lint/fix runtime failure
+  4 requested reference engine unavailable
 `;
 }
 
 function commandUsage(command: string): string {
   switch (command) {
     case "render":
-      return "Usage: vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--base-url url] [--image key=path] [--font path]\n";
+      return "Usage: vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]\n";
     case "lint":
       return "Usage: vellora lint <input|-> [--json]\n";
     case "fix":
       return "Usage: vellora fix <input|-> [--write] [--json]\n";
+    case "doctor":
+      return DOCTOR_USAGE;
+    case "fidelity":
+      return FIDELITY_USAGE;
     default:
       return usage();
   }
-}
-
-function asArray(value: string | string[] | boolean | undefined): string[] {
-  if (value === undefined || typeof value === "boolean") {
-    return [];
-  }
-  return Array.isArray(value) ? value : [value];
-}
-
-function asString(value: string | string[] | boolean | undefined): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
-
-function bool(value: string | boolean | string[] | undefined): boolean {
-  return value === true;
-}
-
-function requireSingleInput(command: string, positionals: string[]): string {
-  if (positionals.length === 0) {
-    throw new UsageError(`${command} requires <input|->.`);
-  }
-  if (positionals.length > 1) {
-    throw new UsageError(
-      `${command} accepts exactly one <input|->, received ${positionals.length}: ${positionals.map((value) => JSON.stringify(value)).join(", ")}.`,
-    );
-  }
-  return positionals[0] as string;
-}
-
-async function readInput(input: string, io: CliIo): Promise<string> {
-  if (input === "-") {
-    return io.readStdin();
-  }
-  return new TextDecoder().decode(await io.readFile(input));
-}
-
-async function readJson(path: string, io: CliIo): Promise<RenderData> {
-  const text = new TextDecoder().decode(await io.readFile(path));
-  try {
-    const parsed = JSON.parse(text) as unknown;
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("expected a JSON object");
-    }
-    return parsed as RenderData;
-  } catch (cause) {
-    throw new UsageError(`Invalid JSON data file ${JSON.stringify(path)}: ${messageOf(cause)}`);
-  }
-}
-
-async function readImages(
-  entries: string[],
-  io: CliIo,
-): Promise<Record<string, Uint8Array> | undefined> {
-  if (entries.length === 0) {
-    return undefined;
-  }
-  const images: Record<string, Uint8Array> = {};
-  for (const entry of entries) {
-    const split = entry.indexOf("=");
-    if (split <= 0 || split === entry.length - 1) {
-      throw new UsageError(`--image expects key=path, received ${JSON.stringify(entry)}`);
-    }
-    const key = entry.slice(0, split);
-    const path = entry.slice(split + 1);
-    images[key] = await io.readFile(path);
-  }
-  return images;
-}
-
-async function readFonts(paths: string[], io: CliIo): Promise<Uint8Array[] | undefined> {
-  if (paths.length === 0) {
-    return undefined;
-  }
-  return Promise.all(paths.map((path) => io.readFile(path)));
 }
 
 function printHumanReport(report: Report): string {
@@ -208,37 +129,6 @@ function printHumanReport(report: Report): string {
     .join("\n")}\n`;
 }
 
-function printJson(value: unknown): string {
-  return `${JSON.stringify(value, null, 2)}\n`;
-}
-
-class UsageError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UsageError";
-  }
-}
-
-function messageOf(reason: unknown): string {
-  return reason instanceof Error ? reason.message : String(reason);
-}
-
-function formatRuntimeError(reason: unknown): string {
-  const record =
-    typeof reason === "object" && reason !== null ? (reason as Record<string, unknown>) : {};
-  const code = typeof record.code === "string" ? `${record.code}: ` : "";
-  const feature = typeof record.feature === "string" ? ` feature=${record.feature}` : "";
-  return `${code}${messageOf(reason)}${feature}`;
-}
-
-function isParseArgsError(reason: unknown): boolean {
-  if (!(reason instanceof TypeError)) {
-    return false;
-  }
-  const code = (reason as { code?: unknown }).code;
-  return typeof code === "string" && code.startsWith("ERR_PARSE_ARGS");
-}
-
 async function handleRender(args: string[], io: CliIo, deps: CliDeps): Promise<ExitCode> {
   const parsed = parseArgs({
     args,
@@ -249,6 +139,9 @@ async function handleRender(args: string[], io: CliIo, deps: CliDeps): Promise<E
       title: { type: "string" },
       "creation-date": { type: "string" },
       "no-strict": { type: "boolean" },
+      engine: { type: "string" },
+      "template-id": { type: "string" },
+      policy: { type: "string" },
       "base-url": { type: "string" },
       image: { type: "string", multiple: true },
       font: { type: "string", multiple: true },
@@ -266,34 +159,7 @@ async function handleRender(args: string[], io: CliIo, deps: CliDeps): Promise<E
   }
 
   const html = await readInput(input, io);
-  const data = parsed.values.data ? await readJson(String(parsed.values.data), io) : undefined;
-  const opts: RenderOptions = {
-    strict: !bool(parsed.values["no-strict"]),
-  };
-  const title = asString(parsed.values.title);
-  const creationDate = asString(parsed.values["creation-date"]);
-  if (title !== undefined || creationDate !== undefined) {
-    opts.metadata = {};
-    if (title !== undefined) {
-      opts.metadata.title = title;
-    }
-    if (creationDate !== undefined) {
-      opts.metadata.creationDate = creationDate;
-    }
-  }
-  const baseUrl = asString(parsed.values["base-url"]);
-  if (baseUrl !== undefined) {
-    opts.baseUrl = baseUrl;
-  }
-  const images = await readImages(asArray(parsed.values.image), io);
-  if (images !== undefined) {
-    opts.images = images;
-  }
-  const fonts = await readFonts(asArray(parsed.values.font), io);
-  if (fonts !== undefined) {
-    opts.fonts = fonts;
-  }
-
+  const { data, opts } = await buildRenderInputs(parsed.values, io);
   const pdf = await deps.renderPdf(html, data, opts);
   await io.mkdir(dirname(out));
   await io.writeFile(out, pdf);
@@ -371,6 +237,10 @@ export async function runCli(
         return await handleLint(args, io, deps);
       case "fix":
         return await handleFix(args, io, deps);
+      case "doctor":
+        return await handleDoctor(args, io, deps);
+      case "fidelity":
+        return await handleFidelity(args, io);
       default:
         io.stderr(`Unknown command: ${command}\n${usage()}`);
         return EXIT_CODES.invalidUsage;
