@@ -31,6 +31,9 @@ export interface RenderMetadata {
   creationDate?: string;
 }
 
+/** Exact PDF/A profiles currently supported by vellora. */
+export type PdfAProfile = "PDF/A-2b";
+
 /**
  * Public render options. `opts` is the single carrier for render configuration and is forwarded to
  * the orchestration and native layers. `metadata`, `images`, `baseUrl`, and `fonts` all have a
@@ -39,6 +42,8 @@ export interface RenderMetadata {
 export interface RenderOptions {
   /** Strict-by-default: validate, never mutate. `false` runs `@vellora/lint` fixers first. */
   strict?: boolean;
+  /** Emit an archival PDF using the named PDF/A profile. Currently only `PDF/A-2b` is supported. */
+  pdfa?: PdfAProfile;
   /** Document metadata (title, creation date). */
   metadata?: RenderMetadata;
   /**
@@ -83,6 +88,7 @@ export interface RenderBatchOptions {
  */
 export interface BridgeRenderOptions {
   metadata: RenderMetadata & { creationDate: string };
+  pdfa?: PdfAProfile;
   fonts?: Uint8Array[];
   images?: Record<string, Uint8Array>;
   baseUrl?: string;

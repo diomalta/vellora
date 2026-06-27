@@ -9,6 +9,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use krilla::color::rgb;
+use krilla::configure::{Archival, ConfigurationBuilder};
+use krilla::error::KrillaError;
 use krilla::geom::{Path, PathBuilder, Point, Rect, Size, Transform};
 use krilla::image::Image;
 use krilla::metadata::{DateTime, Metadata};
@@ -111,11 +113,43 @@ pub struct DocMeta {
     pub title: Option<String>,
     /// Deterministic creation date as (year, month, day). Never wall-clock.
     pub creation_date: Option<(u16, u8, u8)>,
+    /// Optional archival conformance profile.
+    pub pdfa: Option<PdfAProfile>,
+}
+
+/// PDF/A profiles currently supported by vellora.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PdfAProfile {
+    A2B,
+}
+
+impl PdfAProfile {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::A2B => "PDF/A-2b",
+        }
+    }
+}
+
+/// Error emitted by the PDF backend.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PdfEmitError {
+    Render(String),
+    Conformance {
+        profile: PdfAProfile,
+        errors: Vec<String>,
+    },
+}
+
+impl From<String> for PdfEmitError {
+    fn from(message: String) -> Self {
+        Self::Render(message)
+    }
 }
 
 /// Emit the paginated pages to a PDF byte stream.
-pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, String> {
-    let mut document = Document::new_with(SerializeSettings::default());
+pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> {
+    let mut document = Document::new_with(serialize_settings(meta.pdfa)?);
 
     // Metadata. Producer is fixed to vellora; title + creation date are
     // caller-supplied and deterministic.
@@ -171,7 +205,42 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, String> {
 
     document
         .finish()
-        .map_err(|e| format!("krilla finish failed: {e:?}"))
+        .map_err(|err| finish_error(err, meta.pdfa))
+}
+
+fn serialize_settings(pdfa: Option<PdfAProfile>) -> Result<SerializeSettings, PdfEmitError> {
+    let Some(profile) = pdfa else {
+        return Ok(SerializeSettings::default());
+    };
+    let configuration = match profile {
+        PdfAProfile::A2B => ConfigurationBuilder::new()
+            .with_archival_validator(Archival::A2_B)
+            .finish(),
+    }
+    .map_err(|err| {
+        PdfEmitError::Render(format!(
+            "invalid {} configuration: {err:?}",
+            profile.as_str()
+        ))
+    })?;
+
+    Ok(SerializeSettings {
+        configuration,
+        ..SerializeSettings::default()
+    })
+}
+
+fn finish_error(err: KrillaError, pdfa: Option<PdfAProfile>) -> PdfEmitError {
+    match (err, pdfa) {
+        (KrillaError::Validation(errors), Some(profile)) => PdfEmitError::Conformance {
+            profile,
+            errors: errors
+                .into_iter()
+                .map(|(error, validators)| format!("{error:?} ({validators:?})"))
+                .collect(),
+        },
+        (err, _) => PdfEmitError::Render(format!("krilla finish failed: {err:?}")),
+    }
 }
 
 /// Set a solid (fully opaque) sRGB fill on the surface.

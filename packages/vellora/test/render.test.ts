@@ -139,6 +139,12 @@ describe("renderPdf", () => {
     expect(bridge.calls[0]?.options.baseUrl).toBe(baseUrl);
   });
 
+  test("pdfa is forwarded to the bridge unchanged", async () => {
+    const bridge = new MockNativeBridge();
+    await renderPdf(SAFE_HTML, { name: "x" }, { ...withBridge(bridge), pdfa: "PDF/A-2b" });
+    expect(bridge.calls[0]?.options.pdfa).toBe("PDF/A-2b");
+  });
+
   test("an invalid baseUrl rejects with VelloraInputError", async () => {
     // A bare path has no scheme, so it is not a valid absolute base URL.
     await expect(

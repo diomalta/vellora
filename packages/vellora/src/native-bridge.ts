@@ -17,6 +17,7 @@ type AddonRender = (
     images?: Record<string, Uint8Array>;
     baseUrl?: string;
     fonts?: Uint8Array[];
+    pdfa?: "PDF/A-2b";
   },
 ) => Promise<Uint8Array>;
 
@@ -59,6 +60,7 @@ export class NativeAddonBridge implements NativeBridge {
       images: options.images,
       baseUrl: options.baseUrl,
       fonts: options.fonts,
+      pdfa: options.pdfa,
     });
   }
 }

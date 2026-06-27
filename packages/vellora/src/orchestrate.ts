@@ -14,6 +14,7 @@ import {
   VelloraError,
   VelloraInputError,
   VelloraUnsupportedError,
+  conformanceFromDiagnostic,
   unsupportedFromDiagnostic,
 } from "./errors.js";
 import type { BridgeRenderOptions, NativeBridge, RenderOptions } from "./types.js";
@@ -49,6 +50,16 @@ export const DEFAULT_CREATION_DATE = "2000-01-01T00:00:00.000Z";
  * `VelloraInputError` instead of a silent FFI drop. */
 const MIN_CREATION_YEAR = 1;
 const MAX_CREATION_YEAR = 65535;
+const SUPPORTED_PDFA_PROFILE = "PDF/A-2b";
+
+/** Validate the exact PDF/A profile supported by this release. */
+function validatePdfAProfile(pdfa: string): void {
+  if (pdfa !== SUPPORTED_PDFA_PROFILE) {
+    throw new VelloraInputError(
+      `unsupported pdfa profile ${JSON.stringify(pdfa)}; supported: ${JSON.stringify(SUPPORTED_PDFA_PROFILE)}.`,
+    );
+  }
+}
 
 /**
  * Validate a caller-supplied `creationDate` at the public boundary. The string must be a
@@ -133,6 +144,10 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
       creationDate: metadata.creationDate ?? DEFAULT_CREATION_DATE,
     },
   };
+  if (opts.pdfa !== undefined) {
+    validatePdfAProfile(opts.pdfa);
+    resolved.pdfa = opts.pdfa;
+  }
   if (opts.fonts !== undefined) {
     validateFonts(opts.fonts);
     resolved.fonts = opts.fonts;
@@ -231,6 +246,10 @@ export async function orchestrate(
     const unsupported = unsupportedFromDiagnostic(reason);
     if (unsupported) {
       throw unsupported;
+    }
+    const conformance = conformanceFromDiagnostic(reason);
+    if (conformance) {
+      throw conformance;
     }
     // Already-typed Vellora errors propagate unchanged; anything else (e.g. a raw fixer/resvg
     // crash) is wrapped so the public contract never leaks a bare `Error`.

@@ -38,6 +38,19 @@ describe("render", () => {
     expect(startsWithPdfMagic(pdf)).toBe(true);
   });
 
+  test("renders PDF/A-2b through the real native stack", async () => {
+    const pdf = await render(doc("<h1>Archive</h1><p>One paragraph.</p>"), {
+      ...FIXED_OPTS,
+      pdfa: "PDF/A-2b",
+    });
+    const body = Buffer.from(pdf).toString("latin1");
+    expect(startsWithPdfMagic(pdf)).toBe(true);
+    expect(body).toContain("pdfaid:part");
+    expect(body).toContain(">2<");
+    expect(body).toContain("pdfaid:conformance");
+    expect(body).toContain(">B<");
+  });
+
   test("keeps the event loop responsive during an in-flight render", async () => {
     let timerFired = false;
     // A timer scheduled before awaiting the render must fire while the render runs on a worker.

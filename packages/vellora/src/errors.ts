@@ -13,6 +13,7 @@ export type VelloraErrorCode =
   | "VELLORA_ERROR"
   | "VELLORA_TEMPLATE_ERROR"
   | "VELLORA_INPUT_ERROR"
+  | "VELLORA_CONFORMANCE"
   | "VELLORA_UNSUPPORTED";
 
 /** Base class for every error thrown by the public API. */
@@ -50,6 +51,31 @@ export class VelloraInputError extends VelloraError {
     if (options && "cause" in options) {
       (this as { cause?: unknown }).cause = options.cause;
     }
+  }
+}
+
+/**
+ * A conformance failure from a requested output profile such as PDF/A. This is separate from
+ * `VelloraUnsupportedError`: the HTML may be inside vellora's document subset, but the final PDF
+ * could not satisfy the requested profile.
+ */
+export interface ConformanceDiagnostic {
+  /** Exact requested profile, e.g. `"PDF/A-2b"`. */
+  profile: string;
+  /** Validator reasons reported by the native/core emitter. */
+  errors: string[];
+}
+
+/** Requested output conformance profile could not be satisfied. */
+export class VelloraConformanceError extends VelloraError {
+  readonly profile: string;
+  readonly errors: string[];
+
+  constructor(diagnostic: ConformanceDiagnostic) {
+    super(formatConformanceMessage(diagnostic), "VELLORA_CONFORMANCE");
+    this.name = "VelloraConformanceError";
+    this.profile = diagnostic.profile;
+    this.errors = diagnostic.errors;
   }
 }
 
@@ -103,6 +129,25 @@ function formatUnsupportedMessage(diagnostic: UnsupportedDiagnostic): string {
   return `Unsupported construct "${diagnostic.feature}"${location}: ${diagnostic.hint}`;
 }
 
+/** Render the conformance error message with the first validator reason in the headline. */
+function formatConformanceMessage(diagnostic: ConformanceDiagnostic): string {
+  const first = diagnostic.errors[0] ?? "unknown validation error";
+  return `${diagnostic.profile} conformance failed: ${first}`;
+}
+
+/** Type guard: does an unknown value carry the structured conformance diagnostic fields? */
+export function isConformanceDiagnostic(value: unknown): value is ConformanceDiagnostic {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.profile === "string" &&
+    Array.isArray(v.errors) &&
+    v.errors.every((e) => typeof e === "string")
+  );
+}
+
 /** Type guard: does an unknown value carry the structured located diagnostic fields? */
 export function isUnsupportedDiagnostic(value: unknown): value is UnsupportedDiagnostic {
   if (typeof value !== "object" || value === null) {
@@ -115,6 +160,26 @@ export function isUnsupportedDiagnostic(value: unknown): value is UnsupportedDia
     (typeof v.col === "number" || v.col === null) &&
     typeof v.hint === "string"
   );
+}
+
+/**
+ * Adapter: reconstruct a `VelloraConformanceError` from a core/native validation failure. The bridge
+ * may reject either with the typed error already, or with an error/object carrying `{ profile, errors }`.
+ */
+export function conformanceFromDiagnostic(reason: unknown): VelloraConformanceError | undefined {
+  if (reason instanceof VelloraConformanceError) {
+    return reason;
+  }
+  if (isConformanceDiagnostic(reason)) {
+    return new VelloraConformanceError(reason);
+  }
+  if (typeof reason === "object" && reason !== null) {
+    const diagnostic = (reason as { conformance?: unknown }).conformance;
+    if (isConformanceDiagnostic(diagnostic)) {
+      return new VelloraConformanceError(diagnostic);
+    }
+  }
+  return undefined;
 }
 
 /**

@@ -54,6 +54,8 @@ export interface RenderOpts {
   baseUrl?: string;
   /** Custom font faces (raw TTF/OTF bytes); family/weight/style are read from the bytes in the core. */
   fonts?: Uint8Array[];
+  /** Emit an archival PDF using the named PDF/A profile. Currently only PDF/A-2b is supported. */
+  pdfa?: "PDF/A-2b";
 }
 
 /** Surface of the native addon: the smoke export plus the async `render` binding. */

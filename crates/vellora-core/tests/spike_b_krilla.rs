@@ -30,6 +30,7 @@ fn one_page_from(html: &str) -> Vec<u8> {
     let meta = DocMeta {
         title: Some("Spike B".to_string()),
         creation_date: Some((2026, 6, 23)),
+        pdfa: None,
     };
     pdf::emit(&[page], &meta).expect("krilla emit succeeds")
 }

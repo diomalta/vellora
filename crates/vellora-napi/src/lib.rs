@@ -17,7 +17,7 @@ use std::panic::AssertUnwindSafe;
 use napi::bindgen_prelude::{AsyncTask, Object, Uint8Array};
 use napi::{Env, Error, JsValue, Result, Status, Task};
 use napi_derive::napi;
-use vellora_core::{RenderOptions, VelloraError};
+use vellora_core::{PdfAProfile, RenderOptions, VelloraError};
 
 /// JS-facing render options. Mirrors `vellora_core::RenderOptions`: producer is
 /// fixed to `vellora`; the document title, a deterministic creation date
@@ -40,6 +40,8 @@ pub struct RenderOpts {
     /// read from the bytes in the core. An unparseable face rejects with
     /// `font:invalid`.
     pub fonts: Option<Vec<Uint8Array>>,
+    /// Archival conformance profile. Currently only "PDF/A-2b" is supported.
+    pub pdfa: Option<String>,
 }
 
 /// The structured located-diagnostic carried across the boundary on a core
@@ -52,6 +54,12 @@ struct LocatedDiagnostic {
     hint: String,
 }
 
+/// Structured conformance failure carried across napi as `{ profile, errors }`.
+struct ConformanceDiagnostic {
+    profile: String,
+    errors: Vec<String>,
+}
+
 /// The async render unit of work. Carries only `Send` data: the owned HTML bytes
 /// (copied off the JS `Uint8Array` on the main thread) and the parsed options.
 /// `compute` runs on a libuv worker; the `!Send` Blitz document lives entirely
@@ -62,6 +70,9 @@ pub struct RenderTask {
     /// Set by `compute` on a core `Unsupported` error so `reject` can attach the
     /// structured fields.
     located: Option<LocatedDiagnostic>,
+    /// Set by `compute` on a core conformance error so `reject` can attach the
+    /// structured fields.
+    conformance: Option<ConformanceDiagnostic>,
 }
 
 impl Task for RenderTask {
@@ -88,6 +99,12 @@ impl Task for RenderTask {
                         hint: diag.hint.clone(),
                     });
                 }
+                if let VelloraError::Conformance { profile, errors } = &err {
+                    self.conformance = Some(ConformanceDiagnostic {
+                        profile: profile.clone(),
+                        errors: errors.clone(),
+                    });
+                }
                 Err(Error::new(Status::GenericFailure, err.to_string()))
             }
             Err(panic) => Err(Error::new(Status::GenericFailure, panic_message(panic))),
@@ -107,7 +124,13 @@ impl Task for RenderTask {
     /// public-API adapter can reconstruct the located error verbatim.
     fn reject(&mut self, env: Env, err: Error) -> Result<Self::JsValue> {
         let Some(diag) = self.located.take() else {
-            return Err(err);
+            let Some(conformance) = self.conformance.take() else {
+                return Err(err);
+            };
+            let mut error_obj: Object = env.create_error(err)?;
+            error_obj.set("profile", conformance.profile)?;
+            error_obj.set("errors", conformance.errors)?;
+            return Err(Error::from(error_obj.to_unknown()));
         };
         let mut error_obj: Object = env.create_error(err)?;
         error_obj.set("feature", diag.feature)?;
@@ -131,6 +154,7 @@ pub fn render(html: Uint8Array, opts: Option<RenderOpts>) -> AsyncTask<RenderTas
         html: html.to_vec(),
         opts: to_render_options(opts),
         located: None,
+        conformance: None,
     };
     AsyncTask::new(task)
 }
@@ -174,8 +198,13 @@ fn to_render_options(opts: Option<RenderOpts>) -> RenderOptions {
         .fonts
         .map(|faces| faces.iter().map(|f| f.to_vec()).collect::<Vec<Vec<u8>>>())
         .unwrap_or_default();
+    let pdfa = opts.pdfa.as_deref().and_then(|profile| match profile {
+        "PDF/A-2b" => Some(PdfAProfile::A2B),
+        _ => None,
+    });
     RenderOptions {
         title: opts.title,
+        pdfa,
         creation_date,
         images,
         base_url: opts.base_url,

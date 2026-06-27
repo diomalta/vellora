@@ -4,6 +4,7 @@ import {
   MockNativeBridge,
   type NativeBridge,
   type UnsupportedDiagnostic,
+  VelloraConformanceError,
   VelloraError,
   VelloraInputError,
   VelloraUnsupportedError,
@@ -31,6 +32,18 @@ class RejectingBridge implements NativeBridge {
   render(): Promise<Uint8Array> {
     this.calls++;
     return Promise.reject(this.diagnostic);
+  }
+}
+
+/** A bridge that always rejects with a structured conformance diagnostic. */
+class RejectingConformanceBridge implements NativeBridge {
+  calls = 0;
+  render(): Promise<Uint8Array> {
+    this.calls++;
+    return Promise.reject({
+      profile: "PDF/A-2b",
+      errors: ["MissingDocumentDate (Validators { a: Some(A2_B), ua: None })"],
+    });
   }
 }
 
@@ -269,6 +282,14 @@ describe("swappable native bridge", () => {
       diagnostic,
     );
   });
+
+  test("a {profile,errors} rejection maps to VelloraConformanceError", async () => {
+    const bridge = new RejectingConformanceBridge();
+    const err = await orchestrate(SAFE_HTML, { pdfa: "PDF/A-2b" }, bridge).catch((e) => e);
+    expect(err).toBeInstanceOf(VelloraConformanceError);
+    expect(err.profile).toBe("PDF/A-2b");
+    expect(err.errors[0]).toContain("MissingDocumentDate");
+  });
 });
 
 describe("resolveOptions", () => {
@@ -318,6 +339,18 @@ describe("resolveOptions", () => {
     expect("images" in bare).toBe(false);
     expect("baseUrl" in bare).toBe(false);
     expect("fonts" in bare).toBe(false);
+  });
+
+  test("forwards the supported PDF/A profile", () => {
+    const resolved = resolveOptions({ pdfa: "PDF/A-2b" });
+    expect(resolved.pdfa).toBe("PDF/A-2b");
+  });
+
+  test("rejects an unsupported PDF/A profile with VelloraInputError", () => {
+    expect(() =>
+      // biome-ignore lint/suspicious/noExplicitAny: deliberately passing a bad runtime value.
+      resolveOptions({ pdfa: "PDF/A-3b" as any }),
+    ).toThrow(VelloraInputError);
   });
 
   test("rejects an invalid baseUrl with VelloraInputError", () => {
