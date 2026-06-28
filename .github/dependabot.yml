@@ -11,6 +11,12 @@ updates:
       cargo-dependencies:
         patterns:
           - "*"
+    ignore:
+      # Blitz's pinned git rev exposes parley 0.10 types. Bumping our direct
+      # parley dependency to 0.11 creates two incompatible FontContext/LayoutItem
+      # types and breaks vellora-core; revisit this when the Blitz pin moves.
+      - dependency-name: "parley"
+        update-types: ["version-update:semver-minor"]
 
   # npm workspaces — resolved from the root across all workspace packages.
   - package-ecosystem: npm
