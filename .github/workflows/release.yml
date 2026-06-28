@@ -10,7 +10,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write # required for napi-rs GitHub release asset uploads
   id-token: write # required for npm provenance (OIDC)
 
 env:
@@ -149,12 +149,45 @@ jobs:
           npm publish --dry-run --tag "$NPM_DIST_TAG" --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli --workspace @vellora/engine-chromium
       - name: Publish to npm with provenance
         if: ${{ github.event_name == 'release' }}
-        # Provenance comes from NPM_CONFIG_PROVENANCE (below) — `changeset publish` has no
-        # --provenance flag. napi pre-publish publishes the per-platform packages; changeset publish
-        # publishes the fixed-version workspace packages (and skips any already on the registry).
+        # Provenance comes from NPM_CONFIG_PROVENANCE (below). Publish each package explicitly so a
+        # rerun after a partial publish skips versions that already reached the registry.
         run: |
-          npm -w @vellora/native exec -- napi pre-publish -t npm
-          npx changeset publish --tag "$NPM_DIST_TAG"
+          version="${GITHUB_REF_NAME#v}"
+          native_prebuilds=(
+            "@vellora/native-darwin-arm64"
+            "@vellora/native-darwin-x64"
+            "@vellora/native-linux-x64-gnu"
+            "@vellora/native-linux-arm64-gnu"
+          )
+
+          missing_prebuild=0
+          for pkg in "${native_prebuilds[@]}"; do
+            if ! npm view "$pkg@$version" version >/dev/null 2>&1; then
+              missing_prebuild=1
+            fi
+          done
+
+          if [ "$missing_prebuild" = 1 ]; then
+            npm -w @vellora/native exec -- napi pre-publish -t npm --gh-release-id "${{ github.event.release.id }}"
+          else
+            echo "Native prebuild packages for $version are already published; skipping napi pre-publish."
+          fi
+
+          workspaces=(
+            "@vellora/native"
+            "@vellora/lint"
+            "vellora"
+            "@vellora/engine-chromium"
+            "@vellora/cli"
+          )
+
+          for pkg in "${workspaces[@]}"; do
+            if npm view "$pkg@$version" version >/dev/null 2>&1; then
+              echo "$pkg@$version already published; skipping."
+            else
+              npm publish --tag "$NPM_DIST_TAG" --workspace "$pkg"
+            fi
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_ACCESS: public
