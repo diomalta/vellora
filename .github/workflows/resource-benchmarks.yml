@@ -73,7 +73,7 @@ jobs:
         run: npm --prefix benchmarks run bench
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: resource-benchmark-results
           path: |
