@@ -9,7 +9,7 @@
     "LICENSE-DejaVu.txt",
     "LICENSE-Liberation.txt"
   ],
-  "description": "Prebuilt napi-rs addon loader for vellora — alpha.",
+  "description": "Prebuilt napi-rs addon binary for vellora.",
   "keywords": [
     "html-to-pdf",
     "pdf",

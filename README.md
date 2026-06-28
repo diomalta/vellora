@@ -1,298 +1,130 @@
 # vellora
 
-**HTML → PDF for Node.js. No Puppeteer on the native path. No browser install by default — built for
-generated documents in slim Linux images and AWS Lambda.**
+**HTML to PDF for Node.js, native and browserless by default.**
 
 [![CI](https://github.com/diomalta/vellora/actions/workflows/ci.yml/badge.svg)](https://github.com/diomalta/vellora/actions/workflows/ci.yml)
 ![license: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
-![status: alpha](https://img.shields.io/badge/status-alpha-orange)
-[![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora) -->
+![status: 0.x](https://img.shields.io/badge/status-0.x%20pre--1.0-blue)
+[![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora)
 
-`npm install` and it works — a native, in-process renderer for **generated document HTML**:
-the input can be an invoice, receipt, statement, boleto, notification, or any other template
-that stays inside the supported subset. No `apt install`, no Puppeteer browser download,
-no `npx playwright install`, no sidecar service.
-
-Browser fidelity is an explicit opt-in tier: `@vellora/engine-chromium` uses a Chrome/Chromium binary
-you provide.
+vellora renders generated document HTML - invoices, receipts, statements, boletos, notifications -
+through a native napi-rs addon. The default path does not install Puppeteer, Playwright, Chromium, or
+a sidecar service.
 
 ```bash
 npm install vellora
 ```
 
-<p align="center">
-  <strong>Current visual evidence</strong><br>
-  <em>Vellora native compared against Vellora Chromium for representative fixtures.</em>
-</p>
+Supported prebuilds today: macOS arm64/x64 and Linux glibc x64/arm64. musl/Alpine and Windows
+prebuilds are not published yet.
 
-| Fixture | Vellora native | Vellora Chromium | Diff |
-|---|---|---|---|
-| Invoice p.1 | <img src="./docs/assets/visual-evidence/png/vellora/invoice-1.png" alt="Invoice page 1 rendered by Vellora native" width="220"> | <img src="./docs/assets/visual-evidence/png/chromium/invoice-1.png" alt="Invoice page 1 rendered by Vellora Chromium" width="220"> | <img src="./docs/assets/visual-evidence/png/diff/invoice-page-1.png" alt="Invoice page 1 pixel diff between Vellora native and Vellora Chromium" width="220"> |
-| Boleto p.1 | <img src="./docs/assets/visual-evidence/png/vellora/boleto-1.png" alt="Boleto page 1 rendered by Vellora native" width="220"> | <img src="./docs/assets/visual-evidence/png/chromium/boleto-1.png" alt="Boleto page 1 rendered by Vellora Chromium" width="220"> | <img src="./docs/assets/visual-evidence/png/diff/boleto-page-1.png" alt="Boleto page 1 pixel diff between Vellora native and Vellora Chromium" width="220"> |
-
-Generated with `npm run visual:fidelity -- --fixtures invoice,boleto --reference chromium --subject vellora --out docs/assets/visual-evidence --dpi 96`.
-See the full [visual report](./docs/assets/visual-evidence/index.html) and [manifest](./docs/assets/visual-evidence/manifest.json).
-
-> 🚧 **Status: pre-release / alpha — in active development.** The native document renderer, CLI, lint
-> workflow, PDF/A-2b, images, fonts, batch rendering, streaming helper, and optional Chromium fidelity
-> engine are implemented. Roadmap items are marked separately in [Status & roadmap](#status--roadmap).
-
-## Why
-
-Browser-based PDF (Puppeteer/Playwright) means shipping Chromium: a large browser download, system
-libraries in your Docker image, browser launch cost, and a per-render memory footprint that can
-OOM-kill under concurrency. vellora's default path takes a different route — a **native addon
-(napi-rs) that renders inside your Node process**:
-
-- ✅ `npm install`, nothing installed "outside" on supported platforms (macOS + Linux glibc; musl/Alpine prebuilt is a fast-follow)
-- ✅ no browser to launch and no subprocess per render
-- ✅ designed for bounded memory + real concurrency on the libuv thread pool
-- ✅ selectable, searchable text + subset-embedded fonts
-- ✅ `@page` page numbers and running headers/footers (which `chrome --print-to-pdf` can't do via CSS)
-- ✅ PDF/A-2b for archival output; PDF/UA and tagged PDF are planned
-- ✅ **deterministic** output — same template + data ⇒ byte-stable PDF
-
-> **Performance claims are evidence-gated.** Reproducible benchmarks vs Puppeteer, Playwright,
-> Gotenberg, and WeasyPrint (cold start, RSS under concurrency, output size, throughput, image size)
-> live in [`benchmarks/`](./benchmarks/). Numbers are published here once the suite runs in CI —
-> we measure our own, we don't borrow them.
-
-**Current resource evidence.** Source:
-[Resource Benchmarks run 28302496101](https://github.com/diomalta/vellora/actions/runs/28302496101),
-`authority=pinned-linux-ci`, linux x64, Node v22.23.0, 4 cores, generated 2026-06-27T21:42:34Z.
-
-| Path | Package tarballs | Fresh install | Native addon | External runtime | Cold start | RSS @8 | External RSS @8 | Warm median / p95 | Throughput | PDF size |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `vellora` native | 97.1 kB | 28.93 MB | 23.07 MB | N/A | 43.68 ms | 116.69 MB | N/A | 17.02 / 21.05 ms | 56.2/s | 38.8 kB |
-| Vellora Chromium (environment) | 102.6 kB | 28.94 MB | 23.07 MB | 412.28 MB | 529.38 ms | N/A | 6300.04 MB | 495.23 / 524.63 ms | 1.9/s | 156.2 kB |
-
-The Chromium runtime above is the environment-provided Chromium 130.0.6723.31 executable, not a
-browser bundled in the default `vellora` package.
-
-Puppeteer and Playwright are measured in the artifact, but this summary does not quote them as
-comparable because the run marked both as non-comparable for the fixture (`page count 1 != reference 3`).
-
-vellora is **not** a browser clone. It renders a documented HTML/CSS **subset** built for
-documents, and tells you — precisely — when your input leaves it. **Strict by default.**
-For the minority of templates that must match Chromium print output, install the separate
-`@vellora/engine-chromium` package and route only those templates to `engine: "chromium"` or a
-checked-in fidelity policy.
-
-## What works today vs. design target
-
-| Surface | Status |
-|---|---|
-| `renderPdf(html, data?, opts)` — render + built-in templating, strict subset | **Implemented** |
-| `renderPdfBatch(items, { concurrency })` — bounded batch rendering | **Implemented** |
-| `renderPdfToStream(...)` — render to a writable/HTTP response | **Implemented** (PDF buffered then written; progressive emission is planned) |
-| `renderTemplate(...)` — templating only | **Implemented** |
-| `@vellora/lint` `diagnose()` / `fix()` | **Implemented alpha** — dev-time/CI diagnostics and codemods |
-| `npx vellora render` / `lint` / `fix` / `doctor` / `fidelity` (CLI) | **Implemented alpha** |
-| `engine: "chromium"` via optional `@vellora/engine-chromium` | **Implemented alpha** — explicit browser-fidelity tier |
-| `engine: "auto"` with `vellora.fidelity.json` | **Implemented alpha** — template-level routing policy |
-
-## Quick start
+## Quick Start
 
 ```ts
 import { renderPdf } from "vellora";
 
 const pdf = await renderPdf(invoiceHtml, data, {
   metadata: { title: "Invoice INV-2026-00417", creationDate: "2026-06-23T00:00:00.000Z" },
-  strict: true, // default — fails clearly on unsupported HTML/CSS
+  strict: true,
 });
-// pdf: Uint8Array
 ```
 
-Built-in templating (no extra library):
+Use the native path when your template fits vellora's documented subset. For templates that need
+browser print fidelity, install the optional engine and provide a Chrome/Chromium executable:
 
-```html
-<table>
-  <thead><tr><th>Item</th><th>Total</th></tr></thead>
-  <tbody>
-    {% for row in items %}
-      <tr><td>{{ row.name }}</td><td>{{ row.total | currency("BRL") }}</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+```bash
+npm install vellora @vellora/engine-chromium
 ```
-
-Stream straight to an HTTP response or upload:
 
 ```ts
-import { renderPdfToStream } from "vellora";
-await renderPdfToStream(invoiceHtml, res, data);
-```
-
-Render large batches without starting every native render at once:
-
-```ts
-import { renderPdfBatch } from "vellora";
-
-const pdfs = await renderPdfBatch(
-  invoices.map((data) => ({ html: invoiceHtml, data })),
-  { concurrency: 4 },
-);
-```
-
-Runnable recipes live in [`examples/`](./examples) — `npm run example` (invoice),
-`npm run render-receipt`, `render-boleto`, `render-notification`, `render-to-http-stream`,
-`batch-concurrency`.
-
-Use a Chromium engine only for templates that need browser print fidelity:
-
-```ts
-import { renderPdf } from "vellora";
-
 const pdf = await renderPdf(html, data, {
   engine: "chromium",
   chromium: { executablePath: "/path/to/chrome", timeoutMs: 30_000 },
 });
 ```
 
-## Keep your templates in the subset (dev-time, not runtime)
+## What Ships In 0.1.0
 
-`@vellora/lint` is the dev-time/CI companion to the strict renderer. It reports every supported
-lint finding with stable `{ rule, severity, autoFixable, location, suggestedFix, snippet,
-compatLink }` fields, and `fix()` applies deterministic codemods for the common mechanical cases.
-Strict rendering still never mutates your HTML; best-effort rendering (`strict: false`) uses the
-same lint fixers before handing the result to the core.
-
-Use the library directly from tests or template build steps:
-
-```ts
-import { diagnose, fix } from "@vellora/lint";
-
-const report = diagnose(html);
-if (!report.conformant) {
-  console.log(report.findings);
-}
-
-const { html: fixedHtml } = fix(html);
-```
-
-Or use the CLI for file-based workflows:
-
-```bash
-npx vellora lint templates/invoice.html
-npx vellora fix  templates/invoice.html --write
-```
+| Area | Status |
+|---|---|
+| Native render API | `renderPdf`, `renderPdfBatch`, `renderPdfToStream` |
+| Templates | `{{ value }}`, `{% if %}`, `{% for %}`, `currency`, `number`, `date` |
+| Strict subset validation | Default behavior; unsupported input rejects before PDF output |
+| Best-effort fixing | `{ strict: false }` runs `@vellora/lint` fixers before render |
+| Assets | Caller-supplied image bytes, data URL images, custom font bytes |
+| PDF output | Deterministic bytes, selectable text, embedded font subsets, metadata, PDF/A-2b |
+| CLI | `vellora render`, `lint`, `fix`, `doctor`, `fidelity` |
+| Fidelity routing | `engine: "native"`, `engine: "chromium"`, and `engine: "auto"` policy files |
 
 ## Compatibility
 
-vellora renders a documented HTML/CSS **subset**. The full, generated reference — every supported,
-partial, unsupported, and dev-time-fixable feature — is in **[COMPATIBILITY.md](./COMPATIBILITY.md)**
-(generated from the strict-gate denylist, so it can't drift from the code).
+vellora is not a browser clone. It targets generated documents whose markup you control.
 
-| Feature | Status |
-|---|---|
-| Block & inline text, headings, lists | Supported |
-| Tables (incl. multi-page, repeated header) | Supported |
-| Images: data URL PNG / JPEG / GIF / WebP | Supported |
-| Images: `src` via the `images` option (with optional `baseUrl`) | Supported — pass the bytes |
-| Images: network fetching of remote URLs | Not supported (no network; provide bytes via `images`) |
-| Inline SVG | Via dev-time `@vellora/lint.fix()` / `vellora fix` (rasterized to PNG) |
-| `@page` margins, page numbers, running header/footer | Supported |
-| Fonts: text shaping + subset embedding | Supported |
-| Fonts: custom faces via the `fonts` option | Supported — pass `Uint8Array[]` (TTF/OTF) |
-| PDF/A-2b archival output | Supported |
-| PDF/UA, tagged PDF, bookmarks | *Planned* |
-| `display: flex` / `grid` (general) | Limited — use tables |
-| JavaScript, browser APIs, animations, filters | Not supported (rejected by the strict gate) |
+Supported or documented today:
 
-## How it compares
+- block and inline text, headings, lists, and tables, including repeated `<thead>` across pages
+- `@page` margins, page counters, running headers/footers
+- PNG, JPEG, GIF, and WebP images via data URLs or the `images` option
+- custom TTF/OTF font bytes via the `fonts` option
+- PDF/A-2b archival output
+- partial flexbox behavior; prefer tables for reliable document layout
+- dev-time fixes for common issues such as inline SVG and grid/flex inside table cells
 
-Honest positioning — including where vellora is **weaker**. *Found something inaccurate?
-[Open a PR](https://github.com/diomalta/vellora/issues).*
+Unsupported on the native path:
 
-| Tool | Engine / runtime | In-process? | Headless browser? | License | Best for |
-|---|---|---|---|---|---|
-| **vellora** | Rust (napi addon) | ✅ yes | ❌ no by default | MIT | Generated documents, serverless/slim containers, deterministic PDFs |
-| `@vellora/engine-chromium` | Chrome/Chromium executable | ❌ no (browser process) | ✅ explicit opt-in | MIT | Template-specific Chromium print fidelity without Puppeteer |
-| Puppeteer / Playwright | Chromium | ❌ no (browser) | ✅ yes | Apache-2.0 | Full-fidelity web pages, screenshots, JS-driven content |
-| Gotenberg | Chromium + LibreOffice (Docker) | ❌ no (HTTP sidecar) | ✅ yes | MIT | Office docs + HTML via a standalone service |
-| WeasyPrint | Python | ✅ (in Python) | ❌ no | BSD | HTML/CSS→PDF in Python stacks |
-| Prince / DocRaptor | Proprietary engine | ❌ service/binary | ❌ no | Commercial | Advanced print CSS, paid SLA |
-| wkhtmltopdf | Old WebKit | ✅ (binary) | ❌ no | LGPL | **Archived (2023)** — vellora is a migration target |
-| pdfkit / pdf-lib / @react-pdf | JS, programmatic | ✅ yes | ❌ no | MIT | Drawing PDFs by hand/JSX (you don't write HTML/CSS) |
+- JavaScript execution and browser APIs
+- arbitrary website rendering
+- network fetching of image/font assets
+- interactive forms, media elements, canvas, iframe/object/embed
+- full CSS grid/flex/browser layout fidelity
 
-**Where vellora is weaker:** it renders a **documented subset** of HTML/CSS, not the full web
-platform. A headless browser (Puppeteer/Playwright) supports far more CSS, JavaScript, and arbitrary
-web content. If you need pixel-perfect rendering of an arbitrary website, use a browser; vellora is
-for **generated documents** whose markup you control.
+The generated source of truth is [COMPATIBILITY.md](./COMPATIBILITY.md).
 
-## Status & roadmap
+## Evidence
 
-vellora is **pre-release (alpha)**. The *What works today* table above is the API surface; this is
-the broader feature view. Order is roughly build order, not a delivery commitment.
+Visual evidence is generated from the repo fixtures against the optional Chromium engine:
+[report](./docs/assets/visual-evidence/index.html),
+[manifest](./docs/assets/visual-evidence/manifest.json).
 
-- **Available now** — in-process HTML→PDF (no browser by default); multi-page layout (text, headings, lists,
-  tables); table pagination with a repeated `<thead>`; `@page` margins, page numbers, running
-  header/footer; selectable text with subset-embedded fonts; custom fonts via the `fonts` option;
-  deterministic (byte-identical) output;
-  templating (`{{ var }}`, `{% for %}` / `{% if %}`, `currency` / `number` / `date` helpers);
-  strict-by-default subset validation; `renderPdf` / `renderPdfBatch` / `renderPdfToStream`; document metadata
-	  (`title`, `creationDate`); PDF/A-2b archival output; embedded data-url images; representative HTML fixtures for invoice,
-  receipt, boleto, and notification inputs; `@vellora/lint` `diagnose()` / `fix()`; `@vellora/cli`
-  `render` / `lint` / `fix` / `doctor` / `fidelity`; bounded, configurable concurrency; best-effort
-  mode (`{ strict: false }`); optional Chromium engine and `engine: "auto"` fidelity policies;
-  visual evidence artifacts for invoice and boleto against Vellora Chromium.
-- **In progress / next** — musl/Alpine prebuilt binaries, Windows prebuilds, stronger release notes
-  and launch docs; authoritative resource reports.
-- **Planned for a stable release** — broader PDF/A profiles · PDF/UA · tagged PDF · bookmarks; content-hash caching
-  and phase timings; CI quality gates (generated compatibility table, visual-regression, our own
-  benchmarks vs Chromium/Gotenberg/WeasyPrint); a stable semver API and deeper docs/site examples.
-- **Release goal** — a non-alpha `0.x` release can be promoted once visual evidence, resource
-  benchmarks, compatibility generation, and CI gates are current and linked. Native rendering remains
-  a separate maturity decision from the Chromium fidelity lane.
-- **Alpha-exit checklist** — before removing alpha language, confirm: generated compatibility is fresh;
-  visual evidence is current; authoritative resource benchmark artifacts exist; README claims link to
-  generated evidence; CI/release gates cover compatibility, visual, and resource evidence; API/semver
-  maturity is reviewed; native Blitz dependency risk is stated separately from the Chromium escape hatch.
-- **Future (post-1.0, demand-driven)** — password / encryption; attachments (PDF/A-3, e.g. embedding
-  NF-e XML); watermark / stamp; broader CSS subset; more `fix` rules; more image formats; a managed
-  Chromium package **only if** real demand appears for zero-config browser fidelity.
-- **Out of scope** — JavaScript execution · arbitrary-website fidelity · WASM build · Windows
-  support today · bundled Chromium by default.
+<p align="center">
+  <img src="./docs/assets/visual-evidence/png/vellora/invoice-1.png" alt="Invoice page 1 rendered by Vellora native" width="260">
+  <img src="./docs/assets/visual-evidence/png/diff/invoice-page-1.png" alt="Invoice page 1 pixel diff between Vellora native and Vellora Chromium" width="260">
+  <br>
+  <sub>Invoice fixture: native render and native-vs-Chromium diff.</sub>
+</p>
+
+Resource numbers come from
+[Resource Benchmarks run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627)
+on pinned Linux CI, Node v22.23.0, 4 cores:
+
+| Path | Fresh install | External runtime | RSS @8 | External RSS @8 | Warm median / p95 |
+|---|---:|---:|---:|---:|---:|
+| Native `vellora` | 28.93 MB | N/A | 116.51 MB | N/A | 17.47 / 17.96 ms |
+| Vellora Chromium | 28.94 MB | 412.28 MB | N/A | 6425.81 MB | 491.85 / 509.43 ms |
+
+Puppeteer and Playwright are included in the benchmark artifact but are not quoted as comparable here
+because that run marked them non-comparable for the fixture (`page count 1 != reference 3`).
 
 ## Packages
 
-| Package | What |
+| Package | Purpose |
 |---|---|
-| `vellora` | Public API + templating |
-| `@vellora/native` | Prebuilt napi addons (linux glibc, macOS) |
+| `vellora` | Public API, templating, orchestration |
+| `@vellora/native` | Host prebuild loader for the napi addon |
+| `@vellora/lint` | Dev-time `diagnose()` and `fix()` |
+| `@vellora/cli` | Command line workflows |
 | `@vellora/engine-chromium` | Optional browser-fidelity engine using a host-supplied Chrome/Chromium |
-| `@vellora/lint` | Dev-time `diagnose` + `fix` |
-| `@vellora/cli` | `render` / `lint` / `fix` commands |
 
-## Try it without installing
+## Docs
 
-Open the repo in a ready-to-run environment (Rust + Node provisioned), then `npm run build && npm run example`:
-
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-181717?logo=github)](https://codespaces.new/diomalta/vellora)
-
-A one-command Docker demo is in [`Dockerfile.example`](./Dockerfile.example).
-
-## Documentation
-
-- [COMPATIBILITY.md](./COMPATIBILITY.md) — the supported HTML/CSS subset (generated)
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — design, layers, dependency stack, performance model
-- [Status & roadmap](#status--roadmap) — what's shipping when
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — toolchain, dev loop, how to help
-- [SECURITY.md](./SECURITY.md) — disclosure policy + native-addon threat model
-- [RELEASING.md](./RELEASING.md) — release pipeline (Changesets + prebuilds + provenance)
-- [Docs site](https://diomalta.github.io/vellora/) — VitePress guide, recipes, compatibility, and API reference
-
-## Contributing
-
-vellora is pre-release and contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) and
-the [good first issues](https://github.com/diomalta/vellora/contribute).
+- [Docs site](https://diomalta.github.io/vellora/)
+- [COMPATIBILITY.md](./COMPATIBILITY.md)
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
+- [benchmarks/](./benchmarks/)
+- [RELEASING.md](./RELEASING.md)
+- [SECURITY.md](./SECURITY.md)
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
-
----
-
-⭐ **Star the repo to follow the launch**, track the [status](#status--roadmap), or open an issue with
-your document use case.
+MIT - see [LICENSE](./LICENSE).

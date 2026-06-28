@@ -6,18 +6,19 @@ version), plus the per-platform prebuilt addon packages under `packages/native/n
 
 Releases are tag-driven. Publishing runs from [`.github/workflows/release.yml`](.github/workflows/release.yml)
 with **npm provenance** after a GitHub Release is published. The release tag is the single source
-of truth for the version: publishing `v0.1.0-alpha.1` makes every published package use
-`0.1.0-alpha.1` via [`scripts/set-release-version.mjs`](scripts/set-release-version.mjs).
+of truth for the version: publishing `v0.1.1` makes every published package use `0.1.1` via
+[`scripts/set-release-version.mjs`](scripts/set-release-version.mjs).
 
 Manual `workflow_dispatch` runs the same build, clean-install verification, and publish dry-run
 without uploading anything.
 
-Alpha releases currently publish with the explicit npm dist-tag `latest`, because npm requires an
-explicit tag for prerelease versions and the public install path is still `npm install vellora`.
+The workflow publishes with the explicit npm dist-tag `latest`, matching the public install path
+(`npm install vellora`). For prerelease tags, keep `--prerelease` on the GitHub Release and choose
+the dist-tag intentionally before publishing.
 
-## Non-alpha release gate
+## 0.x release evidence gate
 
-Do not cut a non-alpha `0.x` release until the evidence gates below are current:
+Do not cut a `0.x` release until the evidence gates below are current:
 
 - `npm run compat:check` passes against the generated `COMPATIBILITY.md`.
 - README visual evidence has been regenerated from the current checkout and links to its manifest.
@@ -74,7 +75,7 @@ Emulated builds are slower; prefer a native arm64 runner when available.
    supported platform, and runs a publish dry-run without uploading anything.
 5. Publish a GitHub Release with the next semver tag:
    ```bash
-   gh release create v0.1.0-alpha.1 --prerelease --title "v0.1.0-alpha.1" --notes-file <notes.md>
+   gh release create v0.1.1 --title "v0.1.1" --notes-file <notes.md>
    ```
 6. The publish step is **gated** on all `build` and `verify` jobs passing. It moves the prebuilt
    `.node` files into `npm/*`, sets every published package to the release tag version, runs a

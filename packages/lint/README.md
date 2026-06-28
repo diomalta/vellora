@@ -4,8 +4,7 @@ Dev-time HTML diagnose + fix for the [vellora](https://github.com/diomalta/vello
 HTML/CSS subset (parse5 + resvg). Keeps your templates inside the supported subset
 at authoring/CI time, like a linter, never silently during strict rendering.
 
-> **Pre-release (alpha)** — the `diagnose` / `fix` API is implemented and under
-> active development.
+> **0.x pre-1.0** — the `diagnose` / `fix` API is implemented and still evolving.
 
 ## Install
 

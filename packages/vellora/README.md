@@ -4,7 +4,7 @@ HTML to PDF for Node.js — native and browserless by default. Public API + temp
 orchestration, with optional Chromium fidelity routing for selected templates.
 
 > Part of the [vellora](https://github.com/diomalta/vellora) project.
-> **Pre-release (alpha)** — the API may change before `1.0`.
+> **0.x pre-1.0** — the API is implemented, but semver-major changes can still happen before `1.0`.
 
 ## Install
 

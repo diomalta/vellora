@@ -4,7 +4,7 @@ Prebuilt napi-rs addon loader for [vellora](https://github.com/diomalta/vellora)
 the in-process native renderer. You normally depend on **`vellora`**, not on this
 package directly.
 
-> **Pre-release (alpha).** Per-platform prebuilds are published for the supported launch matrix —
+> **0.x pre-1.0.** Per-platform prebuilds are published for the supported launch matrix —
 > see [`RELEASING.md`](https://github.com/diomalta/vellora/blob/main/RELEASING.md).
 
 ## Install

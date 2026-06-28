@@ -6,4 +6,4 @@
 "@vellora/engine-chromium": patch
 ---
 
-Refresh public documentation, package metadata, and docs-site SEO for the current alpha surface.
+Refresh public documentation, package metadata, and docs-site SEO for the current 0.x surface.
