@@ -2,8 +2,61 @@ import { defineConfig } from "vitepress";
 
 const SITE_ORIGIN = "https://diomalta.github.io";
 const BASE_PATH = "/vellora/";
+const SITE_URL = `${SITE_ORIGIN}${BASE_PATH}`;
+const REPOSITORY_URL = "https://github.com/diomalta/vellora";
+const NPM_URL = "https://www.npmjs.com/package/vellora";
+const OG_IMAGE_URL = `${SITE_URL}assets/invoice-preview.png`;
 const DEFAULT_DESCRIPTION =
   "HTML to PDF for Node.js with a native no-browser renderer, strict document HTML subset, PDF/A, fonts, images, and optional Chromium fidelity routing.";
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}#software`,
+      name: "vellora",
+      alternateName: "Vellora HTML to PDF",
+      applicationCategory: "DeveloperApplication",
+      applicationSubCategory: "HTML to PDF renderer",
+      operatingSystem: "macOS, Linux",
+      runtimePlatform: "Node.js >=20",
+      url: SITE_URL,
+      downloadUrl: NPM_URL,
+      installUrl: NPM_URL,
+      codeRepository: REPOSITORY_URL,
+      license: `${REPOSITORY_URL}/blob/main/LICENSE`,
+      programmingLanguage: ["TypeScript", "Rust"],
+      description: DEFAULT_DESCRIPTION,
+      keywords:
+        "html-to-pdf, html to pdf, nodejs, pdf generation, pdf/a, no puppeteer, no chromium, serverless, invoices, receipts",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      author: {
+        "@type": "Person",
+        name: "Diego Malta",
+        url: "https://github.com/diomalta",
+      },
+    },
+    {
+      "@type": "TechArticle",
+      "@id": `${SITE_URL}#docs`,
+      headline: "vellora HTML to PDF for Node.js documentation",
+      name: "vellora documentation",
+      description: DEFAULT_DESCRIPTION,
+      url: SITE_URL,
+      image: OG_IMAGE_URL,
+      about: { "@id": `${SITE_URL}#software` },
+      author: {
+        "@type": "Person",
+        name: "Diego Malta",
+        url: "https://github.com/diomalta",
+      },
+    },
+  ],
+};
 
 const pageDescriptions: Record<string, string> = {
   "index.md":
@@ -65,12 +118,15 @@ export default defineConfig({
   base: BASE_PATH,
   description: DEFAULT_DESCRIPTION,
   sitemap: {
-    hostname: `${SITE_ORIGIN}${BASE_PATH}`,
+    hostname: SITE_URL,
   },
   head: [
     ["meta", { property: "og:site_name", content: "vellora" }],
     ["meta", { property: "og:type", content: "website" }],
-    ["meta", { name: "twitter:card", content: "summary" }],
+    ["meta", { name: "robots", content: "index,follow,max-snippet:-1,max-image-preview:large" }],
+    ["meta", { name: "googlebot", content: "index,follow,max-snippet:-1,max-image-preview:large" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["script", { type: "application/ld+json" }, JSON.stringify(structuredData)],
   ],
   transformPageData(pageData) {
     const description =
@@ -87,8 +143,11 @@ export default defineConfig({
       ["meta", { property: "og:title", content: title }],
       ["meta", { property: "og:description", content: description }],
       ["meta", { property: "og:url", content: url }],
+      ["meta", { property: "og:image", content: OG_IMAGE_URL }],
+      ["meta", { property: "og:image:alt", content: "vellora invoice PDF preview" }],
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
+      ["meta", { name: "twitter:image", content: OG_IMAGE_URL }],
     ];
   },
   cleanUrls: true,
@@ -99,6 +158,7 @@ export default defineConfig({
       { text: "Reference", link: "/reference/" },
       { text: "Compatibility", link: "/compatibility" },
       { text: "Switching", link: "/migrating" },
+      { text: "npm", link: NPM_URL },
     ],
     sidebar: {
       "/guide/": [
@@ -135,6 +195,6 @@ export default defineConfig({
       ],
     },
     search: docsearch,
-    socialLinks: [{ icon: "github", link: "https://github.com/diomalta/vellora" }],
+    socialLinks: [{ icon: "github", link: REPOSITORY_URL }],
   },
 });

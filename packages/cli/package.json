@@ -19,7 +19,7 @@
     "napi-rs",
     "nodejs"
   ],
-  "homepage": "https://github.com/diomalta/vellora#readme",
+  "homepage": "https://diomalta.github.io/vellora/",
   "bugs": "https://github.com/diomalta/vellora/issues",
   "repository": {
     "type": "git",

@@ -1,0 +1,21 @@
+# vellora
+
+> HTML to PDF for Node.js, native and browserless by default.
+
+vellora renders generated HTML documents such as invoices, receipts, statements, boletos, reports,
+and notifications to deterministic PDFs from Node.js. The default renderer runs in-process through a
+napi-rs native addon and does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java,
+or a sidecar service.
+
+Primary links:
+
+- Docs: https://diomalta.github.io/vellora/
+- npm package: https://www.npmjs.com/package/vellora
+- GitHub repository: https://github.com/diomalta/vellora
+- Getting started: https://diomalta.github.io/vellora/guide/getting-started
+- Compatibility: https://diomalta.github.io/vellora/compatibility
+- Migration guide: https://diomalta.github.io/vellora/migrating
+
+Use vellora when you control the generated document template and want HTML-to-PDF output without
+shipping a headless browser in the default runtime. Use a browser renderer when a template requires
+JavaScript execution, arbitrary website rendering, or exact Chromium print output.
