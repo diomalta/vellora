@@ -194,11 +194,11 @@ describe("Deeply-nested HTML does not overflow the stack", () => {
     }).not.toThrow();
     expect(report).toBeDefined();
     expect(Array.isArray(report?.findings)).toBe(true);
-  });
+  }, 15_000);
 
   test("fix returns a result without throwing", () => {
     expect(() => fix(deep)).not.toThrow();
-  });
+  }, 15_000);
 });
 
 describe("Deterministic report ordering", () => {

@@ -10,6 +10,9 @@ hero:
       text: Get Started
       link: /guide/getting-started
     - theme: alt
+      text: npm package
+      link: https://www.npmjs.com/package/vellora
+    - theme: alt
       text: API Reference
       link: /reference/
     - theme: alt
@@ -32,6 +35,8 @@ features:
 vellora is for teams that already create HTML templates for business documents and want PDF output
 without shipping a headless browser in every runtime. Pass document HTML and data to `renderPdf`, keep
 the template inside the supported subset, and get a PDF `Uint8Array` back from the same Node.js process.
+The package is published as [`vellora` on npm](https://www.npmjs.com/package/vellora), with source code
+and examples in [`diomalta/vellora` on GitHub](https://github.com/diomalta/vellora).
 
 ```ts
 import { renderPdf } from "vellora";
