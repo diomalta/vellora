@@ -63,10 +63,10 @@
     "build": "tsc"
   },
   "optionalDependencies": {
-    "@vellora/native-darwin-arm64": "0.1.0-alpha.0",
-    "@vellora/native-darwin-x64": "0.1.0-alpha.0",
-    "@vellora/native-linux-x64-gnu": "0.1.0-alpha.0",
-    "@vellora/native-linux-arm64-gnu": "0.1.0-alpha.0"
+    "@vellora/native-darwin-arm64": "0.1.2",
+    "@vellora/native-darwin-x64": "0.1.2",
+    "@vellora/native-linux-x64-gnu": "0.1.2",
+    "@vellora/native-linux-arm64-gnu": "0.1.2"
   },
   "publishConfig": {
     "access": "public",
