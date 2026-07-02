@@ -5,7 +5,14 @@ const BASE_PATH = "/vellora/";
 const SITE_URL = `${SITE_ORIGIN}${BASE_PATH}`;
 const REPOSITORY_URL = "https://github.com/diomalta/vellora";
 const NPM_URL = "https://www.npmjs.com/package/vellora";
-const OG_IMAGE_URL = `${SITE_URL}assets/invoice-preview.png`;
+const DEFAULT_OG_IMAGE_URL = `${SITE_URL}assets/invoice-preview.png`;
+const DEFAULT_OG_IMAGE_ALT = "vellora invoice PDF preview";
+const pageImages: Record<string, { url: string; alt: string }> = {
+  "blog/html-to-pdf-nodejs-without-puppeteer.md": {
+    url: `${SITE_URL}assets/visual-evidence/png/vellora/invoice-1.png`,
+    alt: "Vellora native invoice page 1 visual evidence",
+  },
+};
 const DEFAULT_DESCRIPTION =
   "HTML to PDF for Node.js with a native no-browser renderer, strict document HTML subset, PDF/A, fonts, images, and optional Chromium fidelity routing.";
 const structuredData = {
@@ -47,7 +54,7 @@ const structuredData = {
       name: "vellora documentation",
       description: DEFAULT_DESCRIPTION,
       url: SITE_URL,
-      image: OG_IMAGE_URL,
+      image: DEFAULT_OG_IMAGE_URL,
       about: { "@id": `${SITE_URL}#software` },
       author: {
         "@type": "Person",
@@ -140,6 +147,10 @@ export default defineConfig({
         ? "vellora - HTML to PDF for Node.js"
         : `${pageData.title} | vellora`;
     const url = canonicalUrl(pageData.relativePath);
+    const image = pageImages[pageData.relativePath] ?? {
+      url: DEFAULT_OG_IMAGE_URL,
+      alt: DEFAULT_OG_IMAGE_ALT,
+    };
     pageData.description = description;
     pageData.frontmatter.head = [
       ...(pageData.frontmatter.head ?? []),
@@ -147,11 +158,11 @@ export default defineConfig({
       ["meta", { property: "og:title", content: title }],
       ["meta", { property: "og:description", content: description }],
       ["meta", { property: "og:url", content: url }],
-      ["meta", { property: "og:image", content: OG_IMAGE_URL }],
-      ["meta", { property: "og:image:alt", content: "vellora invoice PDF preview" }],
+      ["meta", { property: "og:image", content: image.url }],
+      ["meta", { property: "og:image:alt", content: image.alt }],
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
-      ["meta", { name: "twitter:image", content: OG_IMAGE_URL }],
+      ["meta", { name: "twitter:image", content: image.url }],
     ];
   },
   cleanUrls: true,
