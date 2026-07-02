@@ -119,6 +119,7 @@ because that run marked them non-comparable for the fixture (`page count 1 != re
 ## Docs
 
 - [Docs site](https://diomalta.github.io/vellora/)
+- [HTML to PDF in Node.js without Puppeteer or Chromium](https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer)
 - [COMPATIBILITY.md](./COMPATIBILITY.md)
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [benchmarks/](./benchmarks/)

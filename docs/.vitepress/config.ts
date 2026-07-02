@@ -82,6 +82,10 @@ const pageDescriptions: Record<string, string> = {
     "Switch HTML to PDF workflows from Puppeteer or wkhtmltopdf to vellora's native renderer, with Chromium opt-in for specific templates.",
   "recipes.md":
     "Runnable vellora HTML to PDF recipes for invoices, receipts, boletos, notifications, PDF/A, fonts, streaming, and fidelity checks.",
+  "blog/index.md":
+    "Practical notes on HTML to PDF rendering, browserless document generation, and vellora's native Node.js workflow.",
+  "blog/html-to-pdf-nodejs-without-puppeteer.md":
+    "Why vellora uses a native browserless default for generated document HTML in Node.js, where it fits, and when to keep a browser renderer.",
 };
 
 function canonicalUrl(relativePath: string): string {
@@ -155,12 +159,24 @@ export default defineConfig({
     // Top navigation is capped at 3–5 entries (Diataxis); deeper structure lives in the sidebar.
     nav: [
       { text: "Guide", link: "/guide/getting-started" },
+      { text: "Blog", link: "/blog/" },
       { text: "Reference", link: "/reference/" },
       { text: "Compatibility", link: "/compatibility" },
       { text: "Switching", link: "/migrating" },
-      { text: "npm", link: NPM_URL },
     ],
     sidebar: {
+      "/blog/": [
+        {
+          text: "Blog",
+          items: [
+            { text: "Overview", link: "/blog/" },
+            {
+              text: "HTML to PDF without Puppeteer",
+              link: "/blog/html-to-pdf-nodejs-without-puppeteer",
+            },
+          ],
+        },
+      ],
       "/guide/": [
         {
           text: "Getting Started",

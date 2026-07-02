@@ -72,6 +72,7 @@ explicit and reviewable.
 ## Learn the workflow
 
 - Start with [Install & first PDF](/guide/getting-started).
+- Read [HTML to PDF in Node.js without Puppeteer or Chromium](/blog/html-to-pdf-nodejs-without-puppeteer).
 - Build a paginated [invoice](/guide/invoices).
 - Add [custom fonts](/guide/fonts) and [images](/guide/images).
 - Use [Rendering fidelity](/guide/fidelity) when comparing against Chromium or a legacy Puppeteer PDF.
