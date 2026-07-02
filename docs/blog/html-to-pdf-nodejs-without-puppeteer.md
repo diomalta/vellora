@@ -19,7 +19,12 @@ supported shape.
 
 That is the reason Vellora exists.
 
-![Invoice PDF preview rendered by Vellora](/assets/invoice-preview.png)
+The comparison below comes from the current visual-fidelity artifacts for invoice page 1: Vellora's
+native path, Vellora's optional Chromium path, and the generated pixel-diff map.
+
+| Vellora native | Vellora Chromium | Difference map |
+| --- | --- | --- |
+| ![Vellora native invoice page 1 visual evidence](/assets/visual-evidence/png/vellora/invoice-1.png) | ![Vellora Chromium invoice page 1 visual evidence](/assets/visual-evidence/png/chromium/invoice-1.png) | ![Pixel diff between Vellora native and Vellora Chromium invoice page 1](/assets/visual-evidence/png/diff/invoice-page-1.png) |
 
 Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default
 package does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java, or a sidecar
