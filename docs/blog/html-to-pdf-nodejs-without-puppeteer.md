@@ -9,7 +9,8 @@ Puppeteer is good software. Playwright is good software. Chromium is a good brow
 
 The problem starts when a document pipeline quietly becomes a browser operations problem. You want to
 turn an invoice template into a PDF. Now your deploy has to think about browser downloads, system
-libraries, launch behavior, container size, cold paths, process cleanup, and memory under concurrency.
+libraries, launch behavior, container size, cold starts, process cleanup, and memory under
+concurrency.
 
 That trade-off can be worth it when the input is really a web page. It feels stranger when the input
 is controlled document HTML: invoices, receipts, statements, boletos, reports, notices. These
@@ -26,13 +27,22 @@ native path, Vellora's optional Chromium path, and the generated pixel-diff map.
 | --- | --- | --- |
 | ![Vellora native invoice page 1 visual evidence](/assets/visual-evidence/png/vellora/invoice-1.png) | ![Vellora Chromium invoice page 1 visual evidence](/assets/visual-evidence/png/chromium/invoice-1.png) | ![Pixel diff between Vellora native and Vellora Chromium invoice page 1](/assets/visual-evidence/png/diff/invoice-page-1.png) |
 
-For this artifact, the manifest reports a 794 x 1123 px page, 64,988 mismatch pixels
-(7.29%), and a mean absolute error of 0.0241 against the Chromium reference.
+For this artifact, the manifest reports matching page dimensions at 794 x 1123 px, 64,988
+mismatch pixels (7.29%), and a mean absolute error of 0.0241 against the Chromium reference. That is
+not a universal quality score. It is a concrete artifact from the repository's visual-fidelity
+harness, and the diff image is there to make the differences inspectable.
 
 Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default
 package does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java, or a sidecar
 service. You pass generated document HTML and data to `renderPdf`, and you get PDF bytes back from
 the same Node process.
+
+Under the hood, the native path is a Rust renderer exposed to Node.js through a napi-rs addon. The
+public API stays JavaScript; the rendering work does not require launching a browser process.
+
+If you already render HTML with your own templating stack, you can pass that final HTML directly. The
+`data` argument is optional; Vellora's built-in templating is there when you want the document
+renderer and template binding in the same package.
 
 ```sh
 npm install vellora
@@ -90,7 +100,7 @@ That can feel less magical. It is also easier to reason about.
 
 - The default path launches no browser process.
 - The renderer validates the template against the documented [compatibility table](/compatibility).
-- Built-in templating handles interpolation, loops, conditionals, and formatting helpers.
+- Optional built-in templating handles interpolation, loops, conditionals, and formatting helpers.
 - Document features such as `@page`, page counters, repeated table headers, images, custom fonts, and
   PDF/A-2b are part of the current shipped surface.
 - If a template needs browser print fidelity, you can route that template through the optional
@@ -108,17 +118,31 @@ useful because it keeps the discussion concrete.
 Source: [Resource Benchmarks run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627)
 on pinned Linux CI, Node v22.23.0, 4 cores.
 
+The benchmark separates package footprint from external runtime. Fresh install measures the npm
+package footprint, which is why the native and Chromium package installs look almost identical. The
+browser cost shows up separately: the Chromium path needs a 412.28 MB external runtime that the
+native path does not carry.
+
+Memory is split the same way. The native path runs in-process, so its relevant number is RSS inside
+Node. The Chromium path runs browser work out-of-process, so the relevant number is external RSS.
+
 | Path | Fresh install | External runtime | RSS @8 | External RSS @8 | Warm median / p95 |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Native `vellora` | 28.93 MB | N/A | 116.51 MB | N/A | 17.47 / 17.96 ms |
 | Vellora Chromium | 28.94 MB | 412.28 MB | N/A | 6425.81 MB | 491.85 / 509.43 ms |
+
+At concurrency 8, the native path reported 116.51 MB RSS inside the Node process. The Chromium path
+reported 6425.81 MB across external browser processes. Warm latency showed the same shape:
+17.47 / 17.96 ms median/p95 for native, versus 491.85 / 509.43 ms for Vellora Chromium.
 
 The same evidence bundle includes native-vs-Chromium visual artifacts for representative fixtures:
 [visual report](https://github.com/diomalta/vellora/blob/main/docs/assets/visual-evidence/index.html)
 and
 [manifest](https://github.com/diomalta/vellora/blob/main/docs/assets/visual-evidence/manifest.json).
 Puppeteer and Playwright are measured in that benchmark artifact, but this article does not quote
-them as comparable because the run marked them non-comparable for the fixture.
+them as comparable because the run marked them non-comparable for the fixture: their output had 1
+page while the reference had 3. Timing a one-page output against a three-page reference would make the
+comparison look cleaner than it is.
 
 ## Where Vellora fits
 
