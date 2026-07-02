@@ -26,6 +26,9 @@ native path, Vellora's optional Chromium path, and the generated pixel-diff map.
 | --- | --- | --- |
 | ![Vellora native invoice page 1 visual evidence](/assets/visual-evidence/png/vellora/invoice-1.png) | ![Vellora Chromium invoice page 1 visual evidence](/assets/visual-evidence/png/chromium/invoice-1.png) | ![Pixel diff between Vellora native and Vellora Chromium invoice page 1](/assets/visual-evidence/png/diff/invoice-page-1.png) |
 
+For this artifact, the manifest reports a 794 x 1123 px page, 64,988 mismatch pixels
+(7.29%), and a mean absolute error of 0.0241 against the Chromium reference.
+
 Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default
 package does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java, or a sidecar
 service. You pass generated document HTML and data to `renderPdf`, and you get PDF bytes back from
