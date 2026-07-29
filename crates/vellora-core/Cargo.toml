@@ -26,7 +26,7 @@ publish = false
 # supplies a self-contained `FontContext` (see `src/fonts.rs`), so it never links
 # `libfontconfig` or reads host fonts — that is what makes output deterministic
 # across machines and lets it run on slim/Alpine/Lambda with no system deps.
-base64 = "0.22.1"
+base64 = "0.23.0"
 blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
 blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
 blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6" }
@@ -50,4 +50,4 @@ url = "2"
 # PDF inspection for tests: text extraction (selectable text / ToUnicode) and
 # low-level structure (page count, font subsetting, metadata).
 pdf-extract = "0.12"
-lopdf = "0.42"
+lopdf = "0.44"
