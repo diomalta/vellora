@@ -29,12 +29,12 @@
   "license": "MIT",
   "author": "Diego Malta <diohmalta@gmail.com>",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./index.d.ts",
+      "import": "./index.js"
     }
   },
   "sideEffects": false,
@@ -42,7 +42,7 @@
     "node": ">=20"
   },
   "files": [
-    "dist",
+    "index.d.ts",
     "README.md",
     "LICENSE",
     "THIRD-PARTY-NOTICES.md",
@@ -59,7 +59,7 @@
     ]
   },
   "scripts": {
-    "build:addon": "napi build --release --platform --manifest-path ../../crates/vellora-napi/Cargo.toml --output-dir . --no-js",
+    "build:addon": "napi build --release --platform --manifest-path ../../crates/vellora-napi/Cargo.toml --output-dir . --esm",
     "build": "tsc"
   },
   "optionalDependencies": {
