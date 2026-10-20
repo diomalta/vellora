@@ -7,7 +7,7 @@
 //! `Glyph`) and never sees a Blitz/Parley/Taffy type directly.
 
 use base64::Engine as _;
-use blitz_dom::{BaseDocument, DocumentConfig};
+use blitz_dom::{BaseDocument, DocumentConfig, NodeData, NodeId};
 use blitz_html::HtmlDocument;
 use blitz_traits::shell::{ColorScheme, Viewport};
 use style::computed_values::border_collapse::T as BorderCollapse;
@@ -251,7 +251,7 @@ pub fn max_nesting_depth(html: &str) -> usize {
     let root_id = base.root_element().id;
     let mut max_depth = 0usize;
     // (node_id, depth-of-this-node-counting-only-elements).
-    let mut stack: Vec<(usize, usize)> = vec![(root_id, 0)];
+    let mut stack: Vec<(NodeId, usize)> = vec![(root_id, 0)];
     while let Some((node_id, depth)) = stack.pop() {
         let node = match base.get_node(node_id) {
             Some(n) => n,
@@ -292,7 +292,7 @@ fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
 
 fn walk_for_denied(
     base: &BaseDocument,
-    node_id: usize,
+    node_id: NodeId,
     denied: &[&str],
     counts: &mut std::collections::HashMap<String, usize>,
     found: &mut Option<DeniedElement>,
@@ -553,7 +553,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         observer.after_pass(name, &boxes);
     }
 
-    let content_height = base.root_element().final_layout.size.height as f64;
+    let content_height = base.root_element().final_layout().size.height as f64;
 
     // Pair the first unresolved <img> with the DOM total so the source locator can
     // pinpoint it (degrading to None on a source/DOM count mismatch).
@@ -587,13 +587,13 @@ struct WalkSink<'a, 'img> {
 /// Node ids matched by the stylesheet's fragmentation rules
 /// (see [`crate::break_css`]).
 struct BreakTargets {
-    avoid_inside: std::collections::HashSet<usize>,
-    page_before: std::collections::HashSet<usize>,
+    avoid_inside: std::collections::HashSet<NodeId>,
+    page_before: std::collections::HashSet<NodeId>,
 }
 
 /// Resolve each selector list with Stylo's selector matching. A selector Stylo
 /// cannot parse matches nothing, exactly as the browser drops that rule.
-fn matched_nodes(base: &BaseDocument, selectors: &[String]) -> std::collections::HashSet<usize> {
+fn matched_nodes(base: &BaseDocument, selectors: &[String]) -> std::collections::HashSet<NodeId> {
     selectors
         .iter()
         .filter_map(|selector| base.query_selector_all(selector).ok())
@@ -605,7 +605,7 @@ fn matched_nodes(base: &BaseDocument, selectors: &[String]) -> std::collections:
 /// `final_layout` offsets into absolute document coordinates.
 fn walk(
     base: &BaseDocument,
-    node_id: usize,
+    node_id: NodeId,
     parent_x: f64,
     parent_y: f64,
     depth: usize,
@@ -616,7 +616,18 @@ fn walk(
         None => return,
     };
 
-    let layout = &node.final_layout;
+    // Blitz 0.3.0-beta.4: `final_layout` moved from a plain `Node` field into
+    // per-node `LayoutData`, and `Node::final_layout()` PANICS for node kinds
+    // that carry no layout data (text and comment nodes). Under the previous git
+    // rev those nodes kept the zero `Layout` (they are never Taffy nodes), so read
+    // the zero layout for them to keep the walk's output shape unchanged.
+    let zero_layout;
+    let layout = if node_has_layout_data(node) {
+        node.final_layout()
+    } else {
+        zero_layout = Default::default();
+        &zero_layout
+    };
     let abs_x = parent_x + layout.location.x as f64;
     let abs_y = parent_y + layout.location.y as f64;
 
@@ -656,7 +667,10 @@ fn walk(
         .unwrap_or_default();
 
     sink.out.push(LaidOutBox {
-        node_id,
+        // Blitz 0.3.0-beta.4 ids are versioned `NodeId(u64)` (slot index + version)
+        // instead of `usize` slab keys. Consumers only compare ids for equality, so
+        // the raw u64 is carried as our owned `usize` id.
+        node_id: node_id.as_u64() as usize,
         tag,
         x: abs_x,
         y: abs_y,
@@ -683,6 +697,16 @@ fn walk(
     for &child in &node.children {
         walk(base, child, abs_x, abs_y, depth + 1, sink);
     }
+}
+
+/// Whether `node` carries Blitz layout data (element, anonymous block, or the
+/// document node), i.e. whether `Node::final_layout()` is callable without
+/// panicking under Blitz 0.3.0-beta.4.
+fn node_has_layout_data(node: &blitz_dom::Node) -> bool {
+    matches!(
+        node.data,
+        NodeData::Element(_) | NodeData::AnonymousBlock(_) | NodeData::Document(_)
+    )
 }
 
 fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
@@ -747,7 +771,9 @@ fn read_visuals(
         Some(styles) => styles,
         None => return (Vec::new(), Vec::new()),
     };
-    let layout = &node.final_layout;
+    // Only styled (element-like) nodes reach here, and those always carry layout
+    // data, so `final_layout()` cannot hit its text/comment-node panic.
+    let layout = node.final_layout();
     let width = layout.size.width as f64;
     let height = layout.size.height as f64;
     if width <= 0.0 || height <= 0.0 {
@@ -986,10 +1012,12 @@ fn resolve_image_runs(
     height: f64,
     state: &mut ImageResolve,
 ) -> Vec<ImageRun> {
-    let is_img = node
-        .data
-        .downcast_element()
-        .is_some_and(|el| el.name.local.as_ref().eq_ignore_ascii_case("img"));
+    let is_img = node.data.downcast_element().is_some_and(|el| {
+        // markup5ever 0.40's `LocalName` has several `AsRef` impls, so name
+        // the `&str` view explicitly (same idiom as `count_tag_in_document`).
+        let local: &str = &el.name.local;
+        local.eq_ignore_ascii_case("img")
+    });
     if !is_img {
         return Vec::new();
     }
@@ -1244,7 +1272,7 @@ fn read_text_runs(
 /// following glyph runs by inline `padding-right` on styled spans. The computed
 /// style is still attached to the run's brush node, so compensate absolute
 /// padding here until upstream starts including it in `GlyphRun::offset()`.
-fn inline_padding_right_px(base: &BaseDocument, node_id: usize) -> f64 {
+fn inline_padding_right_px(base: &BaseDocument, node_id: NodeId) -> f64 {
     base.get_node(node_id)
         .and_then(|n| n.primary_styles())
         .map(|styles| {
@@ -1261,7 +1289,7 @@ fn inline_padding_right_px(base: &BaseDocument, node_id: usize) -> f64 {
 }
 
 /// Resolve the computed text color for a styled node into sRGB bytes.
-fn brush_color(base: &BaseDocument, node_id: usize) -> [u8; 3] {
+fn brush_color(base: &BaseDocument, node_id: NodeId) -> [u8; 3] {
     base.get_node(node_id)
         .and_then(|n| n.primary_styles())
         .map(|styles| {

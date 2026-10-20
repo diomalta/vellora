@@ -9,14 +9,17 @@ publish = false
 # Pinned upstream revisions (see ARCHITECTURE.md "Honest risks": Blitz is
 # pre-alpha and churns; pin exact revs so an upstream break touches one place).
 #
-# Blitz (DioxusLabs/blitz) is NOT on crates.io. We pin a git rev. All Blitz
+# RESEARCH BRANCH (research/blitz-beta4-bump, measurement only): Blitz is taken
+# from crates.io at the exact pre-release 0.3.0-beta.4 (previously git rev
+# 2003ba5fc2d8931da9213ef26a813b0d24c83ca6, v0.3.0-alpha.5 line). All Blitz
 # contact is funneled through `src/blitz_engine.rs` so a bump touches one file.
 #
-#   Blitz git rev: 2003ba5fc2d8931da9213ef26a813b0d24c83ca6  (v0.3.0-alpha.5 line)
-#     - bundles html5ever + Stylo (cascade) + Taffy (layout) + Parley (text)
+#   Blitz 0.3.0-beta.4 (crates.io)
+#     - bundles html5ever 0.40 + Stylo 0.22 (cascade) + Taffy 0.15 (layout)
+#       + Parley 0.12 (text)
 #   krilla 0.8.2 (crates.io) — PDF emit, font subsetting, ToUnicode, metadata.
 #     - NOTE: krilla depends on parley only as a DEV-dependency (its example),
-#       so there is NO parley version conflict with Blitz's parley 0.10:
+#       so there is NO parley version conflict with Blitz's parley 0.12:
 #       we hand krilla raw font bytes via `Font::new(Data, index)`.
 # =====================================================================
 
@@ -27,16 +30,22 @@ publish = false
 # `libfontconfig` or reads host fonts — that is what makes output deterministic
 # across machines and lets it run on slim/Alpine/Lambda with no system deps.
 base64 = "0.22.1"
-blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
-blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6", default-features = false }
-blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "2003ba5fc2d8931da9213ef26a813b0d24c83ca6" }
+blitz-dom = { version = "=0.3.0-beta.4", default-features = false }
+blitz-html = { version = "=0.3.0-beta.4", default-features = false }
+blitz-traits = "=0.3.0-beta.4"
+# html5ever/markup5ever_rcdom are used ONLY by `src/html_normalize.rs` (a
+# String -> String pre-pass; no Blitz types cross it). Blitz 0.3.0-beta.4 itself
+# uses html5ever ^0.40.1, but markup5ever_rcdom has no 0.40 release on crates.io
+# (latest 0.39.0+unofficial requires html5ever ^0.39), so the normalizer stays on
+# 0.39 and the dependency graph carries two html5ever copies.
 html5ever = "0.39.0"
 markup5ever_rcdom = "0.39.0"
 # Parley/Taffy types re-exported by Blitz; we read (never construct) layouts.
-parley = { version = "0.10", default-features = false, features = ["std"] }
-# Stylo's `style` crate (package `stylo`), pinned to the version Blitz's rev
-# resolves, so we can name `style::color::ColorSpace` for computed-color reads.
-style = { package = "stylo", version = "=0.18.0" }
+# Matches blitz-dom 0.3.0-beta.4's own `parley ^0.12` (default-features off, std).
+parley = { version = "0.12", default-features = false, features = ["std"] }
+# Stylo's `style` crate (package `stylo`), pinned to the version Blitz 0.3.0-beta.4
+# resolves (`stylo ^0.22.0`), so we can name `style::color::ColorSpace` etc.
+style = { package = "stylo", version = "=0.22.0" }
 
 # --- krilla: paginated display list -> PDF ---
 krilla = "0.8.2"
