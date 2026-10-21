@@ -234,16 +234,12 @@ pub fn paginate_traced(
     page_box: &PageBox,
     mut trace: Option<&mut PaginationTrace>,
 ) -> Paginated {
-    let usable_h = page_box.content_height();
-    let margin_l = page_box.margin_left;
-    let margin_t = page_box.margin_top;
+    // Each page's own `@page` box (`:first`, `:left`/`:right` rules may give pages different
+    // heights and margins; the content width is the same on every page, see
+    // `page_css::varying_width_rule`).
+    let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
 
     let fragments = build_fragments(doc);
-    let table_row_fit_limit = usable_h + TABLE_ROW_BREAK_TOLERANCE_PX;
-    // How far content may overflow the box that contains it and still be
-    // fitted against that box: the row drift allowance, but never past the
-    // physical page (the bottom page margin).
-    let overflow_allowance = TABLE_ROW_BREAK_TOLERANCE_PX.min(page_box.margin_bottom.max(0.0));
 
     let headers = table_headers_by_id(&fragments);
 
@@ -291,11 +287,13 @@ pub fn paginate_traced(
         let frag_height = frag.bottom - frag.top;
         let table_header = frag.table_id.and_then(|table_id| headers.get(&table_id));
         let is_table_row = frag.is_row();
-        let fit_limit = if is_table_row {
-            table_row_fit_limit
-        } else {
-            usable_h
-        };
+        // The fit limit of the page the fragment is tried on (re-read after every page break).
+        let mut fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
+        // How far content may overflow the box that contains it and still be
+        // fitted against that box: the row drift allowance, but never past the
+        // physical page (the bottom page margin).
+        let overflow_allowance = TABLE_ROW_BREAK_TOLERANCE_PX
+            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0));
         // The height the fit tests use: a small overflow of the box that
         // contains the fragment does not count (see `Fragment::contained_bottom`).
         let fit_h = fit_height(&frag, overflow_allowance);
@@ -347,6 +345,7 @@ pub fn paginate_traced(
                 headers_on_current.clear();
                 page_start = PageStart::Forced;
                 new_page = Some("forced-break");
+                fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
             } else if page_start == PageStart::Unforced {
                 // An oversize fragment closed the previous page; the break
                 // requested here is still a forced one.
@@ -371,6 +370,7 @@ pub fn paginate_traced(
             headers_on_current.clear();
             page_start = PageStart::Unforced;
             new_page = Some("oversize");
+            fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         }
 
         // A table fragment entering a page without its header (table start OR a
@@ -426,6 +426,7 @@ pub fn paginate_traced(
             headers_on_current.clear();
             page_start = PageStart::Unforced;
             new_page = Some("overflow");
+            fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         }
 
         let header = header_for(&headers_on_current);
@@ -531,40 +532,33 @@ pub fn paginate_traced(
 
     // Phase two: build PdfPages, resolving running header/footer counters now
     // that the total page count is known.
+    let page_boxes: Vec<PageBox> = (0..total).map(|i| geometry.page(i).clone()).collect();
+    let mut margin_texts = build_margin_texts(doc, &page_boxes);
     let mut pages = Vec::with_capacity(total);
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
-        let page_num = i + 1;
+        let page = &page_boxes[i];
         let (rects, rounded_strokes, images, text_runs) =
-            lower_to_display_list(slice, margin_l, margin_t);
+            lower_to_display_list(slice, page.margin_left, page.margin_top);
 
-        // Resolve and place running header/footer margin-box content. Keep
-        // `report.footers` in lock-step with what is actually emitted: a footer
-        // string is only recorded when its `MarginText` was actually produced
-        // (build_margin_text returns None when there is no body font to shape
-        // with, e.g. an empty document), so a reported footer always
-        // corresponds to a rendered one.
-        let mut margin_texts = Vec::new();
-        let mut footer_text = String::new();
-        for mc in &page_box.margins_content {
-            let resolved = resolve_content(&mc.parts, page_num, total);
-            if let Some(mt) = build_margin_text(&resolved, mc.which, page_box, doc) {
-                if mc.which == MarginBox::BottomCenter {
-                    footer_text = resolved.clone();
-                }
-                margin_texts.push(mt);
-            }
-        }
+        // Keep `report.footers` in lock-step with what is actually emitted: a
+        // footer string is only recorded when its `MarginText` was produced.
+        let page_margin_texts = std::mem::take(&mut margin_texts[i]);
+        let footer_text = page_margin_texts
+            .iter()
+            .find(|(which, _)| *which == MarginBox::BottomCenter)
+            .map(|(_, mt)| mt.text.clone())
+            .unwrap_or_default();
         footers.push(footer_text);
 
         pages.push(PdfPage {
-            width_px: page_box.width,
-            height_px: page_box.height,
+            width_px: page.width,
+            height_px: page.height,
             rects,
             rounded_strokes,
             images,
             text_runs,
-            margin_texts,
+            margin_texts: page_margin_texts.into_iter().map(|(_, mt)| mt).collect(),
         });
     }
 
@@ -1273,49 +1267,138 @@ fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
     merged
 }
 
-/// Build a running-header/footer `MarginText` centered in the top/bottom margin
-/// band. The string is shaped by krilla's `draw_text` against the borrowed body
-/// font, so glyphs + ToUnicode are correct (the footer is selectable). Width is
-/// estimated for centering from an average glyph advance.
-fn build_margin_text(
-    text: &str,
-    which: MarginBox,
-    page_box: &PageBox,
-    doc: &LaidOutDoc,
-) -> Option<MarginText> {
-    if text.is_empty() {
-        return None;
+/// The `@page` box of every page, resolved on first use (`PageBox::for_page`).
+struct PageGeometry<'a> {
+    base: &'a PageBox,
+    rtl: bool,
+    pages: Vec<PageBox>,
+}
+
+impl<'a> PageGeometry<'a> {
+    fn new(base: &'a PageBox, rtl: bool) -> Self {
+        PageGeometry {
+            base,
+            rtl,
+            pages: Vec::new(),
+        }
     }
-    // Borrow a font face from any body run; without one (truly empty document)
-    // there is no font to shape the footer with.
-    let sample = doc
+
+    /// The box of page `index` (0-based).
+    fn page(&mut self, index: usize) -> &PageBox {
+        while self.pages.len() <= index {
+            let next = self.base.for_page(self.pages.len(), self.rtl);
+            self.pages.push(next);
+        }
+        &self.pages[index]
+    }
+
+    /// The height a fragment may take on page `index`: the page's content height, plus the row
+    /// drift tolerance for a table row.
+    fn fit_limit(&mut self, index: usize, is_table_row: bool) -> f64 {
+        let usable_h = self.page(index).content_height();
+        if is_table_row {
+            usable_h + TABLE_ROW_BREAK_TOLERANCE_PX
+        } else {
+            usable_h
+        }
+    }
+}
+
+/// The running headers/footers of every page (`@top-center` / `@bottom-center`), laid out by
+/// Blitz with their cascaded text properties ([`crate::blitz_engine::lay_out_margin_texts`]) and
+/// placed like Chrome 155 places them (CSS Paged Media 3 §5.3, UA defaults `text-align: center`,
+/// `vertical-align: middle`):
+///
+/// - horizontally, the line is centred in the page area (between the left and right page
+///   margins, so asymmetric margins move it);
+/// - vertically, the line box is centred in the margin band (the top or bottom page margin), so
+///   the baseline sits (ascent − descent) / 2 below the band's centre whatever the line height.
+///
+/// Chrome snaps that baseline to whole device pixels (≤ 1 px); WeasyPrint and vellora do not.
+/// A document without any shaped body text gets no margin text, as in Chrome (an empty body
+/// prints no footer). Fonts are deduplicated against the body's faces so a face is embedded
+/// once (`tests/pipeline.rs::each_face_is_embedded_exactly_once_across_pages`).
+fn build_margin_texts(doc: &LaidOutDoc, pages: &[PageBox]) -> Vec<Vec<(MarginBox, MarginText)>> {
+    let mut out: Vec<Vec<(MarginBox, MarginText)>> = (0..pages.len()).map(|_| Vec::new()).collect();
+    let has_body_text = doc
         .boxes
         .iter()
         .flat_map(|b| b.text_runs.iter())
-        .find(|r| !r.glyphs.is_empty())?;
+        .any(|r| !r.glyphs.is_empty());
+    if !has_body_text {
+        return out;
+    }
+    let total = pages.len();
+    // (page index, box, resolved text) per non-empty margin box, in page order.
+    let mut wanted: Vec<(usize, &crate::page_css::MarginContent, String)> = Vec::new();
+    for (i, page) in pages.iter().enumerate() {
+        for mc in &page.margins_content {
+            let text = resolve_content(&mc.parts, i + 1, total);
+            if !text.trim().is_empty() {
+                wanted.push((i, mc, text));
+            }
+        }
+    }
+    let requests: Vec<crate::blitz_engine::MarginRequest<'_>> = wanted
+        .iter()
+        .map(|(_, mc, text)| crate::blitz_engine::MarginRequest {
+            text,
+            page_style: &mc.page_style,
+            box_style: &mc.box_style,
+        })
+        .collect();
+    let layouts = crate::blitz_engine::lay_out_margin_texts(&doc.page_context, &requests);
 
-    let font_size = 9.0_f32;
-    // Estimate centered X from an average advance per char (good enough for a
-    // centered single-line label; exact width needs a shaper we run at emit).
-    let avg_advance = {
-        let total: f32 = sample.glyphs.iter().map(|g| g.advance).sum();
-        let per = total / sample.glyphs.len().max(1) as f32;
-        (per / sample.font_size) * font_size
-    };
-    let est_w = avg_advance as f64 * text.chars().count() as f64;
-    let x = ((page_box.width - est_w) / 2.0).max(page_box.margin_left);
-    let y = match which {
-        MarginBox::BottomCenter => page_box.height - page_box.margin_bottom / 2.0,
-        MarginBox::TopCenter => page_box.margin_top / 2.0,
-    };
+    let body_faces: Vec<&std::sync::Arc<Vec<u8>>> = doc
+        .boxes
+        .iter()
+        .flat_map(|b| b.text_runs.iter())
+        .map(|r| &r.font_data)
+        .collect();
+    let mut faces: Vec<std::sync::Arc<Vec<u8>>> = Vec::new();
+    for ((index, mc, text), layout) in wanted.into_iter().zip(layouts) {
+        let Some(layout) = layout else {
+            continue;
+        };
+        let page = &pages[index];
+        let area_w = page.width - page.margin_left - page.margin_right;
+        let x0 = page.margin_left + (area_w - layout.width) / 2.0;
+        let (band_top, band_h) = match mc.which {
+            MarginBox::TopCenter => (0.0, page.margin_top),
+            MarginBox::BottomCenter => (page.height - page.margin_bottom, page.margin_bottom),
+        };
+        let y0 = band_top + (band_h - layout.height) / 2.0;
+        let runs = layout
+            .runs
+            .into_iter()
+            .map(|mut run| {
+                run.origin_x += x0;
+                run.origin_y += y0;
+                run.font_data = shared_face(&run.font_data, &body_faces, &mut faces);
+                run
+            })
+            .collect();
+        out[index].push((mc.which, MarginText { text, runs }));
+    }
+    out
+}
 
-    Some(MarginText {
-        text: text.to_string(),
-        origin_x: x,
-        origin_y: y,
-        font_size,
-        font_data: sample.font_data.clone(),
-        font_index: sample.font_index,
-        color: [60, 60, 60],
-    })
+/// The body's `Arc` of the same face bytes (or the first margin run's), so the PDF embeds each
+/// face once: the margin-box document materializes its own copies of the bytes.
+fn shared_face(
+    data: &std::sync::Arc<Vec<u8>>,
+    body: &[&std::sync::Arc<Vec<u8>>],
+    seen: &mut Vec<std::sync::Arc<Vec<u8>>>,
+) -> std::sync::Arc<Vec<u8>> {
+    let same = |other: &std::sync::Arc<Vec<u8>>| {
+        std::sync::Arc::ptr_eq(other, data) || (other.len() == data.len() && **other == **data)
+    };
+    if let Some(found) = body.iter().find(|f| same(f)) {
+        return (*found).clone();
+    }
+    if let Some(found) = seen.iter().find(|f| same(f)) {
+        return found.clone();
+    }
+    seen.push(data.clone());
+    data.clone()
 }

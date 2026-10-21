@@ -197,6 +197,170 @@ pub struct LaidOutDoc {
     /// and standalone layout helpers stay lenient (they ignore it); only the
     /// `render` entry point turns it into a rejection.
     pub unresolved_image: Option<UnresolvedImage>,
+    /// What the `@page` context inherits from the root element, for the margin boxes.
+    pub page_context: PageContext,
+}
+
+/// The page context of a laid-out document (CSS Paged Media 3: "The page context inherits from
+/// the root element", and the page-margin boxes inherit from the page context; Chrome 155 does
+/// both, `fidelity/baselines/port/06-page-rules`). Carries the root element's computed text
+/// properties and the document's font context, so [`lay_out_margin_texts`] shapes margin-box
+/// text with the same fonts and the same style system as the body. Opaque outside this module.
+pub struct PageContext {
+    /// `property: value;` declarations of the root element's computed text properties.
+    root_css: String,
+    /// Whether the root element's `direction` is `rtl` (page 1 is then a left page).
+    pub rtl: bool,
+    /// A clone of the font context the document was laid out with (same faces, same Blobs).
+    font_ctx: parley::FontContext,
+}
+
+/// The root element's inherited text properties the page context copies (serialized computed
+/// values, re-parsed by Stylo in the margin-box document).
+const PAGE_CONTEXT_PROPERTIES: &[(&str, style::properties::LonghandId)] = {
+    use style::properties::LonghandId as L;
+    &[
+        ("color", L::Color),
+        ("font-family", L::FontFamily),
+        ("font-size", L::FontSize),
+        ("font-style", L::FontStyle),
+        ("font-weight", L::FontWeight),
+        ("letter-spacing", L::LetterSpacing),
+        ("line-height", L::LineHeight),
+        ("text-transform", L::TextTransform),
+        ("word-spacing", L::WordSpacing),
+    ]
+};
+
+fn page_context_of(base: &BaseDocument, font_ctx: parley::FontContext) -> PageContext {
+    use style::computed_values::direction::T as Direction;
+    use style::properties::PropertyDeclarationId;
+
+    let root = base.root_element();
+    let mut root_css = String::new();
+    let mut rtl = false;
+    if let Some(styles) = root.primary_styles() {
+        for (name, id) in PAGE_CONTEXT_PROPERTIES {
+            let value = styles.computed_value_to_string(PropertyDeclarationId::Longhand(*id));
+            if !value.is_empty() {
+                root_css.push_str(&format!("{name}: {value}; "));
+            }
+        }
+        rtl = matches!(styles.clone_direction(), Direction::Rtl);
+    }
+    PageContext {
+        root_css,
+        rtl,
+        font_ctx,
+    }
+}
+
+/// One margin box to lay out: its text and the cascaded text declarations of the page context
+/// and of the box.
+pub struct MarginRequest<'a> {
+    pub text: &'a str,
+    pub page_style: &'a [crate::page_css::Declaration],
+    pub box_style: &'a [crate::page_css::Declaration],
+}
+
+/// A margin box's text as Blitz laid it out on one line: glyph runs relative to the top-left
+/// corner of its line box, the line's width (max-content) and height.
+pub struct MarginLayout {
+    pub runs: Vec<TextRun>,
+    pub width: f64,
+    pub height: f64,
+}
+
+/// Lay out every requested margin-box text in ONE small Blitz document whose root carries the
+/// page context's inherited values (`PageContext::root_css`), each box a max-content,
+/// non-wrapping block under a page-context block. Stylo parses the declarations and Parley shapes
+/// the text exactly like body text, with the document's own font context.
+pub fn lay_out_margin_texts(
+    ctx: &PageContext,
+    requests: &[MarginRequest<'_>],
+) -> Vec<Option<MarginLayout>> {
+    if requests.is_empty() {
+        return Vec::new();
+    }
+    let declarations = |list: &[crate::page_css::Declaration]| {
+        list.iter()
+            .map(|d| format!("{}: {};", d.property, d.value))
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let mut css = format!(
+        "html {{ {} }} body {{ margin: 0; }} div {{ margin: 0; padding: 0; border: 0; }} \
+         .vellora-margin {{ display: block; white-space: nowrap; width: max-content; }}",
+        ctx.root_css
+    );
+    let mut body = String::new();
+    for (i, request) in requests.iter().enumerate() {
+        css.push_str(&format!(
+            " .vellora-page-{i} {{ {} }} .vellora-box-{i} {{ {} }}",
+            declarations(request.page_style),
+            declarations(request.box_style)
+        ));
+        let text = request
+            .text
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        body.push_str(&format!(
+            "<div class=\"vellora-page-{i}\"><div class=\"vellora-margin vellora-box-{i}\">{text}</div></div>"
+        ));
+    }
+    let html =
+        format!("<!DOCTYPE html><html><head><style>{css}</style></head><body>{body}</body></html>");
+    let mut doc = build_document_with(&html, ctx.font_ctx.clone());
+    let viewport = Viewport::new(100_000, 1000, 1.0, ColorScheme::Light);
+    doc.as_mut().set_viewport(viewport);
+    doc.as_mut().resolve(0.0);
+    let base: &BaseDocument = doc.as_ref();
+
+    let mut boxes: Vec<Option<NodeId>> = vec![None; requests.len()];
+    let mut stack = vec![base.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        if let Some(class) = node.attr(blitz_dom::local_name!("class")) {
+            if let Some(i) = class
+                .split_whitespace()
+                .find_map(|c| c.strip_prefix("vellora-box-"))
+                .and_then(|i| i.parse::<usize>().ok())
+            {
+                if let Some(slot) = boxes.get_mut(i) {
+                    *slot = Some(id);
+                }
+            }
+        }
+        stack.extend(node.children.iter().copied());
+    }
+
+    let mut face_cache = std::collections::HashMap::new();
+    let mut origins = std::collections::HashMap::new();
+    boxes
+        .into_iter()
+        .map(|id| {
+            let id = id?;
+            let node = base.get_node(id)?;
+            let (x, y) = box_origin(base, id, &mut origins);
+            let mut runs = read_text_runs(base, node, x, y, &mut face_cache);
+            if runs.is_empty() {
+                return None;
+            }
+            for run in &mut runs {
+                run.origin_x -= x;
+                run.origin_y -= y;
+            }
+            let size = node.final_layout().size;
+            Some(MarginLayout {
+                runs,
+                width: size.width as f64,
+                height: size.height as f64,
+            })
+        })
+        .collect()
 }
 
 /// A renderable `<img>` whose `src` could not be resolved to supported image
@@ -313,6 +477,12 @@ pub fn max_nesting_depth(html: &str) -> usize {
 /// parse-only/geometry helpers pass `&[]` (they never measure text), only the
 /// layout path threads `opts.fonts`.
 fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
+    build_document_with(html, crate::fonts::build_font_context(custom))
+}
+
+/// [`build_document`] with an explicit font context (the layout path keeps a clone of it for
+/// the margin boxes, [`PageContext`]).
+fn build_document_with(html: &str, font_ctx: parley::FontContext) -> HtmlDocument {
     HtmlDocument::from_html(
         html,
         DocumentConfig {
@@ -320,7 +490,7 @@ fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
             // Self-contained, deterministic fonts: bundled faces with system-font
             // discovery off (see `crate::fonts`). This is what removes the
             // `libfontconfig` runtime dependency and makes output machine-independent.
-            font_ctx: Some(crate::fonts::build_font_context(custom)),
+            font_ctx: Some(font_ctx),
             ..Default::default()
         },
     )
@@ -366,7 +536,8 @@ fn walk_for_denied(
 /// `BaseDocument` entirely within this function (lifetime contract).
 pub fn lay_out(html: &str) -> LaidOutDoc {
     let breaks = crate::break_css::parse_break_rules(html);
-    let doc = build_document(html, &[]);
+    let font_ctx = crate::fonts::build_font_context(&[]);
+    let doc = build_document_with(html, font_ctx.clone());
     // Standalone/test helper: lay out against the full A4 width with no caller
     // images (an unresolved `<img>` is recorded on the doc but not enforced here).
     // The render path uses `validate_then_lay_out` with the real @page content width.
@@ -377,6 +548,7 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
         &std::collections::HashMap::new(),
         None,
         &breaks,
+        font_ctx,
         &mut NoObserver,
     )
 }
@@ -426,7 +598,8 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     observer: &mut O,
 ) -> Result<LaidOutDoc, DeniedElement> {
     let breaks = crate::break_css::parse_break_rules(html);
-    let doc = build_document(html, fonts);
+    let font_ctx = crate::fonts::build_font_context(fonts);
+    let doc = build_document_with(html, font_ctx.clone());
     // Validate and lay out the same Blitz parse: one tree shared by validation
     // and layout.
     if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
@@ -439,6 +612,7 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
         images,
         base_url,
         &breaks,
+        font_ctx,
         observer,
     ))
 }
@@ -494,7 +668,9 @@ impl LayoutObserver for NoObserver {}
 /// `content_width_px` is the @page CONTENT width (page width minus left/right
 /// margins) — the box the document flows into. Laying out against the full page
 /// width instead would make `width:100%` boxes overflow once pagination offsets
-/// them by the left margin (the clipped-last-column bug).
+/// them by the left margin (the clipped-last-column bug). `font_ctx` is a clone of
+/// the context `doc` was built with, kept for the margin boxes ([`PageContext`]).
+#[allow(clippy::too_many_arguments)]
 fn resolve_and_walk<O: LayoutObserver>(
     mut doc: HtmlDocument,
     content_width_px: f64,
@@ -502,6 +678,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     images: &std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&str>,
     breaks: &crate::break_css::BreakRules,
+    font_ctx: parley::FontContext,
     observer: &mut O,
 ) -> LaidOutDoc {
     let viewport_px = (content_width_px as u32, content_height_px.max(0.0) as u32);
@@ -572,6 +749,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         viewport_height: content_height_px,
         content_height,
         unresolved_image,
+        page_context: page_context_of(base, font_ctx),
     }
 }
 

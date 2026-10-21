@@ -157,15 +157,20 @@ comparison) and exist only when the Chrome oracle ran; flags never change an out
      `new URL(src, nodeUrl).href` with `baseUrl = nodeUrl` (`http://web-platform.test:8000/<path>`)
      — the same WHATWG join as `vellora-core::resolve_image_key`. `imgWithoutDimAttrs` counts
      `<img>` without `width`/`height` attributes (see observation 2).
-   * **UA page box**. Screen reftests: `@page { size: 800px 600px; margin: 0 }` (the 800x600 WPT
-     reftest viewport) injected as the *first* `@page` — vellora reads only the first `@page` block
-     (`page_css::extract_at_page_block`), and `page_css::length_px` accepts `px` (CONFIRMED by
-     reading the source and by `pdfinfo` showing `600 x 450 pts`). Print reftests: the WPT print
-     default (`docs/writing-tests/print-reftests.md` at the pinned commit: 5in x 3in, 0.5in margins)
-     is merged at the *start* of the document's first `@page` block, so author declarations still
-     win; with no author `@page` a new block is injected (`pageInjection`). The `<style>` goes right
-     after `<head>` (else `<html>`, else the doctype) — never between the doctype and an explicit
-     `<html>` (observation 1).
+   * **UA page box**. A `<style>@layer vellora-ua-page { @page { … } }</style>` is injected
+     before the author styles: screen reftests `size: 800px 600px; margin: 0` (the 800x600 WPT
+     reftest viewport; `page_css::length_px` accepts `px`, CONFIRMED by `pdfinfo` showing
+     `600 x 450 pts`), print reftests the WPT print default (`docs/writing-tests/print-reftests.md`
+     at the pinned commit: 5in x 3in, 0.5in margins). Since port step 06 vellora-core cascades
+     every `@page` rule (`page_css`). The injected rule sits in the first cascade layer, which
+     loses to every later layer and to every unlayered rule, so every author `@page` rule
+     (`:first`, `:left`, `:right` and layered ones included) overrides it like a UA default. Until
+     step 06 vellora read only the first `@page` block and the print default was merged into the
+     start of it (`pageInjection: "merged-into-author-@page"`), which gave pages 2+ of a document
+     whose first block was `@page :first` vellora's A4/16mm default. An author `@page` before the
+     insertion point is noted (`authorPageBeforeUaPage`). The `<style>` goes right after `<head>`
+     (else `<html>`, else the doctype), never between the doctype and an explicit `<html>`
+     (observation 1).
 3. **Render** with `renderPdf(..., { strict: true, ... })` in a forked worker process (one test at a
    time per worker; a timeout or native crash kills only that worker and is attributed to the test).
 4. **Rasterize** with `pdftocairo -png -r 96` (1 CSS px = 1 device px, the scale WPT's

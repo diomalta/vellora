@@ -331,15 +331,34 @@ fn scan_css(html: &str) -> Option<Diagnostic> {
         }
     }
 
+    // `@page :first` / `:left` / `:right` rules that give pages different content widths: Blitz
+    // lays the document out once, at one width (`page_css::varying_width_rule`).
+    if let Some(idx) = crate::page_css::varying_width_rule(html) {
+        consider(&mut best, idx, PAGE_VARYING_WIDTH);
+    }
+
     let (idx, feature) = best?;
     let (line, col) = offset_to_line_col(html, idx);
+    let hint = if feature == PAGE_VARYING_WIDTH {
+        PAGE_VARYING_WIDTH_HINT.to_string()
+    } else {
+        format!("this CSS feature is {FIX_HINT}")
+    };
     Some(Diagnostic {
         feature: feature.to_string(),
         line: Some(line),
         col: Some(col),
-        hint: format!("this CSS feature is {FIX_HINT}"),
+        hint,
     })
 }
+
+/// Feature id of an `@page` rule that gives pages different content widths.
+const PAGE_VARYING_WIDTH: &str = "css:page-varying-width";
+const PAGE_VARYING_WIDTH_HINT: &str = "this @page :first/:left/:right rule gives pages different \
+    content widths (page width minus left and right margins); vellora lays the document out once, \
+    at one width. Keep the page width and the left/right margins the same on every page (margin-top, \
+    margin-bottom, the page height and the margin boxes may vary), or route this template to \
+    engine: \"chromium\".";
 
 /// Replace every `/* … */` comment span AND every `"…"`/`'…'` string interior
 /// with equal-length spaces, preserving all byte offsets so a later match still

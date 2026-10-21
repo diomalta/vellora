@@ -678,13 +678,21 @@ fn each_face_is_embedded_exactly_once_across_pages() {
         .filter(|d| d.has(b"FontFile") || d.has(b"FontFile2") || d.has(b"FontFile3"))
         .count();
 
-    // Distinct faces actually drawn in the laid-out invoice (regular + bold).
+    // Distinct faces actually drawn in the paginated invoice: the body's (regular + bold) and the
+    // running footer's. Since port step 06 the footer is laid out by Blitz in the CSS initial
+    // face (Liberation Serif 16px, as Chrome prints it), which the invoice body does not use, and
+    // `pagination::shared_face` hands its runs the body's `Arc` whenever the bytes are the same.
     use std::collections::HashSet;
     let laid = blitz_engine::lay_out(INVOICE);
-    let faces: HashSet<(usize, u32)> = laid
-        .boxes
+    let paginated = pagination::paginate(&laid, &page_css::parse_page_box(INVOICE));
+    let faces: HashSet<(usize, u32)> = paginated
+        .pages
         .iter()
-        .flat_map(|b| b.text_runs.iter())
+        .flat_map(|p| {
+            p.text_runs
+                .iter()
+                .chain(p.margin_texts.iter().flat_map(|mt| mt.runs.iter()))
+        })
         .map(|r| (std::sync::Arc::as_ptr(&r.font_data) as usize, r.font_index))
         .collect();
 

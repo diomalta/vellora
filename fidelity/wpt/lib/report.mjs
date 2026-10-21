@@ -264,7 +264,7 @@ export function prepareFlagBreakdown(results) {
     skippedFonts: (p) => (p.skippedFonts ?? []).length > 0,
     missingResources: (p) => (p.missingResources ?? []).length > 0,
     inlinedStylesheets: (p) => (p.inlinedStylesheets ?? 0) > 0,
-    mergedAuthorPage: (p) => p.pageInjection === "merged-into-author-@page",
+    authorPageBeforeUaPage: (p) => p.authorPageBeforeUaPage === true,
     uncoveredCodepoints: (p) => (p.uncoveredCodepoints ?? 0) > 0,
     cssUrlResources: (p) => (p.cssUrlResources ?? 0) > 0,
   };

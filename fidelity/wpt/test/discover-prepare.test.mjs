@@ -58,7 +58,7 @@ test("style insertion never lands between the doctype and an explicit <html>", (
   assert.equal(styleInsertionPoint("<!doctype html><p>x").where, "after-doctype");
 });
 
-test("first @page offset mirrors vellora-core extract_at_page_block", () => {
+test("first @page offset: the first well-formed @page block of the <style> elements", () => {
   const html = `<style>p{}</style><style>@page :first { margin: 1in; @top-center { content: "x" } } @page { size: 1in }</style>`;
   const at = firstAtPageBodyOffset(html);
   assert.equal(html.slice(at - 1, at + 8), "{ margin:");
@@ -77,7 +77,7 @@ function tree() {
   return root;
 }
 
-test("prepare: stylesheet inlining, image keys, screen @page first, print @page merged", () => {
+test("prepare: stylesheet inlining, image keys, UA @page injected before the author @page", () => {
   const root = tree();
   try {
     const url = "http://web-platform.test:8000/css/a/t.html";
@@ -104,8 +104,28 @@ test("prepare: stylesheet inlining, image keys, screen @page first, print @page 
     assert.ok(screen.info.missingResources.some((m) => m.endsWith("missing.png")));
     assert.ok(screen.info.missingResources.includes("fonts/Ahem.ttf"));
     const print = prepareNode({ wptRoot: root, rel: "css/a/t.html", url, content, mode: "print" });
-    assert.equal(print.info.pageInjection, "merged-into-author-@page");
-    assert.match(print.html, /@page \{ size: 5in 3in; margin: 0\.5in;\s+size: 2in 1in \}/);
+    // vellora-core cascades every @page rule (port step 06): the UA box goes first, as its own
+    // rule, so the author's `@page { size: 2in 1in }` (and any :first/:left/:right rule) wins.
+    assert.equal(print.info.pageInjection, "new-style-block");
+    assert.equal(print.info.authorPageBeforeUaPage, undefined);
+    assert.ok(
+      print.html.indexOf(
+        "<style>@layer vellora-ua-page { @page { size: 5in 3in; margin: 0.5in } }</style>",
+      ) < print.html.indexOf("@page { size: 2in 1in }"),
+    );
+    const late = prepareNode({
+      wptRoot: root,
+      rel: "css/a/t.html",
+      url,
+      content:
+        "<!doctype html><style>@page { size: 2in }</style><html><head></head><body>x</body></html>",
+      mode: "print",
+    });
+    assert.equal(
+      late.info.authorPageBeforeUaPage,
+      true,
+      "an author @page before the insertion point is noted",
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

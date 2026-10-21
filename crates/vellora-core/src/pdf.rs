@@ -55,22 +55,15 @@ pub struct PdfPage {
     pub images: Vec<ImageRun>,
     /// Positioned text runs, page-local px (baseline origin).
     pub text_runs: Vec<TextRun>,
-    /// Running header/footer strings shaped by krilla itself (correct glyphs +
-    /// ToUnicode for the per-page page-number label).
+    /// Running headers/footers (`@top-center` / `@bottom-center` margin boxes).
     pub margin_texts: Vec<MarginText>,
 }
 
-/// A running header/footer string to be shaped+drawn by krilla's `draw_text`.
+/// A running header/footer: its resolved string and the glyph runs Blitz shaped it into
+/// (`blitz_engine::lay_out_margin_texts`), page-local px, drawn like body text.
 pub struct MarginText {
     pub text: String,
-    /// Baseline origin in page-local CSS px (top-left origin).
-    pub origin_x: f64,
-    pub origin_y: f64,
-    pub font_size: f32,
-    /// Raw font bytes + face index reused from a body run.
-    pub font_data: std::sync::Arc<Vec<u8>>,
-    pub font_index: u32,
-    pub color: [u8; 3],
+    pub runs: Vec<TextRun>,
 }
 
 /// A solid-filled rectangle (used for backgrounds / header bands).
@@ -180,10 +173,9 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             draw_text_run(&mut surface, run, &mut font_cache)?;
         }
 
-        // Running header/footer: let krilla shape the per-page label so its
-        // glyphs + ToUnicode are correct for the exact (varying) string.
-        for mt in &page.margin_texts {
-            draw_margin_text(&mut surface, mt, &mut font_cache)?;
+        // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
+        for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
+            draw_text_run(&mut surface, run, &mut font_cache)?;
         }
 
         surface.finish();
@@ -456,27 +448,6 @@ fn draw_text_run(
         false,
     );
 
-    Ok(())
-}
-
-fn draw_margin_text(
-    surface: &mut krilla::surface::Surface,
-    mt: &MarginText,
-    font_cache: &mut HashMap<(usize, u32), Font>,
-) -> Result<(), String> {
-    let font = cached_font(font_cache, &mt.font_data, mt.font_index, "margin font")?;
-
-    let start = Point::from_xy(content_x_pt(mt.origin_x), content_y_pt(mt.origin_y));
-    set_solid_fill(surface, mt.color);
-    // krilla shapes the string against the font (correct glyph IDs + ToUnicode).
-    surface.draw_text(
-        start,
-        font,
-        mt.font_size * PX_TO_PT as f32,
-        &mt.text,
-        false,
-        krilla::text::TextDirection::Auto,
-    );
     Ok(())
 }
 

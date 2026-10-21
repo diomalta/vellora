@@ -11,11 +11,16 @@
 //      (declared family != intrinsic family) is recorded because vellora matches by intrinsic name.
 //   3. <img src> files from the WPT tree are passed via `images`, keyed by the WHATWG-joined URL
 //      with `baseUrl` = the node's URL (exactly how vellora-core's resolve_image_key joins).
-//   4. The UA page box: screen reftests get `@page { size: 800px 600px; margin: 0 }` as the FIRST
-//      @page (vellora reads only the first @page block) — the 800x600 WPT viewport. Print reftests
-//      get the WPT print default `size: 5in 3in; margin: 0.5in` merged at the START of the
-//      document's first @page block, so author declarations still override it; when the document
-//      has no @page, a new block is injected.
+//   4. The UA page box: `<style>@layer vellora-ua-page { @page { … } }</style>` injected before
+//      the author styles (the style insertion point) — screen reftests `size: 800px 600px;
+//      margin: 0` (the 800x600 WPT viewport), print reftests the WPT print default `size: 5in 3in;
+//      margin: 0.5in`. vellora cascades every @page rule (since port step 06, `page_css`): the
+//      first cascade layer loses to every later layer and to every unlayered rule, so every author
+//      @page rule (`:first`/`:left`/`:right` and layered ones included) overrides it like a UA
+//      default. Until step 06
+//      vellora read only the FIRST @page block, and the print default was merged into the start of
+//      the document's first @page block instead (`pageInjection: "merged-into-author-@page"`),
+//      which broke as soon as that first block was `@page :first`.
 //   5. Flags (attribution aids; they never change the rendered input or an outcome):
 //      `uncoveredCodepoints` — visible text codepoints that no available face maps (vellora's
 //      bundled faces ∪ Ahem ∪ supplied @font-face files; vellora never consults system fonts), so
@@ -32,6 +37,8 @@ export const SCREEN_PAGE_CSS = "size: 800px 600px; margin: 0";
 export const PRINT_PAGE_CSS = "size: 5in 3in; margin: 0.5in";
 /** Raster geometry at 96 DPI (1 CSS px = 1 device px), per mode. */
 export const PAGE_PX = { screen: [800, 600], print: [480, 288] };
+/** The injected UA page box rule: its own (first) cascade layer, so author @page rules win. */
+export const uaPageRule = (pageCss) => `@layer vellora-ua-page { @page { ${pageCss} } }`;
 
 const bytesCache = new Map();
 function readTreeFile(wptRoot, rel) {
@@ -85,8 +92,8 @@ export function styleBlocks(html) {
 }
 
 /**
- * Offset just after the `{` of the first well-formed @page block that vellora-core's
- * `page_css::extract_at_page_block` would pick, or -1 when there is none.
+ * Offset just after the `{` of the first well-formed @page block of the `<style>` elements, or -1
+ * when there is none (used to note an author @page that precedes the injected UA page box).
  */
 export function firstAtPageBodyOffset(html) {
   for (const region of styleBlocks(html)) {
@@ -434,23 +441,19 @@ export function prepareNode({
     info.images++;
   }
 
-  // 4. UA page box.
+  // 4. UA page box: a universal @page rule in the FIRST cascade layer, before every author
+  // style, so every author @page rule (layered or not; cascaded by vellora-core) overrides it.
   const pageCss = mode === "print" ? PRINT_PAGE_CSS : SCREEN_PAGE_CSS;
-  const authorPage = mode === "print" ? firstAtPageBodyOffset(html) : -1;
-  if (authorPage !== -1) {
-    html = `${html.slice(0, authorPage)} ${pageCss}; ${html.slice(authorPage)}`;
-    info.pageInjection = "merged-into-author-@page";
-  } else {
-    const point = styleInsertionPoint(html);
-    html = `${html.slice(0, point.offset)}<style>@page { ${pageCss} }</style>${html.slice(point.offset)}`;
-    info.pageInjection = "new-style-block";
-    info.styleInsertion = point.where;
-    if (
-      mode === "screen" &&
-      firstAtPageBodyOffset(html) !== point.offset + "<style>@page {".length
-    ) {
-      info.notes.push("an author @page precedes the injected screen @page; vellora uses the first");
-    }
+  const point = styleInsertionPoint(html);
+  const authorPage = firstAtPageBodyOffset(html);
+  html = `${html.slice(0, point.offset)}<style>${uaPageRule(pageCss)}</style>${html.slice(point.offset)}`;
+  info.pageInjection = "new-style-block";
+  info.styleInsertion = point.where;
+  if (authorPage !== -1 && authorPage <= point.offset) {
+    info.authorPageBeforeUaPage = true;
+    info.notes.push(
+      "an author @page precedes the injected UA page box, so the injected box overrides it",
+    );
   }
 
   return { html, fonts, images, baseUrl: url, info };
