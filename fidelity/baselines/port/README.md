@@ -471,9 +471,11 @@ those boxes show their real error.
   margin at 68 px = 51.0 pt).
 - **WPT Ahem tests show the same 4 px.** `css/CSS2/linebox/line-height-002.xht` failed by 160 px,
   which is 2 glyphs × 20 px × 4 px. It now passes; css/CSS2/linebox passes went 29 → 125.
-- **Where the constant came from.** It was introduced in `ab65dfd` (Blitz pin era). At the pin,
-  layout-diff L0 text for the notification sat a median +6.73 px low, so a raise looked right then.
-  Steps 01–03 removed that drift, and the constant was left over-correcting.
+- **Where the constant came from.** It was introduced in `ab65dfd` (Blitz pin era). In the pin run
+  `20261021T054154Z`, with the raise applied, the notification's PDF words (PyMuPDF baselines vs
+  Chrome) clustered at 0.0 pt (72 words; median −1.15 pt). The paginated text then sat about 3 pt
+  low and the raise cancelled it. Steps 01–03 removed that drift, and the constant was left
+  over-correcting.
 - **`block_offset`.** On the step-03 code, cells with `vertical-align: middle` or `bottom` and
   `align-content: center` or `end` drew their text at the top of the box, 23–64 px off. Now they
   are exact (TOP/MID/BOT/DFLT 15/38/61/38 px; `align-content` 14/132/250 px).
