@@ -199,6 +199,77 @@ fn margins_after_a_forced_break_are_kept() {
 }
 
 #[test]
+fn margins_kept_after_a_forced_break_collapse_with_their_signs() {
+    // CSS 2.2 §8.3.1: the collapsed margin is the largest positive margin plus the most
+    // negative one (port step 09; before it the paginator kept the largest positive margin
+    // only). Chrome 155 (fidelity/baselines/port/09-review-fixes, attachments/
+    // chrome-probes-review-fixes.json, probes m_*): "One" p1 26.25 pt, "Two" on p2 at the pt
+    // below; the px offset is (pt - 26.25) / 0.75. The step-08 build is in the comment.
+    let cases: &[(&str, &str, &str, f64)] = &[
+        (
+            // 25 + (-10). Step 08: 25 px.
+            "positive root, negative child",
+            "section { margin-top: 25px; break-before: page } section p { margin-top: -10px }",
+            "<p>One</p><section><p>Two</p></section>",
+            (37.5 - 26.25) / 0.75,
+        ),
+        (
+            // -10 (the most negative; the line rises into the top page margin). Step 08: 0.
+            "all negative",
+            "section { margin-top: -10px; break-before: page } section p { margin-top: -5px }",
+            "<p>One</p><section><p>Two</p></section>",
+            (18.75 - 26.25) / 0.75,
+        ),
+        (
+            // max(30, 15) + min(-20, -4) = 10. Step 08: 30 px.
+            "nested chain",
+            ".a { margin-top: 30px; break-before: page } .b { margin-top: -20px } \
+             .c { margin-top: 15px } .d { margin-top: -4px }",
+            "<p>One</p><div class=\"a\"><div class=\"b\"><div class=\"c\"><p class=\"d\">Two</p>\
+             </div></div></div>",
+            (33.75 - 26.25) / 0.75,
+        ),
+        (
+            // 40 + (-12). Step 08: 40 px.
+            "negative root, positive child",
+            "section { margin-top: -12px; break-before: page } section p { margin-top: 40px }",
+            "<p>One</p><section><p>Two</p></section>",
+            (47.25 - 26.25) / 0.75,
+        ),
+        (
+            // An empty block's margins collapse through it: max(40, 5) + (-15). Step 08: 40 px.
+            "through a dropped block",
+            ".empty { margin-top: 40px; margin-bottom: -15px; break-before: page } \
+             .next { margin-top: 5px }",
+            "<p>One</p><div class=\"empty\"></div><p class=\"next\">Two</p>",
+            (45.0 - 26.25) / 0.75,
+        ),
+        (
+            // 30 + min(-6, -20). Step 08: 30 px.
+            "through a dropped block, negative next",
+            ".empty { margin-top: -6px; margin-bottom: 30px; page-break-before: always } \
+             .next { margin-top: -20px }",
+            "<p>One</p><div class=\"empty\"></div><p class=\"next\">Two</p>",
+            (33.75 - 26.25) / 0.75,
+        ),
+        (
+            // A flattened wrapper's margin collapses with its first child's: 30 + (-18).
+            // Step 08: 30 px.
+            "flattened wrapper",
+            ".w { margin-top: 30px; break-before: page } .w p:first-child { margin-top: -18px }",
+            "<p>One</p><div class=\"w\"><p>Two</p><p>Three</p></div>",
+            (35.25 - 26.25) / 0.75,
+        ),
+    ];
+    for (what, css, body, expected) in cases {
+        let p = paginate(&doc(&format!("{SMALL_PAGE} {BASE} {css}"), body));
+        let (one, two) = (at(&p, "One"), at(&p, "Two"));
+        assert_eq!((one.0, two.0), (0, 1), "{what}");
+        assert_px(two.1 - one.1, *expected, what);
+    }
+}
+
+#[test]
 fn margins_adjoining_an_unforced_break_truncate() {
     // Twelve 20 px lines (240 px), then a line with margin-top 40 px: it does
     // not fit the 260 px page, moves to page 2 and loses its margin. Chrome:

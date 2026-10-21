@@ -171,10 +171,10 @@ struct Fragment {
     contained_bottom: f64,
     /// The margin kept above this fragment when a forced break puts it at the
     /// top of a page (CSS Fragmentation 3 §5.2: "margins after the break are
-    /// preserved"): the largest positive margin-top that collapses into its top
-    /// edge (see [`leading_margin`]), including that of an ancestor whose forced
-    /// break moved onto this fragment.
-    break_margin: f64,
+    /// preserved"): the margins that collapse into its top edge (see
+    /// [`leading_margin`]), including those of an ancestor whose forced break
+    /// moved onto this fragment and of dropped fragments it collapses through.
+    break_margin: CollapsedMargin,
     /// A part (header, row, row group) of a `border-collapse: collapse` table:
     /// its rows abut (CSS 2.2 §17.6.2: no spacing between cells), so the flow
     /// gap Blitz 0.3.0-beta.4 leaves between them is not kept (Chrome 155 row
@@ -310,7 +310,7 @@ pub fn paginate_traced(
             let mut members = frag.members;
             if let Some(first) = members.first_mut() {
                 first.break_before |= break_before;
-                first.break_margin = first.break_margin.max(break_margin);
+                first.break_margin = first.break_margin.collapse(break_margin);
             }
             for member in members.into_iter().rev() {
                 queue.push_front(member);
@@ -453,7 +453,7 @@ pub fn paginate_traced(
                     (frag.top.max(header_h), "page-origin")
                 }
                 PageStart::Origin => (header_h, "page-start"),
-                PageStart::Forced => (frag.break_margin + header_h, "forced-break-margin"),
+                PageStart::Forced => (frag.break_margin.value() + header_h, "forced-break-margin"),
                 PageStart::Unforced => (header_h, "page-start"),
             },
         };
@@ -784,10 +784,10 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
 /// A forced break on a split container (items table, flattened wrapper)
 /// lands on its first body part, which also keeps the container's own
 /// leading margin (the two collapse into the margin after the break).
-fn move_forced_break_to_first_part(parts: &mut [Fragment], container_margin: f64) {
+fn move_forced_break_to_first_part(parts: &mut [Fragment], container_margin: CollapsedMargin) {
     if let Some(first) = parts.iter_mut().find(|part| !part.is_thead) {
         first.break_before = true;
-        first.break_margin = first.break_margin.max(container_margin);
+        first.break_margin = first.break_margin.collapse(container_margin);
     }
 }
 
@@ -804,48 +804,97 @@ fn finalize_fragments(fragments: &mut Vec<Fragment>) {
             finalize_fragments(&mut fragment.members);
         }
     }
-    let mut carried_break: Option<f64> = None;
+    let mut carried_break: Option<CollapsedMargin> = None;
     fragments.retain_mut(|fragment| {
         if !fragment_has_renderables(fragment) {
             if fragment.break_before || carried_break.is_some() {
-                let margin = carried_break.unwrap_or(0.0).max(dropped_margin(fragment));
+                let margin = carried_break
+                    .unwrap_or_default()
+                    .collapse(dropped_margin(fragment));
                 carried_break = Some(margin);
             }
             return false;
         }
         if let Some(margin) = carried_break.take() {
             fragment.break_before = true;
-            fragment.break_margin = fragment.break_margin.max(margin);
+            fragment.break_margin = fragment.break_margin.collapse(margin);
         }
         true
     });
 }
 
+/// Adjoining vertical margins collapsed into one (CSS 2.2 §8.3.1): "the
+/// maximum of the adjoining margins" when all are positive, "the absolute
+/// maximum of the negative adjoining margins is deducted from the maximum of
+/// the positive adjoining margins" otherwise. Kept as the two parts, so
+/// collapsing more margins in later (an ancestor's, a dropped fragment's) is
+/// exact whatever the order.
+///
+/// Before port step 09 the paginator kept only the largest positive margin, so
+/// a forced break before `section { margin-top: 25px }` whose first `<p>` has
+/// `margin-top: -10px` kept 25 px where Chrome 155 keeps 15 px
+/// (`tests/pagination_gaps.rs`).
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+struct CollapsedMargin {
+    /// The largest positive margin (0 when none is positive).
+    positive: f64,
+    /// The most negative margin (0 when none is negative).
+    negative: f64,
+}
+
+impl CollapsedMargin {
+    fn of(margin: f64) -> Self {
+        CollapsedMargin {
+            positive: margin.max(0.0),
+            negative: margin.min(0.0),
+        }
+    }
+
+    fn with(self, margin: f64) -> Self {
+        self.collapse(Self::of(margin))
+    }
+
+    fn collapse(self, other: Self) -> Self {
+        CollapsedMargin {
+            positive: self.positive.max(other.positive),
+            negative: self.negative.min(other.negative),
+        }
+    }
+
+    /// The collapsed margin's width (negative when the negative part wins).
+    fn value(self) -> f64 {
+        self.positive + self.negative
+    }
+}
+
 /// The margins of a fragment with nothing to paint, which collapse through it
-/// (CSS 2.2 §8.3.1) into the next fragment's leading margin.
-fn dropped_margin(fragment: &Fragment) -> f64 {
-    fragment.boxes.first().map_or(0.0, |root| {
-        fragment
-            .break_margin
-            .max(root.margin_top)
-            .max(root.margin_bottom)
-            .max(0.0)
-    })
+/// (CSS 2.2 §8.3.1: its top and bottom margins adjoin) into the next
+/// fragment's leading margin.
+fn dropped_margin(fragment: &Fragment) -> CollapsedMargin {
+    fragment
+        .boxes
+        .first()
+        .map_or(CollapsedMargin::default(), |root| {
+            fragment
+                .break_margin
+                .with(root.margin_top)
+                .with(root.margin_bottom)
+        })
 }
 
 /// The margin kept above a subtree placed right after a forced break (CSS
-/// Fragmentation 3 §5.2: "margins after the break are preserved"): the largest
-/// positive margin-top of the subtree root and of its chain of first element
-/// children that start at the same flow y, i.e. whose top margins collapse
-/// with the root's (CSS 2.2 §8.3.1; Blitz reports each box's OWN margin and
-/// places a collapsed-through child at its parent's y). Chrome 155 keeps 25 px
-/// for `<section style="margin-top:25px"><p style="margin-top:10px">`
-/// (`tests/pagination_gaps.rs`, c1).
-fn leading_margin(subtree: &[LaidOutBox]) -> f64 {
+/// Fragmentation 3 §5.2: "margins after the break are preserved"): the
+/// margin-top of the subtree root collapsed with those of its chain of first
+/// element children that start at the same flow y, i.e. whose top margins
+/// collapse with the root's (CSS 2.2 §8.3.1; Blitz reports each box's OWN
+/// margin and places a collapsed-through child at its parent's y). Chrome 155
+/// keeps 25 px for `<section style="margin-top:25px"><p style="margin-top:10px">`
+/// and 15 px with `margin-top:-10px` on the `<p>` (`tests/pagination_gaps.rs`).
+fn leading_margin(subtree: &[LaidOutBox]) -> CollapsedMargin {
     let Some(root) = subtree.first() else {
-        return 0.0;
+        return CollapsedMargin::default();
     };
-    let mut margin = root.margin_top.max(0.0);
+    let mut margin = CollapsedMargin::of(root.margin_top);
     let mut depth = root.depth + 1;
     for b in &subtree[1..] {
         if b.depth < depth {
@@ -859,7 +908,7 @@ fn leading_margin(subtree: &[LaidOutBox]) -> f64 {
         if (b.y - root.y).abs() > 0.5 {
             break;
         }
-        margin = margin.max(b.margin_top);
+        margin = margin.with(b.margin_top);
         depth += 1;
     }
     margin
@@ -945,7 +994,7 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
     let child_depth = root_depth + 1;
     // A forced break (and the margins after it) carried over children with
     // nothing to paint onto the next child that has something.
-    let mut carried_break: Option<f64> = None;
+    let mut carried_break: Option<CollapsedMargin> = None;
     let mut j = 1;
     while j < subtree.len() {
         if subtree[j].depth != child_depth {
@@ -962,7 +1011,7 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
         let own_break = child_root.break_before_page.then(|| leading_margin(child));
         let break_margin = match (own_break, carried_break.take()) {
             (None, None) => None,
-            (a, b) => Some(a.unwrap_or(0.0).max(b.unwrap_or(0.0))),
+            (a, b) => Some(a.unwrap_or_default().collapse(b.unwrap_or_default())),
         };
         if child_is_items_table {
             let start = out.len();
@@ -979,7 +1028,7 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
                 contained_bottom: bottom
                     .min(box_bottom(child_root))
                     .min(box_bottom(&subtree[0])),
-                break_margin: leading_margin(child).max(break_margin.unwrap_or(0.0)),
+                break_margin: leading_margin(child).collapse(break_margin.unwrap_or_default()),
                 collapsed_table: false,
                 table_id: None,
                 is_thead: false,
@@ -989,8 +1038,8 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
         } else if let Some(margin) = break_margin {
             carried_break = Some(
                 margin
-                    .max(child_root.margin_top)
-                    .max(child_root.margin_bottom),
+                    .with(child_root.margin_top)
+                    .with(child_root.margin_bottom),
             );
         }
         j = child_end;
@@ -1039,7 +1088,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
                     bottom,
                     contained_bottom: bottom,
                     // Rows and row groups have no margins.
-                    break_margin: 0.0,
+                    break_margin: CollapsedMargin::default(),
                     collapsed_table: table.collapsed,
                     table_id: table.id,
                     is_thead,
@@ -1075,7 +1124,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
                         top,
                         bottom,
                         contained_bottom: bottom,
-                        break_margin: 0.0,
+                        break_margin: CollapsedMargin::default(),
                         collapsed_table: table.collapsed,
                         table_id: table.id,
                         is_thead: false,
