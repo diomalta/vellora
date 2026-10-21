@@ -1,0 +1,212 @@
+{
+ "schema": "vellora-layout-diff/injected-defects/1",
+ "date_utc": "2026-10-21T04:37:43Z",
+ "os": "darwin 27.0.0 arm64",
+ "cpu": "Apple M5 Pro",
+ "node": "v22.23.2",
+ "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+ "chrome": "Google Chrome 155.0.8059.85",
+ "blitz": "blitz-0.3.0-alpha.5+2003ba5",
+ "matcher_commit": "75f8833ab47a04928d8c5f73f5c422481c2bc993",
+ "method": "Live: /tmp/lfix/live-inj.sh runs fidelity/layout-diff/run.mjs against a scratch clone whose resolve_and_walk carries a TEMPORARY env-gated injection (FIDELITY_INJECT, applied after pass(&mut boxes) and before observer.after_pass, so it persists into later layers; never committed). Viewport/font cases: temporary run.mjs-side overrides in the same scratch clone (FIDELITY_VW_DELTA=-1, FIDELITY_NO_FONTS=1). Every saved run was re-analysed with this branch's final matcher and checks (offline, same inputs). The same A2/C2/C3 injections are replayed as node --test cases on the committed notification snapshot (test/helpers.mjs plantBoxShift/plantFlowGrowth reproduce the validator's injected dumps exactly).",
+ "cases": [
+  {
+   "case": "live-ctl",
+   "fixture": "notification",
+   "injection": "none (control)",
+   "expected": "no table_percent_widths regression",
+   "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --fixtures notification --label live-ctl --dump-repo /tmp/lfix/inj --out /tmp/lfix/res",
+   "env_FIDELITY_INJECT": "none (control)",
+   "headline_box": "enter body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (first over tol. N0)",
+   "regressions_by_layer.table_percent_widths.first_box": null,
+   "regressed_by": [],
+   "events_regressed_by_layer": "0 box / 0 text",
+   "pass_effect_names": [],
+   "caught": true
+  },
+  {
+   "case": "live-A2",
+   "fixture": "notification",
+   "injection": "shift:table_percent_widths:59:10 (body>div:nth-child(4), already +6.05 px off at B0, after the headline)",
+   "expected": "the pass named for the box",
+   "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --fixtures notification --label live-A2 --dump-repo /tmp/lfix/inj --out /tmp/lfix/res",
+   "env_FIDELITY_INJECT": "shift:table_percent_widths:59:10 (body>div:nth-child(4), already +6.05 px off at B0, after the headline)",
+   "headline_box": "enter body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (first over tol. N0)",
+   "regressions_by_layer.table_percent_widths.first_box": "enter body>div:nth-child(4)",
+   "regressed_by": [
+    {
+     "layer": "table_percent_widths",
+     "kind": "worsened",
+     "coord": "dy",
+     "from": 0.047,
+     "to": 10.047,
+     "by": 10
+    }
+   ],
+   "events_regressed_by_layer": "1 box / 0 text",
+   "pass_effect_names": [
+    "body>div:nth-child(4)"
+   ],
+   "caught": true
+  },
+  {
+   "case": "live-C3",
+   "fixture": "notification",
+   "injection": "grow:table_percent_widths:46:10 (body>div:nth-child(3)>div:nth-child(2), flow growth after the headline)",
+   "expected": "root exit named first",
+   "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --fixtures notification --label live-C3 --dump-repo /tmp/lfix/inj --out /tmp/lfix/res",
+   "env_FIDELITY_INJECT": "grow:table_percent_widths:46:10 (body>div:nth-child(3)>div:nth-child(2), flow growth after the headline)",
+   "headline_box": "enter body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (first over tol. N0)",
+   "regressions_by_layer.table_percent_widths.first_box": "exit body>div:nth-child(3)>div:nth-child(2)",
+   "regressed_by": [
+    {
+     "layer": "table_percent_widths",
+     "kind": "worsened",
+     "coord": "dh",
+     "from": -0.312,
+     "to": 9.688,
+     "by": 9.376
+    }
+   ],
+   "events_regressed_by_layer": "27 box / 27 text",
+   "pass_effect_names": [
+    "body>div:nth-child(3)>div:nth-child(2)",
+    "body>div:nth-child(3)>div:nth-child(3)",
+    "body>div:nth-child(3)>div:nth-child(4)"
+   ],
+   "caught": true
+  },
+  {
+   "case": "live-C2",
+   "fixture": "notification",
+   "injection": "grow:fixed_table_widths:17:10 (body>div:nth-child(1)>div:nth-child(1))",
+   "expected": "root exit named first",
+   "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --fixtures notification --label live-C2 --dump-repo /tmp/lfix/inj --out /tmp/lfix/res",
+   "env_FIDELITY_INJECT": "grow:fixed_table_widths:17:10 (body>div:nth-child(1)>div:nth-child(1))",
+   "headline_box": "exit body>div:nth-child(1)>div:nth-child(1) (first over tol. fixed_table_widths)",
+   "regressions_by_layer.fixed_table_widths.first_box": "exit body>div:nth-child(1)>div:nth-child(1)",
+   "regressed_by": [
+    {
+     "layer": "fixed_table_widths",
+     "kind": "worsened",
+     "coord": "dh",
+     "from": 0.016,
+     "to": 10.016,
+     "by": 10
+    }
+   ],
+   "events_regressed_by_layer": "34 box / 34 text",
+   "pass_effect_names": [
+    "body>div:nth-child(1)>div:nth-child(1)",
+    "body>div:nth-child(1)>div:nth-child(2)",
+    "body>table:nth-child(2)"
+   ],
+   "caught": true
+  },
+  {
+   "case": "notification/live-vw671",
+   "injection": "Chromium viewport width 671 (Blitz 672)",
+   "command": "node /private/tmp/lfix/inj/fidelity/layout-diff/run.mjs --fixtures notification,receipt --label live-vw671 --out /tmp/lfix/res --no-build",
+   "checks_failed": [
+    "viewport_width"
+   ],
+   "attribution_valid": false,
+   "caught": true
+  },
+  {
+   "case": "receipt/live-vw671",
+   "injection": "Chromium viewport width 671 (Blitz 672)",
+   "command": "node /private/tmp/lfix/inj/fidelity/layout-diff/run.mjs --fixtures notification,receipt --label live-vw671 --out /tmp/lfix/res --no-build",
+   "checks_failed": [
+    "viewport_width",
+    "normalize_wrappers_located",
+    "normalize_dom_roundtrip",
+    "dom_key_alignment"
+   ],
+   "attribution_valid": false,
+   "caught": true
+  },
+  {
+   "case": "notification/live-nofonts",
+   "injection": "@font-face block dropped from the browser HTML",
+   "command": "node /private/tmp/lfix/inj/fidelity/layout-diff/run.mjs --fixtures notification,receipt --label live-nofonts --out /tmp/lfix/res --no-build",
+   "checks_failed": [
+    "font_block_injected",
+    "bundled_fonts_loaded",
+    "platform_fonts_custom"
+   ],
+   "attribution_valid": false,
+   "caught": true
+  },
+  {
+   "case": "receipt/live-nofonts",
+   "injection": "@font-face block dropped (sans-serif: Helvetica is metric-compatible, geometry alone cannot show it)",
+   "command": "node /private/tmp/lfix/inj/fidelity/layout-diff/run.mjs --fixtures notification,receipt --label live-nofonts --out /tmp/lfix/res --no-build",
+   "checks_failed": [
+    "font_block_injected",
+    "bundled_fonts_loaded",
+    "platform_fonts_custom",
+    "normalize_wrappers_located",
+    "normalize_dom_roundtrip",
+    "dom_key_alignment"
+   ],
+   "attribution_valid": false,
+   "caught": true
+  },
+  {
+   "case": "probe ::before + anonymous blocks",
+   "injection": "temporary fixture fixtures/zzanon (test/data/pseudo-anon-probe.html) in a scratch clone",
+   "command": "node /private/tmp/lfix/inj/fidelity/layout-diff/run.mjs --fixtures zzanon --label anon --out /tmp/lfix/res --no-build",
+   "before_box": {
+    "order": 19,
+    "path": "html>body:nth-child(2)>div:nth-child(3)>::before",
+    "tag": "::before",
+    "chrome": {
+     "x": 5,
+     "y": 109,
+     "w": 662,
+     "h": 14
+    },
+    "present_in": [
+     "N0",
+     "B0",
+     "N0u",
+     "B0u"
+    ],
+    "missing_from": "L0",
+    "counted_as_divergence": true
+   },
+   "generated_text": [
+    {
+     "owner": "html>body:nth-child(2)>div:nth-child(3)",
+     "text": "Before block",
+     "x": 5,
+     "y": 109,
+     "generated": true
+    }
+   ],
+   "caught": true
+  },
+  {
+   "case": "receipt keys (defect g) at the pin, no injection",
+   "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --label pin",
+   "checks_failed": [
+    "normalize_wrappers_located",
+    "normalize_dom_roundtrip",
+    "dom_key_alignment"
+   ],
+   "first_html_normalize_regression": "exit body>div:nth-child(1)>p:nth-child(6) [{\"layer\":\"B0\",\"kind\":\"worsened\",\"coord\":\"dh\",\"from\":-0.297,\"to\":-46.297,\"by\":46}]",
+   "footer": [
+    {
+     "path": "body>div:nth-child(1)>footer:nth-child(7)",
+     "present_in": [
+      "N0",
+      "N0u"
+     ],
+     "lost_at": "B0"
+    }
+   ],
+   "caught": true
+  }
+ ]
+}

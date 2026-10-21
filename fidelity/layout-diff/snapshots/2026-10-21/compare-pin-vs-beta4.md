@@ -1,14 +1,15 @@
 # Layout diff comparison: pin → beta4
 
-Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer where b's delta-vs-Chromium differs from a's by more than the tolerance: `B0` = the bump changed raw Blitz layout; `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.
+Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer (of the layers both runs have) where b's delta-vs-Chromium differs from a's by more than the tolerance: `N0` = the bump changed raw Blitz layout of the source HTML; `B0` = Blitz's layout of html_normalize's output changed (raw Blitz when N0 is absent from either run and html_normalize changed nothing); `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.
 
 ## invoice
 
 - Chromium reference identical across both runs: yes
 |  | pin | beta4 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 |
-| first divergent text | "Acme Widgets LON" by L0 | "EMITENTE" by L0 |
+| first divergent box | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 |
+| first divergent text | "Acme Widgets LON" first over tol. L0 | "EMITENTE" first over tol. L0 |
+| N0: box/text diverged, mean box err | 313/0, 61.514 | 309/0, 24.588 |
 | B0: box/text diverged, mean box err | 313/0, 61.514 | 309/0, 24.588 |
 | L0: box/text diverged, mean box err | 313/210, 61.514 | 309/200, 24.588 |
 | vertical_margin_collapse: box/text diverged, mean box err | 313/210, 61.514 | 309/200, 24.588 |
@@ -19,7 +20,7 @@ Same templated HTML, same Chromium reference, two vellora builds. A change is at
 | auto_table_compact_columns: box/text diverged, mean box err | 310/210, 52.809 | 309/176, 12.914 |
 | collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 309/202, 52.766 | 309/176, 12.914 |
 
-- boxes whose final pre-pagination geometry changed: 217; by first changed layer: {"B0":217}
+- boxes whose final pre-pagination geometry changed: 217; by first changed layer: {"N0":217}
 - text runs whose final position changed: 198; by first changed layer: {"L0":198}
   - of those, x changed: 118, first x-changing layer: {"auto_table_compact_columns":35,"L0":83}; y changed, first y-changing layer: {"L0":189}
   - where the x change comes from (Σ|part| px over those runs): {"L0":298.8,"auto_table_compact_columns":922.69,"collapsed_table_medium_border_insets_x":321.04}; y: {"L0":11939,"collapsed_table_medium_border_insets":1755}
@@ -60,16 +61,16 @@ Largest box changes:
 
 | path | Δ final dx,dy,dw,dh | first changed layer |
 | --- | --- | --- |
-| html | 0, 0, 0, -129 | B0 |
-| body | 0, 0, 0, -129 | B0 |
-| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(1) | 0, -111, 2.01, 0 | B0 |
-| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(2) | -1.06, -111, 1.06, 0 | B0 |
-| body>div:nth-child(5) | 0, -111, 0, 0 | B0 |
-| body>div:nth-child(5)>h3:nth-child(1) | 0, -111, 0, 0 | B0 |
-| body>div:nth-child(5)>p:nth-child(2) | 0, -111, 0, 0 | B0 |
-| body>div:nth-child(5)>p:nth-child(3) | 0, -111, 0, 0 | B0 |
-| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1) | 0, -108, 2.01, 0 | B0 |
-| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(2) | -1.06, -108, 1.06, 0 | B0 |
+| html | 0, 0, 0, -129 | N0 |
+| body | 0, 0, 0, -129 | N0 |
+| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(1) | 0, -111, 2.01, 0 | N0 |
+| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(2) | -1.06, -111, 1.06, 0 | N0 |
+| body>div:nth-child(5) | 0, -111, 0, 0 | N0 |
+| body>div:nth-child(5)>h3:nth-child(1) | 0, -111, 0, 0 | N0 |
+| body>div:nth-child(5)>p:nth-child(2) | 0, -111, 0, 0 | N0 |
+| body>div:nth-child(5)>p:nth-child(3) | 0, -111, 0, 0 | N0 |
+| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1) | 0, -108, 2.01, 0 | N0 |
+| body>table:nth-child(4)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(2) | -1.06, -108, 1.06, 0 | N0 |
 
 Top-level body children whose Blitz margins (L0 margin_top/margin_bottom, used by pagination's gaps) changed: body>div:nth-child(5) pin 37.8/12 → beta4 37.8/0
 
@@ -89,19 +90,20 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | beta4 |
 | --- | --- | --- |
-| first divergent box | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) by B0 | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) by B0 |
-| first divergent text | "CEP 01001-000" by L0 | "CEP 01001-000" by L0 |
-| B0: box/text diverged, mean box err | 76/0, 45.623 | 78/0, 6.135 |
-| L0: box/text diverged, mean box err | 76/50, 45.623 | 78/45, 6.135 |
-| vertical_margin_collapse: box/text diverged, mean box err | 76/50, 45.623 | 78/45, 6.135 |
-| collapsed_table_medium_border_insets: box/text diverged, mean box err | 76/50, 38.626 | 78/45, 6.135 |
-| painted_table_cell_text_baselines: box/text diverged, mean box err | 76/50, 38.626 | 78/41, 6.135 |
-| fixed_table_widths: box/text diverged, mean box err | 76/50, 38.626 | 78/41, 6.135 |
-| table_percent_widths: box/text diverged, mean box err | 76/50, 33.218 | 70/44, 6.028 |
-| auto_table_compact_columns: box/text diverged, mean box err | 76/50, 33.218 | 70/44, 6.028 |
-| collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 76/50, 33.287 | 70/44, 6.028 |
+| first divergent box | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) first over tol. N0 | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) first over tol. N0 |
+| first divergent text | "CEP 01001-000" first over tol. L0 | "CEP 01001-000" first over tol. L0 |
+| N0: box/text diverged, mean box err | 77/0, 45.719 | 78/0, 5.14 |
+| B0: box/text diverged, mean box err | 78/0, 45.623 | 80/0, 6.135 |
+| L0: box/text diverged, mean box err | 78/50, 45.623 | 80/45, 6.135 |
+| vertical_margin_collapse: box/text diverged, mean box err | 78/50, 45.623 | 80/45, 6.135 |
+| collapsed_table_medium_border_insets: box/text diverged, mean box err | 78/50, 38.626 | 80/45, 6.135 |
+| painted_table_cell_text_baselines: box/text diverged, mean box err | 78/50, 38.626 | 80/41, 6.135 |
+| fixed_table_widths: box/text diverged, mean box err | 78/50, 38.626 | 80/41, 6.135 |
+| table_percent_widths: box/text diverged, mean box err | 78/50, 33.218 | 72/44, 6.028 |
+| auto_table_compact_columns: box/text diverged, mean box err | 78/50, 33.218 | 72/44, 6.028 |
+| collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 78/50, 33.287 | 72/44, 6.028 |
 
-- boxes whose final pre-pagination geometry changed: 57; by first changed layer: {"B0":57}
+- boxes whose final pre-pagination geometry changed: 57; by first changed layer: {"N0":57}
 - text runs whose final position changed: 49; by first changed layer: {"L0":49}
   - of those, x changed: 26, first x-changing layer: {"L0":26}; y changed, first y-changing layer: {"L0":47}
   - where the x change comes from (Σ|part| px over those runs): {"L0":129.15,"table_percent_widths":197.12,"collapsed_table_medium_border_insets_x":54}; y: {"L0":1753,"collapsed_table_medium_border_insets":438}
@@ -142,16 +144,16 @@ Largest box changes:
 
 | path | Δ final dx,dy,dw,dh | first changed layer |
 | --- | --- | --- |
-| html | 0, 0, 0, -69 | B0 |
-| body | 0, 0, 0, -69 | B0 |
-| body>div:nth-child(1) | 0, 0, 0, -69 | B0 |
-| body>div:nth-child(1)>p:nth-child(6) | 0, -57, 0, 0 | B0 |
-| body>div:nth-child(1)>p:nth-child(6)>span:nth-child(1) | 0, -57, 0, 0 | B0 |
-| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(1) | 0, -51, -11.14, -1 | B0 |
-| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(2) | -14.19, -51, 14.19, -1 | B0 |
-| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1) | 0, -48, -11.14, 0 | B0 |
-| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(2) | -14.19, -48, 14.19, 0 | B0 |
-| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(1) | 0, -45, -11.14, 0 | B0 |
+| html | 0, 0, 0, -69 | N0 |
+| body | 0, 0, 0, -69 | N0 |
+| body>div:nth-child(1) | 0, 0, 0, -69 | N0 |
+| body>div:nth-child(1)>p:nth-child(6) | 0, -57, 0, 0 | N0 |
+| body>div:nth-child(1)>p:nth-child(6)>span:nth-child(1) | 0, -57, 0, 0 | N0 |
+| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(1) | 0, -51, -11.14, -1 | N0 |
+| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(2) | -14.19, -51, 14.19, -1 | N0 |
+| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1) | 0, -48, -11.14, 0 | N0 |
+| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(2) | -14.19, -48, 14.19, 0 | N0 |
+| body>div:nth-child(1)>div:nth-child(5)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(1) | 0, -45, -11.14, 0 | N0 |
 
 Top-level body children whose Blitz margins (L0 margin_top/margin_bottom, used by pagination's gaps) changed: none
 
@@ -171,8 +173,9 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | beta4 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (exit) by B0 |
-| first divergent text | "999-9" by L0 | "999-9" by L0 |
+| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (exit) first over tol. N0 |
+| first divergent text | "999-9" first over tol. L0 | "999-9" first over tol. L0 |
+| N0: box/text diverged, mean box err | 121/0, 33.7 | 129/0, 11.462 |
 | B0: box/text diverged, mean box err | 121/0, 33.7 | 129/0, 11.462 |
 | L0: box/text diverged, mean box err | 121/75, 33.7 | 129/77, 11.462 |
 | vertical_margin_collapse: box/text diverged, mean box err | 121/75, 33.7 | 129/77, 11.462 |
@@ -183,7 +186,7 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 | auto_table_compact_columns: box/text diverged, mean box err | 116/72, 19.612 | 126/75, 11.462 |
 | collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 116/72, 19.612 | 126/75, 11.462 |
 
-- boxes whose final pre-pagination geometry changed: 81; by first changed layer: {"B0":81}
+- boxes whose final pre-pagination geometry changed: 81; by first changed layer: {"N0":81}
 - text runs whose final position changed: 75; by first changed layer: {"L0":75}
   - of those, x changed: 27, first x-changing layer: {"L0":25,"fixed_table_widths":2}; y changed, first y-changing layer: {"L0":75}
   - where the x change comes from (Σ|part| px over those runs): {"L0":104.11,"fixed_table_widths":623,"auto_table_compact_columns":0.94}; y: {"L0":499}
@@ -224,16 +227,16 @@ Largest box changes:
 
 | path | Δ final dx,dy,dw,dh | first changed layer |
 | --- | --- | --- |
-| body>table:nth-child(3)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(2)>span:nth-child(1) | -1, -2, 59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>span:nth-child(1) | 0, -3, 59, -1 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2)>span:nth-child(1) | 0, -3, -59, -1 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(1)>span:nth-child(1) | 0, -4, 59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(2)>span:nth-child(1) | 0, -4, -59, 12 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(4)>span:nth-child(1) | 0, 8, -59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(4)>span:nth-child(1) | 0, 8, -59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(5)>td:nth-child(1)>span:nth-child(1) | 0, 8, 59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(5)>td:nth-child(2)>span:nth-child(1) | 0, 8, -59, 0 | B0 |
-| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(6)>td:nth-child(1)>span:nth-child(1) | 0, 9, -59, -1 | B0 |
+| body>table:nth-child(3)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(2)>span:nth-child(1) | -1, -2, 59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>span:nth-child(1) | 0, -3, 59, -1 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2)>span:nth-child(1) | 0, -3, -59, -1 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(1)>span:nth-child(1) | 0, -4, 59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(2)>td:nth-child(2)>span:nth-child(1) | 0, -4, -59, 12 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(4)>span:nth-child(1) | 0, 8, -59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(4)>td:nth-child(4)>span:nth-child(1) | 0, 8, -59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(5)>td:nth-child(1)>span:nth-child(1) | 0, 8, 59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(5)>td:nth-child(2)>span:nth-child(1) | 0, 8, -59, 0 | N0 |
+| body>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(6)>td:nth-child(1)>span:nth-child(1) | 0, 9, -59, -1 | N0 |
 
 Top-level body children whose Blitz margins (L0 margin_top/margin_bottom, used by pagination's gaps) changed: none
 
@@ -253,8 +256,9 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | beta4 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 |
-| first divergent text | "Acme Serviços Prediais Ltda." by L0 | "Acme Serviços Prediais Ltda." by L0 |
+| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 |
+| first divergent text | "Acme Serviços Prediais Ltda." first over tol. L0 | "Acme Serviços Prediais Ltda." first over tol. L0 |
+| N0: box/text diverged, mean box err | 41/0, 30.034 | 29/0, 15.082 |
 | B0: box/text diverged, mean box err | 41/0, 30.034 | 29/0, 15.082 |
 | L0: box/text diverged, mean box err | 41/33, 30.034 | 29/18, 15.082 |
 | vertical_margin_collapse: box/text diverged, mean box err | 41/33, 30.034 | 29/18, 15.082 |
@@ -265,7 +269,7 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 | auto_table_compact_columns: box/text diverged, mean box err | 32/24, 6.299 | 29/18, 4.089 |
 | collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 32/21, 6.22 | 29/18, 4.089 |
 
-- boxes whose final pre-pagination geometry changed: 9; by first changed layer: {"B0":9}
+- boxes whose final pre-pagination geometry changed: 9; by first changed layer: {"N0":9}
 - text runs whose final position changed: 10; by first changed layer: {"L0":10}
   - of those, x changed: 3, first x-changing layer: {"L0":3}; y changed, first y-changing layer: {"L0":7}
   - where the x change comes from (Σ|part| px over those runs): {"L0":165,"table_percent_widths":162}; y: {"L0":45,"collapsed_table_medium_border_insets":42}
@@ -299,15 +303,15 @@ Largest box changes:
 
 | path | Δ final dx,dy,dw,dh | first changed layer |
 | --- | --- | --- |
-| body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) | 0, 0, 30.16, 0 | B0 |
-| body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2) | 27.14, 0, -27.13, 0 | B0 |
-| html | 0, 0, 0, -6 | B0 |
-| body | 0, 0, 0, -6 | B0 |
-| body>div:nth-child(3)>div:nth-child(2) | 0, 1, 0, 0 | B0 |
-| body>div:nth-child(3)>div:nth-child(5) | 0, 1, 0, 0 | B0 |
-| body>div:nth-child(5)>p:nth-child(2) | 0, -1, 0, 0 | B0 |
-| body>div:nth-child(5)>p:nth-child(5) | 0, -1, 0, 0 | B0 |
-| body>div:nth-child(6)>div:nth-child(2) | 0, -1, 0, 0 | B0 |
+| body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) | 0, 0, 30.16, 0 | N0 |
+| body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2) | 27.14, 0, -27.13, 0 | N0 |
+| html | 0, 0, 0, -6 | N0 |
+| body | 0, 0, 0, -6 | N0 |
+| body>div:nth-child(3)>div:nth-child(2) | 0, 1, 0, 0 | N0 |
+| body>div:nth-child(3)>div:nth-child(5) | 0, 1, 0, 0 | N0 |
+| body>div:nth-child(5)>p:nth-child(2) | 0, -1, 0, 0 | N0 |
+| body>div:nth-child(5)>p:nth-child(5) | 0, -1, 0, 0 | N0 |
+| body>div:nth-child(6)>div:nth-child(2) | 0, -1, 0, 0 | N0 |
 
 Top-level body children whose Blitz margins (L0 margin_top/margin_bottom, used by pagination's gaps) changed: body>div:nth-child(5) pin 0/14.67 → beta4 0/0
 

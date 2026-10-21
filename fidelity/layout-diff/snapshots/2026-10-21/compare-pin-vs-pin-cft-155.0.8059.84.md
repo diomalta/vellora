@@ -1,14 +1,15 @@
 # Layout diff comparison: pin → pin-cft-155.0.8059.84
 
-Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer where b's delta-vs-Chromium differs from a's by more than the tolerance: `B0` = the bump changed raw Blitz layout; `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.
+Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer (of the layers both runs have) where b's delta-vs-Chromium differs from a's by more than the tolerance: `N0` = the bump changed raw Blitz layout of the source HTML; `B0` = Blitz's layout of html_normalize's output changed (raw Blitz when N0 is absent from either run and html_normalize changed nothing); `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.
 
 ## invoice
 
 - Chromium reference identical across both runs: yes
 |  | pin | pin-cft-155.0.8059.84 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 |
-| first divergent text | "Acme Widgets LON" by L0 | "Acme Widgets LON" by L0 |
+| first divergent box | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 |
+| first divergent text | "Acme Widgets LON" first over tol. L0 | "Acme Widgets LON" first over tol. L0 |
+| N0: box/text diverged, mean box err | 313/0, 61.514 | 313/0, 61.514 |
 | B0: box/text diverged, mean box err | 313/0, 61.514 | 313/0, 61.514 |
 | L0: box/text diverged, mean box err | 313/210, 61.514 | 313/210, 61.514 |
 | vertical_margin_collapse: box/text diverged, mean box err | 313/210, 61.514 | 313/210, 61.514 |
@@ -53,17 +54,18 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | pin-cft-155.0.8059.84 |
 | --- | --- | --- |
-| first divergent box | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) by B0 | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) by B0 |
-| first divergent text | "CEP 01001-000" by L0 | "CEP 01001-000" by L0 |
-| B0: box/text diverged, mean box err | 76/0, 45.623 | 76/0, 45.623 |
-| L0: box/text diverged, mean box err | 76/50, 45.623 | 76/50, 45.623 |
-| vertical_margin_collapse: box/text diverged, mean box err | 76/50, 45.623 | 76/50, 45.623 |
-| collapsed_table_medium_border_insets: box/text diverged, mean box err | 76/50, 38.626 | 76/50, 38.626 |
-| painted_table_cell_text_baselines: box/text diverged, mean box err | 76/50, 38.626 | 76/50, 38.626 |
-| fixed_table_widths: box/text diverged, mean box err | 76/50, 38.626 | 76/50, 38.626 |
-| table_percent_widths: box/text diverged, mean box err | 76/50, 33.218 | 76/50, 33.218 |
-| auto_table_compact_columns: box/text diverged, mean box err | 76/50, 33.218 | 76/50, 33.218 |
-| collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 76/50, 33.287 | 76/50, 33.287 |
+| first divergent box | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) first over tol. N0 | body>div:nth-child(1)>header:nth-child(1)>address:nth-child(4) (exit) first over tol. N0 |
+| first divergent text | "CEP 01001-000" first over tol. L0 | "CEP 01001-000" first over tol. L0 |
+| N0: box/text diverged, mean box err | 77/0, 45.719 | 77/0, 45.719 |
+| B0: box/text diverged, mean box err | 78/0, 45.623 | 78/0, 45.623 |
+| L0: box/text diverged, mean box err | 78/50, 45.623 | 78/50, 45.623 |
+| vertical_margin_collapse: box/text diverged, mean box err | 78/50, 45.623 | 78/50, 45.623 |
+| collapsed_table_medium_border_insets: box/text diverged, mean box err | 78/50, 38.626 | 78/50, 38.626 |
+| painted_table_cell_text_baselines: box/text diverged, mean box err | 78/50, 38.626 | 78/50, 38.626 |
+| fixed_table_widths: box/text diverged, mean box err | 78/50, 38.626 | 78/50, 38.626 |
+| table_percent_widths: box/text diverged, mean box err | 78/50, 33.218 | 78/50, 33.218 |
+| auto_table_compact_columns: box/text diverged, mean box err | 78/50, 33.218 | 78/50, 33.218 |
+| collapsed_table_medium_border_insets_x: box/text diverged, mean box err | 78/50, 33.287 | 78/50, 33.287 |
 
 - boxes whose final pre-pagination geometry changed: 0; by first changed layer: {}
 - text runs whose final position changed: 0; by first changed layer: {}
@@ -99,8 +101,9 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | pin-cft-155.0.8059.84 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 |
-| first divergent text | "999-9" by L0 | "999-9" by L0 |
+| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 |
+| first divergent text | "999-9" first over tol. L0 | "999-9" first over tol. L0 |
+| N0: box/text diverged, mean box err | 121/0, 33.7 | 121/0, 33.7 |
 | B0: box/text diverged, mean box err | 121/0, 33.7 | 121/0, 33.7 |
 | L0: box/text diverged, mean box err | 121/75, 33.7 | 121/75, 33.7 |
 | vertical_margin_collapse: box/text diverged, mean box err | 121/75, 33.7 | 121/75, 33.7 |
@@ -145,8 +148,9 @@ Bottom lines, PDF vs pre-pagination (pt, vellora − Chrome):
 - Chromium reference identical across both runs: yes
 |  | pin | pin-cft-155.0.8059.84 |
 | --- | --- | --- |
-| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) by B0 |
-| first divergent text | "Acme Serviços Prediais Ltda." by L0 | "Acme Serviços Prediais Ltda." by L0 |
+| first divergent box | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 | body>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1) (enter) first over tol. N0 |
+| first divergent text | "Acme Serviços Prediais Ltda." first over tol. L0 | "Acme Serviços Prediais Ltda." first over tol. L0 |
+| N0: box/text diverged, mean box err | 41/0, 30.034 | 41/0, 30.034 |
 | B0: box/text diverged, mean box err | 41/0, 30.034 | 41/0, 30.034 |
 | L0: box/text diverged, mean box err | 41/33, 30.034 | 41/33, 30.034 |
 | vertical_margin_collapse: box/text diverged, mean box err | 41/33, 30.034 | 41/33, 30.034 |

@@ -263,6 +263,34 @@ function topLevelMargins(dumpA, dumpB) {
   return rows;
 }
 
+/** Headline items without per-layer tables and ancestor chains (those stay in each diff.json). */
+function compactHeadline(h) {
+  const item = (x) =>
+    x && {
+      order: x.order,
+      type: x.type,
+      path: x.path,
+      owner: x.owner,
+      text: x.text,
+      first_over_tolerance: firstOverTol(x),
+      regressed_by: x.regressed_by,
+      steps: x.steps,
+    };
+  return {
+    box: item(h.box),
+    text: item(h.text),
+    first_pass_regression: h.first_pass_regression && {
+      box: item(h.first_pass_regression.box),
+      text: item(h.first_pass_regression.text),
+    },
+    first_walk_regression: h.first_walk_regression && { box: item(h.first_walk_regression.box) },
+    first_html_normalize_regression: h.first_html_normalize_regression && {
+      box: item(h.first_html_normalize_regression.box),
+    },
+    first_missing: h.first_missing ?? null,
+  };
+}
+
 function main() {
   const la = arg("--a", "pin");
   const lb = arg("--b", "beta4");
@@ -297,7 +325,7 @@ function main() {
       comparison: cmp,
       top_level_margins: margins,
       bottom_lines: { [la]: bottomA, [lb]: bottomB },
-      headline: { [la]: a.headline, [lb]: b.headline },
+      headline: { [la]: compactHeadline(a.headline), [lb]: compactHeadline(b.headline) },
     });
     md += `## ${fixture}\n\n`;
     md += `- Chromium reference identical across both runs: ${cmp.chrome_reference_identical ? "yes" : `NO (${cmp.chrome_mismatch_sample.join(", ")})`}\n`;
