@@ -304,11 +304,17 @@ fn l0_text_differs_from_raw_blitz_by_the_reader_compensations() {
     );
     let inv = blitz_run(&dump, "INV-2026-00417");
     assert_eq!(l0_run(&dump, "INV-2026-00417").0, inv.origin_x);
-    // vertical-align: middle -> Blitz block_offset, which the walk drops.
+    // vertical-align: middle -> Blitz block_offset. Since port step 04 the walk
+    // reads it like Blitz's painter does (content box + block_offset + baseline),
+    // so the centred cell's text is NOT a reader compensation any more.
     let mid = blitz_run(&dump, "MID");
     assert!(mid.block_offset > 1.0, "{}", mid.block_offset);
     let (_, mid_y) = l0_run(&dump, "MID");
-    assert!((mid_y - (mid.origin_y - mid.block_offset)).abs() < 0.01);
+    assert!(
+        (mid_y - mid.origin_y).abs() < 0.01,
+        "{mid_y} vs {}",
+        mid.origin_y
+    );
 }
 
 #[test]

@@ -14,7 +14,7 @@ export const LAYER_DOCS = {
   N0u: "Same N0 tree from `unrounded_layout` (Taffy before `round_layout`). Diagnostic only, not in the attribution chain.",
   B0: "Blitz's own layout tree of html_normalize's OUTPUT (what the render path lays out): `layout_children` walk (incl. anonymous blocks), absolute border boxes from rounded `final_layout`. With N0 present, the N0 → B0 step is html_normalize's; without N0 it is NOT raw Blitz whenever html_normalize altered the DOM.",
   B0u: "Same B0 tree from `unrounded_layout` (Taffy before `round_layout`). Diagnostic only, not in the attribution chain.",
-  L0: "vellora's box walk (`blitz_engine::walk`, DOM `children`, accumulating `final_layout`) before any pass; text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` dropped). With raw Blitz text in B0, the B0 → L0 text step is vellora's reader.",
+  L0: "vellora's box walk (`blitz_engine::walk`, DOM `children`, accumulating `final_layout`) before any pass; text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` applied as Blitz's painter applies it since phaseb/04-block-offset). With raw Blitz text in B0, the B0 → L0 text step is vellora's reader.",
   P: "Pagination: the final layer with each placed fragment moved by `paginate`'s in-page drift (placement offset `placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages). Boxes pagination never places paint nothing: n/a, not lost. See `Pagination (layer P)`.",
 };
 
@@ -136,7 +136,7 @@ export function attributionText(div, finalName, result) {
       div.type !== "text"
         ? `VELLORA WALK: B0 ${div.per_layer?.B0?.status ?? "?"}, but vellora's DOM-children walk (L0) differs`
         : rawText
-          ? `VELLORA TEXT READER: raw Blitz text (B0) is ${div.per_layer.B0.status}, vellora's read_text_runs (L0) differs (padding compensation / dropped block_offset / walk accumulation)`
+          ? `VELLORA TEXT READER: raw Blitz text (B0) is ${div.per_layer.B0.status}, vellora's read_text_runs (L0) differs (padding compensation / walk accumulation)`
           : "RAW BLITZ/PARLEY TEXT as read by vellora's walk (L0); no normalize pass involved (raw Blitz text not separated in this run)";
   } else if (layer === "P") {
     text =

@@ -11,7 +11,8 @@
 //   N0  Blitz on the SOURCE HTML (html_normalize skipped; optional, needs a source dump). Raw Blitz.
 //   B0  Blitz on html_normalize's OUTPUT. With N0 present, the N0 -> B0 step is html_normalize's.
 //       Schema-2 dumps give N0/B0 the RAW Blitz/Parley text too, so for text the B0 -> L0 step
-//       is vellora's reader (read_text_runs compensations, dropped block_offset, walk).
+//       is vellora's reader (read_text_runs compensations, walk; dropped block_offset before
+//       phaseb/04-block-offset).
 //   P   pagination (schema-2 dumps): the final layer moved by pagination's in-page drift (see
 //       paginationLayer in vellora-model.mjs). The headline and `final_layer` stay the LAST
 //       PRE-PAGINATION layer; P is reported as its own step (first_pagination_regression,

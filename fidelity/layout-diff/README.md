@@ -70,7 +70,7 @@ rendering.
 | `N0u` | Same N0 tree from `unrounded_layout`. Diagnostic only (flags "rounding" when N0 diverges but N0u does not). |
 | `B0` | Blitz's own layout tree of **html_normalize's output** (what the render path lays out). With N0 present, **N0 → B0 is html_normalize's step**. Without N0, B0 is raw Blitz only if html_normalize changed nothing. |
 | `B0u` | Same B0 tree from `unrounded_layout`. Diagnostic only. |
-| `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` dropped). |
+| `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` applied as Blitz's painter applies it since `phaseb/04-block-offset`, dropped before). |
 | pass layers | `LaidOutBox` list after each pass above, named after it (3 since `phaseb/03-table-passes`; 7 in the Phase A dumps). The last one is the final pre-pagination layer (`final_layer`, the headline's layer). |
 | `P` | Pagination (schema-2 dumps): the final layer with every box `paginate` placed moved by its fragment's in-page drift (`placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages; a repeated `<thead>` takes its first injection). Boxes pagination never places (html/body/table/tbody, flattened wrappers, fragments with nothing to paint) paint nothing: **n/a** in P, not lost; text runs on them would be lost. |
 
@@ -80,8 +80,8 @@ way Blitz's own painter places it — content box of the layout-tree box (`final
 padding) + the root's `block_offset` + the run's raw `offset()`/`baseline()` (blitz-paint 0.3.0-beta.4
 `render_element` → `draw_inline_layout` → `stroke_text`, read 2026-10-21) — i.e. BEFORE any vellora
 reader compensation. So N0 and B0 carry text too, the N0 → B0 text step is html_normalize's and the
-**B0 → L0 text step is vellora's reader** (inline padding-right compensation, dropped
-`block_offset`, DOM-parent vs layout-parent accumulation). L0 runs are paired with raw runs by
+**B0 → L0 text step is vellora's reader** (inline padding-right compensation, DOM-parent vs
+layout-parent accumulation; before `phaseb/04-block-offset` also the dropped `block_offset`). L0 runs are paired with raw runs by
 (owner, normalized text, occurrence); owners fold html_normalize wrappers AND Blitz anonymous
 blocks into their parent element, so N0's anonymous-block text pairs with L0's wrapper text. An
 L0 run with no raw counterpart is **n/a** in that layer (not lost); raw runs no L0 run pairs with
@@ -348,7 +348,8 @@ Rust (`cargo test -p vellora-core --test layout_dump`, 13 tests): final layer ==
 layer names/order, both dump variants leave PDF bytes unchanged, keys through wrappers, source
 dump keys `::blitz-anon(j)`, hoisted-wrapper detection; raw Blitz runs cover every L0 run and
 equal it where no compensation applies; L0 = raw + 24 px after a padded span, raw − 24 px on a
-right-aligned line, raw − `block_offset` in a `vertical-align: middle` cell; anonymous-block text
+right-aligned line, raw (incl. `block_offset`, since `phaseb/04-block-offset`; raw −
+`block_offset` before) in a `vertical-align: middle` cell; anonymous-block text
 only in the source dump's raw runs; the pagination trace's arithmetic and every placed (and
 `<thead>`-injected) text run match `paginate()`'s pages; gap-source characterization (a flattened
 wrapper's padding-top is dropped: −40 px); `paginate_traced` emits the same PDF as `paginate`;
@@ -440,8 +441,8 @@ CONFIRMED in the dumps, handed to the pagination / walk owners):**
 - Its right-aligned values ("1234 / 246813-1", nosso número, vencimento, valor) are raw Blitz
   dx +5.3 px and move to +62.3 px at `fixed_table_widths` (L0 = raw Blitz text): past the page
   edge, so poppler's pdftotext drops their last glyphs (BOL-X1 13 → 11; pypdf/pdfminer 16/16).
-- Text vellora's reader moves away from raw Blitz (B0 → L0): dropped `block_offset` of vertically
-  aligned cells (boleto-febraban "BANCO EXEMPLO" −21.52 px, linha digitável −10.77, "104-0" −1.43;
+- Text vellora's reader moved away from raw Blitz (B0 → L0) in this Phase A run: dropped
+  `block_offset` of vertically aligned cells (read since `phaseb/04-block-offset`; boleto-febraban "BANCO EXEMPLO" −21.52 px, linha digitável −10.77, "104-0" −1.43;
   danfe product headers −4.03 px), and DOM-parent accumulation of inline-block text (danfe
   duplicatas: L0 dx −4 / dy −11 px vs raw Blitz).
 

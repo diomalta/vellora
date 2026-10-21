@@ -13,7 +13,8 @@
 // Text: L0 and the passes carry vellora's text runs (`read_text_runs`, incl. its compensations).
 // Schema-2 dumps also carry `blitz_runs`, the RAW Parley runs of the Blitz tree placed the way
 // Blitz's own painter places them, so N0/B0 carry text too and the B0 → L0 text step is vellora's
-// reader (inline padding compensation, dropped `block_offset`, DOM-parent accumulation). Schema-1
+// reader (inline padding compensation, DOM-parent accumulation; it dropped `block_offset` before
+// phaseb/04-block-offset). Schema-1
 // dumps (no `blitz_runs`) keep N0/B0 box-only, exactly as before (`hasText: false`).
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";

@@ -81,7 +81,7 @@ test("raw Blitz text shift is attributed to B0 (raw Blitz), not to vellora's rea
 
 test("a text shift only in vellora's reader is attributed to L0 vs raw Blitz text", () => {
   const dump = syntheticDumpV2();
-  for (const layer of dump.layers) layer.runs[1][3] -= 4; // dropped block_offset: 4 px up
+  for (const layer of dump.layers) layer.runs[1][3] -= 4; // a reader shift, 4 px up (e.g. the block_offset dropped before phaseb/04)
   const r = run(dump);
   assert.equal(r.headline.text.text, "World");
   assert.equal(r.headline.text.first_over_tolerance, "L0");

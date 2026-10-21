@@ -252,6 +252,13 @@ fn invoice_compact_collapsed_table_cells_reach_left_inline_edge() {
     );
 }
 
+// Pins a COMPENSATING heuristic, not browser behaviour: Chrome 155 puts the text
+// of the painted and the unpainted cell at the same offset from the cell top
+// (20 px; probe `painted_row` in fidelity/baselines/port/04-block-offset/
+// attachments/chrome-probes-text-baseline.json). The 2 px raise offsets raw Blitz
+// row-height drift of painted table rows in the corpus; port step 04 measured its
+// removal as net negative there (REF-W p95 danfe 4.49 -> 4.91 mm, boleto 2.58 ->
+// 3.11 mm) against +7 WPT passes, and kept it until that drift is fixed.
 #[test]
 fn painted_table_row_text_baseline_is_raised_without_document_specific_selectors() {
     let html = r#"<!DOCTYPE html><html><head><style>

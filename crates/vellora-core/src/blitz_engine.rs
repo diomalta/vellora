@@ -1220,6 +1220,16 @@ fn parse_image_data_url(src: &str) -> Option<(ImageFormat, Vec<u8>)> {
 /// Read Parley glyph runs out of an inline-root node (real glyph runs, not
 /// rasterized). Mirrors `blitz-paint`'s `text.rs` access path and krilla's
 /// `parley.rs` example for cluster->byte-range mapping.
+///
+/// `abs_x`/`abs_y` are the node's content-box origin. The line boxes start
+/// `TextLayout::block_offset` below it: Blitz stores there the block-axis
+/// alignment of the lines inside the content box (`align-content`, which a
+/// table cell's `vertical-align: middle | bottom` maps to; blitz-dom
+/// 0.3.0-beta.4 `layout/inline.rs` and stylo_taffy `table_cell_vertical_align`),
+/// and its own painter draws the glyph runs at content box + `block_offset` +
+/// `GlyphRun::baseline()` (blitz-paint 0.3.0-beta.4 `render.rs`
+/// `draw_inline_layout`). Inline boxes (atomic inlines) already carry it in
+/// their `final_layout.location`, so only the glyph runs need it here.
 fn read_text_runs(
     base: &BaseDocument,
     node: &blitz_dom::Node,
@@ -1243,6 +1253,7 @@ fn read_text_runs(
     // bump, not a byte copy per run); glyph byte-ranges index into it.
     let source = std::sync::Arc::new(text_layout.text.clone());
     let layout = &text_layout.layout;
+    let line_box_top = abs_y + text_layout.block_offset as f64;
     let mut runs = Vec::new();
 
     for line in layout.lines() {
@@ -1300,7 +1311,7 @@ fn read_text_runs(
                 font_index,
                 font_size,
                 origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
-                origin_y: abs_y + glyph_run.baseline() as f64,
+                origin_y: line_box_top + glyph_run.baseline() as f64,
                 glyphs,
                 color,
             });
