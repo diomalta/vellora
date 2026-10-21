@@ -1,0 +1,54 @@
+// SCRATCH (step 05 investigation; not committed): print vellora's final pre-pagination box list.
+use vellora_core::{blitz_engine, page_css, validation};
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    for path in &args[1..] {
+        println!("== {path}");
+        one(path);
+    }
+}
+
+fn one(path: &str) {
+    let html = std::fs::read_to_string(path).unwrap();
+    let pb = page_css::parse_page_box(&html);
+    let doc = blitz_engine::validate_then_lay_out(
+        &html,
+        validation::denied_elements(),
+        pb.content_width(),
+        pb.content_height(),
+        &Default::default(),
+        None,
+        &[],
+    )
+    .ok()
+    .expect("lays out");
+    for b in &doc.boxes {
+        let ind = "  ".repeat(b.depth);
+        println!(
+            "{ind}#{} {:?} ({:.3},{:.3} {:.3}x{:.3}) mt={} mb={} rects={}",
+            b.node_id,
+            b.tag,
+            b.x,
+            b.y,
+            b.width,
+            b.height,
+            b.margin_top,
+            b.margin_bottom,
+            b.visual_rects.len()
+        );
+        for r in &b.text_runs {
+            let s = r.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+            let e = r.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+            let w: f64 = r.glyphs.iter().map(|g| g.advance as f64).sum();
+            println!(
+                "{ind}   run {:?} @({:.3},{:.3}) w={:.3} size={}",
+                r.text.get(s..e).unwrap_or(""),
+                r.origin_x,
+                r.origin_y,
+                w,
+                r.font_size
+            );
+        }
+    }
+}

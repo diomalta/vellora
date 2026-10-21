@@ -1,0 +1,86 @@
+{
+  "label": "floats-feature experiment",
+  "note": "Scratch experiment 2026-10-21, NOT part of this step: blitz-dom features = [\"floats\"] (taffy/float_layout + stylo_taffy/floats) on the step-05 walk without html_normalize and before the inline-root body fragment (same Chrome data). before = that tree without the feature.",
+  "before": {
+    "vellora": "b3bf9a945e497e12f63845b7acc89210f5b0bf36",
+    "generated": "Wed Oct 21 13:55:57 UTC 2026"
+  },
+  "after": {
+    "vellora": "b3bf9a945e497e12f63845b7acc89210f5b0bf36",
+    "generated": "Wed Oct 21 14:15:41 UTC 2026"
+  },
+  "transitions": {
+    "fail->clean": 258,
+    "fail->flagged": 28,
+    "flagged->clean": 7,
+    "flagged->fail": 6,
+    "clean->fail": 4
+  },
+  "clean_lost": {
+    "clean->fail": [
+      "css/CSS2/floats/float-nowrap-1.html",
+      "css/CSS2/floats/floats-wrap-bfc-003-left-table.xht",
+      "css/CSS2/floats/floats-wrap-bfc-003-right-table.xht",
+      "css/css-break/table/table-border-007.html"
+    ]
+  },
+  "clean_gained_count": 265,
+  "per_suite": {
+    "css/CSS2/abspos": {
+      "pass": [2, 3],
+      "clean": [2, 3]
+    },
+    "css/CSS2/borders": {
+      "pass": [383, 391],
+      "clean": [354, 362]
+    },
+    "css/CSS2/floats": {
+      "pass": [19, 53],
+      "clean": [16, 48]
+    },
+    "css/CSS2/floats-clear": {
+      "pass": [38, 137],
+      "clean": [33, 119]
+    },
+    "css/CSS2/linebox": {
+      "pass": [124, 127],
+      "clean": [122, 124]
+    },
+    "css/CSS2/margin-padding-clear": {
+      "pass": [525, 639],
+      "clean": [508, 620]
+    },
+    "css/CSS2/normal-flow": {
+      "pass": [431, 432],
+      "clean": [405, 407]
+    },
+    "css/CSS2/pagination": {
+      "pass": [33, 35],
+      "clean": [31, 34]
+    },
+    "css/CSS2/positioning": {
+      "pass": [361, 363],
+      "clean": [359, 361]
+    },
+    "css/CSS2/text": {
+      "pass": [241, 244],
+      "clean": [233, 237]
+    },
+    "css/css-break": {
+      "pass": [114, 113],
+      "clean": [80, 80]
+    },
+    "css/css-page": {
+      "pass": [65, 66],
+      "clean": [51, 52]
+    },
+    "css/css-text": {
+      "pass": [628, 637],
+      "clean": [375, 383]
+    }
+  },
+  "total": {
+    "pass": [3646, 3922],
+    "clean": [3090, 3351]
+  }
+}

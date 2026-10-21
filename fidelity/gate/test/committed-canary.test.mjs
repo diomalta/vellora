@@ -257,3 +257,50 @@ test("port/04-block-offset passes vs port/03-table-passes only with its accepted
   const let1 = item(r, "notification|LET-1|oracles:layout|plain|criterion#1|worstMm");
   assert.deepEqual([let1.class, let1.before, let1.after], ["accepted", 0.75, 1.81]);
 });
+
+test("port/05-walk-rewrite passes vs port/04-block-offset only with its acceptedRegressions", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "04-block-offset"));
+  const step = loadBaselineDir(join(baselines, "port", "05-walk-rewrite"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/04-block-offset");
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const accept = step.manifest.acceptedRegressions;
+  assert.equal(accept.length, 18);
+  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
+  // 6 WPT false passes (literal GATE-A1 fit) and 12 items html_normalize's DOM rewrite had
+  // compensated (3 float WPT tests, 9 postmark text rows); evidence: manifest.json,
+  // attachments/accepted-evidence.json, baselines/port/README.md.
+  const labels = {};
+  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
+  assert.deepEqual(labels, { "html-normalize-compensation": 12, "wpt-false-pass": 6 });
+  // Without the acceptances the same comparison gates exactly the 18 accepted items...
+  const raw = compareSnapshots(prev, step);
+  assert.equal(raw.verdict, "FAIL");
+  assert.deepEqual(
+    raw.items
+      .filter((x) => x.gating)
+      .map((x) => x.key)
+      .sort(),
+    accept.map((e) => e.key).sort(),
+  );
+  // ...and with them it passes.
+  const r = compareSnapshots(prev, step, { accept });
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The step's targets: the receipt's hoisted <p class="thanks"> content, block ::before,
+  // abspos on its containing block, anonymous boxes.
+  const rec = item(r, "receipt|REF-W|oracles:layout|plain|criterion#1|maxMm");
+  assert.deepEqual([rec.class, rec.before, rec.after], ["improvement", 101.22, 1.37]);
+  for (const t of [
+    "css/CSS2/generated-content/before-inheritable-001.xht",
+    "css/CSS2/positioning/abspos-containing-block-001.xht",
+    "css/CSS2/box-display/anonymous-box-generation-001.xht",
+  ]) {
+    const w = item(r, `wpt|${t}`);
+    assert.deepEqual([w.class, w.before, w.after], ["improvement", "fail", "pass"], t);
+  }
+});

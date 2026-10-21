@@ -1,0 +1,126 @@
+{
+  "label": "this step",
+  "note": "port/05 run 20261021T142201Z (e9dc7e4) vs port/04",
+  "before": {
+    "vellora": "8e4face4e3d6271bf9dd9001a435091641cd6381",
+    "generated": "Wed Oct 21 12:53:54 UTC 2026"
+  },
+  "after": {
+    "vellora": "e9dc7e4a53c75e3ed9a189c7119f60fef67f27ca",
+    "generated": "Wed Oct 21 14:22:10 UTC 2026"
+  },
+  "transitions": {
+    "fail->clean": 367,
+    "flagged->fail": 26,
+    "fail->flagged": 15,
+    "pass-blank->clean": 12,
+    "clean->fail": 9,
+    "pass-blank->fail": 9,
+    "flagged->clean": 5,
+    "pass-blank->flagged": 3
+  },
+  "clean_lost": {
+    "clean->fail": [
+      "css/CSS2/floats-clear/floats-132.xht",
+      "css/CSS2/floats-clear/floats-153.xht",
+      "css/CSS2/floats/floats-placement-vertical-003.xht",
+      "css/CSS2/floats/floats-placement-vertical-004.xht",
+      "css/CSS2/linebox/baseline-block-with-overflow-001.html",
+      "css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+      "css/css-page/monolithic-overflow-014-print.html",
+      "css/css-text/text-indent/below-float.html",
+      "css/css-text/text-indent/below-float2.html"
+    ]
+  },
+  "clean_gained_count": 384,
+  "per_suite": {
+    "css/CSS2/abspos": {
+      "pass": [0, 2],
+      "clean": [0, 2]
+    },
+    "css/CSS2/backgrounds": {
+      "pass": [176, 175],
+      "clean": [67, 67]
+    },
+    "css/CSS2/box-display": {
+      "pass": [53, 65],
+      "clean": [52, 65]
+    },
+    "css/CSS2/colors": {
+      "pass": [9, 10],
+      "clean": [9, 10]
+    },
+    "css/CSS2/floats": {
+      "pass": [19, 19],
+      "clean": [17, 16]
+    },
+    "css/CSS2/floats-clear": {
+      "pass": [39, 38],
+      "clean": [34, 33]
+    },
+    "css/CSS2/fonts": {
+      "pass": [127, 135],
+      "clean": [127, 135]
+    },
+    "css/CSS2/generated-content": {
+      "pass": [43, 82],
+      "clean": [38, 78]
+    },
+    "css/CSS2/linebox": {
+      "pass": [125, 126],
+      "clean": [123, 124]
+    },
+    "css/CSS2/margin-padding-clear": {
+      "pass": [517, 525],
+      "clean": [502, 508]
+    },
+    "css/CSS2/normal-flow": {
+      "pass": [415, 431],
+      "clean": [391, 405]
+    },
+    "css/CSS2/positioning": {
+      "pass": [315, 361],
+      "clean": [289, 359]
+    },
+    "css/CSS2/tables": {
+      "pass": [53, 77],
+      "clean": [50, 74]
+    },
+    "css/CSS2/text": {
+      "pass": [237, 247],
+      "clean": [229, 238]
+    },
+    "css/CSS2/visudet": {
+      "pass": [14, 14],
+      "clean": [8, 9]
+    },
+    "css/CSS2/visufx": {
+      "pass": [1, 2],
+      "clean": [1, 2]
+    },
+    "css/CSS2/visuren": {
+      "pass": [3, 6],
+      "clean": [3, 6]
+    },
+    "css/css-break": {
+      "pass": [104, 115],
+      "clean": [75, 81]
+    },
+    "css/css-page": {
+      "pass": [64, 71],
+      "clean": [49, 55]
+    },
+    "css/css-tables": {
+      "pass": [38, 47],
+      "clean": [29, 38]
+    },
+    "css/css-text": {
+      "pass": [464, 630],
+      "clean": [214, 377]
+    }
+  },
+  "total": {
+    "pass": [3303, 3665],
+    "clean": [2732, 3107]
+  }
+}

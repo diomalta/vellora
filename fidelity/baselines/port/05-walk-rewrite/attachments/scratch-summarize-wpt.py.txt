@@ -1,0 +1,61 @@
+"""Scratch: summarise a WPT outcome comparison as JSON (counts per transition, per-suite pass/clean,
+and the tests of every transition that leaves or enters a clean pass).
+  python3 -I summarize-wpt.py <label> <before outcomes.json> <after outcomes.json> <note> > out.json
+"""
+import collections
+import json
+import sys
+
+label, fa, fb, note = sys.argv[1:5]
+a, b = json.load(open(fa)), json.load(open(fb))
+
+
+def cls(d, k):
+    o = d["results"].get(k)
+    if o == "pass":
+        return "flagged" if k in d.get("suspectPasses", {}) else "clean"
+    return o
+
+
+trans = collections.defaultdict(list)
+for k in sorted(set(a["results"]) | set(b["results"])):
+    x, y = cls(a, k), cls(b, k)
+    if x != y:
+        trans[f"{x}->{y}"].append(k)
+
+
+def suite(k):
+    p = k.split("/")
+    return "/".join(p[:3]) if p[1] == "CSS2" else "/".join(p[:2])
+
+
+def counts(d):
+    c = collections.Counter()
+    for k in d["results"]:
+        s, x = suite(k), cls(d, k)
+        c[(s, "pass")] += x in ("clean", "flagged")
+        c[(s, "clean")] += x == "clean"
+    return c
+
+
+ca, cb = counts(a), counts(b)
+suites = sorted({s for s, _ in ca})
+out = {
+    "label": label,
+    "note": note,
+    "before": {"vellora": a.get("vellora"), "generated": a.get("generated")},
+    "after": {"vellora": b.get("vellora"), "generated": b.get("generated")},
+    "transitions": {t: len(v) for t, v in sorted(trans.items(), key=lambda kv: -len(kv[1]))},
+    "clean_lost": {t: v for t, v in trans.items() if t.startswith("clean->")},
+    "clean_gained_count": sum(len(v) for t, v in trans.items() if t.endswith("->clean")),
+    "per_suite": {
+        s: {"pass": [ca[(s, "pass")], cb[(s, "pass")]], "clean": [ca[(s, "clean")], cb[(s, "clean")]]}
+        for s in suites
+        if (ca[(s, "pass")], ca[(s, "clean")]) != (cb[(s, "pass")], cb[(s, "clean")])
+    },
+    "total": {
+        "pass": [sum(ca[(s, "pass")] for s in suites), sum(cb[(s, "pass")] for s in suites)],
+        "clean": [sum(ca[(s, "clean")] for s in suites), sum(cb[(s, "clean")] for s in suites)],
+    },
+}
+json.dump(out, sys.stdout, indent=1)

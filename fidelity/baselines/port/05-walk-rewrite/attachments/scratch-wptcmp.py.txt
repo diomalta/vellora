@@ -1,0 +1,67 @@
+"""Compare two WPT outcome files (outcomes.json / expectations schema 2): per-test changes.
+
+Clean pass = outcome "pass" and not listed in suspectPasses (gate semantics).
+  python3 -I wptcmp.py <before.json> <after.json> [losses|all|<regex>]
+"""
+import collections
+import json
+import re
+import sys
+
+a = json.load(open(sys.argv[1]))
+b = json.load(open(sys.argv[2]))
+mode = sys.argv[3] if len(sys.argv) > 3 else None
+
+
+def cls(d, k):
+    o = d["results"].get(k)
+    if o is None:
+        return None
+    if o == "pass":
+        return "flagged" if k in d.get("suspectPasses", {}) else "clean"
+    return o
+
+
+changes = collections.defaultdict(list)
+for k in sorted(set(a["results"]) | set(b["results"])):
+    ca, cb = cls(a, k), cls(b, k)
+    if ca != cb:
+        changes[(ca, cb)].append(k)
+for (ca, cb), ks in sorted(changes.items(), key=lambda x: -len(x[1])):
+    print(f"{str(ca):>12} -> {str(cb):<12} {len(ks)}")
+if mode:
+    for (ca, cb), ks in sorted(changes.items(), key=lambda x: -len(x[1])):
+        lost = ca in ("clean", "flagged") and cb not in ("clean", "flagged")
+        lost |= ca == "clean" and cb == "flagged"
+        if mode == "all" or (mode == "losses" and lost) or (
+            mode not in ("all", "losses") and re.search(mode, f"{ca}->{cb}")
+        ):
+            print(f"--- {ca} -> {cb} ({len(ks)})")
+            for k in ks:
+                print("   ", k, "|", b.get("suspectPasses", {}).get(k, ""))
+
+
+def suite_of(k):
+    parts = k.split("/")
+    return "/".join(parts[:3]) if parts[1] == "CSS2" else "/".join(parts[:2])
+
+
+def counts(d):
+    c = collections.Counter()
+    for k in d["results"]:
+        s = suite_of(k)
+        x = cls(d, k)
+        c[(s, "pass")] += x in ("clean", "flagged")
+        c[(s, "clean")] += x == "clean"
+    return c
+
+
+sa, sb = counts(a), counts(b)
+print("suite pass/clean before -> after")
+tot = [0, 0, 0, 0]
+for s in sorted({s for s, _ in sa} | {s for s, _ in sb}):
+    pa, qa, pb, qb = sa[(s, "pass")], sa[(s, "clean")], sb[(s, "pass")], sb[(s, "clean")]
+    tot = [tot[0] + pa, tot[1] + qa, tot[2] + pb, tot[3] + qb]
+    if (pa, qa) != (pb, qb):
+        print(f"  {s:<36} {pa}/{qa} -> {pb}/{qb}")
+print(f"  TOTAL {tot[0]}/{tot[1]} -> {tot[2]}/{tot[3]}")

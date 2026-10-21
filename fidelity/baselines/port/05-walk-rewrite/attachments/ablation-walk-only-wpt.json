@@ -1,0 +1,112 @@
+{
+  "label": "ablation walk-only (html_normalize kept)",
+  "note": "Ablation V1 2026-10-21: e9dc7e4 with html_normalize restored (b3bf9a9 module + Cargo deps, called in lay_out/validate_then_lay_out_observed; the dump does not mark its wrappers). before = port/04.",
+  "before": {
+    "vellora": "8e4face4e3d6271bf9dd9001a435091641cd6381",
+    "generated": "Wed Oct 21 12:53:54 UTC 2026"
+  },
+  "after": {
+    "vellora": "e9dc7e4a53c75e3ed9a189c7119f60fef67f27ca",
+    "generated": "Wed Oct 21 14:35:30 UTC 2026"
+  },
+  "transitions": {
+    "fail->clean": 350,
+    "flagged->fail": 26,
+    "pass-blank->clean": 12,
+    "fail->flagged": 9,
+    "pass-blank->fail": 6,
+    "flagged->clean": 4,
+    "pass-blank->flagged": 2,
+    "clean->fail": 1
+  },
+  "clean_lost": {
+    "clean->fail": ["css/CSS2/floats-clear/floats-153.xht"]
+  },
+  "clean_gained_count": 366,
+  "per_suite": {
+    "css/CSS2/abspos": {
+      "pass": [0, 2],
+      "clean": [0, 2]
+    },
+    "css/CSS2/backgrounds": {
+      "pass": [176, 175],
+      "clean": [67, 67]
+    },
+    "css/CSS2/box-display": {
+      "pass": [53, 63],
+      "clean": [52, 63]
+    },
+    "css/CSS2/colors": {
+      "pass": [9, 10],
+      "clean": [9, 10]
+    },
+    "css/CSS2/floats": {
+      "pass": [19, 21],
+      "clean": [17, 18]
+    },
+    "css/CSS2/fonts": {
+      "pass": [127, 135],
+      "clean": [127, 135]
+    },
+    "css/CSS2/generated-content": {
+      "pass": [43, 81],
+      "clean": [38, 77]
+    },
+    "css/CSS2/linebox": {
+      "pass": [125, 127],
+      "clean": [123, 125]
+    },
+    "css/CSS2/margin-padding-clear": {
+      "pass": [517, 525],
+      "clean": [502, 508]
+    },
+    "css/CSS2/normal-flow": {
+      "pass": [415, 424],
+      "clean": [391, 400]
+    },
+    "css/CSS2/positioning": {
+      "pass": [315, 358],
+      "clean": [289, 356]
+    },
+    "css/CSS2/tables": {
+      "pass": [53, 77],
+      "clean": [50, 74]
+    },
+    "css/CSS2/text": {
+      "pass": [237, 245],
+      "clean": [229, 236]
+    },
+    "css/CSS2/visudet": {
+      "pass": [14, 14],
+      "clean": [8, 9]
+    },
+    "css/CSS2/visufx": {
+      "pass": [1, 2],
+      "clean": [1, 2]
+    },
+    "css/CSS2/visuren": {
+      "pass": [3, 5],
+      "clean": [3, 5]
+    },
+    "css/css-break": {
+      "pass": [104, 111],
+      "clean": [75, 81]
+    },
+    "css/css-page": {
+      "pass": [64, 72],
+      "clean": [49, 56]
+    },
+    "css/css-tables": {
+      "pass": [38, 45],
+      "clean": [29, 36]
+    },
+    "css/css-text": {
+      "pass": [464, 631],
+      "clean": [214, 378]
+    }
+  },
+  "total": {
+    "pass": [3303, 3649],
+    "clean": [2732, 3097]
+  }
+}

@@ -566,3 +566,199 @@ The `committed-canary` self-test asserts that `04-block-offset` FAILs against `0
 without acceptances (exactly the 2587 accepted keys gate), PASSes with them, and checks the label
 counts. It also checks that `line-height-002`, invoice REF-W max and boleto-febraban REF-W max
 improve, and that LET-1 0.75 → 1.81 is an accepted item.
+
+## `05-walk-rewrite`: the box walk follows Blitz's box tree; `html_normalize` deleted
+
+Branch `phaseb/05-walk-rewrite` (from `phaseb/04-block-offset` `b3bf9a9`), code commit `e9dc7e4`.
+
+- **The walk reads Blitz's box tree, not DOM children** (`blitz_engine::walk_box`). It iterates
+  `Node::layout_children` in layout order, so it now visits Blitz's anonymous block boxes (text next
+  to a block child, a `<td>` holding text and a `<div>`, the body's own text) and block
+  `::before`/`::after` boxes. Text nodes and non-atomic inline elements (`<span>`, `<b>`) no longer
+  get a box: their text is in the runs of the inline root that shaped it. Tables keep their DOM row
+  structure: row groups and rows have no Blitz layout, so `walk_table` re-inserts them as zero-size
+  boxes above their cells, as before. Pagination and the table passes need them.
+- **Every box is placed through `Node::containing_block()`** (`box_origin`: its location plus the
+  containing block's origin, which is Blitz's `absolute_position` without scroll). Absolutely
+  positioned and fixed boxes therefore sit on their containing block. `anonymous_block_offset`
+  (step 01) is gone.
+- **`html_normalize` is deleted**, together with html5ever 0.39 and markup5ever_rcdom (the
+  duplicate html5ever 0.39 stack leaves `Cargo.lock`). It was the HTML pre-pass that wrapped inline
+  runs in `<div>`s and re-serialized the document. The render path now lays out the input as given.
+- **pagination**: when the body's in-flow content is all inline-level, the body is its own inline
+  root and its text sits on the body box. Pagination fragments the body's children, so that text
+  was dropped. The body is now one block fragment, without its own background and borders (see
+  "body background" below).
+- `<img>` diagnostics take the DOM ordinal from a DOM preorder pass and keep the unresolved image
+  that comes first in the DOM, because the walk no longer visits every element.
+- New Chrome-verified tests: `crates/vellora-core/tests/walk.rs` (9; Chrome numbers in
+  `attachments/chrome-probes-walk.json`, probe HTML included). Rewritten: `tests/layout_dump.rs`
+  (wrapper tests → anonymous blocks, N0 = B0, B0/L0 abspos), `tests/pagination_edges.rs` (no
+  `<span>` box), `tests/image_resources.rs` (a hidden `<img>` still counts toward the located
+  occurrence). On the step-04 binary (`layout_dump-B`, `attachments/scratch-oldruns.py.txt`) these
+  probes fail as follows:
+  - the abspos span is at 58, 61 instead of 48, 35;
+  - the ICB boxes are at 208, 120 and 308, 30 instead of 200, 100 and 300, 10;
+  - "BEFORE" is never drawn;
+  - "Volte sempre." is at x 8, 16 px, instead of 167.234, 13.333 px.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T142201Z` (2026-10-21 14:22:01Z), 20/20 steps ok, run-all exit 3 (gate FAIL before acceptances), git `e9dc7e4` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/04-block-offset --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/05-walk-rewrite`, then `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/04-block-offset --run fidelity/results/run-all/05-walk-rewrite --accept <accepted.json> --out fidelity/results/run-all/05-walk-rewrite/gate` (exit 0) |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-05-walk-rewrite-20261021T142201Z`. The ablation run, the floats-feature WPT run, the probe HTML and Chrome PDFs, `accepted.json` and the scratch drivers: `~/.cache/vellora-fidelity/step05-walk-rewrite-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/04-block-offset` (previous link; `gate-report.{json,md}`) | **PASS** with 18 `acceptedRegressions` | improvement 444, accepted 18, reported 26, changed 10, gating 0, unchanged 15008 |
+| `port/04-block-offset` without acceptances (`attachments/gate-report-without-acceptances.*`) | FAIL | the same 18 items gate |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 533 gating (04: 546); improvement 1727 (04: 1314) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 63 gating (04: 76); improvement 1322 (04: 981) |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle | before → after |
+|---|---|
+| WPT pass / clean (8047 reftests) | 3303 / 2732 (41.05 % / 33.95 %) → **3665 / 3107 (45.54 % / 38.61 %)**: 367 fail → clean, 15 fail → flagged, 12 pass-blank → clean, 5 flagged → clean; lost: 9 clean (accepted, below), 26 flagged (reported, below) |
+| WPT per suite (pass / clean) | generated-content 43/38 → 82/78, positioning 315/289 → 361/359, abspos 0/0 → 2/2, visuren 3/3 → 6/6, box-display 53/52 → 65/65, normal-flow 415/391 → 431/405, tables 53/50 → 77/74, css-text 464/214 → 630/377, CSS2/text 237/229 → 247/238, css-break 104/75 → 115/81, css-page 64/49 → 71/55, css-tables 38/29 → 47/38, margin-padding-clear 517/502 → 525/508, fonts 127 → 135, colors 9 → 10, linebox 125/123 → 126/124, visudet 14/8 → 14/9, visufx 1 → 2; floats 19/17 → 19/16, floats-clear 39/34 → 38/33, backgrounds 176/67 → 175/67 |
+| receipt REF-W max / p95 mm (step target: `p.thanks`) | 101.22 / 2.55 → **1.37 / 0.70** |
+| pdf-probe words improved | receipt 40 |
+| accepted (worse) | 6 WPT false passes; 3 WPT float tests; oss-postmark-receipt INV-X1/INV-X2 PASS → FAIL (found 6 → 5), EXT-2 missing pdftotext 38 → 39, pdfminer 2 → 11, pymupdf 40 → 41 |
+| unchanged | every other corpus and oracle value. 23 of the 29 `vellora*.pdf` files are byte-identical to step 04's (`attachments/pdf-identity-vs-04-block-offset.json`): only receipt and postmark changed. Invoice (35 wrappers) and boleto (24) are identical bytes: Blitz's anonymous blocks lay out exactly like html_normalize's `<div>`s. Also unchanged: crashtests 239/239 ok, canaries 30/30 caught, DET-1/DET-2 PASS, code checks green |
+
+Verdict totals: all PASS 141 → 139, FAIL 38 → 40, WARN 8, NOT-RUN 3; excluding diagnostic variants
+119 → 117, 34 → 36, 7, 3. The two new FAILs are postmark INV-X1 and INV-X2.
+
+### `layout_children`, not `paint_children` (probe, `attachments/blitz-tree-probe-paint-vs-layout.txt`)
+
+The probe walks one document three ways (DOM children, `layout_children`, and `paint_children`
+plus stacking-context hoisted children) and prints every node's origin next to
+`Node::absolute_position(0, 0)`. All CONFIRMED, Blitz 0.3.0-beta.4:
+
+- **Positions.** Summing down `paint_children` gives `absolute_position` for every box. Summing
+  down DOM children or `layout_children` puts out-of-flow boxes at the wrong place:
+  - an abspos span inside a non-positioned `<p>`: DOM/layout 58, 61 vs paint/abs 48, 35 (Chrome 48, 35);
+  - a box with no positioned ancestor: 208, 130 vs 200, 100 (Chrome 200, 100).
+- **Structure.** `paint_children` cannot be the box list's skeleton:
+  - it lists a box whose containing block is the initial containing block under `<html>`, a
+    sibling of `<body>`, and pagination only fragments the body's children;
+  - it leaves a `z-index: 2` box out entirely: the box is only in the root's stacking-context
+    list.
+- **Choice.** The walk iterates `layout_children` and takes each position from the
+  containing-block chain. That gives paint's positions with layout's structure.
+- **Paint order does not reach the PDF from this list.** `pagination` sorts the filled rects by
+  (y, x) and the emitter draws all rects, then images, strokes and text. Box order only breaks
+  ties. Real z-order is a follow-up.
+
+### Fidelity layers after this step (`fidelity/layout-diff/README.md`, "Since port step 05")
+
+- **`L0`** is the box walk: anonymous and pseudo-element boxes are in it, text nodes and
+  `<span>`s are out, and table rows are re-inserted. layout-diff lists L0 anonymous boxes as
+  "Blitz anonymous block (no source node)", so they do not fail `dom_key_alignment`.
+- **`B0`** boxes and text are placed the way Blitz's painter places them: each box's location is
+  added to its `containing_block`'s origin (`RawNode.containing_block`). Before, every box was
+  accumulated under its layout parent.
+- **`N0`** (`--no-html-normalize`) equals B0 by construction. JSON `html_normalize` is
+  `"skipped"` for N0 and `"removed"` for the render-path dump; wrappers are 0/0 and `synthetic` is
+  always false.
+- **Allowlist (`fidelity/layout-diff/expected-check-failures.json`).**
+  - Expired and removed: receipt `normalize_wrappers_located`, `normalize_dom_roundtrip` and
+    `dom_key_alignment` (the hoist), and postmark `normalize_dom_roundtrip`.
+  - Added: postmark `dom_key_alignment`. The render DOM is now blitz-html's XML parse of the
+    XHTML-doctype source (`table>tr`, no `tbody`), the same root cause as the kept
+    `source_dom_keys_vs_chromium`. Until step 04 it passed only because html_normalize
+    re-serialized this document and Blitz re-parsed it as HTML.
+- **Phase A baselines.** `pin` and `beta4` predate the allowlist, so `gate/snapshot.mjs` classifies
+  them with a frozen copy of it (`expected-check-failures-phase-a.json`, the list as committed
+  from 00-start to 04). Their classification therefore does not change with the live list.
+
+### `acceptedRegressions` (18; per-item numbers in `attachments/accepted-evidence.json`)
+
+| label | n | fits the literal rule? | what it is |
+|---|---|---|---|
+| `wpt-false-pass` | 6 | yes | the old test equalled its reference (maxDifference 0) but not Chrome's rendering of the test (ink bbox / colour bins / page count from the reused Chrome data) |
+| `html-normalize-compensation` | 12 | **no** | the old value matched Chrome only because html_normalize rewrote the document; without the rewrite, a raw Blitz defect shows |
+
+**`wpt-false-pass` (6).** Old ink is test = reference, compared with Chrome's ink of the test.
+
+| test | old ink vs Chrome's | why old test and reference matched |
+|---|---|---|
+| `css/CSS2/floats-clear/floats-153.xht` | bbox [8, 18, 287, 33] vs [8, 19, 287, 98] | the green PASS was in neither old render. Now the reference draws it (the walk reads the body's anonymous block), and the test still does not (Blitz places the float at x −70) |
+| `css/CSS2/floats/floats-placement-vertical-003.xht` | yellow at y 142–172 vs 113–143 | same picture 29 px off Chrome |
+| `css/CSS2/floats/floats-placement-vertical-004.xht` | [8, 8, 107, 212] vs [8, 8, 207, 113] | stacked instead of side by side. bboxShift is exactly 100 px, one below the ink-displaced flag threshold |
+| `css/CSS2/linebox/baseline-block-with-overflow-001.html` | [8, 8, 37, 415] vs [8, 8, 64, 329] | html_normalize put each `XX` on its own line. The new test equals Chrome's bbox exactly |
+| `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html` | 64866 px vs 42826 px, different colour bins | vellora ignores multicol and floats, so the test's float rendered as the reference's plain block. Pictures: `attachments/flex-fragmented-old-{test,ref}.png` (identical) |
+| `css/css-page/monolithic-overflow-014-print.html` | 2 pages vs 4 | both sides printed 2 pages |
+
+**`html-normalize-compensation` (12): needs the orchestrator's decision, like the
+non-literal families of steps 01, 03 and 04.**
+
+- **3 WPT float tests**: `css/CSS2/floats-clear/floats-132.xht`,
+  `css/css-text/text-indent/below-float.html` and `below-float2.html`.
+  - The old passes matched Chrome (ink bbox within 1 px).
+  - html_normalize wrapped the text next to a floated `<div>` in an inserted `<div>`. That turned
+    the inline formatting context into a block container.
+  - Without the rewrite, Blitz 0.3.0-beta.4 lays the float out inside the inline formatting
+    context and ignores it for the line. In floats-132 the float sits at location (0, −4) under
+    the unwrapped text.
+  - Enabling blitz-dom's `floats` feature does NOT restore these three (CONFIRMED,
+    `attachments/wpt-experiment-floats-feature.json`).
+- **9 oss-postmark-receipt rows**: INV-X1 and INV-X2 status and found counts, plus EXT-2 missing
+  per extractor.
+  - The template's first line is an XHTML 1.0 doctype, so blitz-html parses it as XML
+    (`html_sink.rs:92-99`). In XML `<br>` is not void, so the text after each of the template's 3
+    `<br>` becomes the `<br>`'s content and is not drawn: "The [Product Name] team",
+    "1234 Street Rd." and "Suite 1234".
+  - The extra pdfminer misses (2 → 11) are exactly these 7 tokens (pdfminer also reads text that
+    lies off the page). "Download as PDF" is drawn now; it was missing before.
+  - Chrome parses text/html as HTML. Until step 04, html_normalize happened to change this
+    document (1 wrapper), and its re-serialization made Blitz re-parse it as HTML.
+  - **This is a real fidelity loss on XHTML-doctype HTML.** XHTML-doctype documents that
+    html_normalize did not change were already parsed as XML before this step. The parse-mode
+    decision is a follow-up: HTML for every text/html input diverges from Chrome on WPT `.xht`
+    files, which Chrome loads as XML.
+
+**Fallback if the 12 are rejected: ablation "walk only" (`attachments/ablation-walk-only-*`).**
+It is `e9dc7e4` with html_normalize restored. Its gate against 04, run 2026-10-21 in the same
+environment:
+
+- WPT pass/clean is 3303/2732 → 3649/3097, losing only `floats-153` (the false pass above).
+- No corpus value changes, so the receipt keeps REF-W max 101.22 mm.
+- Its other gating items are ablation artefacts: red cargo tests written for the deletion, and
+  layout-diff key checks, because that build does not mark html_normalize's wrappers in the dump.
+
+Against the walk-only ablation, deleting html_normalize is worth:
+
+- WPT clean: +18 gained (17 fail → clean, 1 flagged → clean), −8 lost (the 5 false passes above
+  other than `floats-153`, and the 3 float tests), so 3097 → 3107;
+- receipt REF-W max: 101.22 → 1.37 mm;
+- postmark: the losses above.
+
+### Other changes and checks
+
+- **26 flagged passes → fail** (reported, not gated):
+  - `css/CSS2/positioning/{bottom,position}-applies-to-*` (24),
+    `box-display/containing-block-023` and `backgrounds/background-position-002`.
+  - The tests now draw their positioned square where Chrome does. Their references draw it as a
+    CSS `background-image`, which vellora does not paint.
+  - Before, both sides lacked the square (ink-missing flag).
+- **9 pass-blank → fail** ("changed", not gated), e.g. `normal-flow/inline-table-width-*`,
+  `css-text/boundary-shaping/*`: the walk now draws text that both sides used to lose.
+- **Body background: CONFIRMED still not painted.** The body box is never part of a fragment. The
+  new inline-root body fragment also leaves out the body's own rects on purpose: CSS 2.2 §14.2
+  propagates the root/body background to the canvas, and pagination does not model that. Body
+  text is drawn now, both as an anonymous block and as an inline root (`tests/walk.rs`).
+- **Block `::before` in an otherwise inline container** (probe `before_block` in
+  `chrome-probes-walk.json`):
+  - "BEFORE" is now drawn where Chrome draws it (8 / 23).
+  - Blitz lays the `::before` out as an inline-level box, so the container's text stays on the
+    first line (vellora "mix content" at 74 / 23; Chrome 8 / 43). This is raw Blitz.
+
+The `committed-canary` self-test asserts that `05-walk-rewrite` FAILs against `04-block-offset`
+without acceptances (exactly the 18 accepted keys gate), PASSes with them, and checks the label
+counts. It also checks that receipt REF-W max (101.22 → 1.37) and the WPT tests
+`generated-content/before-inheritable-001`, `positioning/abspos-containing-block-001` and
+`box-display/anonymous-box-generation-001` improve.

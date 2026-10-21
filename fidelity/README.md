@@ -97,7 +97,10 @@ REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT clean-pass regressio
 the port chain, `baselines/port/00-start`, must pass its sha256 integrity check and PASS against
 `baselines/beta4-gated`; `baselines/port/01-pagination-gaps` must FAIL against `00-start` on
 exactly its 150 `acceptedRegressions` and PASS with them; `02-delete-noop-passes` must PASS against
-`01` with none; `03-table-passes` must FAIL against `02` on exactly its 40 and PASS with them). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
+`01` with none; `03-table-passes`, `04-block-offset` and `05-walk-rewrite` must FAIL against their
+predecessor on exactly their 40, 2587 and 18 and PASS with them; the Phase A baselines `pin`/`beta4`,
+which predate the layout-diff allowlist, are classified with its frozen copy
+`layout-diff/expected-check-failures-phase-a.json`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).
 
 ## Canaries
