@@ -556,7 +556,9 @@ if (opts.expectations !== "none") {
 }
 if (opts.updateExpectations) {
   if (!pin.ok) fatal(`--update-expectations refused: ${pinProblems.join("; ")}`);
-  const command = `node fidelity/wpt/run.mjs ${process.argv.slice(2).join(" ")}`.trim();
+  // Shell-quoted so the recorded command can be pasted back (e.g. a Chrome path with spaces).
+  const quote = (v) => (/^[\w@%+=:,./-]+$/.test(v) ? v : `'${v.replace(/'/g, "'\\''")}'`);
+  const command = `node fidelity/wpt/run.mjs ${process.argv.slice(2).map(quote).join(" ")}`.trim();
   const ink = inkCheck?.status === "ok" ? `chrome ${chromeInfo?.browserVersion}` : "not-run";
   writeJson(
     expectationsPath,

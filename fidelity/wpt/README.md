@@ -30,7 +30,9 @@ Useful options (`run.mjs` header has the full list): `css/CSS2/tables` (any WPT 
 defaults), `--filter <regex>`, `--limit <n>`, `--jobs <n>`, `--vellora <other build>/packages/vellora/dist/index.js`
 (e.g. a Blitz-bump build), `--expectations auto|none|<file>`, `--update-expectations`,
 `--upstream auto|none|<blitz-sha>`, `--rasterizer pdftocairo|pdftoppm`, `--no-aa`, `--no-inline-css`,
-`--artifacts fail|all|none`, `--keep-pdf`, `--label <provenance note>`.
+`--artifacts fail|all|none`, `--keep-pdf`, `--label <provenance note>` (required for a build with no
+git commit), `--allow-unpinned` (measure a WPT tree that is not exactly the pin; no ratchet),
+`--chain-references` (follow a reference's own links — not wptrunner semantics, diagnosis only).
 
 Requirements: Node >= 22.12, git, poppler (`pdftocairo`, `pdfinfo`; `pdftoppm` only for
 `--rasterizer pdftoppm`; override paths with `PDFTOCAIRO`/`PDFINFO`/`PDFTOPPM`). Chrome only for
@@ -50,22 +52,25 @@ existing directory):
 | `summary.md` | the same as tables |
 | `run-info.json` | env + config + timing without per-test records |
 | `upstream.json` | cross-tab against Blitz's own published report, with per-bucket test lists and caveats |
-| `ratchet.json` | comparison against the expectations file (when present) |
-| `artifacts/<test>/` | for failures: `lhs-pN.png`, `rhs-pN.png`, `diff-pN.png` (differing pixels red), `comparison.json`; PDFs with `--keep-pdf` |
+| `ratchet.json` | comparison against the expectations file, or `status: "not-run"` with the reason (other WPT commit, unpinned tree, other comparison settings, schema 1) |
+| `artifacts/<test>/` | for failures: `lhs-pN.png`, `rhs-pN.png`, `diff-pN.png` (differing pixels red), `comparison.json`; with `--artifacts all` also for every other compared test (page 1 of the test and its first reference, so a pass can be audited by eye); PDFs with `--keep-pdf` |
 | `chrome-artifacts/<test>/` | the same for the Chrome oracle |
 
 Per-test record: `test`, `suite`, `mode` (`screen`/`print`), `outcome`, `node` (`test`/`ref`, which node
 was not evaluable), `cause` (`feature`/`line`/`col` for unsupported, `kind`/`message` for errors,
 `reason` for skips), `comparisons` (`lhs`, `rhs`, `relation`, `pass`, `maxDifference`,
 `totalPixels`, `fuzzy`, `firstDiffPage`, `pageCounts`, `pageCountMismatch`, `sizeMismatch`),
-`blank`, `pageCount` (print), `prepare` (what the harness supplied/changed, below), `renderMs`,
-`rasterMs`, `durationMs`, `chrome` (Chrome oracle outcome/comparisons), `upstream` (Blitz's own status).
+`blank`, `pageCount` (print), `prepare` (what the harness supplied/changed and the suspect-pass
+flags, below), `ink` (ink signature of the test's first compared page), `inkCheck` (vellora vs
+Chrome ink, passes only), `renderMs`, `rasterMs`, `durationMs`, `chrome` (Chrome oracle
+outcome/comparisons/ink), `upstream` (Blitz's own status).
 
 ### Outcomes
 
 | outcome | meaning |
 |---|---|
-| `pass` | WPT pass rule satisfied (`blank: true` marks a pass where every compared test page is pure white; `summary.totals.passBlank` counts them) |
+| `pass` | WPT pass rule satisfied by a rendering that is not pure white (or that matched an empty-by-construction reference: `about:blank`, `/common/blank.html`, `css/reference/blank.html`, `blank-print-ref.html`) |
+| `pass-blank` | WPT pass rule satisfied, but every compared page of the TEST rendering is pure white and the reference is not empty by construction: test and reference lost the same content. **Not a pass**: excluded from `pass` and from every pass rate. Decided from vellora's own rendering only, so it does not depend on whether an oracle ran |
 | `fail` | rendered fine, comparison failed |
 | `unsupported` | the strict gate rejected the test or a reference (`VelloraUnsupportedError`; `cause.feature` is the core's feature id, `node` says which) |
 | `error` | `cause.kind`: `panic` (Rust panic surfaced as a rejection), `render`, `input`, `template` (`renderPdf` always runs the templating engine; `{{`/`{%` in a test would throw — an input-contract artifact, not layout; 0 occurrences on the current pin), `conformance`, `crash` (worker process died: abort/stack overflow), `raster`, `metadata`, `harness`, `chrome` |
@@ -76,8 +81,30 @@ Files that are not reftests are never run but always counted (`summary.totals.no
 `testharness` (testharness.js), `css-manual` (CSSWG `flags` with `paged`, `interact`, …),
 `manual`, `visual`, `crashtest`. Support files are excluded.
 
-Pass rates: `passRate = pass / reftests` and `passRateEvaluated = pass / (pass + fail)` (what vellora
-renders correctly among the tests it accepts). Both are always reported.
+Pass rates: `passRate = pass / reftests`, `passRateEvaluated = pass / (pass + pass-blank + fail)`
+(what vellora renders correctly among the tests it accepts) and `passRateClean = passClean / reftests`
+where `passClean` = passes with no suspect flag. All three are always reported.
+
+### Suspect-pass flags (a pass that may not show what the test asserts)
+
+A reftest pass proves that test and reference render alike, not that either rendered what the test
+asserts. CONFIRMED by the validator (2026-10-21) and re-checked here: when both lose the same content
+(nothing drawn, glyphs missing, an ignored property, an offset dropped in both), WPT's rule still
+passes. Such passes stay `pass` but carry flags (`summary.passFlags`, `passFlagged`/`passClean`
+per row, and `suspectPasses` in the expectations file):
+
+| flag | source | meaning |
+|---|---|---|
+| `uncovered-glyphs` | prepare, deterministic | visible text (character data outside `<head>`/`<script>`/`<style>`, entities decoded, plus CSS `content:` strings; white space, controls and default-ignorable codepoints excluded) contains codepoints that **no** available face maps in its `cmap` (vellora's bundled Liberation Sans/Serif/Mono + DejaVu Sans of the build being measured ∪ Ahem ∪ supplied @font-face files; vellora never consults system fonts). A lower bound: a face that covers a codepoint is not necessarily the one parley picks. `prepare.uncoveredSample` lists the first eight |
+| `css-url-resource` | prepare, deterministic | CSS `url()` outside `@font-face` (backgrounds, list images, content images; non-`data:`), which vellora never loads |
+| `img-without-dims` | prepare, deterministic | an `<img>` without `width`/`height` attributes (not drawn by vellora, observation 2) |
+| `webfont-not-supplied` | prepare, deterministic | a WOFF/WOFF2 `@font-face` that the harness cannot supply |
+| `missing-resource` | prepare, deterministic | a stylesheet, image or font that is not in the tree / sparse checkout |
+| `ink-missing-vs-chrome` | `--chrome`, indicative | vellora's TEST rendering lacks ≥ 50% of Chrome's significant ink for the same test (`inkCheck.missingFrac`: 3-bit-per-channel colour histogram, colours with ≥ 50 px; the validator's thresholds, so counts are comparable) |
+| `ink-displaced-vs-chrome` | `--chrome`, indicative | the ink bounding box is > 100 px away from Chrome's (`inkCheck.bboxShift`); catches content drawn in the right colours in the wrong place in both test and reference (validator fixtures val-i2/val-i3: 300 px) while staying above the 8 px page-1 body-margin offset every box shows against Chrome |
+
+The two ink flags are HYPOTHESIS-grade attribution aids (a histogram heuristic over a print-vs-paginate
+comparison) and exist only when the Chrome oracle ran; flags never change an outcome.
 
 ## What is pinned, and why
 
@@ -91,14 +118,27 @@ renders correctly among the tests it accepts). Both are always reported.
   Caveat (CONFIRMED from `blitz-wpt-results/summary/runs.json`): Blitz's archived report for our
   current pin `2003ba5` was produced at WPT `8eaad6beb`, and the run closest to `0.3.0-beta.4`
   (`23b9b26a9b`, beta.4 + "Delete the bump crate") at `cd1d8aa5b`. Use
-  `fetch-wpt.mjs --commit <sha> --dir <dir>` + `run.mjs --wpt <dir>` for a same-revision comparison.
+  `fetch-wpt.mjs --commit <sha> --dir <dir>` + `run.mjs --wpt <dir> --allow-unpinned` for a
+  same-revision comparison.
+* **The pin is enforced, not just recorded.** Before rendering, `run.mjs` requires the WPT tree to be
+  its own git checkout (not a directory inside another repository, whose HEAD `git -C` would
+  report), with HEAD = `WPT_COMMIT`, no modified tracked files and no untracked files (e.g. injected
+  fixtures); otherwise it exits 2. `--allow-unpinned` measures such a tree anyway: the problems are
+  recorded in `run-info.json`/`summary.json` (`wptPin`) and `summary.md`, and no ratchet or
+  expectations update is performed.
 * **Suites** (`suites.mjs`, each with a one-line reason): the CSS 2.1 directories that exercise
   document layout — normal-flow, margin-padding-clear, box, box-display, visudet, visuren, linebox,
   text, fonts, tables, borders, backgrounds, colors, lists, generated-content, floats,
   floats-clear, positioning, abspos, visufx, pagination — plus `css/css-tables`, `css/css-break`,
   `css/css-page`, `css/css-text`. Excluded with reasons in `EXCLUDED_SUITES`: parser/cascade
-  directories owned by Stylo (selectors, cascade, syntax, values, sec5), `@import`, bidi/i18n, UI,
-  media queries, stacking order, legacy css1, and directories with no reftests at this commit.
+  directories owned by Stylo (selectors, cascade, syntax, values, sec5), `@import`, the bidi
+  algorithm (`CSS2/bidi-text`), UI, media queries, stacking order, legacy css1, and directories with
+  no reftests at this commit. Directories are excluded by the feature they test, never by the script
+  of their text: `css/css-text/i18n` (CJK/Thai/Ethiopic line breaking, 0 passes) stays in, because
+  dropping a 0% directory would shrink the denominator; its tests carry the `uncovered-glyphs` flag
+  (no bundled or supplied face covers those scripts), which attributes the failures and keeps any pass
+  out of the clean count. DESIGN TARGET: supply a pinned font set (e.g. Noto, recorded by hash) through
+  `fonts` so these tests measure layout instead of font coverage.
 
 ## Pipeline per node (test or reference)
 
@@ -142,10 +182,25 @@ renders correctly among the tests it accepts). Both are always reported.
   positional, `a-b` ranges, optional `<ref-url>:` key resolved against the node URL). For a
   comparison the LEFT node's fuzzy applies (wptrunner `get_fuzzy`), per page.
 * Multiple references: "at least one `match` must match, and all `mismatch` must differ"
-  (`docs/writing-tests/reftests.md`). wptrunner's DFS implementation ORs every alternative instead;
-  the documented rule is used and the difference only matters for nodes mixing both kinds.
-* Chained references: when a `match` passes and the reference has its own references, evaluation
-  continues from that reference (wptrunner `RefTestImplementation.run_test`), cycle-safe, depth ≤ 8.
+  (`docs/writing-tests/reftests.md`). wptrunner implements exactly that as a graph
+  (`tools/wptrunner/wptrunner/wpttest.py` `ReftestTest.from_manifest`: every `==` reference is
+  followed by an ANDed chain of all `!=` references, walked depth-first by
+  `executors/base.py` `RefTestImplementation.run_test`); this runner evaluates the same rule
+  directly. Two edge differences remain, both CONFIRMED from that source: wptrunner compares the
+  mismatch chain from the matched reference (`ref != m1`, `m1 != test`, …) with no fuzzy beyond
+  the first comparison, while this runner compares `test != m` with the test's fuzzy (identical
+  verdicts without fuzzy, since `test == ref` exactly); and wptrunner returns ERROR as soon as any
+  node of the walk fails to render, while this runner reports a non-evaluable node only when no
+  alternative passes.
+* A reference's own `<link rel=match|mismatch>` is **not** followed (default). CONFIRMED at the pin:
+  `from_manifest` builds every nested node with references taken only from the root's mismatch
+  chain, never from the reference file (the class docstring "the reference passes if it has any
+  references recursively" is stale relative to that code), and `docs/writing-tests/reftests.md`
+  documents no chaining. Blitz's upstream runner does not chain either. `--chain-references` opts
+  into following them (cycle-safe, depth ≤ 8) for diagnosis; it is recorded in the run config,
+  refused for `--update-expectations`, and a ratchet or `--chrome-from` across the two modes is
+  refused. (The pre-fix harness e47e77f chained by default: 61 tests chained and 50 failed only
+  through the chain, per the validator.)
 * Print: page counts must match for `==`; `<meta name=reftest-pages>` selects pages per node URL
   (wptrunner `get_pages`).
 * When no alternative passes and some alternative was not evaluable (unsupported/error/timeout/
@@ -216,16 +271,32 @@ number is an **upper bound**, not a like-for-like oracle:
 
 ## Expectations ratchet
 
-`expectations/<engine-id>.json` (`engine-id` = `blitz-<first 12 of the blitz-dom rev in Cargo.lock>`,
-or `blitz-<version>` for a crates.io Blitz) maps each reftest path to its outcome, with the vellora
-commit, WPT commit, date and command that produced it. Every run compares against the file for its
-own engine (`--expectations auto`) or a given file (`--expectations <file>`, e.g. the pre-bump
-baseline when measuring a Blitz bump) and writes `ratchet.json` with **regressions** (expected `pass`
-→ anything else), **improvements** (non-pass → `pass`), `changed` (non-pass → other non-pass),
-`added`, `missing`. The process exits 1 when there is at least one regression. Regenerate
-intentionally with `--update-expectations` (never automatic) and commit the diff with the reason.
-Local macOS runs are indicative; the authoritative baseline should come from the pinned Linux CI
-run (DESIGN TARGET).
+Committed baselines live in `fidelity/baselines/wpt/<engine-id>.json` (the location
+`fidelity/README.md` assigns to committed baselines; `engine-id` = `blitz-<first 12 of the
+blitz-dom rev in Cargo.lock>`, or `blitz-<version>` for a crates.io Blitz). Schema 2 maps each
+reftest path to its outcome and records the vellora commit and source hash, WPT commit, date,
+command, the comparison settings the outcomes depend on (`comparison`: harness semantics version,
+chaining, CSS inlining, rasterizer/DPI/antialias), `suspectPasses` (test → comma-joined flags for
+every flagged `pass`) and `inkCheck` (whether Chrome-derived flags are included).
+
+Every run compares against the file for its own engine (`--expectations auto`) or a given file
+(`--expectations <file>`, e.g. the pre-bump baseline when measuring a Blitz bump) and writes
+`ratchet.json`:
+
+* **regressions** — expected `pass` → anything else, including `pass-blank` (content vanished);
+  split into `regressionsOfCleanPasses` and `regressionsOfFlaggedPasses` (each regression carries
+  the expected pass's flags), so a regression of a never-verified pass is not mistaken for a new bug;
+* **sightGained** — expected `pass-blank` → a non-pass: the oracle now sees content it could not see
+  before (not a regression);
+* **improvements** (non-pass → `pass`), **changed** (non-pass → other non-pass), `added`, `missing`.
+
+The process exits 1 when there is at least one regression. The ratchet is **refused** (`status:
+"not-run"` with the reason; exit 2 when the file was given explicitly) when the WPT tree is not the
+exact pin, the expectations were produced on another WPT commit, with other comparison settings, or
+with schema 1. `--update-expectations` is refused (exit 2, before anything renders) for partial runs
+(`--filter`, `--limit`, suites other than the default set), `--chain-references` and unpinned
+trees; regenerate intentionally and commit the diff with the reason. Local macOS runs are
+indicative; the authoritative baseline should come from the pinned Linux CI run (DESIGN TARGET).
 
 ## Results on the current pin (CONFIRMED, local macOS run — indicative, not the CI baseline)
 
@@ -317,30 +388,88 @@ tag, upstream WPT `cd1d8aa5b`). Run `20261021-blitz-0.3.0-beta.4-research-dff3bc
   reference image is drawn and the pre-existing gap is exposed. 36 of the 161 regressions have that
   shape (test uses a CSS background `url()`, reference uses `<img>`).
 
+## Independent validation (2026-10-21) and what changed
+
+A validator re-ran the harness from an independent build and injected defects. All but one were
+caught by e47e77f; that one, and the findings below, are fixed (commits on `fidelity/wpt` after
+e47e77f), each with a `node --test` regression test under `test/`:
+
+| finding (validator) | fix | regression test |
+|---|---|---|
+| **major** — blank-vs-blank (and other shared-loss) pairs counted as `pass`; injected defect (a') (`text-transform-uppercase-001.xht` with an unrelated reference; body text vs other body text) passed | `pass-blank` outcome excluded from every pass rate; deterministic suspect-pass flags; Chrome ink check; expectations store flagged passes; ratchet reports `sightGained` | `blank-pass.test.mjs`, `oracle.test.mjs` (real pipeline: empty bodies → `pass-blank`, vs `/common/blank.html` → `pass`; the (a') shape is never `pass`), `flags-ink.test.mjs`, `provenance.test.mjs` |
+| chained references are not wptrunner semantics; README misdescribed chaining and multiple references | no chaining by default (`--chain-references` opt-in); README corrected from `wpttest.py`/`base.py` | `refgraph.test.mjs` |
+| WPT pin and tree cleanliness only warned about; ratchet ignored provenance | pin enforced (own checkout, HEAD, tracked + untracked files) unless `--allow-unpinned`; ratchet/`--chrome-from`/update refuse other WPT commits and comparison settings | `provenance.test.mjs` (real temp git repo), `cli.test.mjs` |
+| `--update-expectations` overwrote the baseline on partial runs | refused before rendering for `--filter`/`--limit`/non-default suites | `cli.test.mjs` |
+| `--artifacts all` wrote nothing for passes | page-1 test/reference rasters (+PDFs) for every compared test | `blank-pass.test.mjs` |
+| i18n scope inconsistent (`CSS2/bidi-text` excluded, `css-text/i18n` included) | scope rule is by feature tested; i18n kept and flagged `uncovered-glyphs` (cmap coverage) | `flags-ink.test.mjs` |
+| baseline location / provenance hygiene | baseline moved to `fidelity/baselines/wpt/`; run ids sanitized; builds without git need `--label` and are named by a source hash; only a 40-hex SHA counts as a commit | `provenance.test.mjs`, `cli.test.mjs` |
+| engine behaviours behind false passes | re-probed and recorded below (observations 3–6, 9) | — |
+
+**Injected defects re-run with the fixed harness** (CONFIRMED 2026-10-21 04:43 UTC, vellora 1017aa6, on
+the validator's mutated tree `/tmp/val528-5/wpt-mut` = WPT 9d8aceec0 + 60 untracked fixtures + one
+modified tracked file): without `--allow-unpinned` the runner now refuses that tree (exit 2: "1
+modified tracked file(s); 60 untracked file(s)"). With it, `node fidelity/wpt/run.mjs css/CSS2/borders
+--wpt /tmp/val528-5/wpt-mut --filter 'val-|border-bottom-color-174' --allow-unpinned --expectations
+none --upstream none` gives the validator's verdict for all 40 tests except the two that were the
+uncaught defect: val-a3 (`pass` → `pass-blank`) and val-a4 (`pass` → `pass-blank`). Unchanged: a0
+pass, a1 fail (swapped ref), b1/b2 fail, b3 pass (mismatch AND rule), c1–c4 `unsupported`
+(`css:transform`, test or ref), d1 fail (floats compiled out), e-ahem fail, the fuzzy fixtures
+(g0 fail, g1 pass, g2/g3 fail, g4 fail — fuzzy in the ref is ignored, g5 pass, g5b metadata error,
+g6 fail, g7/g7b pass), i1/i4/i5 fail, i2/i3 pass. With `--chrome` on the same set, i2/i3 — the
+displaced-content false passes the colour metric cannot see — show `inkCheck.bboxShift` 300 and are
+flagged `ink-displaced-vs-chrome`; a3/a4 show `missingFrac` 1 (Chrome draws text, vellora nothing).
+
 ## Observations surfaced by the runner (CONFIRMED with a repro; causes are HYPOTHESES)
+
+Engine behaviours, not harness defects. They are the mechanisms behind most false passes (test and
+reference lose the same thing) and belong in the layout-diff handoff. Unless noted, re-probed on
+2026-10-21 04:44 UTC with `/tmp/wpt-fix-probes/probe.mjs` (the runner's own loader:
+`renderPdf` strict + pdftocairo 96 DPI, 800x600 screen page) at vellora 1017aa6, whose rendering
+code is identical to `main` 5810062 (Blitz 2003ba5); first reported by the validator.
 
 1. **Blank page from a `<style>` before `<html xmlns>`.** `<!DOCTYPE html><style>…</style><html
    xmlns="http://www.w3.org/1999/xhtml"><head>…</head><body><p>Hello</p></body></html>` renders an
    empty page (1.7 KB PDF); a plain `<html>`, or a `<meta>` instead of the `<style>`, renders
-   normally. The runner avoids the shape (it inserts after `<head>`).
+   normally. The runner avoids the shape (it inserts after `<head>`). (Builder, 2026-10-21.)
 2. **`<img>` without `width`/`height` is not drawn, and not rejected.** With the bytes supplied via
    `images` (correct key), `css/CSS2/reference/ref-filled-black-96px-square.xht` renders no square.
    Source: `blitz_engine.rs` resolves image bytes only during the post-layout walk, so Blitz lays the
    element out with no intrinsic size and `resolve_image_runs` skips 0-sized images before the
-   unresolved-image check. Many CSS2 references draw with `<img>`; 82 failures carry
-   `imgWithoutDimAttrs`.
-3. **Page-1 top margin is dropped.** A 100px box as the first child of `<body>` paints at
-   x 8..107, y 0..99 in vellora's 800x600 page and at x 8..107, y 8..107 in Chrome 155's print of the
-   same document (the 8px UA body margin). Equal for test and reference, so it only shows against
-   Chrome.
-4. **Ahem glyph placement.** `<div style="font:100px/1 Ahem">X</div>` paints rows 0..95 where an
-   equal 100px box paints 0..99 (both rasterizers, so not a raster artifact); horizontally the glyph
-   is exactly 100px. HYPOTHESIS: ascent/baseline metric choice; plausibly behind many of the 171
-   linebox failures (beta.4 moves linebox from 17 to 47 passes).
-5. **`floats` is compiled out.** vellora-core builds blitz-dom with `default-features = false`,
-   which drops `taffy/float_layout`; CSS2 floats/floats-clear score 17% / 13% while Chrome scores
-   85% / 98%.
-6. **Panics** in `blitz-dom/src/resolve.rs:343` on two root-element edge cases (listed above).
+   unresolved-image check. Flagged per test as `imgWithoutDimAttrs` / `img-without-dims`.
+   (Builder, 2026-10-21.)
+3. **Inline content directly in `<body>` and the body background are not painted.**
+   `<body>Hello world</body>` and `<body><span>Hello world</span></body>` rasterize pure white
+   (0 non-white px) while `<body><p>Hello world</p></body>` paints 429 px at x 8..84, y 0..11;
+   `<body style="background:rgb(0,128,0)">` leaves pixel (400,500) white while a `<div>` background
+   paints. This is why the validator's injected defect (a') "passed" before `pass-blank` existed.
+   HYPOTHESIS: the DOM-children walk that misses Blitz anonymous blocks (prior evidence) and a
+   root/body background that is never emitted.
+4. **`opacity` is silently ignored and not rejected.** `opacity:0.5` on a red 100px box: the strict
+   gate accepts it and pixel (50,50) is rgb(255,0,0). Tests that rely on opacity pass or fail by
+   accident (validator example: `abspos-in-opacity-000` passes drawing red where purple is expected).
+5. **Leading vertical space before the first content on page 1 is dropped.** A 100px box as the first
+   child of `<body>` paints at x 8..107, y 0..99 (Chrome 155 prints it at y 8..107: the 8px body
+   margin). `body { padding-top: 40px }` changes nothing (y 0..99); `position:absolute; top:300px;
+   left:0` paints at x 8..107, y 0..99 (its static position — both offsets ignored) and
+   `position:relative; top:300px` at y 0..99 too; after a 10px inked spacer the same relative box is
+   honoured (y 310..409). Equal for test and reference, so only Chrome (or `ink-displaced-vs-chrome`)
+   sees it.
+6. **Ahem glyph placement: 4px high.** Below a 20px spacer, `<div style="font:100px/1 Ahem">X</div>`
+   paints x 8..107, y 16..115, where an equal 100px box paints y 20..119; horizontally the glyph is
+   exactly 100px. Both rasterizers, so not a raster artifact. HYPOTHESIS: ascent/baseline metric
+   choice. Every Ahem-glyph-vs-box reftest is therefore a systematic false fail (validator fixture
+   val-e-ahem fails in vellora, passes in Chrome).
+7. **`floats` is compiled out.** vellora-core builds blitz-dom with `default-features = false`,
+   which drops `taffy/float_layout`; CSS2 floats/floats-clear score far below Chrome (table above).
+   Validator fixture val-d1 (two float:left boxes vs an abs-pos reference) fails in vellora and passes
+   in Chrome.
+8. **Panics** in `blitz-dom/src/resolve.rs:343` (`Option::unwrap()` on `None`) on two root-element
+   edge cases (`css/CSS2/box-display/root-box-003.xht`, `css/css-page/root-element-display-none-print.html`).
+9. **Screen reftests that spill onto page 2.** The validator counted 111 of 6905 evaluated screen
+   tests whose vellora PDF has a second page (93 fail, 18 pass); page 2 is never compared (screen =
+   page 1, the viewport). Not re-measured here (the loader rasterizes only page 1 for screen tests).
+   It supports the "small effect" HYPOTHESIS under Known gaps. The screen `@page` injection itself is
+   faithful: `html, body { height: 100% }` and `50vh` probes resolve to 600px (validator).
 
 ## Known gaps (not silently skipped)
 
@@ -349,9 +478,16 @@ tag, upstream WPT `cd1d8aa5b`). Run `20261021-blitz-0.3.0-beta.4-research-dff3bc
   flagged `xhtmlHazards` (443 tests: 66 pass, 377 fail); no conversion is attempted.
 * Screen reftests are paginated at 600px: content below goes to page 2 and is not compared, and
   fragmentation can move content that a continuous viewport would not. HYPOTHESIS: small effect,
-  since most reftests fit in 800x600.
+  since most reftests fit in 800x600 (validator: 111 of 6905 evaluated screen tests spill; obs. 9).
 * CSS `url()` resources other than `@font-face` (backgrounds, list-style images, `@import` inside
-  inline `<style>`) are never supplied: vellora has no channel for them.
+  inline `<style>`) are never supplied: vellora has no channel for them. Tests that use them carry
+  `cssUrlResources` and, when they pass, the `css-url-resource` flag.
+* Glyph coverage: only vellora's bundled faces, Ahem and TTF/OTF `@font-face` files are available.
+  Text in scripts none of them covers (CJK, Thai, Ethiopic, …) is flagged `uncovered-glyphs`;
+  no pinned font set is supplied yet (DESIGN TARGET).
+* A pass is evidence of equality, not of correctness: see "Suspect-pass flags". `pass-blank` removes
+  the blank case from the pass count; flagged non-blank passes are still counted in `pass` and are
+  reported separately as `passFlagged` / `passClean`. The ink flags need `--chrome`.
 * WOFF/WOFF2 web fonts are not supplied (`skippedFonts`: 289 tests); `@font-face` aliasing is not
   emulated (`fontAliasMismatch`: 10 tests).
 * `.sub.` (wptserve substitution) tests are skipped; `<meta name=variant>` is not expanded; scripts
