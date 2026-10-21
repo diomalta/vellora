@@ -164,91 +164,6 @@ function charBagRecall(expectedTokens, actualTokens) {
   return multisetSplit(expectedChars, actualChars).common.length / expectedChars.length;
 }
 
-/** Remove one occurrence of each token of `remove` from `tokens`, preserving the order of the rest. */
-function withoutMultiset(tokens, remove) {
-  return multisetSplit(tokens, remove).onlyA;
-}
-
-const codePoints = (token) => [...token].length;
-
-/** Smallest piece a scattered split may use. Keeps one-character tokens (page numbers, "x") from
- * being glued into an unrelated expected token and hiding its loss. */
-export const SCATTERED_MIN_PIECE = 2;
-export const SCATTERED_MAX_PIECES = 4;
-
-/**
- * Split `token` into 2..SCATTERED_MAX_PIECES pieces, in order, each an available key of `pool`
- * (Map token -> count) with >= SCATTERED_MIN_PIECE code points. Longest piece first, then
- * lexicographic, so the result is deterministic. Returns the pieces or null.
- */
-function wordBreak(token, pool) {
-  const keys = [...pool.keys()]
-    .filter((key) => key !== token && codePoints(key) >= SCATTERED_MIN_PIECE && token.includes(key))
-    .sort((a, b) => b.length - a.length || (a < b ? -1 : a > b ? 1 : 0));
-  const used = new Map();
-  const pieces = [];
-  const search = (offset) => {
-    if (offset === token.length) {
-      return pieces.length >= 2;
-    }
-    if (pieces.length === SCATTERED_MAX_PIECES) {
-      return false;
-    }
-    for (const key of keys) {
-      if ((used.get(key) ?? 0) >= pool.get(key) || !token.startsWith(key, offset)) {
-        continue;
-      }
-      used.set(key, (used.get(key) ?? 0) + 1);
-      pieces.push(key);
-      if (search(offset + key.length)) {
-        return true;
-      }
-      pieces.pop();
-      used.set(key, used.get(key) - 1);
-    }
-    return false;
-  };
-  return search(0) ? [...pieces] : null;
-}
-
-/**
- * Pair unaligned tokens of one comparison:
- * 1. identical tokens on both sides -> reordered (content present, order differs);
- * 2. a remaining expected token that is the exact in-order concatenation of 2..4 remaining
- *    extracted tokens -> a scattered split (content present, split AND not adjacent; e.g.
- *    innerText glues "Número" to its value "INV-2026-00417" while the PDF text layer has the
- *    two words in different reading-order positions);
- * 3. the rest -> missing / extra.
- * Identical pairing runs first so a split can never steal a token an identical pair needs.
- */
-export function pairUnaligned(missingCandidates, extraCandidates) {
-  const identical = multisetSplit(missingCandidates, extraCandidates);
-  const pool = multiset(identical.onlyB);
-  const splits = [];
-  const consumed = [];
-  const missing = [];
-  for (const token of identical.onlyA) {
-    const pieces = wordBreak(token, pool);
-    if (!pieces) {
-      missing.push(token);
-      continue;
-    }
-    for (const piece of pieces) {
-      pool.set(piece, pool.get(piece) - 1);
-      consumed.push(piece);
-    }
-    splits.push({ expected: token, actual: pieces.join(" ") });
-  }
-  return {
-    reordered: identical.common,
-    splits,
-    splitExpected: splits.map((s) => s.expected),
-    splitActual: consumed,
-    missing,
-    extra: withoutMultiset(identical.onlyB, consumed),
-  };
-}
-
 /**
  * Compare an extracted token sequence against the expected one.
  * - inOrder: tokens aligned by LCS (same order).
@@ -256,11 +171,7 @@ export function pairUnaligned(missingCandidates, extraCandidates) {
  *   whitespace is removed (e.g. letter-spaced "9 9 9" vs "999", or "R$1,00" vs "R$ 1,00").
  *   That is a word-boundary difference, not lost or invented content.
  * - reordered: unaligned tokens present on both sides (content present, order differs).
- * - scatteredSplits: an unaligned expected token rebuilt from 2..4 non-adjacent extracted tokens.
  * - missing / extra: unaligned tokens present on one side only.
- * - missingCandidates / extraCandidates: every unaligned token after boundary absorption and
- *   scattered splits, BEFORE identical pairing. Control attribution (againstControl) works on
- *   these, so a control-explained extra can never cancel a real subject-only loss.
  */
 export function compareTokens(expected, actual, { examples = 25 } = {}) {
   const pairs = lcsPairs(expected, actual);
@@ -279,11 +190,8 @@ export function compareTokens(expected, actual, { examples = 25 } = {}) {
       missing: bag.onlyA,
       extra: bag.onlyB,
       reordered: [],
-      scatteredSplits: [],
       boundaryOnly: [],
       boundaryOnlyAll: [],
-      missingCandidates: bag.onlyA,
-      extraCandidates: bag.onlyB,
     };
   }
   const missingCandidates = [];
@@ -314,7 +222,7 @@ export function compareTokens(expected, actual, { examples = 25 } = {}) {
     missingCandidates.push(...absorbed.restExpected);
     extraCandidates.push(...absorbed.restActual);
   }
-  const paired = pairUnaligned(missingCandidates, extraCandidates);
+  const split = multisetSplit(missingCandidates, extraCandidates);
   return {
     ...base,
     inOrder: pairs.length,
@@ -322,56 +230,24 @@ export function compareTokens(expected, actual, { examples = 25 } = {}) {
     boundaryOnly: boundaryOnly.slice(0, examples),
     boundaryOnlyAll: boundaryOnly,
     boundaryOnlyGroups: boundaryOnly.length,
-    scatteredSplits: paired.splits,
-    reordered: paired.reordered,
-    missing: paired.missing,
-    extra: paired.extra,
-    missingCandidates: withoutMultiset(missingCandidates, paired.splitExpected),
-    extraCandidates: withoutMultiset(extraCandidates, paired.splitActual),
+    reordered: split.common,
+    missing: split.onlyA,
+    extra: split.onlyB,
   };
 }
 
 /**
- * Attribute a subject comparison against the CONTROL comparison (the same extractor reading
- * Chrome's own print of the same HTML).
- *
- * Attribution happens on the unaligned CANDIDATES, before any pairing: the subject's unaligned
- * expected tokens are first cancelled against the control's unaligned expected tokens, and the
- * subject's unaligned extracted tokens against the control's unaligned extracted tokens (like
- * against like). Only the subject's leftovers are then paired into reordered / split / missing /
- * extra. Pairing first and attributing afterwards (the previous design) let a control-explained
- * extra token, such as the "de" of an @page footer "Página 1 de 3", pair with a genuinely deleted
- * body "de" and turn the loss into "reordered" (warn instead of fail).
- *
- * generatedAbsent: tokens Chrome's PDF has beyond innerText (the control's net extras after its
- * own pairing, e.g. @page margin-box text) that appear nowhere among the subject's unaligned
- * tokens: generated content the subject did not produce.
- *
- * Known limitation: deleting exactly the occurrence that the control's extractor itself moves out
- * of reading order (both PDFs then lack it in sequence) still comes out as generatedAbsent/warn,
- * because token identity cannot tell the two occurrences apart.
+ * Split a subject's missing/extra/reordered tokens into "explained" (the same extractor shows
+ * the same token in the same bucket on the CONTROL pdf, i.e. Chrome's own print of the same
+ * HTML) and "subjectOnly" (attributable to the subject renderer).
  */
 export function againstControl(subject, control) {
-  if (!control) {
-    return {
-      missing: { explained: [], subjectOnly: subject.missing },
-      extra: { explained: [], subjectOnly: subject.extra },
-      reordered: { explained: [], subjectOnly: subject.reordered },
-      scatteredSplits: { subjectOnly: subject.scatteredSplits ?? [] },
-      generatedAbsent: [],
-    };
+  const out = {};
+  for (const bucket of ["missing", "extra", "reordered"]) {
+    const split = multisetSplit(subject[bucket], control?.[bucket] ?? []);
+    out[bucket] = { explained: split.common, subjectOnly: split.onlyA };
   }
-  const missing = multisetSplit(subject.missingCandidates, control.missingCandidates);
-  const extra = multisetSplit(subject.extraCandidates, control.extraCandidates);
-  const own = pairUnaligned(missing.onlyA, extra.onlyA);
-  const explained = multisetSplit(missing.common, extra.common);
-  return {
-    missing: { explained: explained.onlyA, subjectOnly: own.missing },
-    extra: { explained: explained.onlyB, subjectOnly: own.extra },
-    reordered: { explained: explained.common, subjectOnly: own.reordered },
-    scatteredSplits: { subjectOnly: own.splits },
-    generatedAbsent: multisetSplit(control.extra, subject.extraCandidates).onlyA,
-  };
+  return out;
 }
 
 const LIGATURES = /[\uFB00-\uFB06]/gu;
