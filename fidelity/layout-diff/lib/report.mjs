@@ -40,20 +40,22 @@ function table(headers, rows) {
 /** "layer coord ±step" list, e.g. "B0 dy +6.52; table_percent_widths dy +10". */
 export function stepsText(steps) {
   if (!steps?.length) return "";
-  return steps.map((st) => `${st.layer} ${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)}`).join("; ");
+  return steps
+    .map((st) => `${st.layer} ${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)}`)
+    .join("; ");
 }
 
 export function worsenedText(worsened) {
   if (!worsened?.length) return "";
-  return worsened
-    .map((w) => `${w.layer} ${w.coord} ${num(w.from)}→${num(w.to)}`)
-    .join("; ");
+  return worsened.map((w) => `${w.layer} ${w.coord} ${num(w.from)}→${num(w.to)}`).join("; ");
 }
 
 function dominantText(item) {
   if (!item?.dominant_layer) return "";
   const st = item.dominant_step;
-  return st ? `${item.dominant_layer} (${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)})` : item.dominant_layer;
+  return st
+    ? `${item.dominant_layer} (${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)})`
+    : item.dominant_layer;
 }
 
 /** Banner when input parity failed: the attribution below is not about the engines. */
@@ -155,7 +157,12 @@ function checksSection(result) {
   let md = "## Checks (input parity and dump self-consistency)\n\n";
   md += table(
     ["check", "class", "status", "detail"],
-    result.checks.map((c) => [c.id, c.class, c.status === "fail" ? "**FAIL**" : c.status, c.detail]),
+    result.checks.map((c) => [
+      c.id,
+      c.class,
+      c.status === "fail" ? "**FAIL**" : c.status,
+      c.detail,
+    ]),
   );
   return `${md}\n`;
 }
@@ -184,7 +191,15 @@ function regressionSection(result) {
   md +=
     "Events each layer made WORSE by more than tolerance (any single checked coordinate's |Δ| grew vs the previous layer; for B0, vs Chromium = already over tolerance). Independent of the first-over-tolerance label, so a pass that worsens an already-divergent box is listed here.\n\n";
   md += table(
-    ["layer", "box events worsened", "text events worsened", "first box worsened", "largest box worsening", "first text worsened", "largest text worsening"],
+    [
+      "layer",
+      "box events worsened",
+      "text events worsened",
+      "first box worsened",
+      "largest box worsening",
+      "first text worsened",
+      "largest text worsening",
+    ],
     result.layers.map((l) => {
       const x = r[l.name];
       const lb = x.largest_box;
@@ -193,9 +208,13 @@ function regressionSection(result) {
         l.name,
         x.box_events,
         l.kind === "blitz" ? "n/a" : x.text_events,
-        x.first_box ? `${eventLabel(x.first_box)} (${worsenedText(x.first_box.worsened_by.filter((w) => w.layer === l.name))})` : "—",
+        x.first_box
+          ? `${eventLabel(x.first_box)} (${worsenedText(x.first_box.worsened_by.filter((w) => w.layer === l.name))})`
+          : "—",
         lb ? `${eventLabel(lb)} ${lb.coord} ${num(lb.from)}→${num(lb.to)}` : "—",
-        x.first_text ? `${eventLabel(x.first_text)} (${worsenedText(x.first_text.worsened_by.filter((w) => w.layer === l.name))})` : "—",
+        x.first_text
+          ? `${eventLabel(x.first_text)} (${worsenedText(x.first_text.worsened_by.filter((w) => w.layer === l.name))})`
+          : "—",
         lt ? `${eventLabel(lt)} ${lt.coord} ${num(lt.from)}→${num(lt.to)}` : "—",
       ];
     }),
@@ -204,12 +223,18 @@ function regressionSection(result) {
     .filter((l) => l.kind !== "blitz")
     .flatMap((l) => r[l.name].events.map((e) => [l.name, e]));
   if (passRows.length) {
-    md += `\nEvery event worsened by L0 or a pass (first 40 per layer; B0 omitted: it is the raw-Blitz divergence list):\n\n`;
+    md +=
+      "\nEvery event worsened by L0 or a pass (first 40 per layer; B0 omitted: it is the raw-Blitz divergence list):\n\n";
     md += table(
       ["layer", "event", "coord", "from → to", "first over tol.", "dominant"],
-      passRows
-        .filter(([name]) => name !== "L0" || true)
-        .map(([name, e]) => [name, eventLabel(e), e.coord, `${num(e.from)} → ${num(e.to)}`, e.introduced_by ?? "", e.dominant_layer ?? ""]),
+      passRows.map(([name, e]) => [
+        name,
+        eventLabel(e),
+        e.coord,
+        `${num(e.from)} → ${num(e.to)}`,
+        e.introduced_by ?? "",
+        e.dominant_layer ?? "",
+      ]),
     );
   }
   return `${md}\n`;
@@ -394,7 +419,18 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
   );
   md += `\n## Top ${result.config.top} text-run divergences in ${result.final_layer}\n\n`;
   md += table(
-    ["owner", "text", "dx", "dy", "dw", "dright", "faces", "first over tol.", "dominant (step)", "worsened by"],
+    [
+      "owner",
+      "text",
+      "dx",
+      "dy",
+      "dw",
+      "dright",
+      "faces",
+      "first over tol.",
+      "dominant (step)",
+      "worsened by",
+    ],
     result.top_text.map((t) => [
       shortPath(t.owner),
       t.text.length > 48 ? `${t.text.slice(0, 45)}...` : t.text,
@@ -413,7 +449,17 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
     md +=
       "rdx/rdy = the run's Δ minus its owner box's dx/dy (final layer), so runs that only ride along with a shifted owner rank low (de-duplicates cascades, like the local box table).\n\n";
     md += table(
-      ["owner", "text", "rdx", "rdy", "dx", "dy", "first over tol.", "dominant (step)", "worsened by"],
+      [
+        "owner",
+        "text",
+        "rdx",
+        "rdy",
+        "dx",
+        "dy",
+        "first over tol.",
+        "dominant (step)",
+        "worsened by",
+      ],
       result.top_local_text.map((t) => [
         shortPath(t.owner),
         t.text.length > 48 ? `${t.text.slice(0, 45)}...` : t.text,
@@ -546,7 +592,13 @@ export function renderSummaryMarkdown({ label, env, rows }) {
   );
   md += "\nPass regressions (events a `layout_normalize` pass made worse by > tolerance):\n\n";
   md += table(
-    ["fixture", "box events worsened, by pass", "text runs worsened, by pass", "first box a pass worsened", "first text run a pass worsened"],
+    [
+      "fixture",
+      "box events worsened, by pass",
+      "text runs worsened, by pass",
+      "first box a pass worsened",
+      "first text run a pass worsened",
+    ],
     rows.map((r) => {
       const reg = r.result.regressions_by_layer ?? {};
       const passes = r.result.layers.filter((l) => l.kind === "pass").map((l) => l.name);

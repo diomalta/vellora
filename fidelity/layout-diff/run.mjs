@@ -19,6 +19,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { runChecks, summarizeChecks } from "./lib/checks.mjs";
 import {
   captureSnapshot,
   launchChrome,
@@ -26,7 +27,6 @@ import {
   normalizeSnapshot,
   resolveChrome,
 } from "./lib/chrome-snapshot.mjs";
-import { runChecks, summarizeChecks } from "./lib/checks.mjs";
 import { blitzLabel, captureEnv } from "./lib/env.mjs";
 import { FIXTURE_IDS, prepareFixture, repoRoot } from "./lib/fixture-html.mjs";
 import { bundledFontFaceCss, bundledFontHashes } from "./lib/fonts.mjs";
@@ -150,7 +150,9 @@ async function main() {
         `${fixture} [${label}] first box: ${b ? `${b.type} ${b.path} (first over tol. ${b.introduced_by}, dominant ${b.dominant_layer})` : "none"}; first text: ${t ? `"${t.text}" (first over tol. ${t.introduced_by}, dominant ${t.dominant_layer})` : "none"}; first pass regression: box ${pr.box ? `${pr.box.path} by ${pr.box.worsened_by.map((w) => w.layer).join("+")}` : "none"}, text ${pr.text ? `"${pr.text.text}" by ${pr.text.worsened_by.map((w) => w.layer).join("+")}` : "none"}\n`,
       );
       for (const c of result.checks.filter((x) => x.status === "fail")) {
-        process.stderr.write(`${fixture} [${label}] CHECK FAILED ${c.id} (${c.class}): ${c.detail}\n`);
+        process.stderr.write(
+          `${fixture} [${label}] CHECK FAILED ${c.id} (${c.class}): ${c.detail}\n`,
+        );
       }
     }
   } finally {

@@ -527,9 +527,7 @@ export function diffLayouts({
   });
   const regressionsByLayer = {};
   for (const layer of chain) {
-    const hits = evaluated
-      .map((e) => ({ e, w: worsenedBy(e, layer.name) }))
-      .filter((h) => h.w);
+    const hits = evaluated.map((e) => ({ e, w: worsenedBy(e, layer.name) })).filter((h) => h.w);
     const boxHits = hits.filter((h) => h.e.event.type !== "text");
     const textHits = hits.filter((h) => h.e.event.type === "text");
     const largest = (list) => [...list].sort((a, b) => b.w.by - a.w.by)[0] ?? null;
