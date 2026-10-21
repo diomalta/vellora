@@ -288,9 +288,7 @@
           "w": 63.6875,
           "h": 12
         },
-        "faces": [
-          "LiberationSans-Regular.ttf"
-        ],
+        "faces": ["LiberationSans-Regular.ttf"],
         "joined": false,
         "first_over_tolerance": "L0",
         "status_in_final": "diverged",
@@ -551,9 +549,7 @@
             "w": 63.6875,
             "h": 12
           },
-          "faces": [
-            "LiberationSans-Regular.ttf"
-          ],
+          "faces": ["LiberationSans-Regular.ttf"],
           "joined": false,
           "first_over_tolerance": "L0",
           "status_in_final": "diverged",
@@ -1091,9 +1087,7 @@
               "w": 14.828125,
               "h": 15
             },
-            "faces": [
-              "LiberationSans-Regular.ttf"
-            ],
+            "faces": ["LiberationSans-Regular.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dx",
@@ -1151,9 +1145,7 @@
               "w": 63.6875,
               "h": 12
             },
-            "faces": [
-              "LiberationSans-Regular.ttf"
-            ],
+            "faces": ["LiberationSans-Regular.ttf"],
             "joined": false,
             "kind": "overshoot",
             "coord": "dy",
@@ -1210,9 +1202,7 @@
               "w": 72.640625,
               "h": 15
             },
-            "faces": [
-              "LiberationSans-Regular.ttf"
-            ],
+            "faces": ["LiberationSans-Regular.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dx",
@@ -1852,9 +1842,7 @@
           "w": 85.1875,
           "h": 14
         },
-        "faces": [
-          "LiberationSans-Regular.ttf"
-        ],
+        "faces": ["LiberationSans-Regular.ttf"],
         "joined": false,
         "first_over_tolerance": "L0",
         "status_in_final": "diverged",
@@ -2096,9 +2084,7 @@
             "w": 105.578125,
             "h": 14
           },
-          "faces": [
-            "LiberationSans-Bold.ttf"
-          ],
+          "faces": ["LiberationSans-Bold.ttf"],
           "joined": false,
           "first_over_tolerance": "L0",
           "status_in_final": "diverged",
@@ -2548,10 +2534,7 @@
           "w": 415.734375,
           "h": 43.265625
         },
-        "present_in": [
-          "N0",
-          "N0u"
-        ],
+        "present_in": ["N0", "N0u"],
         "missing_from": "B0",
         "counted_as_divergence": true,
         "total_missing": 1
@@ -2647,14 +2630,8 @@
         "attribution_valid": true,
         "input_parity_ok": true,
         "self_consistency_ok": false,
-        "failed": [
-          "normalize_wrappers_located",
-          "normalize_dom_roundtrip",
-          "dom_key_alignment"
-        ],
-        "warned": [
-          "text_alignment"
-        ],
+        "failed": ["normalize_wrappers_located", "normalize_dom_roundtrip", "dom_key_alignment"],
+        "warned": ["text_alignment"],
         "not_run": []
       },
       "first_divergence_by_layer": {
@@ -2870,9 +2847,7 @@
               "w": 92.625,
               "h": 15
             },
-            "faces": [
-              "LiberationSans-Bold.ttf"
-            ],
+            "faces": ["LiberationSans-Bold.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dy",
@@ -2954,9 +2929,7 @@
               "w": 105.578125,
               "h": 14
             },
-            "faces": [
-              "LiberationSans-Bold.ttf"
-            ],
+            "faces": ["LiberationSans-Bold.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dx",
@@ -3379,15 +3352,11 @@
         },
         "chrome_only_compared": {
           "count": 1,
-          "sample": [
-            "html>body:nth-child(2)>div:nth-child(1)>footer:nth-child(7)"
-          ]
+          "sample": ["html>body:nth-child(2)>div:nth-child(1)>footer:nth-child(7)"]
         },
         "chrome_only_compared_unkeyed": {
           "count": 1,
-          "sample": [
-            "html>body:nth-child(2)>div:nth-child(1)>footer:nth-child(7)"
-          ]
+          "sample": ["html>body:nth-child(2)>div:nth-child(1)>footer:nth-child(7)"]
         },
         "blitz_tree_only": {
           "count": 0,
@@ -3586,9 +3555,7 @@
           "w": 59.5625,
           "h": 24
         },
-        "faces": [
-          "LiberationSans-Bold.ttf"
-        ],
+        "faces": ["LiberationSans-Bold.ttf"],
         "joined": false,
         "first_over_tolerance": "L0",
         "status_in_final": "diverged",
@@ -4037,9 +4004,7 @@
             "w": 59.5625,
             "h": 24
           },
-          "faces": [
-            "LiberationSans-Bold.ttf"
-          ],
+          "faces": ["LiberationSans-Bold.ttf"],
           "joined": false,
           "first_over_tolerance": "L0",
           "status_in_final": "diverged",
@@ -4546,9 +4511,7 @@
               "w": 65.015625,
               "h": 11
             },
-            "faces": [
-              "LiberationSans-Regular.ttf"
-            ],
+            "faces": ["LiberationSans-Regular.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dy",
@@ -4606,9 +4569,7 @@
               "w": 59.5625,
               "h": 24
             },
-            "faces": [
-              "LiberationSans-Bold.ttf"
-            ],
+            "faces": ["LiberationSans-Bold.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dy",
@@ -4675,9 +4636,7 @@
               "w": 143.59375,
               "h": 12
             },
-            "faces": [
-              "LiberationSans-Regular.ttf"
-            ],
+            "faces": ["LiberationSans-Regular.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dx",
@@ -5378,9 +5337,7 @@
           "w": 286.046875,
           "h": 24
         },
-        "faces": [
-          "LiberationSerif-Bold.ttf"
-        ],
+        "faces": ["LiberationSerif-Bold.ttf"],
         "joined": false,
         "first_over_tolerance": "L0",
         "status_in_final": "diverged",
@@ -5591,9 +5548,7 @@
             "w": 91.828125,
             "h": 15
           },
-          "faces": [
-            "LiberationSerif-Bold.ttf"
-          ],
+          "faces": ["LiberationSerif-Bold.ttf"],
           "joined": false,
           "first_over_tolerance": "painted_table_cell_text_baselines",
           "status_in_final": "diverged",
@@ -6122,9 +6077,7 @@
               "w": 65.546875,
               "h": 15
             },
-            "faces": [
-              "LiberationSerif-Regular.ttf"
-            ],
+            "faces": ["LiberationSerif-Regular.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dx",
@@ -6182,9 +6135,7 @@
               "w": 91.828125,
               "h": 15
             },
-            "faces": [
-              "LiberationSerif-Bold.ttf"
-            ],
+            "faces": ["LiberationSerif-Bold.ttf"],
             "joined": false,
             "kind": "worsened",
             "coord": "dy",
