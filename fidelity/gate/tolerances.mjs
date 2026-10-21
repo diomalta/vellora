@@ -46,6 +46,32 @@ export const TOLERANCES = Object.freeze({
   },
 });
 
+/**
+ * Layer-vector step tolerance (fidelity/gate/layer-vector.mjs, DEBT.json relaxed (b) rule): a layer
+ * step at most this large is not a layer MOVE (it need not be a named compensator, and |run| may
+ * exceed |N0| by it). 0.5 CSS px is layout-diff's own attribution tolerance (config.tolerance);
+ * on page 1 the PDF-level word baselines sit within -0.61..+1.11 px of layer P across the step-07
+ * head-gating words (median per fixture -0.31..+0.48 px; layer-vector.mjs on the step-07 run copy,
+ * 2026-10-21), i.e. the Chrome DOM-vs-PDF rounding the vector cannot remove. DESIGN TARGET.
+ */
+export const LAYER_STEP_TOLERANCE = Object.freeze({ px: 0.5 });
+export const layerStepTolerance = (unit) => LAYER_STEP_TOLERANCE[unit] ?? 0.01;
+
+const PX_PER = Object.freeze({ pt: 4 / 3, mm: 96 / 25.4, px: 1 });
+/**
+ * Tolerance of the PDF-level step (P -> run) and of |run| <= |N0| in a layer vector: the larger of
+ * the layer step tolerance and the item's own gate tolerance in the vector's unit (pdf-probe-pt
+ * 1 pt = 1.333 px, position-mm 0.1 mm = 0.378 px). N0..P are deltas vs Chrome's continuous DOM
+ * layout, run is the delta vs Chrome's PDF; the two references differ by Chrome's own
+ * DOM-vs-PDF rounding (up to 1.11 px on page 1 at step 07, above), which no vellora layer causes
+ * and the gate itself does not resolve (it compares values at this tolerance). DESIGN TARGET.
+ */
+export function vectorRunTolerance(tolClass, unit = "px") {
+  const t = TOLERANCES[tolClass];
+  const conv = t && PX_PER[t.unit] && PX_PER[unit] ? (t.tol * PX_PER[t.unit]) / PX_PER[unit] : 0;
+  return Math.max(layerStepTolerance(unit), conv);
+}
+
 /** Status rank for the status ratchet: higher is better. N/A and NOT-RUN are "not measured". */
 export const STATUS_RANK = Object.freeze({ PASS: 3, INFO: 2, WARN: 2, FAIL: 1 });
 export const UNMEASURED = Object.freeze(["NOT-RUN", "N/A"]);

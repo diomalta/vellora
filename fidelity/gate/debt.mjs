@@ -51,7 +51,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { STATUS_RANK, TOLERANCES } from "./tolerances.mjs";
+import { STATUS_RANK, TOLERANCES, layerStepTolerance, vectorRunTolerance } from "./tolerances.mjs";
 
 export const DEBT_SCHEMA = "vellora-fidelity/debt/1";
 const here = dirname(fileURLToPath(import.meta.url));
@@ -122,14 +122,16 @@ export function relaxedB(entry) {
     return [`${entry.id}: layerVector needs numeric N0 and run (fidelity/gate/layer-vector.mjs)`];
   }
   if (!v.unit) p.push(`${entry.id}: layerVector.unit missing`);
-  if (Math.abs(v.run) > Math.abs(v.N0) + EPS) {
+  const tol = layerStepTolerance(v.unit);
+  const runTol = vectorRunTolerance(entry.tolClass, v.unit);
+  if (Math.abs(v.run) > Math.abs(v.N0) + runTol) {
     p.push(
       `${entry.id}: |run| ${Math.abs(v.run)} > |N0| ${Math.abs(v.N0)}: vellora made the item worse than raw Blitz, not compensating drift`,
     );
   }
   const named = new Set(entry.compensators ?? []);
   for (const { layer, step } of vectorSteps(v)) {
-    if (Math.abs(step) > 0.01 && !named.has(layer)) {
+    if (Math.abs(step) > (layer === "run" ? runTol : tol) && !named.has(layer)) {
       p.push(
         `${entry.id}: vellora layer ${layer} moves the item by ${Math.round(step * 1000) / 1000} ${v.unit} and is not a named compensator`,
       );

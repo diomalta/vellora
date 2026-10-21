@@ -1,3 +1,4 @@
+import { join } from "node:path";
 // Detection canaries of the gate's own rules (fidelity/README.md: an oracle is trusted only after
 // it has caught a deliberately broken input). gate/run.mjs runs them on EVERY gate evaluation,
 // planted into the snapshots being compared (a real pdf-probe word, a real failing WPT test, a
@@ -7,6 +8,10 @@
 // that a broken comparator or ledger makes the canaries uncaught.
 import { compareSnapshots } from "./compare.mjs";
 import { applyLedger, emptyLedger, ledgerProblems, relaxedB, transitionProblems } from "./debt.mjs";
+import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
+
+/** The committed layer-vector input the tool canaries plant into (notification, step 07 run). */
+export const LAYER_VECTOR_CANARY_PACK = join(PACK_DIR, "notification-07.layer-vector-pack.json.gz");
 
 export const GATE_CANARY_ORACLE = "gate";
 const FEATURE = "canary:planted-rejection";
@@ -155,6 +160,8 @@ export function runGateCanaries({
   transition = transitionProblems,
   ledgerCheck = ledgerProblems,
   relaxed = relaxedB,
+  vectors = packWordVectors,
+  pack = LAYER_VECTOR_CANARY_PACK,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -390,6 +397,43 @@ export function runGateCanaries({
         "each reports a problem; a valid entry (control) reports none",
         `good ${good.length}, worse ${worse.length}, unnamed ${unnamed.length}, no owner ${noOwner.length}`,
         good.length === 0 && worse.length > 0 && unnamed.length > 0 && noOwner.length > 0,
+      ),
+    );
+  }
+  // 12 + 13. The layer-vector tool (gate/layer-vector.mjs): the word -> layout-diff run mapping
+  // must fail its own x-check when misaligned, and a planted vellora pass step must be reported.
+  {
+    const p = loadPack(pack);
+    const ok = vectors(p).mapping.xCheck.within3px;
+    const shifted = clone(p);
+    const texts = shifted.diff.text_events.map((e) => e.chrome_text);
+    shifted.diff.text_events.forEach((e, i) => {
+      e.chrome_text = texts[(i + 3) % texts.length];
+    });
+    const bad = vectors(shifted).mapping.xCheck.within3px;
+    rows.push(
+      row(
+        "layer-vector: word mapping misaligned by three fragments",
+        "position check share within 3 px: control >= 0.95, misaligned < 0.5 (a shift by one fragment reads 0.55 on this fixture: neighbouring lines share x; the check catches shifts of two or more)",
+        `control ${ok}, misaligned ${bad}`,
+        ok >= 0.95 && bad !== null && bad < 0.5,
+      ),
+    );
+    const planted = clone(p);
+    const ev = planted.diff.text_events.find((e) => /^Gerente/.test(e.chrome_text ?? ""));
+    const layers = planted.diff.layers.map((l) => l.name);
+    for (const name of layers.slice(layers.indexOf("table_percent_widths"))) {
+      if (typeof ev?.per_layer?.[name]?.dy === "number") ev.per_layer[name].dy += 3;
+    }
+    const rec = [...vectors(planted).vectors.values()].find((x) => x.text === "Gerente");
+    const control = [...vectors(p).vectors.values()].find((x) => x.text === "Gerente");
+    const named = (r) => (r?.dy?.relaxedB?.nonZeroVelloraSteps ?? []).map((x) => x.layer);
+    rows.push(
+      row(
+        "layer-vector: planted +3 px pass step",
+        "the planted pass (table_percent_widths) appears as a non-zero vellora step of the word; the unplanted word (control) has none",
+        `planted [${named(rec).join(", ")}], control [${named(control).join(", ")}]`,
+        named(rec).includes("table_percent_widths") && named(control).length === 0,
       ),
     );
   }

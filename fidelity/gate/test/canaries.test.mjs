@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { gateCanaryItems, runGateCanaries } from "../canaries.mjs";
+import { LAYER_VECTOR_CANARY_PACK, gateCanaryItems, runGateCanaries } from "../canaries.mjs";
 import { compareSnapshots } from "../compare.mjs";
 import { applyLedger, ledgerProblems, relaxedB, transitionProblems } from "../debt.mjs";
+import { loadPack, packWordVectors } from "../layer-vector.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
 
 const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
@@ -23,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 11);
+    assert.equal(rows.length, 13);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -107,6 +108,21 @@ test("a ledger that ignores ceilings, compensators, transitions, owners, collaps
     runGateCanaries({ run: step07, relaxed: (e) => relaxedB(e).filter((p) => !/\|run\|/.test(p)) }),
   );
   assert.equal(c5["relaxed (b): |run| > |N0|, unnamed compensator, no owner"], false);
+});
+
+test("a layer-vector tool that ignores the mapping or the pass layers leaves its canaries uncaught", () => {
+  // A tool that always reports the control's mapping check, and one that drops pass layers.
+  const control = packWordVectors(loadPack(LAYER_VECTOR_CANARY_PACK)).mapping;
+  const stuck = (p) => ({ ...packWordVectors(p), mapping: control });
+  const c1 = caughtBy(runGateCanaries({ vectors: stuck }));
+  assert.equal(c1["layer-vector: word mapping misaligned by three fragments"], false);
+  const passBlind = (p) => {
+    const q = structuredClone(p);
+    q.diff.layers = q.diff.layers.filter((l) => l.kind !== "pass");
+    return packWordVectors(q);
+  };
+  const c2 = caughtBy(runGateCanaries({ vectors: passBlind }));
+  assert.equal(c2["layer-vector: planted +3 px pass step"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

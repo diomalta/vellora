@@ -65,7 +65,7 @@ test("07 vs 06 is unchanged link to link, but 985 items are worse than the head 
   assert.equal(r.head.items.filter((i) => i.headClass === "rejection").length, 10);
   // 07's manifest has no class-a acceptance: every legacy acceptance is ignored by the head.
   assert.equal(r.head.acceptancesCounted, 0);
-  // All 11 gate canaries are caught on this run.
+  // All 13 gate canaries are caught on this run.
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
