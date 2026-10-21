@@ -1,10 +1,10 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "suite": "vellora-fidelity-oracles/fixtures",
   "command": "~/.nvm/versions/node/v22.23.2/bin/node <repo>/fidelity/oracles/run-fixtures.mjs --no-canaries --out fidelity/results/oracles/final-beta4",
   "environment": {
-    "date": "Wed Oct 21 01:06:53 UTC 2026",
-    "dateIso": "2026-10-21T01:06:53.564Z",
+    "date": "Wed Oct 21 04:37:07 UTC 2026",
+    "dateIso": "2026-10-21T04:37:07.155Z",
     "os": {
       "type": "Darwin",
       "release": "27.0.0",
@@ -20,7 +20,7 @@
     "vellora": {
       "version": "0.1.0-alpha.0",
       "git": {
-        "commit": "582aec20661f1115e392be4c10cdd98b89c3d06c",
+        "commit": "256b2ab3c768b13507d91e18bd97dff4f21749e5",
         "branch": "fidelity/oracles",
         "dirty": false
       },
@@ -35,6 +35,7 @@
       "executablePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
       "indicative": true
     },
+    "puppeteerCore": "25.15.0",
     "docker": "Docker version 29.8.2, build 7fc2dff",
     "poppler": "pdftotext version 26.06.0",
     "python": {
@@ -77,33 +78,63 @@
           "status": "warn",
           "orderedRecall": 0.6608527131782945,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 11,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 41,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.686046511627907,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 6,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
@@ -310,33 +341,63 @@
           "status": "warn",
           "orderedRecall": 0.6608527131782945,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 11,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 41,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.686046511627907,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 6,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 0.9941860465116279,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 3,
+              "subject": 3
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
@@ -543,33 +604,63 @@
           "status": "warn",
           "orderedRecall": 0.8601398601398601,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 5,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 3,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "pass",
           "orderedRecall": 0.7832167832167832,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
@@ -761,33 +852,63 @@
           "status": "warn",
           "orderedRecall": 0.8601398601398601,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 5,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 3,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "pass",
           "orderedRecall": 0.7832167832167832,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 2,
+              "subject": 2
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
@@ -976,36 +1097,66 @@
       "textPerExtractor": [
         {
           "extractor": "pdftotext",
-          "status": "pass",
+          "status": "warn",
           "orderedRecall": 0.8875502008032129,
           "bagRecall": 0.9959839357429718,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 4,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.8995983935742972,
           "bagRecall": 0.9919678714859438,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 7,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 32,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 0.9919678714859438,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "fail",
@@ -1194,36 +1345,66 @@
       "textPerExtractor": [
         {
           "extractor": "pdftotext",
-          "status": "pass",
+          "status": "warn",
           "orderedRecall": 0.8875502008032129,
           "bagRecall": 0.9959839357429718,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 4,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.8995983935742972,
           "bagRecall": 0.9919678714859438,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 7,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "subjectOnlyReordered": 32,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "pass",
           "orderedRecall": 1,
           "bagRecall": 0.9919678714859438,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": [],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 1
+            }
+          ],
+          "marginBoxTextAbsent": [],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "fail",
@@ -1415,33 +1596,81 @@
           "status": "warn",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "subjectOnlyReordered": 3,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.9795081967213115,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "warn",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
@@ -1637,33 +1866,81 @@
           "status": "warn",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
-          "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "subjectOnlyReordered": 3,
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pdfminer.six",
           "status": "warn",
           "orderedRecall": 0.9795081967213115,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         },
         {
           "extractor": "pymupdf",
           "status": "warn",
           "orderedRecall": 1,
           "bagRecall": 1,
+          "reference": "control",
           "subjectOnlyMissing": 0,
+          "subjectOnlyMissingTokens": [],
           "subjectOnlyExtra": 0,
           "subjectOnlyReordered": 0,
-          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
-          "copyPaste": true
+          "marginBoxRuns": [
+            {
+              "template": "@page @bottom-center",
+              "control": 1,
+              "subject": 0
+            }
+          ],
+          "marginBoxTextAbsent": [
+            {
+              "template": "@page @bottom-center",
+              "missingRuns": 1,
+              "controlExamples": ["Página 1 de 1"]
+            }
+          ],
+          "copyPaste": true,
+          "copyPasteFailures": []
         }
       ],
       "barcode": "skipped",
