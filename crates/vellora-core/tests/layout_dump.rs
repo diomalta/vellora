@@ -69,13 +69,10 @@ fn layers_are_l0_then_every_named_pass_in_order() {
         names,
         [
             "L0",
-            "vertical_margin_collapse",
-            "collapsed_table_medium_border_insets",
             "painted_table_cell_text_baselines",
             "fixed_table_widths",
             "table_percent_widths",
             "auto_table_compact_columns",
-            "collapsed_table_medium_border_insets_x",
         ]
     );
     assert!(!dump.blitz_tree.is_empty());

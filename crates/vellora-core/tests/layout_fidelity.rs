@@ -128,6 +128,11 @@ fn monospace_generic_uses_bundled_mono_face() {
     );
 }
 
+// Chrome 155.0.8059.85 (print media, bundled fonts, 2026-10-21; probe in
+// fidelity/baselines/port/02-delete-noop-passes/attachments/chrome-probes-noop-passes.json):
+// the <td> border box equals the <table> border box, (0, 0, 300, 15). Blitz
+// 0.3.0-beta.4 lays a borderless collapsed table out without any inset; the
+// pin-era `collapsed_table_medium_border_insets` workaround is gone (port step 02).
 #[test]
 fn collapsed_borderless_table_does_not_keep_medium_border_inset() {
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -189,11 +194,12 @@ fn cell_inline_band_for_table(
 
 #[test]
 fn invoice_borderless_collapsed_header_cells_reach_table_inline_edges() {
-    // Ground truth: the invoice header (table.header) is a width:100%
-    // border-collapse table with no edge border. Blitz insets its cell content
-    // ~3px each side (a synthetic "medium" border, the same Blitz quirk the
-    // vertical pass already strips). After de-inset, the leftmost cell must start
-    // at the table's left edge and the rightmost cell must reach the right edge.
+    // The invoice header (table.header) is a width:100% border-collapse table
+    // with no border. Chrome 155.0.8059.85 (layout-diff snapshot of the invoice,
+    // run 20261021T093020Z) puts its two cells flush with the table: left and
+    // right inset 0. The pin-era Blitz inset the cells ~3px each side (a
+    // synthetic "medium" border); Blitz 0.3.0-beta.4 does not, so the
+    // `collapsed_table_medium_border_insets_x` workaround is gone (port step 02).
     // The header is the first <table> in document order and contains the brand.
     let (laid, _pb) = lay_out_for_render(INVOICE);
 
@@ -217,10 +223,11 @@ fn invoice_borderless_collapsed_header_cells_reach_table_inline_edges() {
 #[test]
 fn invoice_compact_collapsed_table_cells_reach_left_inline_edge() {
     // The items table is a width:100% border-collapse table with >=3 auto columns,
-    // re-flowed by the compact-columns pass whose cursor anchors at the inset
-    // row-left, shifting every column right by the synthetic inset. The de-inset
-    // pass translates that uniform shift out, so the first column reaches the
-    // table's left edge. (Distinct from the header, which is stretched, not shifted.)
+    // re-flowed by the compact-columns pass, whose cursor anchors at the leftmost
+    // cell. Chrome 155.0.8059.85 (layout-diff snapshot of the invoice, run
+    // 20261021T093020Z) puts the first column flush with the table (left inset 0).
+    // At Blitz 0.3.0-beta.4 the cells already start there, without the removed
+    // `collapsed_table_medium_border_insets_x` translation (port step 02).
     let (laid, _pb) = lay_out_for_render(INVOICE);
 
     // The items table = the border-collapse table with the most cells (>=3 cols).
@@ -241,7 +248,7 @@ fn invoice_compact_collapsed_table_cells_reach_left_inline_edge() {
 
     assert!(
         (cell_left - table_x).abs() <= 0.5,
-        "items cells should reach the table left edge after de-inset, table_x={table_x}, cell_left={cell_left}"
+        "items cells should reach the table left edge, table_x={table_x}, cell_left={cell_left}"
     );
 }
 
@@ -739,6 +746,119 @@ fn adjacent_block_vertical_margins_collapse() {
         second.margin_top,
         second.margin_bottom
     );
+}
+
+fn block_with_text<'a>(
+    laid: &'a vellora_core::blitz_engine::LaidOutDoc,
+    tag: &str,
+    text: &str,
+) -> &'a vellora_core::blitz_engine::LaidOutBox {
+    laid.boxes
+        .iter()
+        .find(|b| {
+            b.tag.as_deref() == Some(tag) && b.text_runs.iter().any(|run| run.text.contains(text))
+        })
+        .unwrap_or_else(|| panic!("no <{tag}> holding {text:?}"))
+}
+
+#[test]
+fn adjacent_block_margins_collapse_without_whitespace_between_siblings() {
+    // Siblings with no whitespace text between them. Blitz 0.3.0-beta.4 already
+    // collapses the margins; the removed `vertical_margin_collapse` pass then
+    // subtracted min(margin-bottom, margin-top) a second time (gap 10, not 40).
+    // Chrome 155.0.8059.85, print media, bundled fonts, 2026-10-21 (probe
+    // `margins_without_whitespace` in fidelity/baselines/port/02-delete-noop-passes/
+    // attachments/chrome-probes-noop-passes.json): border boxes a (0, 0, 657, 14),
+    // b (0, 54, 657, 14), c (0, 118, 657, 14), h2 (0, 152, 657, 21),
+    // p (0, 188, 657, 14), i.e. gaps 40, 50, 20, 15 = the larger margin each time.
+    let html = r#"<!DOCTYPE html><html><head><style>@page { size: A4; margin: 18mm; } body { margin: 0; font-family: sans-serif; font-size: 12px; } .a { margin: 0 0 40px 0; } .b { margin: 30px 0 0 0; } .c { margin: 50px 0 0 0; } h2 { font-size: 18px; margin: 20px 0 15px 0; } p { margin: 12px 0 0 0; }</style></head><body><div id="a" class="a">Primeiro</div><div id="b" class="b">Segundo</div><div id="c" class="c">Terceiro</div><h2 id="h">Titulo</h2><p id="p">Paragrafo</p></body></html>"#;
+    let (laid, _pb) = lay_out_for_render(html);
+    let ys: Vec<(f64, f64)> = [
+        ("div", "Primeiro"),
+        ("div", "Segundo"),
+        ("div", "Terceiro"),
+        ("h2", "Titulo"),
+        ("p", "Paragrafo"),
+    ]
+    .iter()
+    .map(|(tag, text)| {
+        let b = block_with_text(&laid, tag, text);
+        (b.y, b.y + b.height)
+    })
+    .collect();
+    let chrome_tops = [0.0, 54.0, 118.0, 152.0, 188.0];
+    for (i, ((top, _), chrome)) in ys.iter().zip(chrome_tops).enumerate() {
+        assert!(
+            (top - chrome).abs() <= 0.5,
+            "box {i} top {top} vs Chrome {chrome}; all (top, bottom): {ys:?}"
+        );
+    }
+    let gaps: Vec<f64> = ys.windows(2).map(|w| w[1].0 - w[0].1).collect();
+    for (gap, chrome) in gaps.iter().zip([40.0, 50.0, 20.0, 15.0]) {
+        assert!(
+            (gap - chrome).abs() <= 0.5,
+            "collapsed gaps {gaps:?} vs Chrome [40, 50, 20, 15]"
+        );
+    }
+}
+
+#[test]
+fn collapsed_table_keeps_half_its_outer_border_around_the_cells() {
+    // A collapsed table whose own 8px border wins over the cells' 4px borders:
+    // the table's border box holds half the outer collapsed border (CSS 2.2
+    // §17.6.2), so every edge cell sits 4px inside it. Blitz 0.3.0-beta.4 does
+    // this; the removed `collapsed_table_medium_border_insets` (block axis) and
+    // `_x` (inline axis: stretch for < 3 columns, shift for >= 3) passes took
+    // the 2..4.5px inset for a synthetic "medium" border and removed it.
+    // Chrome 155.0.8059.85, print media, bundled fonts, 2026-10-21 (probe
+    // `collapsed_table_border`, same attachment): table#two (0, 0, 300, 30),
+    // td Um (4, 4, 131.72, 22), td Dois (135.72, 4, 160.28, 22); table#three
+    // (0, 50, 450, 48), first cell (4, 54), last cell right edge 446, bottom 94.
+    // Only the edge insets are asserted: Blitz still lays the inner collapsed
+    // borders and the row heights out differently (rows 22 vs 20 px, 4px between
+    // rows), a separate follow-up.
+    let html = r##"<!DOCTYPE html><html><head><style>@page { size: A4; margin: 18mm; } body { margin: 0; font-family: sans-serif; font-size: 12px; } table { border-collapse: collapse; border: 8px solid #0cc; margin: 0 0 20px 0; } td { border: 4px solid #000; padding: 0; } #two { width: 300px; } #three { width: 450px; }</style></head><body><table id="two"><tr><td id="t2a">Um</td><td id="t2b">Dois</td></tr></table><table id="three"><tr><td id="t3a">Um</td><td id="t3b">Dois</td><td id="t3c">Tres</td></tr><tr><td id="t3d">Quatro</td><td id="t3e">Cinco</td><td id="t3f">Seis</td></tr></table></body></html>"##;
+    let (laid, _pb) = lay_out_for_render(html);
+    let tables: Vec<usize> = (0..laid.boxes.len())
+        .filter(|&i| laid.boxes[i].tag.as_deref() == Some("table"))
+        .collect();
+    assert_eq!(tables.len(), 2, "two tables");
+    for &t in &tables {
+        let table = &laid.boxes[t];
+        let depth = table.depth;
+        let cells: Vec<&vellora_core::blitz_engine::LaidOutBox> = laid.boxes[t + 1..]
+            .iter()
+            .take_while(|b| b.depth > depth)
+            .filter(|b| b.tag.as_deref() == Some("td"))
+            .collect();
+        let left = cells.iter().map(|c| c.x).fold(f64::INFINITY, f64::min);
+        let right = cells
+            .iter()
+            .map(|c| c.x + c.width)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let top = cells.iter().map(|c| c.y).fold(f64::INFINITY, f64::min);
+        let bottom = cells
+            .iter()
+            .map(|c| c.y + c.height)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let insets = [
+            left - table.x,
+            top - table.y,
+            table.x + table.width - right,
+            table.y + table.height - bottom,
+        ];
+        for inset in insets {
+            assert!(
+                (inset - 4.0).abs() <= 0.5,
+                "table {} (x {}, y {}, w {}, h {}): cell insets [left, top, right, bottom] {insets:?}, Chrome [4, 4, 4, 4]",
+                cells.len(),
+                table.x,
+                table.y,
+                table.width,
+                table.height
+            );
+        }
+    }
 }
 
 #[test]

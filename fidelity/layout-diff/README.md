@@ -42,9 +42,13 @@ rendering.
   parent's origin; out-of-flow boxes still accumulate DOM-parent offsets.
 - Post-layout passes, in this exact order (the single list `LAYOUT_NORMALIZE_PASSES` in
   `blitz_engine.rs`, iterated by `resolve_and_walk`):
-  1. `vertical_margin_collapse` 2. `collapsed_table_medium_border_insets`
-  3. `painted_table_cell_text_baselines` 4. `fixed_table_widths` 5. `table_percent_widths`
-  6. `auto_table_compact_columns` 7. `collapsed_table_medium_border_insets_x` (runs LAST).
+  1. `painted_table_cell_text_baselines` 2. `fixed_table_widths` 3. `table_percent_widths`
+  4. `auto_table_compact_columns`.
+  Until `phaseb/02-delete-noop-passes` (2026-10-21) the list also had `vertical_margin_collapse`
+  and `collapsed_table_medium_border_insets` (before 1.) and `collapsed_table_medium_border_insets_x`
+  (after 4.); dumps and reports from earlier runs (this directory's `snapshots/`, the `pin` and
+  `beta4` baselines) still carry those layers. Evidence for the removal:
+  `fidelity/baselines/port/02-delete-noop-passes/`.
 - Pagination (since `phaseb/01-pagination-gaps`, 2026-10-21) keeps Blitz's flow y within a page:
   one translation per page, set by the page's first fragment (page 1: the flow origin, so the
   leading body margin/padding/first margin stay; after an unforced break: the page top; after a
@@ -396,9 +400,9 @@ from Chromium in the PDF (validator's measurement). The PDF bytes are what the r
 produces today; fixing it changes receipt's PDF, so it is out of scope for Phase A.
 
 Pass regressions after the natural first divergence are now visible per layer (summary table
-"Regressions per layer"); e.g. at the pin `collapsed_table_medium_border_insets_x` regresses 71
-invoice box events and `auto_table_compact_columns` 35, `painted_table_cell_text_baselines` 25
-boleto runs.
+"Regressions per layer"); e.g. at the pin `collapsed_table_medium_border_insets_x` (removed in
+port step 02) regresses 71 invoice box events and `auto_table_compact_columns` 35,
+`painted_table_cell_text_baselines` 25 boleto runs.
 
 **Phase B gate question** (are the beta.4 regressions raw Blitz or vellora's post-layout code?),
 re-run with this tool version (`compare-pin-vs-beta4.md`):

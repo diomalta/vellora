@@ -427,14 +427,6 @@ pub(crate) type LayoutPass = (&'static str, fn(&mut [LaidOutBox]));
 /// after it, so the dumped layer names cannot drift from the passes that ran.
 pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
     (
-        "vertical_margin_collapse",
-        crate::layout_normalize::normalize_vertical_margin_collapse,
-    ),
-    (
-        "collapsed_table_medium_border_insets",
-        crate::layout_normalize::normalize_collapsed_table_medium_border_insets,
-    ),
-    (
         "painted_table_cell_text_baselines",
         crate::layout_normalize::normalize_painted_table_cell_text_baselines,
     ),
@@ -449,15 +441,6 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
     (
         "auto_table_compact_columns",
         crate::layout_normalize::normalize_auto_table_compact_columns,
-    ),
-    // Inline twin of the block inset pass. Runs LAST so it sees the final column
-    // positions: simple tables (e.g. the header) get their squeezed band stretched
-    // to the table edges; auto/compact tables (e.g. items) get the uniform inset
-    // shift — which the compact cursor anchored at the inset row-left — translated
-    // out. Both correct the synthetic Blitz "medium" border on the inline axis.
-    (
-        "collapsed_table_medium_border_insets_x",
-        crate::layout_normalize::normalize_collapsed_table_medium_border_insets_x,
     ),
 ];
 
