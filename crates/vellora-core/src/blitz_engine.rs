@@ -24,11 +24,21 @@ pub const A4_HEIGHT_PX: f64 = 841.92 / 0.75;
 /// One positioned box read out of Blitz's laid-out tree.
 ///
 /// Coordinates are **absolute document coordinates** in CSS px (top-left
-/// origin), already accumulated down the parent chain — pagination consumes
-/// these directly.
+/// origin): each box's `final_layout` location added up its chain of
+/// containing blocks (Blitz's `Node::containing_block`, the box its location is
+/// relative to) — pagination consumes these directly.
+///
+/// The list is Blitz's box tree in layout order (see [`walk_box`]): elements
+/// that generate a box, Blitz's anonymous block boxes and `::before`/`::after`
+/// boxes (`tag: None` for both), with each table's DOM row structure
+/// (`thead`/`tbody`/`tfoot`/`tr`, zero-size) re-inserted above its cells. Text
+/// nodes and non-atomic inline elements generate no box: their text is in the
+/// glyph runs of the inline root that shaped it.
 #[derive(Debug, Clone)]
 pub struct LaidOutBox {
     pub node_id: usize,
+    /// Element tag name; `None` for Blitz's anonymous block boxes and
+    /// `::before`/`::after` pseudo-element boxes (no element of their own).
     pub tag: Option<String>,
     pub x: f64,
     pub y: f64,
@@ -352,13 +362,11 @@ fn walk_for_denied(
     }
 }
 
-/// Normalize browser-compatible mixed-flow table cells, then parse + style +
-/// layout + text in one call. Owns and drops the `!Send` `BaseDocument`
-/// entirely within this function (lifetime contract).
+/// Parse + style + layout + text in one call. Owns and drops the `!Send`
+/// `BaseDocument` entirely within this function (lifetime contract).
 pub fn lay_out(html: &str) -> LaidOutDoc {
-    let normalized = crate::html_normalize::normalize_table_cell_mixed_flow(html);
-    let breaks = crate::break_css::parse_break_rules(&normalized);
-    let doc = build_document(&normalized, &[]);
+    let breaks = crate::break_css::parse_break_rules(html);
+    let doc = build_document(html, &[]);
     // Standalone/test helper: lay out against the full A4 width with no caller
     // images (an unresolved `<img>` is recorded on the doc but not enforced here).
     // The render path uses `validate_then_lay_out` with the real @page content width.
@@ -373,10 +381,12 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
     )
 }
 
-/// Normalize browser-compatible mixed-flow table cells, then parse one Blitz
-/// document, run the subset-validation walk over that single parsed tree, and
-/// only if it passes, resolve + walk into a [`LaidOutDoc`]. The `denied`
-/// allowlist is supplied by the validation gate.
+/// Parse one Blitz document, run the subset-validation walk over that single
+/// parsed tree, and only if it passes, resolve + walk into a [`LaidOutDoc`]. The
+/// `denied` allowlist is supplied by the validation gate. The input is laid out
+/// exactly as given: there is no HTML pre-pass (port step 05 deleted
+/// `html_normalize`, whose synthetic `<div>` wrappers stood in for the anonymous
+/// blocks the walk did not read).
 ///
 /// Returns `Err(DeniedElement)` for the first out-of-subset element; the caller
 /// turns it into a located diagnostic.
@@ -415,21 +425,10 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     fonts: &[Vec<u8>],
     observer: &mut O,
 ) -> Result<LaidOutDoc, DeniedElement> {
-    // `skip_html_normalize` is `false` for every observer except the debug dump's
-    // source-HTML variant (layer `N0`), so the render path always normalizes.
-    let normalized = if observer.skip_html_normalize() {
-        std::borrow::Cow::Borrowed(html)
-    } else {
-        crate::html_normalize::normalize_table_cell_mixed_flow_traced(
-            html,
-            observer.normalize_trace(),
-        )
-    };
-    let breaks = crate::break_css::parse_break_rules(&normalized);
-    let doc = build_document(&normalized, fonts);
-    // Validate and lay out the same Blitz parse. The table-cell normalizer may
-    // parse/serialize HTML before this point, but there is still one Blitz tree
-    // shared by validation and layout.
+    let breaks = crate::break_css::parse_break_rules(html);
+    let doc = build_document(html, fonts);
+    // Validate and lay out the same Blitz parse: one tree shared by validation
+    // and layout.
     if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
         return Err(found);
     }
@@ -473,18 +472,6 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
 /// Blitz type crosses this trait: `after_walk` gets a [`BlitzSnapshot`], whose
 /// only operation is an owned, Blitz-free copy of the laid-out tree.
 pub(crate) trait LayoutObserver {
-    /// When `true`, html_normalize is NOT run: Blitz parses and lays out the input
-    /// HTML exactly as given. Only the debug dump's source-HTML variant (fidelity
-    /// layer `N0`) returns `true`; it isolates what html_normalize changes from
-    /// what Blitz itself computes.
-    fn skip_html_normalize(&self) -> bool {
-        false
-    }
-    /// When `Some`, the HTML normalizer records the element-index chain of every
-    /// synthetic wrapper it inserts (so the dump can key boxes by the ORIGINAL DOM).
-    fn normalize_trace(&mut self) -> Option<&mut Vec<Vec<usize>>> {
-        None
-    }
     /// After the box walk, before any normalize pass (layer `L0`).
     fn after_walk(
         &mut self,
@@ -533,7 +520,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut img_resolve = ImageResolve {
         images,
         base_url,
-        img_count: 0,
+        img_ordinal: img_ordinals(base),
         first_unresolved: None,
     };
     // Dedup font-face bytes across the whole walk: each distinct face (keyed by
@@ -555,8 +542,9 @@ fn resolve_and_walk<O: LayoutObserver>(
             face_cache: &mut face_cache,
             img: &mut img_resolve,
             breaks: &break_targets,
+            origins: std::collections::HashMap::new(),
         };
-        walk(base, root_id, 0.0, 0.0, 0, &mut sink);
+        walk_box(base, root_id, 0, &mut sink);
     }
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
     // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order.
@@ -588,12 +576,16 @@ fn resolve_and_walk<O: LayoutObserver>(
 }
 
 /// Mutable sinks threaded through the layout walk, bundled to keep the walk's
-/// arity small: the output boxes, the per-face byte cache, and image resolution.
+/// arity small: the output boxes, the per-face byte cache, image resolution, and
+/// the memo of absolute border-box origins ([`box_origin`]).
 struct WalkSink<'a, 'img> {
     out: &'a mut Vec<LaidOutBox>,
     face_cache: &'a mut std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>>,
     img: &'a mut ImageResolve<'img>,
     breaks: &'a BreakTargets,
+    /// Absolute border-box origin per node, filled by [`box_origin`]. Lookup
+    /// only: the walk's output order never depends on iterating this map.
+    origins: std::collections::HashMap<NodeId, (f64, f64)>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -613,26 +605,202 @@ fn matched_nodes(base: &BaseDocument, selectors: &[String]) -> std::collections:
         .collect()
 }
 
-/// Recursively read the laid-out tree, accumulating parent-relative
-/// `final_layout` offsets into absolute document coordinates.
-fn walk(
+/// Read one box of Blitz's box tree and, recursively, its layout children.
+///
+/// The walk follows Blitz's layout tree (`Node::layout_children`), not the DOM:
+/// that is where Blitz keeps the anonymous block boxes it wraps around inline
+/// content next to block siblings (`text<p>…</p>text`, a `<td>` holding text and
+/// a `<div>`, the body's own text) and block-level `::before`/`::after` boxes,
+/// which a DOM-children walk never visits (their text was lost). The order is
+/// Blitz's layout order (DOM order with those boxes in place); out-of-flow boxes
+/// stay under their layout parent, so pagination still meets them among the
+/// body's children.
+///
+/// Positions come from Blitz's positioning chain instead of the walk path: a
+/// box's `final_layout.location` is relative to the border box of
+/// `Node::containing_block()` (the `oof_containing_block` of an absolutely
+/// positioned or fixed box hoisted to its containing block by Taffy, else the
+/// layout parent, anonymous blocks included), see [`box_origin`]. Summing DOM
+/// (or layout) parents instead put an absolutely positioned box inside a
+/// non-positioned `<p>` 10/26 px off (Chrome 155 and `Node::absolute_position`:
+/// 48,35; parent sum 58,61) and added the body offset to a box whose containing
+/// block is the initial containing block (`tests/walk.rs`).
+///
+/// Why `layout_children` and not `paint_children` (Blitz's paint order): a
+/// probe of Blitz 0.3.0-beta.4 (`fidelity/baselines/port/05-walk-rewrite`) found
+/// that `paint_children` moves an out-of-flow box under its containing block
+/// (for the initial containing block that is `<html>`, a sibling of `<body>`, so
+/// pagination, which fragments the body's children, would drop it) and leaves
+/// boxes with a non-zero `z-index` out entirely (they live in the stacking
+/// context's list). Positions summed along `paint_children` equal
+/// [`box_origin`]'s for every box of the probe. Paint order itself does not
+/// reach the PDF from this list: `pagination` sorts the filled rects by
+/// position and the emitter draws all rects, then images, strokes, text.
+///
+/// Tables are the exception to "layout tree only": Blitz lays out a table's
+/// cells as direct layout children of the table (rows and row groups are not
+/// layout boxes), while pagination (`<thead>` repetition, row fragments) and
+/// the table passes need the row structure, so [`walk_table`] re-inserts it.
+fn walk_box(base: &BaseDocument, node_id: NodeId, depth: usize, sink: &mut WalkSink) {
+    let Some(node) = base.get_node(node_id) else {
+        return;
+    };
+    let (abs_x, abs_y) = box_origin(base, node_id, &mut sink.origins);
+    push_box(base, node, abs_x, abs_y, depth, sink);
+
+    if node.flags.is_table_root() {
+        walk_table(base, node, (abs_x, abs_y), depth + 1, sink);
+        return;
+    }
+    let children: Vec<NodeId> = node
+        .layout_children
+        .borrow()
+        .as_ref()
+        .map(|c| c.iter().copied().collect())
+        .unwrap_or_default();
+    for child in children {
+        walk_box(base, child, depth + 1, sink);
+    }
+}
+
+/// The children of a table root: its DOM row groups and rows as zero-size
+/// structural boxes at the table's origin (Blitz gives them no layout, CONFIRMED
+/// by the step-05 probe: no `layout_parent`, zero `final_layout`), each cell
+/// under its row, then whatever else Blitz lists as the table's layout children
+/// (`::before`/`::after`, out-of-flow boxes not reached through a row).
+fn walk_table(
     base: &BaseDocument,
-    node_id: NodeId,
-    parent_x: f64,
-    parent_y: f64,
+    table: &blitz_dom::Node,
+    table_origin: (f64, f64),
     depth: usize,
     sink: &mut WalkSink,
 ) {
-    let node = match base.get_node(node_id) {
-        Some(n) => n,
-        None => return,
-    };
+    let laid_out: Vec<NodeId> = table
+        .layout_children
+        .borrow()
+        .as_ref()
+        .map(|c| c.iter().copied().collect())
+        .unwrap_or_default();
+    let laid_out_set: std::collections::HashSet<NodeId> = laid_out.iter().copied().collect();
+    let mut emitted: std::collections::HashSet<NodeId> = std::collections::HashSet::new();
+    if let Some(before) = table.before().filter(|id| laid_out_set.contains(id)) {
+        walk_box(base, before, depth, sink);
+        emitted.insert(before);
+    }
+    for &child in &table.children {
+        walk_table_part(
+            base,
+            child,
+            table_origin,
+            depth,
+            &laid_out_set,
+            &mut emitted,
+            sink,
+        );
+    }
+    for child in laid_out {
+        if !emitted.contains(&child) {
+            walk_box(base, child, depth, sink);
+        }
+    }
+}
 
-    // Blitz 0.3.0-beta.4: `final_layout` moved from a plain `Node` field into
-    // per-node `LayoutData`, and `Node::final_layout()` PANICS for node kinds
-    // that carry no layout data (text and comment nodes). Under the previous git
-    // rev those nodes kept the zero `Layout` (they are never Taffy nodes), so read
-    // the zero layout for them to keep the walk's output shape unchanged.
+/// One DOM child of a table (or of one of its row groups/rows): a cell or an
+/// out-of-flow box Blitz laid out is walked as a box; any other element (row
+/// group, row, `display: contents` wrapper, caption, column) becomes a zero-size
+/// structural box at its DOM parent's origin, and row groups/rows recurse.
+fn walk_table_part(
+    base: &BaseDocument,
+    node_id: NodeId,
+    parent_origin: (f64, f64),
+    depth: usize,
+    laid_out: &std::collections::HashSet<NodeId>,
+    emitted: &mut std::collections::HashSet<NodeId>,
+    sink: &mut WalkSink,
+) {
+    if laid_out.contains(&node_id) {
+        if emitted.insert(node_id) {
+            walk_box(base, node_id, depth, sink);
+        }
+        return;
+    }
+    let Some(node) = base.get_node(node_id) else {
+        return;
+    };
+    if !node.is_element() {
+        return;
+    }
+    let location = node.final_layout().location;
+    let origin = (
+        parent_origin.0 + location.x as f64,
+        parent_origin.1 + location.y as f64,
+    );
+    push_box(base, node, origin.0, origin.1, depth, sink);
+    let groups_rows = node.primary_styles().is_some_and(|styles| {
+        use style::values::specified::box_::DisplayInside;
+        matches!(
+            styles.clone_display().inside(),
+            DisplayInside::TableRowGroup
+                | DisplayInside::TableHeaderGroup
+                | DisplayInside::TableFooterGroup
+                | DisplayInside::TableRow
+                | DisplayInside::Contents
+        )
+    });
+    if groups_rows {
+        for &child in &node.children {
+            walk_table_part(base, child, origin, depth + 1, laid_out, emitted, sink);
+        }
+    }
+}
+
+/// Absolute border-box origin of `node_id` (document CSS px): its
+/// `final_layout.location` plus the origin of its `Node::containing_block()`,
+/// up to the document node. This is Blitz's own `Node::absolute_position(0, 0)`
+/// without scroll offsets (a laid-out document never scrolls here), summed in
+/// `f64` from the root down, memoised per node.
+fn box_origin(
+    base: &BaseDocument,
+    node_id: NodeId,
+    memo: &mut std::collections::HashMap<NodeId, (f64, f64)>,
+) -> (f64, f64) {
+    let mut chain = Vec::new();
+    let mut origin = (0.0, 0.0);
+    let mut current = Some(node_id);
+    while let Some(id) = current {
+        if let Some(&known) = memo.get(&id) {
+            origin = known;
+            break;
+        }
+        let Some(node) = base.get_node(id) else {
+            break;
+        };
+        chain.push(id);
+        current = node.containing_block();
+    }
+    for id in chain.into_iter().rev() {
+        if let Some(node) = base.get_node(id).filter(|n| node_has_layout_data(n)) {
+            let location = node.final_layout().location;
+            origin = (origin.0 + location.x as f64, origin.1 + location.y as f64);
+        }
+        memo.insert(id, origin);
+    }
+    origin
+}
+
+/// Read one box (border-box origin `abs_x`/`abs_y`) into the output list.
+fn push_box(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    abs_x: f64,
+    abs_y: f64,
+    depth: usize,
+    sink: &mut WalkSink,
+) {
+    let node_id = node.id;
+    // Blitz 0.3.0-beta.4: `Node::final_layout()` PANICS for node kinds that
+    // carry no layout data (text and comment nodes). The walk only reaches
+    // boxes, but keep the zero layout as the guard.
     let zero_layout;
     let layout = if node_has_layout_data(node) {
         node.final_layout()
@@ -640,12 +808,12 @@ fn walk(
         zero_layout = Default::default();
         &zero_layout
     };
-    let abs_x = parent_x + layout.location.x as f64;
-    let abs_y = parent_y + layout.location.y as f64;
 
-    let tag = node
-        .data
-        .downcast_element()
+    // Anonymous block boxes and pseudo-element boxes are `AnonymousBlock` nodes
+    // carrying a placeholder `div` name; they are not elements.
+    let tag = (!node.is_anonymous())
+        .then(|| node.data.downcast_element())
+        .flatten()
         .map(|el| el.name.local.to_string());
 
     let content_x = abs_x + layout.border.left as f64 + layout.padding.left as f64;
@@ -704,49 +872,6 @@ fn walk(
         rounded_borders,
         image_runs,
     });
-
-    for &child in &node.children {
-        let (dx, dy) = anonymous_block_offset(base, node_id, child);
-        walk(base, child, abs_x + dx, abs_y + dy, depth + 1, sink);
-    }
-}
-
-/// Offset of the Blitz anonymous block box that sits between a DOM parent and
-/// one of its in-flow DOM children. When a container mixes block and inline
-/// children, Blitz wraps each run of inline-level children in an anonymous
-/// block (`layout_parent`), and the child's `final_layout.location` is relative
-/// to that block, not to the DOM parent the walk accumulates from. Without this
-/// offset the walk reads, e.g., an `inline-table` that follows a `<p>` at the
-/// `<p>`'s own top (WPT `css/CSS2/borders/border-bottom-applies-to-014.xht`:
-/// y 16 without it, 50 with it, below the `<p>` and its 16 px margin; Chrome
-/// 155 puts an inline-block after such a `<p>` 36 px below it,
-/// `tests/pagination_gaps.rs`). Out-of-flow boxes (`oof_containing_block`)
-/// are positioned relative to their containing block instead and are left as
-/// they are (a separate walk limitation).
-fn anonymous_block_offset(base: &BaseDocument, dom_parent: NodeId, child: NodeId) -> (f64, f64) {
-    let Some(node) = base.get_node(child) else {
-        return (0.0, 0.0);
-    };
-    if node.oof_containing_block.get().is_some() {
-        return (0.0, 0.0);
-    }
-    let Some(layout_parent) = node.layout_parent.get() else {
-        return (0.0, 0.0);
-    };
-    if layout_parent == dom_parent {
-        return (0.0, 0.0);
-    }
-    match base.get_node(layout_parent) {
-        Some(anon)
-            if anon.is_anonymous()
-                && anon.layout_parent.get() == Some(dom_parent)
-                && node_has_layout_data(anon) =>
-        {
-            let location = anon.final_layout().location;
-            (location.x as f64, location.y as f64)
-        }
-        _ => (0.0, 0.0),
-    }
 }
 
 /// Whether `node` carries Blitz layout data (element, anonymous block, or the
@@ -1047,22 +1172,52 @@ fn absolute_color_to_srgb(color: style::color::AbsoluteColor) -> Option<[u8; 3]>
 }
 
 /// Image-source resolution state threaded through the layout walk. Holds the
-/// caller's `images` map + optional `base_url`, counts `<img>` elements (for the
-/// source locator), and records the FIRST renderable-but-unresolved `<img>` in
-/// document order (the walk is preorder DFS, so first-recorded == document-first).
+/// caller's `images` map + optional `base_url`, the DOM ordinal of every `<img>`
+/// (for the source locator), and records the FIRST renderable-but-unresolved
+/// `<img>` in document order.
 struct ImageResolve<'a> {
     images: &'a std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&'a str>,
-    img_count: usize,
+    /// 1-based ordinal of each `<img>` among all `<img>` elements in DOM
+    /// preorder ([`img_ordinals`]). The box walk visits only rendered boxes, in
+    /// layout order, so it cannot count them itself.
+    img_ordinal: std::collections::HashMap<NodeId, usize>,
     first_unresolved: Option<(usize, &'static str)>,
 }
 
 impl ImageResolve<'_> {
+    /// Keep the unresolved `<img>` that comes first in the DOM (layout order may
+    /// differ: `order`, `<thead>` laid out first).
     fn record_unresolved(&mut self, occurrence: usize, reason: &'static str) {
-        if self.first_unresolved.is_none() {
+        if self
+            .first_unresolved
+            .is_none_or(|(first, _)| occurrence < first)
+        {
             self.first_unresolved = Some((occurrence, reason));
         }
     }
+}
+
+/// DOM-preorder ordinal (1-based) of every `<img>` element, the same order as
+/// [`count_tag_in_document`]'s total and the source locator's `<img` scan.
+fn img_ordinals(base: &BaseDocument) -> std::collections::HashMap<NodeId, usize> {
+    let mut ordinals = std::collections::HashMap::new();
+    let mut stack = vec![base.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        if node.data.downcast_element().is_some_and(|el| {
+            let local: &str = &el.name.local;
+            local.eq_ignore_ascii_case("img")
+        }) && !node.is_anonymous()
+        {
+            let next = ordinals.len() + 1;
+            ordinals.insert(id, next);
+        }
+        stack.extend(node.children.iter().rev().copied());
+    }
+    ordinals
 }
 
 /// Resolve a node's `<img>` source to drawable image bytes.
@@ -1090,10 +1245,11 @@ fn resolve_image_runs(
     if !is_img {
         return Vec::new();
     }
-    // Count every <img> element so `occurrence` is the DOM ordinal the source
-    // locator expects, regardless of whether this one is renderable.
-    state.img_count += 1;
-    let occurrence = state.img_count;
+    // The DOM ordinal the source locator expects (every <img> counts, rendered
+    // or not).
+    let Some(&occurrence) = state.img_ordinal.get(&node.id) else {
+        return Vec::new();
+    };
 
     if width <= 0.0 || height <= 0.0 || !width.is_finite() || !height.is_finite() {
         return Vec::new();
@@ -1544,6 +1700,7 @@ fn capture_raw_tree(base: &BaseDocument) -> crate::layout_dump::RawTree {
             parent: node.parent.map(raw_id),
             children: node.children.iter().copied().map(raw_id).collect(),
             layout_parent: node.layout_parent.get().map(raw_id),
+            containing_block: node.containing_block().map(raw_id),
             layout_children: layout_children.map(|c| c.into_iter().map(raw_id).collect()),
             before: node.before().map(raw_id),
             after: node.after().map(raw_id),

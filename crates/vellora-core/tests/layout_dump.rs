@@ -1,11 +1,12 @@
 //! The debug layout dump (`vellora_core::debug_layout_dump`, used only by
 //! `fidelity/layout-diff/`) must observe the render path without changing it:
 //! its final layer is exactly the box list `render` paginates, its layers are
-//! the named normalize passes in render order, keys follow the SOURCE DOM even
-//! when html_normalize inserts wrappers, and calling it leaves PDF bytes alone.
-//! The source-HTML variant (`debug_layout_dump_source_html`, fidelity layer
-//! `N0`) skips html_normalize so the tooling can tell its effect apart from
-//! Blitz's own layout.
+//! the named normalize passes in render order, keys follow the SOURCE DOM (Blitz
+//! anonymous blocks keyed under their layout parent), and calling it leaves PDF
+//! bytes alone. The source-HTML variant (`debug_layout_dump_source_html`,
+//! fidelity layer `N0`) once separated the `html_normalize` pre-pass from
+//! Blitz's own layout; since port step 05 deleted that pre-pass it lays out
+//! exactly what the render path does.
 //!
 //! Schema 2 adds the RAW Blitz/Parley text of the Blitz tree (`blitz_runs`: the
 //! `B0`/`N0` text layers, before vellora's reader compensations) and the
@@ -90,118 +91,144 @@ fn dumping_does_not_change_pdf_bytes() {
 }
 
 #[test]
-fn keys_follow_the_source_dom_through_normalize_wrappers() {
-    // html_normalize wraps the inline run "lead <b>bold</b>" (next to a block
-    // child) in a synthetic <div>. The source DOM has <b> as the 1st and <p> as
-    // the 2nd element child of the section; keys must say so.
+fn keys_follow_the_source_dom_and_anonymous_blocks_are_walked() {
+    // Blitz wraps the inline run "lead <b>bold</b>" (next to a block child) in an
+    // ANONYMOUS block: it exists only in Blitz's layout tree and is keyed
+    // `::blitz-anon(j)` under its layout parent. Since port step 05 the box walk
+    // reads it (layer L0 has it, with the run). The source DOM has <b> as the 1st
+    // and <p> as the 2nd element child of the section; keys must say so.
     let html = "<!DOCTYPE html><html><head></head><body>\
         <section id=\"s\">lead <b>bold</b><p class=\"para\">para</p></section>\
         </body></html>";
     let dump = debug_layout_dump(html.as_bytes(), &opts()).expect("dump");
-    assert_eq!(dump.normalize_wrappers_recorded, 1);
-    assert_eq!(dump.normalize_wrappers_located, 1);
-    let path_of = |tag: &str| {
-        dump.nodes
-            .iter()
-            .find(|n| n.tag.as_deref() == Some(tag) && !n.synthetic)
-            .map(|n| n.dom_path.clone())
-            .unwrap_or_default()
-    };
-    assert_eq!(
-        path_of("b"),
-        "html>body:nth-child(2)>section:nth-child(1)>b:nth-child(1)"
-    );
-    assert_eq!(
-        path_of("p"),
-        "html>body:nth-child(2)>section:nth-child(1)>p:nth-child(2)"
-    );
-    let wrapper = dump.nodes.iter().find(|n| n.synthetic).expect("wrapper");
-    assert_eq!(
-        wrapper.dom_path,
-        "html>body:nth-child(2)>section:nth-child(1)>::vellora-wrapper(1)"
-    );
-    let section = dump
+    let section = "html>body:nth-child(2)>section:nth-child(1)";
+    assert_eq!(path_of_tag(&dump, "b"), format!("{section}>b:nth-child(1)"));
+    assert_eq!(path_of_tag(&dump, "p"), format!("{section}>p:nth-child(2)"));
+    let anon = dump
         .nodes
         .iter()
-        .find(|n| n.id_attr.as_deref() == Some("s"))
-        .expect("section");
-    assert_eq!(section.tag.as_deref(), Some("section"));
+        .find(|n| n.kind == "anonymous")
+        .expect("anonymous block");
+    assert_eq!(anon.dom_path, format!("{section}>::blitz-anon(1)"));
+    // Every anonymous node is a box of Blitz's own layout tree, and of L0.
+    for node in dump.nodes.iter().filter(|n| n.kind == "anonymous") {
+        assert!(dump.blitz_tree.iter().any(|b| b.node_id == node.node_id));
+        assert!(dump.layers[0]
+            .boxes
+            .iter()
+            .any(|b| b.node_id == node.node_id));
+    }
+    let lead = dump
+        .runs
+        .iter()
+        .find(|m| m.text == "lead ")
+        .expect("the anonymous block's run is in L0");
+    assert_eq!(lead.owner_node_id, anon.node_id);
 }
 
 fn path_of_tag(dump: &layout_dump::LayoutDump, tag: &str) -> String {
     dump.nodes
         .iter()
-        .find(|n| n.tag.as_deref() == Some(tag) && !n.synthetic && n.kind == "element")
+        .find(|n| n.tag.as_deref() == Some(tag) && n.kind == "element")
         .map(|n| n.dom_path.clone())
         .unwrap_or_default()
 }
 
 #[test]
-fn source_html_dump_skips_normalize_and_keys_blitz_anonymous_blocks() {
-    // Same input as above. Without html_normalize, Blitz itself wraps the inline
-    // run "lead <b>bold</b>" in an ANONYMOUS block: it exists only in Blitz's
-    // layout tree (layout_children) and is keyed `::blitz-anon(j)` under its
-    // layout parent. Source-DOM keys of real elements match the normalized dump.
+fn source_html_dump_lays_out_exactly_what_the_render_path_does() {
+    // There is no HTML pre-pass any more (port step 05 deleted html_normalize),
+    // so the source-HTML dump (layer N0) and the render-path dump (B0) are the
+    // same Blitz layout: same nodes, same keys, same boxes.
     let html = "<!DOCTYPE html><html><head></head><body>\
         <section id=\"s\">lead <b>bold</b><p class=\"para\">para</p></section>\
         </body></html>";
-    let normalized = debug_layout_dump(html.as_bytes(), &opts()).expect("dump");
+    let dump = debug_layout_dump(html.as_bytes(), &opts()).expect("dump");
     let source = debug_layout_dump_source_html(html.as_bytes(), &opts()).expect("source dump");
-    assert!(normalized.html_normalize_applied);
-    assert!(!source.html_normalize_applied);
-    assert_eq!(source.normalize_wrappers_recorded, 0);
-    assert!(source.nodes.iter().all(|n| !n.synthetic));
-    for tag in ["section", "b", "p"] {
-        assert_eq!(
-            path_of_tag(&source, tag),
-            path_of_tag(&normalized, tag),
-            "{tag}"
-        );
-    }
-    let section = "html>body:nth-child(2)>section:nth-child(1)";
-    let anon: Vec<&str> = source
-        .nodes
-        .iter()
-        .filter(|n| n.kind == "anonymous")
-        .map(|n| n.dom_path.as_str())
-        .collect();
-    assert!(
-        anon.contains(&format!("{section}>::blitz-anon(1)").as_str()),
-        "anonymous blocks: {anon:?}"
-    );
-    // Every anonymous node is a box of Blitz's own layout tree.
-    for node in source.nodes.iter().filter(|n| n.kind == "anonymous") {
-        assert!(source.blitz_tree.iter().any(|b| b.node_id == node.node_id));
-    }
+    assert!(!dump.source_html);
+    assert!(source.source_html);
+    assert!(source.pagination.is_none());
+    let keys = |d: &layout_dump::LayoutDump| -> Vec<(String, &'static str)> {
+        d.nodes
+            .iter()
+            .map(|n| (n.dom_path.clone(), n.kind))
+            .collect()
+    };
+    assert_eq!(keys(&source), keys(&dump));
+    let boxes = |d: &layout_dump::LayoutDump| -> Vec<(f64, f64, f64, f64)> {
+        d.blitz_tree
+            .iter()
+            .map(|b| (b.x, b.y, b.width, b.height))
+            .collect()
+    };
+    assert_eq!(boxes(&source), boxes(&dump));
 }
 
 #[test]
-fn wrapper_hoisted_out_of_a_paragraph_is_detected() {
-    // CHARACTERIZATION of a production html_normalize defect (Phase B): inside a
-    // <p> with a display:block child, html_normalize wraps the trailing inline run
-    // in a <div>, but <div> cannot live in <p>, so Blitz's HTML parser closes the
-    // <p> before it when re-parsing the serialized output. The wrapper is then not
-    // where it was recorded, and later siblings' keys shift. The dump must SAY so
-    // (recorded != located) instead of silently mis-keying, and the source-HTML
-    // dump keeps the true source keys. When html_normalize stops producing
-    // non-round-tripping HTML, recorded == located and this test must be updated.
+fn text_after_a_block_span_stays_in_its_paragraph() {
+    // The receipt's `p.thanks` shape: a display:block span inside a <p>, then
+    // text. Blitz puts the text in an anonymous block of the <p>. html_normalize
+    // used to wrap it in a <div>, which the HTML re-parse hoisted out of the <p>
+    // (wrappers recorded 1, located 0; the footer re-keyed as nth-child(4)).
     let html = "<!DOCTYPE html><html><head><style>.big { display: block }</style></head>\
         <body><p class=\"thanks\"><span class=\"big\">Thanks!</span> note</p>\
         <footer class=\"fine\">fine print</footer></body></html>";
-    let normalized = debug_layout_dump(html.as_bytes(), &opts()).expect("dump");
-    let source = debug_layout_dump_source_html(html.as_bytes(), &opts()).expect("source dump");
-    assert_eq!(normalized.normalize_wrappers_recorded, 1);
-    assert_eq!(normalized.normalize_wrappers_located, 0);
+    let dump = debug_layout_dump(html.as_bytes(), &opts()).expect("dump");
     assert_eq!(
-        path_of_tag(&source, "footer"),
+        path_of_tag(&dump, "footer"),
         "html>body:nth-child(2)>footer:nth-child(2)"
     );
-    assert_ne!(
-        path_of_tag(&normalized, "footer"),
-        path_of_tag(&source, "footer")
+    let note = dump
+        .runs
+        .iter()
+        .find(|m| m.text.trim() == "note")
+        .expect("note run");
+    let owner = dump
+        .nodes
+        .iter()
+        .find(|n| n.node_id == note.owner_node_id)
+        .expect("owner");
+    assert_eq!(owner.kind, "anonymous");
+    assert_eq!(
+        owner.dom_path,
+        "html>body:nth-child(2)>p:nth-child(1)>::blitz-anon(1)"
     );
 }
 
+/// Abspos box nested in a non-positioned `<p>` inside a relative container
+/// (Chrome 155: 48, 35; `tests/walk.rs`).
+const ABSPOS_PROBE: &str = "<!DOCTYPE html><html><head><style>\
+    @page { size: A4; margin: 18mm; }\
+    body { margin: 8px; font: 16px/20px \"Liberation Sans\"; }\
+    .rel { position: relative; margin-top: 30px; padding: 10px; }\
+    .abs { position: absolute; top: 5px; left: 40px; width: 50px; height: 20px; }\
+    </style></head><body><div class=\"rel\"><p>para <span class=\"abs\" id=\"abs\">x</span></p></div>\
+    </body></html>";
+
+#[test]
+fn b0_and_l0_place_an_abspos_box_on_its_containing_block() {
+    // B0 places every box the way Blitz's painter does (location + origin of the
+    // containing block); the walk (L0) reads the same position. Accumulating under
+    // the layout parent put this box at 58, 61 in both layers before step 05.
+    let dump = debug_layout_dump(ABSPOS_PROBE.as_bytes(), &opts()).expect("dump");
+    let id = dump
+        .nodes
+        .iter()
+        .find(|n| n.id_attr.as_deref() == Some("abs"))
+        .expect("span")
+        .node_id;
+    let b0 = dump
+        .blitz_tree
+        .iter()
+        .find(|b| b.node_id == id)
+        .expect("B0 box");
+    assert_eq!((b0.x, b0.y, b0.width, b0.height), (48.0, 35.0, 50.0, 20.0));
+    let l0 = dump.layers[0]
+        .boxes
+        .iter()
+        .find(|b| b.node_id == id)
+        .expect("L0 box");
+    assert_eq!((l0.x, l0.y), (b0.x, b0.y));
+}
 // ---------------------------------------------------------------------------
 // Schema 2: raw Blitz text (B0/N0 text layers) and the pagination trace (P).
 // ---------------------------------------------------------------------------
@@ -318,10 +345,10 @@ fn l0_text_differs_from_raw_blitz_by_the_reader_compensations() {
 }
 
 #[test]
-fn source_dump_text_includes_anonymous_block_runs_the_walk_drops() {
-    let source = debug_layout_dump_source_html(TEXT_PROBE.as_bytes(), &opts()).expect("dump");
-    let lead = blitz_run(&source, "lead ");
-    let owner = source
+fn walk_reads_anonymous_block_runs_where_blitz_places_them() {
+    let dump = debug_layout_dump(TEXT_PROBE.as_bytes(), &opts()).expect("dump");
+    let lead = blitz_run(&dump, "lead ");
+    let owner = dump
         .nodes
         .iter()
         .find(|n| n.node_id == lead.owner_node_id)
@@ -331,11 +358,12 @@ fn source_dump_text_includes_anonymous_block_runs_the_walk_drops() {
         owner.dom_path,
         "html>body:nth-child(2)>section:nth-child(4)>::blitz-anon(1)"
     );
-    // Without html_normalize's wrapper, vellora's DOM-children walk never reads it.
-    assert!(l0_runs(&source).iter().all(|(t, _, _)| t != "lead "));
-    // With the wrapper (render path) the walk reads it where Blitz placed it.
-    let dump = debug_layout_dump(TEXT_PROBE.as_bytes(), &opts()).expect("dump");
+    // The box walk follows Blitz's layout tree (port step 05), so it reads the
+    // anonymous block's run where Blitz placed it; the DOM-children walk did
+    // not read it at all (html_normalize's wrapper stood in for it).
     assert_eq!(l0_run(&dump, "lead "), (lead.origin_x, lead.origin_y));
+    let source = debug_layout_dump_source_html(TEXT_PROBE.as_bytes(), &opts()).expect("dump");
+    assert_eq!(l0_run(&source, "lead "), (lead.origin_x, lead.origin_y));
 }
 
 #[test]

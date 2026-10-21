@@ -20,7 +20,7 @@ fn page(width: f64, height: f64, margin: f64) -> PageBox {
 
 #[test]
 fn each_element_type_yields_a_positioned_box() {
-    // block/inline/table/img/text each produce a positioned box.
+    // block/table/img each produce a positioned box; inline text is shaped.
     let html = r#"<!DOCTYPE html><html><body style="margin:0">
         <div style="width:100px;height:30px">block</div>
         <p><span>inline</span> text</p>
@@ -28,7 +28,17 @@ fn each_element_type_yields_a_positioned_box() {
         <img src="x" style="width:40px;height:40px" />
     </body></html>"#;
     let doc = blitz_engine::lay_out(html);
-    for tag in ["div", "p", "span", "table", "td", "img"] {
+    // A non-atomic inline element (`<span>`) generates no box of its own (port
+    // step 05: the walk follows Blitz's box tree): its text is in the glyph runs
+    // of the `<p>`, the inline root that shaped it.
+    assert!(doc.boxes.iter().all(|b| b.tag.as_deref() != Some("span")));
+    let p = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("p"))
+        .expect("p box present");
+    assert!(p.text_runs.iter().any(|r| r.text.contains("inline text")));
+    for tag in ["div", "p", "table", "td", "img"] {
         let b = doc
             .boxes
             .iter()

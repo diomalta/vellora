@@ -33,13 +33,6 @@ base64 = "0.22.1"
 blitz-dom = { version = "=0.3.0-beta.4", default-features = false }
 blitz-html = { version = "=0.3.0-beta.4", default-features = false }
 blitz-traits = "=0.3.0-beta.4"
-# html5ever/markup5ever_rcdom are used ONLY by `src/html_normalize.rs` (a
-# String -> String pre-pass; no Blitz types cross it). Blitz 0.3.0-beta.4 itself
-# uses html5ever ^0.40.1, but markup5ever_rcdom has no 0.40 release on crates.io
-# (latest 0.39.0+unofficial requires html5ever ^0.39), so the normalizer stays on
-# 0.39 and the dependency graph carries two html5ever copies.
-html5ever = "0.39.0"
-markup5ever_rcdom = "0.39.0"
 # Parley/Taffy types re-exported by Blitz; we read (never construct) layouts.
 # Matches blitz-dom 0.3.0-beta.4's own `parley ^0.12` (default-features off, std).
 parley = { version = "0.12", default-features = false, features = ["std"] }

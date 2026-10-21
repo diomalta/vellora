@@ -13,7 +13,7 @@
 
 pub mod json;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::blitz_engine::{BlitzSnapshot, LaidOutBox, LayoutObserver};
 use crate::pagination::PaginationTrace;
@@ -45,6 +45,10 @@ pub(crate) struct RawNode {
     /// DOM children, in order.
     pub children: Vec<usize>,
     pub layout_parent: Option<usize>,
+    /// `Node::containing_block()`: the box this node's layout location is
+    /// relative to (`oof_containing_block` for an out-of-flow box Taffy hoisted
+    /// to its containing block, else the layout parent).
+    pub containing_block: Option<usize>,
     /// Blitz's layout children (incl. anonymous blocks), when it has computed them.
     pub layout_children: Option<Vec<usize>>,
     pub before: Option<usize>,
@@ -120,18 +124,20 @@ pub struct LayoutDump {
     /// Media type Blitz evaluated the stylesheets against. `build_document` never
     /// sets `DocumentConfig::media_type`, so this is Blitz's default, `screen`.
     pub media_type: &'static str,
-    /// `false` only for the source-HTML dump ([`DumpCapture::source_html`]):
-    /// html_normalize was skipped and Blitz laid out the input HTML as given.
-    pub html_normalize_applied: bool,
-    /// Wrappers html_normalize recorded inserting, and how many of them were
-    /// located in the Blitz parse of its output (expected equal).
-    pub normalize_wrappers_recorded: usize,
-    pub normalize_wrappers_located: usize,
+    /// `true` only for the source-HTML dump ([`DumpCapture::source_html`],
+    /// fidelity layer `N0`). Since port step 05 there is no HTML pre-pass, so
+    /// both dumps lay out the input as given (JSON `html_normalize`: `"skipped"`
+    /// here, `"removed"` otherwise).
+    pub source_html: bool,
     /// Every node seen in the DOM walk or in Blitz's layout tree.
     pub nodes: Vec<DumpNode>,
     /// `B0`: Blitz's own layout tree, walked through `layout_children` (which
-    /// includes anonymous blocks) from the root element, accumulating each node's
-    /// `final_layout` (and `unrounded_layout`) location under its layout parent.
+    /// includes anonymous blocks and `::before`/`::after` boxes) from the root
+    /// element. Each box is placed the way Blitz's painter places it: its
+    /// `final_layout` (and `unrounded_layout`) location added to the origin of its
+    /// `containing_block` (port step 05; before, every box was accumulated under
+    /// its layout parent, which put out-of-flow boxes hoisted to an ancestor
+    /// containing block at the wrong place).
     pub blitz_tree: Vec<DumpBlitzBox>,
     /// Text of the `B0` tree: every Parley run of every inline root in it
     /// (anonymous blocks and pseudo-elements included), positioned the way
@@ -139,7 +145,11 @@ pub struct LayoutDump {
     /// `block_offset` + the run's raw `offset()`/`baseline()` — i.e. BEFORE any
     /// vellora reader compensation. In the source-HTML dump this is `N0` text.
     pub blitz_runs: Vec<DumpBlitzRun>,
-    /// `L0` (vellora's DOM-children walk, before any pass), then one layer per
+    /// `L0` (vellora's box walk, before any pass: Blitz's box tree in layout
+    /// order with each table's row structure re-inserted, positioned through the
+    /// containing-block chain; since port step 05 it includes anonymous blocks and
+    /// `::before`/`::after` boxes and no longer text nodes or non-atomic inline
+    /// elements, see `blitz_engine::LaidOutBox`), then one layer per
     /// [`crate::blitz_engine::LAYOUT_NORMALIZE_PASSES`] entry, in order. Box `i`
     /// of every layer is the same node: passes never add, drop, or reorder boxes
     /// (checked, see `layer_order_violations`).
@@ -167,13 +177,10 @@ pub struct DumpNode {
     pub id_attr: Option<String>,
     pub class_attr: Option<String>,
     /// Stable key in the SOURCE DOM, e.g. `html>body:nth-child(2)>div:nth-child(1)`.
-    /// `:nth-child(k)` counts element siblings (CSS semantics) with html_normalize
-    /// wrappers made transparent, so keys equal the browser's for the same input.
-    /// Nodes without a source counterpart end in a `::`/`#` segment
-    /// (`::vellora-wrapper(j)`, `::blitz-anon(j)`, `::before`, `::after`, `#text`).
+    /// `:nth-child(k)` counts element siblings (CSS semantics), so keys equal the
+    /// browser's for the same input. Nodes without a source counterpart end in a
+    /// `::`/`#` segment (`::blitz-anon(j)`, `::before`, `::after`, `#text`).
     pub dom_path: String,
-    /// Inserted by html_normalize (absent from the source DOM).
-    pub synthetic: bool,
     pub parent: Option<usize>,
     pub layout_parent: Option<usize>,
     pub inline_root: bool,
@@ -299,10 +306,8 @@ pub struct DumpRunMeta {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct DumpCapture {
-    skip_html_normalize: bool,
-    wrapper_chains: Vec<Vec<usize>>,
+    source_html: bool,
     viewport_px: (u32, u32),
-    wrappers_located: usize,
     nodes: Vec<DumpNode>,
     blitz_tree: Vec<DumpBlitzBox>,
     blitz_runs: Vec<DumpBlitzRun>,
@@ -313,14 +318,6 @@ pub struct DumpCapture {
 }
 
 impl LayoutObserver for DumpCapture {
-    fn skip_html_normalize(&self) -> bool {
-        self.skip_html_normalize
-    }
-
-    fn normalize_trace(&mut self) -> Option<&mut Vec<Vec<usize>>> {
-        Some(&mut self.wrapper_chains)
-    }
-
     fn after_walk(
         &mut self,
         blitz: &BlitzSnapshot<'_>,
@@ -330,12 +327,11 @@ impl LayoutObserver for DumpCapture {
         self.viewport_px = viewport;
         let raw = blitz.capture();
         let index: HashMap<usize, &RawNode> = raw.nodes.iter().map(|n| (n.id, n)).collect();
-        let (mut nodes, located) = dump_dom_nodes(&raw, &index, &self.wrapper_chains);
+        let mut nodes = dump_dom_nodes(&raw, &index);
         let (tree, runs) = dump_blitz_tree(&raw, &index, &mut nodes);
         self.blitz_tree = tree;
         self.blitz_runs = runs;
         self.nodes = nodes;
-        self.wrappers_located = located;
         let (metas, mismatches) = dump_run_meta(&raw, boxes);
         self.runs = metas;
         self.run_meta_mismatches = mismatches;
@@ -360,18 +356,19 @@ impl LayoutObserver for DumpCapture {
 }
 
 impl DumpCapture {
-    /// A capture that SKIPS html_normalize (fidelity layer `N0`: Blitz on the
-    /// source HTML). Its Blitz tree is keyed by the source DOM with no wrappers.
+    /// The source-HTML capture (fidelity layer `N0`: Blitz on the source HTML).
+    /// Since port step 05 deleted the HTML pre-pass this lays out exactly what
+    /// the default capture does; only the JSON marks it as the source layer.
     pub fn source_html() -> Self {
         Self {
-            skip_html_normalize: true,
+            source_html: true,
             ..Self::default()
         }
     }
 
-    /// Whether this capture skips html_normalize (the source-HTML / `N0` dump).
+    /// Whether this is the source-HTML (`N0`) capture.
     pub fn is_source_html(&self) -> bool {
-        self.skip_html_normalize
+        self.source_html
     }
 
     pub(crate) fn finish(
@@ -384,9 +381,7 @@ impl DumpCapture {
             viewport_height_px: self.viewport_px.1,
             page,
             media_type: "screen",
-            html_normalize_applied: !self.skip_html_normalize,
-            normalize_wrappers_recorded: self.wrapper_chains.len(),
-            normalize_wrappers_located: self.wrappers_located,
+            source_html: self.source_html,
             nodes: self.nodes,
             blitz_tree: self.blitz_tree,
             blitz_runs: self.blitz_runs,
@@ -431,7 +426,7 @@ fn dump_layer(name: &str, boxes: &[LaidOutBox]) -> DumpLayer {
     }
 }
 
-fn dump_node(node: &RawNode, kind: &'static str, dom_path: String, synthetic: bool) -> DumpNode {
+fn dump_node(node: &RawNode, kind: &'static str, dom_path: String) -> DumpNode {
     DumpNode {
         node_id: node.id,
         kind,
@@ -439,7 +434,6 @@ fn dump_node(node: &RawNode, kind: &'static str, dom_path: String, synthetic: bo
         id_attr: node.id_attr.clone(),
         class_attr: node.class_attr.clone(),
         dom_path,
-        synthetic,
         parent: node.parent,
         layout_parent: node.layout_parent,
         inline_root: node.inline_root,
@@ -449,73 +443,19 @@ fn dump_node(node: &RawNode, kind: &'static str, dom_path: String, synthetic: bo
 }
 
 /// Key every DOM node by its SOURCE-DOM path (see [`DumpNode::dom_path`]).
-/// Returns the nodes plus how many recorded html_normalize wrappers were located.
-fn dump_dom_nodes(
-    raw: &RawTree,
-    index: &HashMap<usize, &RawNode>,
-    wrapper_chains: &[Vec<usize>],
-) -> (Vec<DumpNode>, usize) {
-    // 1) Locate the synthetic wrappers by element-index chain (element children
-    //    only, from the document node) — the same chain the normalizer recorded.
-    let wanted: HashSet<&[usize]> = wrapper_chains.iter().map(Vec::as_slice).collect();
-    let mut synthetic: HashSet<usize> = HashSet::new();
-    let mut stack: Vec<(usize, Vec<usize>)> = vec![(raw.document, Vec::new())];
-    while let Some((id, chain)) = stack.pop() {
-        let Some(node) = index.get(&id) else {
-            continue;
-        };
-        let mut element_index = 0usize;
-        for &child in &node.children {
-            let Some(child_node) = index.get(&child) else {
-                continue;
-            };
-            if child_node.kind != "element" {
-                continue;
-            }
-            let mut child_chain = chain.clone();
-            child_chain.push(element_index);
-            element_index += 1;
-            if wanted.contains(child_chain.as_slice()) {
-                synthetic.insert(child);
-            }
-            stack.push((child, child_chain));
-        }
-    }
-
-    // 2) Assign logical paths: a synthetic wrapper is transparent, i.e. its
-    //    children count as children of the wrapper's own (logical) parent.
+fn dump_dom_nodes(raw: &RawTree, index: &HashMap<usize, &RawNode>) -> Vec<DumpNode> {
     let Some(root) = index.get(&raw.document) else {
-        return (Vec::new(), synthetic.len());
+        return Vec::new();
     };
-    let mut out = vec![dump_node(root, "document", "#document".to_string(), false)];
+    let mut out = vec![dump_node(root, "document", "#document".to_string())];
     let mut stack: Vec<(usize, String)> = vec![(root.id, String::new())];
     while let Some((id, path)) = stack.pop() {
         let Some(node) = index.get(&id) else {
             continue;
         };
-        let mut sequence: Vec<usize> = Vec::new();
-        let mut wrapper_index = 0usize;
-        let mut work: Vec<usize> = node.children.iter().rev().copied().collect();
-        while let Some(child) = work.pop() {
-            let Some(child_node) = index.get(&child) else {
-                continue;
-            };
-            if synthetic.contains(&child) {
-                wrapper_index += 1;
-                out.push(dump_node(
-                    child_node,
-                    "element",
-                    format!("{path}>::vellora-wrapper({wrapper_index})"),
-                    true,
-                ));
-                work.extend(child_node.children.iter().rev().copied());
-            } else {
-                sequence.push(child);
-            }
-        }
         let mut element_k = 0usize;
         let mut next: Vec<(usize, String)> = Vec::new();
-        for child in sequence {
+        for &child in &node.children {
             let Some(child_node) = index.get(&child) else {
                 continue;
             };
@@ -529,37 +469,63 @@ fn dump_dom_nodes(
                     } else {
                         format!("{path}>{tag}:nth-child({element_k})")
                     };
-                    out.push(dump_node(child_node, kind, child_path.clone(), false));
+                    out.push(dump_node(child_node, kind, child_path.clone()));
                     next.push((child, child_path));
                 }
-                "text" => out.push(dump_node(child_node, kind, format!("{path}>#text"), false)),
-                _ => out.push(dump_node(
-                    child_node,
-                    kind,
-                    format!("{path}>#{kind}"),
-                    false,
-                )),
+                "text" => out.push(dump_node(child_node, kind, format!("{path}>#text"))),
+                _ => out.push(dump_node(child_node, kind, format!("{path}>#{kind}"))),
             }
         }
         if !path.is_empty() {
             for (pseudo, name) in [(node.before, "before"), (node.after, "after")] {
                 if let Some(pseudo_node) = pseudo.and_then(|p| index.get(&p)) {
-                    out.push(dump_node(
-                        pseudo_node,
-                        "pseudo",
-                        format!("{path}>::{name}"),
-                        false,
-                    ));
+                    out.push(dump_node(pseudo_node, "pseudo", format!("{path}>::{name}")));
                 }
             }
         }
         stack.extend(next.into_iter().rev());
     }
-    (out, synthetic.len())
+    out
+}
+
+/// Absolute border-box origin of `id` as Blitz's painter places it: its layout
+/// location plus the origin of its `containing_block` (`Node::absolute_position`
+/// without scroll offsets), as `[x, y, unrounded x, unrounded y]`, memoised.
+fn painter_origin(
+    index: &HashMap<usize, &RawNode>,
+    id: usize,
+    memo: &mut HashMap<usize, [f64; 4]>,
+) -> [f64; 4] {
+    let mut chain = Vec::new();
+    let mut origin = [0.0; 4];
+    let mut current = Some(id);
+    while let Some(c) = current {
+        if let Some(known) = memo.get(&c) {
+            origin = *known;
+            break;
+        }
+        let Some(node) = index.get(&c) else {
+            break;
+        };
+        chain.push(c);
+        current = node.containing_block;
+    }
+    for c in chain.into_iter().rev() {
+        if let Some(l) = index.get(&c).and_then(|n| n.layout) {
+            origin = [
+                origin[0] + l.x,
+                origin[1] + l.y,
+                origin[2] + l.ux,
+                origin[3] + l.uy,
+            ];
+        }
+        memo.insert(c, origin);
+    }
+    origin
 }
 
 /// `B0`: Blitz's own layout tree, plus its raw text runs. Anonymous blocks (absent
-/// from the DOM walk) are appended to `nodes`, keyed under their layout parent.
+/// from the DOM) are appended to `nodes`, keyed under their layout parent.
 fn dump_blitz_tree(
     raw: &RawTree,
     index: &HashMap<usize, &RawNode>,
@@ -574,22 +540,19 @@ fn dump_blitz_tree(
         runs_of.entry(run.owner).or_default().push(run);
     }
     let mut anon_count: HashMap<Option<usize>, usize> = HashMap::new();
+    let mut origins: HashMap<usize, [f64; 4]> = HashMap::new();
     let mut out = Vec::new();
     let mut text = Vec::new();
-    // (node, parent abs x/y from final_layout, parent abs x/y from unrounded_layout, depth)
-    let mut stack: Vec<(usize, f64, f64, f64, f64, usize)> =
-        vec![(raw.root_element, 0.0, 0.0, 0.0, 0.0, 0)];
-    while let Some((id, px, py, upx, upy, depth)) = stack.pop() {
+    // (node, depth): layout-tree order; positions from the containing-block chain.
+    let mut stack: Vec<(usize, usize)> = vec![(raw.root_element, 0)];
+    while let Some((id, depth)) = stack.pop() {
         let Some(node) = index.get(&id) else {
             continue;
         };
         let Some(l) = node.layout else {
             continue;
         };
-        let x = px + l.x;
-        let y = py + l.y;
-        let ux = upx + l.ux;
-        let uy = upy + l.uy;
+        let [x, y, ux, uy] = painter_origin(index, id, &mut origins);
         if !path_of.contains_key(&id) {
             let parent = node.layout_parent;
             let parent_path = parent
@@ -598,7 +561,7 @@ fn dump_blitz_tree(
             let j = anon_count.entry(parent).or_insert(0);
             *j += 1;
             let path = format!("{parent_path}>::blitz-anon({j})");
-            nodes.push(dump_node(node, node.kind, path.clone(), false));
+            nodes.push(dump_node(node, node.kind, path.clone()));
             path_of.insert(id, path);
         }
         // Blitz's painter places an inline root's text at its content box
@@ -646,7 +609,7 @@ fn dump_blitz_tree(
         });
         if let Some(children) = &node.layout_children {
             for &child in children.iter().rev() {
-                stack.push((child, x, y, ux, uy, depth + 1));
+                stack.push((child, depth + 1));
             }
         }
     }

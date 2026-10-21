@@ -276,3 +276,19 @@ fn the_first_unresolved_image_in_document_order_is_reported() {
         other => panic!("expected image:unresolved, got {other:?}"),
     }
 }
+
+#[test]
+fn a_hidden_image_still_counts_toward_the_located_occurrence() {
+    // The box walk only visits rendered boxes (port step 05), but the locator
+    // maps the k-th `<img>` of the DOM to the k-th `<img` of the source: the
+    // hidden first image still counts, so the diagnostic points at line 3.
+    let html = "<!DOCTYPE html><html><head><style>img{width:9px;height:9px}.h{display:none}</style></head>\n<body><img class=\"h\" src=\"hidden.png\">\n<img src=\"shown.png\"></body></html>";
+    let err = render(html.as_bytes(), &opts(HashMap::new(), None)).expect_err("rejects");
+    match err {
+        VelloraError::Unsupported(d) => {
+            assert_eq!(d.feature, "image:unresolved");
+            assert_eq!((d.line, d.col), (Some(3), Some(1)));
+        }
+        other => panic!("expected image:unresolved, got {other:?}"),
+    }
+}

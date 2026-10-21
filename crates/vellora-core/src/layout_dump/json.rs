@@ -120,7 +120,9 @@ fn value(dump: &LayoutDump) -> V {
                 ("id_attr", V::opt_str(n.id_attr.as_deref())),
                 ("class", V::opt_str(n.class_attr.as_deref())),
                 ("path", V::Str(n.dom_path.clone())),
-                ("synthetic", V::Bool(n.synthetic)),
+                // Schema 2 field: an html_normalize wrapper. That pre-pass was
+                // deleted in port step 05, so no node is synthetic any more.
+                ("synthetic", V::Bool(false)),
                 ("parent", V::opt_int(n.parent)),
                 ("layout_parent", V::opt_int(n.layout_parent)),
                 ("inline_root", V::Bool(n.inline_root)),
@@ -336,13 +338,17 @@ fn value(dump: &LayoutDump) -> V {
             ]),
         ),
         ("media_type", V::Str(dump.media_type.into())),
+        // Schema 2 fields of the former html_normalize pre-pass (deleted in port
+        // step 05): the source-HTML (`N0`) dump still reads `skipped`, which is what
+        // `fidelity/layout-diff/lib/vellora-model.mjs` checks; the render-path dump
+        // reads `removed`. No wrapper is ever recorded.
         (
             "html_normalize",
             V::Str(
-                if dump.html_normalize_applied {
-                    "applied"
-                } else {
+                if dump.source_html {
                     "skipped"
+                } else {
+                    "removed"
                 }
                 .into(),
             ),
@@ -350,14 +356,8 @@ fn value(dump: &LayoutDump) -> V {
         (
             "normalize",
             V::Obj(vec![
-                (
-                    "wrappers_recorded",
-                    V::Int(dump.normalize_wrappers_recorded as i64),
-                ),
-                (
-                    "wrappers_located",
-                    V::Int(dump.normalize_wrappers_located as i64),
-                ),
+                ("wrappers_recorded", V::Int(0)),
+                ("wrappers_located", V::Int(0)),
             ]),
         ),
         (

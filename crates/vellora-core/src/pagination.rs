@@ -687,6 +687,41 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
 
     let mut fragments = Vec::new();
 
+    // A body whose in-flow content is all inline-level is itself the inline root:
+    // Blitz shapes its text into the body box (there is no anonymous block to
+    // carry it), and its children in the box list are only the boxes embedded in
+    // those lines (atomic inlines, out-of-flow and floated boxes). Fragmenting the
+    // body's children alone dropped that text (`tests/walk.rs`); the whole body
+    // is one block fragment instead. The body's own background and borders stay
+    // out of it: CSS 2.2 §14.2 propagates the body background to the canvas,
+    // which pagination does not model (a separate change).
+    if let Some(body_index) = doc
+        .boxes
+        .iter()
+        .position(|b| b.tag.as_deref() == Some("body") && !b.text_runs.is_empty())
+    {
+        let end = subtree_end(&doc.boxes, body_index);
+        let mut subtree = doc.boxes[body_index..end].to_vec();
+        subtree[0].visual_rects.clear();
+        subtree[0].rounded_borders.clear();
+        let (top, bottom) = span(&subtree);
+        let body = &doc.boxes[body_index];
+        fragments.push(Fragment {
+            top,
+            bottom,
+            contained_bottom: bottom.min(box_bottom(body)),
+            break_margin: leading_margin(&subtree),
+            collapsed_table: false,
+            table_id: None,
+            is_thead: false,
+            break_before: body.break_before_page,
+            members: Vec::new(),
+            boxes: subtree,
+        });
+        finalize_fragments(&mut fragments);
+        return fragments;
+    }
+
     // Walk the flat box list. For tables, break into rows; otherwise treat each
     // top-level body child subtree as one fragment.
     let boxes = &doc.boxes;

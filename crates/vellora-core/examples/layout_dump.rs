@@ -7,10 +7,12 @@
 //!   [--no-html-normalize]
 //! ```
 //!
-//! `--no-html-normalize` dumps Blitz's layout of the input HTML exactly as given
-//! (`vellora_core::debug_layout_dump_source_html`; fidelity layer `N0`), i.e.
-//! without vellora's html_normalize pre-pass. It cannot be combined with `--pdf`
-//! (the PDF is always the production render, which always normalizes).
+//! `--no-html-normalize` writes the source-HTML dump
+//! (`vellora_core::debug_layout_dump_source_html`; fidelity layer `N0`). It once
+//! skipped vellora's html_normalize pre-pass; port step 05 deleted that pre-pass,
+//! so the render path lays out the input as given too and the N0 Blitz tree
+//! equals the default dump's. It cannot be combined with `--pdf` (the source dump
+//! has no pagination layer; `--pdf` belongs with the default dump).
 //!
 //! `--pdf` additionally writes the normal `vellora_core::render` output for the
 //! same input (fixed creation date), so a paginated probe can be compared with
@@ -23,8 +25,10 @@
 //!
 //! - `blitz_tree` (`B0`): Blitz's own layout tree (`layout_children`, incl.
 //!   anonymous blocks), absolute border boxes from rounded `final_layout` and
-//!   from `unrounded_layout`; `blitz_runs`: its raw Parley text runs.
-//! - `layers[0]` (`L0`): vellora's DOM-children box walk, before any pass.
+//!   from `unrounded_layout`, each placed on its containing block's origin as
+//!   Blitz's painter places it; `blitz_runs`: its raw Parley text runs.
+//! - `layers[0]` (`L0`): vellora's box walk (Blitz's box tree, table rows
+//!   re-inserted), before any pass.
 //! - `layers[1..]`: after each named `layout_normalize` pass, in render order.
 //! - `pagination` (`P`): every fragment placement of `paginate` (null for N0).
 //!

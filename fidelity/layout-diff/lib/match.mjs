@@ -834,17 +834,23 @@ export function diffLayouts({
       continue;
     }
     const node = vellora.nodesByPath.get(path);
+    // Since port step 05 the walk follows Blitz's box tree, so L0 carries Blitz's anonymous
+    // block boxes (`::blitz-anon(j)`): no source node, no Chromium DOM node (Chromium's
+    // anonymous boxes are not in its DOMSnapshot). Their text is compared via the runs, which
+    // fold into the parent element's owner key (vellora-model ownerKeyFn).
     const category = node?.synthetic
       ? "html_normalize wrapper (no source node)"
-      : el?.policy === "no-layout"
-        ? "display:none in Chromium (vellora zero box)"
-        : el?.policy === "inline-text-only"
-          ? "inline element (compared via text runs)"
-          : el?.policy === "no-blitz-box"
-            ? "table row/group: not a Blitz layout node (zero box in walk)"
-            : !el
-              ? "no Chromium node with this path"
-              : `chromium policy ${el.policy}`;
+      : node?.kind === "anonymous"
+        ? "Blitz anonymous block (no source node)"
+        : el?.policy === "no-layout"
+          ? "display:none in Chromium (vellora zero box)"
+          : el?.policy === "inline-text-only"
+            ? "inline element (compared via text runs)"
+            : el?.policy === "no-blitz-box"
+              ? "table row/group: not a Blitz layout node (zero box in walk)"
+              : !el
+                ? "no Chromium node with this path"
+                : `chromium policy ${el.policy}`;
     velloraOnly[category] = [...(velloraOnly[category] ?? []), path];
   }
   const chromeOnly = tree.elements

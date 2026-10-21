@@ -35,7 +35,6 @@ pub mod blitz_engine;
 pub mod break_css;
 pub mod css_scan;
 mod fonts;
-mod html_normalize;
 #[doc(hidden)]
 pub mod layout_dump;
 mod layout_normalize;
@@ -126,10 +125,16 @@ pub fn debug_layout_dump(
     Ok(capture.finish(page_box, Some(trace)))
 }
 
-/// [`debug_layout_dump`] with html_normalize SKIPPED: Blitz lays out the input
-/// HTML exactly as given (fidelity layer `N0`, "Blitz on the source HTML"), so
-/// the tooling can separate what html_normalize changes from what Blitz itself
-/// computes. Debug/fidelity tooling ONLY: [`render`] always normalizes.
+/// The source-HTML dump (fidelity layer `N0`, "Blitz on the source HTML"):
+/// [`debug_layout_dump`] without the pagination layer, marked as a source dump.
+///
+/// It existed to separate vellora's former `html_normalize` HTML pre-pass from
+/// Blitz's own layout. Port step 05 deleted that pre-pass (the box walk now
+/// reads Blitz's anonymous blocks itself), so the render path lays out the input
+/// exactly as given and this dump's Blitz tree equals [`debug_layout_dump`]'s
+/// by construction. Kept so `fidelity/layout-diff/` keeps its `N0` layer and the
+/// source-DOM checks built on it (`source_dom_keys_vs_chromium`). Debug/fidelity
+/// tooling ONLY.
 #[doc(hidden)]
 pub fn debug_layout_dump_source_html(
     html_bytes: &[u8],
@@ -137,7 +142,7 @@ pub fn debug_layout_dump_source_html(
 ) -> Result<layout_dump::LayoutDump, VelloraError> {
     let mut capture = layout_dump::DumpCapture::source_html();
     let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
-    // Not what `render` paginates (html_normalize skipped): no pagination layer.
+    // The source layer stops before pagination (layer `P` is in the main dump).
     Ok(capture.finish(page_box, None))
 }
 

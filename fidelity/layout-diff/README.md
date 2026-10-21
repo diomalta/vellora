@@ -14,6 +14,27 @@ rendering.
 > Chromium's continuous flow. Page breaks themselves, repeated `<thead>` copies and margin boxes
 > are not compared; `pdf-probe.mjs` is the separate PDF-level probe.
 
+## Since port step 05 (`phaseb/05-walk-rewrite`, CONFIRMED from source and tests, 2026-10-21)
+
+- **`html_normalize` is deleted.** The render path lays out the input exactly as given; there is no
+  pre-pass and no re-parse. `--no-html-normalize` / `debug_layout_dump_source_html` still write the
+  `N0` dump (JSON `html_normalize: "skipped"`; the render-path dump reads `"removed"`), and its
+  Blitz tree equals `B0` by construction (`tests/layout_dump.rs`), so the N0 → B0 step is always
+  empty and the `normalize_*` checks always pass (0 wrappers recorded, 0 located). Kept so the
+  `source_dom_keys_vs_chromium` check and older dumps keep working.
+- **`L0` is the box walk over Blitz's box tree** (`blitz_engine::walk_box`): `layout_children`
+  in layout order, so anonymous blocks (`::blitz-anon(j)` keys) and `::before`/`::after` boxes are
+  in L0, while text nodes and non-atomic inline elements (`<span>`, `<b>`) are not (their text is
+  in the inline root's runs). Tables keep their DOM row structure as zero-size boxes. Every box is
+  placed through `Node::containing_block()` (absolute and fixed boxes on their containing block).
+  L0 anonymous boxes are categorised "Blitz anonymous block (no source node)" in the vellora-only
+  list and do not fail `dom_key_alignment`.
+- **`B0` boxes and text are placed the way Blitz's painter places them**: each box's location is
+  added to its `containing_block`'s origin (it used to be accumulated under the layout parent,
+  which put out-of-flow boxes hoisted to an ancestor containing block at the wrong place). The
+  "Limit" note below about out-of-flow text no longer applies.
+- The sections below describe the pin-era code and are kept as history.
+
 ## How vellora lays out (CONFIRMED from source, 2026-10-21, pin `2003ba5`)
 
 - `lib.rs::render` → `validate_and_lay_out` (`lib.rs`): CSS gate → depth gate → font gate →
@@ -70,7 +91,7 @@ rendering.
 | `N0u` | Same N0 tree from `unrounded_layout`. Diagnostic only (flags "rounding" when N0 diverges but N0u does not). |
 | `B0` | Blitz's own layout tree of **html_normalize's output** (what the render path lays out). With N0 present, **N0 → B0 is html_normalize's step**. Without N0, B0 is raw Blitz only if html_normalize changed nothing. |
 | `B0u` | Same B0 tree from `unrounded_layout`. Diagnostic only. |
-| `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` applied as Blitz's painter applies it since `phaseb/04-block-offset`, dropped before). |
+| `L0` | vellora's walk output before any pass (since `phaseb/05-walk-rewrite` the box-tree walk, see above). Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` applied as Blitz's painter applies it since `phaseb/04-block-offset`, dropped before). |
 | pass layers | `LaidOutBox` list after each pass above, named after it (3 since `phaseb/03-table-passes`; 7 in the Phase A dumps). The last one is the final pre-pagination layer (`final_layer`, the headline's layer). |
 | `P` | Pagination (schema-2 dumps): the final layer with every box `paginate` placed moved by its fragment's in-page drift (`placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages; a repeated `<thead>` takes its first injection). Boxes pagination never places (html/body/table/tbody, flattened wrappers, fragments with nothing to paint) paint nothing: **n/a** in P, not lost; text runs on them would be lost. |
 

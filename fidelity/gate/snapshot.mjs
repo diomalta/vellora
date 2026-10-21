@@ -9,7 +9,8 @@
 //              crashtests | null, pdfProbe | null, canaries | null, codeChecks | null, steps }.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { basename, join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import {
   classifyCheckFailures,
@@ -46,10 +47,28 @@ export function verifyIntegrity(dir, manifest) {
 }
 
 /**
- * Snapshots written before the allowlist existed (Phase A baselines, old runs) carry only
- * layoutDiff.checksFailed: classify them with the committed allowlist so the gate applies one rule.
+ * The allowlist as committed from port/00-start to port/04-block-offset, frozen: snapshots that
+ * predate the allowlist are classified with it, so their classification does not drift when the
+ * live list changes (port step 05 deleted html_normalize and with it four entries the Phase A
+ * baselines still need).
  */
-export function withCheckAllowlist(fixtures, entries = loadExpectedFailures()) {
+export const PHASE_A_ALLOWLIST_FILE = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "layout-diff",
+  "expected-check-failures-phase-a.json",
+);
+
+/**
+ * Snapshots written before the allowlist existed (Phase A baselines, old runs) carry only
+ * layoutDiff.checksFailed: classify them with the frozen allowlist of their era (see
+ * PHASE_A_ALLOWLIST_FILE) so the gate applies one rule. Runs and gate-schema baselines carry
+ * their own classification, made with the live allowlist when they were measured.
+ */
+export function withCheckAllowlist(
+  fixtures,
+  entries = loadExpectedFailures(PHASE_A_ALLOWLIST_FILE),
+) {
   return fixtures.map((f) => {
     const l = f.layoutDiff;
     if (!l || l.status !== "ran" || "checksUnexpectedFailures" in l) return f;
