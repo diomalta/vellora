@@ -262,8 +262,9 @@ mod tests {
         assert_eq!(name(), "vellora-core");
     }
 
-    /// The text every page draws: each glyph run's source substring, in emit order.
-    fn drawn_text(html: &str, syntax: DocumentSyntax) -> String {
+    /// Every glyph run the pages emit: its source substring (trimmed) and whether its origin
+    /// lies inside its page box (a run below the page edge is in the PDF but never visible).
+    fn emitted_runs(html: &str, syntax: DocumentSyntax) -> Vec<(String, bool)> {
         let opts = RenderOptions::default();
         let (laid_out, page_box) = validate_and_lay_out(
             html.as_bytes(),
@@ -273,14 +274,17 @@ mod tests {
         )
         .unwrap_or_else(|e| panic!("lays out: {e}"));
         let paginated = super::pagination::paginate(&laid_out, &page_box);
-        let mut text = String::new();
-        for run in paginated.pages.iter().flat_map(|p| p.text_runs.iter()) {
-            let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
-            let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
-            text.push_str(&run.text[start..end]);
-            text.push('\n');
+        let mut out = Vec::new();
+        for page in &paginated.pages {
+            for run in &page.text_runs {
+                let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+                let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+                let on_page = (0.0..=page.width_px).contains(&run.origin_x)
+                    && (0.0..=page.height_px).contains(&run.origin_y);
+                out.push((run.text[start..end].trim().to_string(), on_page));
+            }
         }
-        text
+        out
     }
 
     /// The `oss-postmark-receipt` corpus template (XHTML 1.0 Transitional doctype, three `<br>`
@@ -290,16 +294,29 @@ mod tests {
     const AFTER_BR: [&str; 3] = ["The [Product Name] team", "1234 Street Rd.", "Suite 1234"];
 
     #[test]
-    fn step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_draws_it() {
+    fn step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_emits_it() {
         // Up to port step 07 every render used blitz-html's sniffing `HtmlDocument::from_html`:
         // this template's XHTML doctype sent it to xml5ever, where `<br>` is not void and the
         // text after it became the `<br>`'s content, never drawn (step 05's INV-X1/X2 6 -> 5).
-        let old = drawn_text(POSTMARK, DocumentSyntax::BlitzSniffed);
-        let new = drawn_text(POSTMARK, DocumentSyntax::Html);
+        let old = emitted_runs(POSTMARK, DocumentSyntax::BlitzSniffed);
+        let new = emitted_runs(POSTMARK, DocumentSyntax::Html);
         for text in AFTER_BR {
-            assert!(!old.contains(text), "the step-07 parse drew {text:?}");
-            assert!(new.contains(text), "the HTML parse lost {text:?}:\n{new}");
+            assert!(
+                !old.iter().any(|(t, _)| t.contains(text)),
+                "the step-07 parse emitted {text:?}"
+            );
+            assert!(
+                new.iter().any(|(t, _)| t == text),
+                "the HTML parse lost {text:?}: {new:?}"
+            );
         }
+        // Emitted is not visible (port step 09, review of step 08): the HTML parse draws "The
+        // [Product Name] team" on page 1, but the oversize layout table is placed whole, so
+        // "1234 Street Rd." and "Suite 1234" sit below the page edge (Chrome 155 breaks the
+        // table onto page 2). Pinned in `tests/html_parse.rs` as a known gap.
+        let visible = |text: &str| new.iter().any(|(t, on_page)| t == text && *on_page);
+        assert!(visible(AFTER_BR[0]), "{new:?}");
+        assert!(!visible(AFTER_BR[1]) && !visible(AFTER_BR[2]), "{new:?}");
     }
 
     #[test]

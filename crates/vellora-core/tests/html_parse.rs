@@ -203,34 +203,79 @@ fn image_only_line_ignores_the_quirks_line_height_rule_known_gap() {
 /// The `oss-postmark-receipt` corpus template, rendered raw (its template tags stay literal text).
 const POSTMARK: &str = include_str!("../../../fixtures/oss-postmark-receipt/index.html");
 
+/// Every glyph run of the render: (0-based page, trimmed source text, origin x and y in pt,
+/// whether the origin lies inside the page box).
+fn emitted(p: &pagination::Paginated) -> Vec<(usize, String, f64, f64, bool)> {
+    p.pages
+        .iter()
+        .enumerate()
+        .flat_map(|(i, page)| {
+            page.text_runs.iter().map(move |run| {
+                let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+                let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+                let on_page = (0.0..=page.width_px).contains(&run.origin_x)
+                    && (0.0..=page.height_px).contains(&run.origin_y);
+                (
+                    i,
+                    run.text[start..end].trim().to_string(),
+                    run.origin_x * 0.75,
+                    run.origin_y * 0.75,
+                    on_page,
+                )
+            })
+        })
+        .collect()
+}
+
 #[test]
-fn postmark_receipt_draws_the_text_after_each_br() {
+fn postmark_receipt_emits_the_text_after_each_br() {
     // The corpus loss of port steps 05-07 (INV-X1/X2 found 6 -> 5, "[Product Name]" 2 of 3): the
     // template's first line is an XHTML 1.0 Transitional doctype, so blitz-html parsed it as XML
     // and dropped the text after its three `<br>`. The step-07 parse is reproduced in
-    // `src/lib.rs` `step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_draws_it`.
-    let p = paginate(POSTMARK);
-    let drawn: Vec<String> = p
-        .pages
-        .iter()
-        .flat_map(|page| page.text_runs.iter())
-        .map(|run| {
-            let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
-            let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
-            run.text[start..end].trim().to_string()
-        })
-        .collect();
+    // `src/lib.rs` `step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_emits_it`.
+    // "Emits": the text is in the PDF; two of the three lines are below the page edge (the known
+    // gap below). Before port step 09 this test was named "draws" and checked existence only.
+    let runs = emitted(&paginate(POSTMARK));
     for text in ["The [Product Name] team", "1234 Street Rd.", "Suite 1234"] {
         assert!(
-            drawn.iter().any(|t| t == text),
-            "{text:?} not drawn: {drawn:?}"
+            runs.iter().any(|(_, t, ..)| t == text),
+            "{text:?} not emitted: {runs:?}"
         );
     }
-    let product_name = drawn
+    // Visible: the first line after a <br>, and all three "[Product Name]" occurrences.
+    assert!(
+        runs.iter()
+            .any(|(_, t, .., on_page)| t == "The [Product Name] team" && *on_page),
+        "{runs:?}"
+    );
+    let product_name: Vec<bool> = runs
         .iter()
-        .filter(|t| t.contains("[Product Name]"))
-        .count();
-    assert_eq!(product_name, 3, "{drawn:?}");
+        .filter(|(_, t, ..)| t.contains("[Product Name]"))
+        .map(|(.., on_page)| *on_page)
+        .collect();
+    assert_eq!(product_name, [true, true, true], "{runs:?}");
+}
+
+#[test]
+fn postmark_receipt_draws_its_layout_table_tail_off_page_known_gap() {
+    // KNOWN GAP (port step 08 finding, pinned at step 09): the template's body is one layout
+    // table taller than a page. vellora places it whole on page 1 (an `oversize-block`), so its
+    // tail is emitted below the 841.92 pt page edge: in the PDF, never visible. Chrome 155
+    // breaks the table: 2 pages, "1234 Street Rd." and "Suite 1234" on page 2 at baselines
+    // 225.75 and 241.50 pt (probe g_postmark_raw, fidelity/baselines/port/09-review-fixes).
+    // A fix that fragments the table must update this test.
+    let p = paginate(POSTMARK);
+    assert_eq!(p.pages.len(), 1, "Chrome prints 2 pages");
+    let runs = emitted(&p);
+    for (text, at_pt) in [("1234 Street Rd.", 1038.60), ("Suite 1234", 1054.35)] {
+        let (page, _, _, y, on_page) = runs
+            .iter()
+            .find(|(_, t, ..)| t == text)
+            .unwrap_or_else(|| panic!("{text:?} emitted"));
+        assert_eq!(*page, 0, "{text}");
+        assert!(!on_page, "{text} is below the page edge");
+        assert!((y - at_pt).abs() <= 0.75, "{text} baseline {y:.2} pt");
+    }
 }
 
 #[test]

@@ -368,6 +368,52 @@ fn the_overflow_allowance_never_reaches_a_drawn_footer() {
 }
 
 #[test]
+fn an_inline_only_body_draws_its_lines_past_page_1_off_page_known_gap() {
+    // KNOWN GAP (review of port step 08, pinned at step 09): a body whose in-flow content is all
+    // inline is one block fragment (the body is the inline root, see `build_fragments`), so its
+    // lines past page 1 are emitted below the page edge: in the PDF, never visible, silently.
+    // Chrome 155 paginates by line: 3 pages, Line001-052 / Line053-104 / Line105-120 (probe
+    // g_inline_body). With the same lines as <p>s vellora prints Chrome's 3 pages (g_p_body).
+    // A fix that fragments inline content by line box must update this test.
+    let page = "@page { size: A4; margin: 10mm; }";
+    let numbered: Vec<String> = (1..=120).map(|i| format!("Line{i:03}")).collect();
+    let inline = paginate(&doc(&format!("{page} {BASE}"), &numbered.join("<br>")));
+    assert_eq!(inline.report.page_count, 1, "Chrome prints 3 pages");
+    let page_1 = &inline.pages[0];
+    // The runs of one inline root share its source string; each covers its glyphs' range.
+    let line_of = |run: &vellora_core::blitz_engine::TextRun| {
+        let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+        let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+        run.text[start..end].trim().to_string()
+    };
+    let off_page: Vec<(String, f64)> = page_1
+        .text_runs
+        .iter()
+        .filter(|run| run.origin_y > page_1.height_px)
+        .map(|run| (line_of(run), run.origin_y * 0.75))
+        .collect();
+    assert_eq!(page_1.text_runs.len(), 120, "every line is emitted");
+    // Line055 is the first baseline below the 1122.56 px (841.92 pt) page edge.
+    assert_eq!(off_page.len(), 66, "Line055-Line120 are off the page");
+    assert_eq!(off_page[0].0, "Line055");
+    assert!((off_page[0].1 - 849.60).abs() < 0.01, "{}", off_page[0].1);
+
+    let paragraphs: String = numbered.iter().map(|l| format!("<p>{l}</p>")).collect();
+    let blocks = paginate(&doc(&format!("{page} {BASE}"), &paragraphs));
+    assert_eq!(blocks.report.page_count, 3);
+    for (text, page_index) in [
+        ("Line052", 0),
+        ("Line053", 1),
+        ("Line104", 1),
+        ("Line105", 2),
+    ] {
+        let (page, y) = at(&blocks, text);
+        assert_eq!(page, page_index, "{text}");
+        assert!(y < blocks.pages[page].height_px, "{text} on its page");
+    }
+}
+
+#[test]
 fn margins_adjoining_an_unforced_break_truncate() {
     // Twelve 20 px lines (240 px), then a line with margin-top 40 px: it does
     // not fit the 260 px page, moves to page 2 and loses its margin. Chrome:
