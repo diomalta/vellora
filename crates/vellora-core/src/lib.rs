@@ -82,8 +82,33 @@ pub struct RenderOptions {
 /// Pipeline: validate (strict gate) -> Blitz layout -> vellora pagination ->
 /// krilla PDF emit. Returns the PDF bytes or a [`VelloraError`].
 pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, VelloraError> {
+    render_as(html_bytes, opts, blitz_engine::DocumentSyntax::Html)
+}
+
+/// Fidelity tooling ONLY (`fidelity/wpt/`, through `examples/xhtml_render.rs`), never the
+/// render path: [`render`] with the document parsed by blitz-html's XML parser (xml5ever)
+/// instead of the HTML parser. WPT serves `.xht`/`.xhtml` files as `application/xhtml+xml`, so
+/// Chrome, the reference engine, parses them as XML; the WPT harness renders those files here so
+/// both engines see the same DOM. vellora's own input is HTML (`renderPdf(html)`), and
+/// [`render`] parses every document as HTML whatever its doctype (port step 08). Not a stable
+/// API.
+#[doc(hidden)]
+pub fn debug_render_xhtml(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+) -> Result<Vec<u8>, VelloraError> {
+    render_as(html_bytes, opts, blitz_engine::DocumentSyntax::Xml)
+}
+
+/// [`render`] with the parser chosen by `syntax` ([`blitz_engine::DocumentSyntax::Html`] for
+/// every product render).
+fn render_as(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+    syntax: blitz_engine::DocumentSyntax,
+) -> Result<Vec<u8>, VelloraError> {
     let (laid_out, page_box) =
-        validate_and_lay_out(html_bytes, opts, &mut blitz_engine::NoObserver)?;
+        validate_and_lay_out(html_bytes, opts, syntax, &mut blitz_engine::NoObserver)?;
 
     // 4) vellora pagination: page breaking + thead repeat + counters.
     let paginated = pagination::paginate(&laid_out, &page_box);
@@ -117,7 +142,12 @@ pub fn debug_layout_dump(
     opts: &RenderOptions,
 ) -> Result<layout_dump::LayoutDump, VelloraError> {
     let mut capture = layout_dump::DumpCapture::default();
-    let (laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
+    let (laid_out, page_box) = validate_and_lay_out(
+        html_bytes,
+        opts,
+        blitz_engine::DocumentSyntax::Html,
+        &mut capture,
+    )?;
     // Fidelity layer `P`: the same `paginate` the render path runs (`paginate`
     // is `paginate_traced(.., None)`), here with a trace of every placement.
     let mut trace = pagination::PaginationTrace::default();
@@ -141,7 +171,12 @@ pub fn debug_layout_dump_source_html(
     opts: &RenderOptions,
 ) -> Result<layout_dump::LayoutDump, VelloraError> {
     let mut capture = layout_dump::DumpCapture::source_html();
-    let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
+    let (_laid_out, page_box) = validate_and_lay_out(
+        html_bytes,
+        opts,
+        blitz_engine::DocumentSyntax::Html,
+        &mut capture,
+    )?;
     // The source layer stops before pagination (layer `P` is in the main dump).
     Ok(capture.finish(page_box, None))
 }
@@ -149,10 +184,12 @@ pub fn debug_layout_dump_source_html(
 /// Steps 1-3 of [`render`] (validation gates, `@page` box, Blitz layout +
 /// normalize passes, unresolved-image reject), shared verbatim by
 /// [`debug_layout_dump`] so the dump can never drift from what `render`
-/// paginates. `observer` is [`blitz_engine::NoObserver`] on the render path.
+/// paginates. `observer` is [`blitz_engine::NoObserver`] on the render path; `syntax` is
+/// [`blitz_engine::DocumentSyntax::Html`] everywhere except [`debug_render_xhtml`].
 fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     html_bytes: &[u8],
     opts: &RenderOptions,
+    syntax: blitz_engine::DocumentSyntax,
     observer: &mut O,
 ) -> Result<(blitz_engine::LaidOutDoc, page_css::PageBox), VelloraError> {
     let html = std::str::from_utf8(html_bytes)
@@ -164,7 +201,7 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     // 1a') Depth gate: reject pathologically deep nesting BEFORE the recursive
     // resolve/layout/walk, which would otherwise overflow the worker-thread stack
     // and ABORT the process. Uses an explicit-stack measure, not recursion.
-    validation::validate_nesting_depth(html)?;
+    validation::validate_nesting_depth_as(html, syntax)?;
 
     // 1a'') Font gate: reject a caller `fonts` blob that is not a usable font
     // face BEFORE layout. Option-level failure (no DOM node), so the diagnostic
@@ -189,6 +226,7 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
         &opts.images,
         opts.base_url.as_deref(),
         &opts.fonts,
+        syntax,
         observer,
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
@@ -214,10 +252,76 @@ pub fn name() -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::name;
+    use super::blitz_engine::DocumentSyntax;
+    use super::{name, render_as, validate_and_lay_out, RenderOptions};
 
     #[test]
     fn name_is_stable() {
         assert_eq!(name(), "vellora-core");
+    }
+
+    /// The text every page draws: each glyph run's source substring, in emit order.
+    fn drawn_text(html: &str, syntax: DocumentSyntax) -> String {
+        let opts = RenderOptions::default();
+        let (laid_out, page_box) = validate_and_lay_out(
+            html.as_bytes(),
+            &opts,
+            syntax,
+            &mut super::blitz_engine::NoObserver,
+        )
+        .unwrap_or_else(|e| panic!("lays out: {e}"));
+        let paginated = super::pagination::paginate(&laid_out, &page_box);
+        let mut text = String::new();
+        for run in paginated.pages.iter().flat_map(|p| p.text_runs.iter()) {
+            let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+            let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+            text.push_str(&run.text[start..end]);
+            text.push('\n');
+        }
+        text
+    }
+
+    /// The `oss-postmark-receipt` corpus template (XHTML 1.0 Transitional doctype, three `<br>`
+    /// followed by text), rendered raw: its template tags stay literal text, which changes
+    /// nothing about how the `<br>`s parse.
+    const POSTMARK: &str = include_str!("../../../fixtures/oss-postmark-receipt/index.html");
+    const AFTER_BR: [&str; 3] = ["The [Product Name] team", "1234 Street Rd.", "Suite 1234"];
+
+    #[test]
+    fn step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_draws_it() {
+        // Up to port step 07 every render used blitz-html's sniffing `HtmlDocument::from_html`:
+        // this template's XHTML doctype sent it to xml5ever, where `<br>` is not void and the
+        // text after it became the `<br>`'s content, never drawn (step 05's INV-X1/X2 6 -> 5).
+        let old = drawn_text(POSTMARK, DocumentSyntax::BlitzSniffed);
+        let new = drawn_text(POSTMARK, DocumentSyntax::Html);
+        for text in AFTER_BR {
+            assert!(!old.contains(text), "the step-07 parse drew {text:?}");
+            assert!(new.contains(text), "the HTML parse lost {text:?}:\n{new}");
+        }
+    }
+
+    #[test]
+    fn html_sniffed_documents_render_byte_identical_to_the_step07_parser() {
+        // Every document blitz-html's sniff already parsed as HTML (`<!DOCTYPE html>`, no
+        // doctype, an `<html>` without the XHTML namespace) renders exactly the PDF of step 07.
+        let documents = [
+            "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 20mm; } body { margin: 0; \
+             font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 \
+             0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product \
+             team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+            "<!DOCTYPE html><html><head><style>table { border-collapse: collapse } td { border: \
+             1px solid #000; padding: 4px }</style></head><body><table><thead><tr><th>A</th>\
+             <th>B</th></tr></thead><tr><td>1</td><td>2</td></tr></table></body></html>",
+            "<p>no doctype<br>second line</p><div>block</div>",
+            "<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><body><p>a<br>b</p>\
+             </body></html>",
+        ];
+        let opts = RenderOptions::default();
+        for html in documents {
+            let new = render_as(html.as_bytes(), &opts, DocumentSyntax::Html);
+            let old = render_as(html.as_bytes(), &opts, DocumentSyntax::BlitzSniffed);
+            assert_eq!(new.as_ref().ok(), old.as_ref().ok(), "{html}");
+            assert!(new.is_ok(), "{html}");
+        }
     }
 }

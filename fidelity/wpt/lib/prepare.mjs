@@ -159,8 +159,12 @@ const VOID_ELEMENTS = new Set([
 
 /**
  * Constructs whose meaning differs when an XHTML file (parsed as XML by browsers) is parsed as
- * HTML, as vellora always does: CDATA sections, self-closing non-void elements (`<div/>` opens an
- * element in HTML), and XML processing instructions other than the prolog.
+ * HTML: CDATA sections, self-closing non-void elements (`<div/>` opens an element in HTML), and
+ * XML processing instructions other than the prolog. vellora's product parse is HTML for every
+ * document (port step 08); the harness renders XML-served nodes with vellora-core's XML parse
+ * (lib/xhtml-bridge.mjs), so these flags say what the HTML parse would change, not what the run
+ * did. Before step 08 blitz-html sniffed: an XHTML doctype, `<?xml` or a leading
+ * `<html xmlns="…xhtml">` got its XML parser, anything else (`<!DOCTYPE html>` first) HTML.
  */
 export function xhtmlHazards(rel, content) {
   if (!/\.(xht|xhtml|xml)$/i.test(rel)) return [];

@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { Lru, makeLoader } from "./loader.mjs";
 import { runReftest } from "./run-test.mjs";
 import { makeVelloraRender } from "./vellora-render.mjs";
+import { makeXhtmlBridge } from "./xhtml-bridge.mjs";
 
 const config = JSON.parse(process.env.VELLORA_WPT_WORKER_CONFIG ?? "{}");
 const specifier = config.velloraModule ? pathToFileURL(config.velloraModule).href : "vellora";
@@ -14,6 +15,7 @@ const render = makeVelloraRender({
   wptRoot: config.wptRoot,
   inlineCss: config.inlineCss,
   bundledFontsDir: config.bundledFontsDir,
+  xhtmlBridge: config.xhtmlRender ? makeXhtmlBridge({ bin: config.xhtmlRender }) : null,
 });
 // Rasterized nodes are cached per worker: shared references (e.g. ref-filled-green-100px-square)
 // recur across hundreds of tests.

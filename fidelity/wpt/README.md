@@ -173,6 +173,22 @@ comparison) and exist only when the Chrome oracle ran; flags never change an out
      (observation 1).
 3. **Render** with `renderPdf(..., { strict: true, ... })` in a forked worker process (one test at a
    time per worker; a timeout or native crash kills only that worker and is attributed to the test).
+   **XML-served nodes** (`.xht`, `.xhtml`, `.xml`; WPT serves them as `application/xhtml+xml`, so
+   Chrome parses them as XML) go through the same `renderPdf` call with `_bridge` set to
+   `lib/xhtml-bridge.mjs`: one `xhtml_render` process per render (a vellora-core example next to
+   `layout_dump`, built by `run.mjs` in the measured checkout), which runs
+   `vellora_core::debug_render_xhtml`, `render`'s pipeline with blitz-html's XML parser (xml5ever).
+   Templating, the strict orchestration and the diagnostic mapping are the product's; only the
+   parser differs, and the product API cannot reach it. Since port step 08 the product parses
+   every document as HTML (its input is a `text/html` string); before, blitz-html sniffed the
+   content and parsed an XHTML doctype, an `<?xml` prolog or a leading `<html xmlns="…xhtml">` as
+   XML. Keeping the XML parse for these nodes changes no outcome against step 07 (8047 unchanged);
+   feeding them to the HTML parse would turn 1518 passes into fails (1474 clean) and 175 fails into
+   passes, all of them in tests with a CDATA section
+   (`baselines/port/08-html-parse/attachments/xht-parse-measurement.json`). `--xhtml-parser html`
+   measures that variant; `results.json config.xmlServedNodes` records which parse a run used. Not
+   part of the Chrome-reuse comparison settings: it changes vellora's renderings, not the verdict
+   rules, so `HARNESS_SEMANTICS` stays 2.
 4. **Rasterize** with `pdftocairo -png -r 96` (1 CSS px = 1 device px, the scale WPT's
    `print_pdf_runner.html` uses: pdf.js viewport scale 96/72). Screen: page 1 only (the viewport).
    Print: all pages (≤50 rasterized; true count from `pdfinfo` beyond that).
@@ -560,9 +576,17 @@ code is identical to `main` 5810062 (Blitz 2003ba5); first reported by the valid
 
 ## Known gaps (not silently skipped)
 
-* XHTML (`.xht`, most of CSS2) is parsed as HTML by vellora, as for any input; browsers parse it as
-  XML. Files with constructs whose meaning differs (CDATA, self-closing non-void elements, PIs) are
-  flagged `xhtmlHazards` (443 tests: 66 pass, 377 fail); no conversion is attempted.
+* XHTML (`.xht`, most of CSS2): browsers parse it as XML, and so does the harness since port step
+  08 (pipeline step 3, vellora-core's fidelity-only XML parse). This bullet used to say vellora
+  parsed it as HTML; that was wrong before step 08 too: blitz-html parsed 5899 of the 5906 `.xht`
+  nodes as XML because of their doctype, prolog or root `xmlns`, and the other 7 (`<!DOCTYPE
+  html>` first) as HTML. `xhtmlHazards` still flags the constructs whose meaning the HTML parse
+  would change (CDATA, self-closing non-void elements, PIs).
+* Document mode: Blitz styles and lays out every document in no-quirks mode (blitz-dom 0.3.0-beta.4
+  `document.rs` `Stylist::new(.., QuirksMode::NoQuirks)`, `stylo.rs` `TDocument::quirks_mode`),
+  although html5ever reports limited-quirks for an XHTML 1.0 Transitional doctype and quirks
+  without a doctype, as Chrome does. Tests that rely on a quirk (e.g. the line height calculation
+  quirk) cannot match Chrome there (`crates/vellora-core/tests/html_parse.rs`).
 * Screen reftests are paginated at 600px: content below goes to page 2 and is not compared, and
   fragmentation can move content that a continuous viewport would not. HYPOTHESIS: small effect,
   since most reftests fit in 800x600 (validator: 111 of 6905 evaluated screen tests spill; obs. 9).

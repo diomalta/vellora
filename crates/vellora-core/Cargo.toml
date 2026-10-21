@@ -33,6 +33,12 @@ base64 = "0.22.1"
 blitz-dom = { version = "=0.3.0-beta.4", default-features = false }
 blitz-html = { version = "=0.3.0-beta.4", default-features = false }
 blitz-traits = "=0.3.0-beta.4"
+# html5ever, pinned to the exact version blitz-html 0.3.0-beta.4 resolves (its requirement is
+# `^0.40.1`; Cargo.lock 0.40.1). `blitz_engine` drives `html5ever::parse_document` with
+# blitz-html's `DocumentHtmlParser` sink so every document is parsed as HTML (port step 08):
+# that call only compiles while both crates link the SAME html5ever, and
+# `tests/html_parse.rs` checks Cargo.lock holds exactly one html5ever, at this version.
+html5ever = "=0.40.1"
 # Parley/Taffy types re-exported by Blitz; we read (never construct) layouts.
 # Matches blitz-dom 0.3.0-beta.4's own `parley ^0.12` (default-features off, std).
 parley = { version = "0.12", default-features = false, features = ["std"] }

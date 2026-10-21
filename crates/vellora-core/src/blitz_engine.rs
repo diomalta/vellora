@@ -8,8 +8,9 @@
 
 use base64::Engine as _;
 use blitz_dom::{BaseDocument, DocumentConfig, NodeData, NodeId};
-use blitz_html::HtmlDocument;
+use blitz_html::DocumentHtmlParser;
 use blitz_traits::shell::{ColorScheme, Viewport};
+use html5ever::tendril::TendrilSink as _;
 use style::computed_values::border_collapse::T as BorderCollapse;
 use style::computed_values::table_layout::T as TableLayout;
 
@@ -311,11 +312,11 @@ pub fn lay_out_margin_texts(
     }
     let html =
         format!("<!DOCTYPE html><html><head><style>{css}</style></head><body>{body}</body></html>");
-    let mut doc = build_document_with(&html, ctx.font_ctx.clone());
+    let mut doc = build_document_with(&html, ctx.font_ctx.clone(), DocumentSyntax::Html);
     let viewport = Viewport::new(100_000, 1000, 1.0, ColorScheme::Light);
-    doc.as_mut().set_viewport(viewport);
-    doc.as_mut().resolve(0.0);
-    let base: &BaseDocument = doc.as_ref();
+    doc.set_viewport(viewport);
+    doc.resolve(0.0);
+    let base: &BaseDocument = &doc;
 
     let mut boxes: Vec<Option<NodeId>> = vec![None; requests.len()];
     let mut stack = vec![base.root_element().id];
@@ -397,9 +398,8 @@ pub struct DeniedElement {
 /// [`validate_then_lay_out`], which parses ONCE and reuses that parse for both
 /// validation and layout (the cost model).
 pub fn find_denied_element(html: &str, denied: &[&str]) -> Option<DeniedElement> {
-    let doc = build_document(html, &[]);
-    let base: &BaseDocument = doc.as_ref();
-    find_denied_in_document(base, denied)
+    let doc = build_document(html, &[], DocumentSyntax::Html);
+    find_denied_in_document(&doc, denied)
 }
 
 /// Walk an already-parsed document for the first denied element (no parse).
@@ -446,8 +446,14 @@ fn count_tag_in_document(base: &BaseDocument, tag: &str) -> usize {
 /// rejecting over-deep input cleanly instead of letting Stylo/Taffy/our own walk
 /// abort the process. Element depth only (text nodes are not counted).
 pub fn max_nesting_depth(html: &str) -> usize {
-    let doc = build_document(html, &[]);
-    let base: &BaseDocument = doc.as_ref();
+    max_nesting_depth_as(html, DocumentSyntax::Html)
+}
+
+/// [`max_nesting_depth`] of the DOM `syntax` builds (the fidelity-only XHTML render,
+/// [`crate::debug_render_xhtml`], measures the tree it lays out).
+pub(crate) fn max_nesting_depth_as(html: &str, syntax: DocumentSyntax) -> usize {
+    let doc = build_document(html, &[], syntax);
+    let base: &BaseDocument = &doc;
     let root_id = base.root_element().id;
     let mut max_depth = 0usize;
     // (node_id, depth-of-this-node-counting-only-elements).
@@ -476,8 +482,84 @@ pub fn max_nesting_depth(html: &str) -> usize {
 /// carries caller-supplied font faces registered alongside the bundled ones; the
 /// parse-only/geometry helpers pass `&[]` (they never measure text), only the
 /// layout path threads `opts.fonts`.
-fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
-    build_document_with(html, crate::fonts::build_font_context(custom))
+fn build_document(html: &str, custom: &[Vec<u8>], syntax: DocumentSyntax) -> BaseDocument {
+    build_document_with(html, crate::fonts::build_font_context(custom), syntax)
+}
+
+/// Which parser builds a document's DOM (port step 08).
+///
+/// vellora's input is an HTML string: the public API is `renderPdf(html)`, and the optional
+/// Chromium engine and the fidelity references load it as `text/html`. A browser parses
+/// `text/html` with the HTML parser whatever the doctype, so every document vellora renders is
+/// parsed with [`DocumentSyntax::Html`]: the body, the margin-box documents and the parse-only
+/// helpers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DocumentSyntax {
+    /// html5ever's HTML tree builder (WHATWG HTML parsing), for every render.
+    Html,
+    /// blitz-html's XML parser (xml5ever). Reached only through the fidelity tooling's
+    /// [`crate::debug_render_xhtml`]: WPT `.xht` files are served as `application/xhtml+xml`,
+    /// so Chrome parses them as XML. Never on the render path.
+    Xml,
+    /// Tests only: blitz-html's `HtmlDocument::from_html` (content sniffing), the parser of every
+    /// render up to port step 07. The tests use it to prove that an HTML-sniffed document's PDF
+    /// is byte-identical to step 07's and to reproduce step 07's XHTML-doctype text loss.
+    #[cfg(test)]
+    BlitzSniffed,
+}
+
+/// The `ParseOpts` of blitz-html 0.3.0-beta.4's HTML branch (`src/html_sink.rs`,
+/// `DocumentHtmlParser::parse_into_mutator`), copied field by field so a `<!DOCTYPE html>`
+/// document gets exactly the DOM `HtmlDocument::from_html` built before this step. `quirks_mode`
+/// is only the tree builder's initial mode: a doctype still makes html5ever call
+/// `TreeSink::set_quirks_mode`, which blitz-html's sink stores and Blitz never reads (Stylo runs
+/// in no-quirks mode, blitz-dom `stylo.rs` `quirks_mode()` and `document.rs` `Stylist::new`).
+fn html_parse_opts() -> html5ever::ParseOpts {
+    use html5ever::tokenizer::TokenizerOpts;
+    use html5ever::tree_builder::{QuirksMode, TreeBuilderOpts};
+    html5ever::ParseOpts {
+        tokenizer: TokenizerOpts::default(),
+        tree_builder: TreeBuilderOpts {
+            exact_errors: false,
+            scripting_enabled: false,
+            iframe_srcdoc: false,
+            drop_doctype: true,
+            quirks_mode: QuirksMode::NoQuirks,
+        },
+    }
+}
+
+/// Parse `html` into the empty document `doc` with `syntax`'s parser.
+///
+/// The HTML branch is blitz-html's own, minus its content sniffing:
+/// `HtmlDocument::from_html` (`DocumentHtmlParser::parse_into_mutator`) switches to xml5ever when
+/// the input starts with `<?xml`, when its first line is a DOCTYPE containing `XHTML`/`xhtml`, or
+/// when the root `<html>` declares `xmlns="http://www.w3.org/1999/xhtml"`. In XML `<br>` is not
+/// void, so the text after it became the `<br>`'s content and was never drawn (the
+/// `oss-postmark-receipt` loss, XHTML 1.0 Transitional doctype).
+///
+/// `html5ever` is pinned to the version blitz-html resolves (`=0.40.1`, Cargo.toml).
+/// `DocumentHtmlParser` implements blitz-html's `html5ever::TreeSink`, so the
+/// `parse_document(DocumentHtmlParser::new(..), ..)` call below only compiles while both crates
+/// use the same html5ever (`tests/html_parse.rs` also checks `Cargo.lock`).
+fn parse_into(doc: &mut BaseDocument, html: &str, syntax: DocumentSyntax) {
+    let mut mutr = doc.mutate();
+    match syntax {
+        DocumentSyntax::Html => {
+            html5ever::parse_document(DocumentHtmlParser::new(&mut mutr), html_parse_opts())
+                .from_utf8()
+                .read_from(&mut html.as_bytes())
+                .expect("reading an in-memory byte slice cannot fail");
+        }
+        DocumentSyntax::Xml => DocumentHtmlParser::parse_xml_into_mutator(&mut mutr, html),
+        // `HtmlDocument::from_html` is `BaseDocument::new(config)`, then this, then dropping the
+        // mutator (blitz-html `html_document.rs` `parse_with`).
+        #[cfg(test)]
+        DocumentSyntax::BlitzSniffed => DocumentHtmlParser::parse_into_mutator(&mut mutr, html),
+    }
+    // Dropping the mutator flushes the parsed tree into the document (stylesheets, ids), as
+    // blitz-html's `HtmlDocument::parse_with` does.
+    drop(mutr);
 }
 
 /// The CSS media type every document is styled for (port step 07): vellora renders paged
@@ -492,24 +574,32 @@ fn document_media_type() -> blitz_dom::MediaType {
 
 /// [`build_document`] with an explicit font context (the layout path keeps a clone of it for
 /// the margin boxes, [`PageContext`]).
-fn build_document_with(html: &str, font_ctx: parley::FontContext) -> HtmlDocument {
-    HtmlDocument::from_html(
-        html,
-        DocumentConfig {
-            base_url: Some("https://vellora.local/".to_string()),
-            // Self-contained, deterministic fonts: bundled faces with system-font
-            // discovery off (see `crate::fonts`). This is what removes the
-            // `libfontconfig` runtime dependency and makes output machine-independent.
-            font_ctx: Some(font_ctx),
-            // Blitz's default is `screen`. In Servo mode Stylo reads the media type only to
-            // evaluate media query lists (stylo 0.22 `media_queries/media_list.rs`), so this
-            // changes which `@media` rules cascade and nothing else. Blitz builds every
-            // `<style>` sheet with an empty media list, so a `<style media="…">` attribute is
-            // still not evaluated.
-            media_type: Some(document_media_type()),
-            ..Default::default()
-        },
-    )
+fn build_document_with(
+    html: &str,
+    font_ctx: parley::FontContext,
+    syntax: DocumentSyntax,
+) -> BaseDocument {
+    let mut doc = BaseDocument::new(document_config(font_ctx));
+    parse_into(&mut doc, html, syntax);
+    doc
+}
+
+/// The configuration of every Blitz document vellora builds.
+fn document_config(font_ctx: parley::FontContext) -> DocumentConfig {
+    DocumentConfig {
+        base_url: Some("https://vellora.local/".to_string()),
+        // Self-contained, deterministic fonts: bundled faces with system-font
+        // discovery off (see `crate::fonts`). This is what removes the
+        // `libfontconfig` runtime dependency and makes output machine-independent.
+        font_ctx: Some(font_ctx),
+        // Blitz's default is `screen`. In Servo mode Stylo reads the media type only to
+        // evaluate media query lists (stylo 0.22 `media_queries/media_list.rs`), so this
+        // changes which `@media` rules cascade and nothing else. Blitz builds every
+        // `<style>` sheet with an empty media list, so a `<style media="…">` attribute is
+        // still not evaluated.
+        media_type: Some(document_media_type()),
+        ..Default::default()
+    }
 }
 
 fn walk_for_denied(
@@ -553,7 +643,7 @@ fn walk_for_denied(
 pub fn lay_out(html: &str) -> LaidOutDoc {
     let breaks = crate::break_css::parse_break_rules(html);
     let font_ctx = crate::fonts::build_font_context(&[]);
-    let doc = build_document_with(html, font_ctx.clone());
+    let doc = build_document_with(html, font_ctx.clone(), DocumentSyntax::Html);
     // Standalone/test helper: lay out against the full A4 width with no caller
     // images (an unresolved `<img>` is recorded on the doc but not enforced here).
     // The render path uses `validate_then_lay_out` with the real @page content width.
@@ -595,13 +685,16 @@ pub fn validate_then_lay_out(
         images,
         base_url,
         fonts,
+        DocumentSyntax::Html,
         &mut NoObserver,
     )
 }
 
 /// [`validate_then_lay_out`] with a [`LayoutObserver`] hooked onto each layout
-/// stage. The render path passes [`NoObserver`] (every hook is a no-op that
-/// monomorphizes away); only the debug layout dump passes a real observer.
+/// stage and the parser chosen by `syntax`. The render path passes
+/// [`DocumentSyntax::Html`] and [`NoObserver`] (every hook is a no-op that
+/// monomorphizes away); only the debug layout dump passes a real observer, and
+/// only the fidelity-only XHTML render passes [`DocumentSyntax::Xml`].
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     html: &str,
@@ -611,14 +704,15 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     images: &std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&str>,
     fonts: &[Vec<u8>],
+    syntax: DocumentSyntax,
     observer: &mut O,
 ) -> Result<LaidOutDoc, DeniedElement> {
     let breaks = crate::break_css::parse_break_rules(html);
     let font_ctx = crate::fonts::build_font_context(fonts);
-    let doc = build_document_with(html, font_ctx.clone());
+    let doc = build_document_with(html, font_ctx.clone(), syntax);
     // Validate and lay out the same Blitz parse: one tree shared by validation
     // and layout.
-    if let Some(found) = find_denied_in_document(doc.as_ref(), denied) {
+    if let Some(found) = find_denied_in_document(&doc, denied) {
         return Err(found);
     }
     Ok(resolve_and_walk(
@@ -688,7 +782,7 @@ impl LayoutObserver for NoObserver {}
 /// the context `doc` was built with, kept for the margin boxes ([`PageContext`]).
 #[allow(clippy::too_many_arguments)]
 fn resolve_and_walk<O: LayoutObserver>(
-    mut doc: HtmlDocument,
+    mut doc: BaseDocument,
     content_width_px: f64,
     content_height_px: f64,
     images: &std::collections::HashMap<String, Vec<u8>>,
@@ -699,10 +793,10 @@ fn resolve_and_walk<O: LayoutObserver>(
 ) -> LaidOutDoc {
     let viewport_px = (content_width_px as u32, content_height_px.max(0.0) as u32);
     let viewport = Viewport::new(viewport_px.0, viewport_px.1, 1.0, ColorScheme::Light);
-    doc.as_mut().set_viewport(viewport);
-    doc.as_mut().resolve(0.0);
+    doc.set_viewport(viewport);
+    doc.resolve(0.0);
 
-    let base: &BaseDocument = doc.as_ref();
+    let base: &BaseDocument = &doc;
     let break_targets = BreakTargets {
         avoid_inside: matched_nodes(base, &breaks.avoid_inside),
         page_before: matched_nodes(base, &breaks.page_before),
@@ -1965,8 +2059,8 @@ mod tests {
     fn documents_are_styled_for_print_media() {
         // Both the document's media type and the Stylo device that evaluates `@media` rules
         // (blitz-dom 0.3.0-beta.4 `make_device`) carry the configured type.
-        let mut doc = build_document("<p>x</p>", &[]);
-        let base: &mut BaseDocument = doc.as_mut();
+        let mut doc = build_document("<p>x</p>", &[], DocumentSyntax::Html);
+        let base: &mut BaseDocument = &mut doc;
         assert_eq!(*base.media_type(), blitz_dom::MediaType::print());
         assert_eq!(
             base.stylist_device().media_type(),
@@ -1974,5 +2068,123 @@ mod tests {
         );
         assert_eq!(document_media_type(), blitz_dom::MediaType::print());
         assert_eq!(DOCUMENT_MEDIA_TYPE, "print");
+    }
+
+    /// The DOM as nested lines: node kind, element namespace + name + attributes, text.
+    fn dom_lines(base: &BaseDocument) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut stack = vec![(base.root_node().id, 0usize)];
+        while let Some((id, depth)) = stack.pop() {
+            let node = base.get_node(id).expect("node");
+            let line = match &node.data {
+                NodeData::Document(_) => "#document".to_string(),
+                NodeData::Element(el) => {
+                    let attrs: Vec<String> = el
+                        .attrs()
+                        .iter()
+                        .map(|a| format!("{}={:?}", a.name.local, a.value))
+                        .collect();
+                    format!("<{}:{} {}>", el.name.ns, el.name.local, attrs.join(" "))
+                }
+                NodeData::Text(t) => format!("#text {:?}", t.content),
+                NodeData::Comment { contents } => format!("#comment {contents:?}"),
+                NodeData::AnonymousBlock(_) => "#anonymous".to_string(),
+            };
+            out.push(format!("{}{line}", "  ".repeat(depth)));
+            for child in node.children.iter().rev() {
+                stack.push((*child, depth + 1));
+            }
+        }
+        out
+    }
+
+    const HTML_SNIFFED: &[&str] = &[
+        "<!DOCTYPE html><html><head><style>p { margin: 0 }</style></head>\
+         <body><p>a<br>b</p><table><tr><td>x</td></tr></table></body></html>",
+        "<p>no doctype<br/>at all</p><div/>still in the div",
+        "<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><body><br>tail</body></html>",
+        "<!doctype html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"><p>lowercase doctype</p>",
+        "  <html xmlns=\"http://example.com/other\"><p>other namespace</p></html>",
+    ];
+
+    #[test]
+    fn html_parse_builds_blitz_htmls_dom_for_every_document_it_sniffed_as_html() {
+        // Port step 08 replaced `HtmlDocument::from_html` by html5ever with the same sink and
+        // ParseOpts. For every input blitz-html's sniff sent to its HTML branch the DOM is
+        // identical, so (same DocumentConfig, deterministic pipeline) the PDF is too.
+        for html in HTML_SNIFFED {
+            let new = build_document(html, &[], DocumentSyntax::Html);
+            let old = build_document(html, &[], DocumentSyntax::BlitzSniffed);
+            assert_eq!(dom_lines(&new), dom_lines(&old), "{html}");
+        }
+    }
+
+    #[test]
+    fn xhtml_doctype_br_is_void_under_the_html_parse() {
+        // blitz-html's sniff parsed this as XML: the `<br>` swallowed "tail" (port step 05/07
+        // `oss-postmark-receipt` loss). The HTML parse makes `<br>` void, as Chrome's text/html
+        // parse does.
+        let html = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \
+                    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\
+                    <html xmlns=\"http://www.w3.org/1999/xhtml\"><body><p>head<br>tail</p></body></html>";
+        let new = dom_lines(&build_document(html, &[], DocumentSyntax::Html));
+        let old = dom_lines(&build_document(html, &[], DocumentSyntax::BlitzSniffed));
+        let br_line = |lines: &[String]| lines.iter().position(|l| l.contains(":br ")).unwrap();
+        let depth = |l: &str| l.len() - l.trim_start().len();
+        let (nb, ob) = (br_line(&new), br_line(&old));
+        // HTML: "tail" is the br's next sibling; XML: it is the br's child.
+        assert_eq!(depth(&new[nb + 1]), depth(&new[nb]), "{new:#?}");
+        assert!(new[nb + 1].contains("\"tail\""), "{new:#?}");
+        assert_eq!(depth(&old[ob + 1]), depth(&old[ob]) + 2, "{old:#?}");
+        assert!(old[ob + 1].contains("\"tail\""), "{old:#?}");
+    }
+
+    /// The document mode html5ever's tree builder picks for `html` (it reports it through
+    /// `TreeSink::set_quirks_mode`, which blitz-html's sink stores in `quirks_mode`).
+    fn html5ever_quirks_mode(html: &str) -> html5ever::tree_builder::QuirksMode {
+        let mut doc = BaseDocument::new(document_config(crate::fonts::build_font_context(&[])));
+        let mut mutr = doc.mutate();
+        let mut parser =
+            html5ever::parse_document(DocumentHtmlParser::new(&mut mutr), html_parse_opts());
+        parser.process(html5ever::tendril::StrTendril::from_slice(html));
+        let mode = parser.tokenizer.sink.sink.quirks_mode.get();
+        parser.finish();
+        mode
+    }
+
+    #[test]
+    fn html5ever_picks_chromes_document_mode_and_blitz_ignores_it() {
+        use html5ever::tree_builder::QuirksMode;
+        // Chrome 155 (fidelity/baselines/port/08-html-parse/attachments/chrome-probes-html-parse.json):
+        // document.compatMode CSS1Compat for <!DOCTYPE html>, XHTML 1.0 Strict and XHTML 1.0
+        // Transitional (limited-quirks reports CSS1Compat), BackCompat without a doctype.
+        let t = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \
+                 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><p>x</p>";
+        let s = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \
+                 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><p>x</p>";
+        assert_eq!(
+            html5ever_quirks_mode("<!DOCTYPE html><p>x</p>"),
+            QuirksMode::NoQuirks
+        );
+        assert_eq!(html5ever_quirks_mode(s), QuirksMode::NoQuirks);
+        assert_eq!(html5ever_quirks_mode(t), QuirksMode::LimitedQuirks);
+        assert_eq!(
+            html5ever_quirks_mode("<html xmlns=\"http://www.w3.org/1999/xhtml\"><p>x</p></html>"),
+            QuirksMode::Quirks
+        );
+        assert_eq!(
+            html5ever_quirks_mode("<?xml version=\"1.0\"?>\n<html><p>x</p></html>"),
+            QuirksMode::Quirks
+        );
+        // GAP (port step 08 finding): Blitz never reads that mode. blitz-dom 0.3.0-beta.4 builds
+        // its Stylist with `QuirksMode::NoQuirks` (document.rs) and its `TDocument::quirks_mode`
+        // returns `NoQuirks` (stylo.rs), so a limited-quirks or quirks document is styled and
+        // laid out in no-quirks mode (see tests/html_parse.rs, the image-only line).
+        let doc = build_document(t, &[], DocumentSyntax::Html);
+        let root = doc.root_node();
+        assert_eq!(
+            style::dom::TDocument::quirks_mode(&root),
+            style::context::QuirksMode::NoQuirks
+        );
     }
 }

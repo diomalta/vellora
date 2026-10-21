@@ -157,14 +157,15 @@ Per fixture, printed at the top of each report and in the summary. A `fail` make
 **2** after writing every report, UNLESS it is listed for that fixture in
 `expected-check-failures.json` (reason + expiry condition per entry; `lib/expected-failures.mjs`).
 The expiry is enforced: an allowlisted check that passes also exits 2 ("entry expired, remove it"),
-and the gate (`fidelity/gate/`) applies the same rule (GATE-L1). Today's entries: receipt
-(`normalize_wrappers_located`, `normalize_dom_roundtrip`, `dom_key_alignment`: html_normalize puts a
-`<div>` inside a `<p>` and Blitz's re-parse hoists it) and oss-postmark-receipt
-(`normalize_dom_roundtrip`, `source_dom_keys_vs_chromium`: its first line is an XHTML doctype, and
-blitz-html 0.3.0-beta.4 then parses the source with its XML parser — no implied `<tbody>` — CONFIRMED
-in `blitz-html/src/html_sink.rs` lines 92-99). Its former font-parity failures are FIXED, not
-allowlisted: the shared alias table maps Helvetica to Liberation Sans. `--allow-check-failures`
-exits 0 anyway.
+and the gate (`fidelity/gate/`) applies the same rule (GATE-L1). The list is empty since port step
+08. History: receipt (`normalize_wrappers_located`, `normalize_dom_roundtrip`, `dom_key_alignment`:
+html_normalize put a `<div>` inside a `<p>` and Blitz's re-parse hoisted it; removed in step 05)
+and oss-postmark-receipt (`normalize_dom_roundtrip`, removed in step 05; `source_dom_keys_vs_chromium`
+and `dom_key_alignment`, removed in step 08: its first line is an XHTML doctype, and blitz-html
+0.3.0-beta.4's `HtmlDocument::from_html` then parsed the source with its XML parser — no implied
+`<tbody>` — CONFIRMED in `blitz-html/src/html_sink.rs` lines 91-99; since step 08 vellora parses
+every document as HTML). Its former font-parity failures are FIXED, not allowlisted: the shared
+alias table maps Helvetica to Liberation Sans. `--allow-check-failures` exits 0 anyway.
 
 | check | class | fails when |
 |---|---|---|

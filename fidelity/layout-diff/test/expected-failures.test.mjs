@@ -11,7 +11,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 test("every allowlist entry has fixture, check, reason, expiry and names a check lib/checks.mjs emits", () => {
   const entries = loadExpectedFailures();
-  assert.ok(entries.length > 0);
+  // Empty since port step 08: its last two entries (oss-postmark-receipt, blitz-html's XML parse of
+  // the XHTML-doctype source) expired when every document became HTML-parsed.
+  assert.ok(Array.isArray(entries));
   const checksSource = readFileSync(join(here, "..", "lib", "checks.mjs"), "utf8");
   for (const e of entries) {
     assert.ok(e.reason.length > 40, `${e.fixture}/${e.check}: reason too thin`);

@@ -16,6 +16,12 @@
 //   --no-aa                   rasterize without anti-aliasing
 //   --rasterizer pdftocairo|pdftoppm  poppler backend (default pdftocairo; see lib/raster.mjs)
 //   --vellora <dist/index.js> render with another vellora build (e.g. a Blitz-bump worktree)
+//   --xhtml-parser xml|html   parser for the nodes WPT serves as XML (.xht/.xhtml/.xml; Chrome
+//                             parses them as XML). xml (default): vellora-core's fidelity-only XML
+//                             parse (lib/xhtml-bridge.mjs, the xhtml_render example of the vellora
+//                             checkout, built here). html: the product path (renderPdf parses HTML);
+//                             measurement only, recorded in the results
+//   --xhtml-render <bin>      use this xhtml_render binary instead of building the checkout's
 //   --expectations auto|none|<file>   ratchet against fidelity/baselines/wpt/<engine>.json
 //   --update-expectations     write fidelity/baselines/wpt/<engine>.json from this run (refused
 //                             unless the default suites ran unfiltered on the exact WPT pin)
@@ -62,6 +68,7 @@ import {
   upstreamCrossTab,
 } from "./lib/report.mjs";
 import { upstreamComparability, upstreamShaFor } from "./lib/upstream-map.mjs";
+import { buildXhtmlRender } from "./lib/xhtml-bridge.mjs";
 import { DEFAULT_SUITES } from "./suites.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -82,6 +89,8 @@ function parseArgs(argv) {
     antialias: true,
     rasterizer: "pdftocairo",
     vellora: null,
+    xhtmlParser: "xml",
+    xhtmlRender: null,
     expectations: "auto",
     updateExpectations: false,
     upstream: "auto",
@@ -138,6 +147,15 @@ function parseArgs(argv) {
         break;
       case "--vellora":
         opts.vellora = resolve(val());
+        break;
+      case "--xhtml-parser":
+        opts.xhtmlParser = val();
+        if (!["xml", "html"].includes(opts.xhtmlParser)) {
+          throw new Error("--xhtml-parser must be xml or html");
+        }
+        break;
+      case "--xhtml-render":
+        opts.xhtmlRender = resolve(val());
         break;
       case "--expectations":
         opts.expectations = val();
@@ -285,6 +303,16 @@ const runId = makeRunId({
 });
 const outDir = opts.out ?? join(fidelityRoot, "results", "wpt", runId);
 mkdirSync(outDir, { recursive: true });
+// Nodes WPT serves as XML go through vellora-core's XML parse (lib/xhtml-bridge.mjs), unless the
+// run measures the product's HTML parse of them (--xhtml-parser html).
+let xhtmlRender = null;
+if (opts.xhtmlParser === "xml") {
+  try {
+    xhtmlRender = opts.xhtmlRender ?? buildXhtmlRender(repoRoot);
+  } catch (e) {
+    fatal(`cannot build the xhtml_render example in ${repoRoot}: ${e.message ?? e}`);
+  }
+}
 const config = {
   suites: opts.suites,
   jobs: opts.jobs,
@@ -300,6 +328,17 @@ const config = {
   printPage: "5in x 3in, margin 0.5in (merged into the first author @page, else injected)",
   render: "vellora.renderPdf(html, undefined, { strict: true, fonts, images, baseUrl })",
   velloraModule: opts.vellora ?? "vellora (workspace package via root node_modules)",
+  // Not part of comparisonConfig (lib/provenance.mjs): it changes vellora's renderings, not the
+  // verdict rules for a rendering, so Chrome reuse and HARNESS_SEMANTICS are unaffected.
+  xmlServedNodes: {
+    extensions: [".xht", ".xhtml", ".xml"],
+    parser: opts.xhtmlParser,
+    render:
+      opts.xhtmlParser === "xml"
+        ? "renderPdf(..., { _bridge: xhtml_render }) = vellora_core::debug_render_xhtml (xml5ever)"
+        : "renderPdf (product path: HTML parse)",
+    xhtmlRender,
+  },
   label: opts.label ?? null,
   semantics: HARNESS_SEMANTICS,
   chainReferences: opts.chainReferences,
@@ -350,6 +389,7 @@ await runPool({
       velloraModule: opts.vellora,
       chainReferences: opts.chainReferences,
       bundledFontsDir: config.bundledFontsDir,
+      xhtmlRender,
     }),
   },
   onResult: (result, task) => {

@@ -180,7 +180,16 @@ pub fn validate_css(html: &str) -> Result<(), VelloraError> {
 /// itself overflow, and must be called BEFORE the recursive layout walk so the
 /// over-deep input is rejected cleanly instead of aborting the process.
 pub fn validate_nesting_depth(html: &str) -> Result<(), VelloraError> {
-    let depth = blitz_engine::max_nesting_depth(html);
+    validate_nesting_depth_as(html, blitz_engine::DocumentSyntax::Html)
+}
+
+/// [`validate_nesting_depth`] over the DOM `syntax`'s parser builds (the render path always
+/// passes HTML; only the fidelity-only XHTML render passes XML).
+pub(crate) fn validate_nesting_depth_as(
+    html: &str,
+    syntax: blitz_engine::DocumentSyntax,
+) -> Result<(), VelloraError> {
+    let depth = blitz_engine::max_nesting_depth_as(html, syntax);
     if depth > MAX_NESTING_DEPTH {
         return Err(VelloraError::Unsupported(Diagnostic {
             feature: "max-nesting-depth".to_string(),

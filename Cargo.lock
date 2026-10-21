@@ -2702,6 +2702,7 @@ dependencies = [
  "blitz-dom",
  "blitz-html",
  "blitz-traits",
+ "html5ever",
  "krilla",
  "lopdf",
  "parley",

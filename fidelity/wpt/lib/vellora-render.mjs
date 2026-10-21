@@ -4,6 +4,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { WPT_ORIGIN } from "./discover.mjs";
 import { directoryCoverage, prepareNode } from "./prepare.mjs";
+import { isXmlServed } from "./xhtml-bridge.mjs";
 
 /**
  * Codepoints covered by vellora's bundled faces (crates/vellora-core/src/fonts of the build being
@@ -51,9 +52,18 @@ export function classifyVelloraError(err) {
 
 /**
  * Build the engine render function for the shared loader.
- * `vellora` is the imported module (so a different build can be injected).
+ * `vellora` is the imported module (so a different build can be injected). `xhtmlBridge`, when
+ * given (lib/xhtml-bridge.mjs), renders the nodes WPT serves as XML (`.xht`/`.xhtml`/`.xml`) with
+ * vellora-core's XML parse, as Chrome parses them; every other node goes through the product
+ * bridge (the napi addon), which parses HTML.
  */
-export function makeVelloraRender({ vellora, wptRoot, inlineCss = true, bundledFontsDir = null }) {
+export function makeVelloraRender({
+  vellora,
+  wptRoot,
+  inlineCss = true,
+  bundledFontsDir = null,
+  xhtmlBridge = null,
+}) {
   const baseCoverage = bundledCoverage(bundledFontsDir);
   return async function render({ url, rel, content, mode }) {
     const nodeUrl = url.startsWith("about:") ? `${WPT_ORIGIN}/about-blank.html` : url;
@@ -66,6 +76,7 @@ export function makeVelloraRender({ vellora, wptRoot, inlineCss = true, bundledF
       inlineCss,
       baseCoverage,
     });
+    const xml = xhtmlBridge !== null && isXmlServed(rel);
     let pdf;
     try {
       pdf = await vellora.renderPdf(prepared.html, undefined, {
@@ -73,6 +84,7 @@ export function makeVelloraRender({ vellora, wptRoot, inlineCss = true, bundledF
         fonts: prepared.fonts,
         images: prepared.images,
         baseUrl: prepared.baseUrl,
+        ...(xml ? { _bridge: xhtmlBridge } : {}),
       });
     } catch (err) {
       throw classifyVelloraError(err);
