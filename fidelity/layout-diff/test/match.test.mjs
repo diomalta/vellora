@@ -192,7 +192,11 @@ const ownRegression = (item, layer) => item.regressed_by.find((w) => w.layer ===
 test("classifyStep: worsened, overshoot (sign flip at equal magnitude), improved, same", () => {
   assert.equal(classifyStep(6, 16, 0.5).kind, "worsened");
   assert.equal(classifyStep(6, -6, 0.5).kind, "overshoot");
-  assert.equal(classifyStep(6, -5, 0.5).kind, "overshoot");
+  assert.equal(classifyStep(6, -5.8, 0.5).kind, "overshoot");
+  // A flip that ends closer to Chromium by more than tolerance is an improvement (beta.4 boleto:
+  // fixed_table_widths moved a cell's dw -1.312 -> +0.688).
+  assert.equal(classifyStep(6, -5, 0.5).kind, "improved");
+  assert.equal(classifyStep(-1.312, 0.688, 0.5).kind, "improved");
   assert.equal(classifyStep(6, 0.05, 0.5).kind, "improved");
   assert.equal(classifyStep(6, 6.3, 0.5).kind, "same");
   assert.equal(classifyStep(0.3, -0.3, 0.5).kind, "same");

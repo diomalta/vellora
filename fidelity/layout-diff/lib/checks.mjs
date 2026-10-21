@@ -208,13 +208,18 @@ export function runChecks({
     count: 0,
     sample: [],
   };
-  const chromeOnly = result.counts.chrome_only_compared;
+  // Compared Chromium boxes whose path NO vellora DOM node has (a key problem). Boxes vellora's
+  // DOM has but its walk drops (e.g. a block ::before) are missing boxes, not key failures: they
+  // are scored as LOST in the diff (missing_boxes) instead.
+  const unkeyed = result.counts.chrome_only_compared_unkeyed ??
+    result.counts.chrome_only_compared ?? { count: 0, sample: [] };
+  const dropped = (result.counts.chrome_only_compared?.count ?? 0) - unkeyed.count;
   out.push(
     check(
       "dom_key_alignment",
       "self-consistency",
-      noChrome.count === 0 && chromeOnly.count === 0 ? "pass" : "fail",
-      `L0 boxes (vellora's render DOM) keyed only on the vellora side: ${noChrome.count}${noChrome.count ? ` (${noChrome.sample.slice(0, 4).join("; ")})` : ""}; compared Chromium boxes with no vellora box: ${chromeOnly.count}${chromeOnly.count ? ` (${chromeOnly.sample.slice(0, 4).join("; ")})` : ""}`,
+      noChrome.count === 0 && unkeyed.count === 0 ? "pass" : "fail",
+      `L0 boxes (vellora's render DOM) keyed only on the vellora side: ${noChrome.count}${noChrome.count ? ` (${sample(noChrome.sample)})` : ""}; compared Chromium boxes whose path no vellora DOM node has: ${unkeyed.count}${unkeyed.count ? ` (${sample(unkeyed.sample)})` : ""}${dropped ? `; plus ${dropped} keyed box(es) the walk drops (scored as LOST, not a key failure)` : ""}`,
     ),
   );
   const t = result.text;

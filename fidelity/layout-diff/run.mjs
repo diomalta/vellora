@@ -202,7 +202,34 @@ async function main() {
       attribution_valid: r.result.checks_summary.attribution_valid,
       checks: r.result.checks,
       checks_summary: r.result.checks_summary,
-      first_divergence_by_layer: r.result.first_divergence_by_layer,
+      // Compact here (full records with per-layer deltas and ancestors are in each diff.json).
+      first_divergence_by_layer: Object.fromEntries(
+        Object.entries(r.result.first_divergence_by_layer).map(([layer, f]) => [
+          layer,
+          {
+            box: f.box && { order: f.box.order, type: f.box.type, path: f.box.path },
+            text: f.text && { order: f.text.order, owner: f.text.owner, text: f.text.text },
+          },
+        ]),
+      ),
+      regressions_by_layer: Object.fromEntries(
+        Object.entries(r.result.regressions_by_layer).map(([layer, x]) => [
+          layer,
+          {
+            box_events_vs_previous_layer: x.box_events_vs_previous_layer,
+            text_events_vs_previous_layer: x.text_events_vs_previous_layer,
+            by_kind: x.by_kind,
+            first_box: x.first_box && {
+              order: x.first_box.order,
+              type: x.first_box.type,
+              path: x.first_box.path,
+              regressed_by: x.first_box.regressed_by,
+            },
+            largest_box: x.largest_box,
+            largest_text: x.largest_text,
+          },
+        ]),
+      ),
       layer_stats: r.result.layer_stats,
       counts: r.result.counts,
     })),

@@ -66,10 +66,11 @@ export const COORDS = {
 /**
  * How one layer changed ONE coordinate of an item's error vs Chromium (prev -> cur, both signed
  * vellora - Chromium deltas; prev = 0 for the first layer of the chain, i.e. Chromium itself):
- *   worsened   |cur| - |prev| > tol                         (the error grew)
- *   overshoot  sign flipped with |prev| > tol and |cur| > tol (moved past Chromium: +6 -> -6 leaves
- *              |delta| unchanged, so a magnitude test alone would miss it)
- *   improved   |prev| - |cur| > tol (and not an overshoot)
+ *   worsened   |cur| - |prev| > tol                                (the error grew)
+ *   overshoot  the sign flipped with |prev| > tol and |cur| > tol, and |delta| did NOT shrink by
+ *              more than tol: the layer moved the item past Chromium without making it better
+ *              (+6 -> -6 leaves |delta| unchanged, so a magnitude test alone would miss it)
+ *   improved   |prev| - |cur| > tol (incl. a flip that ends closer, e.g. -1.31 -> +0.69)
  *   same       otherwise
  * `by` = |cur| - |prev| for worsened/improved, |cur| (the error now on the other side) for overshoot.
  */
@@ -77,8 +78,8 @@ export function classifyStep(prev, cur, tol) {
   const a = Math.abs(prev);
   const b = Math.abs(cur);
   if (b - a > tol) return { kind: "worsened", by: b - a };
-  if (Math.sign(prev) !== Math.sign(cur) && a > tol && b > tol) return { kind: "overshoot", by: b };
   if (a - b > tol) return { kind: "improved", by: a - b };
+  if (Math.sign(prev) !== Math.sign(cur) && a > tol && b > tol) return { kind: "overshoot", by: b };
   return { kind: "same", by: b - a };
 }
 
@@ -827,6 +828,9 @@ export function diffLayouts({
   const chromeOnly = tree.elements
     .filter((e) => e.policy === "compared" && !l0.boxes.has(e.path))
     .map((e) => e.path);
+  // Of those, the ones whose path no vellora DOM node has at all (a KEY problem), as opposed to a
+  // box vellora's DOM has but its walk never emits (a missing box, see missing_boxes).
+  const chromeOnlyUnkeyed = chromeOnly.filter((p) => !vellora.nodesByPath.has(p));
   const b0Only = [...b0.boxes.keys()].filter((p) => !l0.boxes.has(p));
   const sourceCompared = n0
     ? tree.elements.filter((e) => e.policy === "compared" && n0.boxes.has(e.path)).length
@@ -884,6 +888,10 @@ export function diffLayouts({
         ]),
       ),
       chrome_only_compared: { count: chromeOnly.length, sample: chromeOnly.slice(0, 12) },
+      chrome_only_compared_unkeyed: {
+        count: chromeOnlyUnkeyed.length,
+        sample: chromeOnlyUnkeyed.slice(0, 12),
+      },
       blitz_tree_only: { count: b0Only.length, sample: b0Only.slice(0, 12) },
     },
     text: {
