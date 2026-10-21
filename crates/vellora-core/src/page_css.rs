@@ -18,8 +18,9 @@
 //!   `page` property). A rule whose selector does not parse (`:nth(1)`, `:bogus`) is dropped.
 //!   Specificity is (page name, `:first`/`:blank` count, `:left`/`:right` count).
 //! - `@page` inside `@media` applies when the media query list names `print` or `all`; a query
-//!   with a media feature is not evaluated and does not match. `@layer` blocks and statements
-//!   order the cascade layers. Other at-rules (`@supports`, …) are skipped with their contents.
+//!   with a media feature is not evaluated and does not match (see [`media_matches`] for why).
+//!   `@layer` blocks and statements order the cascade layers. Other at-rules (`@supports`, …)
+//!   are skipped with their contents.
 //! - Page declarations: `size`, `margin`, `margin-top/right/bottom/left`, and the text
 //!   properties of the page context (`font*`, `color`, …), which the margin boxes inherit.
 //! - Margin boxes: `content` and the same text properties, cascaded per box like the page's own.
@@ -659,8 +660,14 @@ impl SheetBuilder {
 
 /// `@media` query list evaluated for a paged (print) medium: a query matches when its media type
 /// is `print` or `all` (or is omitted) and it has no media feature (features are not evaluated);
-/// `not` negates a query without features. Shared with `break_css` (port step 07), so both
-/// vellora CSS readers agree with each other; Blitz's own cascade evaluates media features too.
+/// `not` negates a query without features.
+///
+/// Only `@page` rules are read with it. Stylo evaluates media features against the layout
+/// viewport, which is the `@page` content box this sheet decides, so evaluating them here would
+/// be circular (KNOWN GAP: Chrome 155 applies `@page { margin-top: 40mm }` inside
+/// `@media print and (min-width: 1px)`, `tests/media_print.rs`). `break_css`'s rules, which
+/// shared this reader at port step 07, are evaluated by Stylo since step 09
+/// (`blitz_engine::media_query_matches`).
 pub(crate) fn media_matches(prelude: &str) -> bool {
     prelude.split(',').any(|query| {
         let lower = query.trim().to_ascii_lowercase();

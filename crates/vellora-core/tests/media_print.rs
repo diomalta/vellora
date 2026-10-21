@@ -1,7 +1,7 @@
 //! Documents are styled for print media (port step 07): Blitz's `DocumentConfig::media_type` is
 //! `print`, so `@media print` rules cascade and `@media screen` rules do not, and vellora's own
-//! fragmentation reader (`break_css`) reads the `break-*` rules of `@media` blocks that match
-//! print.
+//! fragmentation reader (`break_css`) reads the `break-*` rules of `@media` blocks, whose query
+//! lists Stylo evaluates like those of the style rules (port step 09; media features included).
 //!
 //! Chrome-verified: every document below was printed by Google Chrome 155.0.8059.85 (local macOS
 //! arm64, 2026-10-21, INDICATIVE) through `fidelity/lib/chrome-reference.mjs` (puppeteer-core
@@ -237,4 +237,122 @@ fn break_inside_avoid_follows_the_print_medium() {
     // "Kfour" (57.00, 68.25) on page 2.
     assert_at(body_origin(&screen, 0, "Kthree"), (57.00, 773.25), "Kthree");
     assert_at(body_origin(&screen, 1, "Kfour"), (57.00, 68.25), "Kfour");
+}
+
+/// The port-step-09 probes (`fidelity/baselines/port/09-review-fixes/attachments/
+/// chrome-probes-review-fixes.json`, probes `f3_*`): A4, 10 mm margins, Liberation Serif.
+fn probe(css: &str, body: &str) -> String {
+    format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: A4; margin: 10mm }} body {{ margin: 0; \
+         font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; }} p {{ margin: \
+         0; }} {css}</style></head><body>{body}</body></html>"
+    )
+}
+
+#[test]
+fn break_rules_follow_stylos_evaluation_of_media_features() {
+    // Port step 09: `break_css` hands every `@media` block chain to Stylo
+    // (`blitz_engine::media_query_matches`) instead of treating any query with a media feature
+    // as not matching. Chrome 155: the target line is at (28.50, 39.75) pt on page 2 when the
+    // query matches, at (28.50, 54.75) pt on page 1 when it does not. The step-08 build kept
+    // every target on page 1.
+    let cases: &[(&str, &str, &str, bool)] = &[
+        (
+            "print and a matching feature",
+            "@media print and (min-width: 1px) { .gone { display: none } .brk { break-before: page } }",
+            "<p>First</p><p class=\"gone\">GoneText</p><p class=\"brk\">SecondPage</p>",
+            true,
+        ),
+        (
+            "a feature inside @media print",
+            "@media print { @media (min-width: 10px) { .brk { break-before: page; color: rgb(200, 0, 0) } } }",
+            "<p>First</p><p class=\"brk\">SecondPage</p>",
+            true,
+        ),
+        (
+            "orientation",
+            "@media (orientation: portrait) { .brk { page-break-before: always } }",
+            "<p>First</p><p class=\"brk\">SecondPage</p>",
+            true,
+        ),
+        (
+            "a width the content box passes",
+            "@media (min-width: 600px) { .brk { break-before: page; color: rgb(200, 0, 0) } }",
+            "<p>First</p><p class=\"brk\">SecondPage</p>",
+            true,
+        ),
+        (
+            "a feature inside @media print that fails",
+            "@media print { @media (max-width: 10px) { .brk { break-before: page } } }",
+            "<p>First</p><p class=\"brk\">SamePage</p>",
+            false,
+        ),
+        (
+            "not print and a feature",
+            "@media not print and (min-width: 1px) { .brk { break-before: page } }",
+            "<p>First</p><p class=\"brk\">SamePage</p>",
+            false,
+        ),
+    ];
+    for (what, css, body, breaks) in cases {
+        let p = paginate(&probe(css, body));
+        if *breaks {
+            assert_eq!(p.pages.len(), 2, "{what}");
+            assert_at(body_origin(&p, 1, "SecondPage"), (28.50, 39.75), what);
+        } else {
+            assert_eq!(p.pages.len(), 1, "{what}");
+            assert_at(body_origin(&p, 0, "SamePage"), (28.50, 54.75), what);
+        }
+    }
+    // A failing feature keeps the block's styles off as well (Chrome: "ShownText" at 54.75 pt).
+    let p = paginate(&probe(
+        "@media print and (max-width: 1px) { .gone { display: none } .brk { break-before: page } }",
+        "<p>First</p><p class=\"gone\">ShownText</p><p class=\"brk\">SamePage</p>",
+    ));
+    assert_eq!(p.pages.len(), 1);
+    assert_at(body_origin(&p, 0, "ShownText"), (28.50, 54.75), "ShownText");
+    assert_at(body_origin(&p, 0, "SamePage"), (28.50, 69.75), "SamePage");
+}
+
+#[test]
+fn width_features_see_the_content_box_for_styles_and_breaks_alike_known_gap() {
+    // KNOWN GAP (port step 07 follow-up, unchanged): Stylo evaluates `width` against the layout
+    // viewport, which vellora sets to the @page content box (210 mm - 2 x 10 mm = 718.1 px);
+    // Chrome 155 evaluates it against its own print page and matches `(min-width: 750px)` (2
+    // pages, "Width750" at (28.50, 39.75) pt on page 2). What port step 09 guarantees is that the
+    // break rule and the style rule of one block agree: both off here (black, page 1), both on
+    // at 600 px.
+    let p = paginate(&probe(
+        "@media (min-width: 750px) { .brk { break-before: page; color: rgb(200, 0, 0) } }",
+        "<p>First</p><p class=\"brk\">Width750</p>",
+    ));
+    assert_eq!(p.pages.len(), 1, "Chrome prints 2 pages");
+    let run = find_run(&p, 0, "Width750").expect("on page 1");
+    assert_eq!(run.color, [0, 0, 0], "the style rule does not apply either");
+    let p = paginate(&probe(
+        "@media (min-width: 600px) { .brk { break-before: page; color: rgb(200, 0, 0) } }",
+        "<p>First</p><p class=\"brk\">Width600</p>",
+    ));
+    assert_eq!(p.pages.len(), 2);
+    assert_eq!(
+        find_run(&p, 1, "Width600").expect("on page 2").color,
+        [200, 0, 0]
+    );
+}
+
+#[test]
+fn page_rules_inside_a_feature_query_are_not_evaluated_known_gap() {
+    // KNOWN GAP: `page_css` reads `@page` inside `@media` by media type only, because the page
+    // box decides the layout viewport that Stylo evaluates features against (page size ->
+    // viewport -> query is circular). Chrome 155 applies `margin-top: 40mm` here: "First" at
+    // (28.50, 124.50) pt. vellora keeps the 10 mm margin: 39.75 pt.
+    let p = paginate(&probe(
+        "@media print and (min-width: 1px) { @page { margin-top: 40mm } }",
+        "<p>First</p>",
+    ));
+    assert_at(
+        body_origin(&p, 0, "First"),
+        (28.50, 39.75),
+        "First (Chrome 124.50 pt)",
+    );
 }

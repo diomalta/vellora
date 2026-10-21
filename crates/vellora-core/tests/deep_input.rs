@@ -120,7 +120,12 @@ fn pre_gate_scans(html: &str) -> (Result<(), VelloraError>, f64, Vec<String>) {
     let css = validation::validate_css(html);
     let page = page_css::parse_page_box(html);
     let breaks = break_css::parse_break_rules(html);
-    (css, page.margin_left, breaks.page_before)
+    let read = breaks
+        .page_before
+        .into_iter()
+        .map(|rule| rule.selector)
+        .collect();
+    (css, page.margin_left, read)
 }
 
 fn min_of_three(mut f: impl FnMut()) -> Duration {

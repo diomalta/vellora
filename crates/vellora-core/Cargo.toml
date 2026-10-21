@@ -45,6 +45,11 @@ parley = { version = "0.12", default-features = false, features = ["std"] }
 # Stylo's `style` crate (package `stylo`), pinned to the version Blitz 0.3.0-beta.4
 # resolves (`stylo ^0.22.0`), so we can name `style::color::ColorSpace` etc.
 style = { package = "stylo", version = "=0.22.0" }
+# Stylo's own CSS parser and traits crates, pinned to the versions Stylo 0.22.0 resolves
+# (Cargo.lock holds one of each), so `blitz_engine::media_query_matches` can parse a media
+# query list with Stylo exactly as its cascade does (port step 09). No new crate in the graph.
+cssparser = "=0.38.0"
+style_traits = { package = "stylo_traits", version = "=0.22.0" }
 
 # --- krilla: paginated display list -> PDF ---
 krilla = "0.8.2"

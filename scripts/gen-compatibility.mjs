@@ -170,13 +170,13 @@ const allowedRows = [
   {
     feature: "`@media print` / `@media screen`",
     status: "Supported",
-    note: "Documents are styled for print media, like a browser printing: `@media print` (and `all`, `not screen`) rules apply, `@media screen` rules do not. Media features (`width`, `height`, …) are evaluated against the first page's `@page` content box (whole CSS px); browsers use their own print page size instead. The `media` attribute of a `<style>` element is not evaluated: its rules always apply.",
+    note: "Documents are styled for print media, like a browser printing: `@media print` (and `all`, `not screen`) rules apply, `@media screen` rules do not. Media features (`width`, `height`, …) are evaluated against the first page's `@page` content box (whole CSS px); browsers use their own print page size instead. `@page` rules inside an `@media` block are read by media type only: a query with a media feature does not match for them (the page box decides the content box the features are measured against). The `media` attribute of a `<style>` element is not evaluated: its rules always apply.",
   },
   {
     feature:
       "`break-inside: avoid` / `break-before: page` (and `page-break-inside` / `page-break-before`)",
     status: "Partial",
-    note: "Read from `<style>` rules (any selector Stylo parses), at the top level or inside an `@media` block whose query matches print (`print`, `all`, `not screen`; a query with a media feature does not match), and from inline `style`; rules inside `@supports`/`@layer` are ignored. `break-inside: avoid` keeps together a top-level block, a transparent wrapper (`div`/`section`/`article`/`main`), an items table, or an items-table `<tbody>`; a group taller than an empty page falls back to its rows. `break-before: page` starts a top-level block, a wrapper child, a `<tbody>` or a `<tr>` on a new page. `break-after` and `orphans`/`widows` are not implemented.",
+    note: "Read from `<style>` rules (any selector Stylo parses), at the top level or inside `@media` blocks (each query list evaluated by Stylo exactly as for the style rules next to it: media type and media features, the features against the first page's `@page` content box), and from inline `style`; rules inside `@supports`/`@layer` are ignored. `break-inside: avoid` keeps together a top-level block, a transparent wrapper (`div`/`section`/`article`/`main`), an items table, or an items-table `<tbody>`; a group taller than an empty page falls back to its rows. `break-before: page` starts a top-level block, a wrapper child, a `<tbody>` or a `<tr>` on a new page. `break-after` and `orphans`/`widows` are not implemented.",
   },
   {
     feature: "Fonts: text shaping + subset embedding",

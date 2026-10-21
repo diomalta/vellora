@@ -1044,10 +1044,16 @@ fn resolve_and_walk<O: LayoutObserver>(
     doc.set_viewport(viewport);
     doc.resolve(0.0);
 
+    // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
+    // the device that just styled the document, matches (port step 09).
+    let (avoid_inside, page_before) = {
+        let device = doc.stylist_device();
+        breaks.applicable(|query| media_query_matches(device, query))
+    };
     let base: &BaseDocument = &doc;
     let break_targets = BreakTargets {
-        avoid_inside: matched_nodes(base, &breaks.avoid_inside),
-        page_before: matched_nodes(base, &breaks.page_before),
+        avoid_inside: matched_nodes(base, &avoid_inside),
+        page_before: matched_nodes(base, &page_before),
     };
     let mut boxes = Vec::new();
     // Resolves each <img> source to bytes during the walk and records the first
@@ -1133,12 +1139,46 @@ struct BreakTargets {
 
 /// Resolve each selector list with Stylo's selector matching. A selector Stylo
 /// cannot parse matches nothing, exactly as the browser drops that rule.
-fn matched_nodes(base: &BaseDocument, selectors: &[String]) -> std::collections::HashSet<NodeId> {
+fn matched_nodes(base: &BaseDocument, selectors: &[&str]) -> std::collections::HashSet<NodeId> {
     selectors
         .iter()
         .filter_map(|selector| base.query_selector_all(selector).ok())
         .flatten()
         .collect()
+}
+
+/// Whether the media query list `query` (an `@media` prelude) matches `device`, parsed and
+/// evaluated by Stylo exactly as its cascade does for an `@media` rule: `MediaList::parse`
+/// (an invalid query becomes `not all`) and `MediaList::evaluate` (media type, then the media
+/// features against the device's viewport, no-quirks mode, no `@custom-media`). Pass the
+/// document's own device (`BaseDocument::stylist_device`) so a break rule follows the very
+/// evaluation that decided the style rules next to it.
+fn media_query_matches(device: &style::device::Device, query: &str) -> bool {
+    use style::context::QuirksMode;
+    use style::stylesheets::{CssRuleType, CustomMediaEvaluator, Origin, UrlExtraData};
+
+    // A media query list holds no URLs, so any base URL will do (as blitz-dom's own
+    // `parse_transform_matrix` does).
+    let url = url::Url::parse("about:blank").expect("about:blank is a valid URL");
+    let url_data = UrlExtraData::from(url);
+    let mut context = style::parser::ParserContext::new(
+        Origin::Author,
+        &url_data,
+        Some(CssRuleType::Media),
+        style_traits::ParsingMode::DEFAULT,
+        QuirksMode::NoQuirks,
+        Default::default(),
+        None,
+        None,
+        Default::default(),
+    );
+    let mut input = cssparser::Parser::new(query);
+    let list = style::media_queries::MediaList::parse(&mut context, &mut input);
+    list.evaluate(
+        device,
+        QuirksMode::NoQuirks,
+        &mut CustomMediaEvaluator::none(),
+    )
 }
 
 /// Read one box of Blitz's box tree and, recursively, its layout children.

@@ -2702,12 +2702,14 @@ dependencies = [
  "blitz-dom",
  "blitz-html",
  "blitz-traits",
+ "cssparser",
  "html5ever",
  "krilla",
  "lopdf",
  "parley",
  "pdf-extract",
  "stylo",
+ "stylo_traits",
  "url",
 ]
 

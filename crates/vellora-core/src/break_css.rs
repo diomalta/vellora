@@ -11,20 +11,74 @@
 //! paginator reads the resulting per-box flags. Inline `style="…"` declarations
 //! are read per element by [`declares`].
 //!
-//! Documents are styled for print media (port step 07, `blitz_engine`), so the
-//! rules of an `@media` block whose query list matches print are read too, with
-//! the evaluator `page_css` uses for `@page` rules (`page_css::media_matches`:
-//! the media type only; a query with a media feature does not match). Rules
-//! nested in other at-rules (`@supports`, `@layer`, `@page`, …) are skipped;
-//! `@page` is read by `page_css`.
+//! The rules inside `@media` blocks are read too, with the chain of `@media`
+//! blocks each one sits in ([`BreakRules::media`]); `blitz_engine` evaluates
+//! those query lists with Stylo against the device that styled the document
+//! (`media_query_matches`, port step 09), so a break rule applies exactly when
+//! the style rules next to it do. Port step 07 evaluated them here with
+//! `page_css`'s media-type-only reader, which treats any query with a media
+//! feature as not matching: inside one `@media print and (min-width: 1px)` block
+//! the styles applied and `break-before: page` did not (Chrome 155 breaks).
+//! Rules nested in other at-rules (`@supports`, `@layer`, `@page`, …) are
+//! skipped; `@page` is read by `page_css`.
 
 /// Selectors whose matched elements carry a fragmentation hint.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BreakRules {
     /// Selector lists declaring `break-inside: avoid` (or `avoid-page`).
-    pub avoid_inside: Vec<String>,
+    pub avoid_inside: Vec<BreakRule>,
     /// Selector lists declaring a forced break before the element.
-    pub page_before: Vec<String>,
+    pub page_before: Vec<BreakRule>,
+    /// Every `@media` block a rule was read in, in the order they open (an
+    /// enclosing block comes before the blocks inside it).
+    pub media: Vec<MediaBlock>,
+}
+
+/// One rule's selector list and the innermost `@media` block it sits in.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BreakRule {
+    pub selector: String,
+    /// Index into [`BreakRules::media`]; `None` for a top-level rule.
+    pub media: Option<usize>,
+}
+
+/// An `@media` block: its media query list and the block it sits in.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MediaBlock {
+    pub query: String,
+    pub parent: Option<usize>,
+}
+
+impl BreakRules {
+    /// The selector lists (`avoid_inside`, `page_before`) of the rules whose
+    /// every enclosing `@media` block matches, `matches` evaluating one media
+    /// query list. Each distinct query text is evaluated once, and a block
+    /// inside a block that does not match is not evaluated (linear in the
+    /// number of blocks, whatever their nesting).
+    pub fn applicable<'a>(
+        &'a self,
+        mut matches: impl FnMut(&str) -> bool,
+    ) -> (Vec<&'a str>, Vec<&'a str>) {
+        let mut by_query: std::collections::HashMap<&str, bool> = std::collections::HashMap::new();
+        let mut applies: Vec<bool> = Vec::with_capacity(self.media.len());
+        for block in &self.media {
+            // A block's parent opened before it, so it is already decided.
+            let inside = block.parent.is_none_or(|parent| applies[parent]);
+            let applied = inside
+                && *by_query
+                    .entry(block.query.as_str())
+                    .or_insert_with(|| matches(&block.query));
+            applies.push(applied);
+        }
+        let select = |rules: &'a [BreakRule]| -> Vec<&'a str> {
+            rules
+                .iter()
+                .filter(|rule| rule.media.is_none_or(|block| applies[block]))
+                .map(|rule| rule.selector.as_str())
+                .collect()
+        };
+        (select(&self.avoid_inside), select(&self.page_before))
+    }
 }
 
 /// Which fragmentation hints one declaration block carries.
@@ -39,13 +93,16 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
     let mut rules = BreakRules::default();
     for region in crate::css_scan::style_blocks(html) {
         let css = strip_comments(&region.text);
-        for (selector, body) in top_level_rules(&css) {
+        for (selector, body, media) in top_level_rules(&css, &mut rules.media) {
             let hints = declares(&body);
             if hints.avoid_inside {
-                rules.avoid_inside.push(selector.clone());
+                rules.avoid_inside.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                });
             }
             if hints.page_before {
-                rules.page_before.push(selector);
+                rules.page_before.push(BreakRule { selector, media });
             }
         }
     }
@@ -83,19 +140,20 @@ pub fn declares(block: &str) -> BreakHints {
     hints
 }
 
-/// Split a stylesheet into its qualified rules `(selector, body)` in source
-/// order: the top-level ones and those of every `@media` block whose query list
-/// matches the print medium (`page_css::media_matches`, the evaluator `@page`
-/// rules use; port step 07). Every other at-rule is skipped together with its
-/// block. A matching `@media` block is entered in place (a counter, no
-/// recursion), so its nesting depth never touches the stack.
-fn top_level_rules(css: &str) -> Vec<(String, String)> {
+/// Split a stylesheet into its qualified rules `(selector, body, @media block)`
+/// in source order: the top-level ones and those of every `@media` block, each
+/// with the innermost block it sits in (appended to `media`; the query lists
+/// are evaluated later, see [`BreakRules::applicable`]). Every other at-rule is
+/// skipped together with its block. An `@media` block is entered in place (a
+/// stack of open blocks, no recursion), so its nesting depth never touches the
+/// native stack.
+fn top_level_rules(css: &str, media: &mut Vec<MediaBlock>) -> Vec<(String, String, Option<usize>)> {
     let bytes = css.as_bytes();
     let mut out = Vec::new();
     let mut i = 0;
     let mut prelude_start = 0;
-    // `@media` blocks entered and not closed yet.
-    let mut open_media = 0usize;
+    // `@media` blocks entered and not closed yet (indexes into `media`).
+    let mut open_media: Vec<usize> = Vec::new();
     while i < bytes.len() {
         match bytes[i] {
             b'{' => {
@@ -105,8 +163,12 @@ fn top_level_rules(css: &str) -> Vec<(String, String)> {
                         .find(|c: char| !(c.is_ascii_alphanumeric() || c == '-'))
                         .unwrap_or(at_rule.len());
                     let (name, query) = at_rule.split_at(name_len);
-                    if name.eq_ignore_ascii_case("media") && crate::page_css::media_matches(query) {
-                        open_media += 1;
+                    if name.eq_ignore_ascii_case("media") {
+                        media.push(MediaBlock {
+                            query: query.trim().to_string(),
+                            parent: open_media.last().copied(),
+                        });
+                        open_media.push(media.len() - 1);
                         i += 1;
                         prelude_start = i;
                         continue;
@@ -115,13 +177,17 @@ fn top_level_rules(css: &str) -> Vec<(String, String)> {
                 let end = block_end(bytes, i + 1);
                 if !prelude.is_empty() && !prelude.starts_with('@') {
                     let body_end = end.saturating_sub(1).max(i + 1);
-                    out.push((prelude.to_string(), css[i + 1..body_end].to_string()));
+                    out.push((
+                        prelude.to_string(),
+                        css[i + 1..body_end].to_string(),
+                        open_media.last().copied(),
+                    ));
                 }
                 i = end;
                 prelude_start = end;
             }
-            b'}' if open_media > 0 => {
-                open_media -= 1;
+            b'}' if !open_media.is_empty() => {
+                open_media.pop();
                 i += 1;
                 prelude_start = i;
             }
@@ -217,13 +283,20 @@ mod tests {
         format!("<html><head><style>{css}</style></head><body></body></html>")
     }
 
+    /// The selectors that apply when `@media` queries are evaluated for print by media type
+    /// only (`page_css::media_matches`, the evaluator of port step 07): the parse-level tests
+    /// below use it; the render path evaluates with Stylo (`blitz_engine`).
+    fn by_type(rules: &BreakRules) -> (Vec<&str>, Vec<&str>) {
+        rules.applicable(crate::page_css::media_matches)
+    }
+
     #[test]
     fn collects_avoid_and_before_selectors() {
         let rules = parse_break_rules(&page(
             "tbody.meal { break-inside: avoid; } h2, .start { break-before: page }",
         ));
-        assert_eq!(rules.avoid_inside, vec!["tbody.meal"]);
-        assert_eq!(rules.page_before, vec!["h2, .start"]);
+        assert_eq!(by_type(&rules), (vec!["tbody.meal"], vec!["h2, .start"]));
+        assert!(rules.media.is_empty());
     }
 
     #[test]
@@ -231,8 +304,7 @@ mod tests {
         let rules = parse_break_rules(&page(
             ".a { page-break-inside: avoid !important } .b { page-break-before: always }",
         ));
-        assert_eq!(rules.avoid_inside, vec![".a"]);
-        assert_eq!(rules.page_before, vec![".b"]);
+        assert_eq!(by_type(&rules), (vec![".a"], vec![".b"]));
     }
 
     #[test]
@@ -253,11 +325,11 @@ mod tests {
              /* .c { break-inside: avoid } */ \
              .d { content: \"}\"; break-inside: avoid }",
         ));
-        assert_eq!(rules.avoid_inside, vec![".d"]);
+        assert_eq!(by_type(&rules).0, vec![".d"]);
     }
 
     #[test]
-    fn reads_media_blocks_that_match_print_in_source_order() {
+    fn reads_media_blocks_in_source_order_with_their_chains() {
         let rules = parse_break_rules(&page(
             ".a { break-before: page } \
              @media print { .p { break-before: page } .pi { break-inside: avoid } } \
@@ -272,21 +344,84 @@ mod tests {
              @media print{.tight{page-break-before:always}} \
              .z { break-before: page }",
         ));
+        // By media type only, as at port step 07: the feature query does not match.
         assert_eq!(
-            rules.page_before,
+            by_type(&rules),
+            (
+                vec![".pi"],
+                vec![
+                    ".a",
+                    ".p",
+                    ".all",
+                    ".only",
+                    ".ns",
+                    ".nested",
+                    ".after-sup",
+                    ".tight",
+                    ".z"
+                ]
+            )
+        );
+        // Every rule keeps its block chain; the queries reach the evaluator verbatim.
+        let all = rules.applicable(|_| true).1;
+        assert_eq!(
+            all,
             vec![
                 ".a",
                 ".p",
+                ".s",
                 ".all",
                 ".only",
                 ".ns",
+                ".np",
+                ".feature",
                 ".nested",
                 ".after-sup",
                 ".tight",
                 ".z"
             ]
         );
-        assert_eq!(rules.avoid_inside, vec![".pi"]);
+        let queries: Vec<&str> = rules.media.iter().map(|m| m.query.as_str()).collect();
+        assert_eq!(
+            queries,
+            vec![
+                "print",
+                "screen",
+                "ALL",
+                "only print, tv",
+                "not screen",
+                "not print",
+                "print and (min-width: 1px)",
+                "print",
+                "all",
+                "print"
+            ]
+        );
+        assert_eq!(
+            rules.media[8].parent,
+            Some(7),
+            "@media all sits in @media print"
+        );
+        let only_features = rules.applicable(|q| q.contains('(')).1;
+        assert_eq!(only_features, vec![".a", ".feature", ".z"]);
+    }
+
+    #[test]
+    fn a_block_inside_a_block_that_does_not_match_is_not_evaluated() {
+        let rules = parse_break_rules(&page(
+            "@media screen { @media print { .x { break-before: page } } } \
+             @media print { @media print { .y { break-before: page } } }",
+        ));
+        let mut asked = Vec::new();
+        let applied = rules
+            .applicable(|q| {
+                asked.push(q.to_string());
+                q == "print"
+            })
+            .1;
+        assert_eq!(applied, vec![".y"]);
+        // "print" is evaluated once for the three blocks that ask, "screen" once.
+        assert_eq!(asked, vec!["screen", "print"]);
     }
 
     #[test]
@@ -297,16 +432,15 @@ mod tests {
             "@media all { ".repeat(depth),
             "}".repeat(depth)
         );
-        assert_eq!(
-            parse_break_rules(&page(&css)).page_before,
-            vec![".deep", ".after"]
-        );
+        let rules = parse_break_rules(&page(&css));
+        assert_eq!(rules.media.len(), depth);
+        assert_eq!(by_type(&rules).1, vec![".deep", ".after"]);
     }
 
     #[test]
     fn an_unterminated_media_block_keeps_its_rules() {
         let rules = parse_break_rules(&page("@media print { .p { break-before: page }"));
-        assert_eq!(rules.page_before, vec![".p"]);
+        assert_eq!(by_type(&rules).1, vec![".p"]);
     }
 
     #[test]
@@ -314,7 +448,7 @@ mod tests {
         let rules = parse_break_rules(&page(
             ".c { content: \"/*\" } .pb { break-before: page } /* .x { break-before: page } */",
         ));
-        assert_eq!(rules.page_before, vec![".pb"]);
+        assert_eq!(by_type(&rules).1, vec![".pb"]);
     }
 
     #[test]
