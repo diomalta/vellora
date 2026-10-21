@@ -1,0 +1,355 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "boleto-febraban",
+  "fixture": "boleto-febraban",
+  "variant": "data.json",
+  "class": "boleto",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "BOL-P1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1 (expected 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-X1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "11/16 missing @linhaDigitavel.formatada, @titulo.vencimento (1/2×), @titulo.valor (1/2×), @titulo.nossoNumero, @beneficiario.agenciaCodigo",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-X2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "pdftotext 11/16; pypdf 16/16; pdfminer 16/16",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-B1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "decodes false, validates false",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "FAIL"
+      }
+    },
+    {
+      "criterion": "BOL-B2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "DVs true, rebuilds barcode true, printed text found false",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "102.9123 (target 103 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "FAIL"
+      }
+    },
+    {
+      "criterion": "BOL-G2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "12.954 (target 13 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "5.0377 (target 5 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G4",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "ficha_relative_mm.barcode_centre_above_ficha_bottom not measurable (no dashed cut line detected)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G5",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "edge_error_mm.max not measurable (bar count mismatch: measured 111 vs expected 114 (merged or missing bars))",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "FAIL"
+      }
+    },
+    {
+      "criterion": "BOL-G6",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "ficha_relative_mm.ficha_top not measurable (no dashed cut line detected)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "20.6pt GSCMBG+LiberationSans-Bold; 2/2 occurrences",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "14.51pt ZMYKFM+LiberationSans; 2/2 occurrences",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6pt ZMYKFM+LiberationSans",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "worst BOL-T2 86.02 mm (tol 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 2 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "FAIL",
+      "value": "pdftotext fail (missing 12, extra 8); pdfminer.six warn (missing 0, extra 0); pymupdf fail (missing 12, extra 8)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "BOL-B1",
+      "oracle": "oracles:barcode",
+      "status": "FAIL",
+      "value": "zxing-cpp: no ITF symbol decoded (expected 10497164600001842502468131000100040004170013); zbar: no ITF symbol decoded (expected 10497164600001842502468131000100040004170013)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "second decoder pair: zxing-cpp and zbar, plus the BCB mod-11/mod-10 DVs"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "1 pages vs Chrome 1 (WeasyPrint 1)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 120.78 mm, p95 83.01 mm over 301 consensus words (Chrome and WeasyPrint within 2 pt; coverage 1)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 1,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (15c7d6d4da5b4aa06018d2f93d7aee7ad76c31f1fd217b3cba0a496789a4b884)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "fixed_table_widths",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0,
+        "dy": 1.438,
+        "dw": 153.734
+      }
+    },
+    "firstText": {
+      "text": "BANCO EXEMPLO",
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "L0",
+      "dominantLayer": "L0",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0.234,
+        "dy": -22.578,
+        "dy_basis": "baseline",
+        "dw": -0.004,
+        "dright": 0.23
+      }
+    },
+    "firstPassRegression": {
+      "path": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "type": "enter",
+      "by": [
+        "fixed_table_widths worsened dw -0.266->153.734"
+      ]
+    },
+    "regressionEventsByLayer": {
+      "painted_table_cell_text_baselines": {
+        "box": 0,
+        "text": 6
+      },
+      "fixed_table_widths": {
+        "box": 106,
+        "text": 60
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": false,
+      "wrappers_recorded": 0,
+      "wrappers_located": 0
+    }
+  }
+}

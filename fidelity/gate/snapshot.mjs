@@ -9,7 +9,7 @@
 //              crashtests | null, pdfProbe | null, canaries | null, codeChecks | null, steps }.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import { gunzipSync } from "node:zlib";
 import {
   classifyCheckFailures,
@@ -113,6 +113,20 @@ export function loadBaselineDir(dir) {
       .sort()) {
       pdfProbe[f.replace(/\.json$/, "")] = JSON.parse(
         readFileSync(join(dir, "pdf-probe", f), "utf8"),
+      );
+    }
+  } else if (existsSync(join(dir, "layout-diff-ab"))) {
+    // Phase A beta4 baseline: its A/B pdf-probe of the SAME build is layout-diff-ab/
+    // <fixture>-<dir name>.pdf-probe.json.gz (4 legacy fixtures; produced by pdf-probe.mjs with
+    // the same print options the shared reference driver uses).
+    const label = basename(dir);
+    const suffix = `-${label}.pdf-probe.json.gz`;
+    for (const f of readdirSync(join(dir, "layout-diff-ab"))
+      .filter((x) => x.endsWith(suffix))
+      .sort()) {
+      pdfProbe ??= {};
+      pdfProbe[f.slice(0, -suffix.length)] = compactPdfProbe(
+        JSON.parse(gunzipSync(readFileSync(join(dir, "layout-diff-ab", f))).toString("utf8")),
       );
     }
   }

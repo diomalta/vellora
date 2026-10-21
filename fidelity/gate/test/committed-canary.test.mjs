@@ -19,6 +19,21 @@ test("committed baselines pass their manifest sha256 integrity check", () => {
   assert.equal(beta4.integrity.ok, true, beta4.integrity.problems.join("; "));
 });
 
+test("beta4-gated (gate schema) round-trips: vs the Phase A beta4 baseline only the red cargo test gates", () => {
+  const gated = loadBaselineDir(join(baselines, "beta4-gated"));
+  assert.equal(gated.integrity.ok, true, gated.integrity.problems.join("; "));
+  assert.equal(gated.source.schema, "vellora-fidelity/baseline/2");
+  assert.ok(gated.pdfProbe && Object.keys(gated.pdfProbe).length === 9);
+  assert.equal(Object.keys(gated.crashtests.results).length, 239);
+  const r = compareSnapshots(beta4, gated);
+  assert.equal(r.items.filter((x) => x.class === "regression" || x.class === "removed").length, 0);
+  assert.deepEqual(
+    r.items.filter((x) => x.gating).map((x) => x.key),
+    ["code|cargo-test"],
+  );
+  assert.equal(item(r, "danfe|DANFE-B1|oracles:barcode|plain|criterion#1").class, "newly-measured");
+});
+
 test("beta.4 vs pin: REF-W regressions of notification and invoice are flagged with before/after", () => {
   const r = compareSnapshots(pin, beta4);
   assert.equal(r.verdict, "FAIL");

@@ -854,6 +854,8 @@ function renderMarkdown(s) {
     "",
     `Controls not behaving as expected: ${s.totals.failedControls.length ? s.totals.failedControls.map((c) => `${c.fixture} ${c.criterion} ${c.status}`).join("; ") : "none"}.`,
     `Verdicts carrying a reference caveat (status kept): ${s.totals.all.caveated}.`,
+    `Canaries: ${s.canaryCounts ? `${s.canaryCounts.caught} of ${s.canaryCounts.detection} detection canaries caught (${s.canaryCounts.notCaught} not caught, ${s.canaryCounts.notRun} not run) + ${s.canaryCounts.measurement} measurement-only rows (caught = null; they show a behaviour, they do not test an oracle)` : "not run"}.`,
+    `Code checks: ${s.codeChecks?.length ? s.codeChecks.map((c) => `${c.id} ${c.status}${c.failures?.length ? ` (${c.failures.join(", ")})` : ""}`).join("; ") : "not run"}.`,
     "",
   ];
   for (const f of s.fixtures) {
@@ -871,7 +873,7 @@ function renderMarkdown(s) {
     const l = f.layoutDiff;
     if (l?.status === "ran") {
       lines.push(
-        `layout-diff (attribution, not a verdict): attribution valid ${l.attributionValid}; failed checks ${l.checksFailed.join(", ") || "none"}; first box ${l.firstBox ? `${l.firstBox.type} \`${l.firstBox.path}\` first over tolerance ${l.firstBox.firstOverTolerance}, dominant ${l.firstBox.dominantLayer}` : "none"}; first text ${l.firstText ? `"${esc(l.firstText.text)}" first over tolerance ${l.firstText.firstOverTolerance}, dominant ${l.firstText.dominantLayer}` : "none"}; regression events by layer ${Object.entries(
+        `layout-diff (attribution, not a verdict): attribution valid ${l.attributionValid}; failed checks ${l.checksFailed.join(", ") || "none"} (expected per allowlist: ${(l.checksExpectedFailures ?? []).map((e) => e.check).join(", ") || "none"}; unexpected: ${(l.checksUnexpectedFailures ?? []).join(", ") || "none"}; expired entries: ${(l.checksExpired ?? []).map((e) => e.check).join(", ") || "none"}); final layer ${l.finalLayer ?? "-"}; first box ${l.firstBox ? `${l.firstBox.type} \`${l.firstBox.path}\` first over tolerance ${l.firstBox.firstOverTolerance}, dominant ${l.firstBox.dominantLayer}` : "none"}; first text ${l.firstText ? `"${esc(l.firstText.text)}" first over tolerance ${l.firstText.firstOverTolerance}, dominant ${l.firstText.dominantLayer}` : "none"}; regression events by layer ${Object.entries(
           l.regressionEventsByLayer,
         )
           .map(([k, v]) => `${k} ${v.box}/${v.text}`)

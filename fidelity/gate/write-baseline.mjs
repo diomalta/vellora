@@ -16,11 +16,13 @@
 //
 //   node fidelity/gate/write-baseline.mjs --run <run-all out dir> --name <name>
 //     [--accept <accepted.json>] [--root fidelity/baselines] [--note <text>] [--force]
+//     [--attach <file>[=<name>]]...   extra evidence copied to attachments/ (hashed in files)
 //
 // --accept: the acceptedRegressions the run's gate used; copied verbatim into the manifest (each
 // entry: key|keyPrefix, reason, evidence). Refuses to overwrite an existing directory without
 // --force, and refuses a run whose gate verdict is FAIL/REFUSED unless --force (and says so in
 // the manifest).
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
@@ -32,15 +34,32 @@ import {
 } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { portable } from "../combine/env.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { readAcceptances } from "./run.mjs";
 import { BASELINE_SCHEMA, loadRunDir } from "./snapshot.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const json = (v) => `${JSON.stringify(v, null, 2)}\n`;
+// Committed files never carry the local checkout or home path (<repo>/..., ~/...).
+const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
 const AUTHORITY =
   "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)";
+
+/** `biome format --write` with the repo's pinned biome (a note instead when it is missing). */
+function biomeFormat(path) {
+  const bin = join(repoRoot, "node_modules", ".bin", "biome");
+  // Relative path: biome.json ignores ".claude", which an ABSOLUTE path of a worktree under
+  // .claude/worktrees/ would match.
+  const r = spawnSync(bin, ["format", "--write", relative(repoRoot, path)], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  if (r.error) return `not formatted: ${r.error.message}`;
+  return r.status === 0
+    ? "biome format --write (repo biome.json) before hashing"
+    : `biome exit ${r.status}: ${String(r.stderr).slice(0, 200)}`;
+}
 
 function listFiles(dir, base = dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -56,8 +75,15 @@ export function writeBaseline({
   note = null,
   command,
   forced = false,
+  attach = [],
 }) {
   const snap = loadRunDir(runDir);
+  // Extra evidence files (e.g. the same run gated against another baseline), hashed like the rest.
+  if (attach.length) mkdirSync(join(outDir, "attachments"), { recursive: true });
+  for (const a of attach) {
+    const [src, as] = a.split("=").length === 2 ? a.split("=") : [a, null];
+    copyFileSync(resolve(src), join(outDir, "attachments", as ?? src.split("/").pop()));
+  }
   const s = snap.summary;
   const env = s.environment ?? {};
   mkdirSync(join(outDir, "fixtures"), { recursive: true });
@@ -151,6 +177,9 @@ export function writeBaseline({
     copyFileSync(join(gateDir, "gate-report.json"), join(outDir, "gate-report.json"));
     copyFileSync(join(gateDir, "gate-report.md"), join(outDir, "gate-report.md"));
   }
+  // The baseline is committed and `npm run lint` (biome) checks JSON under fidelity/baselines:
+  // format with the repo's own biome BEFORE hashing, so the recorded sha256s stay valid.
+  const formatted = biomeFormat(outDir);
   const files = Object.fromEntries(
     listFiles(outDir)
       .filter((f) => f !== "manifest.json" && f !== "README.md")
@@ -199,7 +228,9 @@ export function writeBaseline({
     extraction: { command, date: new Date().toISOString() },
     files,
   };
+  manifest.formatting = formatted;
   writeFileSync(join(outDir, "manifest.json"), json(manifest));
+  biomeFormat(join(outDir, "manifest.json"));
   return manifest;
 }
 
@@ -238,6 +269,7 @@ async function main() {
     outDir,
     name,
     acceptFile: val("--accept") ? resolve(val("--accept")) : null,
+    attach: argv.flatMap((a, i) => (a === "--attach" && argv[i + 1] ? [argv[i + 1]] : [])),
     note: val("--note") ?? null,
     command: `node fidelity/gate/write-baseline.mjs ${argv.join(" ")}`,
     forced: force,

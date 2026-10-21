@@ -92,8 +92,18 @@ layer (a box no vellora layer has, or that a layer lost, counts). Read it togeth
 
 ## Checks: when a run cannot be trusted (`lib/checks.mjs`)
 
-Per fixture, printed at the top of each report and in the summary; any `fail` makes `run.mjs` exit
-**2** after writing every report (`--allow-check-failures` exits 0 anyway).
+Per fixture, printed at the top of each report and in the summary. A `fail` makes `run.mjs` exit
+**2** after writing every report, UNLESS it is listed for that fixture in
+`expected-check-failures.json` (reason + expiry condition per entry; `lib/expected-failures.mjs`).
+The expiry is enforced: an allowlisted check that passes also exits 2 ("entry expired, remove it"),
+and the gate (`fidelity/gate/`) applies the same rule (GATE-L1). Today's entries: receipt
+(`normalize_wrappers_located`, `normalize_dom_roundtrip`, `dom_key_alignment`: html_normalize puts a
+`<div>` inside a `<p>` and Blitz's re-parse hoists it) and oss-postmark-receipt
+(`normalize_dom_roundtrip`, `source_dom_keys_vs_chromium`: its first line is an XHTML doctype, and
+blitz-html 0.3.0-beta.4 then parses the source with its XML parser — no implied `<tbody>` — CONFIRMED
+in `blitz-html/src/html_sink.rs` lines 92-99). Its former font-parity failures are FIXED, not
+allowlisted: the shared alias table maps Helvetica to Liberation Sans. `--allow-check-failures`
+exits 0 anyway.
 
 | check | class | fails when |
 |---|---|---|
@@ -171,8 +181,9 @@ per fixture/label. Every file records date (`date -u`), OS/CPU, node, rustc, Chr
 - puppeteer-core with an explicit executable; `emulateMediaType('print')`; viewport = the dump's
   Blitz viewport (same truncated integer width/height, DPR 1); scrollbars hidden (flag + CDP),
   MEASURED via `documentElement.clientWidth`/`innerWidth`/`innerHeight` (check `viewport_*`).
-- Fonts: the `FONT_ALIASES` table of `benchmarks/visual-fidelity.mjs` (copied; a test fails on
-  drift) injected as `@font-face` data URLs of the **same files** vellora embeds
+- Fonts: the ONE shared `FONT_ALIASES` table of `fidelity/lib/chrome-reference.mjs` (a superset of
+  `benchmarks/visual-fidelity.mjs` incl. Helvetica, Nunito Sans, Tahoma; a test fails when a
+  benchmark family maps elsewhere) injected as `@font-face` data URLs of the **same files** vellora embeds
   (`crates/vellora-core/src/fonts/`, sha256 recorded); `document.fonts.ready` awaited; what Chromium
   actually drew with is read back with `CSS.getPlatformFontsForNode` (check `platform_fonts_custom`;
   CONFIRMED necessary: without the font block, receipt/boleto fall back to Helvetica/Arial, which
@@ -248,8 +259,11 @@ result's `env.chrome_version`. CONFIRMED locally (re-run 2026-10-21T04:35Z with 
 version): Chrome for Testing 155.0.8059.84 (mac-arm64) gives Chromium geometry identical to local
 Chrome 155.0.8059.85 for all four fixtures (`compare-pin-vs-pin-cft-155.0.8059.84.md`: 0 changed
 boxes, 0 changed runs). NOT RUN: a Linux Chrome for Testing run (FreeType vs CoreText text metrics
-may differ; that run is what should become the baseline). A CI job must treat exit 2 as failure
-once the receipt html_normalize defect is fixed (today receipt fails by design, see Known gaps).
+may differ; that run is what should become the baseline). A CI job treats exit 2 as failure:
+known defects are listed in `expected-check-failures.json` with their expiry instead of keeping
+the run red. `pdf-probe.mjs` prints Chrome's PDF through the same shared print path
+(`fidelity/lib/chrome-reference.mjs printPdf`) as the oracles and the corpus; `run-all.mjs` runs it
+after layout-diff and the gate ratchets its per-word dx/dy (GATE-P1).
 
 ## Results, 2026-10-21 (local, INDICATIVE; Chrome 155.0.8059.85, macOS 27 arm64)
 
