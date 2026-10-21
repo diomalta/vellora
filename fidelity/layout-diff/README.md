@@ -36,16 +36,24 @@ rendering.
   `final_layout.location` — not Blitz's `layout_children`/`layout_parent`, so anonymous blocks and
   pseudo-element boxes are never visited (CONFIRMED on a probe: a block `::before` Blitz lays out
   has no box in L0 and its generated text is never shaped). Table rows/row groups are not Blitz
-  layout nodes: they come out of the walk as zero-size boxes.
+  layout nodes: they come out of the walk as zero-size boxes. Since `phaseb/01-pagination-gaps`
+  the walk adds the offset of the anonymous block between a DOM parent and an in-flow DOM child
+  (`anonymous_block_offset`), so an atomic inline after a block is no longer read at its
+  parent's origin; out-of-flow boxes still accumulate DOM-parent offsets.
 - Post-layout passes, in this exact order (the single list `LAYOUT_NORMALIZE_PASSES` in
   `blitz_engine.rs`, iterated by `resolve_and_walk`):
   1. `vertical_margin_collapse` 2. `collapsed_table_medium_border_insets`
   3. `painted_table_cell_text_baselines` 4. `fixed_table_widths` 5. `table_percent_widths`
   6. `auto_table_compact_columns` 7. `collapsed_table_medium_border_insets_x` (runs LAST).
-- Pagination re-stacks fragments instead of keeping flow y: `cursor += page_gap` where the gap is
-  the previous fragment's trailing gap — its root's Blitz `margin_bottom`, plus a flattened
-  wrapper's own `margin_bottom` on its last child, or, when that is 0, `next.top − bottom`
-  (`apply_inter_fragment_gaps`). The `P` layer records which rule fired for every placement.
+- Pagination (since `phaseb/01-pagination-gaps`, 2026-10-21) keeps Blitz's flow y within a page:
+  one translation per page, set by the page's first fragment (page 1: the flow origin, so the
+  leading body margin/padding/first margin stay; after an unforced break: the page top; after a
+  forced break: the fragment's leading margin, css-break-3 §5.2). Exceptions, each named in the
+  `P` layer's `gap_note`: rows of a `border-collapse: collapse` table abut (`collapsed-rows`), a
+  fragment whose flow position lies above the page top follows the previous one
+  (`out-of-order`, e.g. a `<tfoot>` written first). Before, it re-stacked fragments with the
+  previous fragment's Blitz `margin_bottom` as the gap (Phase A finding). The `P` layer records
+  the flow gap asked for (`pending_gap`, `flow-gap`/`flow-origin`) and the gap applied.
 
 ## Layers (attribution chain)
 

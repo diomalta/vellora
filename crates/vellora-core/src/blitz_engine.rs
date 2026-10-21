@@ -703,7 +703,46 @@ fn walk(
     });
 
     for &child in &node.children {
-        walk(base, child, abs_x, abs_y, depth + 1, sink);
+        let (dx, dy) = anonymous_block_offset(base, node_id, child);
+        walk(base, child, abs_x + dx, abs_y + dy, depth + 1, sink);
+    }
+}
+
+/// Offset of the Blitz anonymous block box that sits between a DOM parent and
+/// one of its in-flow DOM children. When a container mixes block and inline
+/// children, Blitz wraps each run of inline-level children in an anonymous
+/// block (`layout_parent`), and the child's `final_layout.location` is relative
+/// to that block, not to the DOM parent the walk accumulates from. Without this
+/// offset the walk reads, e.g., an `inline-table` that follows a `<p>` at the
+/// `<p>`'s own top (WPT `css/CSS2/borders/border-bottom-applies-to-014.xht`:
+/// y 16 without it, 50 with it, below the `<p>` and its 16 px margin; Chrome
+/// 155 puts an inline-block after such a `<p>` 36 px below it,
+/// `tests/pagination_gaps.rs`). Out-of-flow boxes (`oof_containing_block`)
+/// are positioned relative to their containing block instead and are left as
+/// they are (a separate walk limitation).
+fn anonymous_block_offset(base: &BaseDocument, dom_parent: NodeId, child: NodeId) -> (f64, f64) {
+    let Some(node) = base.get_node(child) else {
+        return (0.0, 0.0);
+    };
+    if node.oof_containing_block.get().is_some() {
+        return (0.0, 0.0);
+    }
+    let Some(layout_parent) = node.layout_parent.get() else {
+        return (0.0, 0.0);
+    };
+    if layout_parent == dom_parent {
+        return (0.0, 0.0);
+    }
+    match base.get_node(layout_parent) {
+        Some(anon)
+            if anon.is_anonymous()
+                && anon.layout_parent.get() == Some(dom_parent)
+                && node_has_layout_data(anon) =>
+        {
+            let location = anon.final_layout().location;
+            (location.x as f64, location.y as f64)
+        }
+        _ => (0.0, 0.0),
     }
 }
 

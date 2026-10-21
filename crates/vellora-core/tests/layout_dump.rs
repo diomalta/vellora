@@ -417,12 +417,11 @@ fn pagination_trace_is_consistent_with_paginate() {
 
 #[test]
 fn pagination_trace_names_the_gap_source() {
-    // CHARACTERIZATION of the current gap model (Phase A finding, pagination task):
-    // the gap before a flattened wrapper's first child is the previous fragment's
-    // Blitz margin-bottom (10 px); the flow gap also holds the wrapper's own
-    // padding-top (40 px), which pagination drops, so the child is placed 40 px
-    // above its flow top. (Padding, not margin, so no margin-collapse pass is
-    // involved: the trace is what pagination itself did.)
+    // The gap before a flattened wrapper's first child is the FLOW gap: the
+    // previous fragment's margin-bottom (10 px) plus the wrapper's padding-top
+    // (40 px). Phase A's model applied only the 10 px margin and lifted the child
+    // 40 px above its flow top (pre-`phaseb/01-pagination-gaps` characterization);
+    // now every fragment on page 1 sits at its flow position (drift 0).
     let html = "<!DOCTYPE html><html><head><style>\
         body { margin: 0; font-family: sans-serif; font-size: 12px; }\
         .a { margin-bottom: 10px; } .w { padding-top: 40px; } .w p { margin: 0; }\
@@ -437,20 +436,28 @@ fn pagination_trace_names_the_gap_source() {
         &trace.placements[2],
     ];
     assert_eq!(
-        (a.kind, a.gap_source, a.trailing_gap),
-        ("block", "margin-bottom", 10.0)
-    );
-    assert_eq!(
-        (b.pending_gap_source, b.gap_applied, b.gap_note),
-        ("margin-bottom", 10.0, "applied")
-    );
-    assert_eq!(
         b.top - a.bottom,
         50.0,
         "flow gap: margin-bottom + wrapper padding-top"
     );
-    assert_eq!(b.placed_top - b.top, -40.0);
+    assert_eq!(
+        (a.kind, a.gap_note, a.pending_gap_source),
+        ("block", "page-origin", "flow-origin")
+    );
+    assert_eq!((a.gap_source, a.trailing_gap), ("flow-gap", 50.0));
+    assert_eq!(
+        (
+            b.pending_gap_source,
+            b.pending_gap,
+            b.gap_applied,
+            b.gap_note
+        ),
+        ("flow-gap", 50.0, 50.0, "applied")
+    );
+    assert_eq!(b.placed_top - b.top, 0.0);
     assert_eq!((c.gap_applied, c.gap_note), (0.0, "none"));
+    assert_eq!((c.gap_source, c.trailing_gap), ("none", 0.0));
+    assert_eq!(c.placed_top - c.top, 0.0);
     assert_eq!(c.page, 0);
 }
 
@@ -491,7 +498,8 @@ fn json_schema_2_carries_text_and_pagination_layers() {
     assert!(json.contains("\"blitz_runs\":[{\"owner\":"));
     assert!(json.contains("\"block_offset\":"));
     assert!(json.contains("\"pagination\":{\"page_count\":1,"));
-    assert!(json.contains("\"gap_source\":\"margin-bottom\""));
+    assert!(json.contains("\"pending_gap_source\":\"flow-origin\""));
+    assert!(json.contains("\"gap_note\":\"page-origin\""));
     let source = debug_layout_dump_source_html(TEXT_PROBE.as_bytes(), &opts()).expect("dump");
     let source_json = layout_dump::json::to_json(&source);
     assert!(source_json.ends_with(",\"pagination\":null}"));
