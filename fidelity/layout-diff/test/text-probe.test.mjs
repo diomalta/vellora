@@ -81,7 +81,21 @@ test("2026-10-21 evidence: Chrome renders every probe space; the reader's padded
     ["Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90"],
   );
   assert.equal(mixed.agreement.run_x[1].chrome_x, 187.703);
-  // Before the read_text_runs fix: a run after text styled by the padded inline root itself is
+  // After the read_text_runs fix (run_padding_right_px): every run of every probe is within
+  // 0.05 px of Chrome's x and right edge.
+  const after = JSON.parse(
+    readFileSync(
+      join(here, "..", "snapshots", "2026-10-21", "text-probe", "text-probe.json"),
+      "utf8",
+    ),
+  );
+  for (const p of after.probes) {
+    assert.equal(p.agreement.lines_equal, true, p.id);
+    assert.equal(p.agreement.runs_located_in_chrome, p.agreement.runs, p.id);
+    assert.ok(p.agreement.max_abs_dx <= 0.05, `${p.id} dx ${p.agreement.max_abs_dx}`);
+    assert.ok(p.agreement.max_abs_dright <= 0.05, `${p.id} dright ${p.agreement.max_abs_dright}`);
+  }
+  // Before the fix: a run after text styled by the padded inline root itself is
   // shifted by the root's padding-right (td 4 px; block 10 px on a right-aligned line).
   const bad = byId.whitespace.agreement.run_x.filter((r) => Math.abs(r.dx) > 0.5);
   assert.deepEqual(

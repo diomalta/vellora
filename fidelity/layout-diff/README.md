@@ -234,7 +234,11 @@ at beta.4 has it at 187.70 / 191.03; the pin dropped it and the old cargo test e
 probe found one READER defect instead (`text-probe.before-fix.json`): text styled by the padded
 inline root itself (`<td style="padding:4px">Alpha <b>Beta</b>`) made `read_text_runs` add the
 ROOT's padding-right after it — "Beta" +3.994 px, and on right-aligned lines the preceding run
-−3.99 / −9.99 px. Raw Blitz text (B0) is at Chrome's x there: the step is vellora's.
+−3.99 / −9.99 px. Raw Blitz text (B0) is at Chrome's x there: the step is vellora's. Fixed in
+`blitz_engine::run_padding_right_px` (only an inline element's padding advances the next run);
+after the fix every run of every probe is within 0.022 px (x) / 0.029 px (right edge) of Chrome
+(`text-probe.json`), and no corpus fixture changes (20/20 PDFs and all dumps identical,
+`snapshots/2026-10-21/determinism/s1b-reader-fix-vs-base.json`).
 
 ## Chromium side and input parity
 

@@ -1192,7 +1192,7 @@ fn read_text_runs(
                 .items()
                 .filter_map(|item| match item {
                     parley::PositionedLayoutItem::GlyphRun(gr) => {
-                        Some(inline_padding_right_px(base, gr.style().brush.id))
+                        Some(run_padding_right_px(base, node.id, gr.style().brush.id))
                     }
                     _ => None,
                 })
@@ -1226,7 +1226,7 @@ fn read_text_runs(
 
             let style = glyph_run.style();
             let color = brush_color(base, style.brush.id);
-            let padding_right_px = inline_padding_right_px(base, style.brush.id);
+            let padding_right_px = run_padding_right_px(base, node.id, style.brush.id);
 
             let glyphs = take_run_glyphs(&glyph_run, &mut consumed_by_run);
             if glyphs.is_empty() {
@@ -1290,6 +1290,20 @@ fn take_run_glyphs<B: parley::Brush>(
     }
     *consumed += glyph_count;
     glyphs
+}
+
+/// The inline padding-right compensation of one glyph run: the padding of the
+/// INLINE element that styled it. A run styled by the inline root itself (text
+/// directly inside the block/cell, e.g. `<td style="padding:4px">Total <b>9</b>`)
+/// gets none: the root's padding is its content-box inset, already applied once
+/// by the walk, and Chrome advances the following run by nothing (CONFIRMED,
+/// `tests/fixtures/text-probes/whitespace.html`, td-leading-trailing).
+fn run_padding_right_px(base: &BaseDocument, inline_root: NodeId, brush: NodeId) -> f64 {
+    if brush == inline_root {
+        0.0
+    } else {
+        inline_padding_right_px(base, brush)
+    }
 }
 
 /// Blitz's inline layout currently exposes glyph positions without advancing

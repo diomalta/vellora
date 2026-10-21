@@ -230,6 +230,19 @@ fn whitespace_probe_keeps_every_space_chrome_renders() {
             (11, "gamma delta", 8.0),
         ],
     );
+    // Text styled by the padded inline ROOT itself (the cell / block, not an inline span): the
+    // root's padding-right is its content-box inset, not an inline advance. Before the
+    // `run_padding_right_px` fix the reader added it after the root's run: "Beta" +3.994 px, and
+    // on right-aligned lines it pulled the preceding run left by the padding (−3.99 / −9.99 px;
+    // `text-probe.before-fix.json`). Raw Blitz text (B0) was already at Chrome's x.
+    assert_runs_at_chrome_x(
+        &lines,
+        &[
+            (7, "Beta", 46.031),
+            (8, "Total ", 159.953),
+            (9, "Total ", 165.953),
+        ],
+    );
     // The PDF's extractable text keeps the same words in the same order.
     let text = pdf_text_collapsed(WHITESPACE);
     for expected in [
