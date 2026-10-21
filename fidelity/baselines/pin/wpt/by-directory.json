@@ -1,0 +1,1256 @@
+{
+  "schema": "vellora-fidelity/baseline-pin/1/wpt",
+  "labels": {
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "passRates": "pass % = pass / reftests; % of evaluated = pass / (reftests - unsupported - skip); clean % = passes without any suspect-pass flag / reftests. pass-blank is never a pass. Definitions: fidelity/wpt/README.md"
+  },
+  "provenance": {
+    "runId": "20261021T054154Z",
+    "date": "Wed Oct 21 05:41:54 UTC 2026",
+    "dateIso": "2026-10-21T05:41:54Z",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "command": "node fidelity/run-all.mjs --wpt-chrome --tools-image vellora-fidelity-tools:baseline-pin",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-pin sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "2c66544f4c2a7bf44df6f25831a56ccf50d00e82",
+      "branch": "fidelity/baseline-pin",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-alpha.5",
+      "source": "git+https://github.com/DioxusLabs/blitz?rev=2003ba5fc2d8931da9213ef26a813b0d24c83ca6#2003ba5fc2d8931da9213ef26a813b0d24c83ca6"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "f2b7fa491feb46a97216c66c455e15fe9fe183f34f5891b80b2c5238b11e41df"
+      }
+    ],
+    "sourceSummarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9",
+    "extractedBy": "node fidelity/baselines/pin/extract.mjs --run fidelity/results/run-all/20261021T054154Z --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --compare fidelity/combine/snapshots/2026-10-21/summary.json"
+  },
+  "step": {
+    "status": "ok",
+    "exitCode": 0,
+    "durationS": 672.7,
+    "command": "node fidelity/wpt/run.mjs --out <repo>/fidelity/results/run-all/20261021T054154Z/wpt --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'"
+  },
+  "engineId": "blitz-2003ba5fc2d8",
+  "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+  "velloraCommit": "2c66544f4c2a7bf44df6f25831a56ccf50d00e82",
+  "chromeOracle": "ran (Chrome/155.0.8059.85)",
+  "passRateCleanNote": "passClean excludes every suspect-pass flag, including the Chrome ink flags",
+  "criteria": [
+    {
+      "criterion": "WPT-1",
+      "oracle": "wpt",
+      "status": "PASS",
+      "value": "WPT 9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba exact pin; 8047 reftests recorded",
+      "kind": "criterion"
+    },
+    {
+      "criterion": "WPT-2",
+      "oracle": "wpt",
+      "status": "PASS",
+      "value": "0 regressions (0 of clean passes), 0 improvements, 8047 unchanged vs blitz-2003ba5fc2d8",
+      "kind": "criterion"
+    }
+  ],
+  "totals": {
+    "reftests": 8047,
+    "pass": 2578,
+    "passClean": 1988,
+    "passBlank": 45,
+    "fail": 4552,
+    "unsupported": 869,
+    "error": 2,
+    "timeout": 0,
+    "skip": 1,
+    "passRate": 32.04,
+    "passRateEvaluated": 35.93,
+    "passRateClean": 24.7
+  },
+  "bySuite": {
+    "css/CSS2/normal-flow": {
+      "reftests": 789,
+      "pass": 383,
+      "passClean": 360,
+      "passBlank": 8,
+      "fail": 324,
+      "unsupported": 73,
+      "error": 0,
+      "timeout": 0,
+      "skip": 1,
+      "passRate": 48.54,
+      "passRateEvaluated": 53.57,
+      "passRateClean": 45.63
+    },
+    "css/CSS2/margin-padding-clear": {
+      "reftests": 682,
+      "pass": 404,
+      "passClean": 391,
+      "passBlank": 0,
+      "fail": 277,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 59.24,
+      "passRateEvaluated": 59.32,
+      "passRateClean": 57.33
+    },
+    "css/CSS2/box": {
+      "reftests": 9,
+      "pass": 4,
+      "passClean": 0,
+      "passBlank": 0,
+      "fail": 5,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 44.44,
+      "passRateEvaluated": 44.44,
+      "passRateClean": 0
+    },
+    "css/CSS2/box-display": {
+      "reftests": 120,
+      "pass": 49,
+      "passClean": 49,
+      "passBlank": 0,
+      "fail": 35,
+      "unsupported": 35,
+      "error": 1,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 40.83,
+      "passRateEvaluated": 58.33,
+      "passRateClean": 40.83
+    },
+    "css/CSS2/visudet": {
+      "reftests": 38,
+      "pass": 13,
+      "passClean": 6,
+      "passBlank": 0,
+      "fail": 22,
+      "unsupported": 3,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 34.21,
+      "passRateEvaluated": 37.14,
+      "passRateClean": 15.79
+    },
+    "css/CSS2/visuren": {
+      "reftests": 39,
+      "pass": 2,
+      "passClean": 2,
+      "passBlank": 0,
+      "fail": 29,
+      "unsupported": 8,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 5.13,
+      "passRateEvaluated": 6.45,
+      "passRateClean": 5.13
+    },
+    "css/CSS2/linebox": {
+      "reftests": 191,
+      "pass": 15,
+      "passClean": 14,
+      "passBlank": 2,
+      "fail": 171,
+      "unsupported": 3,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 7.85,
+      "passRateEvaluated": 7.98,
+      "passRateClean": 7.33
+    },
+    "css/CSS2/text": {
+      "reftests": 410,
+      "pass": 170,
+      "passClean": 161,
+      "passBlank": 6,
+      "fail": 212,
+      "unsupported": 22,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 41.46,
+      "passRateEvaluated": 43.81,
+      "passRateClean": 39.27
+    },
+    "css/CSS2/fonts": {
+      "reftests": 160,
+      "pass": 108,
+      "passClean": 106,
+      "passBlank": 0,
+      "fail": 51,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 67.5,
+      "passRateEvaluated": 67.92,
+      "passRateClean": 66.25
+    },
+    "css/CSS2/tables": {
+      "reftests": 372,
+      "pass": 18,
+      "passClean": 17,
+      "passBlank": 0,
+      "fail": 232,
+      "unsupported": 122,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 4.84,
+      "passRateEvaluated": 7.2,
+      "passRateClean": 4.57
+    },
+    "css/CSS2/borders": {
+      "reftests": 506,
+      "pass": 322,
+      "passClean": 292,
+      "passBlank": 0,
+      "fail": 182,
+      "unsupported": 2,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 63.64,
+      "passRateEvaluated": 63.89,
+      "passRateClean": 57.71
+    },
+    "css/CSS2/backgrounds": {
+      "reftests": 336,
+      "pass": 179,
+      "passClean": 60,
+      "passBlank": 2,
+      "fail": 152,
+      "unsupported": 3,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 53.27,
+      "passRateEvaluated": 53.75,
+      "passRateClean": 17.86
+    },
+    "css/CSS2/colors": {
+      "reftests": 19,
+      "pass": 6,
+      "passClean": 6,
+      "passBlank": 0,
+      "fail": 13,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 31.58,
+      "passRateEvaluated": 31.58,
+      "passRateClean": 31.58
+    },
+    "css/CSS2/lists": {
+      "reftests": 156,
+      "pass": 67,
+      "passClean": 39,
+      "passBlank": 0,
+      "fail": 88,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 42.95,
+      "passRateEvaluated": 43.23,
+      "passRateClean": 25
+    },
+    "css/CSS2/generated-content": {
+      "reftests": 226,
+      "pass": 23,
+      "passClean": 20,
+      "passBlank": 0,
+      "fail": 177,
+      "unsupported": 26,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 10.18,
+      "passRateEvaluated": 11.5,
+      "passRateClean": 8.85
+    },
+    "css/CSS2/floats": {
+      "reftests": 111,
+      "pass": 21,
+      "passClean": 17,
+      "passBlank": 0,
+      "fail": 81,
+      "unsupported": 9,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 18.92,
+      "passRateEvaluated": 20.59,
+      "passRateClean": 15.32
+    },
+    "css/CSS2/floats-clear": {
+      "reftests": 214,
+      "pass": 28,
+      "passClean": 24,
+      "passBlank": 0,
+      "fail": 179,
+      "unsupported": 7,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 13.08,
+      "passRateEvaluated": 13.53,
+      "passRateClean": 11.21
+    },
+    "css/CSS2/positioning": {
+      "reftests": 520,
+      "pass": 172,
+      "passClean": 169,
+      "passBlank": 0,
+      "fail": 326,
+      "unsupported": 22,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 33.08,
+      "passRateEvaluated": 34.54,
+      "passRateClean": 32.5
+    },
+    "css/CSS2/abspos": {
+      "reftests": 29,
+      "pass": 3,
+      "passClean": 3,
+      "passBlank": 0,
+      "fail": 22,
+      "unsupported": 4,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 10.34,
+      "passRateEvaluated": 12,
+      "passRateClean": 10.34
+    },
+    "css/CSS2/visufx": {
+      "reftests": 53,
+      "pass": 1,
+      "passClean": 1,
+      "passBlank": 1,
+      "fail": 47,
+      "unsupported": 4,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 1.89,
+      "passRateEvaluated": 2.04,
+      "passRateClean": 1.89
+    },
+    "css/CSS2/pagination": {
+      "reftests": 43,
+      "pass": 19,
+      "passClean": 17,
+      "passBlank": 0,
+      "fail": 24,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 44.19,
+      "passRateEvaluated": 44.19,
+      "passRateClean": 39.53
+    },
+    "css/css-tables": {
+      "reftests": 171,
+      "pass": 31,
+      "passClean": 23,
+      "passBlank": 3,
+      "fail": 100,
+      "unsupported": 37,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 18.13,
+      "passRateEvaluated": 23.13,
+      "passRateClean": 13.45
+    },
+    "css/css-break": {
+      "reftests": 1121,
+      "pass": 86,
+      "passClean": 66,
+      "passBlank": 1,
+      "fail": 737,
+      "unsupported": 297,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 7.67,
+      "passRateEvaluated": 10.44,
+      "passRateClean": 5.89
+    },
+    "css/css-page": {
+      "reftests": 224,
+      "pass": 62,
+      "passClean": 46,
+      "passBlank": 5,
+      "fail": 100,
+      "unsupported": 56,
+      "error": 1,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 27.68,
+      "passRateEvaluated": 37.13,
+      "passRateClean": 20.54
+    },
+    "css/css-text": {
+      "reftests": 1508,
+      "pass": 392,
+      "passClean": 99,
+      "passBlank": 17,
+      "fail": 966,
+      "unsupported": 133,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 25.99,
+      "passRateEvaluated": 28.51,
+      "passRateClean": 6.56
+    }
+  },
+  "chromeReference": {
+    "note": "the same reftests through Chrome print with the same geometry, rasterizer and comparator (fidelity/wpt/lib/chrome.mjs); INDICATIVE with a local Chrome",
+    "version": "Chrome/155.0.8059.85",
+    "totals": {
+      "reftests": 8046,
+      "pass": 7261,
+      "passBlank": 3,
+      "fail": 780,
+      "unsupported": 0,
+      "error": 2,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 90.24,
+      "passRateEvaluated": 90.27
+    },
+    "bySuite": {
+      "css/CSS2/normal-flow": {
+        "reftests": 788,
+        "pass": 782,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.24,
+        "passRateEvaluated": 99.24
+      },
+      "css/CSS2/margin-padding-clear": {
+        "reftests": 682,
+        "pass": 676,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.12,
+        "passRateEvaluated": 99.12
+      },
+      "css/CSS2/box": {
+        "reftests": 9,
+        "pass": 9,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/box-display": {
+        "reftests": 120,
+        "pass": 112,
+        "passBlank": 0,
+        "fail": 8,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 93.33,
+        "passRateEvaluated": 93.33
+      },
+      "css/CSS2/visudet": {
+        "reftests": 38,
+        "pass": 25,
+        "passBlank": 0,
+        "fail": 13,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 65.79,
+        "passRateEvaluated": 65.79
+      },
+      "css/CSS2/visuren": {
+        "reftests": 39,
+        "pass": 37,
+        "passBlank": 0,
+        "fail": 2,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 94.87,
+        "passRateEvaluated": 94.87
+      },
+      "css/CSS2/linebox": {
+        "reftests": 191,
+        "pass": 187,
+        "passBlank": 0,
+        "fail": 4,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 97.91,
+        "passRateEvaluated": 97.91
+      },
+      "css/CSS2/text": {
+        "reftests": 410,
+        "pass": 333,
+        "passBlank": 0,
+        "fail": 77,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 81.22,
+        "passRateEvaluated": 81.22
+      },
+      "css/CSS2/fonts": {
+        "reftests": 160,
+        "pass": 143,
+        "passBlank": 0,
+        "fail": 17,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.38,
+        "passRateEvaluated": 89.38
+      },
+      "css/CSS2/tables": {
+        "reftests": 372,
+        "pass": 332,
+        "passBlank": 0,
+        "fail": 40,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.25,
+        "passRateEvaluated": 89.25
+      },
+      "css/CSS2/borders": {
+        "reftests": 506,
+        "pass": 506,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/backgrounds": {
+        "reftests": 336,
+        "pass": 290,
+        "passBlank": 0,
+        "fail": 46,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 86.31,
+        "passRateEvaluated": 86.31
+      },
+      "css/CSS2/colors": {
+        "reftests": 19,
+        "pass": 10,
+        "passBlank": 0,
+        "fail": 9,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 52.63,
+        "passRateEvaluated": 52.63
+      },
+      "css/CSS2/lists": {
+        "reftests": 156,
+        "pass": 155,
+        "passBlank": 0,
+        "fail": 1,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.36,
+        "passRateEvaluated": 99.36
+      },
+      "css/CSS2/generated-content": {
+        "reftests": 226,
+        "pass": 198,
+        "passBlank": 0,
+        "fail": 28,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 87.61,
+        "passRateEvaluated": 87.61
+      },
+      "css/CSS2/floats": {
+        "reftests": 111,
+        "pass": 94,
+        "passBlank": 0,
+        "fail": 17,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 84.68,
+        "passRateEvaluated": 84.68
+      },
+      "css/CSS2/floats-clear": {
+        "reftests": 214,
+        "pass": 209,
+        "passBlank": 0,
+        "fail": 5,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 97.66,
+        "passRateEvaluated": 97.66
+      },
+      "css/CSS2/positioning": {
+        "reftests": 520,
+        "pass": 514,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 98.85,
+        "passRateEvaluated": 98.85
+      },
+      "css/CSS2/abspos": {
+        "reftests": 29,
+        "pass": 26,
+        "passBlank": 0,
+        "fail": 3,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.66,
+        "passRateEvaluated": 89.66
+      },
+      "css/CSS2/visufx": {
+        "reftests": 53,
+        "pass": 53,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/pagination": {
+        "reftests": 43,
+        "pass": 39,
+        "passBlank": 0,
+        "fail": 4,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 90.7,
+        "passRateEvaluated": 90.7
+      },
+      "css/css-tables": {
+        "reftests": 171,
+        "pass": 157,
+        "passBlank": 0,
+        "fail": 14,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 91.81,
+        "passRateEvaluated": 91.81
+      },
+      "css/css-break": {
+        "reftests": 1121,
+        "pass": 997,
+        "passBlank": 1,
+        "fail": 121,
+        "unsupported": 0,
+        "error": 2,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 88.94,
+        "passRateEvaluated": 89.1
+      },
+      "css/css-page": {
+        "reftests": 224,
+        "pass": 187,
+        "passBlank": 0,
+        "fail": 37,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 83.48,
+        "passRateEvaluated": 83.48
+      },
+      "css/css-text": {
+        "reftests": 1508,
+        "pass": 1190,
+        "passBlank": 2,
+        "fail": 316,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 78.91,
+        "passRateEvaluated": 78.91
+      }
+    },
+    "velloraVsChrome": {
+      "matrix": {
+        "error|fail": 1,
+        "error|pass": 1,
+        "fail|error": 1,
+        "fail|fail": 502,
+        "fail|pass": 4049,
+        "pass-blank|fail": 4,
+        "pass-blank|pass": 38,
+        "pass-blank|pass-blank": 3,
+        "pass|error": 1,
+        "pass|fail": 99,
+        "pass|pass": 2478,
+        "unsupported|fail": 174,
+        "unsupported|pass": 695
+      },
+      "totals": {
+        "velloraOnlyFail": 4049,
+        "bothFail": 502,
+        "velloraPassChromeFail": 99,
+        "bothPass": 2478,
+        "velloraPassBlank": 45
+      },
+      "bySuite": {
+        "css/CSS2/normal-flow": {
+          "velloraOnlyFail": 321,
+          "bothFail": 3,
+          "velloraPassChromeFail": 0,
+          "bothPass": 383,
+          "velloraPassBlank": 8
+        },
+        "css/CSS2/margin-padding-clear": {
+          "velloraOnlyFail": 272,
+          "bothFail": 5,
+          "velloraPassChromeFail": 1,
+          "bothPass": 403,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/box": {
+          "velloraOnlyFail": 5,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 4,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/box-display": {
+          "velloraOnlyFail": 28,
+          "bothFail": 7,
+          "velloraPassChromeFail": 0,
+          "bothPass": 49,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/visudet": {
+          "velloraOnlyFail": 11,
+          "bothFail": 11,
+          "velloraPassChromeFail": 0,
+          "bothPass": 13,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/visuren": {
+          "velloraOnlyFail": 27,
+          "bothFail": 2,
+          "velloraPassChromeFail": 0,
+          "bothPass": 2,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/linebox": {
+          "velloraOnlyFail": 167,
+          "bothFail": 4,
+          "velloraPassChromeFail": 0,
+          "bothPass": 15,
+          "velloraPassBlank": 2
+        },
+        "css/CSS2/text": {
+          "velloraOnlyFail": 143,
+          "bothFail": 69,
+          "velloraPassChromeFail": 3,
+          "bothPass": 167,
+          "velloraPassBlank": 6
+        },
+        "css/CSS2/fonts": {
+          "velloraOnlyFail": 35,
+          "bothFail": 16,
+          "velloraPassChromeFail": 0,
+          "bothPass": 108,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/tables": {
+          "velloraOnlyFail": 206,
+          "bothFail": 26,
+          "velloraPassChromeFail": 1,
+          "bothPass": 17,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/borders": {
+          "velloraOnlyFail": 182,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 322,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/backgrounds": {
+          "velloraOnlyFail": 128,
+          "bothFail": 24,
+          "velloraPassChromeFail": 22,
+          "bothPass": 157,
+          "velloraPassBlank": 2
+        },
+        "css/CSS2/colors": {
+          "velloraOnlyFail": 4,
+          "bothFail": 9,
+          "velloraPassChromeFail": 0,
+          "bothPass": 6,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/lists": {
+          "velloraOnlyFail": 88,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 67,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/generated-content": {
+          "velloraOnlyFail": 153,
+          "bothFail": 24,
+          "velloraPassChromeFail": 4,
+          "bothPass": 19,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/floats": {
+          "velloraOnlyFail": 68,
+          "bothFail": 13,
+          "velloraPassChromeFail": 4,
+          "bothPass": 17,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/floats-clear": {
+          "velloraOnlyFail": 174,
+          "bothFail": 5,
+          "velloraPassChromeFail": 0,
+          "bothPass": 28,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/positioning": {
+          "velloraOnlyFail": 321,
+          "bothFail": 5,
+          "velloraPassChromeFail": 1,
+          "bothPass": 171,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/abspos": {
+          "velloraOnlyFail": 21,
+          "bothFail": 1,
+          "velloraPassChromeFail": 1,
+          "bothPass": 2,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/visufx": {
+          "velloraOnlyFail": 47,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 1,
+          "velloraPassBlank": 1
+        },
+        "css/CSS2/pagination": {
+          "velloraOnlyFail": 21,
+          "bothFail": 3,
+          "velloraPassChromeFail": 1,
+          "bothPass": 18,
+          "velloraPassBlank": 0
+        },
+        "css/css-tables": {
+          "velloraOnlyFail": 96,
+          "bothFail": 4,
+          "velloraPassChromeFail": 1,
+          "bothPass": 30,
+          "velloraPassBlank": 3
+        },
+        "css/css-break": {
+          "velloraOnlyFail": 712,
+          "bothFail": 24,
+          "velloraPassChromeFail": 3,
+          "bothPass": 82,
+          "velloraPassBlank": 1
+        },
+        "css/css-page": {
+          "velloraOnlyFail": 87,
+          "bothFail": 13,
+          "velloraPassChromeFail": 4,
+          "bothPass": 58,
+          "velloraPassBlank": 5
+        },
+        "css/css-text": {
+          "velloraOnlyFail": 732,
+          "bothFail": 234,
+          "velloraPassChromeFail": 53,
+          "bothPass": 339,
+          "velloraPassBlank": 17
+        }
+      }
+    },
+    "inkCheck": {
+      "status": "ok",
+      "passesChecked": 2577,
+      "passesWithoutData": 1,
+      "missingFrac": {
+        "<0.1": 2098,
+        "0.1-0.3": 141,
+        "0.3-0.5": 58,
+        "0.5-0.8": 105,
+        ">=0.8": 175
+      },
+      "flagged": 280,
+      "flaggedDisplaced": 100,
+      "bboxShift": {
+        "<=8": 49,
+        "9-32": 1968,
+        "33-100": 243,
+        ">100": 312,
+        "no-ink": 5
+      },
+      "passBlank": {
+        "checked": 45,
+        "chromeDrawsSignificantInk": 39,
+        "chromeAlsoBlank": 3
+      }
+    }
+  },
+  "upstreamBlitzReport": {
+    "sha": "2003ba5fc2d8931da9213ef26a813b0d24c83ca6",
+    "status": "ok",
+    "upstreamWptRevision": "8eaad6beb",
+    "counts": {
+      "bothPass": 2406,
+      "velloraFailUpstreamPass": 1967,
+      "velloraPassUpstreamFail": 165,
+      "velloraPassBlank": 44,
+      "bothFail": 2504,
+      "velloraNotEvaluatedUpstreamPass": 177,
+      "velloraNotEvaluatedUpstreamNotPass": 583,
+      "upstreamAbsent": 201
+    },
+    "matrix": {
+      "error|CRASH": 2,
+      "fail|ABSENT": 81,
+      "fail|CRASH": 2,
+      "fail|FAIL": 2408,
+      "fail|PASS": 1967,
+      "fail|SKIP": 94,
+      "pass-blank|ABSENT": 1,
+      "pass-blank|FAIL": 14,
+      "pass-blank|PASS": 30,
+      "pass|ABSENT": 7,
+      "pass|CRASH": 2,
+      "pass|FAIL": 150,
+      "pass|PASS": 2406,
+      "pass|SKIP": 13,
+      "skip|FAIL": 1,
+      "unsupported|ABSENT": 112,
+      "unsupported|FAIL": 577,
+      "unsupported|PASS": 177,
+      "unsupported|SKIP": 3
+    }
+  },
+  "unsupportedFeatures": {
+    "element:script (test)": 462,
+    "css:grid (test)": 218,
+    "css:transform (test)": 47,
+    "element:iframe (test)": 34,
+    "css:page-margin-box (test)": 29,
+    "element:textarea (test)": 26,
+    "element:canvas (test)": 12,
+    "css:grid (ref)": 11,
+    "css:filter (test)": 8,
+    "element:form (test)": 7,
+    "element:object (test)": 7,
+    "element:input (test)": 2,
+    "element:video (test)": 2,
+    "image:unresolved (test)": 2,
+    "css:transform (ref)": 1,
+    "element:script (ref)": 1
+  },
+  "errorKinds": {
+    "panic": 2
+  },
+  "skipReasons": {
+    "needs-wptserve-substitution": 1
+  },
+  "passFlags": {
+    "css-url-resource": 162,
+    "img-without-dims": 27,
+    "ink-displaced-vs-chrome": 100,
+    "ink-missing-vs-chrome": 280,
+    "missing-resource": 28,
+    "uncovered-glyphs": 193,
+    "webfont-not-supplied": 93
+  },
+  "attribution": {
+    "totals": {
+      "velloraLayerSuspect": 1758,
+      "blitzLayoutSuspect": 2213,
+      "oracleInconclusive": 502,
+      "unattributed": 79
+    },
+    "bySuite": {
+      "css/CSS2/normal-flow": {
+        "velloraLayerSuspect": 218,
+        "blitzLayoutSuspect": 61,
+        "oracleInconclusive": 3,
+        "unattributed": 42
+      },
+      "css/CSS2/margin-padding-clear": {
+        "velloraLayerSuspect": 118,
+        "blitzLayoutSuspect": 154,
+        "oracleInconclusive": 5,
+        "unattributed": 0
+      },
+      "css/CSS2/box": {
+        "velloraLayerSuspect": 5,
+        "blitzLayoutSuspect": 0,
+        "oracleInconclusive": 0,
+        "unattributed": 0
+      },
+      "css/CSS2/box-display": {
+        "velloraLayerSuspect": 11,
+        "blitzLayoutSuspect": 17,
+        "oracleInconclusive": 7,
+        "unattributed": 0
+      },
+      "css/CSS2/visudet": {
+        "velloraLayerSuspect": 3,
+        "blitzLayoutSuspect": 8,
+        "oracleInconclusive": 11,
+        "unattributed": 0
+      },
+      "css/CSS2/visuren": {
+        "velloraLayerSuspect": 6,
+        "blitzLayoutSuspect": 16,
+        "oracleInconclusive": 2,
+        "unattributed": 5
+      },
+      "css/CSS2/linebox": {
+        "velloraLayerSuspect": 114,
+        "blitzLayoutSuspect": 52,
+        "oracleInconclusive": 4,
+        "unattributed": 1
+      },
+      "css/CSS2/text": {
+        "velloraLayerSuspect": 115,
+        "blitzLayoutSuspect": 28,
+        "oracleInconclusive": 69,
+        "unattributed": 0
+      },
+      "css/CSS2/fonts": {
+        "velloraLayerSuspect": 22,
+        "blitzLayoutSuspect": 13,
+        "oracleInconclusive": 16,
+        "unattributed": 0
+      },
+      "css/CSS2/tables": {
+        "velloraLayerSuspect": 29,
+        "blitzLayoutSuspect": 177,
+        "oracleInconclusive": 26,
+        "unattributed": 0
+      },
+      "css/CSS2/borders": {
+        "velloraLayerSuspect": 97,
+        "blitzLayoutSuspect": 85,
+        "oracleInconclusive": 0,
+        "unattributed": 0
+      },
+      "css/CSS2/backgrounds": {
+        "velloraLayerSuspect": 66,
+        "blitzLayoutSuspect": 62,
+        "oracleInconclusive": 24,
+        "unattributed": 0
+      },
+      "css/CSS2/colors": {
+        "velloraLayerSuspect": 4,
+        "blitzLayoutSuspect": 0,
+        "oracleInconclusive": 9,
+        "unattributed": 0
+      },
+      "css/CSS2/lists": {
+        "velloraLayerSuspect": 86,
+        "blitzLayoutSuspect": 2,
+        "oracleInconclusive": 0,
+        "unattributed": 0
+      },
+      "css/CSS2/generated-content": {
+        "velloraLayerSuspect": 90,
+        "blitzLayoutSuspect": 63,
+        "oracleInconclusive": 24,
+        "unattributed": 0
+      },
+      "css/CSS2/floats": {
+        "velloraLayerSuspect": 24,
+        "blitzLayoutSuspect": 41,
+        "oracleInconclusive": 13,
+        "unattributed": 3
+      },
+      "css/CSS2/floats-clear": {
+        "velloraLayerSuspect": 55,
+        "blitzLayoutSuspect": 119,
+        "oracleInconclusive": 5,
+        "unattributed": 0
+      },
+      "css/CSS2/positioning": {
+        "velloraLayerSuspect": 155,
+        "blitzLayoutSuspect": 166,
+        "oracleInconclusive": 5,
+        "unattributed": 0
+      },
+      "css/CSS2/abspos": {
+        "velloraLayerSuspect": 9,
+        "blitzLayoutSuspect": 11,
+        "oracleInconclusive": 1,
+        "unattributed": 1
+      },
+      "css/CSS2/visufx": {
+        "velloraLayerSuspect": 1,
+        "blitzLayoutSuspect": 46,
+        "oracleInconclusive": 0,
+        "unattributed": 0
+      },
+      "css/CSS2/pagination": {
+        "velloraLayerSuspect": 18,
+        "blitzLayoutSuspect": 3,
+        "oracleInconclusive": 3,
+        "unattributed": 0
+      },
+      "css/css-tables": {
+        "velloraLayerSuspect": 20,
+        "blitzLayoutSuspect": 74,
+        "oracleInconclusive": 4,
+        "unattributed": 2
+      },
+      "css/css-break": {
+        "velloraLayerSuspect": 48,
+        "blitzLayoutSuspect": 659,
+        "oracleInconclusive": 24,
+        "unattributed": 6
+      },
+      "css/css-page": {
+        "velloraLayerSuspect": 37,
+        "blitzLayoutSuspect": 50,
+        "oracleInconclusive": 13,
+        "unattributed": 0
+      },
+      "css/css-text": {
+        "velloraLayerSuspect": 407,
+        "blitzLayoutSuspect": 306,
+        "oracleInconclusive": 234,
+        "unattributed": 19
+      }
+    }
+  },
+  "ratchet": {
+    "status": "ok",
+    "against": "fidelity/baselines/wpt/blitz-2003ba5fc2d8.json",
+    "expectationsEngine": "blitz-2003ba5fc2d8",
+    "counts": {
+      "regressions": 0,
+      "regressionsOfCleanPasses": 0,
+      "regressionsOfFlaggedPasses": 0,
+      "sightGained": 0,
+      "improvements": 0,
+      "changed": 0,
+      "added": 0,
+      "missing": 0,
+      "unchanged": 8047
+    },
+    "regressions": [],
+    "improvements": [],
+    "changed": [],
+    "sightGained": [],
+    "added": []
+  },
+  "expectations": {
+    "file": "fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json",
+    "sha256": "2c24ed8f2f87a5eac3e4a065b77bfd53541a52d3a711b39d87048ed0d0f6c90c",
+    "copiedFrom": "fidelity/baselines/wpt/blitz-2003ba5fc2d8.json",
+    "engine": "blitz-2003ba5fc2d8",
+    "blitzDom": {
+      "version": "0.3.0-alpha.5",
+      "source": "git+https://github.com/DioxusLabs/blitz?rev=2003ba5fc2d8931da9213ef26a813b0d24c83ca6#2003ba5fc2d8931da9213ef26a813b0d24c83ca6",
+      "rev": "2003ba5fc2d8931da9213ef26a813b0d24c83ca6"
+    },
+    "generated": "Wed Oct 21 04:56:04 UTC 2026",
+    "generatedBy": "node fidelity/wpt/run.mjs --chrome-from fidelity/results/wpt/20261021T044423Z-blitz-2003ba5fc2d8-vellora-363377d/results.json --update-expectations",
+    "vellora": "985b1122b7db03ab6251635412327a9438eaa1b1",
+    "inkCheck": "chrome Chrome/155.0.8059.85",
+    "tests": 8047,
+    "suspectPasses": 590,
+    "reproducedByThisRun": {
+      "check": "fidelity/wpt/lib/report.mjs buildExpectations() re-applied to <run>/wpt/results.json vs the expectations file",
+      "tests": 8047,
+      "suspectPasses": 590,
+      "outcomesDiffering": [],
+      "suspectPassesDiffering": [],
+      "sameEngine": true,
+      "sameComparison": true,
+      "chromeOracleRan": true
+    },
+    "use": "node fidelity/wpt/run.mjs --expectations fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json  (ratchet a different build, e.g. Blitz 0.3.0-beta.4, against this pin; the expectations check compares WPT commit and comparison settings, not the engine id)"
+  }
+}
