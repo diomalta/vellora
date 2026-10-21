@@ -389,10 +389,16 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     fonts: &[Vec<u8>],
     observer: &mut O,
 ) -> Result<LaidOutDoc, DeniedElement> {
-    let normalized = crate::html_normalize::normalize_table_cell_mixed_flow_traced(
-        html,
-        observer.normalize_trace(),
-    );
+    // `skip_html_normalize` is `false` for every observer except the debug dump's
+    // source-HTML variant (layer `N0`), so the render path always normalizes.
+    let normalized = if observer.skip_html_normalize() {
+        std::borrow::Cow::Borrowed(html)
+    } else {
+        crate::html_normalize::normalize_table_cell_mixed_flow_traced(
+            html,
+            observer.normalize_trace(),
+        )
+    };
     let breaks = crate::break_css::parse_break_rules(&normalized);
     let doc = build_document(&normalized, fonts);
     // Validate and lay out the same Blitz parse. The table-cell normalizer may
@@ -460,6 +466,13 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
 /// bytes are unchanged. The debug layout dump ([`DumpCapture`]) is the only real
 /// implementation. Kept in this module because `after_walk` sees Blitz types.
 pub(crate) trait LayoutObserver {
+    /// When `true`, html_normalize is NOT run: Blitz parses and lays out the input
+    /// HTML exactly as given. Only the debug dump's source-HTML variant
+    /// ([`DumpCapture::source_html`], fidelity layer `N0`) returns `true`; it
+    /// isolates what html_normalize changes from what Blitz itself computes.
+    fn skip_html_normalize(&self) -> bool {
+        false
+    }
     /// When `Some`, the HTML normalizer records the element-index chain of every
     /// synthetic wrapper it inserts (so the dump can key boxes by the ORIGINAL DOM).
     fn normalize_trace(&mut self) -> Option<&mut Vec<Vec<usize>>> {
@@ -1291,6 +1304,9 @@ pub struct LayoutDump {
     /// Media type Blitz evaluated the stylesheets against. `build_document` never
     /// sets `DocumentConfig::media_type`, so this is Blitz's default, `screen`.
     pub media_type: &'static str,
+    /// `false` only for the source-HTML dump ([`DumpCapture::source_html`]):
+    /// html_normalize was skipped and Blitz laid out the input HTML as given.
+    pub html_normalize_applied: bool,
     /// Wrappers html_normalize recorded inserting, and how many of them were
     /// located in the Blitz parse of its output (expected equal).
     pub normalize_wrappers_recorded: usize,
@@ -1424,6 +1440,7 @@ pub struct DumpRunMeta {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct DumpCapture {
+    skip_html_normalize: bool,
     wrapper_chains: Vec<Vec<usize>>,
     viewport_px: (u32, u32),
     wrappers_located: usize,
@@ -1436,6 +1453,10 @@ pub struct DumpCapture {
 }
 
 impl LayoutObserver for DumpCapture {
+    fn skip_html_normalize(&self) -> bool {
+        self.skip_html_normalize
+    }
+
     fn normalize_trace(&mut self) -> Option<&mut Vec<Vec<usize>>> {
         Some(&mut self.wrapper_chains)
     }
@@ -1470,12 +1491,22 @@ impl LayoutObserver for DumpCapture {
 }
 
 impl DumpCapture {
+    /// A capture that SKIPS html_normalize (fidelity layer `N0`: Blitz on the
+    /// source HTML). Its Blitz tree is keyed by the source DOM with no wrappers.
+    pub fn source_html() -> Self {
+        Self {
+            skip_html_normalize: true,
+            ..Self::default()
+        }
+    }
+
     pub(crate) fn finish(self, page: crate::page_css::PageBox) -> LayoutDump {
         LayoutDump {
             viewport_width_px: self.viewport_px.0,
             viewport_height_px: self.viewport_px.1,
             page,
             media_type: "screen",
+            html_normalize_applied: !self.skip_html_normalize,
             normalize_wrappers_recorded: self.wrapper_chains.len(),
             normalize_wrappers_located: self.wrappers_located,
             nodes: self.nodes,

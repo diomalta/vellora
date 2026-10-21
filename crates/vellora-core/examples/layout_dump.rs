@@ -4,7 +4,13 @@
 //! cargo run --release -p vellora-core --example layout_dump -- \
 //!   --html <templated.html> --out <dump.json> [--pdf <render.pdf>] \
 //!   [--font <face.ttf>]... [--image <src>=<file>]... [--base-url <url>]
+//!   [--no-html-normalize]
 //! ```
+//!
+//! `--no-html-normalize` dumps Blitz's layout of the input HTML exactly as given
+//! (`vellora_core::debug_layout_dump_source_html`; fidelity layer `N0`), i.e.
+//! without vellora's html_normalize pre-pass. It cannot be combined with `--pdf`
+//! (the PDF is always the production render, which always normalizes).
 //!
 //! `--pdf` additionally writes the normal `vellora_core::render` output for the
 //! same input (fixed creation date), so a paginated probe can be compared with
@@ -267,6 +273,17 @@ fn to_json(dump: &LayoutDump) -> V {
         ),
         ("media_type", V::Str(dump.media_type.into())),
         (
+            "html_normalize",
+            V::Str(
+                if dump.html_normalize_applied {
+                    "applied"
+                } else {
+                    "skipped"
+                }
+                .into(),
+            ),
+        ),
+        (
             "normalize",
             V::Obj(vec![
                 (
@@ -318,6 +335,7 @@ fn run() -> Result<(), String> {
     let mut html_path: Option<String> = None;
     let mut out_path: Option<String> = None;
     let mut pdf_path: Option<String> = None;
+    let mut source_html = false;
     let mut opts = RenderOptions {
         // Fixed, like every vellora render: never wall-clock.
         creation_date: Some((2026, 6, 25)),
@@ -332,6 +350,7 @@ fn run() -> Result<(), String> {
             "--out" => out_path = Some(value()?),
             "--pdf" => pdf_path = Some(value()?),
             "--base-url" => opts.base_url = Some(value()?),
+            "--no-html-normalize" => source_html = true,
             "--font" => {
                 let path = value()?;
                 opts.fonts
@@ -352,7 +371,15 @@ fn run() -> Result<(), String> {
     let html_path = html_path.ok_or("--html <file> is required")?;
     let out_path = out_path.ok_or("--out <file> is required")?;
     let html = std::fs::read(&html_path).map_err(|e| format!("{html_path}: {e}"))?;
-    let dump = vellora_core::debug_layout_dump(&html, &opts).map_err(|e| format!("{e:?}"))?;
+    if source_html && pdf_path.is_some() {
+        return Err("--no-html-normalize cannot be combined with --pdf".into());
+    }
+    let dump = if source_html {
+        vellora_core::debug_layout_dump_source_html(&html, &opts)
+    } else {
+        vellora_core::debug_layout_dump(&html, &opts)
+    }
+    .map_err(|e| format!("{e:?}"))?;
     let mut json = String::new();
     to_json(&dump).write(&mut json);
     json.push('\n');

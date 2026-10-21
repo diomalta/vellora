@@ -118,6 +118,20 @@ pub fn debug_layout_dump(
     Ok(capture.finish(page_box))
 }
 
+/// [`debug_layout_dump`] with html_normalize SKIPPED: Blitz lays out the input
+/// HTML exactly as given (fidelity layer `N0`, "Blitz on the source HTML"), so
+/// the tooling can separate what html_normalize changes from what Blitz itself
+/// computes. Debug/fidelity tooling ONLY: [`render`] always normalizes.
+#[doc(hidden)]
+pub fn debug_layout_dump_source_html(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+) -> Result<blitz_engine::LayoutDump, VelloraError> {
+    let mut capture = blitz_engine::DumpCapture::source_html();
+    let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
+    Ok(capture.finish(page_box))
+}
+
 /// Steps 1-3 of [`render`] (validation gates, `@page` box, Blitz layout +
 /// normalize passes, unresolved-image reject), shared verbatim by
 /// [`debug_layout_dump`] so the dump can never drift from what `render`
