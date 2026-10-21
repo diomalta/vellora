@@ -56,19 +56,24 @@ async function runPair(files, mode = "screen", rel = "t/test.html") {
     const vellora = await import("vellora");
     const render = makeVelloraRender({ vellora, wptRoot: root });
     const loadNode = makeLoader({ wptRoot: root, mode, render, cache: new Lru(8) });
-    return await runReftest({ test: { rel, url: `${WPT_ORIGIN}/${rel}`, mode }, loadNode });
+    const url = `${WPT_ORIGIN}/${rel}`;
+    const r = await runReftest({ test: { rel, url, mode }, loadNode });
+    // Cache hit: the rasterized test node, for geometry assertions.
+    r.testNode = await loadNode(url);
+    return r;
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 }
 
 test(
-  "real pipeline: equivalent CSS boxes pass with zero difference",
+  "real pipeline: equivalent CSS boxes pass with zero difference (800x600 screen page)",
   { skip: skipReason ?? false },
   async () => {
     const r = await runPair({ "t/test.html": SQUARE_BG, "t/ref.html": SQUARE_BORDER });
     assert.equal(r.outcome, "pass", JSON.stringify(r));
     assert.equal(r.comparisons[0].totalPixels, 0);
+    assert.deepEqual([r.testNode.pages[0].width, r.testNode.pages[0].height], [800, 600]);
   },
 );
 
@@ -117,6 +122,14 @@ test(
       "t/test-print.html",
     );
     assert.equal(r.pageCount, 2);
+    // 5in x 3in at 96 DPI.
+    assert.deepEqual(
+      r.testNode.pages.map((p) => [p.width, p.height]),
+      [
+        [480, 288],
+        [480, 288],
+      ],
+    );
     assert.equal(r.outcome, "fail");
     assert.equal(r.comparisons[0].pageCountMismatch, true);
   },

@@ -25,7 +25,7 @@
 //   --chrome-from <results.json>  reuse Chrome outcomes of an earlier run (same WPT + raster config)
 //   --list                    only discover/classify and print counts
 //   --label <text>            free-form provenance note stored with the run (e.g. a build source)
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -131,8 +131,10 @@ function parseArgs(argv) {
         opts.offline = true;
         break;
       case "--chrome":
+        // The executable is optional: only consume the next argument when it is an existing file
+        // (so `--chrome css/CSS2/box` keeps `css/CSS2/box` as a suite path).
         opts.chrome =
-          argv[i + 1] && !argv[i + 1].startsWith("--")
+          argv[i + 1] && !argv[i + 1].startsWith("--") && statSafeIsFile(argv[i + 1])
             ? argv[++i]
             : (process.env.CHROME_PATH ??
               "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
@@ -156,6 +158,14 @@ function parseArgs(argv) {
   }
   if (opts.suites.length === 0) opts.suites = DEFAULT_SUITES.map((s) => s.path);
   return opts;
+}
+
+function statSafeIsFile(p) {
+  try {
+    return statSync(p).isFile();
+  } catch {
+    return false;
+  }
 }
 
 function writeJson(path, value) {
@@ -444,6 +454,7 @@ writeFileSync(
     flags,
     upstream,
     attribution,
+    raster: config.raster,
   }),
 );
 

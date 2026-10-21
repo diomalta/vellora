@@ -169,7 +169,7 @@ export function prepareFlagBreakdown(results) {
 /** Markdown table for summary.md. */
 export function summaryMarkdown(
   summary,
-  { title, env, chromeSummary, chromeCross, flags, upstream, attribution },
+  { title, env, chromeSummary, chromeCross, flags, upstream, attribution, raster },
 ) {
   const lines = [];
   lines.push(`# ${title}`, "");
@@ -178,7 +178,7 @@ export function summaryMarkdown(
       `- date: ${env.date}`,
       `- engine: ${env.engine.id} (blitz-dom ${env.engine.blitzDom?.version}), krilla ${env.engine.krilla?.version}`,
       `- vellora: ${env.vellora.commit} (${env.vellora.branch}), WPT: ${env.wpt.commit}`,
-      `- node ${env.node}, ${env.rustc}, ${env.pdftoppm}`,
+      `- node ${env.node}, ${env.rustc}, raster: ${raster ? `${raster.tool} (${env[raster.tool]}) @ ${raster.dpi} DPI, antialias ${raster.antialias}` : env.pdftocairo}`,
       `- OS: ${JSON.stringify(env.os)}, ${env.cpus} CPUs`,
       "",
     );
