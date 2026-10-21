@@ -1,12 +1,17 @@
 // Reftest verdicts over a reference graph.
 //
-// Semantics (documented in fidelity/wpt/README.md):
+// Semantics (documented in fidelity/wpt/README.md), from wptrunner at the pinned WPT commit:
 // * Multiple references on one node follow WPT docs/writing-tests/reftests.md "Multiple
-//   References" at the pinned commit: at least one `match` must match AND every `mismatch` must
-//   differ.
-// * Chained references follow wptrunner's RefTestImplementation.run_test DFS: when a `match`
-//   comparison passes and that reference itself has references, the verdict continues into the
-//   reference's own references (with the reference as the new left-hand side).
+//   References": at least one `match` must match AND every `mismatch` must differ. wptrunner's
+//   ReftestTest.from_manifest builds exactly that as a graph (each `==` reference followed by an
+//   ANDed chain of the `!=` references) and RefTestImplementation.run_test walks it depth-first.
+// * A reference's OWN <link rel=match|mismatch> is NOT followed by default. CONFIRMED from
+//   tools/wptrunner/wptrunner/wpttest.py at 9d8aceec0: from_manifest creates every nested node
+//   with references taken only from the root's mismatch chain, never from the reference file
+//   (the class docstring "the reference passes if it has any references recursively" is stale
+//   relative to that code). `chainReferences: true` opts into following them (Gecko-style
+//   chaining), cycle-safe, depth ≤ 8 — useful for diagnosis, not comparable with wptrunner or with
+//   Blitz's upstream runner (which does not chain either).
 // * Per-comparison fuzzy comes from the LEFT-hand node's <meta name=fuzzy> (wptrunner get_fuzzy),
 //   applied separately to every compared page; a page-count mismatch fails `==`.
 // * Screen reftests compare page 1 only (the 800x600 viewport); print reftests compare every page
@@ -18,6 +23,19 @@ import { fuzzyFor, selectPages } from "./html-meta.mjs";
 import { imageHash, isBlank, pageEqual, pixelDiff } from "./pixels.mjs";
 
 const MAX_CHAIN_DEPTH = 8;
+
+/**
+ * References that are empty documents by construction: a test matching one of them is expected
+ * to render nothing, so a blank rendering is a meaningful pass (WPT allows about:blank as a
+ * reference; /common/blank.html, css/reference/blank.html and css-page's blank-print-ref.html are
+ * the shared empty references in the pinned tree).
+ */
+const DECLARED_BLANK_REFERENCE_RE =
+  /^about:blank|\/(?:common|css\/reference)\/blank\.html$|\/blank-print-ref\.html$/;
+
+export function isDeclaredBlankReference(url) {
+  return typeof url === "string" && DECLARED_BLANK_REFERENCE_RE.test(url);
+}
 
 /** Pages of `node` that take part in a comparison. */
 export function comparedPages(node, mode, pageRanges) {
@@ -81,9 +99,14 @@ export function compareNodes(lhs, rhs, relation, { mode, pageRanges }) {
  * Evaluate a reftest whose root node is already loaded (status "ok").
  * `loadNode(url)` resolves to a loaded node `{ status: "ok", url, pages, pageCount, references,
  * fuzzy }` or a non-evaluable `{ status: "unsupported"|"error"|"timeout"|"skip", ... }`.
- * Returns { verdict: "pass"|"fail"|"cannot", cause?, comparisons, failure? }.
+ * Returns { verdict: "pass"|"fail"|"cannot", cause?, via?, comparisons, failure? } where `via` is
+ * the URL of the `==` reference the passing path ended on (null for a mismatch-only pass).
  */
-export async function evaluateReftest(root, loadNode, { mode, pageRanges }) {
+export async function evaluateReftest(
+  root,
+  loadNode,
+  { mode, pageRanges, chainReferences = false },
+) {
   const comparisons = [];
   let failure = null;
 
@@ -102,7 +125,7 @@ export async function evaluateReftest(root, loadNode, { mode, pageRanges }) {
       if (!compare(node, rhs, "!=").pass) return { verdict: "fail" };
     }
     const matches = refs.filter((r) => r.relation === "==");
-    if (matches.length === 0) return { verdict: "pass" };
+    if (matches.length === 0) return { verdict: "pass", via: null };
     let cannot = null;
     for (const ref of matches) {
       const rhs = await loadNode(ref.url);
@@ -112,10 +135,13 @@ export async function evaluateReftest(root, loadNode, { mode, pageRanges }) {
       }
       if (!compare(node, rhs, "==").pass) continue;
       const chained =
-        (rhs.references ?? []).length > 0 && depth < MAX_CHAIN_DEPTH && !stack.has(rhs.url);
-      if (!chained) return { verdict: "pass" };
+        chainReferences &&
+        (rhs.references ?? []).length > 0 &&
+        depth < MAX_CHAIN_DEPTH &&
+        !stack.has(rhs.url);
+      if (!chained) return { verdict: "pass", via: rhs.url };
       const sub = await verdictOf(rhs, depth + 1, new Set([...stack, rhs.url]));
-      if (sub.verdict === "pass") return sub;
+      if (sub.verdict === "pass") return { verdict: "pass", via: sub.via ?? rhs.url };
       if (sub.verdict === "cannot") cannot ??= sub.cause;
     }
     return cannot ? { verdict: "cannot", cause: cannot } : { verdict: "fail" };

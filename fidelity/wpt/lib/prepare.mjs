@@ -16,11 +16,17 @@
 //      get the WPT print default `size: 5in 3in; margin: 0.5in` merged at the START of the
 //      document's first @page block, so author declarations still override it; when the document
 //      has no @page, a new block is injected.
+//   5. Flags (attribution aids; they never change the rendered input or an outcome):
+//      `uncoveredCodepoints` — visible text codepoints that no available face maps (vellora's
+//      bundled faces ∪ Ahem ∪ supplied @font-face files; vellora never consults system fonts), so
+//      test and reference cannot draw them as real glyphs and a pass says nothing about them;
+//      `cssUrlResources` — CSS url() references outside @font-face (backgrounds, list images,
+//      content images, ...), which vellora never loads (it has no channel for them).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { urlToRel } from "./discover.mjs";
 import { findTags, parseAttributes } from "./html-meta.mjs";
-import { fontFormat, readFamilyNames } from "./sfnt.mjs";
+import { fontFormat, readCoverage, readFamilyNames } from "./sfnt.mjs";
 
 export const SCREEN_PAGE_CSS = "size: 800px 600px; margin: 0";
 export const PRINT_PAGE_CSS = "size: 5in 3in; margin: 0.5in";
@@ -181,6 +187,90 @@ function inlineImports(css, cssUrl, wptRoot, depth, info) {
 }
 
 const FONT_FACE_RE = /@font-face\s*{([^}]*)}/gi;
+const CSS_URL_RE = /url\(\s*(["']?)([^"')]*)\1\s*\)/gi;
+
+/** Non-data: url() references in CSS text, ignoring @font-face blocks and comments. */
+export function cssUrlResources(css) {
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, "").replace(FONT_FACE_RE, "");
+  const out = [];
+  for (const m of text.matchAll(CSS_URL_RE)) {
+    const href = m[2].trim();
+    if (href && !/^data:/i.test(href)) out.push(href);
+  }
+  return out;
+}
+
+const coverageCache = new WeakMap();
+function coverageOf(bytes) {
+  let c = coverageCache.get(bytes);
+  if (!c) {
+    c = readCoverage(bytes);
+    coverageCache.set(bytes, c);
+  }
+  return c;
+}
+
+/** Union of the cmap coverage of every TTF/OTF file in `dir` (vellora's bundled faces). */
+export function directoryCoverage(dir, readDir, readFile) {
+  const all = new Set();
+  for (const f of readDir(dir)
+    .filter((n) => /\.(ttf|otf|ttc)$/i.test(n))
+    .sort()) {
+    for (const cp of readCoverage(new Uint8Array(readFile(join(dir, f))))) all.add(cp);
+  }
+  return all;
+}
+
+const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0" };
+const IGNORABLE_RE = /[\p{White_Space}\p{Cc}\p{Default_Ignorable_Code_Point}]/u;
+
+function decodeEntities(text) {
+  return text.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (whole, body) => {
+    if (body[0] === "#") {
+      const cp =
+        body[1] === "x" || body[1] === "X"
+          ? Number.parseInt(body.slice(2), 16)
+          : Number(body.slice(1));
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : whole;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? whole;
+  });
+}
+
+function decodeCssString(s) {
+  return s.replace(/\\([0-9a-f]{1,6})\s?|\\(.)/gi, (_w, hex, ch) => {
+    if (hex) {
+      const cp = Number.parseInt(hex, 16);
+      return cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : "";
+    }
+    return ch;
+  });
+}
+
+/**
+ * Distinct, sorted codepoints of the text a document can paint: character data outside <head>,
+ * <script>, <style>, <title> and comments (entities decoded), plus quoted strings of CSS
+ * `content:` declarations. White space, controls and default-ignorable codepoints are excluded:
+ * they need no glyph.
+ */
+export function textCodepoints(html, cssSources = []) {
+  let body = html.replace(/<!--[\s\S]*?-->/g, "");
+  body = body.replace(/<(script|style|title|head)\b[\s\S]*?<\/\1\s*>/gi, "");
+  body = decodeEntities(body.replace(/<[^>]*>/g, ""));
+  const chars = new Set();
+  const add = (text) => {
+    for (const ch of text) if (!IGNORABLE_RE.test(ch)) chars.add(ch.codePointAt(0));
+  };
+  add(body);
+  for (const src of cssSources) {
+    for (const decl of src.text.matchAll(/(?:^|[;{\s])content\s*:\s*([^;}]*)/gi)) {
+      for (const str of decl[1].matchAll(/"((?:[^"\\]|\\.)*)"|'((?:[^'\\]|\\.)*)'/g)) {
+        add(decodeCssString(str[1] ?? str[2] ?? ""));
+      }
+    }
+  }
+  return [...chars].sort((a, b) => a - b);
+}
 
 function collectFontFaces(css, cssUrl) {
   const faces = [];
@@ -198,7 +288,15 @@ function collectFontFaces(css, cssUrl) {
  * Prepare one node. `mode` is "screen" | "print".
  * Returns { html, fonts, images, baseUrl, info }.
  */
-export function prepareNode({ wptRoot, rel, url, content, mode, inlineCss = true }) {
+export function prepareNode({
+  wptRoot,
+  rel,
+  url,
+  content,
+  mode,
+  inlineCss = true,
+  baseCoverage = null,
+}) {
   const info = {
     pageInjection: null,
     styleInsertion: null,
@@ -215,6 +313,11 @@ export function prepareNode({ wptRoot, rel, url, content, mode, inlineCss = true
     xhtmlHazards: xhtmlHazards(rel, content),
     notes: [],
     cssSources: [],
+    uncoveredCodepoints: 0,
+    uncoveredSample: null,
+    glyphCoverage: baseCoverage ? "checked" : "not-checked",
+    cssUrlResources: 0,
+    cssUrlSample: null,
   };
   let html = content;
 
@@ -282,6 +385,32 @@ export function prepareNode({ wptRoot, rel, url, content, mode, inlineCss = true
       if (pick) addFont(pick.rel, face.declared);
       else if (face.srcs.length)
         info.skippedFonts.push({ srcs: face.srcs, declared: face.declared });
+    }
+  }
+  // 5a. CSS url() resources other than @font-face sources (never loaded by vellora).
+  const cssUrls = new Set();
+  for (const src of info.cssSources) {
+    for (const u of cssUrlResources(src.text)) cssUrls.add(u);
+  }
+  for (const m of html.matchAll(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)) {
+    for (const u of cssUrlResources(decodeEntities(m[1] ?? m[2]))) cssUrls.add(u);
+  }
+  info.cssUrlResources = cssUrls.size;
+  if (cssUrls.size) info.cssUrlSample = [...cssUrls].slice(0, 3).join(" ");
+  // 5b. Glyph coverage of the visible text (+ CSS `content` strings) by every available face.
+  if (baseCoverage) {
+    const extra = fonts.map((bytes) => coverageOf(bytes));
+    const uncovered = [];
+    for (const cp of textCodepoints(html, info.cssSources)) {
+      if (baseCoverage.has(cp) || extra.some((c) => c.has(cp))) continue;
+      uncovered.push(cp);
+    }
+    info.uncoveredCodepoints = uncovered.length;
+    if (uncovered.length) {
+      info.uncoveredSample = uncovered
+        .slice(0, 8)
+        .map((cp) => `U+${cp.toString(16).toUpperCase().padStart(4, "0")}`)
+        .join(" ");
     }
   }
   info.cssSources = info.cssSources.map((s) => s.url);

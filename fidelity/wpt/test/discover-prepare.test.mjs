@@ -10,7 +10,6 @@ import {
   styleInsertionPoint,
   xhtmlHazards,
 } from "../lib/prepare.mjs";
-import { compareExpectations } from "../lib/report.mjs";
 import { readFamilyNames } from "../lib/sfnt.mjs";
 
 const REF = `<link rel="match" href="x-ref.html">`;
@@ -145,26 +144,4 @@ test("sfnt name table: family names are read from a minimal font", () => {
     family: "Ahem",
     typographicFamily: null,
   });
-});
-
-test("expectations ratchet separates regressions from improvements", () => {
-  const expected = {
-    engine: "e",
-    results: { a: "pass", b: "fail", c: "unsupported", gone: "pass" },
-  };
-  const r = compareExpectations(expected, [
-    { test: "a", outcome: "fail" },
-    { test: "b", outcome: "pass" },
-    { test: "c", outcome: "error" },
-    { test: "new", outcome: "pass" },
-  ]);
-  assert.deepEqual(r.counts, {
-    regressions: 1,
-    improvements: 1,
-    changed: 1,
-    added: 1,
-    missing: 1,
-    unchanged: 0,
-  });
-  assert.deepEqual(r.regressions, [{ test: "a", expected: "pass", actual: "fail" }]);
 });

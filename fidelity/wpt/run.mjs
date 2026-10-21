@@ -16,27 +16,44 @@
 //   --no-aa                   rasterize without anti-aliasing
 //   --rasterizer pdftocairo|pdftoppm  poppler backend (default pdftocairo; see lib/raster.mjs)
 //   --vellora <dist/index.js> render with another vellora build (e.g. a Blitz-bump worktree)
-//   --expectations auto|none|<file>   ratchet against fidelity/wpt/expectations/<engine>.json
-//   --update-expectations     write fidelity/wpt/expectations/<engine>.json from this run
+//   --expectations auto|none|<file>   ratchet against fidelity/baselines/wpt/<engine>.json
+//   --update-expectations     write fidelity/baselines/wpt/<engine>.json from this run (refused
+//                             unless the default suites ran unfiltered on the exact WPT pin)
+//   --chain-references        also follow a reference's own <link rel=match|mismatch> (NOT
+//                             wptrunner semantics; diagnosis only, recorded in the results)
+//   --allow-unpinned          run on a WPT tree that is not exactly WPT_COMMIT (other HEAD, no git
+//                             metadata, modified or untracked files); results are marked unpinned
+//                             and no ratchet or expectations update is performed
 //   --upstream auto|none|<blitz-sha>  cross-tab with Blitz's own published WPT report
 //   --offline                 never download (upstream report must already be cached)
 //   --chrome [path]           also run every reftest through Chrome print (see lib/chrome.mjs)
 //   --chrome-jobs <n>         concurrent Chrome pages (default 6)
 //   --chrome-from <results.json>  reuse Chrome outcomes of an earlier run (same WPT + raster config)
 //   --list                    only discover/classify and print counts
-//   --label <text>            free-form provenance note stored with the run (e.g. a build source)
+//   --label <text>            provenance note stored with the run (required when the vellora
+//                             build has no git commit, e.g. a `git archive` export)
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { discover } from "./lib/discover.mjs";
 import { captureEnv, findRepoRoot } from "./lib/env.mjs";
+import { INK_SIGNIFICANT_PX, inkDivergence } from "./lib/pixels.mjs";
 import { runPool } from "./lib/pool.mjs";
+import {
+  HARNESS_SEMANTICS,
+  chromeReuseMismatch,
+  expectationsMismatch,
+  makeRunId,
+  partialRunReason,
+  wptPinProblems,
+} from "./lib/provenance.mjs";
 import {
   attributeFailures,
   buildExpectations,
   chromeCrossTab,
   compareExpectations,
+  inkCheckSummary,
   loadUpstreamReport,
   prepareFlagBreakdown,
   summarize,
@@ -70,6 +87,8 @@ function parseArgs(argv) {
     chrome: null,
     chromeJobs: 6,
     list: false,
+    chainReferences: false,
+    allowUnpinned: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -148,6 +167,12 @@ function parseArgs(argv) {
       case "--list":
         opts.list = true;
         break;
+      case "--chain-references":
+        opts.chainReferences = true;
+        break;
+      case "--allow-unpinned":
+        opts.allowUnpinned = true;
+        break;
       case "--label":
         opts.label = val();
         break;
@@ -173,7 +198,29 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function fatal(message) {
+  console.error(`run: ${message}`);
+  process.exit(2);
+}
+
 const opts = parseArgs(process.argv.slice(2));
+const defaultSuitePaths = DEFAULT_SUITES.map((s) => s.path);
+if (opts.updateExpectations) {
+  const why = partialRunReason({
+    suites: opts.suites,
+    defaultSuites: defaultSuitePaths,
+    filter: opts.filter,
+    limit: opts.limit,
+  });
+  if (why)
+    fatal(
+      `--update-expectations refused: ${why}; the committed baseline covers the full default run`,
+    );
+  if (opts.chainReferences)
+    fatal("--update-expectations refused: --chain-references is not wptrunner semantics");
+  if (opts.allowUnpinned)
+    fatal("--update-expectations refused: --allow-unpinned results are not a baseline");
+}
 if (!existsSync(join(opts.wpt, "fonts", "Ahem.ttf"))) {
   console.error(
     `run: no WPT checkout at ${opts.wpt}; run \`node fidelity/wpt/fetch-wpt.mjs\` first`,
@@ -184,9 +231,21 @@ const repoRoot = findRepoRoot(opts.vellora ? dirname(opts.vellora) : resolve(fid
 const started = Date.now();
 const env = captureEnv({ repoRoot, wptRoot: opts.wpt, chromePath: opts.chrome });
 const expectedWpt = readFileSync(join(here, "WPT_COMMIT"), "utf8").trim();
-if (env.wpt.commit !== expectedWpt) {
+const pinProblems = wptPinProblems(env.wpt, expectedWpt);
+const pin = { expected: expectedWpt, ok: pinProblems.length === 0, problems: pinProblems };
+if (!pin.ok && !opts.list) {
+  if (!opts.allowUnpinned) {
+    fatal(
+      `WPT tree ${opts.wpt} is not exactly the pin: ${pinProblems.join("; ")}. Run fetch-wpt.mjs, or pass --allow-unpinned to measure it anyway (no ratchet, results marked unpinned).`,
+    );
+  }
   console.warn(
-    `run: WARNING WPT checkout is ${env.wpt.commit}, fidelity/wpt/WPT_COMMIT is ${expectedWpt}`,
+    `run: WARNING running UNPINNED (${pinProblems.join("; ")}); no ratchet will be computed`,
+  );
+}
+if (!env.vellora.commit && !opts.label && !opts.list) {
+  fatal(
+    `the vellora build at ${env.vellora.root} has no git commit; pass --label <provenance> (its source hash ${env.vellora.sourceHash.slice(0, 12)} is recorded either way)`,
   );
 }
 
@@ -212,7 +271,12 @@ console.log(
 );
 if (opts.list) process.exit(0);
 
-const runId = `${env.dateIso.replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${env.engine.id}-vellora-${(env.vellora.commit ?? "unknown").slice(0, 7)}`;
+const runId = makeRunId({
+  dateIso: env.dateIso,
+  engineId: env.engine.id,
+  velloraCommit: env.vellora.commit,
+  sourceHash: env.vellora.sourceHash,
+});
 const outDir = opts.out ?? join(fidelityRoot, "results", "wpt", runId);
 mkdirSync(outDir, { recursive: true });
 const config = {
@@ -231,6 +295,11 @@ const config = {
   render: "vellora.renderPdf(html, undefined, { strict: true, fonts, images, baseUrl })",
   velloraModule: opts.vellora ?? "vellora (workspace package via root node_modules)",
   label: opts.label ?? null,
+  semantics: HARNESS_SEMANTICS,
+  chainReferences: opts.chainReferences,
+  allowUnpinned: opts.allowUnpinned,
+  wptPin: pin,
+  bundledFontsDir: join(repoRoot, "crates", "vellora-core", "src", "fonts"),
 };
 
 // 2. Harness-level skips (never silent): non-UTF-8 and wptserve `.sub.` substitution files.
@@ -273,6 +342,8 @@ await runPool({
       artifacts: opts.artifacts,
       keepPdf: opts.keepPdf,
       velloraModule: opts.vellora,
+      chainReferences: opts.chainReferences,
+      bundledFontsDir: config.bundledFontsDir,
     }),
   },
   onResult: (result, task) => {
@@ -302,6 +373,7 @@ if (opts.chrome) {
     artifactsDir: opts.artifacts === "none" ? null : join(outDir, "chrome-artifacts"),
     artifacts: opts.artifacts,
     keepPdf: opts.keepPdf,
+    chainReferences: opts.chainReferences,
     onProgress: (n, total, counts) => {
       if (n % 500 === 0 || n === total)
         console.log(`run: chrome ${n}/${total} ${JSON.stringify(counts)}`);
@@ -311,14 +383,12 @@ if (opts.chrome) {
   env.chrome = { ...(env.chrome ?? {}), browserVersion: chromeInfo.browserVersion };
 } else if (opts.chromeFrom) {
   // Chrome's outcomes do not depend on the vellora build: reuse a previous run's Chrome results
-  // when the WPT commit and raster configuration are identical (refused otherwise).
+  // when the WPT commit, raster configuration and comparison semantics are identical.
   const prior = JSON.parse(readFileSync(opts.chromeFrom, "utf8"));
-  const same =
-    prior.env?.wpt?.commit === env.wpt.commit &&
-    JSON.stringify(prior.config?.raster) === JSON.stringify(config.raster);
-  if (!same) {
-    console.error("run: --chrome-from results differ in WPT commit or raster config; refusing");
-    process.exit(2);
+  const why = chromeReuseMismatch(prior, { wptCommit: env.wpt.commit, config });
+  if (why) fatal(`--chrome-from ${opts.chromeFrom} refused: ${why}`);
+  if (prior.config?.wptPin && !prior.config.wptPin.ok && pin.ok) {
+    fatal(`--chrome-from ${opts.chromeFrom} refused: that run was unpinned`);
   }
   const byTest = new Map(prior.tests.filter((t) => t.chrome).map((t) => [t.test, t.chrome]));
   let reused = 0;
@@ -339,6 +409,30 @@ if (opts.chrome) {
   env.chrome = prior.env?.chrome ?? null;
 }
 const chromeRan = chromeInfo !== null;
+
+// 4b. Ink check (attribution aid): how much of Chrome's ink vellora's TEST rendering lacks, for
+// every vellora pass / pass-blank. Needs ink signatures from both engines.
+let inkStatus = null;
+if (chromeRan) {
+  let checked = 0;
+  for (const r of results) {
+    if (!(r.outcome === "pass" || r.outcome === "pass-blank") || !r.ink || !r.chrome?.ink) continue;
+    r.inkCheck = {
+      ...inkDivergence(r.chrome.ink, r.ink),
+      chromeSignificant: Object.values(r.chrome.ink.bins).some((n) => n >= INK_SIGNIFICANT_PX),
+    };
+    checked++;
+  }
+  if (checked === 0) {
+    inkStatus = {
+      status: "not-run",
+      reason: opts.chromeFrom
+        ? `the --chrome-from run has no ink signatures (produced before harness semantics ${HARNESS_SEMANTICS})`
+        : "no vellora pass had ink signatures from both engines",
+    };
+  }
+}
+const inkCheck = chromeRan ? inkCheckSummary(results, inkStatus) : null;
 
 // 5. Upstream cross-tab (Blitz's own published WPT report for the same Blitz commit).
 let upstream = null;
@@ -401,9 +495,19 @@ writeJson(join(outDir, "summary.json"), {
   engineId: env.engine.id,
   velloraCommit: env.vellora.commit,
   wptCommit: env.wpt.commit,
+  wptPin: pin,
   chromeVersion: chromeInfo?.browserVersion ?? null,
-  config: { suites: opts.suites, raster: config.raster, inlineCss: opts.inlineCss },
+  config: {
+    suites: opts.suites,
+    raster: config.raster,
+    inlineCss: opts.inlineCss,
+    semantics: HARNESS_SEMANTICS,
+    chainReferences: opts.chainReferences,
+    filter: config.filter,
+    limit: config.limit,
+  },
   summary,
+  inkCheck,
   chromeSummary,
   chromeCross: chromeCross && {
     matrix: chromeCross.matrix,
@@ -425,22 +529,39 @@ writeJson(join(outDir, "run-info.json"), runInfo);
 if (upstream) writeJson(join(outDir, "upstream.json"), upstream);
 if (attribution) writeJson(join(outDir, "attribution.json"), attribution);
 
+// Committed baselines live in fidelity/baselines/wpt/ (fidelity/README.md ownership table).
 let ratchet = null;
-const expectationsPath = join(here, "expectations", `${env.engine.id}.json`);
+const expectationsPath = join(fidelityRoot, "baselines", "wpt", `${env.engine.id}.json`);
 if (opts.expectations !== "none") {
-  const file = opts.expectations === "auto" ? expectationsPath : resolve(opts.expectations);
+  const explicit = opts.expectations !== "auto";
+  const file = explicit ? resolve(opts.expectations) : expectationsPath;
   if (existsSync(file)) {
-    ratchet = compareExpectations(JSON.parse(readFileSync(file, "utf8")), results);
-    ratchet.file = file;
+    const expected = JSON.parse(readFileSync(file, "utf8"));
+    const why = !pin.ok
+      ? `the WPT tree is not exactly the pin (${pinProblems.join("; ")})`
+      : expectationsMismatch(expected, { wptCommit: env.wpt.commit, config });
+    if (why) {
+      ratchet = { status: "not-run", reason: why, file };
+      console.error(`run: ratchet against ${file} not run: ${why}`);
+      if (explicit) process.exitCode = 2;
+    } else {
+      ratchet = compareExpectations(expected, results);
+      ratchet.file = file;
+    }
     writeJson(join(outDir, "ratchet.json"), ratchet);
-  } else if (opts.expectations !== "auto") {
+  } else if (explicit) {
     console.error(`run: expectations file ${file} not found`);
     process.exitCode = 2;
   }
 }
 if (opts.updateExpectations) {
+  if (!pin.ok) fatal(`--update-expectations refused: ${pinProblems.join("; ")}`);
   const command = `node fidelity/wpt/run.mjs ${process.argv.slice(2).join(" ")}`.trim();
-  writeJson(expectationsPath, buildExpectations({ results, env, suites: opts.suites, command }));
+  const ink = inkCheck?.status === "ok" ? `chrome ${chromeInfo?.browserVersion}` : "not-run";
+  writeJson(
+    expectationsPath,
+    buildExpectations({ results, env, suites: opts.suites, command, config, inkCheck: ink }),
+  );
   console.log(`run: wrote ${expectationsPath}`);
 }
 
@@ -455,6 +576,8 @@ writeFileSync(
     upstream,
     attribution,
     raster: config.raster,
+    inkCheck,
+    pin,
   }),
 );
 
@@ -464,21 +587,30 @@ console.log(
 );
 const pad = (s, n) => String(s).padEnd(n);
 console.log(
-  `${pad("suite", 32)} ${pad("reftests", 8)} ${pad("pass", 6)} ${pad("fail", 6)} ${pad("unsup", 6)} ${pad("error", 6)} ${pad("t/o", 4)} ${pad("skip", 5)} pass%  eval%${chromeSummary ? "  chrome%" : ""}`,
+  `${pad("suite", 32)} ${pad("reftests", 8)} ${pad("pass", 6)} ${pad("blank", 6)} ${pad("fail", 6)} ${pad("unsup", 6)} ${pad("error", 6)} ${pad("t/o", 4)} ${pad("skip", 5)} pass%  eval%${chromeSummary ? "  chrome%" : ""}`,
 );
 for (const [s, r] of [...Object.entries(summary.bySuite), ["TOTAL", summary.totals]]) {
   const c = s === "TOTAL" ? chromeSummary?.totals : chromeSummary?.bySuite[s];
   console.log(
-    `${pad(s, 32)} ${pad(r.reftests, 8)} ${pad(r.pass, 6)} ${pad(r.fail, 6)} ${pad(r.unsupported, 6)} ${pad(r.error, 6)} ${pad(r.timeout, 4)} ${pad(r.skip, 5)} ${pad(r.passRate ?? "-", 6)} ${pad(r.passRateEvaluated ?? "-", 6)}${c ? ` ${c.passRate ?? "-"}` : ""}`,
+    `${pad(s, 32)} ${pad(r.reftests, 8)} ${pad(r.pass, 6)} ${pad(r["pass-blank"], 6)} ${pad(r.fail, 6)} ${pad(r.unsupported, 6)} ${pad(r.error, 6)} ${pad(r.timeout, 4)} ${pad(r.skip, 5)} ${pad(r.passRate ?? "-", 6)} ${pad(r.passRateEvaluated ?? "-", 6)}${c ? ` ${c.passRate ?? "-"}` : ""}`,
   );
 }
 if (chromeCross) console.log(`run: vellora x chrome: ${JSON.stringify(chromeCross.totals)}`);
 if (attribution)
   console.log(`run: vellora failures attributed: ${JSON.stringify(attribution.totals)}`);
-if (ratchet) console.log(`run: ratchet vs ${ratchet.file}: ${JSON.stringify(ratchet.counts)}`);
+if (ratchet?.status === "ok") {
+  console.log(`run: ratchet vs ${ratchet.file}: ${JSON.stringify(ratchet.counts)}`);
+}
+if (inkCheck?.status === "ok") {
+  console.log(
+    `run: ink check of passes vs Chrome: ${inkCheck.flagged} of ${inkCheck.passesChecked} flagged ink-missing-vs-chrome`,
+  );
+}
 if (upstream) {
   console.log(
     `run: upstream ${upstream.sha}: ${upstream.status === "ok" ? JSON.stringify(upstream.counts) : upstream.reason}`,
   );
 }
-if (ratchet && ratchet.counts.regressions > 0) process.exitCode = 1;
+if (ratchet?.status === "ok" && ratchet.counts.regressions > 0 && !process.exitCode) {
+  process.exitCode = 1;
+}

@@ -9,7 +9,12 @@ import { makeVelloraRender } from "./vellora-render.mjs";
 const config = JSON.parse(process.env.VELLORA_WPT_WORKER_CONFIG ?? "{}");
 const specifier = config.velloraModule ? pathToFileURL(config.velloraModule).href : "vellora";
 const vellora = await import(specifier);
-const render = makeVelloraRender({ vellora, wptRoot: config.wptRoot, inlineCss: config.inlineCss });
+const render = makeVelloraRender({
+  vellora,
+  wptRoot: config.wptRoot,
+  inlineCss: config.inlineCss,
+  bundledFontsDir: config.bundledFontsDir,
+});
 // Rasterized nodes are cached per worker: shared references (e.g. ref-filled-green-100px-square)
 // recur across hundreds of tests.
 const caches = { screen: new Lru(48), print: new Lru(48) };
@@ -33,6 +38,7 @@ process.on("message", async (msg) => {
       artifactsDir: config.artifactsDir,
       artifacts: config.artifacts,
       keepPdf: config.keepPdf,
+      chainReferences: config.chainReferences === true,
     });
   } catch (e) {
     result = {

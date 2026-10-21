@@ -61,16 +61,45 @@ export function engineRevId(revisions) {
   return rev ? `blitz-${rev.slice(0, 12)}` : `blitz-${revisions.blitzDom?.version ?? "unknown"}`;
 }
 
-function gitInfo(dir) {
+/**
+ * Commit, branch and cleanliness of a checkout. `dirtyTrackedFiles` counts modified/deleted
+ * tracked paths, `untrackedFiles` untracked (non-ignored) files; both null outside git.
+ * `git status -C dir` reports the enclosing repository when `dir` is not its own top level, so
+ * the top level is recorded too and callers can refuse a checkout that is not its own repository.
+ */
+export function gitInfo(dir) {
   const sha = run("git", ["-C", dir, "rev-parse", "HEAD"]);
+  const top = run("git", ["-C", dir, "rev-parse", "--show-toplevel"]);
   const branch = run("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"]);
-  const status = run("git", ["-C", dir, "status", "--porcelain", "--untracked-files=no"]);
+  const status = run("git", ["-C", dir, "status", "--porcelain", "--untracked-files=all"]);
+  const lines = typeof status === "string" ? status.split("\n").filter(Boolean) : null;
   return {
     commit: typeof sha === "string" ? sha : null,
+    toplevel: typeof top === "string" ? top : null,
     branch: typeof branch === "string" ? branch : null,
-    dirtyTrackedFiles:
-      typeof status === "string" ? status.split("\n").filter(Boolean).length : null,
+    dirtyTrackedFiles: lines ? lines.filter((l) => !l.startsWith("??")).length : null,
+    untrackedFiles: lines ? lines.filter((l) => l.startsWith("??")).length : null,
   };
+}
+
+/**
+ * Content hash of the build being measured: the addon bytes plus packages/vellora/dist/*.js. It
+ * identifies a build that has no git commit (e.g. a `git archive` export).
+ */
+export function sourceHash(repoRoot, addons) {
+  const h = createHash("sha256");
+  for (const a of addons) h.update(`${a.file}:${a.sha256}\n`);
+  const dist = join(repoRoot, "packages", "vellora", "dist");
+  let files = [];
+  try {
+    files = readdirSync(dist)
+      .filter((f) => f.endsWith(".js"))
+      .sort();
+  } catch {
+    files = [];
+  }
+  for (const f of files) h.update(`${f}:`).update(readFileSync(join(dist, f)));
+  return h.digest("hex");
 }
 
 function addonInfo(repoRoot) {
@@ -91,6 +120,11 @@ function addonInfo(repoRoot) {
       mtime: statSync(p).mtime.toISOString(),
     };
   });
+}
+
+function velloraInfo(repoRoot) {
+  const addon = addonInfo(repoRoot);
+  return { root: repoRoot, ...gitInfo(repoRoot), addon, sourceHash: sourceHash(repoRoot, addon) };
 }
 
 /** Full environment record. `chromeVersion` is filled by the Chrome oracle when it runs. */
@@ -122,7 +156,7 @@ export function captureEnv({ repoRoot, wptRoot, chromePath }) {
       ? { path: chromePath, version: firstLine(run(chromePath, ["--version"])) }
       : null,
     wpt: { root: wptRoot, ...gitInfo(wptRoot) },
-    vellora: { root: repoRoot, ...gitInfo(repoRoot), addon: addonInfo(repoRoot) },
+    vellora: velloraInfo(repoRoot),
     engine: { id: engineRevId(revisions), ...revisions },
     argv: process.argv,
     cwd: process.cwd(),

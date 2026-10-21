@@ -2,8 +2,36 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { zstdDecompressSync } from "node:zlib";
+import { comparisonConfig } from "./provenance.mjs";
 
-export const OUTCOMES = ["pass", "fail", "unsupported", "error", "timeout", "skip"];
+/**
+ * `pass-blank` (WPT pass rule satisfied by a pure-white test rendering whose reference is not an
+ * empty document by construction) is its own outcome: it is never counted in `pass` or in any
+ * pass rate. See lib/run-test.mjs.
+ */
+export const OUTCOMES = ["pass", "pass-blank", "fail", "unsupported", "error", "timeout", "skip"];
+const isPassLike = (o) => o === "pass" || o === "pass-blank";
+/** missingFrac at or above which a pass is flagged `ink-missing-vs-chrome` (validator's 0.5). */
+export const INK_MISSING_SUSPECT = 0.5;
+
+/**
+ * Reasons a `pass` may not show what the test asserts, from the test's own preparation record
+ * (deterministic) and, when the Chrome oracle ran, from the ink check (indicative). They never
+ * change an outcome; they split `pass` into flagged and clean.
+ */
+export function suspectFlags(r) {
+  const p = r.prepare ?? {};
+  const out = [];
+  if (p.uncoveredCodepoints) out.push("uncovered-glyphs");
+  if (p.cssUrlResources) out.push("css-url-resource");
+  if (p.imgWithoutDimAttrs) out.push("img-without-dims");
+  if ((p.skippedFonts ?? []).length) out.push("webfont-not-supplied");
+  if ((p.missingResources ?? []).length) out.push("missing-resource");
+  if (r.inkCheck && r.inkCheck.missingFrac >= INK_MISSING_SUSPECT) {
+    out.push("ink-missing-vs-chrome");
+  }
+  return out;
+}
 const NON_REFTEST_KINDS = ["testharness", "css-manual", "manual", "visual", "crashtest"];
 
 function pct(n, d) {
@@ -13,15 +41,17 @@ function pct(n, d) {
 function emptyRow() {
   const row = { reftests: 0, screen: 0, print: 0 };
   for (const o of OUTCOMES) row[o] = 0;
-  row.passBlank = 0;
+  row.passFlagged = 0;
   row.notRun = {};
   for (const k of NON_REFTEST_KINDS) row.notRun[k] = 0;
   return row;
 }
 
 function finishRow(row) {
+  row.passClean = row.pass - row.passFlagged;
   row.passRate = pct(row.pass, row.reftests);
-  row.passRateEvaluated = pct(row.pass, row.pass + row.fail);
+  row.passRateEvaluated = pct(row.pass, row.pass + row["pass-blank"] + row.fail);
+  row.passRateClean = pct(row.passClean, row.reftests);
   return row;
 }
 
@@ -45,6 +75,7 @@ export function summarize({ discovered, results, suites, engine = "vellora" }) {
     }
   }
   const features = {};
+  const flagCounts = {};
   const errorKinds = {};
   const skipReasons = {};
   for (const r of results) {
@@ -54,7 +85,10 @@ export function summarize({ discovered, results, suites, engine = "vellora" }) {
       row.reftests++;
       row[r.mode]++;
       row[o]++;
-      if (o === "pass" && r.blank) row.passBlank++;
+      if (o === "pass" && engine === "vellora" && suspectFlags(r).length) row.passFlagged++;
+    }
+    if (o === "pass" && engine === "vellora") {
+      for (const f of suspectFlags(r)) flagCounts[f] = (flagCounts[f] ?? 0) + 1;
     }
     const cause = engine === "vellora" ? r.cause : r.chrome?.cause;
     if (o === "unsupported" && cause?.feature) {
@@ -81,6 +115,60 @@ export function summarize({ discovered, results, suites, engine = "vellora" }) {
     ),
     errorKinds: sortObject(errorKinds),
     skipReasons: sortObject(skipReasons),
+    passFlags: sortObject(flagCounts),
+  };
+}
+
+/**
+ * Cross-engine ink check over vellora's passes (needs the Chrome oracle): distribution of the share
+ * of Chrome's significant ink that vellora's TEST rendering lacks, and of the ink bounding-box
+ * shift. HYPOTHESIS-grade (colour-histogram heuristic; Chrome prints, vellora paginates).
+ */
+export function inkCheckSummary(results, status) {
+  if (status) return status;
+  const passes = results.filter((r) => r.outcome === "pass" && r.inkCheck);
+  const blanks = results.filter((r) => r.outcome === "pass-blank" && r.inkCheck);
+  const bucket = (v, edges) => {
+    for (const [name, hi] of edges) if (v < hi) return name;
+    return edges[edges.length - 1][0];
+  };
+  const missing = { "<0.1": 0, "0.1-0.3": 0, "0.3-0.5": 0, "0.5-0.8": 0, ">=0.8": 0 };
+  const shift = { "<=8": 0, "9-32": 0, "33-100": 0, ">100": 0, "no-ink": 0 };
+  for (const r of passes) {
+    const m = r.inkCheck.missingFrac;
+    missing[
+      bucket(m, [
+        ["<0.1", 0.1],
+        ["0.1-0.3", 0.3],
+        ["0.3-0.5", 0.5],
+        ["0.5-0.8", 0.8],
+        [">=0.8", 2],
+      ])
+    ]++;
+    const b = r.inkCheck.bboxShift;
+    shift[
+      b === null
+        ? "no-ink"
+        : bucket(b, [
+            ["<=8", 9],
+            ["9-32", 33],
+            ["33-100", 101],
+            [">100", 1e9],
+          ])
+    ]++;
+  }
+  return {
+    status: "ok",
+    passesChecked: passes.length,
+    passesWithoutData: results.filter((r) => r.outcome === "pass" && !r.inkCheck).length,
+    missingFrac: missing,
+    flagged: passes.filter((r) => r.inkCheck.missingFrac >= INK_MISSING_SUSPECT).length,
+    bboxShift: shift,
+    passBlank: {
+      checked: blanks.length,
+      chromeDrawsSignificantInk: blanks.filter((r) => r.inkCheck.chromeSignificant).length,
+      chromeAlsoBlank: blanks.filter((r) => r.inkCheck.oracleInk === 0).length,
+    },
   };
 }
 
@@ -92,20 +180,29 @@ export function summarize({ discovered, results, suites, engine = "vellora" }) {
 export function chromeCrossTab(results, suites) {
   const matrix = {};
   const bySuite = {};
-  for (const s of suites)
-    bySuite[s] = { velloraOnlyFail: 0, bothFail: 0, velloraPassChromeFail: 0, bothPass: 0 };
+  const blankRow = () => ({
+    velloraOnlyFail: 0,
+    bothFail: 0,
+    velloraPassChromeFail: 0,
+    bothPass: 0,
+    velloraPassBlank: 0,
+  });
+  for (const s of suites) bySuite[s] = blankRow();
   for (const r of results) {
     if (!r.chrome) continue;
     const key = `${r.outcome}|${r.chrome.outcome}`;
     matrix[key] = (matrix[key] ?? 0) + 1;
     const row = bySuite[r.suite];
     if (!row) continue;
-    if (r.outcome === "fail" && r.chrome.outcome === "pass") row.velloraOnlyFail++;
-    else if (r.outcome === "fail" && r.chrome.outcome === "fail") row.bothFail++;
-    else if (r.outcome === "pass" && r.chrome.outcome === "fail") row.velloraPassChromeFail++;
-    else if (r.outcome === "pass" && r.chrome.outcome === "pass") row.bothPass++;
+    // Chrome's own pass-blank counts as a Chrome pass here (Chrome draws what it is given).
+    const c = r.chrome.outcome;
+    if (r.outcome === "pass-blank") row.velloraPassBlank++;
+    else if (r.outcome === "fail" && isPassLike(c)) row.velloraOnlyFail++;
+    else if (r.outcome === "fail" && c === "fail") row.bothFail++;
+    else if (r.outcome === "pass" && c === "fail") row.velloraPassChromeFail++;
+    else if (r.outcome === "pass" && isPassLike(c)) row.bothPass++;
   }
-  const totals = { velloraOnlyFail: 0, bothFail: 0, velloraPassChromeFail: 0, bothPass: 0 };
+  const totals = blankRow();
   for (const row of Object.values(bySuite))
     for (const k of Object.keys(totals)) totals[k] += row[k];
   return { matrix: sortObject(matrix), totals, bySuite };
@@ -132,8 +229,8 @@ export function attributeFailures(results, suites) {
     const up = r.upstream;
     let k = "unattributed";
     if (c === "fail") k = "oracleInconclusive";
-    else if (c === "pass" && up === "PASS") k = "velloraLayerSuspect";
-    else if (c === "pass" && up && up !== "ABSENT") k = "blitzLayoutSuspect";
+    else if (isPassLike(c) && up === "PASS") k = "velloraLayerSuspect";
+    else if (isPassLike(c) && up && up !== "ABSENT") k = "blitzLayoutSuspect";
     lists[k].push(r.test);
     if (bySuite[r.suite]) bySuite[r.suite][k]++;
   }
@@ -154,6 +251,8 @@ export function prepareFlagBreakdown(results) {
     missingResources: (p) => (p.missingResources ?? []).length > 0,
     inlinedStylesheets: (p) => (p.inlinedStylesheets ?? 0) > 0,
     mergedAuthorPage: (p) => p.pageInjection === "merged-into-author-@page",
+    uncoveredCodepoints: (p) => (p.uncoveredCodepoints ?? 0) > 0,
+    cssUrlResources: (p) => (p.cssUrlResources ?? 0) > 0,
   };
   const out = {};
   for (const name of Object.keys(flags)) out[name] = {};
@@ -169,7 +268,7 @@ export function prepareFlagBreakdown(results) {
 /** Markdown table for summary.md. */
 export function summaryMarkdown(
   summary,
-  { title, env, chromeSummary, chromeCross, flags, upstream, attribution, raster },
+  { title, env, chromeSummary, chromeCross, flags, upstream, attribution, raster, inkCheck, pin },
 ) {
   const lines = [];
   lines.push(`# ${title}`, "");
@@ -180,6 +279,7 @@ export function summaryMarkdown(
       `- vellora: ${env.vellora.commit} (${env.vellora.branch}), WPT: ${env.wpt.commit}`,
       `- node ${env.node}, ${env.rustc}, raster: ${raster ? `${raster.tool} (${env[raster.tool]}) @ ${raster.dpi} DPI, antialias ${raster.antialias}` : env.pdftocairo}`,
       `- OS: ${JSON.stringify(env.os)}, ${env.cpus} CPUs`,
+      `- WPT pin: ${pin?.ok ? "exact (HEAD = WPT_COMMIT, clean tree)" : `NOT exact — ${(pin?.problems ?? ["unknown"]).join("; ")}`}`,
       "",
     );
   }
@@ -187,6 +287,8 @@ export function summaryMarkdown(
     "suite",
     "reftests",
     "pass",
+    "pass (clean)",
+    "pass-blank",
     "fail",
     "unsup",
     "error",
@@ -194,6 +296,7 @@ export function summaryMarkdown(
     "skip",
     "pass %",
     "pass % of evaluated",
+    "clean pass %",
   ];
   if (chromeSummary) head.push("chrome pass %");
   lines.push(`| ${head.join(" | ")} |`, `| ${head.map(() => "---").join(" | ")} |`);
@@ -202,6 +305,8 @@ export function summaryMarkdown(
       name,
       r.reftests,
       r.pass,
+      r.passClean,
+      r["pass-blank"],
       r.fail,
       r.unsupported,
       r.error,
@@ -209,25 +314,53 @@ export function summaryMarkdown(
       r.skip,
       r.passRate ?? "-",
       r.passRateEvaluated ?? "-",
+      r.passRateClean ?? "-",
     ];
     if (chromeSummary) cells.push(c?.passRate ?? "-");
     lines.push(`| ${cells.join(" | ")} |`);
   };
   for (const [s, r] of Object.entries(summary.bySuite)) row(s, r, chromeSummary?.bySuite[s]);
   row("**total**", summary.totals, chromeSummary?.totals);
-  lines.push("", `pass (both blank): ${summary.totals.passBlank}`, "");
+  lines.push(
+    "",
+    "`pass-blank` (test rendering pure white, reference not empty by construction) is not a pass and",
+    "is excluded from every pass rate; `pass (clean)` = passes with no suspect flag; pass % of",
+    "evaluated = pass / (pass + pass-blank + fail).",
+    "",
+    "## Suspect-flagged passes (a pass that may not show what the test asserts)",
+    "",
+  );
+  for (const [k, v] of Object.entries(summary.passFlags ?? {})) lines.push(`- ${k}: ${v}`);
+  lines.push("");
+  if (inkCheck) {
+    lines.push(
+      "## Ink check of vellora passes against Chrome's test rendering (HYPOTHESIS-grade)",
+      "",
+    );
+    if (inkCheck.status !== "ok") lines.push(`not run: ${inkCheck.reason}`, "");
+    else {
+      lines.push(
+        `- passes checked: ${inkCheck.passesChecked} (without data: ${inkCheck.passesWithoutData})`,
+        `- share of Chrome's significant ink missing in vellora: ${JSON.stringify(inkCheck.missingFrac)}`,
+        `- flagged ink-missing-vs-chrome (>= 0.5): ${inkCheck.flagged}`,
+        `- ink bounding-box shift (px): ${JSON.stringify(inkCheck.bboxShift)}`,
+        `- pass-blank: ${JSON.stringify(inkCheck.passBlank)}`,
+        "",
+      );
+    }
+  }
   if (chromeCross) {
     lines.push("## vellora × Chrome (print oracle)", "");
     lines.push(
-      "| suite | vellora-only fail | both fail | vellora pass, Chrome fail | both pass |",
-      "| --- | --- | --- | --- | --- |",
+      "| suite | vellora-only fail | both fail | vellora pass, Chrome fail | both pass | vellora pass-blank |",
+      "| --- | --- | --- | --- | --- | --- |",
     );
     for (const [s, r] of [
       ...Object.entries(chromeCross.bySuite),
       ["**total**", chromeCross.totals],
     ]) {
       lines.push(
-        `| ${s} | ${r.velloraOnlyFail} | ${r.bothFail} | ${r.velloraPassChromeFail} | ${r.bothPass} |`,
+        `| ${s} | ${r.velloraOnlyFail} | ${r.bothFail} | ${r.velloraPassChromeFail} | ${r.bothPass} | ${r.velloraPassBlank} |`,
       );
     }
     lines.push("");
@@ -275,49 +408,82 @@ export function summaryMarkdown(
   return `${lines.join("\n")}\n`;
 }
 
-/** Expectations document: test path → outcome, plus provenance. */
-export function buildExpectations({ results, env, suites, command }) {
+/**
+ * Expectations document (schema 2): test path → outcome, the comparison settings the outcomes
+ * depend on (a ratchet refuses different ones), and for every `pass` with suspect flags the
+ * comma-joined flags, so a later run can tell a regression of a clean pass from one of a pass that
+ * was never verified. `inkCheck` records whether Chrome-derived flags are included.
+ */
+export function buildExpectations({ results, env, suites, command, config, inkCheck }) {
   const out = {};
-  for (const r of [...results].sort((a, b) => (a.test < b.test ? -1 : 1))) out[r.test] = r.outcome;
+  const suspect = {};
+  for (const r of [...results].sort((a, b) => (a.test < b.test ? -1 : 1))) {
+    out[r.test] = r.outcome;
+    if (r.outcome === "pass") {
+      const flags = suspectFlags(r);
+      if (flags.length) suspect[r.test] = flags.join(",");
+    }
+  }
   return {
-    schema: 1,
+    schema: 2,
     engine: env.engine.id,
     blitzDom: env.engine.blitzDom,
     vellora: env.vellora.commit,
+    velloraSourceHash: env.vellora.sourceHash ?? null,
     wptCommit: env.wpt.commit,
     generated: env.date,
     command,
     suites,
+    comparison: comparisonConfig(config),
+    inkCheck,
     results: out,
+    suspectPasses: suspect,
   };
 }
 
 /**
- * Ratchet: regressions are expected-pass tests that no longer pass; improvements are tests that
- * now pass but were not expected to; `changed` are non-pass → different non-pass.
+ * Ratchet (schema-2 expectations; the caller checks compatibility first):
+ *   regressions   — expected `pass` → anything else (including `pass-blank`: content vanished);
+ *                   each carries `expectedFlags` when the expected pass was flagged suspect;
+ *   sightGained   — expected `pass-blank` → a non-pass: the oracle now sees content it could not
+ *                   see before (not a regression; usually a pre-existing gap becoming visible);
+ *   improvements  — any non-pass → `pass`;
+ *   changed       — non-pass → a different non-pass.
  */
 export function compareExpectations(expected, results) {
   const actual = new Map(results.map((r) => [r.test, r.outcome]));
+  const flags = expected.suspectPasses ?? {};
   const regressions = [];
+  const sightGained = [];
   const improvements = [];
   const changed = [];
   const added = [];
   let unchanged = 0;
   for (const [test, now] of actual) {
     const was = expected.results[test];
+    const entry = { test, expected: was, actual: now };
     if (was === undefined) added.push({ test, actual: now });
     else if (was === now) unchanged++;
-    else if (was === "pass") regressions.push({ test, expected: was, actual: now });
-    else if (now === "pass") improvements.push({ test, expected: was, actual: now });
-    else changed.push({ test, expected: was, actual: now });
+    else if (was === "pass") {
+      if (flags[test]) entry.expectedFlags = flags[test];
+      regressions.push(entry);
+    } else if (now === "pass") improvements.push(entry);
+    else if (was === "pass-blank") sightGained.push(entry);
+    else changed.push(entry);
   }
   const missing = Object.keys(expected.results).filter((t) => !actual.has(t));
+  const flaggedRegressions = regressions.filter((r) => r.expectedFlags).length;
   return {
+    status: "ok",
     expectationsEngine: expected.engine,
     expectationsVellora: expected.vellora,
     expectationsWpt: expected.wptCommit,
+    expectationsInkCheck: expected.inkCheck ?? null,
     counts: {
       regressions: regressions.length,
+      regressionsOfCleanPasses: regressions.length - flaggedRegressions,
+      regressionsOfFlaggedPasses: flaggedRegressions,
+      sightGained: sightGained.length,
       improvements: improvements.length,
       changed: changed.length,
       added: added.length,
@@ -325,6 +491,7 @@ export function compareExpectations(expected, results) {
       unchanged,
     },
     regressions,
+    sightGained,
     improvements,
     changed,
     added,
@@ -385,6 +552,7 @@ export function upstreamCrossTab(results, upstream) {
     bothPass: [],
     velloraFailUpstreamPass: [],
     velloraPassUpstreamFail: [],
+    velloraPassBlank: [],
     bothFail: [],
     velloraNotEvaluatedUpstreamPass: [],
     velloraNotEvaluatedUpstreamNotPass: [],
@@ -395,6 +563,7 @@ export function upstreamCrossTab(results, upstream) {
     const key = `${r.outcome}|${up}`;
     matrix[key] = (matrix[key] ?? 0) + 1;
     if (up === "ABSENT") buckets.upstreamAbsent.push(r.test);
+    else if (r.outcome === "pass-blank") buckets.velloraPassBlank.push(r.test);
     else if (r.outcome === "pass" && up === "PASS") buckets.bothPass.push(r.test);
     else if (r.outcome === "fail" && up === "PASS") buckets.velloraFailUpstreamPass.push(r.test);
     else if (r.outcome === "pass") buckets.velloraPassUpstreamFail.push(r.test);

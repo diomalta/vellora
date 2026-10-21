@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { evaluateReftest } from "../lib/refgraph.mjs";
+import { evaluateReftest, isDeclaredBlankReference } from "../lib/refgraph.mjs";
 
 const O = "http://web-platform.test:8000/t/";
 
@@ -31,7 +31,8 @@ function graph(spec) {
   return { root: nodes[`${O}test`], load, loads };
 }
 
-const run = (g, mode = "screen") => evaluateReftest(g.root, g.load, { mode, pageRanges: {} });
+const run = (g, mode = "screen", chainReferences = false) =>
+  evaluateReftest(g.root, g.load, { mode, pageRanges: {}, chainReferences });
 
 test("single match: equal passes, different fails", async () => {
   assert.equal(
@@ -73,24 +74,61 @@ test("multiple references: any match AND all mismatches (WPT docs)", async () =>
   assert.equal((await run(mismatchDiffers)).verdict, "pass");
 });
 
-test("chained references continue from the reference (wptrunner DFS)", async () => {
-  const chainOk = graph({
-    test: { pages: [1], refs: [["r1", "=="]] },
-    r1: { pages: [1], refs: [["r2", "=="]] },
-    r2: { pages: [1] },
-  });
-  assert.equal((await run(chainOk)).verdict, "pass");
+test("a reference's own links are NOT followed by default (wptrunner from_manifest at the pin)", async () => {
+  // Regression for the validator finding of 2026-10-21: 50 tests failed only through a chained
+  // reference although test == ref passed; wptrunner never follows a reference's own links.
   const chainBroken = graph({
     test: { pages: [1], refs: [["r1", "=="]] },
     r1: { pages: [1], refs: [["r2", "=="]] },
     r2: { pages: [5] },
   });
-  assert.equal((await run(chainBroken)).verdict, "fail");
+  const plain = await run(chainBroken);
+  assert.equal(plain.verdict, "pass");
+  assert.equal(plain.via, `${O}r1`);
+  assert.equal(plain.comparisons.length, 1, "r1's own reference is never loaded or compared");
+  assert.equal(chainBroken.loads.includes(`${O}r2`), false);
+});
+
+test("--chain-references opts into following a reference's links (cycle-safe)", async () => {
+  const chainOk = graph({
+    test: { pages: [1], refs: [["r1", "=="]] },
+    r1: { pages: [1], refs: [["r2", "=="]] },
+    r2: { pages: [1] },
+  });
+  const ok = await run(chainOk, "screen", true);
+  assert.equal(ok.verdict, "pass");
+  assert.equal(ok.via, `${O}r2`);
+  const chainBroken = graph({
+    test: { pages: [1], refs: [["r1", "=="]] },
+    r1: { pages: [1], refs: [["r2", "=="]] },
+    r2: { pages: [5] },
+  });
+  assert.equal((await run(chainBroken, "screen", true)).verdict, "fail");
   const cycle = graph({
     test: { pages: [1], refs: [["r1", "=="]] },
     r1: { pages: [1], refs: [["test", "=="]] },
   });
-  assert.equal((await run(cycle)).verdict, "pass");
+  assert.equal((await run(cycle, "screen", true)).verdict, "pass");
+});
+
+test("declared-blank references are recognised by URL", () => {
+  assert.equal(isDeclaredBlankReference("about:blank"), true);
+  assert.equal(isDeclaredBlankReference("http://web-platform.test:8000/common/blank.html"), true);
+  assert.equal(
+    isDeclaredBlankReference("http://web-platform.test:8000/css/reference/blank.html"),
+    true,
+  );
+  assert.equal(
+    isDeclaredBlankReference(
+      "http://web-platform.test:8000/css/css-page/reference/blank-print-ref.html",
+    ),
+    true,
+  );
+  assert.equal(
+    isDeclaredBlankReference("http://web-platform.test:8000/css/CSS2/text/x-ref.xht"),
+    false,
+  );
+  assert.equal(isDeclaredBlankReference(null), false);
 });
 
 test("a non-evaluable reference yields its outcome, never a claimed failure", async () => {

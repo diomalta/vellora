@@ -1,8 +1,19 @@
 // Render adapter: one prepared WPT node through vellora's real public pipeline
 // (`renderPdf`, strict: true, the built napi addon). Engine rejections are classified into the
 // runner's outcome taxonomy without interpreting them.
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { WPT_ORIGIN } from "./discover.mjs";
-import { prepareNode } from "./prepare.mjs";
+import { directoryCoverage, prepareNode } from "./prepare.mjs";
+
+/**
+ * Codepoints covered by vellora's bundled faces (crates/vellora-core/src/fonts of the build being
+ * measured), or null when that directory is absent (coverage is then recorded as not checked).
+ */
+export function bundledCoverage(dir) {
+  if (!dir || !existsSync(dir)) return null;
+  const set = directoryCoverage(dir, readdirSync, readFileSync);
+  return set.size ? set : null;
+}
 
 /** Drop empty fields so per-test records stay small. */
 export function compactInfo(info) {
@@ -19,6 +30,7 @@ export function compactInfo(info) {
     else out.fonts = undefined;
   }
   out.cssSources = undefined;
+  if (out.glyphCoverage === "checked") out.glyphCoverage = undefined;
   return out;
 }
 
@@ -41,7 +53,8 @@ export function classifyVelloraError(err) {
  * Build the engine render function for the shared loader.
  * `vellora` is the imported module (so a different build can be injected).
  */
-export function makeVelloraRender({ vellora, wptRoot, inlineCss = true }) {
+export function makeVelloraRender({ vellora, wptRoot, inlineCss = true, bundledFontsDir = null }) {
+  const baseCoverage = bundledCoverage(bundledFontsDir);
   return async function render({ url, rel, content, mode }) {
     const nodeUrl = url.startsWith("about:") ? `${WPT_ORIGIN}/about-blank.html` : url;
     const prepared = prepareNode({
@@ -51,6 +64,7 @@ export function makeVelloraRender({ vellora, wptRoot, inlineCss = true }) {
       content,
       mode,
       inlineCss,
+      baseCoverage,
     });
     let pdf;
     try {

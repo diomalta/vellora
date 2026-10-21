@@ -176,3 +176,42 @@ test(
     }
   },
 );
+
+test(
+  "real pipeline: blank test vs blank ordinary reference is pass-blank; vs common/blank.html is pass",
+  { skip: skipReason ?? false },
+  async () => {
+    // Independent of any engine bug: an empty <body> renders pure white in every engine.
+    const empty = (ref) =>
+      `<!DOCTYPE html><html><head><link rel="match" href="${ref}"></head><body></body></html>`;
+    const blank = await runPair({
+      "t/test.html": empty("ref.html"),
+      "t/ref.html": "<!DOCTYPE html><html><head></head><body></body></html>",
+    });
+    assert.equal(blank.outcome, "pass-blank", JSON.stringify(blank));
+    assert.equal(blank.blank, true);
+    const declared = await runPair({
+      "t/test.html": empty("/common/blank.html"),
+      "common/blank.html": "",
+    });
+    assert.equal(declared.outcome, "pass", JSON.stringify(declared));
+  },
+);
+
+test(
+  "real pipeline: injected defect (a') — body text vs an unrelated body-text reference never passes",
+  { skip: skipReason ?? false },
+  async () => {
+    // The validator's val-a3/val-a4 shape: vellora @ e47e77f paints nothing for inline content
+    // directly in <body>, so the pair compared white == white and was counted as a pass. Whether or
+    // not the engine draws it, the outcome must not be `pass` (pass-blank while it draws nothing,
+    // fail once it does).
+    const r = await runPair({
+      "t/test.html": `<!DOCTYPE html><html><head><link rel="match" href="ref.html"></head><body><span>The quick brown fox jumps over the lazy dog</span></body></html>`,
+      "t/ref.html":
+        "<!DOCTYPE html><html><head></head><body>XXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX<br>second line</body></html>",
+    });
+    assert.notEqual(r.outcome, "pass", JSON.stringify(r));
+    assert.ok(["pass-blank", "fail"].includes(r.outcome), r.outcome);
+  },
+);

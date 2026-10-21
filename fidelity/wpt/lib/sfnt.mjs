@@ -34,6 +34,71 @@ function decodeName(bytes, platformId, start, length) {
   return String.fromCharCode(...slice);
 }
 
+function tableOffset(bytes, name) {
+  const fmt = fontFormat(bytes);
+  if (fmt !== "ttf" && fmt !== "otf" && fmt !== "ttc") return -1;
+  const base = fmt === "ttc" ? u32(bytes, 12) : 0;
+  const numTables = u16(bytes, base + 4);
+  for (let i = 0; i < numTables; i++) {
+    const rec = base + 12 + i * 16;
+    if (tag(bytes, rec) === name) return u32(bytes, rec + 8);
+  }
+  return -1;
+}
+
+/**
+ * Codepoints mapped by the first face's `cmap` (Unicode subtables: format 4 BMP segments and
+ * format 12 groups; platform 0, or platform 3 encodings 1/10). Returns a Set; empty when the font
+ * has no Unicode cmap. Glyph id 0 (.notdef) is not coverage.
+ */
+export function readCoverage(bytes) {
+  const covered = new Set();
+  const cmap = tableOffset(bytes, "cmap");
+  if (cmap < 0) return covered;
+  const n = u16(bytes, cmap + 2);
+  for (let i = 0; i < n; i++) {
+    const rec = cmap + 4 + i * 8;
+    const platform = u16(bytes, rec);
+    const encoding = u16(bytes, rec + 2);
+    if (!(platform === 0 || (platform === 3 && (encoding === 1 || encoding === 10)))) continue;
+    const sub = cmap + u32(bytes, rec + 4);
+    const format = u16(bytes, sub);
+    if (format === 4) {
+      const segX2 = u16(bytes, sub + 6);
+      const ends = sub + 14;
+      const starts = ends + segX2 + 2;
+      const deltas = starts + segX2;
+      const rangeOffsets = deltas + segX2;
+      for (let s = 0; s < segX2; s += 2) {
+        const end = u16(bytes, ends + s);
+        const start = u16(bytes, starts + s);
+        const delta = u16(bytes, deltas + s);
+        const ro = u16(bytes, rangeOffsets + s);
+        for (let c = start; c <= end && c !== 0xffff; c++) {
+          let glyph;
+          if (ro === 0) glyph = (c + delta) & 0xffff;
+          else {
+            const at = rangeOffsets + s + ro + (c - start) * 2;
+            glyph = u16(bytes, at);
+            if (glyph !== 0) glyph = (glyph + delta) & 0xffff;
+          }
+          if (glyph !== 0) covered.add(c);
+        }
+      }
+    } else if (format === 12) {
+      const groups = u32(bytes, sub + 12);
+      for (let g = 0; g < groups; g++) {
+        const at = sub + 16 + g * 12;
+        const start = u32(bytes, at);
+        const end = u32(bytes, at + 4);
+        const startGlyph = u32(bytes, at + 8);
+        for (let c = start; c <= end; c++) if (startGlyph + (c - start) !== 0) covered.add(c);
+      }
+    }
+  }
+  return covered;
+}
+
 /** Family names of the first face: { family, typographicFamily } (either may be null). */
 export function readFamilyNames(bytes) {
   const fmt = fontFormat(bytes);

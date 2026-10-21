@@ -166,6 +166,75 @@ export function pageEqual(diff, fuzzy) {
   );
 }
 
+// --- Ink signature: a cross-engine attribution aid, never part of a verdict. -------------------
+// A pass only proves that the test and its reference render the same; it does not prove either
+// rendered what the test asserts (e.g. both lose the same content). The signature lets a Chrome
+// render of the same TEST be compared with vellora's: which colours Chrome draws that vellora does
+// not ("missing ink"), and how far the overall ink bounding box moved. Quantization and the
+// 50-pixel significance threshold match the validator's cross-engine check of 2026-10-21 (so the
+// counts are comparable); they are heuristics (HYPOTHESIS-grade), not a WPT rule.
+
+/** 3 bits per channel → 512 bins; bin 511 is (near-)white and is never ink. */
+function inkBin(d, i) {
+  return ((d[i] >> 5) << 6) | ((d[i + 1] >> 5) << 3) | (d[i + 2] >> 5);
+}
+const WHITE_BIN = 511;
+/** Bins with fewer pixels are dropped from the stored signature (anti-aliasing fringe). */
+export const INK_STORE_MIN_PX = 10;
+/** Chrome colours with fewer pixels do not count as significant ink. */
+export const INK_SIGNIFICANT_PX = 50;
+
+/** { px, bins: { bin: count }, bbox: [x0, y0, x1, y1] | null } of one rasterized page. */
+export function inkSignature(img) {
+  const counts = new Uint32Array(512);
+  const d = img.data;
+  let x0 = Number.POSITIVE_INFINITY;
+  let y0 = Number.POSITIVE_INFINITY;
+  let x1 = -1;
+  let y1 = -1;
+  let px = 0;
+  for (let i = 0, p = 0; i < d.length; i += 3, p++) {
+    const b = inkBin(d, i);
+    if (b === WHITE_BIN) continue;
+    counts[b]++;
+    px++;
+    const x = p % img.width;
+    const y = (p - x) / img.width;
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
+  }
+  const bins = {};
+  for (let b = 0; b < 512; b++) if (counts[b] >= INK_STORE_MIN_PX) bins[b] = counts[b];
+  return { px, bins, bbox: px === 0 ? null : [x0, y0, x1, y1] };
+}
+
+/**
+ * How much of the oracle's significant ink the candidate does not draw, and how far the ink
+ * bounding box moved. `missingFrac` = Σ max(0, oracle − candidate) / Σ oracle over oracle bins
+ * with ≥ INK_SIGNIFICANT_PX pixels (0 when the oracle draws no significant ink).
+ */
+export function inkDivergence(oracle, candidate) {
+  let ink = 0;
+  let missing = 0;
+  for (const [bin, n] of Object.entries(oracle.bins)) {
+    if (n < INK_SIGNIFICANT_PX) continue;
+    ink += n;
+    missing += Math.max(0, n - (candidate.bins[bin] ?? 0));
+  }
+  let bboxShift = null;
+  if (oracle.bbox && candidate.bbox) {
+    bboxShift = Math.max(...oracle.bbox.map((v, i) => Math.abs(v - candidate.bbox[i])));
+  }
+  return {
+    oracleInk: oracle.px,
+    candidateInk: candidate.px,
+    missingFrac: ink === 0 ? 0 : Math.round((missing / ink) * 1000) / 1000,
+    bboxShift,
+  };
+}
+
 /** Diff visualisation: differing pixels red, others the test pixel faded to 25%. */
 export function diffImage(a, b) {
   const out = new Uint8Array(a.width * a.height * 3);

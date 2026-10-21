@@ -1,10 +1,16 @@
 // Run one reftest with a given node loader and produce the per-test result record.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { diffImage, encodePng } from "./pixels.mjs";
-import { evaluateReftest, nodeIsBlank } from "./refgraph.mjs";
+import { diffImage, encodePng, inkSignature } from "./pixels.mjs";
+import {
+  comparedPages,
+  evaluateReftest,
+  isDeclaredBlankReference,
+  nodeIsBlank,
+} from "./refgraph.mjs";
 
 function relOf(url) {
+  if (typeof url === "string" && url.startsWith("about:")) return url;
   try {
     return new URL(url).pathname.replace(/^\//, "");
   } catch {
@@ -41,10 +47,42 @@ function compactRecord(r) {
   return out;
 }
 
+function writeArtifacts({ dir, record, pagePair, page, loaded, keepPdf }) {
+  mkdirSync(dir, { recursive: true });
+  if (pagePair) {
+    writeFileSync(join(dir, `lhs-p${page}.png`), encodePng(pagePair[0]));
+    writeFileSync(join(dir, `rhs-p${page}.png`), encodePng(pagePair[1]));
+    if (pagePair[0].width === pagePair[1].width && pagePair[0].height === pagePair[1].height) {
+      writeFileSync(join(dir, `diff-p${page}.png`), encodePng(diffImage(pagePair[0], pagePair[1])));
+    }
+  }
+  if (keepPdf) {
+    for (const [side, url] of [
+      ["lhs", record.lhs],
+      ["rhs", record.rhs],
+    ]) {
+      const n = loaded.get(url);
+      if (n?.pdf) writeFileSync(join(dir, `${side}.pdf`), n.pdf);
+    }
+  }
+  writeFileSync(
+    join(dir, "comparison.json"),
+    `${JSON.stringify({ ...compactRecord(record), lhsFile: relOf(record.lhs), rhsFile: relOf(record.rhs) }, null, 2)}\n`,
+  );
+}
+
 /**
- * Evaluate `test` ({ rel, url, mode }) and return its result record. When `artifactsDir` is set
- * and the test fails (or `artifacts === "all"`), the first differing page pair and a diff image
- * are written under artifactsDir/<rel>/ (PDFs too when `keepPdf`).
+ * Evaluate `test` ({ rel, url, mode }) and return its result record.
+ *
+ * Outcome `pass-blank`: the WPT pass rule holds but every compared page of the TEST rendering is
+ * pure white, and the reference it matched is not an empty document by construction
+ * (`isDeclaredBlankReference`). Such a pass only shows that test and reference lost the same
+ * content, so it is never counted as `pass`. Decided from this engine's own rendering only, so the
+ * outcome does not depend on whether an oracle ran.
+ *
+ * Artifacts: when `artifactsDir` is set, a failing test (or, with `artifacts === "all"`, any test
+ * that was compared) gets the first differing page pair — for a pass, page 1 of the test and of
+ * its first reference — plus a diff image under artifactsDir/<rel>/ (PDFs too when `keepPdf`).
  */
 export async function runReftest({
   test,
@@ -52,6 +90,7 @@ export async function runReftest({
   artifactsDir,
   artifacts = "fail",
   keepPdf = false,
+  chainReferences = false,
 }) {
   const started = performance.now();
   const result = { test: test.rel, mode: test.mode };
@@ -74,16 +113,22 @@ export async function runReftest({
   const evaluation = await evaluateReftest(root, tracked, {
     mode: test.mode,
     pageRanges: root.pageRanges,
+    chainReferences,
   });
   result.comparisons = evaluation.comparisons.map(compactRecord);
+  const blank = nodeIsBlank(root, test.mode, root.pageRanges);
+  if (blank) result.blank = true;
   if (evaluation.verdict === "cannot") {
     result.outcome = evaluation.cause.status;
     result.node = "ref";
     result.cause = describeCause(evaluation.cause);
+  } else if (evaluation.verdict === "pass" && blank && !isDeclaredBlankReference(evaluation.via)) {
+    result.outcome = "pass-blank";
   } else {
     result.outcome = evaluation.verdict;
   }
-  if (nodeIsBlank(root, test.mode, root.pageRanges)) result.blank = true;
+  const firstPage = comparedPages(root, test.mode, root.pageRanges)[0];
+  if (firstPage) result.ink = inkSignature(firstPage);
   let renderMs = 0;
   let rasterMs = 0;
   for (const n of loaded.values()) {
@@ -94,35 +139,25 @@ export async function runReftest({
   result.rasterMs = Math.round(rasterMs);
 
   const wantArtifacts =
-    artifactsDir && (artifacts === "all" || (artifacts === "fail" && result.outcome === "fail"));
-  if (wantArtifacts && evaluation.failure) {
+    artifactsDir &&
+    evaluation.comparisons.length > 0 &&
+    (artifacts === "all" || (artifacts === "fail" && result.outcome === "fail"));
+  if (wantArtifacts) {
     const dir = join(artifactsDir, test.rel);
-    mkdirSync(dir, { recursive: true });
-    const { record, pagePair } = evaluation.failure;
-    const page = record.firstDiffPage ?? 1;
-    if (pagePair) {
-      writeFileSync(join(dir, `lhs-p${page}.png`), encodePng(pagePair[0]));
-      writeFileSync(join(dir, `rhs-p${page}.png`), encodePng(pagePair[1]));
-      if (pagePair[0].width === pagePair[1].width && pagePair[0].height === pagePair[1].height) {
-        writeFileSync(
-          join(dir, `diff-p${page}.png`),
-          encodePng(diffImage(pagePair[0], pagePair[1])),
-        );
-      }
+    if (evaluation.failure) {
+      const { record, pagePair } = evaluation.failure;
+      const page = record.firstDiffPage ?? 1;
+      writeArtifacts({ dir, record, pagePair, page, loaded, keepPdf });
+    } else {
+      // A pass (or a non-evaluable outcome after some comparison): page 1 of the test and of the
+      // first reference it was compared with, so a pass can be audited by eye.
+      const record = evaluation.comparisons[0];
+      const lhs = loaded.get(record.lhs);
+      const rhs = loaded.get(record.rhs);
+      const a = lhs && comparedPages(lhs, test.mode, root.pageRanges)[0];
+      const b = rhs && comparedPages(rhs, test.mode, root.pageRanges)[0];
+      writeArtifacts({ dir, record, pagePair: a && b ? [a, b] : null, page: 1, loaded, keepPdf });
     }
-    if (keepPdf) {
-      for (const [side, url] of [
-        ["lhs", record.lhs],
-        ["rhs", record.rhs],
-      ]) {
-        const n = loaded.get(url);
-        if (n?.pdf) writeFileSync(join(dir, `${side}.pdf`), n.pdf);
-      }
-    }
-    writeFileSync(
-      join(dir, "comparison.json"),
-      `${JSON.stringify({ ...compactRecord(record), lhsFile: relOf(record.lhs), rhsFile: relOf(record.rhs) }, null, 2)}\n`,
-    );
     result.artifacts = `artifacts/${test.rel}`;
   }
   result.durationMs = Math.round(performance.now() - started);

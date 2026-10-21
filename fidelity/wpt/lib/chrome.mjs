@@ -119,6 +119,7 @@ export async function runChromeOracle({
   artifactsDir = null,
   artifacts = "fail",
   keepPdf = false,
+  chainReferences = false,
   onProgress,
 }) {
   const { default: puppeteer } = await import("puppeteer-core");
@@ -210,6 +211,7 @@ export async function runChromeOracle({
           artifactsDir,
           artifacts,
           keepPdf,
+          chainReferences,
         });
       } catch (e) {
         r = {
@@ -226,6 +228,7 @@ export async function runChromeOracle({
         ...(r.node ? { node: r.node } : {}),
         ...(r.cause ? { cause: r.cause } : {}),
         ...(r.blank ? { blank: true } : {}),
+        ...(r.ink ? { ink: r.ink } : {}),
         comparisons: r.comparisons,
       };
       counts[r.outcome] = (counts[r.outcome] ?? 0) + 1;
