@@ -48,6 +48,13 @@ the preflight and turns into `not-run` with its reason. Options are in the scrip
 Rebuild the tools image whenever `oracles/docker/` changes: the runner records the image ID, and
 an older image under the same tag is not detected.
 
+A reviewed run is committed under `combine/snapshots/<date>/` (local macOS, INDICATIVE). The
+2026-10-21 run (`fidelity/integration` d02e1b3, Chrome 155.0.8059.85) was repeated once with
+identical verdict statuses (193 rows) and identical PDF bytes; layout-diff exits 2 there by design
+(receipt's known html_normalize defect, and oss-postmark-receipt, whose `Helvetica` font stack is
+not in the copied `FONT_ALIASES` table, so Chromium draws system Helvetica: input parity fails and
+the oracles' Chrome-referenced verdicts for that fixture carry a `caveat`).
+
 ## Rules
 
 - Every number records environment (OS, CPU, Node, Rust, Chrome, tool versions), command and date.
