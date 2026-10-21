@@ -1,0 +1,473 @@
+#!/usr/bin/env node
+// WPT reftest runner over vellora's real native pipeline (renderPdf, strict: true).
+// See fidelity/wpt/README.md for semantics, outcomes and the evidence behind each choice.
+//
+//   node fidelity/wpt/run.mjs [suite-path ...] [options]
+//
+// Options:
+//   --wpt <dir>               WPT checkout (default fidelity/.cache/wpt; see fetch-wpt.mjs)
+//   --out <dir>               results dir (default fidelity/results/wpt/<run-id>); never deleted
+//   --jobs <n>                worker processes (default min(cpus - 2, 12))
+//   --timeout-ms <ms>         per-test budget (default 30000; `<meta name=timeout content=long>` x6)
+//   --filter <regex>          only tests whose path matches
+//   --limit <n>               only the first n reftests (after filtering)
+//   --artifacts fail|all|none failure PNGs (default fail);  --keep-pdf  also keep the PDFs
+//   --no-inline-css           do not inline <link rel=stylesheet> (measure the raw input contract)
+//   --no-aa                   rasterize without anti-aliasing
+//   --rasterizer pdftocairo|pdftoppm  poppler backend (default pdftocairo; see lib/raster.mjs)
+//   --vellora <dist/index.js> render with another vellora build (e.g. a Blitz-bump worktree)
+//   --expectations auto|none|<file>   ratchet against fidelity/wpt/expectations/<engine>.json
+//   --update-expectations     write fidelity/wpt/expectations/<engine>.json from this run
+//   --upstream auto|none|<blitz-sha>  cross-tab with Blitz's own published WPT report
+//   --offline                 never download (upstream report must already be cached)
+//   --chrome [path]           also run every reftest through Chrome print (see lib/chrome.mjs)
+//   --chrome-jobs <n>         concurrent Chrome pages (default 6)
+//   --chrome-from <results.json>  reuse Chrome outcomes of an earlier run (same WPT + raster config)
+//   --list                    only discover/classify and print counts
+//   --label <text>            free-form provenance note stored with the run (e.g. a build source)
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { discover } from "./lib/discover.mjs";
+import { captureEnv, findRepoRoot } from "./lib/env.mjs";
+import { runPool } from "./lib/pool.mjs";
+import {
+  attributeFailures,
+  buildExpectations,
+  chromeCrossTab,
+  compareExpectations,
+  loadUpstreamReport,
+  prepareFlagBreakdown,
+  summarize,
+  summaryMarkdown,
+  upstreamCrossTab,
+} from "./lib/report.mjs";
+import { DEFAULT_SUITES } from "./suites.mjs";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const fidelityRoot = resolve(here, "..");
+
+function parseArgs(argv) {
+  const opts = {
+    suites: [],
+    wpt: join(fidelityRoot, ".cache", "wpt"),
+    out: null,
+    jobs: Math.max(1, Math.min(os.availableParallelism() - 2, 12)),
+    timeoutMs: 30000,
+    filter: null,
+    limit: null,
+    artifacts: "fail",
+    keepPdf: false,
+    inlineCss: true,
+    antialias: true,
+    rasterizer: "pdftocairo",
+    vellora: null,
+    expectations: "auto",
+    updateExpectations: false,
+    upstream: "auto",
+    offline: false,
+    chrome: null,
+    chromeJobs: 6,
+    list: false,
+  };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const val = () => {
+      const v = argv[++i];
+      if (v === undefined) throw new Error(`${a} needs a value`);
+      return v;
+    };
+    switch (a) {
+      case "--wpt":
+        opts.wpt = resolve(val());
+        break;
+      case "--out":
+        opts.out = resolve(val());
+        break;
+      case "--jobs":
+        opts.jobs = Number(val());
+        break;
+      case "--timeout-ms":
+        opts.timeoutMs = Number(val());
+        break;
+      case "--filter":
+        opts.filter = new RegExp(val());
+        break;
+      case "--limit":
+        opts.limit = Number(val());
+        break;
+      case "--artifacts":
+        opts.artifacts = val();
+        break;
+      case "--keep-pdf":
+        opts.keepPdf = true;
+        break;
+      case "--no-inline-css":
+        opts.inlineCss = false;
+        break;
+      case "--no-aa":
+        opts.antialias = false;
+        break;
+      case "--rasterizer":
+        opts.rasterizer = val();
+        if (!["pdftocairo", "pdftoppm"].includes(opts.rasterizer)) {
+          throw new Error("--rasterizer must be pdftocairo or pdftoppm");
+        }
+        break;
+      case "--vellora":
+        opts.vellora = resolve(val());
+        break;
+      case "--expectations":
+        opts.expectations = val();
+        break;
+      case "--update-expectations":
+        opts.updateExpectations = true;
+        break;
+      case "--upstream":
+        opts.upstream = val();
+        break;
+      case "--offline":
+        opts.offline = true;
+        break;
+      case "--chrome":
+        opts.chrome =
+          argv[i + 1] && !argv[i + 1].startsWith("--")
+            ? argv[++i]
+            : (process.env.CHROME_PATH ??
+              "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+        break;
+      case "--chrome-jobs":
+        opts.chromeJobs = Number(val());
+        break;
+      case "--chrome-from":
+        opts.chromeFrom = resolve(val());
+        break;
+      case "--list":
+        opts.list = true;
+        break;
+      case "--label":
+        opts.label = val();
+        break;
+      default:
+        if (a.startsWith("--")) throw new Error(`unknown option ${a}`);
+        opts.suites.push(a.replace(/\/+$/, ""));
+    }
+  }
+  if (opts.suites.length === 0) opts.suites = DEFAULT_SUITES.map((s) => s.path);
+  return opts;
+}
+
+function writeJson(path, value) {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+const opts = parseArgs(process.argv.slice(2));
+if (!existsSync(join(opts.wpt, "fonts", "Ahem.ttf"))) {
+  console.error(
+    `run: no WPT checkout at ${opts.wpt}; run \`node fidelity/wpt/fetch-wpt.mjs\` first`,
+  );
+  process.exit(2);
+}
+const repoRoot = findRepoRoot(opts.vellora ? dirname(opts.vellora) : resolve(fidelityRoot, ".."));
+const started = Date.now();
+const env = captureEnv({ repoRoot, wptRoot: opts.wpt, chromePath: opts.chrome });
+const expectedWpt = readFileSync(join(here, "WPT_COMMIT"), "utf8").trim();
+if (env.wpt.commit !== expectedWpt) {
+  console.warn(
+    `run: WARNING WPT checkout is ${env.wpt.commit}, fidelity/wpt/WPT_COMMIT is ${expectedWpt}`,
+  );
+}
+
+// 1. Discover + classify.
+const discovered = discover(opts.wpt, opts.suites);
+let reftests = discovered
+  .filter((f) => f.kind === "reftest")
+  .map((f) => ({
+    rel: f.rel,
+    url: f.url,
+    mode: f.print ? "print" : "screen",
+    suite: f.suite,
+    timeoutClass: f.timeout,
+    nonUtf8: !!f.nonUtf8,
+    sub: f.metaFlags.includes("sub"),
+  }));
+if (opts.filter) reftests = reftests.filter((t) => opts.filter.test(t.rel));
+if (opts.limit) reftests = reftests.slice(0, opts.limit);
+const kindCounts = {};
+for (const f of discovered) kindCounts[f.kind] = (kindCounts[f.kind] ?? 0) + 1;
+console.log(
+  `run: ${discovered.length} files in ${opts.suites.length} suites; ${reftests.length} reftests selected; kinds ${JSON.stringify(kindCounts)}`,
+);
+if (opts.list) process.exit(0);
+
+const runId = `${env.dateIso.replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${env.engine.id}-vellora-${(env.vellora.commit ?? "unknown").slice(0, 7)}`;
+const outDir = opts.out ?? join(fidelityRoot, "results", "wpt", runId);
+mkdirSync(outDir, { recursive: true });
+const config = {
+  suites: opts.suites,
+  jobs: opts.jobs,
+  timeoutMs: opts.timeoutMs,
+  longTimeoutMultiplier: 6,
+  filter: opts.filter?.source ?? null,
+  limit: opts.limit,
+  artifacts: opts.artifacts,
+  keepPdf: opts.keepPdf,
+  inlineCss: opts.inlineCss,
+  raster: { tool: opts.rasterizer, dpi: 96, antialias: opts.antialias },
+  screenPage: "800x600 CSS px, margin 0 (injected as the first @page)",
+  printPage: "5in x 3in, margin 0.5in (merged into the first author @page, else injected)",
+  render: "vellora.renderPdf(html, undefined, { strict: true, fonts, images, baseUrl })",
+  velloraModule: opts.vellora ?? "vellora (workspace package via root node_modules)",
+  label: opts.label ?? null,
+};
+
+// 2. Harness-level skips (never silent): non-UTF-8 and wptserve `.sub.` substitution files.
+const results = [];
+const tasks = [];
+for (const t of reftests) {
+  if (t.nonUtf8 || t.sub) {
+    results.push({
+      test: t.rel,
+      suite: t.suite,
+      mode: t.mode,
+      outcome: "skip",
+      node: "test",
+      cause: { status: "skip", reason: t.nonUtf8 ? "non-utf8" : "needs-wptserve-substitution" },
+    });
+  } else tasks.push(t);
+}
+
+// 3. Render + compare in worker processes.
+let done = 0;
+const tally = {};
+const tick = setInterval(() => {
+  console.log(
+    `run: ${done}/${tasks.length} ${JSON.stringify(tally)} (${Math.round((Date.now() - started) / 1000)}s)`,
+  );
+}, 15000);
+const vStart = Date.now();
+await runPool({
+  script: join(here, "lib", "vellora-worker.mjs"),
+  size: opts.jobs,
+  tasks,
+  timeoutMs: (t) => opts.timeoutMs * (t.timeoutClass === "long" ? 6 : 1),
+  env: {
+    VELLORA_WPT_WORKER_CONFIG: JSON.stringify({
+      wptRoot: opts.wpt,
+      inlineCss: opts.inlineCss,
+      antialias: opts.antialias,
+      rasterizer: opts.rasterizer,
+      artifactsDir: opts.artifacts === "none" ? null : join(outDir, "artifacts"),
+      artifacts: opts.artifacts,
+      keepPdf: opts.keepPdf,
+      velloraModule: opts.vellora,
+    }),
+  },
+  onResult: (result, task) => {
+    result.suite = task.suite;
+    results.push(result);
+    done++;
+    tally[result.outcome] = (tally[result.outcome] ?? 0) + 1;
+  },
+});
+clearInterval(tick);
+const velloraSeconds = (Date.now() - vStart) / 1000;
+results.sort((a, b) => (a.test < b.test ? -1 : 1));
+
+// 4. Optional Chrome oracle.
+let chromeInfo = null;
+if (opts.chrome) {
+  const { runChromeOracle } = await import("./lib/chrome.mjs");
+  const cStart = Date.now();
+  chromeInfo = await runChromeOracle({
+    chromePath: opts.chrome,
+    wptRoot: opts.wpt,
+    tests: results.filter((r) => r.outcome !== "skip"),
+    jobs: opts.chromeJobs,
+    antialias: opts.antialias,
+    rasterizer: opts.rasterizer,
+    timeoutMs: opts.timeoutMs,
+    artifactsDir: opts.artifacts === "none" ? null : join(outDir, "chrome-artifacts"),
+    artifacts: opts.artifacts,
+    keepPdf: opts.keepPdf,
+    onProgress: (n, total, counts) => {
+      if (n % 500 === 0 || n === total)
+        console.log(`run: chrome ${n}/${total} ${JSON.stringify(counts)}`);
+    },
+  });
+  chromeInfo.seconds = (Date.now() - cStart) / 1000;
+  env.chrome = { ...(env.chrome ?? {}), browserVersion: chromeInfo.browserVersion };
+} else if (opts.chromeFrom) {
+  // Chrome's outcomes do not depend on the vellora build: reuse a previous run's Chrome results
+  // when the WPT commit and raster configuration are identical (refused otherwise).
+  const prior = JSON.parse(readFileSync(opts.chromeFrom, "utf8"));
+  const same =
+    prior.env?.wpt?.commit === env.wpt.commit &&
+    JSON.stringify(prior.config?.raster) === JSON.stringify(config.raster);
+  if (!same) {
+    console.error("run: --chrome-from results differ in WPT commit or raster config; refusing");
+    process.exit(2);
+  }
+  const byTest = new Map(prior.tests.filter((t) => t.chrome).map((t) => [t.test, t.chrome]));
+  let reused = 0;
+  for (const r of results) {
+    const c = byTest.get(r.test);
+    if (c && r.outcome !== "skip") {
+      r.chrome = c;
+      reused++;
+    }
+  }
+  chromeInfo = {
+    reusedFrom: opts.chromeFrom,
+    reusedRunId: prior.runId,
+    browserVersion: prior.chrome?.browserVersion ?? prior.env?.chrome?.browserVersion ?? null,
+    reused,
+    seconds: 0,
+  };
+  env.chrome = prior.env?.chrome ?? null;
+}
+const chromeRan = chromeInfo !== null;
+
+// 5. Upstream cross-tab (Blitz's own published WPT report for the same Blitz commit).
+let upstream = null;
+if (opts.upstream !== "none") {
+  const sha = opts.upstream === "auto" ? env.engine.blitzDom?.rev : opts.upstream;
+  if (sha) {
+    const report = await loadUpstreamReport({
+      sha,
+      cacheDir: join(fidelityRoot, ".cache", "blitz-wpt-results"),
+      offline: opts.offline,
+    });
+    if (report.error) {
+      upstream = { sha, status: "not-run", reason: report.error };
+    } else {
+      for (const r of results) r.upstream = report.statuses.get(r.test) ?? "ABSENT";
+      upstream = {
+        sha,
+        status: "ok",
+        source: report.url,
+        upstreamWptRevision: report.run?.wpt_revision ?? report.runInfo?.revision ?? null,
+        ourWptRevision: env.wpt.commit,
+        caveats: [
+          "Upstream = Blitz's own runner (blitz-paint/vello screen paint, 800x600) with the `floats` feature enabled; vellora builds blitz-dom with default-features = false (no `floats`).",
+          "Upstream treats a reftest without <meta name=fuzzy> as passing when dify (threshold 0.1, anti-aliasing detection) finds no difference; this runner requires exact pixel equality (wptrunner rule). Upstream is therefore an upper bound, not a like-for-like oracle.",
+          "Upstream may have run a different WPT revision (see upstreamWptRevision); test content can differ.",
+        ],
+        ...upstreamCrossTab(results, report),
+      };
+    }
+  }
+}
+
+// 6. Summaries and result files.
+const summary = summarize({ discovered, results, suites: opts.suites });
+const chromeSummary = chromeRan
+  ? summarize({ discovered, results, suites: opts.suites, engine: "chrome" })
+  : null;
+const chromeCross = chromeRan ? chromeCrossTab(results, opts.suites) : null;
+const flags = prepareFlagBreakdown(results);
+const attribution =
+  chromeRan && upstream?.status === "ok" ? attributeFailures(results, opts.suites) : null;
+const totalSeconds = (Date.now() - started) / 1000;
+const runInfo = {
+  runId,
+  env,
+  config,
+  timing: {
+    totalSeconds,
+    velloraSeconds,
+    chromeSeconds: chromeInfo?.seconds ?? null,
+    velloraTestsPerSecond: tasks.length / velloraSeconds,
+  },
+  discovered: kindCounts,
+  chrome: chromeInfo,
+};
+writeJson(join(outDir, "results.json"), { schema: 1, ...runInfo, tests: results });
+// Stable summary: no timings or dates, so two runs of the same engine diff cleanly.
+writeJson(join(outDir, "summary.json"), {
+  schema: 1,
+  engineId: env.engine.id,
+  velloraCommit: env.vellora.commit,
+  wptCommit: env.wpt.commit,
+  chromeVersion: chromeInfo?.browserVersion ?? null,
+  config: { suites: opts.suites, raster: config.raster, inlineCss: opts.inlineCss },
+  summary,
+  chromeSummary,
+  chromeCross: chromeCross && {
+    matrix: chromeCross.matrix,
+    totals: chromeCross.totals,
+    bySuite: chromeCross.bySuite,
+  },
+  upstream: upstream && {
+    sha: upstream.sha,
+    status: upstream.status,
+    reason: upstream.reason,
+    upstreamWptRevision: upstream.upstreamWptRevision,
+    counts: upstream.counts,
+    matrix: upstream.matrix,
+  },
+  prepareFlags: flags,
+  attribution: attribution && { totals: attribution.totals, bySuite: attribution.bySuite },
+});
+writeJson(join(outDir, "run-info.json"), runInfo);
+if (upstream) writeJson(join(outDir, "upstream.json"), upstream);
+if (attribution) writeJson(join(outDir, "attribution.json"), attribution);
+
+let ratchet = null;
+const expectationsPath = join(here, "expectations", `${env.engine.id}.json`);
+if (opts.expectations !== "none") {
+  const file = opts.expectations === "auto" ? expectationsPath : resolve(opts.expectations);
+  if (existsSync(file)) {
+    ratchet = compareExpectations(JSON.parse(readFileSync(file, "utf8")), results);
+    ratchet.file = file;
+    writeJson(join(outDir, "ratchet.json"), ratchet);
+  } else if (opts.expectations !== "auto") {
+    console.error(`run: expectations file ${file} not found`);
+    process.exitCode = 2;
+  }
+}
+if (opts.updateExpectations) {
+  const command = `node fidelity/wpt/run.mjs ${process.argv.slice(2).join(" ")}`.trim();
+  writeJson(expectationsPath, buildExpectations({ results, env, suites: opts.suites, command }));
+  console.log(`run: wrote ${expectationsPath}`);
+}
+
+writeFileSync(
+  join(outDir, "summary.md"),
+  summaryMarkdown(summary, {
+    title: `WPT reftests — vellora ${env.engine.id}`,
+    env,
+    chromeSummary,
+    chromeCross,
+    flags,
+    upstream,
+    attribution,
+  }),
+);
+
+// 7. Console report.
+console.log(
+  `\nrun: results in ${outDir} (${totalSeconds.toFixed(1)}s total, vellora phase ${velloraSeconds.toFixed(1)}s with ${opts.jobs} workers${chromeInfo ? `, chrome phase ${chromeInfo.seconds.toFixed(1)}s` : ""})`,
+);
+const pad = (s, n) => String(s).padEnd(n);
+console.log(
+  `${pad("suite", 32)} ${pad("reftests", 8)} ${pad("pass", 6)} ${pad("fail", 6)} ${pad("unsup", 6)} ${pad("error", 6)} ${pad("t/o", 4)} ${pad("skip", 5)} pass%  eval%${chromeSummary ? "  chrome%" : ""}`,
+);
+for (const [s, r] of [...Object.entries(summary.bySuite), ["TOTAL", summary.totals]]) {
+  const c = s === "TOTAL" ? chromeSummary?.totals : chromeSummary?.bySuite[s];
+  console.log(
+    `${pad(s, 32)} ${pad(r.reftests, 8)} ${pad(r.pass, 6)} ${pad(r.fail, 6)} ${pad(r.unsupported, 6)} ${pad(r.error, 6)} ${pad(r.timeout, 4)} ${pad(r.skip, 5)} ${pad(r.passRate ?? "-", 6)} ${pad(r.passRateEvaluated ?? "-", 6)}${c ? ` ${c.passRate ?? "-"}` : ""}`,
+  );
+}
+if (chromeCross) console.log(`run: vellora x chrome: ${JSON.stringify(chromeCross.totals)}`);
+if (attribution)
+  console.log(`run: vellora failures attributed: ${JSON.stringify(attribution.totals)}`);
+if (ratchet) console.log(`run: ratchet vs ${ratchet.file}: ${JSON.stringify(ratchet.counts)}`);
+if (upstream) {
+  console.log(
+    `run: upstream ${upstream.sha}: ${upstream.status === "ok" ? JSON.stringify(upstream.counts) : upstream.reason}`,
+  );
+}
+if (ratchet && ratchet.counts.regressions > 0) process.exitCode = 1;
