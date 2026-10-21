@@ -376,6 +376,38 @@ function absoluteChecks(after, items) {
   }
 }
 
+const present = (v) =>
+  Boolean(v) && (Array.isArray(v) ? v.length > 0 : Object.keys(v.results ?? v).length > 0);
+
+/**
+ * A section the baseline measured and the run lacks would otherwise compare as "nothing to
+ * check" (e.g. `--skip code-checks` or `--no-canaries`): REFUSED, like missing WPT outcomes. A
+ * fidelity/run-all.mjs RUN must always carry code checks, canaries and crashtests, whatever the
+ * baseline has (the Phase A baselines have no code-checks or crashtest record).
+ */
+export function missingSections(before, after) {
+  const out = [];
+  const isRun = after.source?.kind === "run";
+  const sections = [
+    ["codeChecks", "code checks (cargo test, vitest, lint, fidelity tests)", true],
+    ["canaries", "oracle canaries", true],
+    ["crashtests", "WPT crashtests", true],
+    ["pdfProbe", "pdf-probe", false],
+  ];
+  for (const [field, label, requiredInRun] of sections) {
+    const field2 = field === "crashtests" ? (s) => s.crashtests?.results : (s) => s[field];
+    if (present(field2(after))) continue;
+    if (present(field2(before))) {
+      out.push(
+        `${label}: the baseline has them, the run does not (a gated run must not skip them)`,
+      );
+    } else if (isRun && requiredInRun) {
+      out.push(`${label}: missing from the run (a gated run must run every step)`);
+    }
+  }
+  return out;
+}
+
 function matchesAcceptance(item, entry) {
   if (
     entry.key ? entry.key !== item.key : !(entry.keyPrefix && item.key.startsWith(entry.keyPrefix))
@@ -457,6 +489,7 @@ export function compareSnapshots(before, after, { accept = [] } = {}) {
   compareCanaries(before.canaries, after.canaries, items, counts);
   if (after.pdfProbe) comparePdfProbe(before.pdfProbe, after.pdfProbe, items, counts);
   absoluteChecks(after, items);
+  refusals.push(...missingSections(before, after));
   if (before.integrity && !before.integrity.ok) {
     refusals.push(`baseline integrity: ${before.integrity.problems.join("; ")}`);
   }

@@ -26,6 +26,36 @@ const rel = (p) => relative(repoRoot, p) || ".";
 
 export const GATE_EXIT = Object.freeze({ PASS: 0, FAIL: 3, REFUSED: 2 });
 
+/** wpt/run.mjs options that take a value (their value is not a suite path). */
+const WPT_VALUE_OPTIONS = new Set([
+  "--wpt",
+  "--out",
+  "--jobs",
+  "--timeout-ms",
+  "--artifacts",
+  "--rasterizer",
+  "--vellora",
+  "--expectations",
+  "--upstream",
+  "--chrome-jobs",
+  "--chrome-from",
+  "--label",
+]);
+
+/** The first --wpt-arg that narrows the default suites (--filter, --limit, a suite path), or null. */
+export function wptNarrowing(args) {
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === "--filter" || a === "--limit") return a;
+    if (WPT_VALUE_OPTIONS.has(a)) {
+      i++;
+      continue;
+    }
+    if (!a.startsWith("--")) return a;
+  }
+  return null;
+}
+
 /**
  * Why `run-all.mjs --gate` cannot start, checked BEFORE the 10+ minute WPT step (null = ok).
  * opts: { baseline, accept, wptArgs, chromeFrom, wptChrome, chrome }; selected: step ids.
@@ -38,6 +68,17 @@ export function gateRefusal(opts, selected, exists = existsSync) {
   if (opts.accept && !exists(opts.accept)) return `--accept ${opts.accept} does not exist`;
   if ((opts.wptArgs ?? []).includes("--update-expectations")) {
     return "a gated run never rewrites committed expectations (drop --wpt-arg --update-expectations)";
+  }
+  // Every step feeds a gated section (code checks, WPT, crashtests, canaries, pdf-probe, ...):
+  // skipping one would silently drop its checks.
+  const missing = (opts.allSteps ?? []).filter((s) => !selected.includes(s));
+  if (missing.length) {
+    return `a gated run runs every step; not selected: ${missing.join(", ")} (drop --only/--skip)`;
+  }
+  if (opts.canaries === false) return "a gated run runs the canaries (drop --no-canaries)";
+  const narrowing = wptNarrowing(opts.wptArgs ?? []);
+  if (narrowing) {
+    return `a gated run measures the full default WPT suites (--wpt-arg ${narrowing} narrows them)`;
   }
   if (selected.includes("wpt")) {
     if (opts.chromeFrom && !exists(opts.chromeFrom)) {

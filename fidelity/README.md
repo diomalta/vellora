@@ -83,6 +83,9 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
 - **Crashtests** (WPT-3): ok → panic/crash/timeout gates.
 - **Absolute**: red code checks, an uncaught detection canary, a layout-diff check failure not
   in `layout-diff/expected-check-failures.json`, an expired allowlist entry, a crashed step.
+- **Complete or refused**: `--gate` runs every step (no `--only`/`--skip`/`--no-canaries`, no
+  narrowed WPT); a section the baseline measured but the run lacks, or a run without code checks,
+  canaries or crashtests, makes the verdict REFUSED (exit 2), never an empty PASS.
 - **acceptedRegressions**: `{ "acceptedRegressions": [{ "key": "<metric key from gate-report>",
   "after": <accepted value>, "reason": "...", "evidence": "..." }] }`. Only for regressions PROVEN
   to correct a wrong old value (false pass, oracle artefact) with Chrome + WeasyPrint consensus or

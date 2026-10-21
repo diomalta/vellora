@@ -366,3 +366,58 @@ test("run-all --gate refuses before running anything without baseline or Chrome 
     /never rewrites/,
   );
 });
+
+test("a gated run cannot skip a step, the canaries or part of the WPT suites", () => {
+  const exists = () => true;
+  const all = ["code-checks", "wpt", "wpt-crashtests", "corpus", "oracles-fixtures"];
+  const base = {
+    baseline: "/b",
+    wptArgs: [],
+    chromeFrom: "/r.json",
+    allSteps: all,
+    canaries: true,
+  };
+  assert.equal(gateRefusal(base, all, exists), null);
+  const skipped = all.filter((s) => s !== "code-checks");
+  assert.match(gateRefusal(base, skipped, exists), /not selected: code-checks/);
+  assert.match(gateRefusal({ ...base, canaries: false }, all, exists), /--no-canaries/);
+  for (const wptArgs of [["css/CSS2/tables"], ["--filter", "x"], ["--limit", "3"]]) {
+    assert.match(gateRefusal({ ...base, wptArgs }, all, exists), /narrows/);
+  }
+  // Option values are not suite paths.
+  assert.equal(
+    gateRefusal({ ...base, wptArgs: ["--jobs", "6", "--upstream", "none"] }, all, exists),
+    null,
+  );
+});
+
+test("sections the baseline measured but the run lacks are REFUSED, never compared as empty", () => {
+  const code = [{ id: "cargo-test", status: "pass", exitCode: 0, failures: [] }];
+  const canaries = [{ oracle: "qpdf", canary: "truncated", ran: true, caught: true }];
+  const probe = {
+    invoice: { pairs: [{ k: "a#1", text: "a", page: 1, samePage: true, dx: 0, dy: 0 }] },
+  };
+  const crash = { results: { "a-crash.html": "ok" } };
+  for (const [field, value, re] of [
+    ["codeChecks", code, /code checks/],
+    ["canaries", canaries, /canaries/],
+    ["pdfProbe", probe, /pdf-probe/],
+    ["crashtests", crash, /crashtests/],
+  ]) {
+    const r = compareSnapshots(snapshot([], { [field]: value }), snapshot([]));
+    assert.equal(r.verdict, "REFUSED", field);
+    assert.match(r.refusals.join("; "), re);
+  }
+  // A run-all RUN must carry code checks, canaries and crashtests even against a Phase A
+  // baseline that has none of them.
+  const r = compareSnapshots(snapshot([]), snapshot([], { source: { kind: "run" } }));
+  assert.equal(r.verdict, "REFUSED");
+  assert.equal(r.refusals.length, 3);
+  const full = snapshot([], {
+    source: { kind: "run" },
+    codeChecks: code,
+    canaries,
+    crashtests: crash,
+  });
+  assert.equal(compareSnapshots(snapshot([]), full).verdict, "PASS");
+});

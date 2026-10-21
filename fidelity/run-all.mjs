@@ -250,7 +250,7 @@ async function main() {
   const selected = STEP_IDS.filter((s) => opts.only.includes(s) && !opts.skip.includes(s));
   const baselineExpectations = opts.baseline ? baselineWptExpectations(opts.baseline) : null;
   if (opts.gate) {
-    const why = gateRefusal(opts, selected);
+    const why = gateRefusal({ ...opts, allSteps: STEP_IDS }, selected);
     if (why) {
       process.stderr.write(`run-all: --gate refused before running anything: ${why}\n`);
       process.exitCode = 2;
