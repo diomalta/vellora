@@ -238,6 +238,12 @@ concurrent lane never received rAF callbacks and timed out). Same `pdftocairo` +
 Chrome is a *print* oracle, not a screenshot: a screen reftest that depends on screen-only behaviour
 can differ. Local Chrome is **indicative**; the version is recorded from `browser.version()`.
 
+`--chrome-from <results.json>` reuses the Chrome outcomes and ink signatures of an earlier run (Chrome
+does not depend on the vellora build). It is refused (exit 2) unless that run used the same WPT
+commit, rasterizer configuration and comparison semantics (harness semantics version, chaining, CSS
+inlining), and when that run was unpinned while this one is pinned. Results from e47e77f (semantics
+1, no ink signatures) are therefore not reusable.
+
 DESIGN TARGET (CI): pin Chrome for Testing with `node fidelity/wpt/install-chrome.mjs`
 (`CHROME_FOR_TESTING_BUILD = 155.0.8059.85`, `@puppeteer/browsers` 3.2.5; CONFIRMED the mac-arm64
 archive URL answers HTTP 200), then `run.mjs --chrome <printed path>`; record the build in the
@@ -300,93 +306,136 @@ indicative; the authoritative baseline should come from the pinned Linux CI run 
 
 ## Results on the current pin (CONFIRMED, local macOS run — indicative, not the CI baseline)
 
-Run `20261021T010844Z-blitz-2003ba5fc2d8-vellora-b998f40`, command
-`node fidelity/wpt/run.mjs --chrome --update-expectations`, `date -u`: Wed Oct 21 01:08:44 UTC 2026.
-macOS 27.0.1 (26A434), Apple M5 Pro, 18 CPUs, 48 GiB; node v22.23.2; rustc 1.96.0; poppler
-pdftocairo 26.06.0; Chrome 155.0.8059.85 (local install). Engine: blitz-dom 0.3.0-alpha.5 @
-`2003ba5fc2d8`, stylo 0.18.0, parley 0.10.0, krilla 0.8.2. WPT `9d8aceec0ddc`. Rendering code is
-identical to `main` 5810062 (this branch only adds `fidelity/wpt/` and a `biome.json` ignore).
-Runtime: vellora phase 53 s with 12 worker processes (≈151 tests/s), Chrome phase 838 s with 6
-pages; 893 s total.
+Run `20261021T044423Z-blitz-2003ba5fc2d8-vellora-363377d`, command
+`node fidelity/wpt/run.mjs --chrome "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --update-expectations`,
+`date -u`: Wed Oct 21 04:44:23 UTC 2026. macOS 27.0.1 (26A434), Apple M5 Pro, 18 CPUs, 48 GiB; node
+v22.23.2; rustc 1.96.0 (ac68faa20 2026-05-25); poppler pdftocairo 26.06.0; Chrome 155.0.8059.85
+(local install). Engine: blitz-dom 0.3.0-alpha.5 @ `2003ba5fc2d8`, stylo 0.18.0, parley 0.10.0,
+krilla 0.8.2. WPT `9d8aceec0ddc`, pin exact (own checkout, HEAD = `WPT_COMMIT`, 0 modified, 0
+untracked). vellora 363377d, clean tree; rendering code identical to `main` 5810062 (this branch only
+adds `fidelity/wpt/`, `fidelity/baselines/wpt/` and a `biome.json` ignore). Harness semantics 2
+(no reference chaining, `pass-blank`). Runtime: vellora phase 44 s with 12 worker processes
+(≈183 tests/s), Chrome phase 541 s with 6 pages; 585 s total. The committed baseline
+`fidelity/baselines/wpt/blitz-2003ba5fc2d8.json` was then written by
+`node fidelity/wpt/run.mjs --chrome-from fidelity/results/wpt/20261021T044423Z-blitz-2003ba5fc2d8-vellora-363377d/results.json --update-expectations`
+(run `20261021T045604Z-…-vellora-985b112`, 04:56:04 UTC, same Chrome outcomes and ink signatures).
 
-| suite | reftests | pass | fail | unsup | error | skip | vellora pass % | % of evaluated | Chrome pass % |
-|---|---|---|---|---|---|---|---|---|---|
-| css/CSS2/normal-flow | 789 | 391 | 324 | 73 | 0 | 1 | 49.56 | 54.69 | 99.24 |
-| css/CSS2/margin-padding-clear | 682 | 404 | 277 | 1 | 0 | 0 | 59.24 | 59.32 | 99.12 |
-| css/CSS2/box | 9 | 4 | 5 | 0 | 0 | 0 | 44.44 | 44.44 | 100 |
-| css/CSS2/box-display | 120 | 49 | 35 | 35 | 1 | 0 | 40.83 | 58.33 | 93.33 |
-| css/CSS2/visudet | 38 | 13 | 22 | 3 | 0 | 0 | 34.21 | 37.14 | 65.79 |
-| css/CSS2/visuren | 39 | 2 | 29 | 8 | 0 | 0 | 5.13 | 6.45 | 94.87 |
-| css/CSS2/linebox | 191 | 17 | 171 | 3 | 0 | 0 | 8.90 | 9.04 | 97.91 |
-| css/CSS2/text | 410 | 166 | 222 | 22 | 0 | 0 | 40.49 | 42.78 | 81.22 |
-| css/CSS2/fonts | 160 | 99 | 60 | 1 | 0 | 0 | 61.88 | 62.26 | 89.38 |
-| css/CSS2/tables | 372 | 18 | 232 | 122 | 0 | 0 | 4.84 | 7.20 | 89.25 |
-| css/CSS2/borders | 506 | 322 | 182 | 2 | 0 | 0 | 63.64 | 63.89 | 100 |
-| css/CSS2/backgrounds | 336 | 181 | 152 | 3 | 0 | 0 | 53.87 | 54.35 | 86.31 |
-| css/CSS2/colors | 19 | 6 | 13 | 0 | 0 | 0 | 31.58 | 31.58 | 52.63 |
-| css/CSS2/lists | 156 | 67 | 88 | 1 | 0 | 0 | 42.95 | 43.23 | 99.36 |
-| css/CSS2/generated-content | 226 | 23 | 177 | 26 | 0 | 0 | 10.18 | 11.50 | 87.61 |
-| css/CSS2/floats | 111 | 19 | 83 | 9 | 0 | 0 | 17.12 | 18.63 | 84.68 |
-| css/CSS2/floats-clear | 214 | 28 | 179 | 7 | 0 | 0 | 13.08 | 13.53 | 97.66 |
-| css/CSS2/positioning | 520 | 172 | 326 | 22 | 0 | 0 | 33.08 | 34.54 | 98.85 |
-| css/CSS2/abspos | 29 | 3 | 22 | 4 | 0 | 0 | 10.34 | 12.00 | 89.66 |
-| css/CSS2/visufx | 53 | 2 | 47 | 4 | 0 | 0 | 3.77 | 4.08 | 100 |
-| css/CSS2/pagination (print) | 43 | 19 | 24 | 0 | 0 | 0 | 44.19 | 44.19 | 90.70 |
-| css/css-tables | 171 | 34 | 100 | 37 | 0 | 0 | 19.88 | 25.37 | 91.81 |
-| css/css-break | 1121 | 87 | 737 | 297 | 0 | 0 | 7.76 | 10.56 | 88.94 |
-| css/css-page (print) | 224 | 67 | 100 | 56 | 1 | 0 | 29.91 | 40.12 | 83.48 |
-| css/css-text | 1508 | 380 | 995 | 133 | 0 | 0 | 25.20 | 27.64 | 79.05 |
-| **total** | **8047** | **2573** | **4602** | **869** | **2** | **1** | **31.97** | **35.86** | **90.27** |
+| suite | reftests | pass | pass (clean) | pass-blank | fail | unsup | error | skip | pass % | % of evaluated | clean pass % | Chrome pass % |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| css/CSS2/normal-flow | 789 | 383 | 360 | 8 | 324 | 73 | 0 | 1 | 48.54 | 53.57 | 45.63 | 99.24 |
+| css/CSS2/margin-padding-clear | 682 | 404 | 391 | 0 | 277 | 1 | 0 | 0 | 59.24 | 59.32 | 57.33 | 99.12 |
+| css/CSS2/box | 9 | 4 | 0 | 0 | 5 | 0 | 0 | 0 | 44.44 | 44.44 | 0 | 100 |
+| css/CSS2/box-display | 120 | 49 | 49 | 0 | 35 | 35 | 1 | 0 | 40.83 | 58.33 | 40.83 | 93.33 |
+| css/CSS2/visudet | 38 | 13 | 6 | 0 | 22 | 3 | 0 | 0 | 34.21 | 37.14 | 15.79 | 65.79 |
+| css/CSS2/visuren | 39 | 2 | 2 | 0 | 29 | 8 | 0 | 0 | 5.13 | 6.45 | 5.13 | 94.87 |
+| css/CSS2/linebox | 191 | 15 | 14 | 2 | 171 | 3 | 0 | 0 | 7.85 | 7.98 | 7.33 | 97.91 |
+| css/CSS2/text | 410 | 170 | 161 | 6 | 212 | 22 | 0 | 0 | 41.46 | 43.81 | 39.27 | 81.22 |
+| css/CSS2/fonts | 160 | 108 | 106 | 0 | 51 | 1 | 0 | 0 | 67.5 | 67.92 | 66.25 | 89.38 |
+| css/CSS2/tables | 372 | 18 | 17 | 0 | 232 | 122 | 0 | 0 | 4.84 | 7.2 | 4.57 | 89.25 |
+| css/CSS2/borders | 506 | 322 | 292 | 0 | 182 | 2 | 0 | 0 | 63.64 | 63.89 | 57.71 | 100 |
+| css/CSS2/backgrounds | 336 | 179 | 60 | 2 | 152 | 3 | 0 | 0 | 53.27 | 53.75 | 17.86 | 86.31 |
+| css/CSS2/colors | 19 | 6 | 6 | 0 | 13 | 0 | 0 | 0 | 31.58 | 31.58 | 31.58 | 52.63 |
+| css/CSS2/lists | 156 | 67 | 39 | 0 | 88 | 1 | 0 | 0 | 42.95 | 43.23 | 25 | 100 |
+| css/CSS2/generated-content | 226 | 23 | 20 | 0 | 177 | 26 | 0 | 0 | 10.18 | 11.5 | 8.85 | 87.61 |
+| css/CSS2/floats | 111 | 21 | 17 | 0 | 81 | 9 | 0 | 0 | 18.92 | 20.59 | 15.32 | 84.68 |
+| css/CSS2/floats-clear | 214 | 28 | 24 | 0 | 179 | 7 | 0 | 0 | 13.08 | 13.53 | 11.21 | 97.66 |
+| css/CSS2/positioning | 520 | 172 | 169 | 0 | 326 | 22 | 0 | 0 | 33.08 | 34.54 | 32.5 | 98.85 |
+| css/CSS2/abspos | 29 | 3 | 3 | 0 | 22 | 4 | 0 | 0 | 10.34 | 12 | 10.34 | 93.1 |
+| css/CSS2/visufx | 53 | 1 | 1 | 1 | 47 | 4 | 0 | 0 | 1.89 | 2.04 | 1.89 | 100 |
+| css/CSS2/pagination (print) | 43 | 19 | 17 | 0 | 24 | 0 | 0 | 0 | 44.19 | 44.19 | 39.53 | 90.7 |
+| css/css-tables | 171 | 31 | 23 | 3 | 100 | 37 | 0 | 0 | 18.13 | 23.13 | 13.45 | 91.81 |
+| css/css-break | 1121 | 86 | 66 | 1 | 737 | 297 | 0 | 0 | 7.67 | 10.44 | 5.89 | 88.85 |
+| css/css-page (print) | 224 | 62 | 46 | 5 | 100 | 56 | 1 | 0 | 27.68 | 37.13 | 20.54 | 83.48 |
+| css/css-text | 1508 | 392 | 99 | 17 | 966 | 133 | 0 | 0 | 25.99 | 28.51 | 6.56 | 78.98 |
+| **total** | 8047 | 2578 | 1988 | 45 | 4552 | 869 | 2 | 1 | 32.04 | 35.93 | 24.7 | 90.27 |
 
-8047 reftests (7712 screen, 335 print), 0 timeouts; 48 of the passes have a blank test rendering.
-Not run (not reftests): 629 testharness, 415 CSSWG-manual, 1913 visual, 239 crashtests, 2 manual.
-Errors: 2 Rust panics surfaced as rejections (`blitz-dom/src/resolve.rs:343` `Option::unwrap()` on
-`None`: `css/CSS2/box-display/root-box-003.xht`, `css/css-page/root-element-display-none-print.html`).
-Skip: 1 (`.sub.` file). Templating errors: 0.
+8047 reftests (7712 screen, 335 print), 0 timeouts. Not run (not reftests): 629 testharness, 415
+CSSWG-manual, 1913 visual, 239 crashtests, 2 manual. Errors: 2 Rust panics surfaced as rejections
+(observation 8). Skip: 1 (`.sub.` file). Templating errors: 0.
+
+* **`pass-blank` 45** (were `pass` under e47e77f). Chrome's rendering of the same test draws
+  significant ink in 40 of them and is blank in 2 (`css/css-break/overflowed-abs-pos-with-percentage-height-print.html`,
+  `css/css-text/text-indent/text-indent-caret-hanging-001.html` — plausibly legitimate blank passes,
+  conservatively left out of `pass`: a loss of 2 we report rather than hide). 3 blank renderings
+  that matched an empty-by-construction reference remain `pass` (`content-counter-001.xht` vs
+  `about:blank`, `ink-overflow-001-print.html` vs `about:blank`, `zwnj-renders-invisible.html` vs
+  `css/reference/blank.html`).
+* **No reference chaining**: 50 tests that failed only through a chained reference under e47e77f now
+  pass (all 50 had a comparison with a reference on the left). Net: pass 2573 → 2578.
+* **Flagged passes: 590 of 2578** (`pass (clean)` 1988 = 24.70% of reftests). Per flag (a pass can
+  carry several): `ink-missing-vs-chrome` 280, `uncovered-glyphs` 193, `css-url-resource` 162,
+  `ink-displaced-vs-chrome` 100, `webfont-not-supplied` 93, `missing-resource` 28,
+  `img-without-dims` 27. css-text is the extreme (392 passes, 99 clean); CSS2/backgrounds (179, 60
+  clean: CSS `url()` backgrounds are never loaded) and lists (67, 39) follow.
+* **Ink check** (2577 passes with ink from both engines; HYPOTHESIS-grade): share of Chrome's
+  significant ink missing in vellora's test rendering < 0.1: 2098, 0.1–0.3: 141, 0.3–0.5: 58,
+  0.5–0.8: 105, ≥ 0.8: 175 (validator, same metric, e47e77f passes: 254 at ≥ 0.5 among 2524
+  non-blank passes; here 280 among 2577 — the 50 un-chained passes are included). Ink bounding-box
+  shift: ≤ 8 px 49, 9–32 px 1968, 33–100 px 243, > 100 px 312, no ink 5 — most passes sit 9–32 px
+  away from Chrome (observation 5: page-1 leading space dropped), which is why the displacement flag
+  starts at 100 px.
 
 Strict-gate rejections (`unsupported`, node rejected): `element:script` 462 (+1 ref), `css:grid` 218
 (+11 ref), `css:transform` 47 (+1 ref), `element:iframe` 34, `css:page-margin-box` 29,
 `element:textarea` 26, `element:canvas` 12, `css:filter` 8, `element:form` 7, `element:object` 7,
 `element:input` 2, `element:video` 2, `image:unresolved` 2.
 
-**vellora × Chrome** (tests both evaluated): vellora-only fail 4095, both fail 506, vellora pass /
-Chrome fail 99, both pass 2473. **vellora × Blitz's own report** for `2003ba5` (upstream WPT
-`8eaad6beb`): both pass 2386, vellora fail / upstream PASS 2017, vellora pass / upstream not-pass
-179, both fail 2504, vellora not evaluated / upstream PASS 177, upstream has no result 201.
-**Attribution of the 4602 vellora failures** (triage, `attribution.json` lists them):
-`velloraLayerSuspect` 1804 (Chrome and Blitz's own runner both pass), `blitzLayoutSuspect` 2213
-(Chrome passes, Blitz's runner does not), `oracleInconclusive` 506 (Chrome fails too),
-`unattributed` 79. HYPOTHESIS-grade only: the upstream runner is lenient (dify) and builds `floats`.
+**vellora × Chrome** (tests both evaluated): vellora-only fail 4049, both fail 502, vellora pass /
+Chrome fail 99, both pass 2478, vellora pass-blank 45. **vellora × Blitz's own report** for
+`2003ba5` (upstream WPT `8eaad6beb`): both pass 2406, vellora fail / upstream PASS 1967, vellora pass
+/ upstream not-pass 165, vellora pass-blank 44 (+1 upstream-absent), both fail 2504, vellora not
+evaluated / upstream PASS 177, upstream has no result 201. **Attribution of the 4552 vellora
+failures** (triage, `attribution.json` lists them): `velloraLayerSuspect` 1758 (Chrome and Blitz's
+own runner both pass), `blitzLayoutSuspect` 2213 (Chrome passes, Blitz's runner does not),
+`oracleInconclusive` 502 (Chrome fails too), `unattributed` 79. HYPOTHESIS-grade only: the upstream
+runner is lenient (dify) and builds `floats`.
 
-Reproducibility (CONFIRMED): two full runs of this pin 12 minutes apart gave identical vellora
-outcomes for all 8047 tests except the one test whose reference (`/common/blank.html`) was added to
-the sparse checkout in between. Chrome flipped on 7 tests between the same two runs, all
-script-driven "dynamic" tests (e.g. `css/CSS2/abspos/hypothetical-box-dynamic.html`) that vellora
-rejects as `element:script` anyway.
+Reproducibility (CONFIRMED): the two runs above (04:44 and 04:56 UTC, separate processes) produced
+identical records for all 8047 tests — outcome, `blank`, rejected feature, every comparison's
+pass/maxDifference/totalPixels/firstDiffPage, the `prepare` record (flags included) and the ink
+signature — and identical `results`/`suspectPasses` in the two baselines they wrote. (Under
+e47e77f, Chrome flipped on 7 script-driven "dynamic" tests between two runs; vellora rejects all 7 as
+`element:script`.)
 
 ### Extra measurement: the Blitz 0.3.0-beta.4 bump (research/blitz-beta4-bump `dff3bc6`)
 
-Same harness, WPT commit, rasterizer and Chrome baseline (`--chrome-from` the run above), build from
-`git archive dff3bc6` → `npm ci && npm run build` outside the repo; `--expectations
-expectations/blitz-2003ba5fc2d8.json --upstream 23b9b26a9b6a` (nearest upstream run to the beta.4
-tag, upstream WPT `cd1d8aa5b`). Run `20261021-blitz-0.3.0-beta.4-research-dff3bc6`, 85 s.
+Same harness, WPT commit, rasterizer and Chrome outcomes (`--chrome-from` the pin run above, which
+carries Chrome ink signatures), build from `git archive dff3bc6` → `npm ci && npm run build` in
+`/tmp/wpt-a1/beta4-src` (no git: named by its source hash `5803049f5f2c`, `--label` records the
+provenance; not durable). Run `20261021T045709Z-blitz-0.3.0-beta.4-vellora-nogit-5803049`
+(04:57:09 UTC, 45 s), command `node fidelity/wpt/run.mjs --vellora /tmp/wpt-a1/beta4-src/packages/vellora/dist/index.js
+--chrome-from fidelity/results/wpt/20261021T044423Z-blitz-2003ba5fc2d8-vellora-363377d/results.json
+--upstream 23b9b26a9b6af5947b8f003d2c2cc768bff10b8a --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json
+--label "research/blitz-beta4-bump dff3bc6 exported with git archive to /tmp/wpt-a1/beta4-src, built with npm ci && npm run build"`
+(upstream `23b9b26a9b` = nearest Blitz run to the beta.4 tag, upstream WPT `cd1d8aa5b`).
 
-* Total pass 2573 → **2729** (31.97% → 33.91%; evaluated 35.86% → 38.01%). Ratchet:
-  **161 regressions**, 317 improvements, 2 changed (unsupported → fail), 7567 unchanged. The
-  runner exits 1 because of the regressions, as designed. Largest moves (improvements/regressions):
-  css-text +103/−69, CSS2/text +53/−0, linebox +30/−0, css-break +24/−9, generated-content +22/−4,
-  backgrounds +9/−36.
-* Of the 161 regressions, **121 are tests Blitz's own beta.4 runner passes** (93 of them Chrome
-  passes too) and 40 are tests Blitz's own runner fails at beta.4 (33 of those it passed at the pin,
-  i.e. an upstream regression). HYPOTHESIS: most WPT-visible regressions of the bump arise in
-  vellora's layer (DOM-children walk missing anonymous blocks, post-layout normalization,
-  pagination/emit), not in raw Blitz layout. This is triage evidence, not proof; the per-box
-  layout-diff (fidelity/layout-diff) is the instrument that can confirm it.
-* Not every "regression" is a new bug. CONFIRMED for `css/CSS2/backgrounds/background-002.xht`:
-  the test paints with CSS `background: url(...)` (vellora never loads it) and its reference uses
-  `<img width="100%" height="50">`; at the pin neither was drawn, so the pair "passed"; at beta.4 the
-  reference image is drawn and the pre-existing gap is exposed. 36 of the 161 regressions have that
-  shape (test uses a CSS background `url()`, reference uses `<img>`).
+* Total pass 2578 → **2729** (32.04% → 33.91%; evaluated 35.93% → 38.01%; clean 1988 → 2213,
+  24.70% → 27.50%); pass-blank 45 → 37. The ratchet against the committed baseline: **164
+  regressions — 53 of clean passes, 111 of flagged passes** — 6 `sightGained` (pass-blank → fail),
+  315 improvements, 3 changed, 7559 unchanged; every regression is now a `fail`. The runner exits 1
+  because of the regressions, as designed. Largest moves (improvements/regressions): css-text
+  +101/−72, CSS2/text +53/−0, linebox +30/−0, css-break +24/−9, generated-content +22/−4,
+  backgrounds +9/−36, positioning +13/−10.
+* **How much of e47e77f's "161 regressions" was oracle noise** (the validator's question): re-scored
+  under the fixed semantics, 6 are `sightGained` (the pin pass was blank), 104 regress a pass that
+  is flagged suspect, and 51 regress a clean pass (+2 more clean and +7 more flagged regressions
+  appear because 50 un-chained tests now pass at the pin). Flags on the 111 flagged regressions:
+  `ink-missing-vs-chrome` 61, `webfont-not-supplied` 54, `uncovered-glyphs` 41,
+  `css-url-resource` 38, `ink-displaced-vs-chrome` 16. CONFIRMED example of the shape (builder):
+  `css/CSS2/backgrounds/background-002.xht` paints with CSS `background: url(...)` (never loaded)
+  against an `<img width="100%" height="50">` reference; at the pin neither was drawn, at beta.4 the
+  reference image is.
+* **Phase A attribution question — raw Blitz or vellora's post-layout passes?** For the 53
+  regressions of clean passes: Blitz's own runner at beta.4 passes 37 and fails 16; Chrome passes 48
+  (fails 4, errors 1); both pass 33. HYPOTHESIS (triage, not proof): about two thirds of the
+  WPT-visible clean regressions of the bump arise in what vellora adds after Blitz layout
+  (DOM-children walk missing anonymous blocks, `layout_normalize.rs`, pagination, emit), and about
+  one third reproduce in raw Blitz. Caveats: the upstream runner is lenient (dify), builds `floats`,
+  and ran WPT `cd1d8aa5b`, not `9d8aceec0`. The per-box layout diff (`fidelity/layout-diff`), raw
+  Blitz vs post-normalize boxes, is the instrument that can confirm it per test;
+  `ratchet.json` lists the 53 (`regressions` without `expectedFlags`).
+* Attribution of all 4413 beta.4 failures: `velloraLayerSuspect` 2126, `blitzLayoutSuspect` 1764,
+  `oracleInconclusive` 520, `unattributed` 3 (the beta.4 upstream report lacks only 38 of our tests, the pin report 201).
 
 ## Independent validation (2026-10-21) and what changed
 
