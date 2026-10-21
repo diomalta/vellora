@@ -389,3 +389,178 @@ All 40 are pdf-probe words.
 The `committed-canary` self-test asserts that `03-table-passes` FAILs against `02-delete-noop-passes`
 without acceptances (exactly the 40 accepted keys gate), PASSes with them, and that invoice REF-W
 max, BOL-X1, DANFE-X1 and `fixed-table-layout-026` improve.
+
+## `04-block-offset`: Blitz's `block_offset` read, constant 4 px PDF text raise removed
+
+Branch `phaseb/04-block-offset` (from `phaseb/03-table-passes` `52b915e`), code commit `8e4face`:
+
+- `blitz_engine::read_text_runs` places every glyph run where Blitz's own painter does: content box
+  + `TextLayout::block_offset` + `GlyphRun::baseline()` (blitz-paint 0.3.0-beta.4 `render.rs`
+  `draw_inline_layout`). `block_offset` carries a table cell's `vertical-align` (stylo_taffy
+  `table_cell_vertical_align` maps it to `align-content`) and a block's `align-content` (blitz-dom
+  `layout/inline.rs`). Before, every vertically aligned cell drew its text at the cell top.
+- `pdf.rs` draws each run on its layout baseline. `TEXT_BASELINE_COMPENSATION_PX` (a constant 4 px =
+  3 pt raise of every glyph run) is deleted. There was no baseline bug to fix at the source: Parley's
+  line baseline is already Chrome's.
+- `normalize_painted_table_cell_text_baselines` is **kept** (ablation below). Its test now says it
+  pins a compensating heuristic, not browser behaviour.
+- New Chrome-verified tests in `crates/vellora-core/tests/text_baseline.rs` (5; red on the step-03
+  code except the layout-baseline one, which pins that Parley's baselines already match Chrome).
+  The Chrome numbers are in `attachments/chrome-probes-text-baseline.json`.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T125346Z` (2026-10-21 12:53:46Z), 20/20 steps ok, run-all exit 3 (gate FAIL before acceptances), git `8e4face` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/03-table-passes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/04-block-offset`, then `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/03-table-passes --run fidelity/results/run-all/04-block-offset --accept <accepted.json> --out fidelity/results/run-all/04-block-offset/gate` (exit 0) |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-04-block-offset-20261021T125346Z`. The ablation runs (A/B/C), the `layout_dump` binaries of every variant, the probe HTML, the Chrome PDFs and `accepted.json`: `~/.cache/vellora-fidelity/step04-block-offset-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/03-table-passes` (previous link; `gate-report.{json,md}`) | **PASS** with 2587 `acceptedRegressions` | improvement 733, accepted 2587, gating 0, unchanged 12193, withinTolerance 1 |
+| `port/03-table-passes` without acceptances (`attachments/gate-report-without-acceptances.*`) | FAIL | the same 2587 items gate |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 546 gating (03: 110); improvement 1314 (03: 881) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 76 gating (03: 74: + DANFE-L1a…d, − invoice REF-W max, − `floats-142`); improvement 981 (03: 761) |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle | before → after |
+|---|---|
+| WPT pass / clean (8047 reftests) | 3077 / 2507 (38.24 % / 31.15 %) → **3303 / 2732 (41.05 % / 33.95 %)**: 227 fail → pass, 1 clean pass lost (accepted, below). css/CSS2/linebox 29/27 → 125/123, tables 21/18 → 53/50, normal-flow 396/373 → 415/391, positioning 298/272 → 315/289, css-text 443/193 → 464/214, CSS2/text 223/215 → 237/229, floats-clear 30/25 → 39/34, fonts 121 → 127, borders 377/348 → 383/354, margin-padding-clear 513/498 → 517/502, colors 7 → 9 |
+| invoice REF-W max / p95 mm | 2.81 / 2.78 → **2.53 / 2.51** |
+| boleto-febraban (and `.px-grid`) REF-W max / p95 mm; BOL-R1 worstMm | 7.94 / 2.63 → **2.31 / 1.95**; 4.8 → 1.82 |
+| text-stress-ptbr TXT-R1 worstMm | 0.94 → 0.38 |
+| DANFE-M1 excessB mm | 25.232 → 24.173 |
+| pdf-probe words improved | invoice 283, boleto-febraban 115, text-stress-ptbr 46, boleto 25, danfe 22, notification 5 |
+| accepted (worse) | notification LET-1 PASS → **FAIL** 0.75 → 1.81 mm; DANFE-L1b PASS → **FAIL**; DANFE-L1a…d posErrMm +1.06 mm each; REF-W max/p95 danfe 4.71/3.43 → 5.42/4.49, notification 1.63/1.07 → 1.81/1.70, boleto p95 2.40 → 2.58, receipt p95 2.03 → 2.55, text-stress 96.73/95.96 → 97.79/97.02; INV-R1 sparksuite 3.09 → 4.15, postmark 9.20 → 10.26; 2569 pdf-probe words |
+| unchanged | every page count (REF-P etc.), LET-2, TXT-B1, BOL-X/DANFE-X/EXT-2 counts, barcode decodes, crashtests 239/239 ok, canaries 30/30 caught, DET-1/DET-2 PASS, code checks green, layout-diff check failures limited to the 5 allowlisted ones |
+
+Verdict totals: all PASS 143 → 141, FAIL 36 → 38, WARN 8, NOT-RUN 3; excluding diagnostic variants
+121 → 119, 32 → 34, 7, 3. The two new FAILs are LET-1 (notification) and DANFE-L1b. PDF bytes change
+on purpose. The clean-commit run and the dirty ablation run B (same code) produced byte-identical
+`vellora*.pdf` files, 29/29 (`attachments/pdf-identity-vs-ablation-B.json`).
+
+**The REF-W distribution got better in its body and worse in its tail** (layout oracle, Chrome +
+WeasyPrint tol-2 consensus words; subject error in pt, `attachments/ablation-block-offset.json`):
+
+| fixture | median dy | mean \|dy\| | p50 | p95 | max |
+|---|---|---|---|---|---|
+| invoice | −3.46 → −0.46 | 3.21 → 1.00 | 3.75 → 1.42 | 7.87 → 7.11 | 7.96 → 7.16 |
+| notification | −2.70 → +0.30 | 2.45 → 1.94 | 2.72 → 0.50 | 3.04 → 4.82 | 4.62 → 5.14 |
+| receipt | −3.04 → −0.04 | 3.12 → 1.95 | 3.44 → 1.00 | 5.75 → 7.22 | 286.72 → 286.91 |
+| boleto-febraban | −2.85 → +0.15 | 3.18 → 1.83 | 3.52 → 2.78 | 7.45 → 5.54 | 22.50 → 6.55 |
+| boleto | −1.27 → +1.73 | 2.80 → 2.95 | 2.63 → 2.57 | 6.79 → 7.32 | 13.16 → 13.16 |
+| danfe | +1.42 → +4.42 | 3.19 → 4.56 | 3.62 → 4.84 | 9.71 → 12.73 | 13.37 → 15.38 |
+
+Before this step, text was 3 pt above its layout position everywhere. Where the layout was right,
+this put the median about 3 pt above Chrome: invoice, notification, receipt, boleto-febraban.
+Where raw Blitz placed boxes too low, the raise hid part of that drift: the lower half of the
+notification, the DANFE, and the boleto tails. Now each word sits at its layout position, so
+those boxes show their real error.
+
+### Root cause of `TEXT_BASELINE_COMPENSATION_PX` (CONFIRMED, `attachments/chrome-probes-text-baseline.json`)
+
+- **Parley's layout baseline is Chrome's.** The probe covers 7 bundled face/size/`line-height`
+  forms: normal, number, length, 0, Liberation Sans/Serif/Mono, DejaVu Sans. The layout baselines
+  are within 0.31 px of Chrome's DOM baselines, and the residual is Blink rounding ascent and
+  descent to whole px.
+- **The raise was the only error.** With the 4 px raise, every one of these PDF baselines sat
+  2.976 pt above Chrome's print baseline. Without it they sit +0.024 pt (Chrome puts the 18 mm
+  margin at 68 px = 51.0 pt).
+- **WPT Ahem tests show the same 4 px.** `css/CSS2/linebox/line-height-002.xht` failed by 160 px,
+  which is 2 glyphs × 20 px × 4 px. It now passes; css/CSS2/linebox passes went 29 → 125.
+- **Where the constant came from.** It was introduced in `ab65dfd` (Blitz pin era). At the pin,
+  layout-diff L0 text for the notification sat a median +6.73 px low, so a raise looked right then.
+  Steps 01–03 removed that drift, and the constant was left over-correcting.
+- **`block_offset`.** On the step-03 code, cells with `vertical-align: middle` or `bottom` and
+  `align-content: center` or `end` drew their text at the top of the box, 23–64 px off. Now they
+  are exact (TOP/MID/BOT/DFLT 15/38/61/38 px; `align-content` 14/132/250 px).
+
+### pdf-probe measures bbox tops, and the producers' `/Ascent` differs (CONFIRMED, `attachments/font-descriptor-ascent.txt`, `pdftotext-bbox-baselines-probe.txt`)
+
+- **What pdf-probe measures.** Its y is poppler `pdftotext -bbox` yMin, which is baseline − `/Ascent` × size.
+- **What each producer writes as `/Ascent`.**
+  - krilla 0.8.2 writes OS/2 `sTypoAscender`: Liberation Sans 728, Serif 693, Serif Bold 677 (per 1000 em).
+  - Chrome writes the hhea ascender: 905 and 891.
+- **Effect on every pdf-probe dy (steps 00–04).** Each one carries +(A_chrome − A_krilla) × size:
+  +2.12 pt for 12 pt Liberation Sans, +1.08 pt for 5.5 pt Serif. Before this step, that term and
+  the −3 pt raise largely cancelled, so pdf-probe looked better than the true baselines.
+- **The artefact-free check.** On the probe, the two PDFs' PyMuPDF baselines agree to 0.024 pt and
+  their yMax (descent) values agree to 0.006 pt, while their yMin values differ by +2.15 pt.
+- **What the evidence uses instead.** Every pdf-probe acceptance below compares PyMuPDF span origins
+  (true baselines) of the same two PDFs. Follow-up: pdf-probe should compare baselines (or yMax).
+
+### `painted_table_cell_text_baselines`: kept (ablation, `attachments/ablation-block-offset.json`)
+
+Each variant was a full `run-all --gate` against `03-table-passes` (same environment):
+
+| variant | gate vs 03 (no acceptances) | WPT pass / clean | REF-W p95 mm danfe / boleto / boleto-febraban / invoice |
+|---|---|---|---|
+| A: `block_offset` only | improvement 30, regression 28 (+1 lint failure: unformatted test) | 3077 / 2507 | 3.60 / 1.87 / 2.12 / 2.78 |
+| B (= final): A − 4 px raise | improvement 733, regression 2587 | 3303 / 2732 | 4.49 / 2.58 / 1.95 / 2.51 |
+| C: B − painted pass | improvement 470, regression 2762 | 3310 / 2739 | 4.91 / 3.11 / 2.17 / 2.54 |
+
+- **Why the pass is not redundant with `block_offset`.** Chrome puts the text of a painted cell and
+  an unpainted cell at the same offset, 20 px (probe `painted_row`). So the 2 px raise is wrong for
+  in-box placement. In the corpus, though, it offsets raw Blitz row drift of painted table rows: the
+  invoice items table box is +2.09 px at N0, with its text +0.19 px relative to the box.
+- **Why it stays.** Removing it gains 7 WPT passes (margin-collapse-106/155,
+  white-space-normal-001/002, white-space-collapsing-bidi-003, ws-break-spaces-applies-to-012/013).
+  It costs the REF-W values above and 175 more gating items. Retire it together with the drift fix.
+- **Layer proof.** In this run, every layout-diff text run's final-layer y equals raw Blitz's B0
+  placement, or B0 − 2 px (the kept pass). No other vellora layer moves text y.
+
+### `acceptedRegressions` (2587; per-item numbers in `attachments/accepted-evidence.json`)
+
+The builder, `attachments/scratch-build-accepted.py.txt`, gives each gating item one label. Only the
+first three labels fit GATE-A1's literal wording ("the old value was an oracle artefact"):
+
+| label | n | fits the literal rule? | what it is |
+|---|---|---|---|
+| `pdf-probe-ascent-artefact` | 697 | yes | the word's true baseline (PyMuPDF) did not get worse beyond 1 pt; only pdftotext's yMin did (ascent term above) |
+| `pdf-probe-pairing-artefact` | 11 | yes | the k-th-occurrence pair is another word instance (paired Chrome word > 20 pt away horizontally in both runs, e.g. body `débito` vs header `Débito`) |
+| `wpt-subpixel-raster-artefact` | 1 | yes | `css/CSS2/linebox/inline-formatting-context-001.xht`: 1 differing pixel (maxDifference 3) at a glyph-run boundary; Chrome 155 fails the same reftest in the same harness (78 px, maxDifference 64); the old pass drew test and reference 4 px above Chrome (ink bbox top 14 vs Chrome 19, now 18) |
+| `compensating-drift` | 672 words + 17 value/status rows | **no** | the old value was the layout error minus the removed 3 pt raise (two errors cancelling); the word or anchor now sits at its laid-out and paginated baseline; old baseline < 5 pt off Chrome |
+| `misplaced-word-uniform-shift` | 1189 | **no** | the old baseline was already ≥ 5 pt off Chrome (text-stress-ptbr 736: rows displaced by its 8-vs-7 page breaks, e.g. page 3 `10/04/2026 Compra no débito …` at 422.8 pt vs Chrome 150.6 pt), moved by exactly the removed raise (+ `block_offset`) |
+
+- **The 5 pt split is a triage aid.** It separates words that looked right before from words already
+  visibly off. It is not a rule claim.
+- **Per fixture.**
+  - ascent artefacts: invoice 148, notification 147, text-stress 198, danfe 101, boleto-febraban 33,
+    receipt 30, boleto 29, sparksuite 11.
+  - compensating-drift words: danfe 176, boleto-febraban 109, boleto 99, notification 90,
+    text-stress 82, postmark 48, receipt 44, sparksuite 24.
+  - misplaced words: text-stress 736, danfe 264, boleto 89, postmark 89, sparksuite 11.
+  - pairing artefacts: text-stress 7, danfe 2, receipt 2.
+- **The 17 value/status rows, all `compensating-drift`:**
+  - notification LET-1, status PASS → FAIL and worstMm 0.75 → 1.81. The worst anchor, "Gerente do
+    Departamento de Cobrança", is +6.516 px below Chrome already in raw Blitz on the source HTML
+    (layout-diff N0). Its box sits at the same offset, and B0 = L0 = every pass = P.
+  - DANFE-L1b, status PASS → FAIL, and DANFE-L1a…d posErrMm, each +1.06 mm.
+  - REF-W max/p95 of danfe, notification, boleto (p95), receipt (p95) and text-stress (page-break
+    dominated).
+  - INV-R1 of sparksuite and postmark, each +1.06 mm.
+- **Same family as steps 01 and 03.** The 1861 words and 17 rows are of the same kind as step 01's
+  119 `pdf-probe-compensating-drift` items and step 03's 24
+  `coincidental-match-of-wrong-geometry` items. The orchestrator decides on them. The fallback
+  without them is ablation A (`block_offset` only): its gate shows 28 regressions (18 DANFE header
+  words, 4 postmark values, 1 DANFE REF-W p95 — all compensating drift — and 5 boleto words, which
+  are ascent artefacts).
+- **Commit message.** This step's commit message lists every non-pdf-probe accepted key and the
+  per-label × per-fixture counts of the 2569 words, not 2569 lines. The full list is in
+  `manifest.json`.
+
+Other findings, measured in this step:
+
+- **Blitz `<br>` in a table cell adds 1 px per line.** At 12 px with line-height 1.5 the line pitch
+  is 19 px instead of 18; with `normal` it is 15 instead of 14. Wrapped lines in cells and `<br>` in
+  divs are exact (probes `cell_lines_*`, `lines_*`). This is a candidate source of the row drift.
+- **postmark.** Chrome and WeasyPrint disagree by about 22 pt on its table values, and vellora's new
+  position matches WeasyPrint within 0.5 pt. postmark has no REF-W consensus.
+
+The `committed-canary` self-test asserts that `04-block-offset` FAILs against `03-table-passes`
+without acceptances (exactly the 2587 accepted keys gate), PASSes with them, and checks the label
+counts. It also checks that `line-height-002`, invoice REF-W max and boleto-febraban REF-W max
+improve, and that LET-1 0.75 → 1.81 is an accepted item.

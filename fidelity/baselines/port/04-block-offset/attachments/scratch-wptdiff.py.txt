@@ -1,0 +1,34 @@
+"""WPT outcome changes between two results.json (old, new): counts and per-suite flips."""
+import json, sys, collections
+
+old = {t['test']: t for t in json.load(open(sys.argv[1]))['tests']}
+new = {t['test']: t for t in json.load(open(sys.argv[2]))['tests']}
+
+
+def clean(t):
+    # a pass is "clean" when the ink check did not flag it (field names per wpt/run.mjs)
+    return t['outcome'] == 'pass' and not t.get('inkFlags') and not (t.get('ink') or {}).get('flags')
+
+
+flips = collections.Counter()
+suites = collections.defaultdict(collections.Counter)
+examples = collections.defaultdict(list)
+for k, n in new.items():
+    o = old.get(k)
+    if not o:
+        continue
+    if o['outcome'] != n['outcome']:
+        flips[(o['outcome'], n['outcome'])] += 1
+        suites[n['suite']][(o['outcome'], n['outcome'])] += 1
+        if len(examples[(o['outcome'], n['outcome'])]) < 12:
+            examples[(o['outcome'], n['outcome'])].append(k)
+print('flips', dict(flips))
+for s, c in sorted(suites.items()):
+    print('  ', s, dict(c))
+for k, v in examples.items():
+    print(k)
+    for t in v:
+        print('     ', t)
+po = sum(1 for t in old.values() if t['outcome'] == 'pass')
+pn = sum(1 for t in new.values() if t['outcome'] == 'pass')
+print('pass', po, '->', pn, 'of', len(new))

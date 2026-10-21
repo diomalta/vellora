@@ -1,0 +1,25 @@
+import json, sys, glob, collections, statistics
+
+root = sys.argv[1]
+layers = sys.argv[2].split(',') if len(sys.argv) > 2 else ['B0', 'L0']
+for f in sorted(glob.glob(root + '/layout-diff/*/run-all/diff.json')):
+    d = json.load(open(f))
+    name = f.split('/')[-3]
+    final = d['final_layer']
+    out = []
+    for layer in layers + [final]:
+        dys = []
+        for ev in d['text_events']:
+            pl = ev.get('per_layer', {}).get(layer)
+            if not pl or pl.get('status') in (None, 'n/a', 'missing') or pl.get('dy') is None:
+                continue
+            dys.append(pl['dy'])
+        if not dys:
+            out.append(f"{layer}: -")
+            continue
+        cnt = collections.Counter(round(v) for v in dys)
+        within1 = sum(1 for v in dys if abs(v) <= 1.0)
+        out.append(f"{layer}: n={len(dys)} med={statistics.median(dys):+.2f} |dy|<=1:{within1} top={cnt.most_common(4)}")
+    print(name)
+    for o in out:
+        print('   ', o)

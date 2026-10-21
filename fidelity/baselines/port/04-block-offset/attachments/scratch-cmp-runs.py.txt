@@ -1,0 +1,32 @@
+"""Compare two run dirs: gate items (non-unchanged) and sha256 of every vellora*.pdf."""
+import hashlib, json, os, sys
+
+a_dir, b_dir = sys.argv[1:3]
+a = json.load(open(a_dir + '/gate/gate-report.json'))
+b = json.load(open(b_dir + '/gate/gate-report.json'))
+ka = {i['key']: (i['class'], i.get('before'), i.get('after')) for i in a['items'] if i['class'] != 'unchanged'}
+kb = {i['key']: (i['class'], i.get('before'), i.get('after')) for i in b['items'] if i['class'] != 'unchanged'}
+print('only in', a_dir, [k for k in ka if k not in kb][:10])
+print('only in', b_dir, [k for k in kb if k not in ka][:10])
+print('differ', [k for k in ka if k in kb and ka[k] != kb[k]][:10])
+same = diff = missing = 0
+out = {}
+for root, _, files in os.walk(a_dir):
+    for f in files:
+        if f.startswith('vellora') and f.endswith('.pdf'):
+            p = os.path.join(root, f)
+            rel = os.path.relpath(p, a_dir)
+            q = os.path.join(b_dir, rel)
+            ha = hashlib.sha256(open(p, 'rb').read()).hexdigest()
+            if not os.path.exists(q):
+                missing += 1
+                continue
+            hb = hashlib.sha256(open(q, 'rb').read()).hexdigest()
+            out[rel] = {'a': ha, 'b': hb}
+            if ha == hb:
+                same += 1
+            else:
+                diff += 1
+print('pdfs same', same, 'diff', diff, 'missing', missing)
+if len(sys.argv) > 3:
+    json.dump(out, open(sys.argv[3], 'w'), indent=1, sort_keys=True)

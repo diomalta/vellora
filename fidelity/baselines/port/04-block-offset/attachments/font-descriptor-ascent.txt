@@ -1,0 +1,25 @@
+# FontDescriptor metrics (PDF glyph units, per 1000 em) of the embedded faces, read with pypdf 6.21.1 (scratch-fontdesc.py.txt)
+# from layout-diff/<fixture>/run-all/{vellora,chrome}.pdf of run 20261021T125346Z (port step 04), 2026-10-21.
+# krilla 0.8.2 writes OS/2 sTypoAscender (krilla src/text/font.rs: os_2.s_typo_ascender); Chrome 155 writes the hhea ascender.
+# poppler pdftotext -bbox places yMin = baseline - Ascent/1000 x size, so pdf-probe dy carries +(A_chrome - A_krilla)/1000 x size;
+# yMax (descent) agrees between the producers to 0.006 pt on the step's probe.
+invoice/run-all/vellora.pdf
+  /SSXZUZ+LiberationSans-Bold              Ascent=728.02734 Descent=-210.44922 CapHeight=687.9883 FontBBox=[-23.925781, -211.91406, 942.8711, 890.1367]
+  /KPFJVM+LiberationSans                   Ascent=728.02734 Descent=-210.44922 CapHeight=687.9883 FontBBox=[-24.414062, -211.91406, 1000, 867.1875]
+invoice/run-all/chrome.pdf
+  /AAAAAA+Times-Roman                      Ascent=750 Descent=250 CapHeight=661.62109 FontBBox=[-203.125, -428.22266, 1700.1953, 1271.48438]
+  /BAAAAA+LiberationSans-Bold              Ascent=905.27344 Descent=211.91406 CapHeight=687.98828 FontBBox=[-481.93359, -376.46484, 1304.19922, 1033.20313]
+  /CAAAAA+LiberationSans                   Ascent=905.27344 Descent=211.91406 CapHeight=687.98828 FontBBox=[-543.94531, -303.22266, 1301.75781, 979.98047]
+notification/run-all/vellora.pdf
+  /MSJDQW+LiberationSerif-Bold             Ascent=677.2461 Descent=-215.82031 CapHeight=654.78516 FontBBox=[0, -220.70312, 915.03906, 858.8867]
+  /XIHEOZ+LiberationSerif                  Ascent=693.3594 Descent=-215.82031 CapHeight=654.78516 FontBBox=[-28.808594, -215.82031, 1006.83594, 858.39844]
+notification/run-all/chrome.pdf
+  /AAAAAA+Times-Roman                      Ascent=750 Descent=250 CapHeight=661.62109 FontBBox=[-203.125, -428.22266, 1700.1953, 1271.48438]
+  /BAAAAA+LiberationSerif-Bold             Ascent=891.11328 Descent=216.30859 CapHeight=654.78516 FontBBox=[-543.94531, -303.22266, 1344.23828, 1007.8125]
+  /CAAAAA+LiberationSerif                  Ascent=891.11328 Descent=216.30859 CapHeight=654.78516 FontBBox=[-543.94531, -303.22266, 1278.32031, 981.44531]
+danfe/run-all/vellora.pdf
+  /RBBBAF+LiberationSerif                  Ascent=693.3594 Descent=-215.82031 CapHeight=654.78516 FontBBox=[-6.8359375, -215.82031, 1006.83594, 858.8867]
+  /SWPJVR+LiberationSerif-Bold             Ascent=677.2461 Descent=-215.82031 CapHeight=654.78516 FontBBox=[-9.765625, -212.89062, 1006.83594, 857.91016]
+danfe/run-all/chrome.pdf
+  /AAAAAA+LiberationSerif                  Ascent=891.11328 Descent=216.30859 CapHeight=654.78516 FontBBox=[-543.94531, -303.22266, 1278.32031, 981.44531]
+  /BAAAAA+LiberationSerif-Bold             Ascent=891.11328 Descent=216.30859 CapHeight=654.78516 FontBBox=[-543.94531, -303.22266, 1344.23828, 1007.8125]

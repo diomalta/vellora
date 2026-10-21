@@ -1,0 +1,37 @@
+"""Baseline (PyMuPDF span origin) of named words: old run vs new run vs Chrome vs WeasyPrint.
+
+  python3 wordcmp.py <old run dir> <new run dir> <oracle subdir e.g. fixtures/boleto> word[#k]...
+"""
+import json, sys, collections
+
+
+def load(p):
+    d = json.load(open(p))
+    occ = collections.Counter()
+    out = {}
+    for pg in d['pages']:
+        for w in pg['words']:
+            occ[w['text']] += 1
+            out[(w['text'], occ[w['text']])] = (pg['page'], w['x'], w['baseline'], w['size'])
+    return out
+
+
+old_run, new_run, sub = sys.argv[1:4]
+words = sys.argv[4:]
+base = '/oracles/%s/plain/layout/' % sub
+o = load(old_run + base + 'words-subject.json')
+n = load(new_run + base + 'words-subject.json')
+c = load(new_run + base + 'words-chrome.json')
+w = load(new_run + base + 'words-weasyprint.json')
+for spec in words:
+    t, _, k = spec.partition('#')
+    k = int(k or 1)
+    key = (t, k)
+    def f(m):
+        v = m.get(key)
+        return None if v is None else (v[0], round(v[2], 3))
+    co = c.get(key)
+    line = f'{spec:24s} old {f(o)} new {f(n)} chrome {f(c)} weasy {f(w)}'
+    if co and o.get(key) and n.get(key):
+        line += f'  dy_old {o[key][2]-co[2]:+.2f} dy_new {n[key][2]-co[2]:+.2f} pt'
+    print(line)

@@ -1,0 +1,30 @@
+"""Print FontDescriptor Ascent/Descent/CapHeight/FontBBox of every font in a PDF (pypdf)."""
+import sys
+from pypdf import PdfReader
+
+for path in sys.argv[1:]:
+    r = PdfReader(path)
+    seen = set()
+    print(path)
+    for page in r.pages[:2]:
+        res = page.get('/Resources') or {}
+        fonts = res.get('/Font') or {}
+        for name, ref in fonts.items():
+            f = ref.get_object()
+            base = f.get('/BaseFont')
+            desc = None
+            if '/FontDescriptor' in f:
+                desc = f['/FontDescriptor'].get_object()
+            elif '/DescendantFonts' in f:
+                df = f['/DescendantFonts'][0].get_object()
+                desc = df.get('/FontDescriptor')
+                desc = desc.get_object() if desc else None
+            if base in seen:
+                continue
+            seen.add(base)
+            if desc is None:
+                print('  ', base, 'no descriptor')
+                continue
+            print('  %-40s Ascent=%s Descent=%s CapHeight=%s FontBBox=%s' % (
+                base, desc.get('/Ascent'), desc.get('/Descent'), desc.get('/CapHeight'),
+                list(desc.get('/FontBBox') or [])))

@@ -1,0 +1,49 @@
+"""Spot-check text-stress pdf-probe pairs with a large dy: same word instance or not?
+
+For a few pairs, print the full PyMuPDF line containing the vellora word and the Chrome word, plus
+the line before, so a reader can tell whether both are the same row of the document.
+"""
+import json, sys, unicodedata
+import pymupdf
+
+run = sys.argv[1]
+fx = 'text-stress-ptbr'
+probe = json.load(open(f'{run}/layout-diff/{fx}/run-all/pdf-probe.json'))
+
+
+def lines(which):
+    doc = pymupdf.open(f'{run}/layout-diff/{fx}/run-all/{which}.pdf')
+    out = []
+    for pno, page in enumerate(doc):
+        for b in page.get_text('dict')['blocks']:
+            for l in b.get('lines', []):
+                t = ''.join(s['text'] for s in l['spans'])
+                out.append((pno + 1, l['bbox'][1], l['bbox'][0], t))
+    return out
+
+
+V, C = lines('vellora'), lines('chrome')
+
+
+def around(L, page, x, y):
+    cands = [l for l in L if l[0] == page and abs(l[1] - y) < 8 and l[2] <= x + 2]
+    cands.sort(key=lambda l: (abs(l[1] - y), -l[2]))
+    return cands[0] if cands else None
+
+
+seen = 0
+occ = {}
+for p in probe['pairs']:
+    k = unicodedata.normalize('NFC', p['text'])
+    occ[k] = occ.get(k, 0) + 1
+    if not p.get('samePage') or abs(p['dy_pt']) < 200:
+        continue
+    seen += 1
+    if seen not in (1, 40, 120, 300, 500, 700):
+        continue
+    v = around(V, p['vellora']['page'], p['vellora']['x'], p['vellora']['y'])
+    c = around(C, p['chrome']['page'], p['chrome']['x'], p['chrome']['y'])
+    print(f"#{seen} {k}#{occ[k]} dy {p['dy_pt']} page {p['vellora']['page']}")
+    print('   vellora:', v and (round(v[1], 1), v[3][:90]))
+    print('   chrome :', c and (round(c[1], 1), c[3][:90]))
+print('pairs with |dy| >= 200 on the same page:', seen)

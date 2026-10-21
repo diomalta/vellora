@@ -207,3 +207,53 @@ test("port/03-table-passes passes vs port/02-delete-noop-passes only with its ac
   const wpt = item(r, "wpt|css/CSS2/tables/fixed-table-layout-026.xht");
   assert.deepEqual([wpt.class, wpt.before, wpt.after], ["improvement", "fail", "pass"]);
 });
+
+test("port/04-block-offset passes vs port/03-table-passes only with its acceptedRegressions", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "03-table-passes"));
+  const step = loadBaselineDir(join(baselines, "port", "04-block-offset"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/03-table-passes");
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const accept = step.manifest.acceptedRegressions;
+  assert.equal(accept.length, 2587);
+  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
+  // 709 oracle artefacts (literal GATE-A1 fit) and 1861 words + 17 value/status rows whose old value
+  // was two errors cancelling (the removed 3 pt PDF raise vs raw Blitz box drift); labels and
+  // evidence: manifest.json, attachments/accepted-evidence.json, baselines/port/README.md.
+  const labels = {};
+  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
+  assert.deepEqual(labels, {
+    "compensating-drift": 689,
+    "misplaced-word-uniform-shift": 1189,
+    "pdf-probe-ascent-artefact": 697,
+    "pdf-probe-pairing-artefact": 11,
+    "wpt-subpixel-raster-artefact": 1,
+  });
+  // Without the acceptances the same comparison gates exactly the 2587 accepted items...
+  const raw = compareSnapshots(prev, step);
+  assert.equal(raw.verdict, "FAIL");
+  assert.deepEqual(
+    raw.items
+      .filter((x) => x.gating)
+      .map((x) => x.key)
+      .sort(),
+    accept.map((e) => e.key).sort(),
+  );
+  // ...and with them it passes.
+  const r = compareSnapshots(prev, step, { accept });
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The step's targets: Ahem line boxes, invoice/boleto cell text; LET-1 is an accepted regression.
+  const ahem = item(r, "wpt|css/CSS2/linebox/line-height-002.xht");
+  assert.deepEqual([ahem.class, ahem.before, ahem.after], ["improvement", "fail", "pass"]);
+  const inv = item(r, "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm");
+  assert.deepEqual([inv.class, inv.before, inv.after], ["improvement", 2.81, 2.53]);
+  const bol = item(r, "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm");
+  assert.deepEqual([bol.class, bol.before, bol.after], ["improvement", 7.94, 2.31]);
+  const let1 = item(r, "notification|LET-1|oracles:layout|plain|criterion#1|worstMm");
+  assert.deepEqual([let1.class, let1.before, let1.after], ["accepted", 0.75, 1.81]);
+});

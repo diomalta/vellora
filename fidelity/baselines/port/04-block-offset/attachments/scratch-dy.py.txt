@@ -1,0 +1,40 @@
+import json, sys, collections, statistics, glob, os
+
+
+def load(p):
+    d = json.load(open(p))
+    out = []
+    for pg in d['pages']:
+        for w in pg['words']:
+            out.append((pg['page'], w['text'], w['x'], w['baseline'], w['size']))
+    return out
+
+
+def pair(a, b):
+    ca = collections.defaultdict(list)
+    cb = collections.defaultdict(list)
+    for w in a:
+        ca[(w[0], w[1])].append(w)
+    for w in b:
+        cb[(w[0], w[1])].append(w)
+    res = []
+    for k in ca:
+        if k in cb and len(ca[k]) == len(cb[k]):
+            for x, y in zip(ca[k], cb[k]):
+                res.append((x, y))
+    return res
+
+
+root = sys.argv[1]
+ref = sys.argv[2] if len(sys.argv) > 2 else 'chrome'
+for d in sorted(glob.glob(root + '/oracles/*/*/plain/layout')):
+    s = load(d + '/words-subject.json')
+    c = load(d + '/words-%s.json' % ref)
+    pr = pair(s, c)
+    dys = [x[3] - y[3] for x, y in pr if abs(x[2] - y[2]) < 3]
+    name = d.split('/')[-3]
+    if not dys:
+        print(name, 'none')
+        continue
+    cnt = collections.Counter(round(v * 2) / 2 for v in dys)
+    print(f"{name:28s} n={len(dys):4d} median dy(pt, subject-{ref}) {statistics.median(dys):+.2f}  top {cnt.most_common(5)}")

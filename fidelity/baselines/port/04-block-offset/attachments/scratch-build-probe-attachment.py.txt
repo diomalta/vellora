@@ -1,0 +1,64 @@
+"""Scratch (not part of the repo): build attachments/chrome-probes-text-baseline.json.
+
+Runs vellora-probe.py's measurement (layout_dump L0/final runs + PyMuPDF PDF baselines) for every
+probe set with each build, next to Chrome's numbers from chrome-probe.mjs.
+
+  fidelity/.venv/bin/python -I build_probe_attachment.py <out.json>
+"""
+import json, os, subprocess, sys
+
+S = '/tmp/s04'
+PY = '<repo>/fidelity/.venv/bin/python'
+SETS = {
+    'probes.json': ('chrome-probes.json', 'chrome-pdf'),
+    'probes-unpainted.json': ('chrome-probes-unpainted.json', 'chrome-pdf-unpainted'),
+    'probes-painted.json': ('chrome-probes-painted.json', 'chrome-pdf-painted'),
+    'probes-lines.json': ('chrome-probes-lines.json', 'chrome-pdf-lines'),
+    'probes-cell-lines.json': ('chrome-probes-cell-lines.json', 'chrome-pdf-cell-lines'),
+}
+BUILDS = {
+    'step03': (S + '/base03/target/release/examples/layout_dump',
+               'phaseb/03-table-passes 52b915e (code 5ce90be): block_offset dropped, 4 px PDF raise, painted pass'),
+    'A_block_offset': (S + '/layout_dump-A', 'A: + block_offset read (4 px raise and painted pass kept)'),
+    'B_final': ('<repo>/target/release/examples/layout_dump',
+                'B = this step (8e4face): + block_offset, - 4 px PDF raise, painted pass kept'),
+    'C_no_painted_pass': (S + '/layout_dump-C', 'C: B - painted_table_cell_text_baselines (ablation, not shipped)'),
+}
+out_path = sys.argv[1]
+out = {
+    'what': ('Text baselines of small probe documents: Chrome (DOM baseline = bottom edge of a zero-size '
+             'inline-block injected as the element\'s first child, CSS 2.2 §10.8.1; PDF baseline = PyMuPDF '
+             'span origin of Chrome\'s page.pdf() with fidelity/lib/chrome-reference.mjs PRINT_OPTIONS) vs '
+             'vellora builds (layout_dump L0 and final-layer run origin_y, CSS px document coordinates; PDF '
+             'baselines of the production render read the same way). Viewport 657 px (A4 - 2 x 18 mm, '
+             'truncated like vellora). Chrome places the 18 mm margin at 68 px = 51.0 pt, vellora at 51.024 pt.'),
+    'env': {
+        'date': '2026-10-21', 'os': 'darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro', 'node': 'v22.23.2',
+        'chrome': 'Google Chrome 155.0.8059.85 (local, INDICATIVE)', 'blitz': 'blitz-dom 0.3.0-beta.4 (crates.io)',
+        'pymupdf': '1.28.2',
+        'drivers': 'attachments/scratch-chrome-probe.mjs.txt, scratch-vellora-probe.py.txt, '
+                   'scratch-build-probe-attachment.py.txt',
+    },
+    'builds': {k: v[1] for k, v in BUILDS.items()},
+    'probes': {},
+}
+for pset, (chrome_file, chrome_pdf_dir) in SETS.items():
+    html = json.load(open(os.path.join(S, pset)))
+    chrome = json.load(open(os.path.join(S, chrome_file)))
+    out['env']['chromeUserAgent'] = chrome['userAgent']
+    per_build = {}
+    for b, (binary, _) in BUILDS.items():
+        work = os.path.join(S, 'attach-work', b, pset.replace('.json', ''))
+        res = subprocess.run([PY, '-I', os.path.join(S, 'vellora-probe.py'), binary, os.path.join(S, pset), work,
+                              os.path.join(S, chrome_pdf_dir)], check=True, capture_output=True, text=True)
+        per_build[b] = json.loads(res.stdout)
+    for name, doc in html.items():
+        entry = {'html': doc, 'chrome': chrome['probes'][name], 'chrome_pdf_words': None, 'vellora': {}}
+        for b, data in per_build.items():
+            d = data[name]
+            entry['chrome_pdf_words'] = d['chrome_pdf_words']
+            entry['vellora'][b] = {'runs': d['runs'], 'pdf_words': d['vellora_pdf_words'],
+                                   'blitz_runs': d['blitz_runs']}
+        out['probes'][name] = entry
+json.dump(out, open(out_path, 'w'), indent=1, ensure_ascii=False)
+print('probes', len(out['probes']))

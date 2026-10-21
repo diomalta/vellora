@@ -1,0 +1,86 @@
+"""Scratch probe (not part of the repo): vellora's text baselines for the probe documents.
+
+For each probe in probes.json, runs a `layout_dump` binary (--pdf writes the production render)
+and reports, per text run: L0 and final-layer origin_y (CSS px, document coordinates; the @page
+margin is not part of them) and, from the production PDF, the word baselines read with PyMuPDF
+(pt, page coordinates: includes the 18 mm = 51.024 pt top margin). Chrome's print PDF of the same
+probe (from chrome-probe.mjs) is read the same way.
+
+  fidelity/.venv/bin/python -I vellora-probe.py <layout_dump> probes.json <workdir> <chrome-pdf-dir> > out.json
+"""
+import json
+import os
+import subprocess
+import sys
+
+import pymupdf as fitz
+
+dump_bin, probes_file, workdir, chrome_dir = sys.argv[1:5]
+probes = json.load(open(probes_file))
+os.makedirs(workdir, exist_ok=True)
+
+
+def pdf_words(path):
+    doc = fitz.open(path)
+    out = []
+    for pno, page in enumerate(doc):
+        d = page.get_text("rawdict")
+        for block in d["blocks"]:
+            for line in block.get("lines", []):
+                for span in line["spans"]:
+                    text = "".join(c["c"] for c in span["chars"]).strip()
+                    if not text:
+                        continue
+                    out.append({
+                        "page": pno + 1,
+                        "text": text,
+                        "x": round(span["origin"][0], 3),
+                        "baseline": round(span["origin"][1], 3),
+                        "size": round(span["size"], 3),
+                    })
+    return out
+
+
+result = {}
+for name, html in probes.items():
+    hp = os.path.join(workdir, name + ".html")
+    open(hp, "w").write(html)
+    dp = os.path.join(workdir, name + ".dump.json")
+    pp = os.path.join(workdir, name + ".vellora.pdf")
+    subprocess.run([dump_bin, "--html", hp, "--out", dp, "--pdf", pp], check=True,
+                   stdout=subprocess.DEVNULL)
+    dump = json.load(open(dp))
+    id_of = {n["id"]: (n.get("id_attr") or "") for n in dump["nodes"]}
+    parent = {n["id"]: n.get("parent") for n in dump["nodes"]}
+
+    def owner_id_attr(nid):
+        while nid is not None:
+            if id_of.get(nid):
+                return id_of[nid]
+            nid = parent.get(nid)
+        return None
+
+    layers = dump["layers"]
+    l0, final = layers[0], layers[-1]
+    runs = []
+    for i, meta in enumerate(dump["runs"]):
+        r0 = l0["runs"][i]
+        rf = final["runs"][i]
+        assert r0[0] == meta["box"] and r0[1] == meta["run"]
+        runs.append({
+            "text": meta["text"],
+            "owner_id": owner_id_attr(meta["owner"]),
+            "l0_y": round(r0[3], 4),
+            "final_y": round(rf[3], 4),
+            "final_layer": final["name"],
+        })
+    blitz = [{"text": r["text"], "owner_id": owner_id_attr(r["owner"]), "y": round(r["y"], 4),
+              "block_offset": round(r["block_offset"], 4)} for r in dump["blitz_runs"]]
+    cp = os.path.join(chrome_dir, name + ".chrome.pdf")
+    result[name] = {
+        "runs": runs,
+        "blitz_runs": blitz,
+        "vellora_pdf_words": pdf_words(pp),
+        "chrome_pdf_words": pdf_words(cp) if os.path.exists(cp) else None,
+    }
+print(json.dumps(result, indent=1, ensure_ascii=False))
