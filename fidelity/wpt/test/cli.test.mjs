@@ -2,16 +2,33 @@
 // they need neither the native addon nor poppler.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { gitInfo } from "../lib/env.mjs";
+import { wptPinProblems } from "../lib/provenance.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const runner = resolve(here, "..", "run.mjs");
 const repo = resolve(here, "..", "..", "..");
 const pinnedCache = join(repo, "fidelity", ".cache", "wpt");
+// The label check runs after the pin check, so it needs the local cache to be the exact pin.
+const cacheProblems = existsSync(join(pinnedCache, ".git"))
+  ? wptPinProblems(
+      { root: pinnedCache, ...gitInfo(pinnedCache) },
+      readFileSync(resolve(here, "..", "WPT_COMMIT"), "utf8").trim(),
+    )
+  : ["no WPT cache (run fetch-wpt.mjs)"];
 
 function run(args) {
   const r = spawnSync(process.execPath, [runner, ...args], { encoding: "utf8", timeout: 60000 });
@@ -59,7 +76,11 @@ test("a WPT tree that cannot be proven to be the pin is refused without --allow-
 
 test(
   "a vellora build without a git commit needs --label",
-  { skip: existsSync(join(pinnedCache, ".git")) ? false : "no pinned WPT cache (fetch-wpt.mjs)" },
+  {
+    skip: cacheProblems.length
+      ? `WPT cache is not the exact pin: ${cacheProblems.join("; ")}`
+      : false,
+  },
   () => {
     // Fake build root: Cargo.lock + crates/ is what findRepoRoot looks for; no .git anywhere above.
     const build = mkdtempSync(join(tmpdir(), "vellora-nogit-"));
