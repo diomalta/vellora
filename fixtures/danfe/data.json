@@ -681,7 +681,7 @@
   },
   "transportador": {
     "razaoSocial": "Transportes Exemplares S.A.",
-    "modFrete": "0 - REMETENTE (CIF)",
+    "modFrete": "0 – Remetente",
     "codigoAntt": "",
     "placa": "ABC1D23",
     "ufPlaca": "SP",

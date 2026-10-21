@@ -12,7 +12,9 @@ The barcode is searched on the WHOLE page (a misplaced symbol is still measured)
 scanned, dark runs are split into clusters at gaps >= 1.5 mm (both symbologies have quiet zones
 >= 2.6 mm and inner spaces <= 1.1 mm), and the cluster whose bar count is closest to the expected
 count wins. Prints JSON: measured start/length/height/centre, placement errors, bar-edge errors vs
-expected, wide/narrow ratio, dashed cut-line y. All lengths in mm, page coordinates (top-left origin).
+expected, wide/narrow ratio, dashed cut-line y (strict: regular dashes only), full-width solid rules,
+ficha edges (top and left detected, bottom declared). All lengths in mm, page coordinates (top-left
+origin).
 """
 
 import argparse
@@ -178,17 +180,28 @@ def main():
             "wide_max_mm": mm(max(wide)),
         }
     if exp.get("cut_search_mm"):
-        # Dashed cut line: >= 50 dashes of near-identical length spanning >= 150 mm on one row.
-        # Searched on the whole page (above the barcode) so a misplaced ficha is still found.
+        # Dashed cut line: >= 50 dashes of near-identical length spanning >= 150 mm on one row, that
+        # are >= 95 % of all dark runs of the row AND whose gaps are regular (>= 90 % within 30 %
+        # of the median gap). The regularity tests matter: a text row crossing many glyph stems
+        # also has >= 50 short runs over 150 mm (CONFIRMED: > 600 such rows per boleto page), but
+        # irregular gaps. Searched on the whole page (above the barcode) so a misplaced ficha is
+        # still found; a cut line drawn solid is NOT a dashed cut line (cut_line_y_mm = null).
         def dashed(y):
-            short = [s for s in row_runs(buf, width, y) if (s[1] - s[0]) < 3 * px_per_mm]
+            runs = row_runs(buf, width, y)
+            short = [s for s in runs if (s[1] - s[0]) < 3 * px_per_mm]
             if len(short) < 50:
                 return 0
             lengths = sorted(s[1] - s[0] for s in short)
             med = lengths[len(lengths) // 2]
             dashes = [s for s in short if abs((s[1] - s[0]) - med) <= max(2, 0.3 * med)]
-            span = dashes[-1][1] - dashes[0][0] if dashes else 0
-            return len(dashes) if len(dashes) >= 50 and span >= 150 * px_per_mm else 0
+            if len(dashes) < 50 or dashes[-1][1] - dashes[0][0] < 150 * px_per_mm:
+                return 0
+            if len(dashes) < 0.95 * len(runs):
+                return 0
+            gaps = sorted(dashes[i + 1][0] - dashes[i][1] for i in range(len(dashes) - 1))
+            mg = gaps[len(gaps) // 2]
+            regular = sum(1 for g in gaps if abs(g - mg) <= max(2, 0.3 * mg))
+            return len(dashes) if regular >= 0.9 * len(gaps) else 0
 
         best = None
         for y in range(0, min(height, top)):
@@ -196,20 +209,53 @@ def main():
             if n and (best is None or n > best[1]):
                 best = (y, n)
         out["cut_line_y_mm"] = mm(best[0]) if best else None
+        ficha_top_px = None
         if best:
             last = best[0]
             while last + 1 < top and dashed(last + 1):
                 last += 1
-            ficha_top = mm(last + 1)
-            out["ficha_relative_mm"] = {
-                "ficha_top": ficha_top,
-                "barcode_centre_above_ficha_bottom": round(
-                    ficha_top + 105 - out["measured"]["y_center_mm"], 4
-                ),
-                "barcode_start_from_ficha_left": round(out["measured"]["x0_mm"] - 5, 4),
-                "note": "ficha top = first row below the dashed cut line; ficha bottom = top + 105 mm "
-                "(declared .ficha height); ficha left = 5 mm page margin",
-            }
+            ficha_top_px = last + 1
+        # Ficha left edge, DETECTED: the leftmost pixel column (left of the symbol) with >= 20 mm of
+        # dark pixels between the ficha top (or, without a dashed cut line, 60 mm above the symbol)
+        # and the symbol top, i.e. the outer border of the ficha's field grid. Total, not
+        # contiguous: an engine may draw the collapsed border per row with gaps; the longest
+        # contiguous run is reported as border continuity. The ficha bottom edge is NOT drawn in
+        # the fixture, so it stays DECLARED (detected top + the template's 105 mm .ficha height).
+        band_top = ficha_top_px if ficha_top_px is not None else max(0, top - int(60 * px_per_mm))
+        min_dark = int(20 * px_per_mm)
+        ficha_left = None
+        border_run = 0
+        for xc in range(0, first):
+            run = longest = dark = 0
+            for yy in range(band_top, top):
+                if buf[yy * width + xc] < 128:
+                    run += 1
+                    dark += 1
+                    longest = max(longest, run)
+                else:
+                    run = 0
+            if dark >= min_dark:
+                ficha_left, border_run = xc, longest
+                break
+        ficha_top = mm(ficha_top_px) if ficha_top_px is not None else None
+        out["ficha_relative_mm"] = {
+            "ficha_top": ficha_top,
+            "ficha_left_detected": mm(ficha_left) if ficha_left is not None else None,
+            "ficha_left_border_longest_run": mm(border_run) if ficha_left is not None else None,
+            "barcode_start_from_ficha_left": mm(first - ficha_left) if ficha_left is not None else None,
+            "barcode_start_from_sheet_left": mm(first),
+            "barcode_centre_above_ficha_bottom": (
+                round(ficha_top + 105 - out["measured"]["y_center_mm"], 4)
+                if ficha_top is not None
+                else None
+            ),
+            "barcode_centre_above_sheet_bottom": round(mm(height) - out["measured"]["y_center_mm"], 4),
+            "note": "ficha top = first row below the detected dashed cut line (null: none detected); "
+            "ficha left = detected outer border of the ficha grid (>= 20 mm of vertical ink); ficha "
+            "bottom = ficha top + 105 mm DECLARED (.ficha height; no bottom edge is drawn); *_sheet_* "
+            "values are distances to the page edge (BCB-2926 V reads 'lateral esquerda do "
+            "formulario')",
+        }
     json.dump(out, sys.stdout, indent=1)
     sys.stdout.write("\n")
 

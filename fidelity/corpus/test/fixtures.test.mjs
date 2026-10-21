@@ -2,6 +2,8 @@
 // digit / total is self-consistent, licences and provenance files exist, and every template renders
 // through vellora's templating with no unresolved token.
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
@@ -10,12 +12,28 @@ import { TARGETS, serialize } from "../build-fixtures.mjs";
 import { fatorVencimento, validateBarcode, validateLinha } from "../lib/boleto.mjs";
 import { code128cValues } from "../lib/code128c.mjs";
 import { parseChave, validateChave } from "../lib/nfe.mjs";
+import { countOccurrences, requiredItems, visibleText } from "../lib/required-text.mjs";
+import { PY, pythonMissing } from "./helpers.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const read = (p) => readFileSync(join(repoRoot, p), "utf8");
 const json = (p) => JSON.parse(read(p));
 const manifest = json("fidelity/corpus/corpus.json");
+const sources = json("fidelity/corpus/sources.json");
+const sha256 = (p) =>
+  createHash("sha256")
+    .update(readFileSync(join(repoRoot, p)))
+    .digest("hex");
+
+async function loadVellora(t) {
+  try {
+    return await import("vellora");
+  } catch {
+    t.skip("not-run: the vellora package is not built (run `npm run build` first)");
+    return null;
+  }
+}
 
 const parseBR = (s) => Number(s.replace(/−/, "-").replace(/\./g, "").replace(",", "."));
 
@@ -89,12 +107,103 @@ test("every corpus fixture has index.html + its data files; OSS fixtures carry L
   }
 });
 
+// The LICENSE files are verbatim copies of the upstream file at the pinned commit, so their bytes
+// must hash to sources.json licenceSha256 (a text that merely mentions "MIT License" does not).
+// fileSha256 is the hash of the UPSTREAM template, which the fixture adapts (NOTICE.md lists the
+// changes), so it is checked for consistency with NOTICE.md, not against the adapted index.html.
+test("OSS fixtures: LICENSE bytes equal the pinned upstream licence; NOTICE agrees with sources.json", () => {
+  const oss = manifest.fixtures.filter((fx) => fx.id.startsWith("oss-"));
+  assert.equal(oss.length, sources.upstreamTemplates.length);
+  for (const fx of oss) {
+    const up = sources.upstreamTemplates.find((u) => u.fixture === fx.id);
+    assert.ok(up, `${fx.id} missing from sources.json upstreamTemplates`);
+    assert.equal(up.licence, "MIT");
+    assert.equal(
+      sha256(`fixtures/${fx.id}/${up.licenceFile}`),
+      up.licenceSha256,
+      `${fx.id} LICENSE`,
+    );
+    const notice = read(`fixtures/${fx.id}/NOTICE.md`);
+    assert.ok(notice.includes(`commit ${up.commit}`), `${fx.id} NOTICE commit`);
+    assert.ok(notice.includes(up.licenceSha256), `${fx.id} NOTICE licence sha256`);
+    assert.ok(notice.includes(up.fileSha256), `${fx.id} NOTICE upstream file sha256`);
+  }
+});
+
+// Every required string's pinned `count` is the number of times it occurs (case-insensitively) in
+// the templated HTML body, so deleting one copy of a string that also appears elsewhere (the via
+// label "Ficha de Compensação" vs "Autenticação Mecânica - Ficha de Compensação") is caught here at
+// authoring time and by BOL-X1 at render time.
+test("required-text counts are pinned to the templated HTML of every fixture/variant", async (t) => {
+  const vellora = await loadVellora(t);
+  if (!vellora) {
+    return;
+  }
+  for (const fx of manifest.fixtures) {
+    const html = read(`fixtures/${fx.id}/index.html`);
+    for (const v of fx.variants) {
+      const data = json(`fixtures/${fx.id}/${v.data}`);
+      const text = visibleText(vellora.renderTemplate(html, data));
+      for (const it of requiredItems(fx, data)) {
+        const loose = it.mode === "loose";
+        const n = countOccurrences(
+          loose ? text.replace(/ /g, "") : text,
+          loose ? it.needle.replace(/ /g, "") : it.needle,
+        );
+        assert.equal(
+          n,
+          it.count,
+          `${fx.id}/${v.data} ${it.ref}: HTML has ${n}, corpus.json pins ${it.count}`,
+        );
+      }
+    }
+  }
+});
+
+// DANFE: every visible text node of the templated body is inside an element whose data-moc names a
+// category the manifest judges (fidelity/corpus/font_sizes.py Segments parser, the same one the
+// render-time DANFE-F1..F11 checks use), so no glyph escapes the MOC-AII 3.7 minimums.
+test("danfe: every body text node carries a data-moc category judged by corpus.json", async (t) => {
+  const skip = pythonMissing();
+  if (skip) {
+    t.skip(skip);
+    return;
+  }
+  const vellora = await loadVellora(t);
+  if (!vellora) {
+    return;
+  }
+  const fx = manifest.fixtures.find((f) => f.id === "danfe");
+  const html = vellora.renderTemplate(
+    read("fixtures/danfe/index.html"),
+    json("fixtures/danfe/data.json"),
+  );
+  const code = [
+    "import json, sys",
+    `sys.path.insert(0, ${JSON.stringify(join(repoRoot, "fidelity", "corpus"))})`,
+    "from font_sizes import Segments",
+    "p = Segments(); p.feed(sys.stdin.read())",
+    "print(json.dumps({'mocs': sorted({m for _, m in p.out}), 'untagged': [t for t, _ in p.untagged], 'n': len(p.out)}))",
+  ].join("\n");
+  const out = JSON.parse(execFileSync(PY, ["-I", "-B", "-c", code], { input: html, encoding: "utf8" }));
+  assert.deepEqual(out.untagged, [], "text outside any data-moc element");
+  assert.ok(out.n > 300, `only ${out.n} segments`);
+  const judged = new Set(fx.fontRules.categories.map((c) => c.moc));
+  assert.deepEqual(
+    out.mocs.filter((m) => !judged.has(m)),
+    [],
+    "data-moc values the manifest does not judge",
+  );
+  assert.deepEqual(
+    [...judged].filter((m) => !out.mocs.includes(m)),
+    [],
+    "categories with no segment",
+  );
+});
+
 test("every template renders through vellora templating with no unresolved token", async (t) => {
-  let vellora;
-  try {
-    vellora = await import("vellora");
-  } catch {
-    t.skip("not-run: the vellora package is not built (run `npm run build` first)");
+  const vellora = await loadVellora(t);
+  if (!vellora) {
     return;
   }
   for (const fx of manifest.fixtures) {

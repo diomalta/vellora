@@ -12,10 +12,14 @@
       page A4, @page margin 5 mm -> content box 200 x 287 mm
       .recibo 175 + .corte 6 + .ficha 105 = 286 mm (1 mm slack keeps the ficha on page 1)
       .ficha: 200 x 105 mm [BCB-2926 03.a: 95-108 x 170-216]; at the bottom of the sheet [BCB-2926 05.b]
-      barcode: starts 5.0 mm from the ficha left edge, 103 x 13 mm, centre 12 mm above the ficha
-               bottom edge [BCB-2926 V]; ITF elements come from data.json (codigoBarras.elementos)
+      barcode: starts 5.0 mm from the ficha left edge [CAIXA 4.2.10.1; BCB-2926 V says "lateral
+               esquerda do formulario", BANPARA 8.c "margem esquerda do boleto" - see ACCEPTANCE],
+               103 x 13 mm, centre 12 mm above the ficha bottom edge [BCB-2926 V]; ITF elements
+               come from data.json (codigoBarras.elementos)
       bank code: 20.6pt bold -> digit height 20.6pt x 0.688 em = 5.0 mm [BCB-2926 I]; linha digitavel
-               14.5pt -> digit height 3.52 mm [BCB-2926 II: 3.5-4 mm]; "Ficha de Compensacao" 7pt -> 1.8 mm [<= 2 mm, BCB-2926 V]
+               14.5pt -> digit height 3.52 mm [BCB-2926 II: 3.5-4 mm]; "Ficha de Compensacao" via
+               label 6pt -> cap height 1.46 mm, full ink of the string (0.9365 em: i dot to c
+               cedilla) 1.98 mm, so it is <= 2 mm under either reading [BCB-2926 V]
                (Liberation Sans digit/cap height 0.688 em, measured from the bundled TTF with fontTools)
     Bars are flex items with explicit widths; this is the fractional-geometry probe of the corpus.
   -->
@@ -210,7 +214,7 @@
     .via {
       margin-left: 5mm;
       margin-top: 1mm;
-      font-size: 7pt;
+      font-size: 6pt;
     }
 
     h1.recibo-titulo {

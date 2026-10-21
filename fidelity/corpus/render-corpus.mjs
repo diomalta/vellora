@@ -26,6 +26,7 @@ import { widthToMm } from "./lib/build.mjs";
 import { chromePrintToPdf, chromeVersion, prepareReferenceHtml } from "./lib/chrome-ref.mjs";
 import { fixtureImages, renderOptions } from "./lib/fixture-io.mjs";
 import { validateChave } from "./lib/nfe.mjs";
+import { resolvePath, textMatches } from "./lib/required-text.mjs";
 
 const execFileAsync = promisify(execFile);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -61,22 +62,7 @@ async function runSafe(cmd, args) {
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
-/** "@a.b.0" resolves against data.json; any other string is literal text. */
-function resolvePath(data, ref) {
-  if (typeof ref !== "string" || !ref.startsWith("@")) {
-    return ref;
-  }
-  return ref
-    .slice(1)
-    .split(".")
-    .reduce((v, k) => (v == null ? undefined : v[k]), data);
-}
-
 const get = (obj, path) => path.split(".").reduce((v, k) => (v == null ? undefined : v[k]), obj);
-
-function normalizeText(s) {
-  return s.replace(/ /g, " ").replace(/\s+/g, " ").trim();
-}
 
 async function environment(withChrome) {
   const [date, rustc, pdftoppm, py, gitSha, cpuBrand, osName] = await Promise.all([
@@ -171,17 +157,24 @@ function idealSpec(data) {
   };
 }
 
-function textMatches(fx, data, hayRaw) {
-  const hay = normalizeText(hayRaw);
-  const hayLoose = hay.replace(/ /g, "");
-  return (fx.requiredText ?? []).map((item) => {
-    const ref = typeof item === "string" ? item : item.text;
-    const mode = typeof item === "string" ? "strict" : (item.match ?? "strict");
-    const needle = normalizeText(String(resolvePath(data, ref) ?? ""));
-    const strict = needle !== "" && hay.includes(needle);
-    const loose = needle !== "" && hayLoose.includes(needle.replace(/ /g, ""));
-    return { ref, mode, ok: mode === "loose" ? loose : strict, loose };
-  });
+/**
+ * Region (mm, page coords) of a font rule, measured from the barcode geometry of the same PDF:
+ * "belowBarcode" = the band directly under the measured symbol (BCB-2926 V "abaixo do código de
+ * barras"). null if the symbol was not found.
+ */
+function resolveRegion(name, geo) {
+  if (name !== "belowBarcode") {
+    throw new Error(`unknown region ${name}`);
+  }
+  const m = geo?.found ? geo.measured : null;
+  return m
+    ? {
+        x_min_mm: m.x0_mm - 3,
+        x_max_mm: m.x1_mm,
+        top_min_mm: m.bottom_mm - 0.5,
+        top_max_mm: m.bottom_mm + 8,
+      }
+    : null;
 }
 
 async function checkPdf({ fx, data, pdfPath, work, label }) {
@@ -203,6 +196,11 @@ async function checkPdf({ fx, data, pdfPath, work, label }) {
           found: v.filter((r) => r.ok).length,
           total: v.length,
           missing: v.filter((r) => !r.ok).map((r) => r.ref),
+          // Shown in reports: a string present fewer times than pinned is listed with its count.
+          missingDetail: v
+            .filter((r) => !r.ok)
+            .map((r) => (r.occurrences > 0 ? `${r.ref} (${r.occurrences}/${r.count}×)` : r.ref)),
+          occurrences: Object.fromEntries(v.map((r) => [r.ref, r.occurrences])),
         },
       ]),
     ),
@@ -232,18 +230,37 @@ async function checkPdf({ fx, data, pdfPath, work, label }) {
   if (png && fx.criteria.some((c) => c.check === "margins")) {
     result.inkbox = await py("pdf_probe.py", ["inkbox", "--png", png, "--dpi", String(DPI)]);
   }
-  if (fx.moneyColumnsPage) {
-    const page = String(fx.moneyColumnsPage);
-    result.moneyColumns = await py("pdf_probe.py", ["columns", "--pdf", pdfPath, "--page", page]);
+  if (fx.moneyColumns) {
+    const { page, headers } = fx.moneyColumns;
+    const args = ["columns", "--pdf", pdfPath, "--page", String(page)];
+    result.moneyColumns = await py("pdf_probe.py", [...args, "--headers", JSON.stringify(headers)]);
   }
   if (fx.fontRules) {
     const rules = {
       ...fx.fontRules,
-      rules: fx.fontRules.rules.map((r) => ({ ...r, text: String(resolvePath(data, r.text)) })),
+      rules: fx.fontRules.rules.map((r0) => {
+        const { regionFrom, ...r } = r0;
+        const out = { ...r, text: String(resolvePath(data, r.text)) };
+        if (regionFrom) {
+          const region = resolveRegion(regionFrom, result.barcode?.geometry);
+          // An unmeasurable region matches nothing, so the rule fails instead of falling back
+          // to an unqualified (re-anchorable) search.
+          out.region = region ?? { x_min_mm: Number.MAX_VALUE };
+          out.regionFrom = region ? regionFrom : `${regionFrom} (not measurable)`;
+        }
+        return out;
+      }),
     };
     const rulesPath = join(work, `${label}-fontrules.json`);
     writeFileSync(rulesPath, JSON.stringify(rules));
-    result.fontCheck = await py("font_sizes.py", ["--pdf", pdfPath, "--rules", rulesPath]);
+    const htmlArgs = fx.fontRules.categories ? ["--html", join(work, "templated.html")] : [];
+    result.fontCheck = await py("font_sizes.py", [
+      "--pdf",
+      pdfPath,
+      "--rules",
+      rulesPath,
+      ...htmlArgs,
+    ]);
   }
   return result;
 }
@@ -305,7 +322,7 @@ function evaluate(c, e, ctx) {
       const t = e.text.pdftotext;
       return pass(
         t.found === t.total,
-        `${t.found}/${t.total}${t.missing.length ? ` missing ${t.missing.join(", ")}` : ""}`,
+        `${t.found}/${t.total}${t.missing.length ? ` missing ${t.missingDetail.join(", ")}` : ""}`,
       );
     }
     case "textAgree": {
@@ -330,7 +347,7 @@ function evaluate(c, e, ctx) {
     }
     case "linhaConsistent": {
       const linha = validateLinha(ctx.data.linhaDigitavel.formatada);
-      const printed = e.text.pdftotext.missing.includes("@linhaDigitavel.formatada") === false;
+      const printed = e.text.pdftotext.occurrences["@linhaDigitavel.formatada"] > 0;
       const ok = linha.ok && linha.barcode === ctx.data.codigoBarras.digitos && printed;
       return pass(
         ok,
@@ -344,9 +361,14 @@ function evaluate(c, e, ctx) {
       }
       const v = get(geo, c.path);
       if (v == null) {
+        const ficha = c.path.startsWith("ficha_relative_mm.");
+        const why = [
+          ficha ? null : geo.structure,
+          ficha && geo.cut_line_y_mm == null ? "no dashed cut line detected" : null,
+        ].filter(Boolean);
         return {
           status: "FAIL",
-          value: `${c.path} not measurable${geo.structure ? ` (${geo.structure})` : ""}`,
+          value: `${c.path} not measurable${why.length ? ` (${why.join("; ")})` : ""}`,
         };
       }
       if (c.target !== undefined) {
@@ -379,9 +401,20 @@ function evaluate(c, e, ctx) {
             value: `${id}: anchor text not found in ${a?.found ? "reference" : "vellora"}`,
           };
         }
-        deltas.push({
-          id,
-          d: Math.max(Math.abs(a.box.x_mm - b.box.x_mm), Math.abs(a.box.top_mm - b.box.top_mm)),
+        // Every qualifying occurrence is compared in reading order; a different count is itself
+        // a failure (an anchor that exists twice in one engine and once in the other).
+        if (a.boxes.length !== b.boxes.length) {
+          return {
+            status: "FAIL",
+            value: `${id}: ${a.boxes.length} occurrences vs reference ${b.boxes.length}`,
+          };
+        }
+        a.boxes.forEach((ba, k) => {
+          const bb = b.boxes[k];
+          deltas.push({
+            id,
+            d: Math.max(Math.abs(ba.x_mm - bb.x_mm), Math.abs(ba.top_mm - bb.top_mm)),
+          });
         });
       }
       const worst = deltas.reduce((m, x) => (x.d > m.d ? x : m), deltas[0]);
@@ -393,10 +426,68 @@ function evaluate(c, e, ctx) {
         return { status: "NOT-RUN", value: "rule not evaluated" };
       }
       if (!r.found) {
-        return { status: "FAIL", value: "text not found on the page" };
+        const where = r.regionFrom ? ` in region ${r.regionFrom}` : " on the page";
+        return { status: "FAIL", value: `text not found${where}` };
       }
       const pos = r.pos_error_mm ? `; pos Δ(${r.pos_error_mm.dx}, ${r.pos_error_mm.dy}) mm` : "";
-      return pass(r.ok, `${r.sizes_pt.join("/")}pt ${r.fonts.join(",")}${pos}`);
+      const n =
+        r.expected > 1 || r.occurrences !== 1 ? `; ${r.occurrences}/${r.expected} occurrences` : "";
+      const why = r.reason ? `; ${r.reason}` : "";
+      return pass(r.ok, `${r.sizes_pt.join("/")}pt ${r.fonts.join(",")}${pos}${n}${why}`);
+    }
+    case "fontCategory": {
+      const r = e.fontCheck?.categories?.find((x) => x.id === c.id);
+      if (!r) {
+        return { status: "NOT-RUN", value: "category not evaluated" };
+      }
+      const parts = [`${r.segments_located}/${r.segments_expected} segments`];
+      if (r.smallest) {
+        parts.push(`min ${r.smallest.pt}pt "${r.smallest.segment}"`);
+      }
+      if (r.segments_merged) {
+        parts.push(`${r.segments_merged} merged with a neighbour`);
+      }
+      if (r.missing) {
+        parts.push(`missing ${r.missing.map((t) => `"${t.slice(0, 40)}"`).join(", ")}`);
+      }
+      if (r.not_bold) {
+        parts.push(`not bold "${r.not_bold}"`);
+      }
+      if (r.not_caps) {
+        parts.push(`not caps "${r.not_caps}"`);
+      }
+      if (r.reason) {
+        parts.push(r.reason);
+      }
+      return pass(r.ok, parts.join("; "));
+    }
+    case "fontFloor": {
+      const f = e.fontCheck?.floor;
+      if (!f) {
+        return { status: "NOT-RUN", value: "floor not evaluated" };
+      }
+      const g = e.fontCheck.min_glyph;
+      return pass(f.ok, `min ${f.min_pt}pt ("${g?.char}" p${g?.page}; floor ${f.floor_pt}pt)`);
+    }
+    case "fontCoverage": {
+      const cov = e.fontCheck?.coverage;
+      if (!cov) {
+        return { status: "NOT-RUN", value: "coverage not evaluated" };
+      }
+      const extra = [];
+      if (cov.unattributed) {
+        extra.push(`sample "${cov.unattributed_sample}"`);
+      }
+      if (cov.untagged_html_text.length) {
+        extra.push(`untagged HTML text "${cov.untagged_html_text[0]}"`);
+      }
+      if (cov.unknown_moc.length) {
+        extra.push(`unknown data-moc ${cov.unknown_moc.join(", ")}`);
+      }
+      return pass(
+        cov.ok,
+        `${cov.glyphs - cov.unattributed}/${cov.glyphs} glyphs attributed${extra.length ? `; ${extra.join("; ")}` : ""}`,
+      );
     }
     case "fontFamily": {
       const f = e.fontCheck?.families;
@@ -417,14 +508,24 @@ function evaluate(c, e, ctx) {
       );
     }
     case "moneyAlign": {
-      const cols = e.moneyColumns?.columns ?? [];
-      if (!cols.length) {
-        return { status: "FAIL", value: "no money column found" };
+      const mc = e.moneyColumns;
+      if (!mc || mc.error) {
+        return { status: "FAIL", value: mc?.error ?? "money columns not probed" };
       }
-      const worst = Math.max(...cols.map((x) => x.spread_mm));
+      const cols = mc.columns.filter((x) => x.count > 0);
+      if (!cols.length) {
+        return { status: "FAIL", value: `no money token on page ${mc.page}` };
+      }
+      const worst = cols.reduce((m, x) => (x.spread_mm > m.spread_mm ? x : m), cols[0]);
+      const un = mc.unassigned.length
+        ? `; ${mc.unassigned.length} token(s) in no column: ${mc.unassigned
+            .slice(0, 3)
+            .map((t) => `${t.text} @ ${t.x1_mm}`)
+            .join(", ")}`
+        : "";
       return pass(
-        worst <= c.max,
-        `${cols.length} columns, worst right-edge spread ${worst} mm (max ${c.max})`,
+        worst.spread_mm <= c.max && mc.unassigned.length === 0,
+        `${mc.tokens} tokens in ${cols.length} columns, worst right-edge spread ${worst.spread_mm} mm (${worst.header}; max ${c.max})${un}`,
       );
     }
     case "deterministic":
