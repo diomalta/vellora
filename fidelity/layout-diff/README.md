@@ -205,6 +205,37 @@ per fixture/label. Every file records date (`date -u`), OS/CPU, node, rustc, Chr
 (from Cargo.lock), puppeteer-core, git commit/dirty and the exact command. A dated copy of the
 2026-10-21 run is committed under `snapshots/2026-10-21/`.
 
+## Text probe (`text-probe.mjs`): what text, with which spaces, at which x
+
+```sh
+node fidelity/layout-diff/text-probe.mjs [--probes crates/vellora-core/tests/fixtures/text-probes] \
+  [--out fidelity/results/text-probe/text-probe.json] [--no-build]
+```
+
+For each probe page (the exact bytes the Rust tests `tests/text_probes.rs` and
+`pipeline.rs::mixed_weight_inline_siblings_advance_by_the_first_run_width` render) it records what
+CHROME renders — every rendered character with x/width (Range rects; collapsed whitespace has a
+zero-width rect and is excluded; a rendered whitespace character counts as one space), the
+measured baseline, the visual lines, `pdftotext -raw` of `page.pdf()` — and what vellora lays out
+and emits for the same bytes (L0/final runs, raw Blitz runs, visual lines, `pdftotext -raw` of the
+production render), plus `agreement`: lines equal, pdftotext equal, and per vellora run the x of
+the same characters in Chrome (`dx`, `dright`). Input difference, recorded in the output: Chrome
+gets `font-family: sans-serif` rewritten to "Liberation Sans" (vellora maps the generic to its
+bundled face) and the bundled `@font-face` block; the viewport is vellora's Blitz viewport.
+
+**2026-10-21 result (Chrome 155.0.8059.85, local macOS, INDICATIVE;
+`snapshots/2026-10-21/text-probe/`).** The Phase A contradiction "beta.4 preserves a
+browser-correct space" vs "beta.4 LOSES spaces" is settled by Chrome: on all 3 probes (mixed-weight
+spans, inline padding, 11 whitespace cases: a space opening or closing a span, between elements,
+collapsed doubles and newlines, `&nbsp;`, a padded cell, right-aligned lines, a wrapped line)
+vellora's visual lines equal Chrome's and both PDFs extract to the same `pdftotext` text. Chrome
+renders "Acme Widgets Comércio LTDA — CNPJ …" with the space (x 187.703, dash at 191.031); vellora
+at beta.4 has it at 187.70 / 191.03; the pin dropped it and the old cargo test encoded that. The
+probe found one READER defect instead (`text-probe.before-fix.json`): text styled by the padded
+inline root itself (`<td style="padding:4px">Alpha <b>Beta</b>`) made `read_text_runs` add the
+ROOT's padding-right after it — "Beta" +3.994 px, and on right-aligned lines the preceding run
+−3.99 / −9.99 px. Raw Blitz text (B0) is at Chrome's x there: the step is vellora's.
+
 ## Chromium side and input parity
 
 - puppeteer-core with an explicit executable; `emulateMediaType('print')`; viewport = the dump's
