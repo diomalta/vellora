@@ -44,3 +44,9 @@ openspec/
 .env
 .env.local
 examples/out/
+
+# Fidelity oracle tooling (fidelity/README.md): local deps, downloaded inputs, run output
+fidelity/node_modules/
+fidelity/.cache/
+fidelity/results/
+fidelity/.venv/

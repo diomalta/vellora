@@ -1,0 +1,9 @@
+{
+  "name": "@vellora/fidelity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fidelity oracles for the native renderer: WPT reftests, layout-tree diff, external PDF/text/barcode oracles. NOT published and NOT a root workspace member, so browser/Python tooling never enters a published package's dependency graph.",
+  "scripts": {},
+  "devDependencies": {}
+}
