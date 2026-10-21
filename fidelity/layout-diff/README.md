@@ -238,7 +238,11 @@ ROOT's padding-right after it — "Beta" +3.994 px, and on right-aligned lines t
 `blitz_engine::run_padding_right_px` (only an inline element's padding advances the next run);
 after the fix every run of every probe is within 0.022 px (x) / 0.029 px (right edge) of Chrome
 (`text-probe.json`), and no corpus fixture changes (20/20 PDFs and all dumps identical,
-`snapshots/2026-10-21/determinism/s1b-reader-fix-vs-base.json`).
+`snapshots/2026-10-21/determinism/s1b-reader-fix-vs-base.json`). Gate (`run-all.mjs --gate`,
+run `20261021T073259Z` at `1d13bd7`, `snapshots/2026-10-21/gate-s1b/`): 193/193 verdict rows
+with no status or value change vs the beta.4 baseline run `20261021T054809Z`; WPT 0 regressions,
+13 improvements (pass 2729 → 2742, clean 2213 → 2217: `css-text/shaping/*` — e.g.
+`ع<span>ع</span>ع` in a 10 px-padded block — and `word-break-break-all-inline-00{2,3,5,6}`).
 
 ## Chromium side and input parity
 
@@ -392,6 +396,25 @@ re-run with this tool version (`compare-pin-vs-beta4.md`):
   `body>div:nth-child(5)` changes 14.67 px → 0 at beta.4, and pagination re-stacks fragments from
   top-level margins (HYPOTHESIS for the mechanism; next measurement: dump pagination fragments
   `top/bottom/trailing_gap/cursor` at pin vs beta.4).
+  **Measured with the committed P layer (2026-10-21, `phaseb/text-hook`, beta.4, run
+  `run.mjs --label s1b`; CONFIRMED):** the signature's first line (`body>div:nth-child(6)>p:nth-child(1)`)
+  gets gap 14.667 px (`margin-bottom` of the previous paragraph) where the flow has 43 px, drift
+  −34.667 px; "Atenciosamente," is +6.5 px in the final pre-pagination layer and −28.17 px in P,
+  regressed by P — the scratch probe's table reproduced from the tool
+  (`test/real-schema2.test.mjs`).
+
+**Pagination and raw-text findings of the P / raw-text layers (2026-10-21, beta.4, same run;
+CONFIRMED in the dumps, handed to the pagination / walk owners):**
+- boleto-febraban: the recibo wrapper `body>div:nth-child(1)` has a fixed height (175 mm); pagination
+  flattens it into its children and drops the box's own height (flow gap 311 px, gap used 9.33 px),
+  so the corte line and the whole ficha are lifted 304.89 px (BOL-G6's ficha position).
+- Its right-aligned values ("1234 / 246813-1", nosso número, vencimento, valor) are raw Blitz
+  dx +5.3 px and move to +62.3 px at `fixed_table_widths` (L0 = raw Blitz text): past the page
+  edge, so poppler's pdftotext drops their last glyphs (BOL-X1 13 → 11; pypdf/pdfminer 16/16).
+- Text vellora's reader moves away from raw Blitz (B0 → L0): dropped `block_offset` of vertically
+  aligned cells (boleto-febraban "BANCO EXEMPLO" −21.52 px, linha digitável −10.77, "104-0" −1.43;
+  danfe product headers −4.03 px), and DOM-parent accumulation of inline-block text (danfe
+  duplicatas: L0 dx −4 / dy −11 px vs raw Blitz).
 
 **Injected-defect re-check (2026-10-21, `snapshots/2026-10-21/injected-defects-recheck.json`):**
 the validator's in-pipeline injections re-created as a temporary env-gated patch in a scratch
@@ -437,8 +460,10 @@ accessors (they panic for text/comment nodes, so the B0 walk skips nodes without
 - A layer that moves an item towards Chromium is never reported as a regression (by definition);
   use `compare.mjs` for build-vs-build questions.
 - P compares pagination's in-page drift only: where pages break, repeated `<thead>` copies and margin
-  boxes are not judged; pdf-probe aligns PDF words by text occurrence (and, with a schema-2 dump,
-  maps each word to its placement and splits its dy into pagination drift + the rest).
+  boxes are not judged, and a later page is anchored at its first fragment, so an error in THAT
+  fragment's own placement (e.g. a margin a forced break should keep) is not measured; pdf-probe
+  aligns PDF words by text occurrence (and, with a schema-2 dump, maps each word to its placement
+  and splits its dy into pagination drift + the rest).
 - No Linux / Chrome for Testing baseline yet (see CI design). macOS numbers are indicative.
 - Schema-1 dumps only: L0 text includes vellora's inline padding-right compensation, not separable
   from raw Parley (schema 2 separates it: B0 → L0).
