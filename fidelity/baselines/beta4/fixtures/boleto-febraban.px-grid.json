@@ -1,0 +1,448 @@
+{
+  "schema": "vellora-fidelity/baseline-beta4/1/fixture",
+  "labels": {
+    "verdicts": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired); criterion IDs and mapping: fidelity/ACCEPTANCE.md and manifest.json acceptance.mapping",
+    "layoutDiff": "attribution only (per-layer first divergence vs Chromium), never PASS/FAIL"
+  },
+  "provenance": {
+    "runId": "20261021T054809Z",
+    "date": "Wed Oct 21 05:48:09 UTC 2026",
+    "dateIso": "2026-10-21T05:48:09Z",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "command": "node fidelity/run-all.mjs --tools-image vellora-fidelity-tools:baseline-beta4 --wpt-chrome --wpt-arg --expectations --wpt-arg fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --wpt-arg --update-expectations",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+      "branch": "fidelity/baseline-beta4",
+      "dirtyEntries": 1
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "706e6a350df0433b79b2b12da52c5192efaeb0a093bd7b8b6a585a7812cf1bcf"
+      }
+    ],
+    "sourceSummarySha256": "832e66b53eaef6f3c1f4a4031634c7ae5724b58b5b8fae82ecb82aeef36a3ca4",
+    "extractedBy": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T054809Z --expectations fidelity/baselines/wpt/blitz-0.3.0-beta.4.json --compare fidelity/results/pin-run-20261021T054154Z/summary.json --out fidelity/baselines/beta4"
+  },
+  "key": "boleto-febraban.px-grid",
+  "fixture": "boleto-febraban",
+  "variant": "data.px-grid.json",
+  "variantLabel": "DIAGNOSTIC px-grid geometry (107.16 mm)",
+  "class": "boleto",
+  "diagnostic": true,
+  "sources": [
+    "corpus/render-corpus.mjs",
+    "oracles/run.mjs"
+  ],
+  "steps": [
+    {
+      "id": "corpus",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 21.5,
+      "reason": null,
+      "command": "VELLORA_ORACLE_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' node fidelity/corpus/render-corpus.mjs --out <repo>/fidelity/results/run-all/20261021T054809Z/corpus"
+    },
+    {
+      "id": "oracles-corpus:boleto-febraban.px-grid:plain",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 19,
+      "reason": null,
+      "command": "VELLORA_ORACLE_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_TOOLS_IMAGE=vellora-fidelity-tools:baseline-beta4 VELLORA_FIDELITY_VERAPDF_IMAGE=verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c node fidelity/oracles/run.mjs --pdf <repo>/fidelity/results/run-all/20261021T054809Z/corpus/boleto-febraban.px-grid/vellora.pdf --html <repo>/fidelity/results/run-all/20261021T054809Z/corpus/boleto-febraban.px-grid/templated.html --base-dir <repo>/fixtures/boleto-febraban --class boleto --no-pdfa --out <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/boleto-febraban.px-grid/plain --expect <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/boleto-febraban.px-grid/expect.json"
+    },
+    {
+      "id": "oracles-corpus:boleto-febraban.px-grid:pdfa",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 13.5,
+      "reason": null,
+      "command": "VELLORA_FIDELITY_TOOLS_IMAGE=vellora-fidelity-tools:baseline-beta4 VELLORA_FIDELITY_VERAPDF_IMAGE=verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c node fidelity/oracles/run.mjs --pdf <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/boleto-febraban.px-grid/pdfa/vellora.pdf --pdfa PDF/A-2b --oracles qpdf,verapdf --out <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/boleto-febraban.px-grid/pdfa"
+    },
+    {
+      "id": "layout-diff",
+      "status": "ok",
+      "exitCode": 2,
+      "signal": null,
+      "durationS": 18.1,
+      "reason": null,
+      "command": "node fidelity/layout-diff/run.mjs --fixtures invoice,receipt,boleto,notification,boleto-febraban,danfe,text-stress-ptbr,oss-sparksuite-invoice,oss-postmark-receipt --label run-all --out <repo>/fidelity/results/run-all/20261021T054809Z/layout-diff --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'"
+    }
+  ],
+  "totals": {
+    "counts": {
+      "PASS": 19,
+      "FAIL": 8,
+      "WARN": 0,
+      "INFO": 0,
+      "N/A": 0,
+      "NOT-RUN": 0
+    },
+    "byOracle": {
+      "corpus": {
+        "PASS": 12,
+        "FAIL": 6,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:qpdf": {
+        "PASS": 2,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:text": {
+        "PASS": 1,
+        "FAIL": 1,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:barcode": {
+        "PASS": 1,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:layout": {
+        "PASS": 1,
+        "FAIL": 1,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:verapdf": {
+        "PASS": 1,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "run-all": {
+        "PASS": 1,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      }
+    },
+    "caveated": 0
+  },
+  "controlsNotAsExpected": [],
+  "verdicts": [
+    {
+      "criterion": "BOL-P1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1 (expected 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-X1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "11/16 missing @linhaDigitavel.formatada, @titulo.vencimento (1/2×), @titulo.valor (1/2×), @titulo.nossoNumero, @beneficiario.agenciaCodigo",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-X2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "pdftotext 11/16; pypdf 16/16; pdfminer 16/16",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-B1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "decodes true, validates true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-B2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "DVs true, rebuilds barcode true, printed text found false",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "107.1457 (target 107.1563 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "12.954 (target 13 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "5.0377 (target 5 ± 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G4",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "ficha_relative_mm.barcode_centre_above_ficha_bottom not measurable (no dashed cut line detected)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G5",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "0.0212 (max 0.05)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-G6",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "ficha_relative_mm.ficha_top not measurable (no dashed cut line detected)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "20.6pt GSCMBG+LiberationSans-Bold; 2/2 occurrences",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "14.51pt ZMYKFM+LiberationSans; 2/2 occurrences",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-T3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6pt ZMYKFM+LiberationSans",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "BOL-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "worst BOL-T2 86.02 mm (tol 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 2 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "FAIL",
+      "value": "pdftotext fail (missing 12, extra 8); pdfminer.six warn (missing 0, extra 0); pymupdf fail (missing 12, extra 8)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "BOL-B1",
+      "oracle": "oracles:barcode",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "second decoder pair: zxing-cpp and zbar, plus the BCB mod-11/mod-10 DVs"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "1 pages vs Chrome 1 (WeasyPrint 1)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 120.78 mm, p95 83.01 mm over 301 consensus words (Chrome and WeasyPrint within 2 pt; coverage 1)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 1,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (1d3093ddc1788a303b2343047ef7ce373231712f577a4c3eb0b64dbefa6b4555)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "not-run",
+    "reason": "layout-diff measures data.json only (variant)"
+  },
+  "layoutDiffLayers": null
+}

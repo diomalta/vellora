@@ -1,0 +1,3611 @@
+{
+  "schema": "vellora-fidelity/baseline-beta4/1/wpt",
+  "labels": {
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "passRates": "pass % = pass / reftests; % of evaluated = pass / (reftests - unsupported - skip); clean % = passes without any suspect-pass flag / reftests. pass-blank is never a pass. Definitions: fidelity/wpt/README.md"
+  },
+  "provenance": {
+    "runId": "20261021T054809Z",
+    "date": "Wed Oct 21 05:48:09 UTC 2026",
+    "dateIso": "2026-10-21T05:48:09Z",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "command": "node fidelity/run-all.mjs --tools-image vellora-fidelity-tools:baseline-beta4 --wpt-chrome --wpt-arg --expectations --wpt-arg fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --wpt-arg --update-expectations",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+      "branch": "fidelity/baseline-beta4",
+      "dirtyEntries": 1
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "706e6a350df0433b79b2b12da52c5192efaeb0a093bd7b8b6a585a7812cf1bcf"
+      }
+    ],
+    "sourceSummarySha256": "832e66b53eaef6f3c1f4a4031634c7ae5724b58b5b8fae82ecb82aeef36a3ca4",
+    "extractedBy": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T054809Z --expectations fidelity/baselines/wpt/blitz-0.3.0-beta.4.json --compare fidelity/results/pin-run-20261021T054154Z/summary.json --out fidelity/baselines/beta4"
+  },
+  "step": {
+    "status": "ok",
+    "exitCode": 1,
+    "durationS": 622.5,
+    "command": "node fidelity/wpt/run.mjs --out <repo>/fidelity/results/run-all/20261021T054809Z/wpt --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --update-expectations --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'"
+  },
+  "engineId": "blitz-0.3.0-beta.4",
+  "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+  "velloraCommit": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+  "chromeOracle": "ran (Chrome/155.0.8059.85)",
+  "passRateCleanNote": "passClean excludes every suspect-pass flag, including the Chrome ink flags",
+  "criteria": [
+    {
+      "criterion": "WPT-1",
+      "oracle": "wpt",
+      "status": "PASS",
+      "value": "WPT 9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba exact pin; 8047 reftests recorded",
+      "kind": "criterion"
+    },
+    {
+      "criterion": "WPT-2",
+      "oracle": "wpt",
+      "status": "FAIL",
+      "value": "164 regressions (53 of clean passes), 315 improvements, 7559 unchanged vs blitz-2003ba5fc2d8",
+      "kind": "criterion"
+    }
+  ],
+  "totals": {
+    "reftests": 8047,
+    "pass": 2729,
+    "passClean": 2213,
+    "passBlank": 37,
+    "fail": 4413,
+    "unsupported": 867,
+    "error": 0,
+    "timeout": 0,
+    "skip": 1,
+    "passRate": 33.91,
+    "passRateEvaluated": 38.01,
+    "passRateClean": 27.5
+  },
+  "bySuite": {
+    "css/CSS2/normal-flow": {
+      "reftests": 789,
+      "pass": 392,
+      "passClean": 368,
+      "passBlank": 6,
+      "fail": 317,
+      "unsupported": 73,
+      "error": 0,
+      "timeout": 0,
+      "skip": 1,
+      "passRate": 49.68,
+      "passRateEvaluated": 54.83,
+      "passRateClean": 46.64
+    },
+    "css/CSS2/margin-padding-clear": {
+      "reftests": 682,
+      "pass": 409,
+      "passClean": 396,
+      "passBlank": 0,
+      "fail": 272,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 59.97,
+      "passRateEvaluated": 60.06,
+      "passRateClean": 58.06
+    },
+    "css/CSS2/box": {
+      "reftests": 9,
+      "pass": 4,
+      "passClean": 0,
+      "passBlank": 0,
+      "fail": 5,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 44.44,
+      "passRateEvaluated": 44.44,
+      "passRateClean": 0
+    },
+    "css/CSS2/box-display": {
+      "reftests": 120,
+      "pass": 47,
+      "passClean": 47,
+      "passBlank": 1,
+      "fail": 37,
+      "unsupported": 35,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 39.17,
+      "passRateEvaluated": 55.29,
+      "passRateClean": 39.17
+    },
+    "css/CSS2/visudet": {
+      "reftests": 38,
+      "pass": 10,
+      "passClean": 7,
+      "passBlank": 0,
+      "fail": 27,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 26.32,
+      "passRateEvaluated": 27.03,
+      "passRateClean": 18.42
+    },
+    "css/CSS2/visuren": {
+      "reftests": 39,
+      "pass": 1,
+      "passClean": 1,
+      "passBlank": 0,
+      "fail": 30,
+      "unsupported": 8,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 2.56,
+      "passRateEvaluated": 3.23,
+      "passRateClean": 2.56
+    },
+    "css/CSS2/linebox": {
+      "reftests": 191,
+      "pass": 45,
+      "passClean": 33,
+      "passBlank": 2,
+      "fail": 141,
+      "unsupported": 3,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 23.56,
+      "passRateEvaluated": 23.94,
+      "passRateClean": 17.28
+    },
+    "css/CSS2/text": {
+      "reftests": 410,
+      "pass": 223,
+      "passClean": 215,
+      "passBlank": 6,
+      "fail": 159,
+      "unsupported": 22,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 54.39,
+      "passRateEvaluated": 57.47,
+      "passRateClean": 52.44
+    },
+    "css/CSS2/fonts": {
+      "reftests": 160,
+      "pass": 120,
+      "passClean": 120,
+      "passBlank": 0,
+      "fail": 39,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 75,
+      "passRateEvaluated": 75.47,
+      "passRateClean": 75
+    },
+    "css/CSS2/tables": {
+      "reftests": 372,
+      "pass": 19,
+      "passClean": 17,
+      "passBlank": 0,
+      "fail": 231,
+      "unsupported": 122,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 5.11,
+      "passRateEvaluated": 7.6,
+      "passRateClean": 4.57
+    },
+    "css/CSS2/borders": {
+      "reftests": 506,
+      "pass": 332,
+      "passClean": 302,
+      "passBlank": 0,
+      "fail": 172,
+      "unsupported": 2,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 65.61,
+      "passRateEvaluated": 65.87,
+      "passRateClean": 59.68
+    },
+    "css/CSS2/backgrounds": {
+      "reftests": 336,
+      "pass": 152,
+      "passClean": 67,
+      "passBlank": 2,
+      "fail": 179,
+      "unsupported": 3,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 45.24,
+      "passRateEvaluated": 45.65,
+      "passRateClean": 19.94
+    },
+    "css/CSS2/colors": {
+      "reftests": 19,
+      "pass": 6,
+      "passClean": 6,
+      "passBlank": 0,
+      "fail": 13,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 31.58,
+      "passRateEvaluated": 31.58,
+      "passRateClean": 31.58
+    },
+    "css/CSS2/lists": {
+      "reftests": 156,
+      "pass": 67,
+      "passClean": 40,
+      "passBlank": 0,
+      "fail": 88,
+      "unsupported": 1,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 42.95,
+      "passRateEvaluated": 43.23,
+      "passRateClean": 25.64
+    },
+    "css/CSS2/generated-content": {
+      "reftests": 226,
+      "pass": 41,
+      "passClean": 38,
+      "passBlank": 0,
+      "fail": 159,
+      "unsupported": 26,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 18.14,
+      "passRateEvaluated": 20.5,
+      "passRateClean": 16.81
+    },
+    "css/CSS2/floats": {
+      "reftests": 111,
+      "pass": 20,
+      "passClean": 18,
+      "passBlank": 0,
+      "fail": 82,
+      "unsupported": 9,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 18.02,
+      "passRateEvaluated": 19.61,
+      "passRateClean": 16.22
+    },
+    "css/CSS2/floats-clear": {
+      "reftests": 214,
+      "pass": 25,
+      "passClean": 22,
+      "passBlank": 0,
+      "fail": 182,
+      "unsupported": 7,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 11.68,
+      "passRateEvaluated": 12.08,
+      "passRateClean": 10.28
+    },
+    "css/CSS2/positioning": {
+      "reftests": 520,
+      "pass": 175,
+      "passClean": 173,
+      "passBlank": 0,
+      "fail": 323,
+      "unsupported": 22,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 33.65,
+      "passRateEvaluated": 35.14,
+      "passRateClean": 33.27
+    },
+    "css/CSS2/abspos": {
+      "reftests": 29,
+      "pass": 0,
+      "passClean": 0,
+      "passBlank": 0,
+      "fail": 25,
+      "unsupported": 4,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 0,
+      "passRateEvaluated": 0,
+      "passRateClean": 0
+    },
+    "css/CSS2/visufx": {
+      "reftests": 53,
+      "pass": 1,
+      "passClean": 1,
+      "passBlank": 1,
+      "fail": 47,
+      "unsupported": 4,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 1.89,
+      "passRateEvaluated": 2.04,
+      "passRateClean": 1.89
+    },
+    "css/CSS2/pagination": {
+      "reftests": 43,
+      "pass": 19,
+      "passClean": 17,
+      "passBlank": 0,
+      "fail": 24,
+      "unsupported": 0,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 44.19,
+      "passRateEvaluated": 44.19,
+      "passRateClean": 39.53
+    },
+    "css/css-tables": {
+      "reftests": 171,
+      "pass": 36,
+      "passClean": 27,
+      "passBlank": 3,
+      "fail": 95,
+      "unsupported": 37,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 21.05,
+      "passRateEvaluated": 26.87,
+      "passRateClean": 15.79
+    },
+    "css/css-break": {
+      "reftests": 1121,
+      "pass": 101,
+      "passClean": 73,
+      "passBlank": 1,
+      "fail": 722,
+      "unsupported": 297,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 9.01,
+      "passRateEvaluated": 12.26,
+      "passRateClean": 6.51
+    },
+    "css/css-page": {
+      "reftests": 224,
+      "pass": 63,
+      "passClean": 47,
+      "passBlank": 5,
+      "fail": 100,
+      "unsupported": 56,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 28.13,
+      "passRateEvaluated": 37.5,
+      "passRateClean": 20.98
+    },
+    "css/css-text": {
+      "reftests": 1508,
+      "pass": 421,
+      "passClean": 178,
+      "passBlank": 10,
+      "fail": 944,
+      "unsupported": 133,
+      "error": 0,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 27.92,
+      "passRateEvaluated": 30.62,
+      "passRateClean": 11.8
+    }
+  },
+  "chromeReference": {
+    "note": "the same reftests through Chrome print with the same geometry, rasterizer and comparator (fidelity/wpt/lib/chrome.mjs); INDICATIVE with a local Chrome",
+    "version": "Chrome/155.0.8059.85",
+    "totals": {
+      "reftests": 8046,
+      "pass": 7258,
+      "passBlank": 2,
+      "fail": 784,
+      "unsupported": 0,
+      "error": 2,
+      "timeout": 0,
+      "skip": 0,
+      "passRate": 90.21,
+      "passRateEvaluated": 90.23
+    },
+    "bySuite": {
+      "css/CSS2/normal-flow": {
+        "reftests": 788,
+        "pass": 782,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.24,
+        "passRateEvaluated": 99.24
+      },
+      "css/CSS2/margin-padding-clear": {
+        "reftests": 682,
+        "pass": 676,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.12,
+        "passRateEvaluated": 99.12
+      },
+      "css/CSS2/box": {
+        "reftests": 9,
+        "pass": 9,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/box-display": {
+        "reftests": 120,
+        "pass": 112,
+        "passBlank": 0,
+        "fail": 8,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 93.33,
+        "passRateEvaluated": 93.33
+      },
+      "css/CSS2/visudet": {
+        "reftests": 38,
+        "pass": 25,
+        "passBlank": 0,
+        "fail": 13,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 65.79,
+        "passRateEvaluated": 65.79
+      },
+      "css/CSS2/visuren": {
+        "reftests": 39,
+        "pass": 37,
+        "passBlank": 0,
+        "fail": 2,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 94.87,
+        "passRateEvaluated": 94.87
+      },
+      "css/CSS2/linebox": {
+        "reftests": 191,
+        "pass": 187,
+        "passBlank": 0,
+        "fail": 4,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 97.91,
+        "passRateEvaluated": 97.91
+      },
+      "css/CSS2/text": {
+        "reftests": 410,
+        "pass": 333,
+        "passBlank": 0,
+        "fail": 77,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 81.22,
+        "passRateEvaluated": 81.22
+      },
+      "css/CSS2/fonts": {
+        "reftests": 160,
+        "pass": 143,
+        "passBlank": 0,
+        "fail": 17,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.38,
+        "passRateEvaluated": 89.38
+      },
+      "css/CSS2/tables": {
+        "reftests": 372,
+        "pass": 332,
+        "passBlank": 0,
+        "fail": 40,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.25,
+        "passRateEvaluated": 89.25
+      },
+      "css/CSS2/borders": {
+        "reftests": 506,
+        "pass": 506,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/backgrounds": {
+        "reftests": 336,
+        "pass": 290,
+        "passBlank": 0,
+        "fail": 46,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 86.31,
+        "passRateEvaluated": 86.31
+      },
+      "css/CSS2/colors": {
+        "reftests": 19,
+        "pass": 10,
+        "passBlank": 0,
+        "fail": 9,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 52.63,
+        "passRateEvaluated": 52.63
+      },
+      "css/CSS2/lists": {
+        "reftests": 156,
+        "pass": 155,
+        "passBlank": 0,
+        "fail": 1,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 99.36,
+        "passRateEvaluated": 99.36
+      },
+      "css/CSS2/generated-content": {
+        "reftests": 226,
+        "pass": 198,
+        "passBlank": 0,
+        "fail": 28,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 87.61,
+        "passRateEvaluated": 87.61
+      },
+      "css/CSS2/floats": {
+        "reftests": 111,
+        "pass": 94,
+        "passBlank": 0,
+        "fail": 17,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 84.68,
+        "passRateEvaluated": 84.68
+      },
+      "css/CSS2/floats-clear": {
+        "reftests": 214,
+        "pass": 209,
+        "passBlank": 0,
+        "fail": 5,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 97.66,
+        "passRateEvaluated": 97.66
+      },
+      "css/CSS2/positioning": {
+        "reftests": 520,
+        "pass": 514,
+        "passBlank": 0,
+        "fail": 6,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 98.85,
+        "passRateEvaluated": 98.85
+      },
+      "css/CSS2/abspos": {
+        "reftests": 29,
+        "pass": 26,
+        "passBlank": 0,
+        "fail": 3,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 89.66,
+        "passRateEvaluated": 89.66
+      },
+      "css/CSS2/visufx": {
+        "reftests": 53,
+        "pass": 53,
+        "passBlank": 0,
+        "fail": 0,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 100,
+        "passRateEvaluated": 100
+      },
+      "css/CSS2/pagination": {
+        "reftests": 43,
+        "pass": 39,
+        "passBlank": 0,
+        "fail": 4,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 90.7,
+        "passRateEvaluated": 90.7
+      },
+      "css/css-tables": {
+        "reftests": 171,
+        "pass": 156,
+        "passBlank": 0,
+        "fail": 15,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 91.23,
+        "passRateEvaluated": 91.23
+      },
+      "css/css-break": {
+        "reftests": 1121,
+        "pass": 994,
+        "passBlank": 1,
+        "fail": 124,
+        "unsupported": 0,
+        "error": 2,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 88.67,
+        "passRateEvaluated": 88.83
+      },
+      "css/css-page": {
+        "reftests": 224,
+        "pass": 187,
+        "passBlank": 0,
+        "fail": 37,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 83.48,
+        "passRateEvaluated": 83.48
+      },
+      "css/css-text": {
+        "reftests": 1508,
+        "pass": 1191,
+        "passBlank": 1,
+        "fail": 316,
+        "unsupported": 0,
+        "error": 0,
+        "timeout": 0,
+        "skip": 0,
+        "passRate": 78.98,
+        "passRateEvaluated": 78.98
+      }
+    },
+    "velloraVsChrome": {
+      "matrix": {
+        "fail|error": 2,
+        "fail|fail": 520,
+        "fail|pass": 3891,
+        "pass-blank|fail": 5,
+        "pass-blank|pass": 30,
+        "pass-blank|pass-blank": 2,
+        "pass|fail": 83,
+        "pass|pass": 2646,
+        "unsupported|fail": 176,
+        "unsupported|pass": 691
+      },
+      "totals": {
+        "velloraOnlyFail": 3891,
+        "bothFail": 520,
+        "velloraPassChromeFail": 83,
+        "bothPass": 2646,
+        "velloraPassBlank": 37
+      },
+      "bySuite": {
+        "css/CSS2/normal-flow": {
+          "velloraOnlyFail": 315,
+          "bothFail": 2,
+          "velloraPassChromeFail": 1,
+          "bothPass": 391,
+          "velloraPassBlank": 6
+        },
+        "css/CSS2/margin-padding-clear": {
+          "velloraOnlyFail": 267,
+          "bothFail": 5,
+          "velloraPassChromeFail": 1,
+          "bothPass": 408,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/box": {
+          "velloraOnlyFail": 5,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 4,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/box-display": {
+          "velloraOnlyFail": 30,
+          "bothFail": 7,
+          "velloraPassChromeFail": 0,
+          "bothPass": 47,
+          "velloraPassBlank": 1
+        },
+        "css/CSS2/visudet": {
+          "velloraOnlyFail": 14,
+          "bothFail": 13,
+          "velloraPassChromeFail": 0,
+          "bothPass": 10,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/visuren": {
+          "velloraOnlyFail": 28,
+          "bothFail": 2,
+          "velloraPassChromeFail": 0,
+          "bothPass": 1,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/linebox": {
+          "velloraOnlyFail": 138,
+          "bothFail": 3,
+          "velloraPassChromeFail": 1,
+          "bothPass": 44,
+          "velloraPassBlank": 2
+        },
+        "css/CSS2/text": {
+          "velloraOnlyFail": 91,
+          "bothFail": 68,
+          "velloraPassChromeFail": 4,
+          "bothPass": 219,
+          "velloraPassBlank": 6
+        },
+        "css/CSS2/fonts": {
+          "velloraOnlyFail": 23,
+          "bothFail": 16,
+          "velloraPassChromeFail": 0,
+          "bothPass": 120,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/tables": {
+          "velloraOnlyFail": 205,
+          "bothFail": 26,
+          "velloraPassChromeFail": 1,
+          "bothPass": 18,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/borders": {
+          "velloraOnlyFail": 172,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 332,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/backgrounds": {
+          "velloraOnlyFail": 134,
+          "bothFail": 45,
+          "velloraPassChromeFail": 1,
+          "bothPass": 151,
+          "velloraPassBlank": 2
+        },
+        "css/CSS2/colors": {
+          "velloraOnlyFail": 4,
+          "bothFail": 9,
+          "velloraPassChromeFail": 0,
+          "bothPass": 6,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/lists": {
+          "velloraOnlyFail": 88,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 67,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/generated-content": {
+          "velloraOnlyFail": 137,
+          "bothFail": 22,
+          "velloraPassChromeFail": 6,
+          "bothPass": 35,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/floats": {
+          "velloraOnlyFail": 67,
+          "bothFail": 15,
+          "velloraPassChromeFail": 2,
+          "bothPass": 18,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/floats-clear": {
+          "velloraOnlyFail": 177,
+          "bothFail": 5,
+          "velloraPassChromeFail": 0,
+          "bothPass": 25,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/positioning": {
+          "velloraOnlyFail": 319,
+          "bothFail": 4,
+          "velloraPassChromeFail": 2,
+          "bothPass": 173,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/abspos": {
+          "velloraOnlyFail": 23,
+          "bothFail": 2,
+          "velloraPassChromeFail": 0,
+          "bothPass": 0,
+          "velloraPassBlank": 0
+        },
+        "css/CSS2/visufx": {
+          "velloraOnlyFail": 47,
+          "bothFail": 0,
+          "velloraPassChromeFail": 0,
+          "bothPass": 1,
+          "velloraPassBlank": 1
+        },
+        "css/CSS2/pagination": {
+          "velloraOnlyFail": 21,
+          "bothFail": 3,
+          "velloraPassChromeFail": 1,
+          "bothPass": 18,
+          "velloraPassBlank": 0
+        },
+        "css/css-tables": {
+          "velloraOnlyFail": 91,
+          "bothFail": 4,
+          "velloraPassChromeFail": 1,
+          "bothPass": 35,
+          "velloraPassBlank": 3
+        },
+        "css/css-break": {
+          "velloraOnlyFail": 696,
+          "bothFail": 24,
+          "velloraPassChromeFail": 3,
+          "bothPass": 98,
+          "velloraPassBlank": 1
+        },
+        "css/css-page": {
+          "velloraOnlyFail": 87,
+          "bothFail": 13,
+          "velloraPassChromeFail": 4,
+          "bothPass": 59,
+          "velloraPassBlank": 5
+        },
+        "css/css-text": {
+          "velloraOnlyFail": 712,
+          "bothFail": 232,
+          "velloraPassChromeFail": 55,
+          "bothPass": 366,
+          "velloraPassBlank": 10
+        }
+      }
+    },
+    "inkCheck": {
+      "status": "ok",
+      "passesChecked": 2729,
+      "passesWithoutData": 0,
+      "missingFrac": {
+        "<0.1": 2283,
+        "0.1-0.3": 179,
+        "0.3-0.5": 58,
+        "0.5-0.8": 40,
+        ">=0.8": 169
+      },
+      "flagged": 209,
+      "flaggedDisplaced": 90,
+      "bboxShift": {
+        "<=8": 38,
+        "9-32": 2137,
+        "33-100": 284,
+        ">100": 264,
+        "no-ink": 6
+      },
+      "passBlank": {
+        "checked": 37,
+        "chromeDrawsSignificantInk": 31,
+        "chromeAlsoBlank": 3
+      }
+    }
+  },
+  "upstreamBlitzReport": null,
+  "unsupportedFeatures": {
+    "element:script (test)": 462,
+    "css:grid (test)": 218,
+    "css:transform (test)": 47,
+    "element:iframe (test)": 34,
+    "css:page-margin-box (test)": 29,
+    "element:textarea (test)": 26,
+    "element:canvas (test)": 12,
+    "css:grid (ref)": 11,
+    "css:filter (test)": 8,
+    "element:form (test)": 7,
+    "element:object (test)": 7,
+    "element:input (test)": 2,
+    "element:video (test)": 2,
+    "css:transform (ref)": 1,
+    "element:script (ref)": 1
+  },
+  "errorKinds": {},
+  "skipReasons": {
+    "needs-wptserve-substitution": 1
+  },
+  "passFlags": {
+    "css-url-resource": 128,
+    "img-without-dims": 27,
+    "ink-displaced-vs-chrome": 90,
+    "ink-missing-vs-chrome": 209,
+    "missing-resource": 37,
+    "uncovered-glyphs": 164,
+    "webfont-not-supplied": 43
+  },
+  "attribution": null,
+  "ratchet": {
+    "status": "ok",
+    "against": "fidelity/baselines/wpt/blitz-2003ba5fc2d8.json",
+    "expectationsEngine": "blitz-2003ba5fc2d8",
+    "counts": {
+      "regressions": 164,
+      "regressionsOfCleanPasses": 53,
+      "regressionsOfFlaggedPasses": 111,
+      "sightGained": 6,
+      "improvements": 315,
+      "changed": 3,
+      "added": 0,
+      "missing": 0,
+      "unchanged": 7559
+    },
+    "regressions": [
+      {
+        "test": "css/CSS2/abspos/between-float-and-text.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/abspos/static-fixed-inside-abspos.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/abspos/static-inside-inline-block.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-002.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-003.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-090.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-093.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-096.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-104.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-106.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-111.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-114.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-117.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-120.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-128.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-130.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-135.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-138.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-141.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-144.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-152.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-154.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-184.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-188.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-190.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-194.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-196.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-attachment-applies-to-007.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-attachment-applies-to-009.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-attachment-applies-to-012.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-attachment-applies-to-013.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-attachment-applies-to-014.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-image-cover-002.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-image-cover-004.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-image-cover-attachment-001.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-repeat-001.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-repeat-002.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-repeat-003.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-repeat-005.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/box-display/containing-block-019.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/box-display/containing-block-020.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/box-display/containing-block-021.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/box-display/containing-block-022.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/box-display/three-block-in-inlines-cascading-margins.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats-clear/clear-002.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/floats-clear/clear-applies-to-009.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats-clear/clear-float-005.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats-clear/floats-142.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats/float-in-inline-anonymous-block-with-overflow-hidden.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats/float-nowrap-2.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats/float-nowrap-8.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/floats/float-with-absolutely-positioned-child-with-static-inset.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/floats/floats-placement-vertical-001a.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/generated-content/after-content-display-012.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/generated-content/after-content-display-013.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/generated-content/before-content-display-012.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/generated-content/before-content-display-013.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-collapse-012.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-collapse-115.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-collapse-116.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-formatting-context-height-003.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-formatting-contexts-009.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-in-inline-float-between-001.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-non-replaced-width-004.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/height-applies-to-004.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/normal-flow/height-percentage-003.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/normal-flow/inline-table-zorder-001.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-max-001.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-min-001.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-min-max-001.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/abspos-002.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/abspos-027.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/auto-position-rtl-child-viewport-scrollbar.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-005.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-014.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-019.xht",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-nested-001.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "css-url-resource"
+      },
+      {
+        "test": "css/CSS2/visudet/content-height-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/visudet/content-height-003.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/visudet/content-height-004.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/CSS2/visudet/line-height-205.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied"
+      },
+      {
+        "test": "css/CSS2/visuren/float-inside-inline-between-blocks-1.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/abspos-in-opacity-000.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-break/flexbox/flex-container-fragmentation-008.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-column-flex-fragmentation-054.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-column-flex-fragmentation-055.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-column-flex-fragmentation-058.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/out-of-flow-in-multicolumn-026.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/out-of-flow-in-multicolumn-083.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-break/ruby-003.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-tables/table-cell-baseline-static-position.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/letter-spacing/letter-spacing-ligatures-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-011.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-012.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-013.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-014.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-015.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-016a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-016b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-017a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-017b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-018.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-011.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-012.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-013.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-014.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-015a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-015b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-016a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-016b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-017a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-017b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-normal-018.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-shaping-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-011.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-012.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-013.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-014.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-015a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-015b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-016a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-016b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-017a.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-017b.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-strict-018.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/line-breaking/line-breaking-018.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/overflow-wrap/overflow-wrap-shaping-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/overflow-wrap/overflow-wrap-shaping-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-000.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-004.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-005.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-006.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-007.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-012.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping-013.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping_lig-000.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/shaping/shaping_lig-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-integer-001.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-integer-002.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-integer-003.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-length-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-length-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/tab-size/tab-size-percent-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-006.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-008.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-010.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-justify-006.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-010.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-encoding/shaping-tatweel-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/text-justify/text-justify-and-trailing-spaces-003.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/text-justify/text-justify-and-trailing-spaces-004.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/text-justify/text-justify-none-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-fullwidth-001.xht",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/white-space/text-wrap-balance-text-indent-001.html",
+        "expected": "pass",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-vs-joiners-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-003.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-004.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-005.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,ink-displaced-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-overflow-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-001.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      },
+      {
+        "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-002.html",
+        "expected": "pass",
+        "actual": "fail",
+        "expectedFlags": "uncovered-glyphs,webfont-not-supplied,ink-missing-vs-chrome"
+      }
+    ],
+    "improvements": [
+      {
+        "test": "css/CSS2/backgrounds/background-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-008.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-009.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-014.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-022.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-image-transparency-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/backgrounds/background-position-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-bottom-width-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-bottom-width-025.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-bottom-width-058.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-bottom-width-069.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-bottom-width-080.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-top-width-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-top-width-025.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-top-width-058.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-top-width-069.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/borders/border-top-width-080.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/box-display/block-in-inline-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/box-display/block-in-inline-followed-by-empty-span.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/box-display/containing-block-030.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/floats-clear/floats-036.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/floats/float-nowrap-1.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/floats/float-nowrap-4.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/floats/floats-placement-006.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/floats/floats-placement-vertical-004.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-011.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-012.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-013.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-014.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-015.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-029.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-030.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-031.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-032.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-042.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/fonts/font-043.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/after-content-display-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/after-content-display-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/before-content-display-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/before-content-display-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-040.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-054.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-056.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-063.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-068.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-070.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-076.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-077.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-083.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-099.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-126.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-127.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-135.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-136.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-143.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-144.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-146.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/generated-content/content-147.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/inline-formatting-context-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-breaking-font-size-zero-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-006.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-017.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-028.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-029.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-039.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-040.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-050.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-051.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-058.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-072.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-073.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-083.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-084.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-105.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-106.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-112.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-004.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-009.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-012.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-013.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-014.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/linebox/line-height-applies-to-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-collapse-028.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-collapse-min-height-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-left-103.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-left-104.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-left-applies-to-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-right-103.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-right-104.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/margin-padding-clear/margin-top-applies-to-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-in-inline-align-last-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/block-in-inline-first-line-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/blocks-017.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/inline-block-000.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/inline-block-width-001b.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/inline-block-width-002b.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/margin-collapse-min-height-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/margin-collapse-min-height-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/margin-collapse-through-percentage-height-block-inside-table-cell.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/max-height-applies-to-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/max-width-applies-to-006.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/max-width-applies-to-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/min-height-separates-margin.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/min-width-applies-to-006.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/min-width-applies-to-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/normal-flow/root-box-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-height-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-height-013.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-max-height-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-max-height-011.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/absolute-non-replaced-width-027.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/bottom-103.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/bottom-104.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/bottom-113.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/left-offset-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/left-offset-percentage-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-029.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/position-relative-031.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/positioning/position-static-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/tables/table-backgrounds-bs-table-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/bidi-span-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-004.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-005.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-006.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-017.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-028.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-029.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-030.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-040.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-041.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-042.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-052.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-053.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-054.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-064.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-065.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-066.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-076.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-077.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-078.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-088.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-089.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-090.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-097.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-098.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-099.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-100.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/letter-spacing-justify-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-indent-011.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-indent-rtl-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-indent-rtl-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-005.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-006.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-007.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-008.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-009.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-010.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-011.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-applies-to-014.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/text-transform-cap-003.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-mixed-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-nowrap-attribute-001.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-processing-016.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-processing-017.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-processing-018.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-processing-045.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/text/white-space-processing-053.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/CSS2/visudet/inline-block-baseline-016.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/border-image-000.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-081a-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-081b-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-081c-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-081d-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-082a-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-082b-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-082c-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/flexbox/multi-line-row-flex-fragmentation-082d-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/oof-in-cell-with-alignment-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/oof-in-cell-with-alignment-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/oof-in-cell-with-alignment-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-001a-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-001b-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-001c-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-001d-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-002a-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-002b-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-002c-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/table/table-fragmentation-002d-print.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/widows-orphans-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/widows-orphans-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/widows-orphans-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-break/widows-orphans-004.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-page/root-element-display-none-print.html",
+        "expected": "error",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/absolute-tables-014.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/min-height-table.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/out-of-order-elements-collapsed-border.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/rules-groups.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/subpixel-table-cell-height-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-tables/table-colspan-percent-auto.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/hanging-punctuation/hanging-punctuation-last-rtl.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/hyphens/hyphens-shaping-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/letter-spacing/letter-spacing-211.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/letter-spacing/letter-spacing-combining-mark-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/letter-spacing/letter-spacing-end-of-line-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/line-break/line-break-loose-hyphens-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/line-breaking/line-breaking-atomic-009.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-007.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-center-last-center.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-center-last-end.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-center-last-justify.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-center-last-start.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-005.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-007.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-014.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-015.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-017.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-last-center.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-last-end.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-last-justify.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-end-last-start.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-justify-last-center.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-justify-last-end.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-justify-last-justify.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-justify-last-start.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-last-center.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-last-end.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-last-simple.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-last-start.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-last-wins-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-match-parent-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-match-parent-01.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-014.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-last-center.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-last-end.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-last-justify.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-align/text-align-start-last-start.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-autospace/text-autospace-ligature-001.html",
+        "expected": "pass-blank",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-indent/text-indent-min-max-content-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-spacing-trim/text-spacing-trim-end-span-001.html",
+        "expected": "pass-blank",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-spacing-trim/text-spacing-trim-start-002.html",
+        "expected": "pass-blank",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/math/text-transform-math-auto-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-005.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-009.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-010.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-014.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-018.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-020.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-022.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-024.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-030.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-031.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-032.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-033.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-capitalize-035.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-fullwidth-002.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-fullwidth-004.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-fullwidth-005.xht",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-fullwidth-010.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-multiple-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/text-transform/text-transform-tailoring-004.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/break-spaces-with-ideographic-space-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/hanging-whitespace-005.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-004.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-005.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-006.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-007.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-011.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-018.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-align-center-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-align-end-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-align-left-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-align-right-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/pre-wrap-align-start-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/trailing-ideographic-space-011.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/trailing-ideographic-space-015.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/trailing-ideographic-space-016.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-applies-to-text-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-nowrap-011.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-justify-003.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-012.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-014.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-015.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/white-space-pre-wrap-trailing-spaces-021.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/ws-break-spaces-applies-to-001.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/ws-break-spaces-applies-to-002.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/white-space/ws-break-spaces-applies-to-005.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/word-break/word-break-keep-all-011.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/word-space-transform/word-space-transform-009.html",
+        "expected": "fail",
+        "actual": "pass"
+      },
+      {
+        "test": "css/css-text/word-space-transform/word-space-transform-012.html",
+        "expected": "fail",
+        "actual": "pass"
+      }
+    ],
+    "changed": [
+      {
+        "test": "css/CSS2/box-display/root-box-003.xht",
+        "expected": "error",
+        "actual": "pass-blank"
+      },
+      {
+        "test": "css/CSS2/visudet/replaced-elements-min-height-20.html",
+        "expected": "unsupported",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/visudet/replaced-elements-min-height-40.html",
+        "expected": "unsupported",
+        "actual": "fail"
+      }
+    ],
+    "sightGained": [
+      {
+        "test": "css/CSS2/normal-flow/inline-block-zorder-001.xht",
+        "expected": "pass-blank",
+        "actual": "fail"
+      },
+      {
+        "test": "css/CSS2/normal-flow/inline-block-zorder-002.xht",
+        "expected": "pass-blank",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/boundary-shaping/boundary-shaping-002.html",
+        "expected": "pass-blank",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/boundary-shaping/boundary-shaping-006.html",
+        "expected": "pass-blank",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/boundary-shaping/boundary-shaping-007.html",
+        "expected": "pass-blank",
+        "actual": "fail"
+      },
+      {
+        "test": "css/css-text/boundary-shaping/boundary-shaping-008.html",
+        "expected": "pass-blank",
+        "actual": "fail"
+      }
+    ],
+    "added": []
+  },
+  "expectations": {
+    "file": "fidelity/baselines/beta4/wpt/expectations-blitz-0.3.0-beta.4.json",
+    "sha256": "fca69c8be529677c073fe3293e2ce127f95e5a29a2ca39c37c0927e9b6337773",
+    "copiedFrom": "fidelity/baselines/wpt/blitz-0.3.0-beta.4.json",
+    "engine": "blitz-0.3.0-beta.4",
+    "blitzDom": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "rev": null
+    },
+    "generated": "Wed Oct 21 05:48:09 UTC 2026",
+    "generatedBy": "node fidelity/wpt/run.mjs --out /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/results/run-all/20261021T054809Z/wpt --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --update-expectations --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'",
+    "vellora": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+    "inkCheck": "chrome Chrome/155.0.8059.85",
+    "tests": 8047,
+    "suspectPasses": 516,
+    "reproducedByThisRun": {
+      "check": "fidelity/wpt/lib/report.mjs buildExpectations() re-applied to <run>/wpt/results.json vs the expectations file",
+      "tests": 8047,
+      "suspectPasses": 516,
+      "outcomesDiffering": [],
+      "suspectPassesDiffering": [],
+      "sameEngine": true,
+      "sameComparison": true,
+      "chromeOracleRan": true
+    },
+    "use": "node fidelity/wpt/run.mjs --expectations fidelity/baselines/beta4/wpt/expectations-blitz-0.3.0-beta.4.json  (ratchet a different build against this Blitz 0.3.0-beta.4 baseline; the expectations check compares WPT commit and comparison settings, not the engine id)"
+  }
+}

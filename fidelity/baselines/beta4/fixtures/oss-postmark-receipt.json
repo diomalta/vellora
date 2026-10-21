@@ -1,0 +1,631 @@
+{
+  "schema": "vellora-fidelity/baseline-beta4/1/fixture",
+  "labels": {
+    "verdicts": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired); criterion IDs and mapping: fidelity/ACCEPTANCE.md and manifest.json acceptance.mapping",
+    "layoutDiff": "attribution only (per-layer first divergence vs Chromium), never PASS/FAIL"
+  },
+  "provenance": {
+    "runId": "20261021T054809Z",
+    "date": "Wed Oct 21 05:48:09 UTC 2026",
+    "dateIso": "2026-10-21T05:48:09Z",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "command": "node fidelity/run-all.mjs --tools-image vellora-fidelity-tools:baseline-beta4 --wpt-chrome --wpt-arg --expectations --wpt-arg fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --wpt-arg --update-expectations",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+      "branch": "fidelity/baseline-beta4",
+      "dirtyEntries": 1
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "706e6a350df0433b79b2b12da52c5192efaeb0a093bd7b8b6a585a7812cf1bcf"
+      }
+    ],
+    "sourceSummarySha256": "832e66b53eaef6f3c1f4a4031634c7ae5724b58b5b8fae82ecb82aeef36a3ca4",
+    "extractedBy": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T054809Z --expectations fidelity/baselines/wpt/blitz-0.3.0-beta.4.json --compare fidelity/results/pin-run-20261021T054154Z/summary.json --out fidelity/baselines/beta4"
+  },
+  "key": "oss-postmark-receipt",
+  "fixture": "oss-postmark-receipt",
+  "variant": "data.json",
+  "variantLabel": "Postmark receipt (MIT)",
+  "class": "receipt",
+  "diagnostic": false,
+  "sources": [
+    "corpus/render-corpus.mjs",
+    "oracles/run.mjs"
+  ],
+  "steps": [
+    {
+      "id": "corpus",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 21.5,
+      "reason": null,
+      "command": "VELLORA_ORACLE_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' node fidelity/corpus/render-corpus.mjs --out <repo>/fidelity/results/run-all/20261021T054809Z/corpus"
+    },
+    {
+      "id": "oracles-corpus:oss-postmark-receipt:plain",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 17.6,
+      "reason": null,
+      "command": "VELLORA_ORACLE_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' VELLORA_FIDELITY_TOOLS_IMAGE=vellora-fidelity-tools:baseline-beta4 VELLORA_FIDELITY_VERAPDF_IMAGE=verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c node fidelity/oracles/run.mjs --pdf <repo>/fidelity/results/run-all/20261021T054809Z/corpus/oss-postmark-receipt/vellora.pdf --html <repo>/fidelity/results/run-all/20261021T054809Z/corpus/oss-postmark-receipt/templated.html --base-dir <repo>/fixtures/oss-postmark-receipt --class receipt --no-pdfa --out <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/oss-postmark-receipt/plain"
+    },
+    {
+      "id": "oracles-corpus:oss-postmark-receipt:pdfa",
+      "status": "ok",
+      "exitCode": 0,
+      "signal": null,
+      "durationS": 13.3,
+      "reason": null,
+      "command": "VELLORA_FIDELITY_TOOLS_IMAGE=vellora-fidelity-tools:baseline-beta4 VELLORA_FIDELITY_VERAPDF_IMAGE=verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c node fidelity/oracles/run.mjs --pdf <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/oss-postmark-receipt/pdfa/vellora.pdf --pdfa PDF/A-2b --oracles qpdf,verapdf --out <repo>/fidelity/results/run-all/20261021T054809Z/oracles/corpus/oss-postmark-receipt/pdfa"
+    },
+    {
+      "id": "layout-diff",
+      "status": "ok",
+      "exitCode": 2,
+      "signal": null,
+      "durationS": 18.1,
+      "reason": null,
+      "command": "node fidelity/layout-diff/run.mjs --fixtures invoice,receipt,boleto,notification,boleto-febraban,danfe,text-stress-ptbr,oss-sparksuite-invoice,oss-postmark-receipt --label run-all --out <repo>/fidelity/results/run-all/20261021T054809Z/layout-diff --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'"
+    }
+  ],
+  "totals": {
+    "counts": {
+      "PASS": 10,
+      "FAIL": 4,
+      "WARN": 0,
+      "INFO": 0,
+      "N/A": 0,
+      "NOT-RUN": 1
+    },
+    "byOracle": {
+      "corpus": {
+        "PASS": 5,
+        "FAIL": 2,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:qpdf": {
+        "PASS": 2,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:text": {
+        "PASS": 1,
+        "FAIL": 1,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "oracles:layout": {
+        "PASS": 0,
+        "FAIL": 1,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 1
+      },
+      "oracles:verapdf": {
+        "PASS": 1,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      },
+      "run-all": {
+        "PASS": 1,
+        "FAIL": 0,
+        "WARN": 0,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 0
+      }
+    },
+    "caveated": 4
+  },
+  "controlsNotAsExpected": [],
+  "verdicts": [
+    {
+      "criterion": "INV-P2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "1 vs reference 2",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "INV-X1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6/6",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-X2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pdftotext 6/6; pypdf 6/6; pdfminer 6/6",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "worst RCP-S4 9.20 mm (tol 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 2 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "FAIL",
+      "value": "pdftotext fail (missing 38, extra 0); pdfminer.six fail (missing 2, extra 0); pymupdf fail (missing 40, extra 0)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list",
+      "caveat": "reference font parity not established: layout-diff failed bundled_fonts_loaded, platform_fonts_custom for this fixture with the alias table the oracles also inject (CONFIRMED for layout-diff's Chromium; for the oracles' Chrome/WeasyPrint references an UNVERIFIED ASSUMPTION, same table)"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain",
+      "caveat": "reference font parity not established: layout-diff failed bundled_fonts_loaded, platform_fonts_custom for this fixture with the alias table the oracles also inject (CONFIRMED for layout-diff's Chromium; for the oracles' Chrome/WeasyPrint references an UNVERIFIED ASSUMPTION, same table)"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "1 pages vs Chrome 2 (WeasyPrint 2)",
+      "kind": "criterion",
+      "mode": "plain",
+      "caveat": "reference font parity not established: layout-diff failed bundled_fonts_loaded, platform_fonts_custom for this fixture with the alias table the oracles also inject (CONFIRMED for layout-diff's Chromium; for the oracles' Chrome/WeasyPrint references an UNVERIFIED ASSUMPTION, same table)"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "NOT-RUN",
+      "value": "0 consensus words at 2 pt (coverage 0)",
+      "kind": "criterion",
+      "mode": "plain",
+      "caveat": "reference font parity not established: layout-diff failed bundled_fonts_loaded, platform_fonts_custom for this fixture with the alias table the oracles also inject (CONFIRMED for layout-diff's Chromium; for the oracles' Chrome/WeasyPrint references an UNVERIFIED ASSUMPTION, same table)"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (6833a237890e692c0a5cc3bff0dc928d5fe4cd80d0061b7aa5dbc3a2d40f1013)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": false,
+    "checksFailed": [
+      "bundled_fonts_loaded",
+      "platform_fonts_custom",
+      "normalize_dom_roundtrip",
+      "source_dom_keys_vs_chromium"
+    ],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "B0",
+      "dominantLayer": "B0",
+      "finalDelta": {
+        "status": "diverged",
+        "dx": 2,
+        "dy": 2,
+        "dw": -4
+      }
+    },
+    "firstText": {
+      "text": "[Product Name]",
+      "owner": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "L0",
+      "dominantLayer": "L0",
+      "finalDelta": {
+        "status": "diverged",
+        "dx": 0,
+        "dy": 5,
+        "dy_basis": "baseline",
+        "dw": 0,
+        "dright": 0
+      }
+    },
+    "firstPassRegression": null,
+    "regressionEventsByLayer": {
+      "B0": {
+        "box": 3,
+        "text": 0
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": true,
+      "wrappers_recorded": 1,
+      "wrappers_located": 1
+    }
+  },
+  "layoutDiffLayers": {
+    "note": "per-layer deltas vs Chromium (vellora - Chromium, CSS px, pre-pagination); finalLayerDelta is the delta in the final layout_normalize layer. Use it instead of layoutDiff.firstBox.finalDelta, which is the diagnostic B0u layer (see extract.mjs layerView).",
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "path": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "type": "enter",
+      "firstOverTolerance": "B0",
+      "dominantLayer": "B0",
+      "finalLayerDelta": {
+        "status": "diverged",
+        "dx": 2,
+        "dy": 2,
+        "dw": -4
+      },
+      "perLayer": {
+        "N0": {
+          "status": "missing"
+        },
+        "B0": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "L0": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "vertical_margin_collapse": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "collapsed_table_medium_border_insets": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "painted_table_cell_text_baselines": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "fixed_table_widths": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "table_percent_widths": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "auto_table_compact_columns": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "collapsed_table_medium_border_insets_x": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        },
+        "N0u": {
+          "status": "missing"
+        },
+        "B0u": {
+          "status": "diverged",
+          "dx": 2,
+          "dy": 2,
+          "dw": -4
+        }
+      }
+    },
+    "firstText": {
+      "path": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "text": "[Product Name]",
+      "type": "text",
+      "firstOverTolerance": "L0",
+      "dominantLayer": "L0",
+      "finalLayerDelta": {
+        "status": "diverged",
+        "dx": 0,
+        "dy": 5,
+        "dy_basis": "baseline",
+        "dw": 0,
+        "dright": 0
+      },
+      "perLayer": {
+        "N0": {
+          "status": "n/a"
+        },
+        "B0": {
+          "status": "n/a"
+        },
+        "L0": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "vertical_margin_collapse": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "collapsed_table_medium_border_insets": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "painted_table_cell_text_baselines": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "fixed_table_widths": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "table_percent_widths": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "auto_table_compact_columns": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        },
+        "collapsed_table_medium_border_insets_x": {
+          "status": "diverged",
+          "dx": 0,
+          "dy": 5,
+          "dy_basis": "baseline",
+          "dw": 0,
+          "dright": 0
+        }
+      }
+    },
+    "layerStats": [
+      {
+        "layer": "N0",
+        "kind": "blitz-source",
+        "events": 6,
+        "diverged": 3,
+        "boxEventsDiverged": 3,
+        "textEventsDiverged": 0,
+        "missing": 110,
+        "meanAbsBoxError": 7.641
+      },
+      {
+        "layer": "B0",
+        "kind": "blitz",
+        "events": 116,
+        "diverged": 85,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 0,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "L0",
+        "kind": "walk",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "vertical_margin_collapse",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "collapsed_table_medium_border_insets",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "painted_table_cell_text_baselines",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "fixed_table_widths",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "table_percent_widths",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "auto_table_compact_columns",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      },
+      {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "kind": "pass",
+        "events": 160,
+        "diverged": 129,
+        "boxEventsDiverged": 85,
+        "textEventsDiverged": 44,
+        "missing": 0,
+        "meanAbsBoxError": 41.208
+      }
+    ]
+  }
+}

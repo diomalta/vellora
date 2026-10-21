@@ -1,0 +1,38 @@
+# cargo test -p vellora-core --no-fail-fast at fidelity/baseline-beta4 dc535e7 (Blitz 0.3.0-beta.4 + dump-hook port)
+# run: 2026-10-21 ~05:41 UTC, darwin 27.0.0 arm64 Apple M5 Pro, rustc 1.96.0 (ac68faa20 2026-05-25), cargo 1.96.0 (30a34c682 2026-05-25)
+# exit 101: 162 passed, 1 failed: the known whitespace failure below. CONFIRMED 2026-10-21 that it fails identically on the bump-only commit dff3bc6 (cargo test -p vellora-core --test pipeline: 27 passed, 1 failed, same test), so it is the bump, not the dump-hook port.
+
+     Running unittests src/lib.rs (target/debug/deps/vellora_core-7039cbe304f69934)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/font_resources.rs (target/debug/deps/font_resources-b5212cd2fbc8dc56)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/fragmentation_hints.rs (target/debug/deps/fragmentation_hints-32ea4618d013fd2b)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running tests/image_resources.rs (target/debug/deps/image_resources-d7d393b9201f7918)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/layout_dump.rs (target/debug/deps/layout_dump-9a82164b962c243a)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+     Running tests/layout_fidelity.rs (target/debug/deps/layout_fidelity-a2bec4100b7e23da)
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+     Running tests/pagination_correctness.rs (target/debug/deps/pagination_correctness-95f3e286f9902ae7)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+     Running tests/pagination_edges.rs (target/debug/deps/pagination_edges-f75c2d14a209f4ab)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/pipeline.rs (target/debug/deps/pipeline-295c9e3d2062b32f)
+test mixed_weight_inline_siblings_advance_by_the_first_run_width ... FAILED
+test result: FAILED. 27 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+     Running tests/spike_a_blitz.rs (target/debug/deps/spike_a_blitz-1ad4566f8fbcd00c)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+     Running tests/spike_b_krilla.rs (target/debug/deps/spike_b_krilla-4d7dfeedd81ed117)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+     Running tests/validation.rs (target/debug/deps/validation-cddad446765b7e4e)
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+# failure detail (first lines)
+---- mixed_weight_inline_siblings_advance_by_the_first_run_width stdout ----
+
+thread 'mixed_weight_inline_siblings_advance_by_the_first_run_width' (63198283) panicked at crates/vellora-core/tests/pipeline.rs:94:9:
+missing text runs for source "Acme Widgets Comércio LTDA— CNPJ 12.345.678/0001-90"
+depth=0 tag=Some("html") x=0.0 y=0.0 w=793.0 h=38.0 runs=[]
+depth=1 tag=Some("head") x=0.0 y=0.0 w=0.0 h=0.0 runs=[]
