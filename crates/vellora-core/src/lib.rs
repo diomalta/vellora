@@ -81,6 +81,52 @@ pub struct RenderOptions {
 /// Pipeline: validate (strict gate) -> Blitz layout -> vellora pagination ->
 /// krilla PDF emit. Returns the PDF bytes or a [`VelloraError`].
 pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, VelloraError> {
+    let (laid_out, page_box) =
+        validate_and_lay_out(html_bytes, opts, &mut blitz_engine::NoObserver)?;
+
+    // 4) vellora pagination: page breaking + thead repeat + counters.
+    let paginated = pagination::paginate(&laid_out, &page_box);
+
+    // 5) krilla: emit the paginated display list to PDF bytes.
+    let meta = DocMeta {
+        title: opts.title.clone(),
+        creation_date: opts.creation_date,
+        pdfa: opts.pdfa,
+    };
+    pdf::emit(&paginated.pages, &meta).map_err(|err| match err {
+        pdf::PdfEmitError::Conformance { profile, errors } => VelloraError::Conformance {
+            profile: profile.as_str().to_string(),
+            errors,
+        },
+        pdf::PdfEmitError::Render(message) => VelloraError::Render(message),
+    })
+}
+
+/// Debug/fidelity tooling ONLY (`fidelity/layout-diff/`), never the render path:
+/// runs exactly [`render`]'s validation + layout sequence (same function, same
+/// gates, same errors) with an observer that snapshots vellora's box list at
+/// every layout stage — Blitz's own layout tree (`B0`), the box walk (`L0`), and
+/// after each named `layout_normalize` pass — keyed by stable source-DOM paths.
+/// Stops before pagination. Not a stable API; the shape may change freely.
+#[doc(hidden)]
+pub fn debug_layout_dump(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+) -> Result<blitz_engine::LayoutDump, VelloraError> {
+    let mut capture = blitz_engine::DumpCapture::default();
+    let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
+    Ok(capture.finish(page_box))
+}
+
+/// Steps 1-3 of [`render`] (validation gates, `@page` box, Blitz layout +
+/// normalize passes, unresolved-image reject), shared verbatim by
+/// [`debug_layout_dump`] so the dump can never drift from what `render`
+/// paginates. `observer` is [`blitz_engine::NoObserver`] on the render path.
+fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+    observer: &mut O,
+) -> Result<(blitz_engine::LaidOutDoc, page_css::PageBox), VelloraError> {
     let html = std::str::from_utf8(html_bytes)
         .map_err(|e| VelloraError::Render(format!("input is not valid UTF-8: {e}")))?;
 
@@ -107,7 +153,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
     // 1b + 3) Single parse shared by the element gate AND layout (cost
     // model): parse once, walk the parsed tree for out-of-subset elements
     // BEFORE layout, then resolve + read the layout tree from that same parse.
-    let laid_out = blitz_engine::validate_then_lay_out(
+    let laid_out = blitz_engine::validate_then_lay_out_observed(
         html,
         validation::denied_elements(),
         page_box.content_width(),
@@ -115,6 +161,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         &opts.images,
         opts.base_url.as_deref(),
         &opts.fonts,
+        observer,
     )
     .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
 
@@ -128,22 +175,7 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
         )));
     }
 
-    // 4) vellora pagination: page breaking + thead repeat + counters.
-    let paginated = pagination::paginate(&laid_out, &page_box);
-
-    // 5) krilla: emit the paginated display list to PDF bytes.
-    let meta = DocMeta {
-        title: opts.title.clone(),
-        creation_date: opts.creation_date,
-        pdfa: opts.pdfa,
-    };
-    pdf::emit(&paginated.pages, &meta).map_err(|err| match err {
-        pdf::PdfEmitError::Conformance { profile, errors } => VelloraError::Conformance {
-            profile: profile.as_str().to_string(),
-            errors,
-        },
-        pdf::PdfEmitError::Render(message) => VelloraError::Render(message),
-    })
+    Ok((laid_out, page_box))
 }
 
 /// Returns the crate name. Retained from the initial scaffold so existing

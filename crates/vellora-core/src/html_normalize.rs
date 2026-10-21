@@ -28,10 +28,27 @@ struct BlockSelectors {
 }
 
 pub fn normalize_table_cell_mixed_flow(html: &str) -> Cow<'_, str> {
+    normalize_table_cell_mixed_flow_traced(html, None)
+}
+
+/// [`normalize_table_cell_mixed_flow`], optionally recording where the synthetic
+/// wrappers went. With `trace: None` (the render path) behavior and output are
+/// identical. With `Some`, the element-index chain (element children only,
+/// 0-based, from the document node) of every inserted wrapper `<div>` in the
+/// NORMALIZED tree is appended, so the debug layout dump can locate the wrappers
+/// in the Blitz parse of the serialized output and key boxes by the source DOM.
+pub(crate) fn normalize_table_cell_mixed_flow_traced<'a>(
+    html: &'a str,
+    trace: Option<&mut Vec<Vec<usize>>>,
+) -> Cow<'a, str> {
     let dom = parse_document(RcDom::default(), Default::default()).one(html);
     let block_selectors = collect_block_selectors(&dom.document);
     let mut changed = false;
-    normalize_subtree(&dom.document, &block_selectors, &mut changed);
+    let mut wrappers: Option<Vec<Handle>> = trace.as_ref().map(|_| Vec::new());
+    normalize_subtree(&dom.document, &block_selectors, &mut changed, &mut wrappers);
+    if let (Some(trace), Some(wrappers)) = (trace, wrappers) {
+        record_wrapper_chains(&dom.document, &wrappers, &mut Vec::new(), trace);
+    }
     if !changed {
         return Cow::Borrowed(html);
     }
@@ -43,14 +60,40 @@ pub fn normalize_table_cell_mixed_flow(html: &str) -> Cow<'_, str> {
     Cow::Owned(String::from_utf8(out).expect("html5ever serializer emits UTF-8"))
 }
 
-fn normalize_subtree(node: &Handle, block_selectors: &BlockSelectors, changed: &mut bool) {
+/// Debug-dump trace: element-index chains of `wrappers` in the tree under `node`.
+fn record_wrapper_chains(
+    node: &Handle,
+    wrappers: &[Handle],
+    chain: &mut Vec<usize>,
+    out: &mut Vec<Vec<usize>>,
+) {
+    let children = node.children.borrow();
+    let elements = children
+        .iter()
+        .filter(|child| matches!(child.data, NodeData::Element { .. }));
+    for (index, child) in elements.enumerate() {
+        chain.push(index);
+        if wrappers.iter().any(|w| std::rc::Rc::ptr_eq(w, child)) {
+            out.push(chain.clone());
+        }
+        record_wrapper_chains(child, wrappers, chain, out);
+        chain.pop();
+    }
+}
+
+fn normalize_subtree(
+    node: &Handle,
+    block_selectors: &BlockSelectors,
+    changed: &mut bool,
+    wrappers: &mut Option<Vec<Handle>>,
+) {
     if is_flow_container(node) && has_block_like_child(node, block_selectors) {
-        *changed |= wrap_inline_runs_in_blocks(node, block_selectors);
+        *changed |= wrap_inline_runs_in_blocks(node, block_selectors, wrappers);
     }
 
     let children = node.children.borrow().clone();
     for child in children {
-        normalize_subtree(&child, block_selectors, changed);
+        normalize_subtree(&child, block_selectors, changed, wrappers);
     }
 }
 
@@ -61,7 +104,11 @@ fn has_block_like_child(node: &Handle, block_selectors: &BlockSelectors) -> bool
         .any(|child| is_block_like_element(child, block_selectors))
 }
 
-fn wrap_inline_runs_in_blocks(node: &Handle, block_selectors: &BlockSelectors) -> bool {
+fn wrap_inline_runs_in_blocks(
+    node: &Handle,
+    block_selectors: &BlockSelectors,
+    wrappers: &mut Option<Vec<Handle>>,
+) -> bool {
     let old_children = node.children.borrow().clone();
     let mut new_children = Vec::with_capacity(old_children.len());
     let mut pending = Vec::new();
@@ -76,6 +123,7 @@ fn wrap_inline_runs_in_blocks(node: &Handle, block_selectors: &BlockSelectors) -
                 pending_has_content,
                 &mut new_children,
                 &mut changed,
+                wrappers,
             );
             pending_has_content = false;
             set_parent(&child, node);
@@ -91,6 +139,7 @@ fn wrap_inline_runs_in_blocks(node: &Handle, block_selectors: &BlockSelectors) -
         pending_has_content,
         &mut new_children,
         &mut changed,
+        wrappers,
     );
 
     if changed {
@@ -105,6 +154,7 @@ fn flush_inline_run(
     pending_has_content: bool,
     out: &mut Vec<Handle>,
     changed: &mut bool,
+    wrappers: &mut Option<Vec<Handle>>,
 ) {
     if pending.is_empty() {
         return;
@@ -120,6 +170,9 @@ fn flush_inline_run(
             }
         }
         set_parent(&wrapper, parent);
+        if let Some(wrappers) = wrappers.as_mut() {
+            wrappers.push(wrapper.clone());
+        }
         out.push(wrapper);
         *changed = true;
     } else {
