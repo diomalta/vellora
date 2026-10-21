@@ -1,5 +1,8 @@
-// PDF/A oracle: the official veraPDF CLI (greenfield parser) in its pinned Docker image, PDF/A-2B
-// profile, machine-readable JSON report (`--format json`). Java is not required on the host.
+// PDF/A oracle: the official veraPDF CLI in its pinned Docker image, PDF/A-2B profile,
+// machine-readable JSON report (`--format json`). Java is not required on the host.
+// Parser flavour CONFIRMED 2026-10-21 by listing /opt/verapdf/bin/cli-1.30.3.jar: it bundles
+// org.verapdf:parser (veraPDF's own "greenfield" COS/PD parser) and contains no
+// org/apache/pdfbox classes.
 //
 // veraPDF CLI exit codes as OBSERVED with 1.30.3 on 2026-10-21: 0 = compliant, 1 = not compliant;
 // anything else is treated as a processing failure. The verdict comes from the report's `compliant` flag, not only the

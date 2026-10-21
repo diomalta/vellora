@@ -36,7 +36,9 @@ async function main() {
       `${readFileSync(new URL(import.meta.url))
         .toString()
         .split("\n")
-        .slice(1, 17)
+        .slice(1)
+        .filter((line, index, lines) => lines.slice(0, index + 1).every((l) => l.startsWith("//")))
+        .map((line) => line.replace(/^\/\/ ?/, ""))
         .join("\n")}\n`,
     );
     process.exitCode = pdfArg ? 0 : 2;

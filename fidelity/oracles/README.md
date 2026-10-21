@@ -55,7 +55,7 @@ byte-identical HTML. The swap is recorded in `environment.vellora.subject`.
 | Tool | Pinned version | Route | Why this route |
 |---|---|---|---|
 | qpdf | 12.2.0 (Debian `qpdf=12.2.0-1`) | `QPDF_BIN` / `qpdf` on PATH first, else tools image | The real CLI and its documented exit codes (0 ok, 2 errors, 3 warnings). pikepdf bundles libqpdf, not the CLI. |
-| veraPDF | 1.30.3, `verapdf/cli@sha256:d565…f9c` | official Docker image, `--flavour 2b --format json` | Java is not installed on the host. The image is amd64-only, so it runs emulated on Apple Silicon (recorded as `emulated`). |
+| veraPDF | 1.30.3, `verapdf/cli@sha256:d565…f9c` | official Docker image, `--flavour 2b --format json` | Java is not installed on the host. The image is amd64-only, so it runs emulated on Apple Silicon (recorded as `emulated`). The bundled `cli-1.30.3.jar` contains `org.verapdf:parser` (the greenfield parser) and no PDFBox classes (checked 2026-10-21). |
 | pdftotext | poppler 26.06.0 (host) | `PDFTOTEXT_BIN` / PATH | Already installed. Version recorded per run. |
 | pdfminer.six | 20260107 | `fidelity/.venv` | Pure-Python extractor; shares no code with poppler or MuPDF. |
 | PyMuPDF | 1.28.2 | `fidelity/.venv` | Third extractor and the word-anchor source. 2.0 came out 2026-10-19, a day before this pin was chosen, so it was not adopted. |
