@@ -669,6 +669,30 @@ export function matchesDeclaration(item, d) {
   return [d.keyPrefix ?? []].flat().some((p) => item.key.startsWith(p));
 }
 
+/**
+ * Every item key a snapshot can produce (rows, metrics, WPT tests, crashtests, pdf-probe words and
+ * counts): what "the key vanished from the run" means for a DEBT.json removal (rule iii).
+ */
+export function snapshotKeys(s) {
+  const out = new Set();
+  const { rows, metrics } = verdictIndex(s.fixtures ?? []);
+  for (const k of rows.keys()) out.add(k);
+  for (const k of metrics.keys()) out.add(k);
+  for (const t of Object.keys(s.wpt?.expectations?.results ?? {})) out.add(`wpt|${t}`);
+  for (const t of Object.keys(s.crashtests?.results ?? {})) out.add(`wpt-crash|${t}`);
+  for (const [fx, p] of Object.entries(s.pdfProbe ?? {})) {
+    out.add(`pdf-probe|${fx}`);
+    for (const q of p.pairs ?? []) {
+      for (const axis of ["dx", "dy", "pairing"]) out.add(`pdf-probe|${fx}|${q.k}|${axis}`);
+    }
+    // A Chrome word without a vellora partner still exists: its pairing key has not vanished.
+    for (const w of p.unpairedChrome ?? []) if (w.k) out.add(`pdf-probe|${fx}|${w.k}|pairing`);
+    out.add(`pdf-probe|${fx}|unpaired-chrome`);
+    out.add(`pdf-probe|${fx}|unpaired-vellora`);
+  }
+  return out;
+}
+
 /** Gating items a declaredRejections entry may cover. */
 const declarable = (i) =>
   i.gating &&

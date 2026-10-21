@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { compareSnapshots } from "../compare.mjs";
 import { verdictMetrics } from "../metrics.mjs";
-import { gateRefusal } from "../run.mjs";
+import { gateOptions, gateRefusal } from "../run.mjs";
 import { byKey, expectations, fixture, gating, snapshot, v } from "./helpers.mjs";
 
 const refw = (max, p95, status = "FAIL") =>
@@ -375,6 +375,34 @@ test("run-all --gate refuses before running anything without baseline or Chrome 
     /does not exist/,
   );
   assert.equal(gateRefusal(base, ["corpus"], exists), null);
+  // --head / --pin must be baseline directories; the default head comes from the port README.
+  assert.match(
+    gateRefusal({ ...base, gateArgs: ["--head", "/missing-head"] }, ["corpus"], exists),
+    /--head .*no manifest/,
+  );
+  assert.match(
+    gateRefusal({ ...base, gateArgs: ["--pin", "/missing-pin"] }, ["corpus"], exists),
+    /--pin .*no manifest/,
+  );
+  assert.equal(
+    gateRefusal({ ...base, gateArgs: ["--no-head", "--no-pin"] }, ["corpus"], exists),
+    null,
+  );
+  const o = gateOptions([
+    "--no-head",
+    "--pin",
+    "/p",
+    "--main",
+    "--step",
+    "08-x",
+    "--debt-base",
+    "/d",
+  ]);
+  assert.deepEqual(
+    [o.headDir, o.pinDir, o.main, o.step, o.debtBase],
+    [null, "/p", true, "08-x", "/d"],
+  );
+  assert.equal(gateOptions([]).headDir, undefined);
   assert.match(
     gateRefusal({ ...base, wptChrome: true, wptArgs: ["--update-expectations"] }, ["wpt"], exists),
     /never rewrites/,

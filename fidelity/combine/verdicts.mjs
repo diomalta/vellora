@@ -352,6 +352,9 @@ export function fromLayoutDiffRow(row, { expectedFailures = [] } = {}) {
     checksUnexpectedFailures: checks.unexpected,
     checksExpired: checks.expired,
     finalLayer: layer,
+    // The layout_normalize passes of the run, in order: the gate's DEBT.json rule v (a pass a
+    // ledger entry names as compensator must still exist) reads them.
+    passes: (row.layer_stats ?? []).filter((l) => l.kind === "pass").map((l) => l.layer),
     firstBox: box
       ? {
           type: box.type,

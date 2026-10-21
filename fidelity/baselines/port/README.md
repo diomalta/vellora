@@ -11,6 +11,11 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   the chain, `00-start`, is gated against `fidelity/baselines/beta4-gated`. Full chain:
   `pin` (Phase A, Blitz pin `2003ba5`) → `beta4` (Phase A, mechanical bump to 0.3.0-beta.4) →
   `beta4-gated` (hardened-gate re-baseline) → `port/00-start` → `port/01-…` → …
+- **Chain head** (the `--head` default of `fidelity/gate/run.mjs` and `fidelity/run-all.mjs
+  --gate`, read from this line by `gate/debt.mjs chainHead`): `port/00-start`. Every run is
+  gated against the previous link AND against this head (GATE-H1): an item worse than the head
+  beyond its tolerance passes only as a class-`a` acceptance of the current step or a
+  `DEBT.json` entry within its ceiling ("Head ratchet and debt ledger" below).
 - One step, one gated run, one baseline:
 
   ```sh

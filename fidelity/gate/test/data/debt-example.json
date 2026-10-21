@@ -1,0 +1,38 @@
+{
+  "schema": "vellora-fidelity/debt/1",
+  "head": "port/00-start",
+  "note": "EXAMPLE ledger for the self-tests (gate/test/debt.test.mjs). Its entry is shaped like a real one but is NOT a claim about the chain; fidelity/baselines/port/DEBT.json holds the real ledger.",
+  "entries": [
+    {
+      "id": "DEBT-EXAMPLE-1",
+      "keys": ["pdf-probe|danfe|p1|0,00#3|dy"],
+      "class": "b",
+      "headValue": 2.1,
+      "ceiling": 7.4,
+      "closesAt": "09-row-drift",
+      "tolClass": "pdf-probe-pt",
+      "owner": {
+        "layer": "blitz:table-row-height",
+        "component": "blitz-dom layout/table.rs (row block size of painted rows)",
+        "upstream": null
+      },
+      "layerVector": {
+        "unit": "px",
+        "N0": 11.2,
+        "B0": 11.2,
+        "L0": 11.2,
+        "painted_table_cell_text_baselines": 9.2,
+        "table_percent_widths": 9.2,
+        "auto_table_compact_columns": 9.2,
+        "P": 9.2,
+        "run": 9.87
+      },
+      "compensators": ["painted_table_cell_text_baselines", "run"],
+      "introducedBy": "04-block-offset",
+      "evidence": [
+        "example: node fidelity/gate/layer-vector.mjs --run <run copy> --keys 'pdf-probe|danfe|p1|0,00#3|dy'"
+      ]
+    }
+  ],
+  "closed": []
+}

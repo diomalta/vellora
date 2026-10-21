@@ -5,7 +5,26 @@
 // <dir>` runs the same evaluation at the end of a fresh run.
 //
 //   node fidelity/gate/run.mjs --baseline <fidelity/baselines/<name>> --run <run-all out dir>
-//     [--accept <accepted.json>] [--out <dir>]
+//     [--accept <accepted.json>] [--out <dir>] [--head <baseline dir> | --no-head]
+//     [--pin <baseline dir> | --no-pin] [--main] [--debt <DEBT.json>] [--debt-base <DEBT.json>]
+//     [--step <NN-name>] [--layout-from <run-all dir>]
+//
+// --baseline the previous link (GATE-S1..R1, per-step tolerances).
+// --head     the chain head (default: the "**Chain head**" named in fidelity/baselines/port/
+//            README.md, port/00-start): an item worse than the HEAD beyond its tolerance gates
+//            unless a class-"a" acceptedRegressions entry of THIS step or a DEBT.json entry
+//            within its ceiling covers it (GATE-H1, GATE-D*). Legacy entries without "class"
+//            cover the previous link only. --no-head turns it off (history / post-hoc reports).
+// --pin      the shipped main (default fidelity/baselines/pin): the PIN VIEW classes every item
+//            worse than it (a) artefact / (b) ledger debt / (c) neither; --main makes (c) gate
+//            (a merge to main, GATE-H3). --no-pin skips it.
+// --debt     the ledger (default fidelity/baselines/port/DEBT.json); --debt-base the ledger at
+//            the merge base (e.g. `git show main:fidelity/baselines/port/DEBT.json`): checks rule
+//            iii (count, ceilings, removals) and that new entries satisfy the relaxed (b) rule.
+// --step     the step id (NN-name) the run measures: an entry may close at its closesAt step.
+// --layout-from  a run-all dir whose layout-diff dumps give the run's layout_normalize passes
+//            (rule v) when the snapshot does not record them (baselines written before
+//            2026-10-21, or a committed baseline used as --run).
 //
 // --accept  JSON { "acceptedRegressions": [{ "key" | "keyPrefix", "after"?, "reason",
 //           "evidence", "label"?, "class"?: "a" }], "declaredRejections": [{ "feature",
@@ -17,10 +36,23 @@
 // check, uncaught canary, unexpected layout-diff check failure, expired allowlist entry, crashed
 // step); 2 REFUSED (not comparable: WPT commit / settings / ink data differ, baseline integrity);
 // 1 the gate itself crashed.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareSnapshots } from "./compare.mjs";
+import { gateCanaryItems, runGateCanaries } from "./canaries.mjs";
+import { compareSnapshots, snapshotKeys } from "./compare.mjs";
+import {
+  BASELINES_DIR,
+  DEBT_FILE,
+  applyLedger,
+  chainHead,
+  emptyLedger,
+  ledgerProblems,
+  loadDebt,
+  pinView,
+  transitionProblems,
+} from "./debt.mjs";
+import { verdictIndex } from "./metrics.mjs";
 import { renderGateMarkdown } from "./report.mjs";
 import { loadSnapshot } from "./snapshot.mjs";
 
@@ -69,6 +101,25 @@ export function gateRefusal(opts, selected, exists = existsSync) {
     return `${opts.baseline} has no manifest.json (not a baseline directory)`;
   }
   if (opts.accept && !exists(opts.accept)) return `--accept ${opts.accept} does not exist`;
+  const g = gateOptions(opts.gateArgs ?? []);
+  for (const [flag, dir] of [
+    ["--head", g.headDir],
+    ["--pin", g.pinDir],
+  ]) {
+    if (dir && !exists(join(dir, "manifest.json"))) {
+      return `${flag} ${dir} has no manifest.json (not a baseline directory)`;
+    }
+  }
+  if (g.headDir === undefined) {
+    try {
+      const head = chainHead();
+      if (!exists(join(head, "manifest.json")))
+        return `the chain head ${head} has no manifest.json`;
+    } catch (e) {
+      return e.message;
+    }
+  }
+  // A --debt-base file that does not exist is the ledger's first population (loadDebt -> null).
   if ((opts.wptArgs ?? []).includes("--update-expectations")) {
     return "a gated run never rewrites committed expectations (drop --wpt-arg --update-expectations)";
   }
@@ -135,13 +186,206 @@ export function readDeclarations(file) {
   return list;
 }
 
-/** Evaluate and write gate-report.{json,md} into outDir. Returns { report, exitCode }. */
-export function runGate({ baselineDir, runDir, acceptFile = null, outDir, command, date }) {
+/** Page-count (page-delta) metric keys of a snapshot (rule vi: what a page-scoped entry may name). */
+export function pageMetricKeys(snapshot) {
+  const { metrics } = verdictIndex(snapshot.fixtures ?? []);
+  return new Set([...metrics].filter(([, m]) => m.tolClass === "page-delta").map(([k]) => k));
+}
+
+/** The layout_normalize pass names a snapshot recorded (fixtures' layoutDiff.passes), or null. */
+export function snapshotPasses(snapshot, layoutFrom = null) {
+  const out = new Set();
+  for (const f of snapshot.fixtures ?? []) for (const p of f.layoutDiff?.passes ?? []) out.add(p);
+  if (!out.size && layoutFrom && existsSync(join(layoutFrom, "layout-diff"))) {
+    // Older runs/baselines: the run's own layout-diff dumps (diff.json `layers`, kind "pass").
+    for (const fx of readdirSync(join(layoutFrom, "layout-diff"))) {
+      const f = join(layoutFrom, "layout-diff", fx, "run-all", "diff.json");
+      if (!existsSync(f)) continue;
+      for (const l of JSON.parse(readFileSync(f, "utf8")).layers ?? []) {
+        if (l.kind === "pass") out.add(l.name);
+      }
+    }
+  }
+  return out.size ? [...out].sort() : null;
+}
+
+const gatingOf = (items) => items.filter((i) => i.gating);
+const countClasses = (items) => {
+  const out = {};
+  for (const i of items) out[i.class] = (out[i.class] ?? 0) + 1;
+  return out;
+};
+
+/**
+ * The whole gate on loaded snapshots (pure apart from nothing: every input is passed in).
+ *   before/after  previous link / run: compareSnapshots (GATE-S1, V1, W1, P1, K1, C1, L1, R1)
+ *   head          the chain head (GATE-H1): every item worse than it beyond tolerance must be a
+ *                 class-a acceptance of the CURRENT step or a DEBT.json entry within its ceiling
+ *   pin           the shipped main (GATE-H3, pin view): every item worse than it is classed
+ *                 (a) / (b) / (c); with `main` a (c) item gates (a merge to main)
+ *   ledger        DEBT.json (GATE-D1..D7); ledgerBase: the ledger at the merge base (rule iii)
+ * Returns the report (compareSnapshots shape + head, pin, ledger, gateCanaries sections).
+ */
+export function evaluateGate({
+  before,
+  after,
+  head = null,
+  pin = null,
+  accept = [],
+  declared = [],
+  ledger = null,
+  ledgerBase = undefined,
+  step = null,
+  passes = null,
+  main = false,
+  canaries = true,
+}) {
+  const report = compareSnapshots(before, after, { accept, declared });
+  const classA = accept.filter((e) => e.class === "a");
+  const doc = ledger ?? emptyLedger();
+  const problems = ledgerProblems(doc, { pageMetricKeys: pageMetricKeys(after) });
+  if (ledgerBase !== undefined) {
+    problems.push(
+      ...transitionProblems(ledgerBase ?? emptyLedger(), doc, {
+        step,
+        presentKeys: snapshotKeys(after),
+      }),
+    );
+  }
+  if (head) {
+    const hr = compareSnapshots(head.snapshot, after, { accept: classA, declared });
+    const applied = applyLedger(hr, doc, { passes });
+    problems.push(...applied.problems);
+    const items = [
+      ...applied.items,
+      ...hr.items.filter((i) => i.class === "accepted" || i.class === "declared"),
+    ];
+    report.head = {
+      baseline: head.dir,
+      refusals: hr.refusals,
+      verdict: hr.refusals.length ? "REFUSED" : gatingOf(items).length ? "FAIL" : "PASS",
+      counts: {
+        ...countClasses(items),
+        gating: gatingOf(items).length,
+        improvement: hr.counts.improvement ?? 0,
+        withinTolerance: hr.counts.withinTolerance,
+        flaggedPassLost: hr.counts.flaggedPassLost,
+      },
+      items,
+      unusedEntries: applied.unused,
+      acceptancesCounted: classA.length,
+      acceptancesIgnored: accept.length - classA.length,
+    };
+    report.refusals.push(...hr.refusals.map((r) => `head ${head.dir}: ${r}`));
+  }
+  report.ledger = {
+    schema: doc.schema,
+    entries: doc.entries.length,
+    problems,
+    transitionChecked: ledgerBase !== undefined,
+    passes,
+  };
+  for (const [n, p] of problems.entries()) {
+    report.items.push({
+      key: `debt|ledger#${n + 1}`,
+      group: "debt ledger",
+      check: "debt",
+      class: "failure",
+      gating: true,
+      before: "-",
+      after: "invalid",
+      detail: p,
+    });
+  }
+  if (canaries) {
+    report.gateCanaries = runGateCanaries({ run: after, passes });
+    report.items.push(...gateCanaryItems(report.gateCanaries));
+  }
+  if (pin) {
+    const pr = compareSnapshots(pin.snapshot, after, { accept: classA, declared });
+    report.pin = { baseline: pin.dir, ...pinView(pr, doc), main };
+    if (main) {
+      for (const i of report.pin.items.filter((x) => x.pinClass === "c")) {
+        report.items.push({
+          ...i,
+          key: `pin|${i.key}`,
+          class: "pin-c",
+          gating: true,
+          detail: `worse than the shipped main (pin) and neither an artefact nor ledger debt: ${i.detail}`,
+        });
+      }
+    }
+    report.refusals.push(...(main ? pr.refusals.map((r) => `pin ${pin.dir}: ${r}`) : []));
+  }
+  const gating = gatingOf(report.items).length;
+  const headGating = report.head ? report.head.counts.gating : 0;
+  report.counts = {
+    ...countClasses(report.items),
+    gating,
+    headGating,
+    debt: report.head?.counts.debt ?? 0,
+    flaggedPassLost: report.counts.flaggedPassLost,
+    unchanged: report.counts.unchanged,
+    withinTolerance: report.counts.withinTolerance,
+    withinToleranceBetter: report.counts.withinToleranceBetter,
+    ...(report.pin
+      ? { pinA: report.pin.counts.a, pinB: report.pin.counts.b, pinC: report.pin.counts.c }
+      : {}),
+  };
+  const byGroup = {};
+  for (const i of report.items) {
+    byGroup[i.group] ??= {};
+    byGroup[i.group][i.class] = (byGroup[i.group][i.class] ?? 0) + 1;
+  }
+  report.byGroup = byGroup;
+  report.verdict = report.refusals.length ? "REFUSED" : gating + headGating ? "FAIL" : "PASS";
+  return report;
+}
+
+const loadOptional = (dir) => (dir ? { dir: rel(dir), snapshot: loadSnapshot(dir) } : null);
+
+/**
+ * Evaluate and write gate-report.{json,md} into outDir. Returns { report, exitCode }.
+ * headDir / pinDir: undefined = the default (chain head named in baselines/port/README.md;
+ * fidelity/baselines/pin), null = off.
+ */
+export function runGate({
+  baselineDir,
+  runDir,
+  acceptFile = null,
+  outDir,
+  command,
+  date,
+  headDir = undefined,
+  pinDir = undefined,
+  debtFile = DEBT_FILE,
+  debtBase = undefined,
+  step = null,
+  layoutFrom = null,
+  main = false,
+}) {
   const before = loadSnapshot(baselineDir);
   const after = loadSnapshot(runDir);
   const accept = readAcceptances(acceptFile);
   const declared = readDeclarations(acceptFile);
-  const report = compareSnapshots(before, after, { accept, declared });
+  const head = loadOptional(headDir === undefined ? chainHead() : headDir);
+  const pin = loadOptional(pinDir === undefined ? join(BASELINES_DIR, "pin") : pinDir);
+  const ledger = loadDebt(debtFile);
+  const ledgerBase = debtBase === undefined ? undefined : loadDebt(debtBase);
+  const passes = snapshotPasses(after, layoutFrom ?? (after.source.kind === "run" ? runDir : null));
+  const report = evaluateGate({
+    before,
+    after,
+    head,
+    pin,
+    accept,
+    declared,
+    ledger,
+    ledgerBase,
+    step,
+    passes,
+    main,
+  });
   const meta = {
     date: date ?? new Date().toISOString(),
     command,
@@ -153,6 +397,10 @@ export function runGate({ baselineDir, runDir, acceptFile = null, outDir, comman
     },
     run: { dir: rel(runDir), schema: after.source.schema, provenance: after.provenance ?? null },
     acceptFile: acceptFile ? rel(acceptFile) : null,
+    debtFile: debtFile ? rel(debtFile) : null,
+    debtBase: debtBase ? rel(debtBase) : null,
+    step,
+    layoutFrom: layoutFrom ? rel(layoutFrom) : null,
   };
   mkdirSync(outDir, { recursive: true });
   writeFileSync(
@@ -170,6 +418,25 @@ export function runGate({ baselineDir, runDir, acceptFile = null, outDir, comman
     }),
   );
   return { report, exitCode: GATE_EXIT[report.verdict] ?? 1 };
+}
+
+/** --head/--no-head, --pin/--no-pin, --debt, --debt-base, --step, --layout-from, --main. */
+export function gateOptions(argv) {
+  const val = (name) => {
+    const i = argv.indexOf(name);
+    return i >= 0 ? argv[i + 1] : undefined;
+  };
+  const dir = (name, off) =>
+    argv.includes(off) ? null : val(name) !== undefined ? resolve(val(name)) : undefined;
+  return {
+    headDir: dir("--head", "--no-head"),
+    pinDir: dir("--pin", "--no-pin"),
+    debtFile: val("--debt") ? resolve(val("--debt")) : DEBT_FILE,
+    debtBase: val("--debt-base") ? resolve(val("--debt-base")) : undefined,
+    step: val("--step") ?? null,
+    layoutFrom: val("--layout-from") ? resolve(val("--layout-from")) : null,
+    main: argv.includes("--main"),
+  };
 }
 
 async function main() {
@@ -198,13 +465,24 @@ async function main() {
     acceptFile: val("--accept") ? resolve(val("--accept")) : null,
     outDir,
     command: `node fidelity/gate/run.mjs ${argv.join(" ")}`,
+    ...gateOptions(argv),
   });
   process.stdout.write(
     `gate: ${report.verdict}; ${Object.entries(report.counts)
       .map(([k, v]) => `${k} ${v}`)
-      .join(
-        ", ",
-      )}\n${report.refusals.map((r) => `gate: REFUSED ${r}\n`).join("")}gate: report ${join(outDir, "gate-report.md")}\n`,
+      .join(", ")}\n${
+      report.head
+        ? `gate: head ${report.head.baseline} ${report.head.verdict}; ${Object.entries(
+            report.head.counts,
+          )
+            .map(([k, v]) => `${k} ${v}`)
+            .join(", ")}\n`
+        : ""
+    }${
+      report.pin
+        ? `gate: pin view ${report.pin.baseline}: (a) ${report.pin.counts.a}, (b) ${report.pin.counts.b}, (c) ${report.pin.counts.c}, declared ${report.pin.counts.declared}; merge to main ${report.pin.mainMerge}\n`
+        : ""
+    }${report.refusals.map((r) => `gate: REFUSED ${r}\n`).join("")}gate: report ${join(outDir, "gate-report.md")}\n`,
   );
   process.exitCode = exitCode;
 }
