@@ -480,6 +480,16 @@ fn build_document(html: &str, custom: &[Vec<u8>]) -> HtmlDocument {
     build_document_with(html, crate::fonts::build_font_context(custom))
 }
 
+/// The CSS media type every document is styled for (port step 07): vellora renders paged
+/// output, so `@media print` rules apply and `@media screen` rules do not, as in Chrome's print
+/// path (the optional Chromium engine's `--print-to-pdf`, the fidelity references'
+/// `emulateMediaType("print")`). Reported by the layout dump.
+pub(crate) const DOCUMENT_MEDIA_TYPE: &str = "print";
+
+fn document_media_type() -> blitz_dom::MediaType {
+    blitz_dom::MediaType::print()
+}
+
 /// [`build_document`] with an explicit font context (the layout path keeps a clone of it for
 /// the margin boxes, [`PageContext`]).
 fn build_document_with(html: &str, font_ctx: parley::FontContext) -> HtmlDocument {
@@ -491,6 +501,12 @@ fn build_document_with(html: &str, font_ctx: parley::FontContext) -> HtmlDocumen
             // discovery off (see `crate::fonts`). This is what removes the
             // `libfontconfig` runtime dependency and makes output machine-independent.
             font_ctx: Some(font_ctx),
+            // Blitz's default is `screen`. In Servo mode Stylo reads the media type only to
+            // evaluate media query lists (stylo 0.22 `media_queries/media_list.rs`), so this
+            // changes which `@media` rules cascade and nothing else. Blitz builds every
+            // `<style>` sheet with an empty media list, so a `<style media="…">` attribute is
+            // still not evaluated.
+            media_type: Some(document_media_type()),
             ..Default::default()
         },
     )
@@ -1938,5 +1954,25 @@ fn capture_raw_runs(
                 advance: glyphs.iter().map(|g| g.advance as f64).sum(),
             });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn documents_are_styled_for_print_media() {
+        // Both the document's media type and the Stylo device that evaluates `@media` rules
+        // (blitz-dom 0.3.0-beta.4 `make_device`) carry the configured type.
+        let mut doc = build_document("<p>x</p>", &[]);
+        let base: &mut BaseDocument = doc.as_mut();
+        assert_eq!(*base.media_type(), blitz_dom::MediaType::print());
+        assert_eq!(
+            base.stylist_device().media_type(),
+            blitz_dom::MediaType::print()
+        );
+        assert_eq!(document_media_type(), blitz_dom::MediaType::print());
+        assert_eq!(DOCUMENT_MEDIA_TYPE, "print");
     }
 }

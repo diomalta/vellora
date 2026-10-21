@@ -121,8 +121,10 @@ pub struct LayoutDump {
     pub viewport_height_px: u32,
     /// The resolved `@page` box (its untruncated content box is width - margins).
     pub page: crate::page_css::PageBox,
-    /// Media type Blitz evaluated the stylesheets against. `build_document` never
-    /// sets `DocumentConfig::media_type`, so this is Blitz's default, `screen`.
+    /// Media type Blitz evaluated the stylesheets against:
+    /// `blitz_engine::DOCUMENT_MEDIA_TYPE`, the `DocumentConfig::media_type` every
+    /// document is built with (`print` since port step 07; Blitz's default, `screen`,
+    /// before).
     pub media_type: &'static str,
     /// `true` only for the source-HTML dump ([`DumpCapture::source_html`],
     /// fidelity layer `N0`). Since port step 05 there is no HTML pre-pass, so
@@ -380,7 +382,7 @@ impl DumpCapture {
             viewport_width_px: self.viewport_px.0,
             viewport_height_px: self.viewport_px.1,
             page,
-            media_type: "screen",
+            media_type: crate::blitz_engine::DOCUMENT_MEDIA_TYPE,
             source_html: self.source_html,
             nodes: self.nodes,
             blitz_tree: self.blitz_tree,

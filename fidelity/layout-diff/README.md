@@ -49,10 +49,13 @@ rendering.
   to whole CSS px: `Viewport::new(content_width_px as u32, content_height_px as u32, 1.0, …)`
   (e.g. A4 − 2×16 mm = 672.3351 px → 672). Taffy output is rounded (`taffy::round_layout`,
   blitz-dom `resolve.rs:369`), and vellora reads the rounded `final_layout`.
-- Blitz evaluates stylesheets as media **`screen`**: `build_document` never sets
-  `DocumentConfig::media_type`, whose default is screen (blitz-dom `config.rs:51-52`). Chromium is
-  run with `print`; the four fixtures have no `@media` rules, so this is inert for them (reported
-  per fixture).
+- Blitz evaluates stylesheets as media **`print`** since port step 07: `blitz_engine` builds
+  every document with `DocumentConfig::media_type = print` (Blitz's default, before, was
+  `screen`: blitz-dom `config.rs:51-54`). Chromium is run with `print` too. Media features
+  (`width`, `height`, …) are evaluated by Blitz against its viewport, the `@page` content box;
+  Chromium evaluates them against its own print page, whatever the `@page` rule says (see
+  `baselines/port/README.md`, step 07). The four fixtures have no `@media` rules; the two OSS
+  templates have only `screen` ones (reported per fixture).
 - `blitz_engine::walk` reads boxes by recursing **DOM `node.children`** and accumulating
   `final_layout.location` — not Blitz's `layout_children`/`layout_parent`, so anonymous blocks and
   pseudo-element boxes are never visited (CONFIRMED on a probe: a block `::before` Blitz lays out

@@ -577,8 +577,9 @@ fn join_layer(parent: &str, name: &str) -> String {
 
 /// `@media` query list evaluated for a paged (print) medium: a query matches when its media type
 /// is `print` or `all` (or is omitted) and it has no media feature (features are not evaluated);
-/// `not` negates a query without features.
-fn media_matches(prelude: &str) -> bool {
+/// `not` negates a query without features. Shared with `break_css` (port step 07), so both
+/// vellora CSS readers agree with each other; Blitz's own cascade evaluates media features too.
+pub(crate) fn media_matches(prelude: &str) -> bool {
     prelude.split(',').any(|query| {
         let lower = query.trim().to_ascii_lowercase();
         if lower.contains('(') {

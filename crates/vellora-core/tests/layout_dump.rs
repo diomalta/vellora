@@ -76,7 +76,7 @@ fn layers_are_l0_then_every_named_pass_in_order() {
         ]
     );
     assert!(!dump.blitz_tree.is_empty());
-    assert_eq!(dump.media_type, "screen");
+    assert_eq!(dump.media_type, "print");
 }
 
 #[test]

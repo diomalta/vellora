@@ -168,10 +168,15 @@ const allowedRows = [
     note: "Page size and margins are honoured; running content is drawn in the `@top-center` and `@bottom-center` margin boxes, with `counter(page)` / `counter(pages)`. The other margin boxes are rejected (see below).",
   },
   {
+    feature: "`@media print` / `@media screen`",
+    status: "Supported",
+    note: "Documents are styled for print media, like a browser printing: `@media print` (and `all`, `not screen`) rules apply, `@media screen` rules do not. Media features (`width`, `height`, …) are evaluated against the first page's `@page` content box (whole CSS px); browsers use their own print page size instead. The `media` attribute of a `<style>` element is not evaluated: its rules always apply.",
+  },
+  {
     feature:
       "`break-inside: avoid` / `break-before: page` (and `page-break-inside` / `page-break-before`)",
     status: "Partial",
-    note: "Read from top-level `<style>` rules (any selector Stylo parses) and inline `style`; rules inside `@media`/`@supports` are ignored. `break-inside: avoid` keeps together a top-level block, a transparent wrapper (`div`/`section`/`article`/`main`), an items table, or an items-table `<tbody>`; a group taller than an empty page falls back to its rows. `break-before: page` starts a top-level block, a wrapper child, a `<tbody>` or a `<tr>` on a new page. `break-after` and `orphans`/`widows` are not implemented.",
+    note: "Read from `<style>` rules (any selector Stylo parses), at the top level or inside an `@media` block whose query matches print (`print`, `all`, `not screen`; a query with a media feature does not match), and from inline `style`; rules inside `@supports`/`@layer` are ignored. `break-inside: avoid` keeps together a top-level block, a transparent wrapper (`div`/`section`/`article`/`main`), an items table, or an items-table `<tbody>`; a group taller than an empty page falls back to its rows. `break-before: page` starts a top-level block, a wrapper child, a `<tbody>` or a `<tr>` on a new page. `break-after` and `orphans`/`widows` are not implemented.",
   },
   {
     feature: "Fonts: text shaping + subset embedding",

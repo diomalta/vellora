@@ -11,9 +11,12 @@
 //! paginator reads the resulting per-box flags. Inline `style="…"` declarations
 //! are read per element by [`declares`].
 //!
-//! Rules nested in at-rules (`@media`, `@supports`, `@page`, …) are skipped:
-//! the document subset renders one paged medium, and `@page` is read by
-//! `page_css`.
+//! Documents are styled for print media (port step 07, `blitz_engine`), so the
+//! rules of an `@media` block whose query list matches print are read too, with
+//! the evaluator `page_css` uses for `@page` rules (`page_css::media_matches`:
+//! the media type only; a query with a media feature does not match). Rules
+//! nested in other at-rules (`@supports`, `@layer`, `@page`, …) are skipped;
+//! `@page` is read by `page_css`.
 
 /// Selectors whose matched elements carry a fragmentation hint.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -80,24 +83,47 @@ pub fn declares(block: &str) -> BreakHints {
     hints
 }
 
-/// Split a stylesheet into its top-level qualified rules `(selector, body)`,
-/// skipping every at-rule together with its block.
+/// Split a stylesheet into its qualified rules `(selector, body)` in source
+/// order: the top-level ones and those of every `@media` block whose query list
+/// matches the print medium (`page_css::media_matches`, the evaluator `@page`
+/// rules use; port step 07). Every other at-rule is skipped together with its
+/// block. A matching `@media` block is entered in place (a counter, no
+/// recursion), so its nesting depth never touches the stack.
 fn top_level_rules(css: &str) -> Vec<(String, String)> {
     let bytes = css.as_bytes();
     let mut out = Vec::new();
     let mut i = 0;
     let mut prelude_start = 0;
+    // `@media` blocks entered and not closed yet.
+    let mut open_media = 0usize;
     while i < bytes.len() {
         match bytes[i] {
             b'{' => {
-                let end = block_end(bytes, i + 1);
                 let prelude = css[prelude_start..i].trim();
+                if let Some(at_rule) = prelude.strip_prefix('@') {
+                    let name_len = at_rule
+                        .find(|c: char| !(c.is_ascii_alphanumeric() || c == '-'))
+                        .unwrap_or(at_rule.len());
+                    let (name, query) = at_rule.split_at(name_len);
+                    if name.eq_ignore_ascii_case("media") && crate::page_css::media_matches(query) {
+                        open_media += 1;
+                        i += 1;
+                        prelude_start = i;
+                        continue;
+                    }
+                }
+                let end = block_end(bytes, i + 1);
                 if !prelude.is_empty() && !prelude.starts_with('@') {
                     let body_end = end.saturating_sub(1).max(i + 1);
                     out.push((prelude.to_string(), css[i + 1..body_end].to_string()));
                 }
                 i = end;
                 prelude_start = end;
+            }
+            b'}' if open_media > 0 => {
+                open_media -= 1;
+                i += 1;
+                prelude_start = i;
             }
             b';' if css[prelude_start..i].trim_start().starts_with('@') => {
                 i += 1;
@@ -220,6 +246,59 @@ mod tests {
              .d { content: \"}\"; break-inside: avoid }",
         ));
         assert_eq!(rules.avoid_inside, vec![".d"]);
+    }
+
+    #[test]
+    fn reads_media_blocks_that_match_print_in_source_order() {
+        let rules = parse_break_rules(&page(
+            ".a { break-before: page } \
+             @media print { .p { break-before: page } .pi { break-inside: avoid } } \
+             @media screen { .s { break-before: page } } \
+             @MEDIA ALL { .all { break-before: page } } \
+             @media only print, tv { .only { break-before: page } } \
+             @media not screen { .ns { break-before: page } } \
+             @media not print { .np { break-before: page } } \
+             @media print and (min-width: 1px) { .feature { break-before: page } } \
+             @media print { @media all { .nested { break-before: page } } \
+             @supports (display: grid) { .sup { break-before: page } } .after-sup { break-before: page } } \
+             @media print{.tight{page-break-before:always}} \
+             .z { break-before: page }",
+        ));
+        assert_eq!(
+            rules.page_before,
+            vec![
+                ".a",
+                ".p",
+                ".all",
+                ".only",
+                ".ns",
+                ".nested",
+                ".after-sup",
+                ".tight",
+                ".z"
+            ]
+        );
+        assert_eq!(rules.avoid_inside, vec![".pi"]);
+    }
+
+    #[test]
+    fn deeply_nested_media_blocks_do_not_recurse() {
+        let depth = 200_000;
+        let css = format!(
+            "{}.deep {{ break-before: page }}{} .after {{ break-before: page }}",
+            "@media all { ".repeat(depth),
+            "}".repeat(depth)
+        );
+        assert_eq!(
+            parse_break_rules(&page(&css)).page_before,
+            vec![".deep", ".after"]
+        );
+    }
+
+    #[test]
+    fn an_unterminated_media_block_keeps_its_rules() {
+        let rules = parse_break_rules(&page("@media print { .p { break-before: page }"));
+        assert_eq!(rules.page_before, vec![".p"]);
     }
 
     #[test]
