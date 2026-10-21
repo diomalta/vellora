@@ -1,0 +1,2533 @@
+{
+  "pages": {
+    "vellora": 1,
+    "chrome": 1
+  },
+  "words": {
+    "vellora": 315,
+    "chrome": 315,
+    "aligned": 315
+  },
+  "pairs": [
+    {
+      "k": "Recibo#1",
+      "text": "Recibo",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.82,
+      "dy": -1.48
+    },
+    {
+      "k": "do#1",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.82,
+      "dy": -1.48
+    },
+    {
+      "k": "Pagador#1",
+      "text": "Pagador",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.82,
+      "dy": -1.48
+    },
+    {
+      "k": "BANCO#1",
+      "text": "BANCO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": -19
+    },
+    {
+      "k": "EXEMPLO#1",
+      "text": "EXEMPLO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": -19
+    },
+    {
+      "k": "104-0#1",
+      "text": "104-0",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.7,
+      "dy": -1.68
+    },
+    {
+      "k": "10492.46810#1",
+      "text": "10492.46810",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.68,
+      "dy": -8.76
+    },
+    {
+      "k": "31000.100045#1",
+      "text": "31000.100045",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.61,
+      "dy": -8.76
+    },
+    {
+      "k": "00041.700139#1",
+      "text": "00041.700139",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.54,
+      "dy": -8.76
+    },
+    {
+      "k": "7#1",
+      "text": "7",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.47,
+      "dy": -8.76
+    },
+    {
+      "k": "16460000184250#1",
+      "text": "16460000184250",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.46,
+      "dy": -8.76
+    },
+    {
+      "k": "Beneficiário#1",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -1.26
+    },
+    {
+      "k": "CPF/CNPJ#1",
+      "text": "CPF/CNPJ",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": -1.26
+    },
+    {
+      "k": "do#2",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": -1.26
+    },
+    {
+      "k": "Beneficiário#2",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": -1.26
+    },
+    {
+      "k": "Oficina#1",
+      "text": "Oficina",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.73
+    },
+    {
+      "k": "Exemplo#1",
+      "text": "Exemplo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.73
+    },
+    {
+      "k": "de#1",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.73
+    },
+    {
+      "k": "Testes#1",
+      "text": "Testes",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.73
+    },
+    {
+      "k": "Ltda.#1",
+      "text": "Ltda.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.73
+    },
+    {
+      "k": "11.222.333/0001-81#1",
+      "text": "11.222.333/0001-81",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": -0.73
+    },
+    {
+      "k": "Agência#1",
+      "text": "Agência",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": -1.26
+    },
+    {
+      "k": "/#1",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": -1.26
+    },
+    {
+      "k": "Código#1",
+      "text": "Código",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": -1.26
+    },
+    {
+      "k": "do#3",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": -1.26
+    },
+    {
+      "k": "Beneficiário#3",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": -1.26
+    },
+    {
+      "k": "1234#1",
+      "text": "1234",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.9,
+      "dy": -0.73
+    },
+    {
+      "k": "/#2",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.9,
+      "dy": -0.73
+    },
+    {
+      "k": "246813-1#1",
+      "text": "246813-1",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.9,
+      "dy": -0.73
+    },
+    {
+      "k": "Endereço#1",
+      "text": "Endereço",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.51
+    },
+    {
+      "k": "do#4",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.51
+    },
+    {
+      "k": "Beneficiário#4",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -0.51
+    },
+    {
+      "k": "Rua#1",
+      "text": "Rua",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "das#1",
+      "text": "das",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Acácias,#1",
+      "text": "Acácias,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "1500,#1",
+      "text": "1500,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Sala#1",
+      "text": "Sala",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "42#1",
+      "text": "42",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "—#1",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Jardim#1",
+      "text": "Jardim",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Sintético#1",
+      "text": "Sintético",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "—#2",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "São#1",
+      "text": "São",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "José#1",
+      "text": "José",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "dos#1",
+      "text": "dos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Exemplos#1",
+      "text": "Exemplos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "/#3",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "SP#1",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "—#3",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "CEP#1",
+      "text": "CEP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "01310-930#1",
+      "text": "01310-930",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.02
+    },
+    {
+      "k": "Data#1",
+      "text": "Data",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.24
+    },
+    {
+      "k": "do#5",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.24
+    },
+    {
+      "k": "documento#1",
+      "text": "documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.24
+    },
+    {
+      "k": "Nr.#1",
+      "text": "Nr.",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 0.24
+    },
+    {
+      "k": "do#6",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 0.24
+    },
+    {
+      "k": "documento#2",
+      "text": "documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 0.24
+    },
+    {
+      "k": "Aceite#1",
+      "text": "Aceite",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": 0.24
+    },
+    {
+      "k": "Data#2",
+      "text": "Data",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 0.24
+    },
+    {
+      "k": "do#7",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 0.24
+    },
+    {
+      "k": "processamento#1",
+      "text": "processamento",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 0.24
+    },
+    {
+      "k": "15/10/2026#1",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.77
+    },
+    {
+      "k": "NF-2026/00417#1",
+      "text": "NF-2026/00417",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 0.77
+    },
+    {
+      "k": "N#1",
+      "text": "N",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": 0.77
+    },
+    {
+      "k": "15/10/2026#2",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 0.77
+    },
+    {
+      "k": "Nosso#1",
+      "text": "Nosso",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": 0.24
+    },
+    {
+      "k": "Número#1",
+      "text": "Número",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": 0.24
+    },
+    {
+      "k": "14/000000000417001-1#1",
+      "text": "14/000000000417001-1",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.9,
+      "dy": 0.77
+    },
+    {
+      "k": "Pagador#2",
+      "text": "Pagador",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 0.99
+    },
+    {
+      "k": "CPF/CNPJ#2",
+      "text": "CPF/CNPJ",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.45,
+      "dy": 0.99
+    },
+    {
+      "k": "do#8",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.45,
+      "dy": 0.99
+    },
+    {
+      "k": "Pagador#3",
+      "text": "Pagador",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.45,
+      "dy": 0.99
+    },
+    {
+      "k": "Maria#1",
+      "text": "Maria",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.52
+    },
+    {
+      "k": "da#1",
+      "text": "da",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.52
+    },
+    {
+      "k": "Conceição#1",
+      "text": "Conceição",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.52
+    },
+    {
+      "k": "Exemplo#2",
+      "text": "Exemplo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.52
+    },
+    {
+      "k": "123.456.789-09#1",
+      "text": "123.456.789-09",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.45,
+      "dy": 1.52
+    },
+    {
+      "k": "Carteira#1",
+      "text": "Carteira",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Espécie#1",
+      "text": "Espécie",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 1.74
+    },
+    {
+      "k": "Vencimento#1",
+      "text": "Vencimento",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": 1.74
+    },
+    {
+      "k": "RG#1",
+      "text": "RG",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "R$#1",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": 2.27
+    },
+    {
+      "k": "30/11/2026#1",
+      "text": "30/11/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": 2.27
+    },
+    {
+      "k": "Valor#1",
+      "text": "Valor",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 1.74
+    },
+    {
+      "k": "do#9",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 1.74
+    },
+    {
+      "k": "Documento#1",
+      "text": "Documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 1.74
+    },
+    {
+      "k": "Valor#2",
+      "text": "Valor",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": 1.74
+    },
+    {
+      "k": "Cobrado#1",
+      "text": "Cobrado",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.66,
+      "dy": 1.74
+    },
+    {
+      "k": "Referência#1",
+      "text": "Referência",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": 2.49
+    },
+    {
+      "k": "Demonstrativo#1",
+      "text": "Demonstrativo",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.18,
+      "dy": 2.49
+    },
+    {
+      "k": "Valor#3",
+      "text": "Valor",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.3,
+      "dy": 2.49
+    },
+    {
+      "k": "(R$)#1",
+      "text": "(R$)",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.3,
+      "dy": 2.49
+    },
+    {
+      "k": "10/2026#1",
+      "text": "10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": 2.08
+    },
+    {
+      "k": "Revisão#1",
+      "text": "Revisão",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.18,
+      "dy": 2.08
+    },
+    {
+      "k": "programada#1",
+      "text": "programada",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.15,
+      "dy": 2.08
+    },
+    {
+      "k": "—#4",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": 2.08
+    },
+    {
+      "k": "mão#1",
+      "text": "mão",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.09,
+      "dy": 2.08
+    },
+    {
+      "k": "de#2",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.07,
+      "dy": 2.08
+    },
+    {
+      "k": "obra#1",
+      "text": "obra",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.05,
+      "dy": 2.08
+    },
+    {
+      "k": "980,00#1",
+      "text": "980,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.27,
+      "dy": 2.08
+    },
+    {
+      "k": "10/2026#2",
+      "text": "10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": 2.08
+    },
+    {
+      "k": "Peças#1",
+      "text": "Peças",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.18,
+      "dy": 2.08
+    },
+    {
+      "k": "de#3",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.15,
+      "dy": 2.08
+    },
+    {
+      "k": "reposição#1",
+      "text": "reposição",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.14,
+      "dy": 2.08
+    },
+    {
+      "k": "(filtros,#1",
+      "text": "(filtros,",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": 2.08
+    },
+    {
+      "k": "óleo#1",
+      "text": "óleo",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.07,
+      "dy": 2.08
+    },
+    {
+      "k": "sintético)#1",
+      "text": "sintético)",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.05,
+      "dy": 2.08
+    },
+    {
+      "k": "712,50#1",
+      "text": "712,50",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.27,
+      "dy": 2.08
+    },
+    {
+      "k": "10/2026#3",
+      "text": "10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": 2.83
+    },
+    {
+      "k": "Alinhamento#1",
+      "text": "Alinhamento",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.18,
+      "dy": 2.83
+    },
+    {
+      "k": "e#1",
+      "text": "e",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.13,
+      "dy": 2.83
+    },
+    {
+      "k": "balanceamento#1",
+      "text": "balanceamento",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.12,
+      "dy": 2.83
+    },
+    {
+      "k": "150,00#1",
+      "text": "150,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.27,
+      "dy": 2.83
+    },
+    {
+      "k": "1.842,50#1",
+      "text": "1.842,50",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.97,
+      "dy": 2.27
+    },
+    {
+      "k": "Autenticação#1",
+      "text": "Autenticação",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.08,
+      "dy": 4.91
+    },
+    {
+      "k": "Mecânica#1",
+      "text": "Mecânica",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.09,
+      "dy": 4.91
+    },
+    {
+      "k": "—#5",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.09,
+      "dy": 4.91
+    },
+    {
+      "k": "Recibo#2",
+      "text": "Recibo",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.09,
+      "dy": 4.91
+    },
+    {
+      "k": "do#10",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": 4.91
+    },
+    {
+      "k": "Pagador#4",
+      "text": "Pagador",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": 4.91
+    },
+    {
+      "k": "Corte#1",
+      "text": "Corte",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.83,
+      "dy": -4.26
+    },
+    {
+      "k": "na#1",
+      "text": "na",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.83,
+      "dy": -4.26
+    },
+    {
+      "k": "linha#1",
+      "text": "linha",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.83,
+      "dy": -4.26
+    },
+    {
+      "k": "pontilhada#1",
+      "text": "pontilhada",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.83,
+      "dy": -4.26
+    },
+    {
+      "k": "BANCO#2",
+      "text": "BANCO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": -21.25
+    },
+    {
+      "k": "EXEMPLO#2",
+      "text": "EXEMPLO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": -21.25
+    },
+    {
+      "k": "104-0#2",
+      "text": "104-0",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.7,
+      "dy": -3.93
+    },
+    {
+      "k": "10492.46810#2",
+      "text": "10492.46810",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.68,
+      "dy": -11.01
+    },
+    {
+      "k": "31000.100045#2",
+      "text": "31000.100045",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.61,
+      "dy": -11.01
+    },
+    {
+      "k": "00041.700139#2",
+      "text": "00041.700139",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.54,
+      "dy": -11.01
+    },
+    {
+      "k": "7#2",
+      "text": "7",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.47,
+      "dy": -11.01
+    },
+    {
+      "k": "16460000184250#2",
+      "text": "16460000184250",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.46,
+      "dy": -11.01
+    },
+    {
+      "k": "Local#1",
+      "text": "Local",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -4.26
+    },
+    {
+      "k": "de#4",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -4.26
+    },
+    {
+      "k": "pagamento#1",
+      "text": "pagamento",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -4.26
+    },
+    {
+      "k": "Vencimento#2",
+      "text": "Vencimento",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -4.26
+    },
+    {
+      "k": "EM#1",
+      "text": "EM",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "TODA#1",
+      "text": "TODA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "A#1",
+      "text": "A",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "REDE#1",
+      "text": "REDE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "BANCÁRIA#1",
+      "text": "BANCÁRIA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "E#1",
+      "text": "E",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "SEUS#1",
+      "text": "SEUS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "CORRESPONDENTES#1",
+      "text": "CORRESPONDENTES",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "ATÉ#1",
+      "text": "ATÉ",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "O#1",
+      "text": "O",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "VALOR#1",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "LIMITE#1",
+      "text": "LIMITE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -3.73
+    },
+    {
+      "k": "Beneficiário#5",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "30/11/2026#2",
+      "text": "30/11/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -3.73
+    },
+    {
+      "k": "Agência#2",
+      "text": "Agência",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "/#4",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "Código#2",
+      "text": "Código",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "do#11",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "Beneficiário#6",
+      "text": "Beneficiário",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "Oficina#2",
+      "text": "Oficina",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "Exemplo#3",
+      "text": "Exemplo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "de#5",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "Testes#2",
+      "text": "Testes",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "Ltda.#2",
+      "text": "Ltda.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "—#6",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "CNPJ#1",
+      "text": "CNPJ",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "11.222.333/0001-81#2",
+      "text": "11.222.333/0001-81",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.23
+    },
+    {
+      "k": "1234#2",
+      "text": "1234",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -2.23
+    },
+    {
+      "k": "/#5",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -2.23
+    },
+    {
+      "k": "246813-1#2",
+      "text": "246813-1",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -2.23
+    },
+    {
+      "k": "Rua#2",
+      "text": "Rua",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "das#2",
+      "text": "das",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Acácias,#2",
+      "text": "Acácias,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "1500,#2",
+      "text": "1500,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Sala#2",
+      "text": "Sala",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "42#2",
+      "text": "42",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "—#7",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Jardim#2",
+      "text": "Jardim",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Sintético#2",
+      "text": "Sintético",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "—#8",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "São#2",
+      "text": "São",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "José#2",
+      "text": "José",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "dos#2",
+      "text": "dos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Exemplos#2",
+      "text": "Exemplos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "/#6",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "SP#2",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "—#9",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "CEP#2",
+      "text": "CEP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "01310-930#2",
+      "text": "01310-930",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Data#3",
+      "text": "Data",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "do#12",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "documento#3",
+      "text": "documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "Nr.#2",
+      "text": "Nr.",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -2.01
+    },
+    {
+      "k": "do#13",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -2.01
+    },
+    {
+      "k": "Documento#2",
+      "text": "Documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -2.01
+    },
+    {
+      "k": "Espécie#2",
+      "text": "Espécie",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -2.01
+    },
+    {
+      "k": "DOC#1",
+      "text": "DOC",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -2.01
+    },
+    {
+      "k": "Aceite#2",
+      "text": "Aceite",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.01,
+      "dy": -2.01
+    },
+    {
+      "k": "Data#4",
+      "text": "Data",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.47,
+      "dy": -2.01
+    },
+    {
+      "k": "do#14",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.47,
+      "dy": -2.01
+    },
+    {
+      "k": "processamento#2",
+      "text": "processamento",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.47,
+      "dy": -2.01
+    },
+    {
+      "k": "15/10/2026#3",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -1.48
+    },
+    {
+      "k": "NF-2026/00417#2",
+      "text": "NF-2026/00417",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -1.48
+    },
+    {
+      "k": "DM#1",
+      "text": "DM",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -1.48
+    },
+    {
+      "k": "N#2",
+      "text": "N",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.01,
+      "dy": -1.48
+    },
+    {
+      "k": "15/10/2026#4",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.47,
+      "dy": -1.48
+    },
+    {
+      "k": "Uso#1",
+      "text": "Uso",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "do#15",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Banco#1",
+      "text": "Banco",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.76
+    },
+    {
+      "k": "Carteira#2",
+      "text": "Carteira",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -2.76
+    },
+    {
+      "k": "Espécie#3",
+      "text": "Espécie",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -2.76
+    },
+    {
+      "k": "Moeda#1",
+      "text": "Moeda",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -2.76
+    },
+    {
+      "k": "Qtde#1",
+      "text": "Qtde",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.01,
+      "dy": -2.76
+    },
+    {
+      "k": "moeda#1",
+      "text": "moeda",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.01,
+      "dy": -2.76
+    },
+    {
+      "k": "xValor#1",
+      "text": "xValor",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.47,
+      "dy": -2.76
+    },
+    {
+      "k": "RG#2",
+      "text": "RG",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.32,
+      "dy": -1.48
+    },
+    {
+      "k": "R$#2",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.54,
+      "dy": -1.48
+    },
+    {
+      "k": "Instruções#1",
+      "text": "Instruções",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "(Texto#1",
+      "text": "(Texto",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "de#6",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "Responsabilidade#1",
+      "text": "Responsabilidade",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "do#16",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "Beneficiário)#1",
+      "text": "Beneficiário)",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.01
+    },
+    {
+      "k": "Após#1",
+      "text": "Após",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -1.67
+    },
+    {
+      "k": "o#1",
+      "text": "o",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.87,
+      "dy": -1.67
+    },
+    {
+      "k": "vencimento,#1",
+      "text": "vencimento,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.88,
+      "dy": -1.67
+    },
+    {
+      "k": "cobrar#1",
+      "text": "cobrar",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.93,
+      "dy": -1.67
+    },
+    {
+      "k": "multa#1",
+      "text": "multa",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.96,
+      "dy": -1.67
+    },
+    {
+      "k": "de#7",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.98,
+      "dy": -1.67
+    },
+    {
+      "k": "2,00%#1",
+      "text": "2,00%",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.99,
+      "dy": -1.67
+    },
+    {
+      "k": "e#2",
+      "text": "e",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.02,
+      "dy": -1.67
+    },
+    {
+      "k": "juros#1",
+      "text": "juros",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.03,
+      "dy": -1.67
+    },
+    {
+      "k": "de#8",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.05,
+      "dy": -1.67
+    },
+    {
+      "k": "mora#1",
+      "text": "mora",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.06,
+      "dy": -1.67
+    },
+    {
+      "k": "de#9",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.09,
+      "dy": -1.67
+    },
+    {
+      "k": "1,00%#1",
+      "text": "1,00%",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.1,
+      "dy": -1.67
+    },
+    {
+      "k": "ao#1",
+      "text": "ao",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.13,
+      "dy": -1.67
+    },
+    {
+      "k": "mês.#1",
+      "text": "mês.",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.14,
+      "dy": -1.67
+    },
+    {
+      "k": "Desconto#1",
+      "text": "Desconto",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -2.42
+    },
+    {
+      "k": "de#10",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.89,
+      "dy": -2.42
+    },
+    {
+      "k": "R$#3",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.9,
+      "dy": -2.42
+    },
+    {
+      "k": "92,13#1",
+      "text": "92,13",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.92,
+      "dy": -2.42
+    },
+    {
+      "k": "para#1",
+      "text": "para",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.94,
+      "dy": -2.42
+    },
+    {
+      "k": "pagamento#2",
+      "text": "pagamento",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.96,
+      "dy": -2.42
+    },
+    {
+      "k": "até#1",
+      "text": "até",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.01,
+      "dy": -2.42
+    },
+    {
+      "k": "20/11/2026.#1",
+      "text": "20/11/2026.",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.02,
+      "dy": -2.42
+    },
+    {
+      "k": "Não#1",
+      "text": "Não",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -1.67
+    },
+    {
+      "k": "receber#1",
+      "text": "receber",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.87,
+      "dy": -1.67
+    },
+    {
+      "k": "após#1",
+      "text": "após",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.9,
+      "dy": -1.67
+    },
+    {
+      "k": "60#1",
+      "text": "60",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.92,
+      "dy": -1.67
+    },
+    {
+      "k": "dias#1",
+      "text": "dias",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.93,
+      "dy": -1.67
+    },
+    {
+      "k": "do#17",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.95,
+      "dy": -1.67
+    },
+    {
+      "k": "vencimento.#1",
+      "text": "vencimento.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": -1.67
+    },
+    {
+      "k": "DOCUMENTO#1",
+      "text": "DOCUMENTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": -1.67
+    },
+    {
+      "k": "DE#1",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.91,
+      "dy": -1.67
+    },
+    {
+      "k": "TESTE#1",
+      "text": "TESTE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.92,
+      "dy": -1.67
+    },
+    {
+      "k": "—#10",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.96,
+      "dy": -1.67
+    },
+    {
+      "k": "SEM#1",
+      "text": "SEM",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": -1.67
+    },
+    {
+      "k": "VALOR.#1",
+      "text": "VALOR.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.99,
+      "dy": -1.67
+    },
+    {
+      "k": "Fixture#1",
+      "text": "Fixture",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.02,
+      "dy": -1.67
+    },
+    {
+      "k": "sintética#1",
+      "text": "sintética",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.05,
+      "dy": -1.67
+    },
+    {
+      "k": "do#18",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.09,
+      "dy": -1.67
+    },
+    {
+      "k": "vellora#1",
+      "text": "vellora",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.1,
+      "dy": -1.67
+    },
+    {
+      "k": "(fidelity/corpus).#1",
+      "text": "(fidelity/corpus).",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.13,
+      "dy": -1.67
+    },
+    {
+      "k": "Nosso#2",
+      "text": "Nosso",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.01
+    },
+    {
+      "k": "Número#2",
+      "text": "Número",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.01
+    },
+    {
+      "k": "14/000000000417001-1#2",
+      "text": "14/000000000417001-1",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -1.48
+    },
+    {
+      "k": "(=)#1",
+      "text": "(=)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "Valor#4",
+      "text": "Valor",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "do#19",
+      "text": "do",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "Documento#3",
+      "text": "Documento",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.76
+    },
+    {
+      "k": "1.842,50#2",
+      "text": "1.842,50",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.92,
+      "dy": -1.48
+    },
+    {
+      "k": "(-)#1",
+      "text": "(-)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.01
+    },
+    {
+      "k": "Desconto#2",
+      "text": "Desconto",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -2.01
+    },
+    {
+      "k": "(-)#2",
+      "text": "(-)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -1.26
+    },
+    {
+      "k": "Outras#1",
+      "text": "Outras",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -1.26
+    },
+    {
+      "k": "Deduções/Abatimento#1",
+      "text": "Deduções/Abatimento",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -1.26
+    },
+    {
+      "k": "(+)#1",
+      "text": "(+)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -0.51
+    },
+    {
+      "k": "Mora/Multa/Juros#1",
+      "text": "Mora/Multa/Juros",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": -0.51
+    },
+    {
+      "k": "(+)#2",
+      "text": "(+)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.24
+    },
+    {
+      "k": "Outros#1",
+      "text": "Outros",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.24
+    },
+    {
+      "k": "Acréscimos#1",
+      "text": "Acréscimos",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.24
+    },
+    {
+      "k": "(=)#2",
+      "text": "(=)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.99
+    },
+    {
+      "k": "Valor#5",
+      "text": "Valor",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.99
+    },
+    {
+      "k": "Cobrado#2",
+      "text": "Cobrado",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.68,
+      "dy": 0.99
+    },
+    {
+      "k": "Pagador#5",
+      "text": "Pagador",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Maria#2",
+      "text": "Maria",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "da#2",
+      "text": "da",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "Conceição#2",
+      "text": "Conceição",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "Exemplo#4",
+      "text": "Exemplo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "—#11",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "CPF#1",
+      "text": "CPF",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "123.456.789-09#2",
+      "text": "123.456.789-09",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.27
+    },
+    {
+      "k": "Avenida#1",
+      "text": "Avenida",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Paulista,#1",
+      "text": "Paulista,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "1000,#1",
+      "text": "1000,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Apto#1",
+      "text": "Apto",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "101#1",
+      "text": "101",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "—#12",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Bela#1",
+      "text": "Bela",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Vista#1",
+      "text": "Vista",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "—#13",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "São#3",
+      "text": "São",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Paulo#1",
+      "text": "Paulo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "/#7",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "SP#3",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "—#14",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "CEP#3",
+      "text": "CEP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "01310-100#1",
+      "text": "01310-100",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 1.74
+    },
+    {
+      "k": "Sacador/Avalista#1",
+      "text": "Sacador/Avalista",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.85,
+      "dy": 2.49
+    },
+    {
+      "k": "Autenticação#2",
+      "text": "Autenticação",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "Mecânica#2",
+      "text": "Mecânica",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "-#1",
+      "text": "-",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "Ficha#1",
+      "text": "Ficha",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "de#11",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "Compensação#1",
+      "text": "Compensação",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": 3.24
+    },
+    {
+      "k": "Ficha#2",
+      "text": "Ficha",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.01,
+      "dy": 3.24
+    },
+    {
+      "k": "de#12",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.01,
+      "dy": 3.24
+    },
+    {
+      "k": "Compensação#2",
+      "text": "Compensação",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.01,
+      "dy": 3.24
+    }
+  ]
+}

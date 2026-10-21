@@ -829,6 +829,128 @@
     "fixtures/receipt.json": "85d04d874c2f3028e7cf181485b32d71c56d9931ec1de8c3d234ca8aad5f93d2",
     "fixtures/text-stress-ptbr.json": "4cb9026e47de54373a7e679f8920f5bfe7146b9b83dadc3ee07363680133727b",
     "wpt/by-directory.json": "4b2fb04959c2f1c2caed33ffbe3fc94610b21ffcd9f2d801a8f3212b12c65317",
-    "wpt/expectations-blitz-2003ba5fc2d8.json": "2c24ed8f2f87a5eac3e4a065b77bfd53541a52d3a711b39d87048ed0d0f6c90c"
+    "wpt/expectations-blitz-2003ba5fc2d8.json": "2c24ed8f2f87a5eac3e4a065b77bfd53541a52d3a711b39d87048ed0d0f6c90c",
+    "pdf-probe/invoice.json": "78060a6b0b04ba1101e50352de1ea32445f1dc25d8d0b3b73afc3f62a7d9c035",
+    "pdf-probe/notification.json": "60a2fc6f93d044be4c7a7eed810d5bc85737edb4818a025a57fdc72ec2cc5dc4"
+  },
+  "pdfProbeRescore": {
+    "semantics": 2,
+    "settings": {
+      "semantics": 2,
+      "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+      "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+      "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+      "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+      "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+      "maxDistancePt": 36,
+      "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+    },
+    "command": "node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+    "date": "2026-10-21T20:05:50.971Z",
+    "environment": {
+      "os": "darwin 27.0.0 arm64",
+      "node": "v22.23.2",
+      "python": "3.12.13",
+      "extractor": "pymupdf 1.28.2"
+    },
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+      "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9",
+      "matchesManifestSource": true
+    },
+    "v1": {
+      "location": null,
+      "note": "this baseline had no pdf-probe section before the re-score"
+    },
+    "v1Identity": {
+      "invoice": "baseline has no v1 section",
+      "notification": "baseline has no v1 section"
+    },
+    "inputs": {
+      "invoice": {
+        "vellora": {
+          "path": "layout-diff/invoice/run-all/vellora.pdf",
+          "sha256": "5c4061330d65dd5b9b95c77f5b8a04cdd11e05a795a62cfbb6ee01f58a1b51a8"
+        },
+        "chrome": {
+          "path": "layout-diff/invoice/run-all/chrome.pdf",
+          "sha256": "36ccfe168fca42ca697ebd006c71fd8bdf01263c4732cb34fc2f4178ac73a54a"
+        },
+        "words": {
+          "vellora": 541,
+          "chrome": 541,
+          "paired": 541,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "notification": {
+        "vellora": {
+          "path": "layout-diff/notification/run-all/vellora.pdf",
+          "sha256": "051616a4996a5395cd7d143bb3ad99d16f2ca60daf4081058a1002bc897b2c1d"
+        },
+        "chrome": {
+          "path": "layout-diff/notification/run-all/chrome.pdf",
+          "sha256": "d9a0a005c0a1678900060df6b2231047a7f80086c6dda36ce911fbf5dbb2d325"
+        },
+        "words": {
+          "vellora": 244,
+          "chrome": 248,
+          "paired": 244,
+          "unpairedVellora": 0,
+          "unpairedChrome": 4
+        }
+      }
+    },
+    "missing": [
+      {
+        "fixture": "boleto",
+        "absent": [
+          "layout-diff/boleto/run-all/vellora.pdf",
+          "layout-diff/boleto/run-all/chrome.pdf"
+        ]
+      },
+      {
+        "fixture": "boleto-febraban",
+        "absent": [
+          "layout-diff/boleto-febraban/run-all/vellora.pdf",
+          "layout-diff/boleto-febraban/run-all/chrome.pdf"
+        ]
+      },
+      {
+        "fixture": "danfe",
+        "absent": ["layout-diff/danfe/run-all/vellora.pdf", "layout-diff/danfe/run-all/chrome.pdf"]
+      },
+      {
+        "fixture": "oss-postmark-receipt",
+        "absent": [
+          "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+          "layout-diff/oss-postmark-receipt/run-all/chrome.pdf"
+        ]
+      },
+      {
+        "fixture": "oss-sparksuite-invoice",
+        "absent": [
+          "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+          "layout-diff/oss-sparksuite-invoice/run-all/chrome.pdf"
+        ]
+      },
+      {
+        "fixture": "receipt",
+        "absent": [
+          "layout-diff/receipt/run-all/vellora.pdf",
+          "layout-diff/receipt/run-all/chrome.pdf"
+        ]
+      },
+      {
+        "fixture": "text-stress-ptbr",
+        "absent": [
+          "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+          "layout-diff/text-stress-ptbr/run-all/chrome.pdf"
+        ]
+      }
+    ],
+    "v2Fixtures": ["invoice", "notification"],
+    "formatting": "biome format --write (repo biome.json) before hashing"
   }
 }

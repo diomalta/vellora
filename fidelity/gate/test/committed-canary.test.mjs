@@ -2,6 +2,12 @@
 // the "run" against the pin baseline MUST be flagged for the two regressions the status-only
 // ratchet missed (notification REF-W 3.60 -> 8.54 mm, invoice REF-W 2.44 -> 3.91 mm) and for the
 // WPT clean-pass regressions; and beta.4 against itself must show no regression.
+//
+// pdf-probe history: every link was gated with pdf-probe semantics 1 (pdftotext bbox tops, k-th
+// occurrence pairs) and its acceptedRegressions name v1 keys. Since the v2 re-score
+// (gate/rescore-pdf-probe.mjs) the gated section is v2 and the v1 one is kept under
+// attachments/pdf-probe-v1/ (beta4: layout-diff-ab/). The historical verdicts below are reproduced
+// on the v1 sections (`v1(...)`); the v2 facts of the chain are asserted at the end.
 import assert from "node:assert/strict";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
@@ -13,6 +19,8 @@ const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "
 const pin = loadBaselineDir(join(baselines, "pin"));
 const beta4 = loadBaselineDir(join(baselines, "beta4"));
 const item = (r, key) => r.items.find((i) => i.key === key);
+/** A baseline with the pdf-probe section it was gated with (semantics 1, history). */
+const v1 = (...parts) => loadBaselineDir(join(baselines, ...parts), { pdfProbe: "v1" });
 
 test("committed baselines pass their manifest sha256 integrity check", () => {
   assert.equal(pin.integrity.ok, true, pin.integrity.problems.join("; "));
@@ -99,9 +107,9 @@ test("port/00-start (head of the port chain, baselines/port/README.md) passes vs
   assert.ok(improved.every((x) => x.key.startsWith("wpt|css/css-text/")));
 });
 
-test("port/01-pagination-gaps passes vs port/00-start only with its acceptedRegressions", () => {
-  const start = loadBaselineDir(join(baselines, "port", "00-start"));
-  const step = loadBaselineDir(join(baselines, "port", "01-pagination-gaps"));
+test("port/01-pagination-gaps passes vs port/00-start only with its acceptedRegressions (v1 pdf-probe)", () => {
+  const start = v1("port", "00-start");
+  const step = v1("port", "01-pagination-gaps");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
   assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
   assert.equal(step.manifest.gate.verdict, "PASS");
@@ -162,9 +170,9 @@ test("port/02-delete-noop-passes passes vs port/01-pagination-gaps with no accep
   );
 });
 
-test("port/03-table-passes passes vs port/02-delete-noop-passes only with its acceptedRegressions", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "02-delete-noop-passes"));
-  const step = loadBaselineDir(join(baselines, "port", "03-table-passes"));
+test("port/03-table-passes passes vs port/02-delete-noop-passes only with its acceptedRegressions (v1 pdf-probe)", () => {
+  const prev = v1("port", "02-delete-noop-passes");
+  const step = v1("port", "03-table-passes");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
   assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
   assert.equal(step.manifest.gate.verdict, "PASS");
@@ -208,9 +216,9 @@ test("port/03-table-passes passes vs port/02-delete-noop-passes only with its ac
   assert.deepEqual([wpt.class, wpt.before, wpt.after], ["improvement", "fail", "pass"]);
 });
 
-test("port/04-block-offset passes vs port/03-table-passes only with its acceptedRegressions", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "03-table-passes"));
-  const step = loadBaselineDir(join(baselines, "port", "04-block-offset"));
+test("port/04-block-offset passes vs port/03-table-passes only with its acceptedRegressions (v1 pdf-probe)", () => {
+  const prev = v1("port", "03-table-passes");
+  const step = v1("port", "04-block-offset");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
   assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
   assert.equal(step.manifest.gate.verdict, "PASS");
@@ -258,9 +266,9 @@ test("port/04-block-offset passes vs port/03-table-passes only with its accepted
   assert.deepEqual([let1.class, let1.before, let1.after], ["accepted", 0.75, 1.81]);
 });
 
-test("port/05-walk-rewrite passes vs port/04-block-offset only with its acceptedRegressions", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "04-block-offset"));
-  const step = loadBaselineDir(join(baselines, "port", "05-walk-rewrite"));
+test("port/05-walk-rewrite passes vs port/04-block-offset only with its acceptedRegressions (v1 pdf-probe)", () => {
+  const prev = v1("port", "04-block-offset");
+  const step = v1("port", "05-walk-rewrite");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
   assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
   assert.equal(step.manifest.gate.verdict, "PASS");
@@ -305,9 +313,9 @@ test("port/05-walk-rewrite passes vs port/04-block-offset only with its accepted
   }
 });
 
-test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "05-walk-rewrite"));
-  const step = loadBaselineDir(join(baselines, "port", "06-page-rules"));
+test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions (v1 pdf-probe)", () => {
+  const prev = v1("port", "05-walk-rewrite");
+  const step = v1("port", "06-page-rules");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
   assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
   assert.equal(step.manifest.gate.verdict, "PASS");
@@ -376,4 +384,129 @@ test("port/07-media-print passes vs port/06-page-rules with no acceptedRegressio
     r.items.filter((x) => x.class !== "unchanged").map((x) => `${x.class} ${x.key}`),
     [],
   );
+});
+
+// ---- pdf-probe v2 (semantics 2) on the re-scored chain --------------------------------------
+
+const CHAIN = [
+  "pin",
+  "beta4",
+  "beta4-gated",
+  "port/00-start",
+  "port/01-pagination-gaps",
+  "port/02-delete-noop-passes",
+  "port/03-table-passes",
+  "port/04-block-offset",
+  "port/05-walk-rewrite",
+  "port/06-page-rules",
+  "port/07-media-print",
+];
+const cur = (link) => loadBaselineDir(join(baselines, ...link.split("/")));
+
+test("every committed link carries a v2 pdf-probe section re-scored from its own run's PDFs", () => {
+  for (const link of CHAIN) {
+    const b = cur(link);
+    assert.equal(b.integrity.ok, true, `${link}: ${b.integrity.problems.join("; ")}`);
+    const m = b.manifest.pdfProbeRescore;
+    assert.equal(m.semantics, 2, link);
+    assert.ok(
+      Object.values(b.pdfProbe).every((s) => s.semantics === 2),
+      link,
+    );
+    // The run's own v1 probe re-compacts to the committed v1 section: same PDFs (pin had none).
+    const want = link === "pin" ? "baseline has no v1 section" : "identical";
+    assert.ok(
+      Object.values(m.v1Identity).every((x) => x === want),
+      `${link}: ${JSON.stringify(m.v1Identity)}`,
+    );
+    assert.equal(m.source.matchesManifestSource, link !== "beta4", link);
+  }
+  // Missing inputs are recorded, never silently dropped: the pin run kept invoice + notification
+  // only; beta4's A/B PDFs were not kept, so beta4-gated's stand in (evidence in the manifest).
+  assert.deepEqual(
+    cur("pin").manifest.pdfProbeRescore.missing.map((x) => x.fixture),
+    [
+      "boleto",
+      "boleto-febraban",
+      "danfe",
+      "oss-postmark-receipt",
+      "oss-sparksuite-invoice",
+      "receipt",
+      "text-stress-ptbr",
+    ],
+  );
+  assert.match(cur("beta4").manifest.pdfProbeRescore.source.substitute, /no run copy kept/);
+  assert.deepEqual(Object.keys(cur("beta4").pdfProbe), [
+    "boleto",
+    "invoice",
+    "notification",
+    "receipt",
+  ]);
+});
+
+test("a v1 baseline against a v2 snapshot is REFUSED (pdf-probe semantics differ)", () => {
+  const r = compareSnapshots(v1("port", "06-page-rules"), cur("port/07-media-print"));
+  assert.equal(r.verdict, "REFUSED");
+  assert.match(r.refusals.join("; "), /pdf-probe semantics differ: baseline 1, run 2/);
+});
+
+test("v2: links whose vellora PDFs equal the previous link's show no pdf-probe item at all", () => {
+  // 00-start = beta4-gated, 02 = 01, 07 = 06 (byte-identical vellora PDFs; Chrome's PyMuPDF
+  // words are identical across every run): no Chrome or extractor jitter reaches the section.
+  for (const [prev, link] of [
+    ["beta4-gated", "port/00-start"],
+    ["port/01-pagination-gaps", "port/02-delete-noop-passes"],
+    ["port/06-page-rules", "port/07-media-print"],
+  ]) {
+    const r = compareSnapshots(cur(prev), cur(link));
+    assert.deepEqual(
+      r.items.filter((x) => x.check === "pdf-probe"),
+      [],
+      link,
+    );
+  }
+});
+
+test("v2 re-judges the chain: gating pdf-probe items per link vs the previous link", () => {
+  // With each link's own (v1-era) acceptedRegressions applied: their pdf-probe keys match no v2
+  // key, every other accepted item still matches, so what gates is exactly the v2 pdf-probe debt.
+  const expected = {
+    "port/01-pagination-gaps": 55,
+    "port/03-table-passes": 84,
+    "port/04-block-offset": 1403,
+    "port/05-walk-rewrite": 6,
+    "port/06-page-rules": 0,
+  };
+  for (const [link, n] of Object.entries(expected)) {
+    const step = cur(link);
+    const r = compareSnapshots(cur(CHAIN[CHAIN.indexOf(link) - 1]), step, {
+      accept: step.manifest.acceptedRegressions,
+    });
+    assert.equal(r.items.filter((x) => x.gating && x.check === "pdf-probe").length, n, link);
+    assert.equal(r.items.filter((x) => x.gating && x.check !== "pdf-probe").length, 0, link);
+  }
+});
+
+test("v2 gates the step-05 text loss v1 only reported (D3): postmark's 'The [Product Name] team'", () => {
+  const r = compareSnapshots(cur("port/04-block-offset"), cur("port/05-walk-rewrite"));
+  assert.deepEqual(
+    r.items
+      .filter((x) => x.gating && x.key.startsWith("pdf-probe|oss-postmark-receipt|"))
+      .map((x) => x.key)
+      .sort(),
+    [
+      "pdf-probe|oss-postmark-receipt|p1|Name]#3|pairing",
+      "pdf-probe|oss-postmark-receipt|p1|The#1|pairing",
+      "pdf-probe|oss-postmark-receipt|p1|[Product#4|pairing",
+      "pdf-probe|oss-postmark-receipt|p1|team#2|pairing",
+      "pdf-probe|oss-postmark-receipt|unpaired-chrome",
+      "pdf-probe|oss-postmark-receipt|unpaired-vellora",
+    ],
+  );
+  const c = item(r, "pdf-probe|oss-postmark-receipt|unpaired-chrome");
+  assert.deepEqual([c.before, c.after], [42, 46]);
+  // v1 saw the same change as a non-gating "changed" item.
+  const old = compareSnapshots(v1("port", "04-block-offset"), v1("port", "05-walk-rewrite"));
+  const u = item(old, "pdf-probe|oss-postmark-receipt|unpaired");
+  assert.deepEqual([u.class, u.gating], ["changed", false]);
 });

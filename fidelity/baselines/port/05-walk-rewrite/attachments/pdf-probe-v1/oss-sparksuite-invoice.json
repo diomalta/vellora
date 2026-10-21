@@ -1,0 +1,381 @@
+{
+  "pages": {
+    "vellora": 1,
+    "chrome": 1
+  },
+  "words": {
+    "vellora": 46,
+    "chrome": 46,
+    "aligned": 46
+  },
+  "pairs": [
+    {
+      "k": "Invoice#1",
+      "text": "Invoice",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "#:#1",
+      "text": "#:",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "123#1",
+      "text": "123",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "Created:#1",
+      "text": "Created:",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "January#1",
+      "text": "January",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "1,#1",
+      "text": "1,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "2023#1",
+      "text": "2023",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "Due:#1",
+      "text": "Due:",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "February#1",
+      "text": "February",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "1,#2",
+      "text": "1,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "2023#2",
+      "text": "2023",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 3.4
+    },
+    {
+      "k": "Sparksuite,#1",
+      "text": "Sparksuite,",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Inc.#1",
+      "text": "Inc.",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "12345#1",
+      "text": "12345",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Sunny#1",
+      "text": "Sunny",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Road#1",
+      "text": "Road",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Sunnyville,#1",
+      "text": "Sunnyville,",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "CA#1",
+      "text": "CA",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "12345#2",
+      "text": "12345",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Payment#1",
+      "text": "Payment",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Method#1",
+      "text": "Method",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 4.9
+    },
+    {
+      "k": "Acme#1",
+      "text": "Acme",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 4.9
+    },
+    {
+      "k": "Corp.#1",
+      "text": "Corp.",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 4.9
+    },
+    {
+      "k": "John#1",
+      "text": "John",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 4.9
+    },
+    {
+      "k": "Doe#1",
+      "text": "Doe",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 4.9
+    },
+    {
+      "k": "john@example.com#1",
+      "text": "john@example.com",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 4.9
+    },
+    {
+      "k": "Check#1",
+      "text": "Check",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 4.9
+    },
+    {
+      "k": "##1",
+      "text": "#",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 4.9
+    },
+    {
+      "k": "Check#2",
+      "text": "Check",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 7.9
+    },
+    {
+      "k": "1000#1",
+      "text": "1000",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 7.9
+    },
+    {
+      "k": "Item#1",
+      "text": "Item",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 7.9
+    },
+    {
+      "k": "Price#1",
+      "text": "Price",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 7.9
+    },
+    {
+      "k": "Website#1",
+      "text": "Website",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 9.4
+    },
+    {
+      "k": "design#1",
+      "text": "design",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 9.4
+    },
+    {
+      "k": "$300.00#1",
+      "text": "$300.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 9.4
+    },
+    {
+      "k": "Hosting#1",
+      "text": "Hosting",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 10.9
+    },
+    {
+      "k": "(3#1",
+      "text": "(3",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 10.9
+    },
+    {
+      "k": "months)#1",
+      "text": "months)",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 10.9
+    },
+    {
+      "k": "$75.00#1",
+      "text": "$75.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 10.9
+    },
+    {
+      "k": "Domain#1",
+      "text": "Domain",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 13.9
+    },
+    {
+      "k": "name#1",
+      "text": "name",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 13.9
+    },
+    {
+      "k": "(1#1",
+      "text": "(1",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 13.9
+    },
+    {
+      "k": "year)#1",
+      "text": "year)",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.27,
+      "dy": 13.9
+    },
+    {
+      "k": "$10.00#1",
+      "text": "$10.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 13.9
+    },
+    {
+      "k": "Total:#1",
+      "text": "Total:",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 13.9
+    },
+    {
+      "k": "$385.00#1",
+      "text": "$385.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 13.9
+    }
+  ]
+}

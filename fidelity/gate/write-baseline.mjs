@@ -42,7 +42,7 @@ import { BASELINE_SCHEMA, loadRunDir } from "./snapshot.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 // Committed files never carry the local checkout or home path (<repo>/..., ~/...).
-const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
+export const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
 const AUTHORITY =
   "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)";
 
@@ -59,7 +59,7 @@ export function copyPortable(src, dest, root = repoRoot) {
 }
 
 /** `biome format --write` with the repo's pinned biome (a note instead when it is missing). */
-function biomeFormat(path) {
+export function biomeFormat(path) {
   const bin = join(repoRoot, "node_modules", ".bin", "biome");
   // Relative path: biome.json ignores ".claude", which an ABSOLUTE path of a worktree under
   // .claude/worktrees/ would match.
@@ -73,7 +73,7 @@ function biomeFormat(path) {
     : `biome exit ${r.status}: ${String(r.stderr).slice(0, 200)}`;
 }
 
-function listFiles(dir, base = dir) {
+export function listFiles(dir, base = dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory() ? listFiles(join(dir, e.name), base) : [relative(base, join(dir, e.name))],
   );
