@@ -1,0 +1,40 @@
+// node wpt-pixels.mjs <suite regex> <label=results.json>...
+// Continuous WPT signal for failing tests: per test, the differing-pixel count of the first
+// comparison (test vs reference) and the ink bbox distance to Chrome's ink bbox, per variant.
+import { readFileSync } from "node:fs";
+const [suiteRe, ...specs] = process.argv.slice(2);
+const rx = new RegExp(suiteRe);
+const runs = specs.map((s) => {
+  const i = s.indexOf("=");
+  const r = JSON.parse(readFileSync(s.slice(i + 1), "utf8"));
+  const m = new Map();
+  for (const t of r.tests) if (rx.test(t.test)) m.set(t.test, t);
+  return { label: s.slice(0, i), m };
+});
+const bboxDist = (t) => {
+  const a = t.ink?.bbox;
+  const b = t.chrome?.ink?.bbox;
+  if (!a || !b) return null;
+  return a.reduce((s, v, i) => s + Math.abs(v - b[i]), 0);
+};
+const base = runs[0];
+const changed = [];
+for (const [name, t0] of base.m) {
+  const vals = runs.map((r) => {
+    const t = r.m.get(name);
+    return { px: t?.comparisons?.[0]?.totalPixels ?? null, ink: t ? bboxDist(t) : null, out: t?.outcome };
+  });
+  if (vals.some((v) => v.px !== vals[0].px || v.ink !== vals[0].ink)) changed.push({ name, vals });
+}
+console.log("tests in suites:", base.m.size, "tests whose diff pixels or ink bbox changed:", changed.length);
+for (const c of changed) {
+  console.log(
+    c.name,
+    c.vals.map((v, i) => `${runs[i].label}: ${v.out} px=${v.px} inkΔ=${v.ink}`).join(" | "),
+  );
+}
+const sum = (i, k) => changed.reduce((s, c) => s + (c.vals[i][k] ?? 0), 0);
+console.log(
+  "sums over changed tests:",
+  runs.map((r, i) => `${r.label}: px=${sum(i, "px")} inkΔ=${sum(i, "ink")}`).join(" | "),
+);

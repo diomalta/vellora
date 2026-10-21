@@ -1,0 +1,60 @@
+// Scratch probe (not part of the repo): Chrome border boxes + text line rects of every element with
+// an id (and every table/td/th), for the probe documents in probes.json, laid out by the ONE
+// shared reference setup (fidelity/lib/chrome-reference.mjs: print media, bundled Liberation
+// @font-face block). Viewport width = the @page content width vellora hands Blitz, truncated to
+// whole px like vellora's viewport (A4 - 2 x 18 mm = 657.64 -> 657).
+//   node chrome-probe.mjs <repo> probes.json [viewportWidth] > chrome.json
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const [repo, probesFile, vw = "657"] = process.argv.slice(2);
+const ref = await import(pathToFileURL(join(repo, "fidelity/lib/chrome-reference.mjs")).href);
+const probes = JSON.parse(readFileSync(probesFile, "utf8"));
+const chrome = await ref.launchReferenceChrome();
+const width = Number(vw);
+const out = { chrome: chrome.version, userAgent: chrome.userAgent, viewport: [width, 1000], probes: {} };
+try {
+  for (const [name, html] of Object.entries(probes)) {
+    out.probes[name] = await ref.withPrintPage(chrome, ref.referenceHtml(html), async (page) => {
+      await page.setViewport({ width, height: 1000, deviceScaleFactor: 1 });
+      return page.evaluate(() => {
+        const r = {};
+        let n = 0;
+        for (const el of document.querySelectorAll("[id], table, td, th")) {
+          const b = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          const key = el.id || `${el.tagName.toLowerCase()}#${n++}`;
+          const lines = [];
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+            if (!t.textContent.trim()) continue;
+            const range = document.createRange();
+            range.selectNodeContents(t);
+            for (const q of range.getClientRects()) {
+              lines.push({ text: t.textContent.trim().slice(0, 40), x: q.x, y: q.y, w: q.width, h: q.height, right: q.x + q.width });
+            }
+          }
+          r[key] = {
+            x: b.x,
+            y: b.y,
+            w: b.width,
+            h: b.height,
+            right: b.x + b.width,
+            padL: parseFloat(cs.paddingLeft),
+            padR: parseFloat(cs.paddingRight),
+            borderL: parseFloat(cs.borderLeftWidth),
+            borderR: parseFloat(cs.borderRightWidth),
+            textAlign: cs.textAlign,
+            font: cs.fontFamily,
+            lines,
+          };
+        }
+        return r;
+      });
+    });
+  }
+} finally {
+  await chrome.close();
+}
+console.log(JSON.stringify(out, null, 1));

@@ -1,0 +1,50 @@
+// Scratch probe (not part of the repo): vellora's boxes + text runs (L0 and every pass layer of a
+// layout_dump) for the elements with an id / table / td / th of each probe in probes.json.
+//   node vellora-probe.mjs <layout_dump bin> probes.json <workdir> [layer]
+import { spawnSync } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+const [bin, probesFile, work, wantLayer] = process.argv.slice(2);
+mkdirSync(work, { recursive: true });
+const probes = JSON.parse(readFileSync(probesFile, "utf8"));
+const out = {};
+for (const [name, html] of Object.entries(probes)) {
+  const h = join(work, `${name}.html`);
+  const d = join(work, `${name}.dump.json`);
+  writeFileSync(h, html);
+  const r = spawnSync(bin, ["--html", h, "--out", d], { encoding: "utf8" });
+  if (r.status !== 0) throw new Error(r.stderr);
+  const dump = JSON.parse(readFileSync(d, "utf8"));
+  const nodes = new Map(dump.nodes.map((n) => [n.id, n]));
+  const res = { layers: dump.layers.map((l) => l.name), boxes: {} };
+  for (const layer of dump.layers) {
+    if (wantLayer && layer.name !== wantLayer && layer.name !== "L0") continue;
+    const fields = String(layer.box_fields).split(",");
+    const f = Object.fromEntries(fields.map((k, i) => [k, i]));
+    const rf = Object.fromEntries(String(layer.run_fields).split(",").map((k, i) => [k, i]));
+    let n = 0;
+    layer.boxes.forEach((b, bi) => {
+      const node = nodes.get(b[f.node_id]);
+      if (!node || node.kind !== "element") return;
+      if (!(node.id_attr || ["table", "td", "th"].includes(node.tag))) return;
+      const key = node.id_attr || `${node.tag}#${n++}`;
+      const runs = layer.runs
+        .filter((run) => run[rf.box_index] === bi)
+        .map((run) => ({
+          x: run[rf.origin_x],
+          right: run[rf.origin_x] + run[rf.advance],
+          w: run[rf.advance],
+        }));
+      (res.boxes[key] ??= {})[layer.name] = {
+        x: b[f.x],
+        y: b[f.y],
+        w: b[f.w],
+        right: b[f.x] + b[f.w],
+        runs,
+      };
+    });
+  }
+  out[name] = res;
+}
+console.log(JSON.stringify(out, null, 1));

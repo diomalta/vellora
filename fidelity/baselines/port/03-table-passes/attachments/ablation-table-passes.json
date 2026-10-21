@@ -1,0 +1,384 @@
+{
+  "what": "Ablation of the table passes (port step 03). Every variant is a full run-all --gate run against fidelity/baselines/port/02-delete-noop-passes, same environment (darwin 27.0.0 arm64 / Apple M5 Pro, node v22.23.2, rustc 1.96.0, Chrome 155.0.8059.85 local INDICATIVE, Chrome WPT data reused from the Phase A beta.4 run). tablesSuitesDiffPixels = sum over css/CSS2/tables + css/css-tables of the differing-pixel count of each test's first comparison (0 for passes): a continuous signal under the binary WPT outcome.",
+  "baseline02": {
+    "tablesSuitesPass": 58,
+    "tablesSuitesDiffPixels": 4655141
+  },
+  "variants": [
+    {
+      "id": "V1-align",
+      "what": "alignment-aware text move; fixed_table_widths + compact kept",
+      "gateVs02WithoutAcceptances": {
+        "verdict": "FAIL",
+        "counts": {
+          "improvement": 536,
+          "regression": 38,
+          "gating": 38,
+          "unchanged": 14905,
+          "withinTolerance": 1
+        }
+      },
+      "byGroup": {
+        "corpus BOL-R": {
+          "improvement": 2
+        },
+        "oracles:text EXT-2": {
+          "improvement": 12,
+          "regression": 3
+        },
+        "oracles:layout REF-W": {
+          "improvement": 6
+        },
+        "pdf-probe": {
+          "improvement": 516,
+          "regression": 35
+        }
+      },
+      "metrics": {
+        "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 3.91,
+          "after": 2.81,
+          "class": "improvement"
+        },
+        "invoice|REF-W|oracles:layout|plain|criterion#1|p95Mm": {
+          "before": 3.78,
+          "after": 2.78,
+          "class": "improvement"
+        },
+        "danfe|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 45.66,
+          "after": 44.42,
+          "class": "improvement"
+        },
+        "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 86.19,
+          "after": 63.3,
+          "class": "improvement"
+        },
+        "text-stress-ptbr|REF-W|oracles:layout|plain|criterion#1|maxMm": "unchanged",
+        "boleto-febraban|BOL-X1|corpus||criterion#1|found": "unchanged",
+        "danfe|DANFE-X1|corpus||criterion#1|found": "unchanged",
+        "danfe|DANFE-F11|corpus||criterion#1|glyphsAttributed": "unchanged",
+        "danfe|DANFE-B5|corpus||criterion#1|excess": "unchanged"
+      },
+      "wpt": {
+        "pass": 3076,
+        "clean": 2506,
+        "total": 8047,
+        "tablesSuitesPass": 58,
+        "tablesSuitesDiffPixels": 4656441
+      }
+    },
+    {
+      "id": "V3-nofixed",
+      "what": "V1 + fixed_table_widths deleted (compact kept)",
+      "gateVs02WithoutAcceptances": {
+        "verdict": "FAIL",
+        "counts": {
+          "improvement": 1528,
+          "regression": 40,
+          "gating": 40,
+          "unchanged": 13911,
+          "withinTolerance": 0
+        }
+      },
+      "byGroup": {
+        "corpus BOL-X": {
+          "improvement": 8
+        },
+        "corpus BOL-B": {
+          "improvement": 4
+        },
+        "oracles:text EXT-2": {
+          "improvement": 25
+        },
+        "corpus DANFE-X": {
+          "improvement": 4
+        },
+        "corpus DANFE-B": {
+          "improvement": 5
+        },
+        "corpus DANFE-F": {
+          "improvement": 4
+        },
+        "oracles:barcode DANFE-B1": {
+          "improvement": 1
+        },
+        "corpus BOL-R": {
+          "improvement": 2
+        },
+        "oracles:layout REF-W": {
+          "improvement": 10
+        },
+        "pdf-probe": {
+          "improvement": 1465,
+          "regression": 40
+        }
+      },
+      "metrics": {
+        "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 3.91,
+          "after": 2.81,
+          "class": "improvement"
+        },
+        "invoice|REF-W|oracles:layout|plain|criterion#1|p95Mm": {
+          "before": 3.78,
+          "after": 2.78,
+          "class": "improvement"
+        },
+        "danfe|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 45.66,
+          "after": 4.71,
+          "class": "improvement"
+        },
+        "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 86.19,
+          "after": 7.94,
+          "class": "improvement"
+        },
+        "text-stress-ptbr|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 101.6,
+          "after": 96.73,
+          "class": "improvement"
+        },
+        "boleto-febraban|BOL-X1|corpus||criterion#1|found": {
+          "before": 11,
+          "after": 16,
+          "class": "improvement"
+        },
+        "danfe|DANFE-X1|corpus||criterion#1|found": {
+          "before": 22,
+          "after": 26,
+          "class": "improvement"
+        },
+        "danfe|DANFE-F11|corpus||criterion#1|glyphsAttributed": {
+          "before": 3472,
+          "after": 3511,
+          "class": "improvement"
+        },
+        "danfe|DANFE-B5|corpus||criterion#1|excess": {
+          "before": 2.6077,
+          "after": 0,
+          "class": "improvement"
+        }
+      },
+      "wpt": {
+        "pass": 3076,
+        "clean": 2506,
+        "total": 8047,
+        "tablesSuitesPass": 58,
+        "tablesSuitesDiffPixels": 4567081
+      }
+    },
+    {
+      "id": "V4-nofixed-nocompact",
+      "what": "V3 + auto_table_compact_columns deleted",
+      "gateVs02WithoutAcceptances": {
+        "verdict": "FAIL",
+        "counts": {
+          "improvement": 1489,
+          "regression": 79,
+          "failure": 1,
+          "gating": 80,
+          "unchanged": 13911,
+          "withinTolerance": 0
+        }
+      },
+      "byGroup": {
+        "corpus BOL-X": {
+          "improvement": 8
+        },
+        "corpus BOL-B": {
+          "improvement": 4
+        },
+        "oracles:text EXT-2": {
+          "improvement": 25
+        },
+        "corpus DANFE-X": {
+          "improvement": 4
+        },
+        "corpus DANFE-B": {
+          "improvement": 5
+        },
+        "corpus DANFE-F": {
+          "improvement": 4
+        },
+        "oracles:barcode DANFE-B1": {
+          "improvement": 1
+        },
+        "corpus BOL-R": {
+          "improvement": 2
+        },
+        "oracles:layout REF-W": {
+          "improvement": 8,
+          "regression": 2
+        },
+        "pdf-probe": {
+          "improvement": 1428,
+          "regression": 77
+        },
+        "code-checks": {
+          "failure": 1
+        }
+      },
+      "metrics": {
+        "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 3.91,
+          "after": 5.14,
+          "class": "regression"
+        },
+        "invoice|REF-W|oracles:layout|plain|criterion#1|p95Mm": {
+          "before": 3.78,
+          "after": 4.88,
+          "class": "regression"
+        },
+        "danfe|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 45.66,
+          "after": 4.71,
+          "class": "improvement"
+        },
+        "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 86.19,
+          "after": 7.94,
+          "class": "improvement"
+        },
+        "text-stress-ptbr|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 101.6,
+          "after": 96.73,
+          "class": "improvement"
+        },
+        "boleto-febraban|BOL-X1|corpus||criterion#1|found": {
+          "before": 11,
+          "after": 16,
+          "class": "improvement"
+        },
+        "danfe|DANFE-X1|corpus||criterion#1|found": {
+          "before": 22,
+          "after": 26,
+          "class": "improvement"
+        },
+        "danfe|DANFE-F11|corpus||criterion#1|glyphsAttributed": {
+          "before": 3472,
+          "after": 3511,
+          "class": "improvement"
+        },
+        "danfe|DANFE-B5|corpus||criterion#1|excess": {
+          "before": 2.6077,
+          "after": 0,
+          "class": "improvement"
+        }
+      },
+      "wpt": {
+        "pass": 3076,
+        "clean": 2506,
+        "total": 8047,
+        "tablesSuitesPass": 58,
+        "tablesSuitesDiffPixels": 4567081
+      }
+    },
+    {
+      "id": "final",
+      "what": "V3 + table_percent_widths skips table-layout: fixed tables (committed)",
+      "gateVs02WithoutAcceptances": {
+        "verdict": "FAIL",
+        "counts": {
+          "improvement": 1529,
+          "regression": 40,
+          "gating": 40,
+          "unchanged": 13910,
+          "withinTolerance": 0
+        }
+      },
+      "byGroup": {
+        "corpus BOL-X": {
+          "improvement": 8
+        },
+        "corpus BOL-B": {
+          "improvement": 4
+        },
+        "oracles:text EXT-2": {
+          "improvement": 25
+        },
+        "corpus DANFE-X": {
+          "improvement": 4
+        },
+        "corpus DANFE-B": {
+          "improvement": 5
+        },
+        "corpus DANFE-F": {
+          "improvement": 4
+        },
+        "oracles:barcode DANFE-B1": {
+          "improvement": 1
+        },
+        "corpus BOL-R": {
+          "improvement": 2
+        },
+        "oracles:layout REF-W": {
+          "improvement": 10
+        },
+        "wpt css/CSS2/tables": {
+          "improvement": 1
+        },
+        "pdf-probe": {
+          "improvement": 1465,
+          "regression": 40
+        }
+      },
+      "metrics": {
+        "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 3.91,
+          "after": 2.81,
+          "class": "improvement"
+        },
+        "invoice|REF-W|oracles:layout|plain|criterion#1|p95Mm": {
+          "before": 3.78,
+          "after": 2.78,
+          "class": "improvement"
+        },
+        "danfe|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 45.66,
+          "after": 4.71,
+          "class": "improvement"
+        },
+        "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 86.19,
+          "after": 7.94,
+          "class": "improvement"
+        },
+        "text-stress-ptbr|REF-W|oracles:layout|plain|criterion#1|maxMm": {
+          "before": 101.6,
+          "after": 96.73,
+          "class": "improvement"
+        },
+        "boleto-febraban|BOL-X1|corpus||criterion#1|found": {
+          "before": 11,
+          "after": 16,
+          "class": "improvement"
+        },
+        "danfe|DANFE-X1|corpus||criterion#1|found": {
+          "before": 22,
+          "after": 26,
+          "class": "improvement"
+        },
+        "danfe|DANFE-F11|corpus||criterion#1|glyphsAttributed": {
+          "before": 3472,
+          "after": 3511,
+          "class": "improvement"
+        },
+        "danfe|DANFE-B5|corpus||criterion#1|excess": {
+          "before": 2.6077,
+          "after": 0,
+          "class": "improvement"
+        }
+      },
+      "wpt": {
+        "pass": 3077,
+        "clean": 2507,
+        "total": 8047,
+        "tablesSuitesPass": 59,
+        "tablesSuitesDiffPixels": 4547081
+      }
+    }
+  ]
+}

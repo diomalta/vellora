@@ -263,3 +263,129 @@ with and without the passes.
 The `committed-canary` self-test asserts that `02-delete-noop-passes` PASSes against
 `01-pagination-gaps` with no acceptances and that its only non-unchanged items are the 3 WPT
 improvements.
+
+## `03-table-passes`: alignment-aware table text, `fixed_table_widths` deleted
+
+Branch `phaseb/03-table-passes` (from `phaseb/02-delete-noop-passes` `abc80c1`), code commit
+`5ce90be`. In `layout_normalize.rs`:
+
+- `adjust_subtree_inline_geometry` moves a resized cell's own text by the left-edge change plus the
+  share of the width change its computed `text-align` gives it (left 0, center half, right all;
+  `start`/`end` resolved against `direction`). `LaidOutBox.text_align_right` becomes
+  `text_align: InlineAlign`.
+- `normalize_fixed_table_widths` is deleted (with `LaidOutBox.rowspan`, which only it used).
+- `normalize_table_percent_widths` skips `table-layout: fixed` tables.
+- `normalize_auto_table_compact_columns` is kept.
+
+The render path and the layout dump now run 3 passes: `painted_table_cell_text_baselines`,
+`table_percent_widths`, `auto_table_compact_columns`. The new and rewritten tests in
+`crates/vellora-core/tests/layout_fidelity.rs` cite Chrome's numbers
+(`attachments/chrome-probes-table-passes.json`).
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T114420Z` (2026-10-21 11:44:20Z), 20/20 steps ok, run-all exit 3 (gate FAIL before acceptances), git `5ce90be` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/02-delete-noop-passes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/03-table-passes`, then `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/02-delete-noop-passes --run fidelity/results/run-all/03-table-passes --accept <accepted.json> --out fidelity/results/run-all/03-table-passes/gate` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-03-table-passes-20261021T114420Z`. Ablation runs, binaries, diffs, `accepted.json` and scratch drivers: `~/.cache/vellora-fidelity/step03-table-passes-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/02-delete-noop-passes` (previous link; `gate-report.{json,md}`) | **PASS** with 40 `acceptedRegressions` | improvement 1529, accepted 40, gating 0, unchanged 13910 |
+| `port/02-delete-noop-passes` without acceptances (`attachments/gate-report-without-acceptances.*`) | FAIL | the same 40 items gate |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 110 gating; improvement 640 → 881 |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 100 → 74 gating; improvement 715 → 761 |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle | before → after |
+|---|---|
+| invoice REF-W max / p95 mm (step target: price/total columns) | 3.91 / 3.78 → **2.81 / 2.78** (pin 2.44 / 1.78) |
+| danfe REF-W max / p95 mm | 45.66 / 33.22 → **4.71 / 3.43** |
+| boleto-febraban REF-W max / p95 mm (and `.px-grid`) | 86.19 / 36.73 → **7.94 / 2.63**; BOL-R1 worstMm 86.02 → 4.8 |
+| text-stress-ptbr REF-W max / p95 mm | 101.6 / 97.36 → 96.73 / 95.96 |
+| BOL-X1 / BOL-X2 (pdftotext) found, both boleto-febraban variants | 11 → **16** of 16 (pin 13); BOL-B2 printed text found 0 → 1 |
+| DANFE-X1 found / DANFE-X2 pdftotext, pdfminer | 22 → **26** of 26 (pin 24) / 22 → 26, 25 → 26 |
+| DANFE-F4c segments / DANFE-F11 glyphs | 2 → 3 / 3472 → 3511 (the pin's values) |
+| DANFE-B1 Code 128 decodes + validates (corpus and zxing/zbar oracle) / DANFE-B5 excess | FAIL → PASS / 2.6077 → 0 mm |
+| EXT-2 pdftotext missing/extra | boleto-febraban 12/8 → 0/0, danfe 15/10 → 0/0, text-stress 82/50 → 0/9 |
+| pdf-probe words improved | invoice 182, boleto-febraban 112, danfe 392, text-stress-ptbr 779 |
+| WPT pass / clean (8047 reftests) | 3076 / 2506 → **3077 / 2507** (38.24 % / 31.15 %): `css/CSS2/tables/fixed-table-layout-026.xht` fail → clean pass; no other outcome changes |
+| unchanged | notification (meta-table untouched: 2 columns, no compact; deadline table already fixed by `table_percent_widths`), receipt, boleto, sparksuite, postmark; every page count; LET-*, TXT-B1, DANFE-M1; crashtests 239/239 ok; canaries 30/30 caught; DET-1/DET-2 PASS; layout-diff check failures limited to the 5 allowlisted ones |
+
+Verdict totals: all PASS 131 → 143, FAIL 52 → 36, WARN 4 → 8, NOT-RUN 3; excluding diagnostic
+variants 112 → 121, 44 → 32, 4 → 7, 3. The extra WARNs are EXT-2 rows going FAIL → WARN.
+
+### How each pass was decided (ablation, `attachments/ablation-table-passes.json`)
+
+Each variant was a full `run-all --gate` run against `02-delete-noop-passes` (same environment):
+
+| variant | gate vs 02 (no acceptances) | invoice REF-W max | WPT pass / clean |
+|---|---|---|---|
+| V1: alignment fix, both passes kept | improvement 536, regression 38 | 2.81 | 3076 / 2506 |
+| V3: V1 − `fixed_table_widths` | improvement 1528, regression 40 | 2.81 | 3076 / 2506 |
+| V4: V3 − `auto_table_compact_columns` | improvement 1489, regression 79 (+ red cargo test) | **5.14** | 3076 / 2506 |
+| final: V3 + percent pass skips fixed tables | improvement 1529, regression 40 | 2.81 | 3077 / 2507 |
+
+- **`auto_table_compact_columns`: kept.** It only fires on the invoice in the corpus. Deleting it
+  moves invoice REF-W max 2.81 → 5.14 mm (worse than step 02's 3.91) and makes 111 invoice
+  pdf-probe words worse with none better, and changes no WPT outcome or table-suite pixel count.
+  With the alignment fix the pass improves 70 invoice runs and regresses none (layout-diff layer
+  effects; step 02: 35 better / 70 worse). The pass is a heuristic: Chrome gives the spare width of
+  an auto table to the columns in proportion to their max-content widths (CONFIRMED on the
+  invoice, `compact_aligned` and `short_numeric_columns` probes, scale factors 1.29 / 1.475 /
+  1.374); raw Blitz gives every auto column an equal share (HYPOTHESIS: Taffy's auto-track
+  stretch, the table is a grid in blitz-dom). The tests pin its column boxes near Chrome's, not
+  its text.
+- **`fixed_table_widths`: deleted (net harmful).** It split every `table-layout: fixed` table into
+  equal tracks. Blitz 0.3.0-beta.4 implements CSS 2.2 §17.5.2.1 itself and matches Chrome exactly
+  on `<col>` widths (60 / 220 / 120 px; the pass gave 133.33 × 3) and first-row widths (88 / 156 /
+  156). Deleting it improves 1465 pdf-probe words and the DANFE/BOL rows above. On WPT the
+  table-suite differing pixels drop 4 656 441 → 4 567 081 (V1 → V3). `fixed-table-layout-003a*–d*`
+  go from 1 600–4 300 to 8–21 px. `003e*/f*` and `025`/`027`–`031` get worse (e.g. 025: 5 000 →
+  8 800 px; outcomes stay fail).
+- **`table_percent_widths`: kept, now auto tables only.** Re-checked: Blitz still turns `%` cell
+  and `<col>` widths into `auto` in auto tables (blitz-dom `layout/table.rs`,
+  `build_table_context` / `collect_table_cells`). The notification deadline table needs the pass
+  (value cell x error 65.5 px → 0.13 px). In fixed tables Blitz resolves `%` itself and matches
+  Chrome (108 / 146 / 146); the pass re-split them (100 / 150 / 150). Skipping fixed tables turns
+  `fixed-table-layout-026` into a clean pass and lowers 025/028/030/031 (e.g. 028 6 000 → 2 000
+  px); 027 rises 6 400 → 7 400 px. The corpus has no `%` width in a fixed table.
+
+### `acceptedRegressions` (40; reasons and evidence in `manifest.json`, per-item data in `attachments/accepted-evidence.json`)
+
+All 40 are pdf-probe words.
+
+- **16 `pdf-probe-pairing-artefact`** (oracle artefacts). The gate pairs the k-th occurrence of a
+  token on each side.
+  - **danfe** `1#1 dx`, `DA#3 dx/dy`, `da#1 dy`, `da#2 dx/dy`: the vellora word order changed, so
+    old and new compare different Chrome words. By position (nearest same-text Chrome word on the
+    page) each moved closer to Chrome or changed by less than 1 pt (e.g. `da#2` 25.41 → 2.96 pt,
+    `1#1` 32.79 → 2.21 pt, `DA#3` 0.36 → 1.11 pt).
+  - **danfe** `000#12 dy`: the old pdftotext order of the item rows was scrambled. The same row
+    against the same Chrome word has dy 16.09 pt in both runs; only its x moved, −122.2 → +2.99 pt.
+  - **text-stress-ptbr** `débito#6/#10/#13/#16`, `crédito#3/#5/#6`, `Documento#6`, `Saldo#8`:
+    vellora has 8 pages and Chrome 7, so these occurrences pair with words of other rows.
+    Against the Chrome column they belong to, all moved closer: `crédito` +36.65 → −0.23 pt,
+    `débito` +36.66 → −0.21, `Documento` −88.42 → −0.17, `Saldo` −19.07 → −0.95.
+- **24 `coincidental-match-of-wrong-geometry`**. These are DANFE header-cell words in the collapsed
+  fixed tables 5, 7 and 14 (`INSCRIÇÃO ESTADUAL DO SUBST. TRIB.`, `CNPJ`, `DATA DA EMISSÃO`,
+  `DATA DA SAÍDA`, `HORA DA SAÍDA` and their values, the second `CNPJ/CPF` block); |dx| goes from
+  0.07–5.84 pt to 1.83–7.69 pt.
+  - The old position came from the equal tracks of the deleted pass. They were wrong by
+    construction (they ignore the `<col>` widths Chrome honours) and landed near Chrome's edges here
+    only by arithmetic (table 5: `<col>` 6.86 / 6.86 / 6.78 cm vs equal 6.83 cm).
+  - The new position is raw Blitz: layout-diff L0 dx equals the final-layer dx for every one of
+    these runs.
+  - The residual is a separate Blitz defect. It lays each collapsed border out as a whole-width
+    gutter between `<col>`-length tracks, so cells drift right per column and overflow the table
+    (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px).
+  - **These 24 do not fit the merge rule's literal "false pass / oracle artefact" wording**: the
+    old value was closer to Chrome, for a wrong reason. They are listed for the orchestrator to
+    decide, like step 01's `pdf-probe-compensating-drift` items.
+
+The `committed-canary` self-test asserts that `03-table-passes` FAILs against `02-delete-noop-passes`
+without acceptances (exactly the 40 accepted keys gate), PASSes with them, and that invoice REF-W
+max, BOL-X1, DANFE-X1 and `fixed-table-layout-026` improve.

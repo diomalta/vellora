@@ -161,3 +161,49 @@ test("port/02-delete-noop-passes passes vs port/01-pagination-gaps with no accep
     ],
   );
 });
+
+test("port/03-table-passes passes vs port/02-delete-noop-passes only with its acceptedRegressions", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "02-delete-noop-passes"));
+  const step = loadBaselineDir(join(baselines, "port", "03-table-passes"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/02-delete-noop-passes");
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const accept = step.manifest.acceptedRegressions;
+  assert.equal(accept.length, 40);
+  assert.ok(accept.every((e) => e.key.startsWith("pdf-probe|") && e.reason && e.evidence));
+  // 16 occurrence-pairing artefacts and 24 DANFE words the deleted fixed_table_widths pass had
+  // placed near Chrome by coincidence (labels and evidence: manifest.json, baselines/port/README.md).
+  const labels = {};
+  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
+  assert.deepEqual(labels, {
+    "pdf-probe-pairing-artefact": 16,
+    "coincidental-match-of-wrong-geometry": 24,
+  });
+  // Without the acceptances the same comparison gates exactly the 40 accepted items...
+  const raw = compareSnapshots(prev, step);
+  assert.equal(raw.verdict, "FAIL");
+  assert.deepEqual(
+    raw.items
+      .filter((x) => x.gating)
+      .map((x) => x.key)
+      .sort(),
+    accept.map((e) => e.key).sort(),
+  );
+  // ...and with them it passes.
+  const r = compareSnapshots(prev, step, { accept });
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The step's targets: invoice price columns, DANFE and boleto-febraban grids.
+  const inv = item(r, "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm");
+  assert.deepEqual([inv.class, inv.before, inv.after], ["improvement", 3.91, 2.81]);
+  const bol = item(r, "boleto-febraban|BOL-X1|corpus||criterion#1|found");
+  assert.deepEqual([bol.class, bol.before, bol.after], ["improvement", 11, 16]);
+  const danfe = item(r, "danfe|DANFE-X1|corpus||criterion#1|found");
+  assert.deepEqual([danfe.class, danfe.before, danfe.after], ["improvement", 22, 26]);
+  const wpt = item(r, "wpt|css/CSS2/tables/fixed-table-layout-026.xht");
+  assert.deepEqual([wpt.class, wpt.before, wpt.after], ["improvement", "fail", "pass"]);
+});

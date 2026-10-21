@@ -1,0 +1,1754 @@
+{
+  "pdf-probe|danfe|1#1|dx": {
+    "key": "pdf-probe|danfe|1#1|dx",
+    "before": -32.79,
+    "after": 58.46,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 260.13287,
+          "y": 125.885704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 292.920615,
+          "y": 131.50268
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 351.38287,
+          "y": 125.885704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 292.920615,
+          "y": 131.50268
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -32.79,
+      "new": 2.21
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.05,
+      "new": 2.21
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|DA#3|dx": {
+    "key": "pdf-probe|danfe|DA#3|dx",
+    "before": 0.36,
+    "after": -505.14,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 42.919623,
+          "y": 185.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 42.55791,
+          "y": 187.223161
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 43.669623,
+          "y": 185.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 548.813333,
+          "y": 146.203111
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 0.36,
+      "new": 1.11
+    },
+    "nearestSameTextSameColumn": {
+      "old": 0.36,
+      "new": -291.99
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|DA#3|dy": {
+    "key": "pdf-probe|danfe|DA#3|dy",
+    "before": -1.73,
+    "after": 39.29,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 42.919623,
+          "y": 185.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 42.55791,
+          "y": 187.223161
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 43.669623,
+          "y": 185.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 548.813333,
+          "y": 146.203111
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.73,
+      "new": -1.73
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|da#1|dy": {
+    "key": "pdf-probe|danfe|da#1|dy",
+    "before": -0.23,
+    "after": -10.72,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 581.528165,
+          "y": 145.974634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 548.813333,
+          "y": 146.203111
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 551.778165,
+          "y": 145.974634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 541.513545,
+          "y": 156.692326
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.23,
+      "new": -0.23
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|da#2|dx": {
+    "key": "pdf-probe|danfe|da#2|dx",
+    "before": 32.71,
+    "after": 501.92,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 574.223891,
+          "y": 157.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 541.513545,
+          "y": 156.692326
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 544.473891,
+          "y": 157.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 42.55791,
+          "y": 187.223161
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 25.41,
+      "new": 2.96
+    },
+    "nearestSameTextSameColumn": {
+      "old": 25.41,
+      "new": 2.96
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|da#2|dy": {
+    "key": "pdf-probe|danfe|da#2|dy",
+    "before": 0.53,
+    "after": -30,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 574.223891,
+          "y": 157.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 541.513545,
+          "y": 156.692326
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 544.473891,
+          "y": 157.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 42.55791,
+          "y": 187.223161
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 11.02,
+      "new": 0.53
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|danfe|INSCRIÇÃO#2|dx": {
+    "key": "pdf-probe|danfe|INSCRIÇÃO#2|dx",
+    "before": -0.17,
+    "after": 1.83,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 203.83661,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 204.008122,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 205.83661,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 204.008122,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.17,
+      "new": 1.83
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.17,
+      "new": 1.83
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|ESTADUAL#2|dx": {
+    "key": "pdf-probe|danfe|ESTADUAL#2|dx",
+    "before": -0.14,
+    "after": 1.86,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 237.674501,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 237.811258,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 239.674501,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 237.811258,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.14,
+      "new": 1.86
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.14,
+      "new": 1.86
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DO#2|dx": {
+    "key": "pdf-probe|danfe|DO#2|dx",
+    "before": -0.1,
+    "after": 1.9,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 270.135438,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 270.238854,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 272.135438,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 270.238854,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.1,
+      "new": 1.9
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.1,
+      "new": 1.9
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|SUBST.#1|dx": {
+    "key": "pdf-probe|danfe|SUBST.#1|dx",
+    "before": -0.09,
+    "after": 1.91,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 280.301454,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 280.394428,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 282.301454,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 280.394428,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.09,
+      "new": 1.91
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.09,
+      "new": 1.91
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|TRIB.#1|dx": {
+    "key": "pdf-probe|danfe|TRIB.#1|dx",
+    "before": -0.07,
+    "after": 1.93,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 301.421571,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 301.492853,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 303.421571,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 301.492853,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.07,
+      "new": 1.93
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.07,
+      "new": 1.93
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|CNPJ#1|dx": {
+    "key": "pdf-probe|danfe|CNPJ#1|dx",
+    "before": -0.67,
+    "after": 3.33,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 397.5866,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 398.257623,
+          "y": 211.94774
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 401.5866,
+          "y": 210.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 398.257623,
+          "y": 211.94774
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.67,
+      "new": 3.33
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.67,
+      "new": 3.33
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|12.345.678/0001-95#1|dx": {
+    "key": "pdf-probe|danfe|12.345.678/0001-95#1|dx",
+    "before": -0.67,
+    "after": 3.33,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 397.5866,
+          "y": 219.474634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 398.257623,
+          "y": 219.627618
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 401.5866,
+          "y": 219.474634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 398.257623,
+          "y": 219.627618
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -0.67,
+      "new": 3.33
+    },
+    "nearestSameTextSameColumn": {
+      "old": -0.67,
+      "new": 3.33
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DATA#2|dx": {
+    "key": "pdf-probe|danfe|DATA#2|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 248.659993
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 248.659993
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DA#4|dx": {
+    "key": "pdf-probe|danfe|DA#4|dx",
+    "before": -1.25,
+    "after": 6.04,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 524.9884,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 526.235416,
+          "y": 248.659993
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 532.2741,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 526.235416,
+          "y": 248.659993
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.25,
+      "new": 6.04
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.25,
+      "new": 4.56
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|EMISSÃO#1|dx": {
+    "key": "pdf-probe|danfe|EMISSÃO#1|dx",
+    "before": -1.24,
+    "after": 6.05,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 534.823361,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 536.060275,
+          "y": 248.659993
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 542.109061,
+          "y": 248.495364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 536.060275,
+          "y": 248.659993
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.24,
+      "new": 6.05
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.24,
+      "new": 6.05
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|15/10/2026#2|dx": {
+    "key": "pdf-probe|danfe|15/10/2026#2|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 256.974634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 256.339872
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 256.974634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 256.339872
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DATA#3|dx": {
+    "key": "pdf-probe|danfe|DATA#3|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 272.635342
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 272.635342
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DA#5|dx": {
+    "key": "pdf-probe|danfe|DA#5|dx",
+    "before": -1.25,
+    "after": 6.04,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 524.9884,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 526.235416,
+          "y": 272.635342
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 532.2741,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 526.235416,
+          "y": 272.635342
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.25,
+      "new": 6.04
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.25,
+      "new": 4.56
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|SAÍDA#2|dx": {
+    "key": "pdf-probe|danfe|SAÍDA#2|dx",
+    "before": -1.24,
+    "after": 6.05,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 534.823361,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 536.060275,
+          "y": 272.635342
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 542.109061,
+          "y": 273.245364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 536.060275,
+          "y": 272.635342
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.24,
+      "new": 6.05
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.24,
+      "new": 4.57
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|15/10/2026#3|dx": {
+    "key": "pdf-probe|danfe|15/10/2026#3|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 281.885704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 280.315221
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 281.885704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 280.315221
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|HORA#1|dx": {
+    "key": "pdf-probe|danfe|HORA#1|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 297.359921
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 297.359921
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|DA#6|dx": {
+    "key": "pdf-probe|danfe|DA#6|dx",
+    "before": -1.25,
+    "after": 6.04,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 526.470822,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 527.716315,
+          "y": 297.359921
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 533.756522,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 527.716315,
+          "y": 297.359921
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.25,
+      "new": 6.04
+    },
+    "nearestSameTextSameColumn": {
+      "old": 0.24,
+      "new": 6.04
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|SAÍDA#3|dx": {
+    "key": "pdf-probe|danfe|SAÍDA#3|dx",
+    "before": -1.24,
+    "after": 6.05,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 536.305783,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 537.541175,
+          "y": 297.359921
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 543.591483,
+          "y": 297.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 537.541175,
+          "y": 297.359921
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.24,
+      "new": 6.05
+    },
+    "nearestSameTextSameColumn": {
+      "old": 0.25,
+      "new": 6.05
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|14:00:00#1|dx": {
+    "key": "pdf-probe|danfe|14:00:00#1|dx",
+    "before": -1.26,
+    "after": 6.02,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.3009,
+          "y": 306.635704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 304.29057
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 515.5866,
+          "y": 306.635704
+        },
+        "chrome": {
+          "page": 1,
+          "x": 509.565056,
+          "y": 304.29057
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "nearestSameTextSameColumn": {
+      "old": -1.26,
+      "new": 6.02
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|CNPJ/CPF#2|dx": {
+    "key": "pdf-probe|danfe|CNPJ/CPF#2|dx",
+    "before": -5.84,
+    "after": 7.66,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 475.0866,
+          "y": 435.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 432.221261
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 488.5866,
+          "y": 435.995364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 432.221261
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|44.555.666/0001-81#1|dx": {
+    "key": "pdf-probe|danfe|44.555.666/0001-81#1|dx",
+    "before": -5.84,
+    "after": 7.66,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 475.0866,
+          "y": 444.474634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 439.15191
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 488.5866,
+          "y": 444.474634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 439.15191
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|INSCRIÇÃO#4|dx": {
+    "key": "pdf-probe|danfe|INSCRIÇÃO#4|dx",
+    "before": -5.84,
+    "after": 7.66,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 475.0866,
+          "y": 460.745364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 456.19661
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 488.5866,
+          "y": 460.745364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 456.19661
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|ESTADUAL#4|dx": {
+    "key": "pdf-probe|danfe|ESTADUAL#4|dx",
+    "before": -5.81,
+    "after": 7.69,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 508.924491,
+          "y": 460.745364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 514.73357,
+          "y": 456.19661
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 522.424491,
+          "y": 460.745364
+        },
+        "chrome": {
+          "page": 1,
+          "x": 514.73357,
+          "y": 456.19661
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -5.81,
+      "new": 7.69
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.81,
+      "new": 7.69
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|244.556.677.118#1|dx": {
+    "key": "pdf-probe|danfe|244.556.677.118#1|dx",
+    "before": -5.84,
+    "after": 7.66,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 475.0866,
+          "y": 469.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 463.876489
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 488.5866,
+          "y": 469.224634
+        },
+        "chrome": {
+          "page": 1,
+          "x": 480.930434,
+          "y": 463.876489
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "nearestSameTextSameColumn": {
+      "old": -5.84,
+      "new": 7.66
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "label": "coincidental-match-of-wrong-geometry"
+  },
+  "pdf-probe|danfe|000#12|dy": {
+    "key": "pdf-probe|danfe|000#12|dy",
+    "before": 4.84,
+    "after": 16.09,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 1,
+          "x": 136.67465,
+          "y": 658.395955
+        },
+        "chrome": {
+          "page": 1,
+          "x": 258.877492,
+          "y": 653.552594
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 1,
+          "x": 261.8711,
+          "y": 669.645955
+        },
+        "chrome": {
+          "page": 1,
+          "x": 258.877492,
+          "y": 653.552594
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 4.84,
+      "new": 16.09
+    },
+    "pages": {
+      "vellora": 2,
+      "chrome": 1
+    },
+    "sameRowOld": {
+      "vellora": {
+        "page": 1,
+        "x": 136.67465,
+        "y": 669.645955
+      },
+      "dyVsNewChromePartner": 16.09
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|débito#6|dx": {
+    "key": "pdf-probe|text-stress-ptbr|débito#6|dx",
+    "before": -191.43,
+    "after": -228.3,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 3,
+          "x": 176.283452,
+          "y": 211.668931
+        },
+        "chrome": {
+          "page": 3,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 3,
+          "x": 139.408456,
+          "y": 211.668931
+        },
+        "chrome": {
+          "page": 3,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|crédito#3|dx": {
+    "key": "pdf-probe|text-stress-ptbr|crédito#3|dx",
+    "before": -169.3,
+    "after": -206.18,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 3,
+          "x": 263.202476,
+          "y": 260.418951
+        },
+        "chrome": {
+          "page": 3,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 3,
+          "x": 226.32748,
+          "y": 260.418951
+        },
+        "chrome": {
+          "page": 3,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -169.3,
+      "new": -206.18
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.65,
+      "new": -0.23
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|débito#10|dx": {
+    "key": "pdf-probe|text-stress-ptbr|débito#10|dx",
+    "before": -191.43,
+    "after": -228.3,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 4,
+          "x": 176.283452,
+          "y": 279.168951
+        },
+        "chrome": {
+          "page": 4,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 4,
+          "x": 139.408456,
+          "y": 279.168951
+        },
+        "chrome": {
+          "page": 4,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|débito#13|dx": {
+    "key": "pdf-probe|text-stress-ptbr|débito#13|dx",
+    "before": -191.43,
+    "after": -228.3,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 5,
+          "x": 176.283452,
+          "y": 162.918931
+        },
+        "chrome": {
+          "page": 5,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 5,
+          "x": 139.408456,
+          "y": 162.918931
+        },
+        "chrome": {
+          "page": 5,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|crédito#5|dx": {
+    "key": "pdf-probe|text-stress-ptbr|crédito#5|dx",
+    "before": -169.3,
+    "after": -206.18,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 5,
+          "x": 263.202476,
+          "y": 293.418951
+        },
+        "chrome": {
+          "page": 5,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 5,
+          "x": 226.32748,
+          "y": 293.418951
+        },
+        "chrome": {
+          "page": 5,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 36.65,
+      "new": -0.23
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.65,
+      "new": -0.23
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|crédito#6|dx": {
+    "key": "pdf-probe|text-stress-ptbr|crédito#6|dx",
+    "before": -169.3,
+    "after": -206.18,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 6,
+          "x": 263.202476,
+          "y": 84.168941
+        },
+        "chrome": {
+          "page": 6,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 6,
+          "x": 226.32748,
+          "y": 84.168941
+        },
+        "chrome": {
+          "page": 6,
+          "x": 432.503892,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": -169.3,
+      "new": -206.18
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.65,
+      "new": -0.23
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|débito#16|dx": {
+    "key": "pdf-probe|text-stress-ptbr|débito#16|dx",
+    "before": -191.43,
+    "after": -228.3,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 6,
+          "x": 176.283452,
+          "y": 282.168951
+        },
+        "chrome": {
+          "page": 6,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 6,
+          "x": 139.408456,
+          "y": 282.168951
+        },
+        "chrome": {
+          "page": 6,
+          "x": 367.710922,
+          "y": 49.307437
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 81.06,
+      "new": 44.18
+    },
+    "nearestSameTextSameColumn": {
+      "old": 36.66,
+      "new": -0.21
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|Documento#6|dx": {
+    "key": "pdf-probe|text-stress-ptbr|Documento#6|dx",
+    "before": 92.89,
+    "after": 181.14,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 7,
+          "x": 216.76968,
+          "y": 46.668943
+        },
+        "chrome": {
+          "page": 7,
+          "x": 123.877024,
+          "y": 81.699525
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 7,
+          "x": 305.01968,
+          "y": 46.668943
+        },
+        "chrome": {
+          "page": 7,
+          "x": 123.877024,
+          "y": 81.699525
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 92.89,
+      "new": 30.76
+    },
+    "nearestSameTextSameColumn": {
+      "old": -88.42,
+      "new": -0.17
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  },
+  "pdf-probe|text-stress-ptbr|Saldo#8|dx": {
+    "key": "pdf-probe|text-stress-ptbr|Saldo#8|dx",
+    "before": 357.06,
+    "after": 375.18,
+    "occurrencePair": {
+      "old": {
+        "vellora": {
+          "page": 7,
+          "x": 488.16055,
+          "y": 46.668943
+        },
+        "chrome": {
+          "page": 7,
+          "x": 131.101782,
+          "y": 176.949521
+        }
+      },
+      "new": {
+        "vellora": {
+          "page": 7,
+          "x": 506.28555,
+          "y": 46.668943
+        },
+        "chrome": {
+          "page": 7,
+          "x": 131.101782,
+          "y": 176.949521
+        }
+      }
+    },
+    "nearestSameTextSamePage": {
+      "old": 357.06,
+      "new": 375.18
+    },
+    "nearestSameTextSameColumn": {
+      "old": -19.07,
+      "new": -0.95
+    },
+    "pages": {
+      "vellora": 8,
+      "chrome": 7
+    },
+    "label": "pdf-probe-pairing-artefact"
+  }
+}

@@ -1,0 +1,54 @@
+// node probe-regress.mjs <gate-report.json> <old run dir> <new run dir>
+// For every gating pdf-probe item: the occurrence-paired delta (what the gate compares) and, for the
+// same vellora word, the delta to the NEAREST Chrome word with the same text on the same page
+// (occurrence pairing can swap identical tokens when pdftotext reorders them).
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const [gateFile, oldDir, newDir] = process.argv.slice(2);
+const gate = JSON.parse(readFileSync(gateFile, "utf8"));
+const probe = (dir, fx) =>
+  JSON.parse(readFileSync(join(dir, "layout-diff", fx, "run-all", "pdf-probe.json"), "utf8"));
+const cache = new Map();
+const get = (dir, fx) => {
+  const k = `${dir}|${fx}`;
+  if (!cache.has(k)) cache.set(k, probe(dir, fx));
+  return cache.get(k);
+};
+function lookup(p, text, occ) {
+  const same = p.pairs.filter((x) => x.text === text);
+  const pair = same[occ - 1];
+  if (!pair) return null;
+  // nearest Chrome word with the same text on the vellora word's page
+  const chromeWords = p.pairs
+    .filter((x) => x.text === text && x.chrome)
+    .map((x) => x.chrome);
+  let best = null;
+  for (const c of chromeWords) {
+    if (!pair.vellora || c.page !== pair.vellora.page) continue;
+    const d = Math.hypot(pair.vellora.x - c.x, pair.vellora.y - c.y);
+    if (!best || d < best.d) best = { d, dx: pair.vellora.x - c.x, dy: pair.vellora.y - c.y };
+  }
+  return { pair, best, count: same.length };
+}
+const f = (v) => (v == null ? "-" : (+v).toFixed(2));
+for (const it of gate.items.filter((x) => x.gating && x.key.startsWith("pdf-probe|"))) {
+  const [, fx, tok, coord] = it.key.split("|");
+  const i = tok.lastIndexOf("#");
+  const text = tok.slice(0, i);
+  const occ = Number(tok.slice(i + 1));
+  const o = lookup(get(oldDir, fx), text, occ);
+  const n = lookup(get(newDir, fx), text, occ);
+  console.log(
+    [
+      fx,
+      tok,
+      coord,
+      `gate ${f(it.before)}->${f(it.after)}`,
+      `nearest-old d${coord} ${f(o?.best?.[coord])}`,
+      `nearest-new d${coord} ${f(n?.best?.[coord])}`,
+      `new v(${n?.pair.vellora?.page},${f(n?.pair.vellora?.x)},${f(n?.pair.vellora?.y)}) c(${n?.pair.chrome?.page},${f(n?.pair.chrome?.x)},${f(n?.pair.chrome?.y)})`,
+      `count ${n?.count}`,
+    ].join(" | "),
+  );
+}

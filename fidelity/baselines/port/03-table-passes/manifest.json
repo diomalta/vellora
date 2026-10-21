@@ -1,0 +1,973 @@
+{
+  "schema": "vellora-fidelity/baseline/2",
+  "name": "03-table-passes",
+  "labels": {
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "what": "Baseline for the fidelity value ratchet (fidelity/gate/): verdicts with values, WPT per-test outcomes with Chrome ink flags, crashtests, per-word pdf-probe, canaries, code checks."
+  },
+  "provenance": {
+    "runId": "20261021T114420Z",
+    "date": "Wed Oct 21 11:44:20 UTC 2026",
+    "dateIso": "2026-10-21T11:44:20Z",
+    "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/02-delete-noop-passes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/03-table-passes",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "5ce90be792c5bd1bf3c9f71cffa25e29d24a37b6",
+      "branch": "phaseb/03-table-passes",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "4a237f81e61cca1dbe80e074294ffbcf3e965343cafca7040cf68d372bd78a15"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    }
+  },
+  "environment": {
+    "date": "Wed Oct 21 11:44:20 UTC 2026",
+    "dateIso": "2026-10-21T11:44:20Z",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "cpuCount": 18,
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "chrome": {
+      "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "version": "Google Chrome 155.0.8059.85"
+    },
+    "poppler": {
+      "pdftoppm": "pdftoppm version 26.06.0",
+      "pdftotext": "pdftotext version 26.06.0",
+      "pdftocairo": "pdftocairo version 26.06.0",
+      "pdfinfo": "pdfinfo version 26.06.0",
+      "pdffonts": "pdffonts version 26.06.0",
+      "pdfimages": "pdfimages version 26.06.0"
+    },
+    "python": {
+      "interpreter": "Python 3.12.13",
+      "packages": {
+        "cffi": "2.1.1",
+        "charset-normalizer": "3.5.2",
+        "cryptography": "50.0.2",
+        "pdfminer-six": "20260107",
+        "pillow": "12.3.0",
+        "pycparser": "3.11",
+        "pymupdf": "1.28.2",
+        "zxing-cpp": "3.1.1",
+        "pypdf": "6.21.1",
+        "fonttools": "4.67.0"
+      }
+    },
+    "docker": {
+      "server": "29.8.2",
+      "toolsImage": {
+        "image": "vellora-fidelity-tools:baseline-beta4",
+        "present": true,
+        "id": "sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+        "architecture": "arm64"
+      },
+      "verapdfImage": {
+        "image": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+        "present": true,
+        "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+        "architecture": "amd64"
+      }
+    },
+    "git": {
+      "head": "5ce90be792c5bd1bf3c9f71cffa25e29d24a37b6",
+      "branch": "phaseb/03-table-passes",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "4a237f81e61cca1dbe80e074294ffbcf3e965343cafca7040cf68d372bd78a15"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    },
+    "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/02-delete-noop-passes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/03-table-passes",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)"
+  },
+  "source": {
+    "run": "fidelity/results/run-all/03-table-passes",
+    "summarySha256": "68abd0ae176560592f1e6942b3834af010c926a032475ee42e8ed9963d86511f",
+    "note": "fidelity/results/ is gitignored; the run directory is not committed"
+  },
+  "canaryCounts": {
+    "total": 38,
+    "detection": 30,
+    "caught": 30,
+    "notCaught": 0,
+    "notRun": 0,
+    "measurement": 8
+  },
+  "totals": {
+    "all": {
+      "counts": {
+        "PASS": 143,
+        "FAIL": 36,
+        "WARN": 8,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 20,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 11,
+          "FAIL": 1,
+          "WARN": 8,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 12,
+          "FAIL": 11,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 10,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 2,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 74,
+          "FAIL": 19,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 6,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "excludingDiagnostic": {
+      "counts": {
+        "PASS": 121,
+        "FAIL": 32,
+        "WARN": 7,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 18,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 10,
+          "FAIL": 1,
+          "WARN": 7,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 11,
+          "FAIL": 10,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 9,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 1,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 59,
+          "FAIL": 16,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 5,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "failedControls": [],
+    "stepsByStatus": {
+      "ok": 20
+    }
+  },
+  "gate": {
+    "verdict": "PASS",
+    "baseline": "fidelity/baselines/port/02-delete-noop-passes",
+    "counts": {
+      "improvement": 1529,
+      "accepted": 40,
+      "gating": 0,
+      "unchanged": 13910,
+      "withinTolerance": 0
+    },
+    "refusals": [],
+    "accepted": [
+      {
+        "key": "pdf-probe|danfe|1#1|dx",
+        "before": -32.79,
+        "after": 58.46,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #1 of \"1\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (351.38, 125.89) vs Chrome (292.92, 131.5)). By position (nearest same-text Chrome word on the same page) |dx| went 32.79 -> 2.21 pt: closer to Chrome.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|1#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|DA#3|dx",
+        "before": 0.36,
+        "after": -505.14,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #3 of \"DA\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (43.67, 185.5) vs Chrome (548.81, 146.2)). By position (nearest same-text Chrome word on the same page) |dx| went 0.36 -> 1.11 pt: a change below the 1 pt tolerance.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|DA#3|dy",
+        "before": -1.73,
+        "after": 39.29,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #3 of \"DA\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (43.67, 185.5) vs Chrome (548.81, 146.2)). By position (nearest same-text Chrome word on the same page) |dy| went 1.73 -> 1.73 pt: a change below the 1 pt tolerance.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#3|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|da#1|dy",
+        "before": -0.23,
+        "after": -10.72,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #1 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (551.78, 145.97) vs Chrome (541.51, 156.69)). By position (nearest same-text Chrome word on the same page) |dy| went 0.23 -> 0.23 pt: a change below the 1 pt tolerance.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#1|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|da#2|dx",
+        "before": 32.71,
+        "after": 501.92,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #2 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (544.47, 157.22) vs Chrome (42.56, 187.22)). By position (nearest same-text Chrome word on the same page) |dx| went 25.41 -> 2.96 pt: closer to Chrome.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|da#2|dy",
+        "before": 0.53,
+        "after": -30,
+        "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #2 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (544.47, 157.22) vs Chrome (42.56, 187.22)). By position (nearest same-text Chrome word on the same page) |dy| went 11.02 -> 0.53 pt: closer to Chrome.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#2|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|danfe|INSCRIÇÃO#2|dx",
+        "before": -0.17,
+        "after": 1.83,
+        "reason": "|dx| 0.17 -> 1.83 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|INSCRIÇÃO#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|ESTADUAL#2|dx",
+        "before": -0.14,
+        "after": 1.86,
+        "reason": "|dx| 0.14 -> 1.86 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|ESTADUAL#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DO#2|dx",
+        "before": -0.1,
+        "after": 1.9,
+        "reason": "|dx| 0.1 -> 1.9 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DO#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|SUBST.#1|dx",
+        "before": -0.09,
+        "after": 1.91,
+        "reason": "|dx| 0.09 -> 1.91 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SUBST.#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|TRIB.#1|dx",
+        "before": -0.07,
+        "after": 1.93,
+        "reason": "|dx| 0.07 -> 1.93 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|TRIB.#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|CNPJ#1|dx",
+        "before": -0.67,
+        "after": 3.33,
+        "reason": "|dx| 0.67 -> 3.33 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|CNPJ#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|12.345.678/0001-95#1|dx",
+        "before": -0.67,
+        "after": 3.33,
+        "reason": "|dx| 0.67 -> 3.33 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|12.345.678/0001-95#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DATA#2|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DATA#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DA#4|dx",
+        "before": -1.25,
+        "after": 6.04,
+        "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|EMISSÃO#1|dx",
+        "before": -1.24,
+        "after": 6.05,
+        "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|EMISSÃO#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|15/10/2026#2|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|15/10/2026#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DATA#3|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DATA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DA#5|dx",
+        "before": -1.25,
+        "after": 6.04,
+        "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#5|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|SAÍDA#2|dx",
+        "before": -1.24,
+        "after": 6.05,
+        "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SAÍDA#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|15/10/2026#3|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|15/10/2026#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|HORA#1|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|HORA#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|DA#6|dx",
+        "before": -1.25,
+        "after": 6.04,
+        "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|SAÍDA#3|dx",
+        "before": -1.24,
+        "after": 6.05,
+        "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SAÍDA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|14:00:00#1|dx",
+        "before": -1.26,
+        "after": 6.02,
+        "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|14:00:00#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|CNPJ/CPF#2|dx",
+        "before": -5.84,
+        "after": 7.66,
+        "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|CNPJ/CPF#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|44.555.666/0001-81#1|dx",
+        "before": -5.84,
+        "after": 7.66,
+        "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|44.555.666/0001-81#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|INSCRIÇÃO#4|dx",
+        "before": -5.84,
+        "after": 7.66,
+        "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|INSCRIÇÃO#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|ESTADUAL#4|dx",
+        "before": -5.81,
+        "after": 7.69,
+        "reason": "|dx| 5.81 -> 7.69 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|ESTADUAL#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|244.556.677.118#1|dx",
+        "before": -5.84,
+        "after": 7.66,
+        "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|244.556.677.118#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "coincidental-match-of-wrong-geometry"
+      },
+      {
+        "key": "pdf-probe|danfe|000#12|dy",
+        "before": 4.84,
+        "after": 16.09,
+        "reason": "Occurrence pairing of an identical token whose old pdftotext order was scrambled: the old run listed the \"000\" of this row (vellora y 669.65) as another occurrence, so the old occurrence #12 was a word of a different row. The same row's word against the same Chrome word (y 653.55) has dy 16.09 pt in the old run and 16.09 pt now: unchanged by row (only its x moved, -122.2 -> 2.99 pt). The growing dy down the item rows is raw Blitz row height.",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|000#12|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|débito#6|dx",
+        "before": -191.43,
+        "after": -228.3,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 211.67) p3 vs Chrome (367.71, 49.31) p3). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|crédito#3|dx",
+        "before": -169.3,
+        "after": -206.18,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #3 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 260.42) p3 vs Chrome (432.5, 49.31) p3). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|débito#10|dx",
+        "before": -191.43,
+        "after": -228.3,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #10 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 279.17) p4 vs Chrome (367.71, 49.31) p4). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#10|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|débito#13|dx",
+        "before": -191.43,
+        "after": -228.3,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #13 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 162.92) p5 vs Chrome (367.71, 49.31) p5). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#13|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|crédito#5|dx",
+        "before": -169.3,
+        "after": -206.18,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #5 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 293.42) p5 vs Chrome (432.5, 49.31) p5). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#5|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|crédito#6|dx",
+        "before": -169.3,
+        "after": -206.18,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 84.17) p6 vs Chrome (432.5, 49.31) p6). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|débito#16|dx",
+        "before": -191.43,
+        "after": -228.3,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #16 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 282.17) p6 vs Chrome (367.71, 49.31) p6). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#16|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|Documento#6|dx",
+        "before": 92.89,
+        "after": 181.14,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"Documento\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (305.02, 46.67) p7 vs Chrome (123.88, 81.7) p7). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from -88.42 pt to -0.17 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|Documento#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      },
+      {
+        "key": "pdf-probe|text-stress-ptbr|Saldo#8|dx",
+        "before": 357.06,
+        "after": 375.18,
+        "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #8 of \"Saldo\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (506.29, 46.67) p7 vs Chrome (131.1, 176.95) p7). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from -19.07 pt to -0.95 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+        "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|Saldo#8|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json.",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    ],
+    "gating": [],
+    "writtenDespiteVerdict": false
+  },
+  "acceptedRegressions": [
+    {
+      "key": "pdf-probe|danfe|1#1|dx",
+      "after": 58.46,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #1 of \"1\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (351.38, 125.89) vs Chrome (292.92, 131.5)). By position (nearest same-text Chrome word on the same page) |dx| went 32.79 -> 2.21 pt: closer to Chrome.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|1#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DA#3|dx",
+      "after": -505.14,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #3 of \"DA\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (43.67, 185.5) vs Chrome (548.81, 146.2)). By position (nearest same-text Chrome word on the same page) |dx| went 0.36 -> 1.11 pt: a change below the 1 pt tolerance.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DA#3|dy",
+      "after": 39.29,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #3 of \"DA\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (43.67, 185.5) vs Chrome (548.81, 146.2)). By position (nearest same-text Chrome word on the same page) |dy| went 1.73 -> 1.73 pt: a change below the 1 pt tolerance.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#3|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|da#1|dy",
+      "after": -10.72,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #1 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (551.78, 145.97) vs Chrome (541.51, 156.69)). By position (nearest same-text Chrome word on the same page) |dy| went 0.23 -> 0.23 pt: a change below the 1 pt tolerance.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#1|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|da#2|dx",
+      "after": 501.92,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #2 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (544.47, 157.22) vs Chrome (42.56, 187.22)). By position (nearest same-text Chrome word on the same page) |dx| went 25.41 -> 2.96 pt: closer to Chrome.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|da#2|dy",
+      "after": -30,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token: the gate pairs occurrence #2 of \"da\" on each side, and the vellora word order changed, so old and new compare different Chrome words (new pair: vellora (544.47, 157.22) vs Chrome (42.56, 187.22)). By position (nearest same-text Chrome word on the same page) |dy| went 11.02 -> 0.53 pt: closer to Chrome.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|da#2|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|INSCRIÇÃO#2|dx",
+      "after": 1.83,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.17 -> 1.83 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|INSCRIÇÃO#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|ESTADUAL#2|dx",
+      "after": 1.86,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.14 -> 1.86 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|ESTADUAL#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DO#2|dx",
+      "after": 1.9,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.1 -> 1.9 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DO#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|SUBST.#1|dx",
+      "after": 1.91,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.09 -> 1.91 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SUBST.#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|TRIB.#1|dx",
+      "after": 1.93,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.07 -> 1.93 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|TRIB.#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|CNPJ#1|dx",
+      "after": 3.33,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.67 -> 3.33 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|CNPJ#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|12.345.678/0001-95#1|dx",
+      "after": 3.33,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 0.67 -> 3.33 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|12.345.678/0001-95#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DATA#2|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DATA#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DA#4|dx",
+      "after": 6.04,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|EMISSÃO#1|dx",
+      "after": 6.05,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|EMISSÃO#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|15/10/2026#2|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|15/10/2026#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DATA#3|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DATA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DA#5|dx",
+      "after": 6.04,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#5|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|SAÍDA#2|dx",
+      "after": 6.05,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SAÍDA#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|15/10/2026#3|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|15/10/2026#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|HORA#1|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|HORA#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|DA#6|dx",
+      "after": 6.04,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.25 -> 6.04 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|DA#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|SAÍDA#3|dx",
+      "after": 6.05,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.24 -> 6.05 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|SAÍDA#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|14:00:00#1|dx",
+      "after": 6.02,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 1.26 -> 6.02 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|14:00:00#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|CNPJ/CPF#2|dx",
+      "after": 7.66,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|CNPJ/CPF#2|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|44.555.666/0001-81#1|dx",
+      "after": 7.66,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|44.555.666/0001-81#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|INSCRIÇÃO#4|dx",
+      "after": 7.66,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|INSCRIÇÃO#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|ESTADUAL#4|dx",
+      "after": 7.69,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 5.81 -> 7.69 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|ESTADUAL#4|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|244.556.677.118#1|dx",
+      "after": 7.66,
+      "label": "coincidental-match-of-wrong-geometry",
+      "reason": "|dx| 5.84 -> 7.66 pt (same word pair before and after). fixed_table_widths split every table-layout: fixed table into equal tracks and ignored the <col> widths (CSS 2.2 §17.5.2.1) that Chrome 155 and Blitz 0.3.0-beta.4 honour (attachments/chrome-probes-table-passes.json fixed_cols: Chrome 60/220/120, Blitz 60/220/120, old pass 133.33 x 3). The DANFE grids are built from <col> widths, so the old cell edges were wrong by construction and agreed with Chrome near these words only where an equal-track edge happened to fall near a <col> edge (table 5: <col> widths 6.86 / 6.86 / 6.78 cm, equal track 6.83 cm), while across the DANFE the same pass put text up to tens of pt off (1465 pdf-probe words improve in this step). The new position is raw Blitz: the layout-diff L0 dx equals the final-layer dx for every one of these runs (no pass moves them). Its residual is Blitz's collapsed-border model: it lays each collapsed border out as a whole-width gutter between <col>-length tracks, so cells drift right by about one border width (0.5pt = 0.67 px) per column and the last cells overflow the table (DANFE table 7: Chrome td x 0.5 / 466.16 / 667.59, Blitz +0.50 / +4.84 / +6.41 px). Not a false pass or oracle artefact in the literal sense of the merge rule: the old value was closer to Chrome, but only by coincidence of a wrong mechanism; flagged for the orchestrator. Follow-up: Blitz collapsed-border gutters in fixed tables.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|244.556.677.118#1|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|danfe|000#12|dy",
+      "after": 16.09,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing of an identical token whose old pdftotext order was scrambled: the old run listed the \"000\" of this row (vellora y 669.65) as another occurrence, so the old occurrence #12 was a word of a different row. The same row's word against the same Chrome word (y 653.55) has dy 16.09 pt in the old run and 16.09 pt now: unchanged by row (only its x moved, -122.2 -> 2.99 pt). The growing dy down the item rows is raw Blitz row height.",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|danfe|000#12|dy\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|débito#6|dx",
+      "after": -228.3,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 211.67) p3 vs Chrome (367.71, 49.31) p3). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|crédito#3|dx",
+      "after": -206.18,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #3 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 260.42) p3 vs Chrome (432.5, 49.31) p3). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#3|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|débito#10|dx",
+      "after": -228.3,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #10 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 279.17) p4 vs Chrome (367.71, 49.31) p4). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#10|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|débito#13|dx",
+      "after": -228.3,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #13 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 162.92) p5 vs Chrome (367.71, 49.31) p5). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#13|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|crédito#5|dx",
+      "after": -206.18,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #5 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 293.42) p5 vs Chrome (432.5, 49.31) p5). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#5|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|crédito#6|dx",
+      "after": -206.18,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"crédito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (226.33, 84.17) p6 vs Chrome (432.5, 49.31) p6). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.65 pt to -0.23 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|crédito#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|débito#16|dx",
+      "after": -228.3,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #16 of \"débito\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (139.41, 282.17) p6 vs Chrome (367.71, 49.31) p6). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from 36.66 pt to -0.21 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|débito#16|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Documento#6|dx",
+      "after": 181.14,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #6 of \"Documento\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (305.02, 46.67) p7 vs Chrome (123.88, 81.7) p7). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from -88.42 pt to -0.17 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|Documento#6|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Saldo#8|dx",
+      "after": 375.18,
+      "label": "pdf-probe-pairing-artefact",
+      "reason": "Occurrence pairing across differently paginated pages: vellora lays text-stress-ptbr out on 8 pages, Chrome on 7, so occurrence #8 of \"Saldo\" sits in a row (or repeated <thead>) that Chrome puts on another page and the gate pairs it with a different word (old and new pair the same two words: vellora (506.29, 46.67) p7 vs Chrome (131.1, 176.95) p7). Compared with the Chrome column the word belongs to (nearest same-text Chrome x), it moved from -19.07 pt to -0.95 pt: the extrato table now keeps its <col> widths (fixed_table_widths deleted).",
+      "evidence": "pdf-probe pairs (poppler pdftotext -bbox, PDF pt) of port/02 run 20261021T102146Z and this run; Chrome 155.0.8059.85 local (INDICATIVE). Per-item numbers: attachments/accepted-evidence.json[\"pdf-probe|text-stress-ptbr|Saldo#8|dx\"]; Chrome/Blitz probe numbers: attachments/chrome-probes-table-passes.json."
+    }
+  ],
+  "extraction": {
+    "command": "node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/03-table-passes --root fidelity/baselines/port --name 03-table-passes --accept /tmp/vellora-step03/accepted.json --attach /tmp/vellora-step03/chrome-probes-table-passes.json=chrome-probes-table-passes.json --attach /tmp/vellora-step03/accepted-evidence.json=accepted-evidence.json --attach /tmp/vellora-step03/ablation-table-passes.json=ablation-table-passes.json --attach fidelity/results/run-all/03-table-passes/gate-without-acceptances/gate-report.json=gate-report-without-acceptances.json --attach fidelity/results/run-all/03-table-passes/gate-without-acceptances/gate-report.md=gate-report-without-acceptances.md --attach fidelity/results/run-all/03-table-passes/gate-vs-beta4/gate-report.json=gate-report-vs-beta4.json --attach fidelity/results/run-all/03-table-passes/gate-vs-beta4/gate-report.md=gate-report-vs-beta4.md --attach fidelity/results/run-all/03-table-passes/gate-vs-pin/gate-report.json=gate-report-vs-pin.json --attach fidelity/results/run-all/03-table-passes/gate-vs-pin/gate-report.md=gate-report-vs-pin.md --attach /tmp/vellora-step03/scripts/chrome-probe.mjs=scratch-chrome-probe.mjs.txt --attach /tmp/vellora-step03/scripts/vellora-probe.mjs=scratch-vellora-probe.mjs.txt --attach /tmp/vellora-step03/scripts/build-probe-attachment.mjs=scratch-build-probe-attachment.mjs.txt --attach /tmp/vellora-step03/scripts/build-accepted.mjs=scratch-build-accepted.mjs.txt --attach /tmp/vellora-step03/scripts/build-ablation.mjs=scratch-build-ablation.mjs.txt --attach /tmp/vellora-step03/scripts/probe-regress.mjs=scratch-probe-regress.mjs.txt --attach /tmp/vellora-step03/scripts/wpt-pixels.mjs=scratch-wpt-pixels.mjs.txt --attach /tmp/vellora-step03/scripts/gate-cmp.mjs=scratch-gate-cmp.mjs.txt",
+    "date": "2026-10-21T11:57:07.296Z"
+  },
+  "files": {
+    "attachments/ablation-table-passes.json": "afa009c1c3552afb6e11110cdb4004a0b7e628804b08dbab43e152fae8a4f2b1",
+    "attachments/accepted-evidence.json": "ac141b1fbc5d1e3b8974cd47969f67bcff0017fa41887333560a8a346490f4de",
+    "attachments/chrome-probes-table-passes.json": "446259e36f698bed777667602f2866d5101a8db942336a1b8456dfac6fea5750",
+    "attachments/gate-report-vs-beta4.json": "f3d02249e103575c225bdd8fae03af298b01a8f11e35dc4cdcb151b38853c3c0",
+    "attachments/gate-report-vs-beta4.md": "a2fcee291e5a85d7dcfe44723412caa5581d3b670b99c8cfc46c2ca9974e0713",
+    "attachments/gate-report-vs-pin.json": "8dfccb5de523de8905ead85c783341f0af9076165ae01900fd1a061f6079ed89",
+    "attachments/gate-report-vs-pin.md": "7ade192f8e055abd8276f4005259e183bb2178f194e2970cb60c35b946350e69",
+    "attachments/gate-report-without-acceptances.json": "712ac0f75a7e12e28620585a70612a955e8d7639963fb9f5ca978b07673753b5",
+    "attachments/gate-report-without-acceptances.md": "0dc60ae5ea28cc4af133bb9189a38d47a8c6022aef01f14c3bc07e9314ca12d8",
+    "attachments/scratch-build-ablation.mjs.txt": "669063fe7507ab28a4dc3e21f8907ff1e67abecd7b9ab1e6176fc3a729e00a20",
+    "attachments/scratch-build-accepted.mjs.txt": "e67d5105be67ec7ad8a654dfcb4300c86b39b4f82a0160990408c9f10593ef28",
+    "attachments/scratch-build-probe-attachment.mjs.txt": "6fdecaf734747f7dc27bbe4e95c88658bbe5bae4a59972390a5e0fe02ec281f1",
+    "attachments/scratch-chrome-probe.mjs.txt": "d470bd4291ce1540b6ef59e767276499500e0186e6a8143439bf7b0f415953ad",
+    "attachments/scratch-gate-cmp.mjs.txt": "6d2a046d8c73c03c3d885c613c2789ef3cab8832efd3cbb604a9307f9c381f70",
+    "attachments/scratch-probe-regress.mjs.txt": "611489535a1aab2440d17fd7f482fde6b01dd0fe63eb8bdb4e22e34f50cb449d",
+    "attachments/scratch-vellora-probe.mjs.txt": "2c3e3d14caf7911db5ef20b3f1295fab9ac3f9158e8f064e1e7388ffb948a5eb",
+    "attachments/scratch-wpt-pixels.mjs.txt": "672489068a4a85dca1601e3a00c9307c1dd4e95e3794d55b79860a54066c7a8f",
+    "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
+    "code-checks.json": "c960ced2001315755ed8304f84747023c5436a35d1a636e164a174804cc5bf31",
+    "fixtures/boleto-febraban.json": "b15698302a7e9ab59592e0aea5ccaf3ce1cf8a120d71c8f1776590f417d80a58",
+    "fixtures/boleto-febraban.px-grid.json": "46ef9b26720aeccbb26b1adc13eb0372a214b22e017791ebda2a71c9f5a4460a",
+    "fixtures/boleto.json": "5321a9acef02e6360ba6c0236f1733e5a3ab2081e7d8f7128f2a4ac2ef719708",
+    "fixtures/danfe.json": "d28900018d2d6c9c6fe9ade50c12e1c44bf7ca58deb44c69e028628635be1120",
+    "fixtures/invoice.json": "dbe2c59c4c533107494f7d8ae9d2cec02e022ced6d153c031ba4265d5f106017",
+    "fixtures/notification.json": "af69c8c77efefc979f53fdee3cfb8ea3c96b79dc7feecc468bc496a72b746f12",
+    "fixtures/oss-postmark-receipt.json": "1790a2e71abf705211d8c6f639fa0618140a1e7366dca705a9daa430ab1e583b",
+    "fixtures/oss-sparksuite-invoice.json": "69eefd208d58c6a4b04424258ce8b42a1877acd9bba622cedec9fbc1c7da442b",
+    "fixtures/receipt.json": "a5c94d78f35f218ec860e4c380b389c8770e7a5246d21f85b82b26f5dfd37210",
+    "fixtures/text-stress-ptbr.json": "fd05af25ac02e3d820099f1deff7a0befec24d75ca9f6e9a9dfc95947538f341",
+    "gate-report.json": "a8507d1d8288ec07eff9026cddb776c0e7bc662cdb20f69ef903fc9976f7b35b",
+    "gate-report.md": "283e337605b9320420ea81986ebedb30c89c67623293ef7a810470a30486f8e3",
+    "metrics.json": "e23e7668ca00133fd8add7e166f78b7c22f4a5cffbb4de17519be98135660b1a",
+    "pdf-probe/boleto-febraban.json": "6fb6721a7c41f86d70af3edb63196482930b867cf459f990f470ffc2015bf077",
+    "pdf-probe/boleto.json": "0b38939fa66d3043e47436d75ad3e227bc6c8c67770948c7d115a443b404ef8f",
+    "pdf-probe/danfe.json": "f7f32bf7c8f58cdcccdf34263d3d0957a8b3cabf31ba73a28993195e97626436",
+    "pdf-probe/invoice.json": "a9d1e7cf75d3a04f117c7967d36b695610c0dc6155ce52a7551eaec0a1c67fcf",
+    "pdf-probe/notification.json": "fa4c66a45ea91406c5d0efe03c5dd7277c542e91cac6da3af57dcd58b3479824",
+    "pdf-probe/oss-postmark-receipt.json": "5b90828b0374b8454db21ca658565b5453133588894c2e960edaae2898188e9a",
+    "pdf-probe/oss-sparksuite-invoice.json": "95032144325a17597cc585a54a57d580a2d322f57dc92e0753d9ba245f2c7468",
+    "pdf-probe/receipt.json": "1c93e2c8208b7993236ab2df21d2b7595a7f039a22c52bc9da847cae644cdeb4",
+    "pdf-probe/text-stress-ptbr.json": "11365d83799ef533c1d7d947d8c240ee481408e628e8ded674af512e3e8e70fe",
+    "wpt/by-directory.json": "03a5b365290967e854c6d6247374d96f016c55dc408d645485dca7761e24fed1",
+    "wpt/crashtests.json": "bbf8e02297d53b2dbf4ada2f8dabce624a6dcbeb0b61eac45ce49e6390a5ba8a",
+    "wpt/expectations-blitz-0.3.0-beta.4.json": "ffbefb4564ce45b726a7a14f32d1e0aebbbec8f2fa120b27c67988ced7b88d84"
+  },
+  "formatting": "biome format --write (repo biome.json) before hashing"
+}
