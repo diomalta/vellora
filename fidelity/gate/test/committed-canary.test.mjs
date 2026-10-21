@@ -304,3 +304,52 @@ test("port/05-walk-rewrite passes vs port/04-block-offset only with its accepted
     assert.deepEqual([w.class, w.before, w.after], ["improvement", "fail", "pass"], t);
   }
 });
+
+test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "05-walk-rewrite"));
+  const step = loadBaselineDir(join(baselines, "port", "06-page-rules"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/05-walk-rewrite");
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const accept = step.manifest.acceptedRegressions;
+  assert.equal(accept.length, 13);
+  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
+  // Both labels fit GATE-A1's literal wording: 12 pdf-probe occurrence-pairing artefacts
+  // (text-stress-ptbr: vellora's footer "de" paired with a Chrome body "de") and 1 WPT false
+  // pass (page-size-015: test and reference both lost their page size); evidence:
+  // manifest.json, attachments/accepted-evidence.json, baselines/port/README.md.
+  const labels = {};
+  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
+  assert.deepEqual(labels, { "pdf-probe-pairing-artefact": 12, "wpt-false-pass": 1 });
+  // Without the acceptances the same comparison gates exactly the 13 accepted items...
+  const raw = compareSnapshots(prev, step);
+  assert.equal(raw.verdict, "FAIL");
+  assert.deepEqual(
+    raw.items
+      .filter((x) => x.gating)
+      .map((x) => x.key)
+      .sort(),
+    accept.map((e) => e.key).sort(),
+  );
+  // ...and with them it passes.
+  const r = compareSnapshots(prev, step, { accept });
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The step's targets: the notification footer is drawn (EXT-2 per extractor), the footers
+  // sit where Chrome prints them (boleto REF-W max was its footer "1"), page-size-006 (:first).
+  for (const [key, before, after] of [
+    ["notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pdfminer.six", 2, 3],
+    ["notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pymupdf", 2, 3],
+    ["receipt|EXT-2|oracles:text|plain|criterion#1", "WARN", "PASS"],
+    ["boleto|REF-W|oracles:layout|plain|criterion#1|maxMm", 4.64, 2.62],
+    ["receipt|REF-W|oracles:layout|plain|criterion#1|maxMm", 1.37, 0.77],
+    ["wpt|css/css-page/page-size-006-print.html", "fail", "pass"],
+  ]) {
+    const x = item(r, key);
+    assert.deepEqual([x.class, x.before, x.after], ["improvement", before, after], key);
+  }
+});

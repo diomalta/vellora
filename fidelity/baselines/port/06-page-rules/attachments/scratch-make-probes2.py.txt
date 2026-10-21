@@ -1,0 +1,70 @@
+"""probes2.json: margin-box vertical/horizontal placement grid + root inheritance with loaded faces.
+
+Chrome loads an @font-face only when an element uses it, so every face a margin box asks for is
+also used by a body span (otherwise Chrome prints the box in its fallback face, or not at all).
+"""
+import json
+import sys
+
+out = sys.argv[1]
+LOAD = (
+    '<p>Corpo <span style="font-family: \'Liberation Sans\'">sans</span>'
+    ' <span style="font-family: \'Liberation Serif\'">serif</span>'
+    ' <span style="font-family: \'Liberation Mono\'">mono</span>'
+    ' <b style="font-family: \'Liberation Sans\'">sansb</b></p>'
+)
+FOOTER = 'content: "Página " counter(page) " de " counter(pages);'
+
+
+def doc(css, body=LOAD):
+    return (
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'
+        + css
+        + ' body { margin: 0; font-family: "Liberation Serif"; font-size: 11pt; }'
+        + "</style></head><body>"
+        + body
+        + "</body></html>"
+    )
+
+
+probes = {}
+for fam_key, fam in (("serif", "Liberation Serif"), ("sans", "Liberation Sans"), ("mono", "Liberation Mono")):
+    for size in (8, 10, 12, 16, 24, 32):
+        for mb in (16, 30):
+            probes[f"v_{fam_key}_{size}px_mb{mb}"] = doc(
+                f'@page {{ size: A4; margin: 16mm 16mm {mb}mm 16mm; @bottom-center {{ {FOOTER}'
+                f' font-family: "{fam}"; font-size: {size}px; }} }}'
+            )
+for size in (12, 16):
+    probes[f"top_serif_{size}px_mt20"] = doc(
+        f'@page {{ size: A4; margin: 20mm 16mm; @top-center {{ content: "Cabeçalho " counter(page);'
+        f' font-family: "Liberation Serif"; font-size: {size}px; }} }}'
+    )
+probes["root_inherit_loaded"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' } }'
+    ' html { font-family: "Liberation Sans"; font-size: 10px; color: rgb(200, 0, 0); }'
+)
+probes["root_line_height"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' } }'
+    ' html { font-family: "Liberation Serif"; font-size: 16px; line-height: 40px; }'
+)
+probes["box_line_height"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+    + ' font-family: "Liberation Serif"; line-height: 40px; } }'
+)
+probes["sans_8pt_loaded"] = doc(
+    '@page { size: A4; margin: 16mm 15mm 18mm 15mm; @bottom-center { ' + FOOTER
+    + ' font-family: "Liberation Sans", Arial, sans-serif; font-size: 8pt; } }'
+)
+probes["bold_color_loaded"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+    + ' font-family: "Liberation Sans"; font-weight: bold; color: rgb(0, 0, 200); } }'
+)
+probes["generic_serif"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' font-family: serif; } }'
+)
+probes["generic_sans"] = doc(
+    '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' font-family: sans-serif; } }'
+)
+json.dump(probes, open(out, "w"), ensure_ascii=False, indent=1)
+print(len(probes), "probes")

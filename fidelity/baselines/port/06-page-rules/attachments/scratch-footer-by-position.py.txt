@@ -1,0 +1,36 @@
+"""Footer words BY POSITION (not by occurrence index): for each page, the words of the bottom
+margin band (yMin > band pt) of Chrome's PDF and of vellora's, from `pdftotext -bbox` (the
+extractor pdf-probe uses).
+
+usage: footer_by_position.py <band yMin pt> <chrome.pdf> <vellora.pdf> [<vellora-before.pdf>]
+"""
+import re
+import subprocess
+import sys
+
+band = float(sys.argv[1])
+WORD = re.compile(r'<page\b[^>]*>|<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">([^<]*)</word>')
+
+
+def footer_words(pdf):
+    out = subprocess.run(["/opt/homebrew/bin/pdftotext", "-bbox", pdf, "-"], capture_output=True, text=True).stdout
+    page = 0
+    rows = {}
+    for m in WORD.finditer(out):
+        if m.group(0).startswith("<page"):
+            page += 1
+            continue
+        y0 = float(m.group(2))
+        if y0 > band:
+            rows.setdefault(page, []).append((m.group(5), round(float(m.group(1)), 2), round(y0, 2)))
+    return rows
+
+
+sets = [("chrome", sys.argv[2]), ("vellora", sys.argv[3])]
+if len(sys.argv) > 4:
+    sets.append(("vellora-before", sys.argv[4]))
+data = {name: footer_words(p) for name, p in sets}
+pages = sorted(set().union(*[d.keys() for d in data.values()]))
+for pg in pages:
+    for name, _ in sets:
+        print(f"p{pg} {name:15} {data[name].get(pg)}")

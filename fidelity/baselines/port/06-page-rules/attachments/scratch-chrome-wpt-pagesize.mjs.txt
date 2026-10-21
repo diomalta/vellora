@@ -1,0 +1,39 @@
+// Print WPT print-reftest files in Chrome with the WPT harness's print geometry
+// (fidelity/wpt/lib/chrome.mjs: 5in x 3in sheet, 0.5in margins, preferCSSPageSize, print media,
+// backgrounds) and report each PDF's page sizes (pt), so a vellora page size can be compared.
+//   node chrome_wpt_pagesize.mjs <repo> <wptRoot> <outDir> <rel> [<rel> ...]
+import { execFileSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const [repo, wptRoot, out, ...rels] = process.argv.slice(2);
+mkdirSync(out, { recursive: true });
+const ref = await import(pathToFileURL(join(repo, "fidelity/lib/chrome-reference.mjs")).href);
+const chrome = await ref.launchReferenceChrome();
+const result = { chrome: chrome.version, files: {} };
+try {
+  for (const rel of rels) {
+    const page = await chrome.browser.newPage();
+    await page.emulateMediaType("print");
+    await page.goto(pathToFileURL(join(wptRoot, rel)).href, { waitUntil: "load" });
+    const pdf = await page.pdf({
+      width: "5in",
+      height: "3in",
+      margin: { top: "0.5in", right: "0.5in", bottom: "0.5in", left: "0.5in" },
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+    await page.close();
+    const file = join(out, `${rel.replaceAll("/", "_")}.chrome.pdf`);
+    writeFileSync(file, pdf);
+    const info = execFileSync("pdfinfo", ["-f", "1", "-l", "9", file], { encoding: "utf8" });
+    result.files[rel] = info
+      .split("\n")
+      .filter((l) => /^Page\s+\d+ size|^Pages:/.test(l))
+      .map((l) => l.trim());
+  }
+} finally {
+  await chrome.close();
+}
+console.log(JSON.stringify(result, null, 1));

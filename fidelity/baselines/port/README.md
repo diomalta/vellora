@@ -762,3 +762,166 @@ without acceptances (exactly the 18 accepted keys gate), PASSes with them, and c
 counts. It also checks that receipt REF-W max (101.22 → 1.37) and the WPT tests
 `generated-content/before-inheritable-001`, `positioning/abspos-containing-block-001` and
 `box-display/anonymous-box-generation-001` improve.
+
+## `06-page-rules`: every `@page` rule cascaded per page; margin boxes laid out by Blitz
+
+Branch `phaseb/06-page-rules` (from `phaseb/05-walk-rewrite` `2fd9576`), code commit `c9fe9f5`.
+
+- **Before this step `page_css` read only the FIRST `@page` rule**, whatever its selector. The
+  notification fixture declares its footer in a second universal rule, so the footer was never
+  drawn; a leading `@page :first { … }` applied to every page. Comments were not stripped either:
+  `/* … */ size: 1234px` was read as the property `/* … */ size` and dropped.
+- **`page_css` now reads every `@page` rule of every `<style>` element** and cascades them per
+  page like the element cascade: `!important`, then cascade layer (`@layer` statements and
+  blocks; unlayered rules beat layered ones, reversed for `!important`), then page-selector
+  specificity (page name, `:first`/`:blank`, `:left`/`:right`), then source order.
+  - Selectors. Universal and `:first`. `:left`/`:right`: page 1 is a right page, or a left page
+    when the root's `direction` is `rtl`. `:blank` never matches (vellora makes no blank pages),
+    and neither do page names (no `page` property). A rule whose selector does not parse
+    (`:nth(1)`, `:bogus`) is dropped.
+  - `@page` inside `@media print`/`all` applies. A media query with a feature is not evaluated
+    and does not match. Other at-rules (`@supports`, …) are skipped.
+  - Comments, strings, escapes and parentheses are respected. The content template no longer
+    skips the character after a closing quote, so `"P"counter(page)` keeps its counter.
+- **pagination** resolves each page's box (`PageBox::for_page`): page height, vertical margins
+  and margin boxes may differ per page. The layout viewport is page 1's.
+- **Strict gate: `css:page-varying-width`.** Blitz lays the document out once, at one width. A
+  `:first`/`:left`/`:right` rule that gives pages different content widths (page width minus left
+  and right margins) is rejected at its source position (`page_css::varying_width_rule`, scanned
+  by `validation::validate_css`; it checks all four `:first` × left/right combinations, so the
+  result does not depend on the page count). Mirrored margins with the same sum pass. No lint
+  rule maps to it, like `css:transform` and `css:filter`.
+- **Margin boxes are laid out by Blitz.** `blitz_engine::lay_out_margin_texts` builds one small
+  second document per render. Its root carries the page context's inherited values: the root
+  element's computed text properties (CSS Paged Media 3: the page context inherits from the root),
+  then the `@page` text declarations, then the margin box's own (`font*`, `color`,
+  `letter-spacing`, `word-spacing`, `text-transform`, `line-height`). It is laid out with the
+  document's own font context (a clone kept in `LaidOutDoc::page_context`). pagination places
+  each line the way Chrome does:
+  - centred in the page area (between the left and right page margins);
+  - vertically centred in the margin band (UA `vertical-align: middle`), so the baseline sits
+    (ascent − descent) / 2 below the band centre whatever the line height;
+  - glyph runs are emitted like body text and share the body's `Arc` of a face, so each face is
+    embedded once.
+
+  Before this step the footer was drawn at 9 px in a sampled body face, grey `#3c3c3c`, its
+  baseline at the band centre, centred on the page with an estimated width. A document without
+  any body text still gets no margin box, as in Chrome (probe `empty_body_footer`).
+- **WPT harness** (`fidelity/wpt/lib/prepare.mjs`). The UA page box (print `size: 5in 3in;
+  margin: 0.5in`, screen 800 × 600 / 0) is now injected as `@layer vellora-ua-page { @page { … } }`
+  before the author styles. It used to be merged into the start of the first author `@page`
+  block, which broke as soon as that block was `@page :first`. The first layer loses to every
+  author rule, layered ones included (`layers-001` needs that). No `HARNESS_SEMANTICS` bump: the
+  comparison semantics and the Chrome side are unchanged.
+- New Chrome-verified tests: `crates/vellora-core/tests/page_rules.rs` (12) and unit tests in
+  `page_css.rs` (9). `tests/pipeline.rs::each_face_is_embedded_exactly_once_across_pages` now
+  counts the footer's face too.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T153752Z` (2026-10-21 15:37:52Z), 20/20 steps ok, run-all exit 3 (gate FAIL before acceptances), git `c9fe9f5` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/05-walk-rewrite --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/06-page-rules`, then `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/05-walk-rewrite --run fidelity/results/run-all/06-page-rules --accept fidelity/results/run-all/06-page-rules/accepted.json --out fidelity/results/run-all/06-page-rules/gate` (exit 0) |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-06-page-rules-20261021T153752Z`. Probes (HTML, Chrome and vellora PDFs), WPT page-size checks, `accepted.json` and the scratch drivers: `~/.cache/vellora-fidelity/step06-page-rules-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/05-walk-rewrite` (previous link; `gate-report.{json,md}`) | **PASS** with 13 `acceptedRegressions` | improvement 37, accepted 13, reported 1, changed 10, gating 0, unchanged 15444 |
+| `port/05-walk-rewrite` without acceptances (`attachments/gate-report-without-acceptances.*`) | FAIL | the same 13 items gate |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 533 gating (05: 533); improvement 1754 (05: 1727) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 63 gating (05: 63); improvement 1326 (05: 1322) |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle | before → after |
+|---|---|
+| notification EXT-2 (the step's target) | the footer "Página 1 de 1" is drawn: margin-box runs absent 1 → 0 in all three extractors. pdfminer.six and PyMuPDF WARN → PASS. pdftotext stays WARN for its pre-existing reorder of the right-aligned "São Paulo, 22/06/2026" (the same 3 tokens at step 05) |
+| receipt EXT-2 | WARN → **PASS**: pdftotext no longer reorders "Café Espresso Duplo". Only the footer changed in this PDF; HYPOTHESIS: the old 6.75 pt footer changed pdftotext's block order |
+| boleto REF-W max / p95 mm | 4.64 / 2.58 → **2.62 / 2.36** (its max was the footer "1": dx −12.6 pt) |
+| receipt REF-W max mm | 1.37 → **0.77** (its max was the footer "1": dy −3.8 pt) |
+| notification REF-W max / p95 mm | 1.81 / 1.70 → 1.81 / 1.70. The footer "1" and the 9 body "de" are now scorable: consensus words 235 → 245 |
+| pdf-probe words improved (all footer words) | invoice 12, text-stress-ptbr 8, receipt 6, boleto 3; e.g. boleto "1" \|dx\| 20.59 → 0.11 pt, receipt "Página" 11.23 → 0.11 pt |
+| WPT pass / clean (8047 reftests) | 3665 / 3107 → 3664 / 3107 (45.54 % / 38.61 % → 45.53 % / 38.61 %). css-page 71 / 55 → 70 / 55; fail 97 → 88, unsupported 56 → 66. Transitions: 1 fail → clean (`page-size-006`, `:first { margin-top }`), 1 clean → fail (`page-size-015`, accepted), 1 flagged → fail (`page-name-001`, reported), 10 fail → unsupported (`css:page-varying-width`: `pseudo-first-margin-001…004`, `page-size-004/005/009`, `page-margin-007`, `layers-003/004`). No other suite changed |
+| unchanged | every other corpus and oracle value: invoice REF-W 2.53 / 2.51 mm, notification LET-1 1.81 mm, LET-2/3, REF-P, TXT-B1, BOL-*, DANFE-*, INV-*. 14 of the 29 `vellora*.pdf` files are byte-identical to step 05's (`attachments/pdf-identity-vs-05-walk-rewrite.json`). The 15 that changed are the renders of the 5 documents with margin boxes (invoice, receipt, boleto, notification, text-stress-ptbr). Also unchanged: crashtests 239/239 ok, canaries 30/30 caught, DET-1/DET-2 PASS, code checks green |
+
+Verdict totals: all PASS 139 → 140, FAIL 40, WARN 8 → 7, NOT-RUN 3; excluding diagnostic variants
+117 → 118, 36, 7 → 6, 3. The new PASS is receipt EXT-2.
+
+### Chrome probes (`attachments/chrome-probes-page-rules.json`)
+
+72 probes, Chrome 155 through the shared reference print path, words from PyMuPDF character
+origins. All CONFIRMED. Leaving out the 4 Chrome fallback-face probes (below), every paired word
+of every probe is within 0.72 pt of Chrome horizontally and 0.35 pt vertically. The 0.72 pt is
+the right-aligned body text of the `rtl` probe; margin-box words are within 0.60 pt.
+
+- **Cascade** (body positions): later universal declarations override property by property;
+  `:first` applies to page 1 only and beats a later universal rule; `:left`/`:right` alternate
+  from a right first page, or from a left one for `<html dir="rtl">`; `:blank`, page names and
+  invalid selectors never match; `@layer` order applies, and an unlayered rule beats a layered
+  one; `!important` beats specificity; `@media print` applies and `@media screen` does not; a
+  `:first` page may be taller (pages 841.92 vs 425.04 pt).
+- **The same probes on the step-05 build**, for example: no footer for the notification pattern;
+  `first_margin_top` page 1 at 38.1 pt (Chrome 123.0); `first_specificity` at x 45.35 pt (Chrome
+  28.5), because the `:first` rule and its default 16 mm horizontal margins applied to every page.
+- **Margin boxes**:
+  - a 36-cell grid: 3 faces × 6 sizes (8–32 px) × 2 bottom margins (16, 30 mm);
+  - `@top-center`;
+  - asymmetric margins;
+  - inheritance from the page context and the root;
+  - `:first` content (`none`, another string) and a `:first` font size;
+  - margin-box declarations (the text-stress-ptbr box).
+
+  Chrome snaps the baseline to whole device pixels; vellora, like WeasyPrint, does not.
+- **What Chrome inherits.** Font family, size and colour of the page context come from the root
+  element (`html { 10px Liberation Sans rgb(200,0,0) }` → footer 7.5 pt `#c80000`). The root's
+  `line-height` does not move the baseline (the line box is centred).
+- **Chrome probe artefact.** Chrome loads an `@font-face` only when an element uses it. A face
+  named only in a margin box prints in Chrome's system fallback (Times-Roman, Helvetica), or not
+  at all (`declared_sans_8pt`). `probes2` repeats those probes with the faces used by body spans.
+  The fixtures' Chrome references print their default-face footers in system Times-Roman.
+  vellora uses Liberation Serif (the CSS initial `serif`), which has the same advances, so the
+  footer words land within 0.1 pt.
+
+### `acceptedRegressions` (13; per-item numbers in `attachments/accepted-evidence.json`)
+
+Both labels fit GATE-A1's literal wording.
+
+**`pdf-probe-pairing-artefact` (12):** text-stress-ptbr "de" #33, #61, #87, #115, #155 and #168,
+dx and dy each. pdf-probe pairs the k-th "de" of vellora's PDF with the k-th of Chrome's.
+- In each of these pairs, vellora's word is the FOOTER "de" of page 2–7, at (306.55, 813.58) pt.
+  The Chrome word it is paired with is a BODY "de", at (104.13, 269–542) or (301.72, 81.70) pt.
+  vellora prints 8 pages against Chrome's 7, and the extractor emits the footers at other
+  occurrence positions.
+- The change, \|dx\| +1.78 pt and \|dy\| +2.08 pt, is the footer moving to where Chrome prints it.
+  Compared by position with Chrome's footer "de" on the same page, at (307.12, 812.51), \|dx\| went
+  2.35 → 0.57 pt and \|dy(yMin)\| 1.02 → 1.07 pt. yMin carries each producer's declared ascent
+  (step 04).
+- The PyMuPDF baseline of the 8pt Liberation Sans footer is 819.75 pt in Chrome and 819.41 pt in
+  vellora.
+- The correctly paired page-1 "de" (#8) is among the improvements: \|dx\| 2.35 → 0.57.
+
+**`wpt-false-pass` (1): `css/css-page/page-size-015-print.tentative.html`.**
+- Chrome prints the test and the reference at 540 × 432 pt (7.5in × 6in, from the tentative
+  `@page` `width`/`height` descriptors).
+- Old vellora printed both at 360 × 216 pt, the 5in × 3in UA box: the comment in front of the
+  test's `size: 1234px` hid the declaration, and the reference has no `size`. This was measured
+  with the step-05 addon (sha256 `0211dcfb…`, the addon of run 20261021T142201Z) and the
+  step-05 harness injection.
+- Now the test honours `size: 1234px` (925.5 × 925.5 pt, CSS Paged Media 3). vellora does not
+  implement the `width`/`height` descriptors.
+
+**Reported, not gated: `css/css-page/page-name-001-print.html`** (flagged pass →
+fail). It was flagged ink-missing: vellora's ink was 139 px against Chrome's 4453 px, because
+Chrome draws the root's 5 px border and vellora does not.
+- Chrome and old vellora print the test at 144 × 216 pt.
+- Old vellora got that size because it applied the first rule, `@page a { size: 2in 3in }`, to
+  every page whatever its name.
+- Now page names never match, because vellora has no `page` property, and the test prints at
+  the 360 × 216 pt UA size.
+
+The `committed-canary` self-test asserts that `06-page-rules` FAILs against `05-walk-rewrite`
+without acceptances (exactly the 13 accepted keys gate), PASSes with them, checks the label
+counts, and checks the targets: notification EXT-2 per extractor, receipt EXT-2, boleto and
+receipt REF-W max, and `page-size-006`.

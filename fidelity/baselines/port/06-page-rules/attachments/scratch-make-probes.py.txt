@@ -1,0 +1,135 @@
+"""Write probes.json: the step-06 @page probes (Chrome and vellora render each one).
+
+Every probe pins the margin-box face where it can (bundled Liberation faces are aliased in the
+reference HTML), so Chrome's system Times never enters a measured number.
+"""
+import json
+import sys
+
+out = sys.argv[1]
+
+BODY_SERIF = 'body { margin: 0; font-family: "Liberation Serif"; font-size: 11pt; }'
+FOOTER = 'content: "Página " counter(page) " de " counter(pages);'
+
+
+def doc(css, body):
+    return (
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>"
+        + css
+        + "</style></head><body>"
+        + body
+        + "</body></html>"
+    )
+
+
+ONE_PAGE = "<p>Primeira linha do corpo.</p>"
+THREE_PAGES = (
+    '<div style="height: 50px">pagina um</div>'
+    '<div style="break-before: page; height: 50px">pagina dois</div>'
+    '<div style="break-before: page; height: 50px">pagina tres</div>'
+)
+
+probes = {
+    # (a) does the page context inherit from the root element? html sets a face/size/colour.
+    "root_inherit": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' } }'
+        ' html { font-family: "Liberation Sans"; font-size: 10px; color: rgb(200, 0, 0); }'
+        + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # (a2) only body sets the font (the notification pattern): the footer uses the initial face.
+    "body_only": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER + ' } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # (b) a declared face + size in the margin box: exact centring / baseline formula.
+    "declared_serif_12pt": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Serif"; font-size: 12pt; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    "declared_top_center": doc(
+        '@page { size: A4; margin: 20mm 16mm; @top-center { content: "Cabeçalho " counter(page);'
+        ' font-family: "Liberation Sans"; font-size: 14px; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # (c) the notification pattern: two universal rules, the second only has the margin box.
+    "two_universal_rules": doc(
+        '@page { size: A4; margin: 16mm; } @page { @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Serif"; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # later universal declarations override earlier ones property by property
+    "universal_override": doc(
+        '@page { size: A4; margin: 10mm; } @page { margin-top: 30mm; }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # (d) :first margin-top (WPT page-size-006 pattern) on a 3-page document
+    "first_margin_top": doc(
+        '@page { size: A4; margin: 10mm; } @page :first { margin-top: 40mm; }' + BODY_SERIF,
+        THREE_PAGES,
+    ),
+    # :first is more specific than a LATER universal rule
+    "first_specificity": doc(
+        '@page :first { margin-top: 40mm; } @page { size: A4; margin: 10mm; }' + BODY_SERIF,
+        THREE_PAGES,
+    ),
+    # (e) :first suppresses the footer
+    "first_content_none": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Serif"; } } @page :first { @bottom-center { content: none; } }'
+        + BODY_SERIF,
+        THREE_PAGES,
+    ),
+    # :first replaces the footer text
+    "first_content_other": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Serif"; } } @page :first { @bottom-center { content: "Capa"; } }'
+        + BODY_SERIF,
+        THREE_PAGES,
+    ),
+    # (f) text-stress pattern: margin box declares face + 8pt
+    "declared_sans_8pt": doc(
+        '@page { size: A4; margin: 16mm 15mm 18mm 15mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Sans", Arial, sans-serif; font-size: 8pt; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # asymmetric horizontal margins: where is the centre?
+    "asymmetric_margins": doc(
+        '@page { size: A4; margin: 16mm 10mm 16mm 40mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Serif"; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # colour + bold in the margin box
+    "declared_color_bold": doc(
+        '@page { size: A4; margin: 16mm; @bottom-center { ' + FOOTER
+        + ' font-family: "Liberation Sans"; font-weight: bold; color: rgb(0, 0, 200); } }'
+        + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # :left / :right mirrored margins (equal content width), 3 pages; page 1 is a right page
+    "left_right_mirrored": doc(
+        '@page { size: A4; margin: 10mm; } @page :left { margin-left: 30mm; margin-right: 10mm; }'
+        ' @page :right { margin-left: 10mm; margin-right: 30mm; }' + BODY_SERIF,
+        THREE_PAGES,
+    ),
+    # a named-page rule with no element using `page:` never matches
+    "named_unused": doc(
+        '@page { size: A4; margin: 10mm; } @page wide { margin: 40mm; }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # the margin box in a rule whose selector is invalid is dropped with the rule
+    "invalid_selector": doc(
+        '@page { size: A4; margin: 10mm; } @page :nth(1) { margin: 40mm; }'
+        ' @page :bogus { margin: 40mm; }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+    # an @page inside @media print still applies; inside @media screen it does not
+    "media_print_page": doc(
+        '@page { size: A4; margin: 10mm; } @media print { @page { margin-top: 30mm; } }'
+        ' @media screen { @page { margin-top: 60mm; } }' + BODY_SERIF,
+        ONE_PAGE,
+    ),
+}
+json.dump(probes, open(out, "w"), ensure_ascii=False, indent=1)
+print(len(probes), "probes")

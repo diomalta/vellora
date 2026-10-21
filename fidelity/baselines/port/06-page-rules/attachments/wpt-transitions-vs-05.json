@@ -1,0 +1,34 @@
+{
+  "note": "port/06 run of c9fe9f5 vs port/05 run 20261021T142201Z (e9dc7e4)",
+  "before": {
+    "vellora": "e9dc7e4a53c75e3ed9a189c7119f60fef67f27ca",
+    "runId": "20261021T142210Z-blitz-0.3.0-beta.4-vellora-e9dc7e4"
+  },
+  "after": {
+    "vellora": "c9fe9f59755c78bbea05e7f2b7c434f103389799",
+    "runId": "20261021T153819Z-blitz-0.3.0-beta.4-vellora-c9fe9f5"
+  },
+  "transitions": {
+    "fail->unsupported": 10,
+    "flagged->fail": 1,
+    "fail->clean": 1,
+    "clean->fail": 1
+  },
+  "tests": {
+    "fail->unsupported": [
+      "css/css-page/layers-003-print.html",
+      "css/css-page/layers-004-print.html",
+      "css/css-page/page-margin-007-print.html",
+      "css/css-page/page-size-004-print.html",
+      "css/css-page/page-size-005-print.html",
+      "css/css-page/page-size-009-print.html",
+      "css/css-page/pseudo-first-margin-001-print.html",
+      "css/css-page/pseudo-first-margin-002-print.html",
+      "css/css-page/pseudo-first-margin-003-print.html",
+      "css/css-page/pseudo-first-margin-004-print.html"
+    ],
+    "flagged->fail": ["css/css-page/page-name-001-print.html"],
+    "fail->clean": ["css/css-page/page-size-006-print.html"],
+    "clean->fail": ["css/css-page/page-size-015-print.tentative.html"]
+  }
+}

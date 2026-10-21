@@ -1,0 +1,1196 @@
+{
+  "date": "2026-10-21T15:52:40.862Z",
+  "command": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/05-walk-rewrite --run fidelity/results/run-all/06-page-rules --accept fidelity/results/run-all/06-page-rules/accepted.json --out fidelity/results/run-all/06-page-rules/gate",
+  "baseline": {
+    "dir": "fidelity/baselines/port/05-walk-rewrite",
+    "schema": "vellora-fidelity/baseline/2",
+    "provenance": {
+      "runId": "20261021T142201Z",
+      "date": "Wed Oct 21 14:22:01 UTC 2026",
+      "dateIso": "2026-10-21T14:22:01Z",
+      "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/04-block-offset --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/05-walk-rewrite",
+      "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+      "cpu": "Apple M5 Pro",
+      "node": "v22.23.2",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "chrome": "Google Chrome 155.0.8059.85",
+      "poppler": "pdftoppm version 26.06.0",
+      "python": "Python 3.12.13",
+      "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+      "verapdfImage": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+      "git": {
+        "head": "e9dc7e4a53c75e3ed9a189c7119f60fef67f27ca",
+        "branch": "phaseb/05-walk-rewrite",
+        "dirtyEntries": 0
+      },
+      "blitz": {
+        "version": "0.3.0-beta.4",
+        "source": "registry+https://github.com/rust-lang/crates.io-index"
+      },
+      "addon": [
+        {
+          "file": "vellora.darwin-arm64.node",
+          "sha256": "0211dcfb683e7f37af66df493f52a655b7d282c893939872b0ff33340d539202"
+        }
+      ],
+      "wpt": {
+        "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+        "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+      }
+    },
+    "integrity": {
+      "ok": true,
+      "checked": 54,
+      "problems": []
+    }
+  },
+  "run": {
+    "dir": "fidelity/results/run-all/06-page-rules",
+    "schema": "vellora-fidelity/run-all/1",
+    "provenance": {
+      "runId": "20261021T153752Z",
+      "date": "Wed Oct 21 15:37:52 UTC 2026",
+      "dateIso": "2026-10-21T15:37:52Z",
+      "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/05-walk-rewrite --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/06-page-rules",
+      "environment": {
+        "date": "Wed Oct 21 15:37:52 UTC 2026",
+        "dateIso": "2026-10-21T15:37:52Z",
+        "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+        "cpu": "Apple M5 Pro",
+        "cpuCount": 18,
+        "node": "v22.23.2",
+        "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+        "chrome": {
+          "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "version": "Google Chrome 155.0.8059.85"
+        },
+        "poppler": {
+          "pdftoppm": "pdftoppm version 26.06.0",
+          "pdftotext": "pdftotext version 26.06.0",
+          "pdftocairo": "pdftocairo version 26.06.0",
+          "pdfinfo": "pdfinfo version 26.06.0",
+          "pdffonts": "pdffonts version 26.06.0",
+          "pdfimages": "pdfimages version 26.06.0"
+        },
+        "python": {
+          "interpreter": "Python 3.12.13",
+          "packages": {
+            "cffi": "2.1.1",
+            "charset-normalizer": "3.5.2",
+            "cryptography": "50.0.2",
+            "pdfminer-six": "20260107",
+            "pillow": "12.3.0",
+            "pycparser": "3.11",
+            "pymupdf": "1.28.2",
+            "zxing-cpp": "3.1.1",
+            "pypdf": "6.21.1",
+            "fonttools": "4.67.0"
+          }
+        },
+        "docker": {
+          "server": "29.8.2",
+          "toolsImage": {
+            "image": "vellora-fidelity-tools:baseline-beta4",
+            "present": true,
+            "id": "sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+            "architecture": "arm64"
+          },
+          "verapdfImage": {
+            "image": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+            "present": true,
+            "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+            "architecture": "amd64"
+          }
+        },
+        "git": {
+          "head": "c9fe9f59755c78bbea05e7f2b7c434f103389799",
+          "branch": "phaseb/06-page-rules",
+          "dirtyEntries": 0
+        },
+        "blitz": {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        },
+        "addon": [
+          {
+            "file": "vellora.darwin-arm64.node",
+            "sha256": "ed1a562a4f33e6733abbe7b76ed80e685b4cb2e727b1515314b13eadc1754a7a"
+          }
+        ],
+        "wpt": {
+          "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+          "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+        },
+        "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/05-walk-rewrite --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/06-page-rules",
+        "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)"
+      }
+    }
+  },
+  "acceptFile": "fidelity/results/run-all/06-page-rules/accepted.json",
+  "schema": "vellora-fidelity/gate-report/1",
+  "verdict": "PASS",
+  "refusals": [],
+  "counts": {
+    "improvement": 37,
+    "changed": 10,
+    "reported": 1,
+    "accepted": 13,
+    "gating": 0,
+    "unchanged": 15444,
+    "withinTolerance": 0
+  },
+  "byGroup": {
+    "oracles:text EXT-2": {
+      "improvement": 4
+    },
+    "oracles:layout REF-W": {
+      "improvement": 3
+    },
+    "wpt css/css-page": {
+      "changed": 10,
+      "reported": 1,
+      "improvement": 1,
+      "accepted": 1
+    },
+    "pdf-probe": {
+      "improvement": 29,
+      "accepted": 12
+    }
+  },
+  "wptPerSuite": {
+    "css/CSS2/abspos": {
+      "cleanBefore": 2,
+      "cleanAfter": 2,
+      "passBefore": 2,
+      "passAfter": 2
+    },
+    "css/CSS2/backgrounds": {
+      "cleanBefore": 67,
+      "cleanAfter": 67,
+      "passBefore": 175,
+      "passAfter": 175
+    },
+    "css/CSS2/borders": {
+      "cleanBefore": 354,
+      "cleanAfter": 354,
+      "passBefore": 383,
+      "passAfter": 383
+    },
+    "css/CSS2/box-display": {
+      "cleanBefore": 65,
+      "cleanAfter": 65,
+      "passBefore": 65,
+      "passAfter": 65
+    },
+    "css/CSS2/box": {
+      "cleanBefore": 0,
+      "cleanAfter": 0,
+      "passBefore": 4,
+      "passAfter": 4
+    },
+    "css/CSS2/colors": {
+      "cleanBefore": 10,
+      "cleanAfter": 10,
+      "passBefore": 10,
+      "passAfter": 10
+    },
+    "css/CSS2/floats-clear": {
+      "cleanBefore": 33,
+      "cleanAfter": 33,
+      "passBefore": 38,
+      "passAfter": 38
+    },
+    "css/CSS2/floats": {
+      "cleanBefore": 16,
+      "cleanAfter": 16,
+      "passBefore": 19,
+      "passAfter": 19
+    },
+    "css/CSS2/fonts": {
+      "cleanBefore": 135,
+      "cleanAfter": 135,
+      "passBefore": 135,
+      "passAfter": 135
+    },
+    "css/CSS2/generated-content": {
+      "cleanBefore": 78,
+      "cleanAfter": 78,
+      "passBefore": 82,
+      "passAfter": 82
+    },
+    "css/CSS2/linebox": {
+      "cleanBefore": 124,
+      "cleanAfter": 124,
+      "passBefore": 126,
+      "passAfter": 126
+    },
+    "css/CSS2/lists": {
+      "cleanBefore": 40,
+      "cleanAfter": 40,
+      "passBefore": 67,
+      "passAfter": 67
+    },
+    "css/CSS2/margin-padding-clear": {
+      "cleanBefore": 508,
+      "cleanAfter": 508,
+      "passBefore": 525,
+      "passAfter": 525
+    },
+    "css/CSS2/normal-flow": {
+      "cleanBefore": 405,
+      "cleanAfter": 405,
+      "passBefore": 431,
+      "passAfter": 431
+    },
+    "css/CSS2/pagination": {
+      "cleanBefore": 31,
+      "cleanAfter": 31,
+      "passBefore": 33,
+      "passAfter": 33
+    },
+    "css/CSS2/positioning": {
+      "cleanBefore": 359,
+      "cleanAfter": 359,
+      "passBefore": 361,
+      "passAfter": 361
+    },
+    "css/CSS2/tables": {
+      "cleanBefore": 74,
+      "cleanAfter": 74,
+      "passBefore": 77,
+      "passAfter": 77
+    },
+    "css/CSS2/text": {
+      "cleanBefore": 238,
+      "cleanAfter": 238,
+      "passBefore": 247,
+      "passAfter": 247
+    },
+    "css/CSS2/visudet": {
+      "cleanBefore": 9,
+      "cleanAfter": 9,
+      "passBefore": 14,
+      "passAfter": 14
+    },
+    "css/CSS2/visufx": {
+      "cleanBefore": 2,
+      "cleanAfter": 2,
+      "passBefore": 2,
+      "passAfter": 2
+    },
+    "css/CSS2/visuren": {
+      "cleanBefore": 6,
+      "cleanAfter": 6,
+      "passBefore": 6,
+      "passAfter": 6
+    },
+    "css/css-break": {
+      "cleanBefore": 81,
+      "cleanAfter": 81,
+      "passBefore": 115,
+      "passAfter": 115
+    },
+    "css/css-page": {
+      "cleanBefore": 55,
+      "cleanAfter": 55,
+      "passBefore": 71,
+      "passAfter": 70
+    },
+    "css/css-tables": {
+      "cleanBefore": 38,
+      "cleanAfter": 38,
+      "passBefore": 47,
+      "passAfter": 47
+    },
+    "css/css-text": {
+      "cleanBefore": 377,
+      "cleanAfter": 377,
+      "passBefore": 630,
+      "passAfter": 630
+    }
+  },
+  "items": [
+    {
+      "key": "receipt|EXT-2|oracles:text|plain|criterion#1",
+      "group": "oracles:text EXT-2",
+      "check": "status",
+      "before": "WARN",
+      "after": "PASS",
+      "class": "improvement",
+      "gating": false,
+      "detail": "pdftotext warn (missing 0, extra 0); pdfminer.six pass (missing 0, extra 0); pymupdf pass (missing 0, extra 0) -> pdftotext pass (missing 0, extra 0); pdfminer.six pass (missing 0, extra 0); pymupdf pass (missing 0, extra 0)"
+    },
+    {
+      "key": "boleto|REF-W|oracles:layout|plain|criterion#1|maxMm",
+      "group": "oracles:layout REF-W",
+      "check": "value",
+      "tolClass": "position-mm",
+      "tol": 0.1,
+      "before": 4.64,
+      "after": 2.62,
+      "delta": -2.0199999999999996,
+      "class": "improvement",
+      "gating": false,
+      "detail": "4.64 -> 2.62"
+    },
+    {
+      "key": "boleto|REF-W|oracles:layout|plain|criterion#1|p95Mm",
+      "group": "oracles:layout REF-W",
+      "check": "value",
+      "tolClass": "position-mm",
+      "tol": 0.1,
+      "before": 2.58,
+      "after": 2.36,
+      "delta": -0.2200000000000002,
+      "class": "improvement",
+      "gating": false,
+      "detail": "2.58 -> 2.36"
+    },
+    {
+      "key": "notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pdfminer.six",
+      "group": "oracles:text EXT-2",
+      "check": "value",
+      "tolClass": "count",
+      "tol": 0,
+      "before": 2,
+      "after": 3,
+      "delta": 1,
+      "class": "improvement",
+      "gating": false,
+      "detail": "2 -> 3"
+    },
+    {
+      "key": "notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pymupdf",
+      "group": "oracles:text EXT-2",
+      "check": "value",
+      "tolClass": "count",
+      "tol": 0,
+      "before": 2,
+      "after": 3,
+      "delta": 1,
+      "class": "improvement",
+      "gating": false,
+      "detail": "2 -> 3"
+    },
+    {
+      "key": "receipt|EXT-2|oracles:text|plain|criterion#1|statusRank.pdftotext",
+      "group": "oracles:text EXT-2",
+      "check": "value",
+      "tolClass": "count",
+      "tol": 0,
+      "before": 2,
+      "after": 3,
+      "delta": 1,
+      "class": "improvement",
+      "gating": false,
+      "detail": "2 -> 3"
+    },
+    {
+      "key": "receipt|REF-W|oracles:layout|plain|criterion#1|maxMm",
+      "group": "oracles:layout REF-W",
+      "check": "value",
+      "tolClass": "position-mm",
+      "tol": 0.1,
+      "before": 1.37,
+      "after": 0.77,
+      "delta": -0.6000000000000001,
+      "class": "improvement",
+      "gating": false,
+      "detail": "1.37 -> 0.77"
+    },
+    {
+      "key": "wpt|css/css-page/layers-003-print.html",
+      "test": "css/css-page/layers-003-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/layers-004-print.html",
+      "test": "css/css-page/layers-004-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-margin-007-print.html",
+      "test": "css/css-page/page-margin-007-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-name-001-print.html",
+      "test": "css/css-page/page-name-001-print.html",
+      "suite": "css/css-page",
+      "before": "pass",
+      "after": "fail",
+      "class": "reported",
+      "gating": false,
+      "detail": "pass[ink-missing-vs-chrome] -> fail (flagged pass: reported, not gated)",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-size-004-print.html",
+      "test": "css/css-page/page-size-004-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-size-005-print.html",
+      "test": "css/css-page/page-size-005-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-size-006-print.html",
+      "test": "css/css-page/page-size-006-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "pass",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-size-009-print.html",
+      "test": "css/css-page/page-size-009-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/page-size-015-print.tentative.html",
+      "test": "css/css-page/page-size-015-print.tentative.html",
+      "suite": "css/css-page",
+      "before": "pass",
+      "after": "fail",
+      "class": "accepted",
+      "gating": false,
+      "detail": "pass -> fail (clean pass lost)",
+      "group": "wpt css/css-page",
+      "check": "wpt",
+      "acceptedAs": {
+        "reason": "pass -> fail. Fits GATE-A1 (FALSE PASS): the old test equalled its reference only because both lost their page size. Chrome prints test AND reference at 540 x 432 pt (7.5in x 6in, the tentative @page width/height descriptors). Old vellora printed both at 360 x 216 pt (the 5in x 3in UA box): its @page reader did not strip the CSS comment in front of the test's `size: 1234px`, so it read the property name '/* ... */ size' and dropped the declaration; the reference has no size. Now comments are stripped and the test gets `size: 1234px` (925.5 x 925.5 pt, CSS Paged Media 3), the reference keeps 360 x 216; vellora does not implement the tentative width/height descriptors (follow-up).",
+        "evidence": "pdfinfo page sizes: Chrome with the WPT harness print geometry, vellora old = step-05 addon sha256 0211dcfb... with the step-05 injection, new = c9fe9f5; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "wpt-false-pass"
+      }
+    },
+    {
+      "key": "wpt|css/css-page/pseudo-first-margin-001-print.html",
+      "test": "css/css-page/pseudo-first-margin-001-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/pseudo-first-margin-002-print.html",
+      "test": "css/css-page/pseudo-first-margin-002-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/pseudo-first-margin-003-print.html",
+      "test": "css/css-page/pseudo-first-margin-003-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-page/pseudo-first-margin-004-print.html",
+      "test": "css/css-page/pseudo-first-margin-004-print.html",
+      "suite": "css/css-page",
+      "before": "fail",
+      "after": "unsupported",
+      "class": "changed",
+      "gating": false,
+      "detail": "fail -> unsupported",
+      "group": "wpt css/css-page",
+      "check": "wpt"
+    },
+    {
+      "key": "pdf-probe|boleto|1#4|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -12.27,
+      "after": -0.11,
+      "delta": -12.16,
+      "detail": "\"1\" |dx| 12.27 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|boleto|de#11|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -15.65,
+      "after": -0.11,
+      "delta": -15.540000000000001,
+      "detail": "\"de\" |dx| 15.65 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|boleto|1#5|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -20.59,
+      "after": -0.11,
+      "delta": -20.48,
+      "detail": "\"1\" |dx| 20.59 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|Página#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 6.18,
+      "after": -0.11,
+      "delta": -6.069999999999999,
+      "detail": "\"Página\" |dx| 6.18 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|1#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -5.47,
+      "after": -0.11,
+      "delta": -5.359999999999999,
+      "detail": "\"1\" |dx| 5.47 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|de#5|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -8.84,
+      "after": -0.11,
+      "delta": -8.73,
+      "detail": "\"de\" |dx| 8.84 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|3#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -13.42,
+      "after": -0.11,
+      "delta": -13.31,
+      "detail": "\"3\" |dx| 13.42 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|Página#2|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 6.18,
+      "after": -0.11,
+      "delta": -6.069999999999999,
+      "detail": "\"Página\" |dx| 6.18 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|2#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -5.47,
+      "after": -0.11,
+      "delta": -5.359999999999999,
+      "detail": "\"2\" |dx| 5.47 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|de#12|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -8.84,
+      "after": -0.11,
+      "delta": -8.73,
+      "detail": "\"de\" |dx| 8.84 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|3#2|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -13.42,
+      "after": -0.11,
+      "delta": -13.31,
+      "detail": "\"3\" |dx| 13.42 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|Página#3|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 6.18,
+      "after": -0.11,
+      "delta": -6.069999999999999,
+      "detail": "\"Página\" |dx| 6.18 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|3#3|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -5.47,
+      "after": -0.11,
+      "delta": -5.359999999999999,
+      "detail": "\"3\" |dx| 5.47 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|de#16|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -8.84,
+      "after": -0.11,
+      "delta": -8.73,
+      "detail": "\"de\" |dx| 8.84 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|invoice|3#4|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -13.42,
+      "after": -0.11,
+      "delta": -13.31,
+      "detail": "\"3\" |dx| 13.42 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|Página#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 11.23,
+      "after": -0.11,
+      "delta": -11.120000000000001,
+      "detail": "\"Página\" |dx| 11.23 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|de#5|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -3.79,
+      "after": -0.11,
+      "delta": -3.68,
+      "detail": "\"de\" |dx| 3.79 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|2#2|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -8.37,
+      "after": -0.11,
+      "delta": -8.26,
+      "detail": "\"2\" |dx| 8.37 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|Página#2|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 11.23,
+      "after": -0.11,
+      "delta": -11.120000000000001,
+      "detail": "\"Página\" |dx| 11.23 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|de#6|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -3.79,
+      "after": -0.11,
+      "delta": -3.68,
+      "detail": "\"de\" |dx| 3.79 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|receipt|2#4|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -8.37,
+      "after": -0.11,
+      "delta": -8.26,
+      "detail": "\"2\" |dx| 8.37 -> 0.11 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#1|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#8|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": -2.35,
+      "after": -0.57,
+      "delta": -1.7800000000000002,
+      "detail": "\"de\" |dx| 2.35 -> 0.57 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#2|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#33|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 200.64,
+      "after": 202.42,
+      "delta": 1.7800000000000011,
+      "detail": "\"de\" |dx| 200.64 -> 202.42 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#33 is the page-2 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 530.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (200.64 -> 202.42 pt) is the footer moving to where Chrome draws it: by position, page-2 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#33|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 281.44,
+      "after": 283.52,
+      "delta": 2.079999999999984,
+      "detail": "\"de\" |dy| 281.44 -> 283.52 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#33 is the page-2 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 530.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (281.44 -> 283.52 pt) is the footer moving to where Chrome draws it: by position, page-2 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#3|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#61|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 200.64,
+      "after": 202.42,
+      "delta": 1.7800000000000011,
+      "detail": "\"de\" |dx| 200.64 -> 202.42 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#61 is the page-3 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 293.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (200.64 -> 202.42 pt) is the footer moving to where Chrome draws it: by position, page-3 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#61|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 518.44,
+      "after": 520.52,
+      "delta": 2.0799999999999272,
+      "detail": "\"de\" |dy| 518.44 -> 520.52 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#61 is the page-3 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 293.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (518.44 -> 520.52 pt) is the footer moving to where Chrome draws it: by position, page-3 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#4|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#87|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 200.64,
+      "after": 202.42,
+      "delta": 1.7800000000000011,
+      "detail": "\"de\" |dx| 200.64 -> 202.42 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#87 is the page-4 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 316.31) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (200.64 -> 202.42 pt) is the footer moving to where Chrome draws it: by position, page-4 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#87|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 495.19,
+      "after": 497.27,
+      "delta": 2.079999999999984,
+      "detail": "\"de\" |dy| 495.19 -> 497.27 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#87 is the page-4 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 316.31) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (495.19 -> 497.27 pt) is the footer moving to where Chrome draws it: by position, page-4 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#5|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#115|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 200.64,
+      "after": 202.42,
+      "delta": 1.7800000000000011,
+      "detail": "\"de\" |dx| 200.64 -> 202.42 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#115 is the page-5 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 350.81) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (200.64 -> 202.42 pt) is the footer moving to where Chrome draws it: by position, page-5 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#115|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 460.69,
+      "after": 462.77,
+      "delta": 2.079999999999984,
+      "detail": "\"de\" |dy| 460.69 -> 462.77 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#115 is the page-5 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 350.81) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (460.69 -> 462.77 pt) is the footer moving to where Chrome draws it: by position, page-5 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#6|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#155|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 200.64,
+      "after": 202.42,
+      "delta": 1.7800000000000011,
+      "detail": "\"de\" |dx| 200.64 -> 202.42 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#155 is the page-6 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 542.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (200.64 -> 202.42 pt) is the footer moving to where Chrome draws it: by position, page-6 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#155|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 269.44,
+      "after": 271.52,
+      "delta": 2.079999999999984,
+      "detail": "\"de\" |dy| 269.44 -> 271.52 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#155 is the page-6 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (104.13, 542.06) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (269.44 -> 271.52 pt) is the footer moving to where Chrome draws it: by position, page-6 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|Página#7|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "improvement",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 1.81,
+      "after": -0.6,
+      "delta": -1.21,
+      "detail": "\"Página\" |dx| 1.81 -> 0.6 pt"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#168|dx",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 3.05,
+      "after": 4.83,
+      "delta": 1.7800000000000002,
+      "detail": "\"de\" |dx| 3.05 -> 4.83 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#168 is the page-7 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (301.72, 81.70) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dx change (3.05 -> 4.83 pt) is the footer moving to where Chrome draws it: by position, page-7 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|de#168|dy",
+      "group": "pdf-probe",
+      "check": "pdf-probe",
+      "class": "accepted",
+      "gating": false,
+      "tolClass": "pdf-probe-pt",
+      "tol": 1,
+      "before": 729.79,
+      "after": 731.88,
+      "delta": 2.090000000000032,
+      "detail": "\"de\" |dy| 729.79 -> 731.88 pt vs Chrome",
+      "acceptedAs": {
+        "reason": "Fits GATE-A1 (oracle artefact): the k-th-occurrence pair is two different word instances. vellora's de#168 is the page-7 FOOTER 'de' (306.55, 813.58) pt; the Chrome word it is paired with is a BODY 'de' at (301.72, 81.70) pt (vellora 8 pages vs Chrome 7, and the extractor emits the footers at different occurrence positions). The dy change (729.79 -> 731.88 pt) is the footer moving to where Chrome draws it: by position, page-7 footer 'de' vs Chrome's (307.12, 812.51) pt went |dx| 2.35 -> 0.57 pt, |dy(yMin)| 1.02 -> 1.07 pt (yMin carries each producer's declared ascent, step 04; PyMuPDF baseline of the 8pt Liberation Sans footer: Chrome 819.75, vellora 819.41 pt).",
+        "evidence": "pdftotext 26.06.0 -bbox of layout-diff text-stress-ptbr chrome.pdf / vellora.pdf of both runs; Chrome 155.0.8059.85 local macOS (INDICATIVE), 2026-10-21; old = port/05 run 20261021T142201Z (e9dc7e4), new = port/06 run of c9fe9f5; numbers: attachments/accepted-evidence.json; label legend: baselines/port/README.md (06-page-rules)",
+        "label": "pdf-probe-pairing-artefact"
+      }
+    }
+  ],
+  "unusedAcceptances": [],
+  "tolerances": {
+    "position-mm": {
+      "tol": 0.1,
+      "unit": "mm",
+      "label": "DESIGN TARGET",
+      "why": "word/anchor position error vs a reference (REF-W max/p95, REF-R worst anchor, DANFE-L1, LET-1). 0.1 mm (0.28 pt, 0.38 CSS px) is 10x the 0.01 mm the values are reported with and below one CSS px (0.26 mm), the smallest step a px-snapping layout can move; the measurement is deterministic for one build and one reference (CONFIRMED: equal inputs gave equal values in the Phase A repeat run)."
+    },
+    "geometry-excess-mm": {
+      "tol": 0.05,
+      "unit": "mm",
+      "label": "DESIGN TARGET",
+      "why": "distance OUTSIDE a specification window (BOL-G*, DANFE-B*, DANFE-M1, TXT-A1). Inside the window the spec admits any value, so only the excess is ratcheted; 0.05 mm is about one 600 dpi raster pixel (0.042 mm), the measurement quantum of measure_bars.py / the page ink box."
+    },
+    "font-excess-pt": {
+      "tol": 0.05,
+      "unit": "pt",
+      "label": "SPEC-derived tolerance unit",
+      "why": "font-size excess outside a window; 0.05 pt is the tolerance ACCEPTANCE.md already applies to every font-size criterion (BOL-T*, DANFE-F*)."
+    },
+    "count": {
+      "tol": 0,
+      "unit": "count",
+      "label": "DESIGN TARGET",
+      "why": "integer counts from deterministic tools (required strings found, extractor missing/extra tokens, segments/glyphs attributed, decoded symbols): any loss is a real change of the document."
+    },
+    "page-delta": {
+      "tol": 0,
+      "unit": "pages",
+      "label": "DESIGN TARGET",
+      "why": "|vellora pages - reference pages|: a page break moving is never noise."
+    },
+    "pdf-probe-pt": {
+      "tol": 1,
+      "unit": "pt",
+      "label": "DESIGN TARGET",
+      "why": "per-word |dx| / |dy| of vellora's PDF vs Chrome's PDF (pdftotext -bbox, same-page pairs). 1 pt (0.35 mm) is an order of magnitude below the Phase A regressions it must catch (invoice price column +9 pt, notification signature -14 pt) and above glyph-bbox rounding of pdftotext (0.01 pt) and sub-px snapping differences."
+    }
+  }
+}
