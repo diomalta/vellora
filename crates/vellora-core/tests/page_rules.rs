@@ -226,6 +226,30 @@ fn left_and_right_pages_alternate_from_a_right_first_page() {
 }
 
 #[test]
+fn an_rtl_root_makes_page_one_a_left_page() {
+    // Right-to-left page progression (css-page-3 "Spread pseudo-classes"). Chrome, `<html
+    // dir="rtl">`: baselines 123.0 (left: 40 mm), 66.75 (right: 20 mm), 123.0 pt.
+    let html = doc(
+        "@page { size: A4; margin: 10mm; } @page :left { margin-top: 40mm; } \
+         @page :right { margin-top: 20mm; }",
+        THREE_PAGES,
+    )
+    .replacen("<html>", "<html dir=\"rtl\">", 1);
+    let p = paginate(&html);
+    for (page, text, chrome) in [
+        (0, "pagina um", 123.0),
+        (1, "pagina dois", 66.75),
+        (2, "pagina tres", 123.0),
+    ] {
+        let baseline = body_origin(&p, page, text).1;
+        assert!(
+            (baseline - chrome).abs() <= TOL_PT,
+            "{text}: {baseline:.2} pt, Chrome {chrome} pt"
+        );
+    }
+}
+
+#[test]
 fn blank_named_and_invalid_selectors_never_match() {
     // Chrome: "Primeira"/"pagina" at (28.5, 49.5)/(28.5, 38.25) pt — the 10 mm margins only.
     for (css, body, text, chrome) in [
