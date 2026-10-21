@@ -59,7 +59,9 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
 | `render-corpus.mjs`, `corpus.json` | Runner + per-fixture criteria manifest |
 | `decode_barcodes.py` | zxing-cpp decode of page rasters; ideal-raster ground truth + negative control |
 | `measure_bars.py` | Bar geometry from the raster vs `data.json` (length, height, placement, edge error, quiet zones, cut line) |
-| `font_sizes.py`, `pdf_probe.py` | pdfminer font sizes / positions; pypdf + pdfminer text; strict parse; ink box; money columns |
+| `font_sizes.py`, `pdf_probe.py` | pdfminer font sizes / positions (word-bounded anchors with exact occurrence counts, regions, whole-line matches; `data-moc` categories judging every glyph, page floor, coverage); pypdf + pdfminer text; strict parse; ink box; header-assigned money columns |
+| `lib/required-text.mjs` | Required-text matching with pinned occurrence counts (runner and tests share it) |
+| `test/oracles.test.mjs`, `test/helpers.mjs` | Oracle regression tests on synthetic PDFs / rasters (base-14 Helvetica PDF writer, PIL raster); no renderer involved |
 | `font_metrics.py` | Re-derives the Liberation digit/cap heights and advances (fontTools) used to convert mm ↔ pt |
 | `make_placeholder_logo.py` | Neutral CC0 logo used instead of an upstream brand logo |
 | `fetch-sources.mjs`, `sources.json` | Reproducible download + sha256 check of the primary documents |
@@ -77,10 +79,20 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
   post-layout passes. Chromium 155 shows the same class of snapping for backgrounds: neither engine
   decodes the spec-geometry ITF (X = 0.2543 mm: vellora 108 / Chrome 107 of 114 bars), both decode
   the px-grid variant (bar-edge error 0.021 mm vellora, 0.032 mm Chrome).
+- **CONFIRMED — vellora paints `dashed` / `dotted` borders solid.** `crates/vellora-core/src/blitz_engine.rs`
+  (border loop at lines 723–738) pushes one solid rectangle for every border whose style is not
+  none/hidden. In the boleto raster vellora draws the cut line as one 199.8 mm solid run at 104.77 mm,
+  where Chrome draws 152 regular dashes at 185.72–185.97 mm. The first corpus snapshot reported the
+  vellora "ficha top at 131.9 mm": that was the cut-line detector taking a text row for a dashed line
+  (it is now strict: regular dashes and gaps), so that number was wrong; G4 / G6 are now "not
+  measurable" for vellora.
 - **CONFIRMED — vellora layout losses the strict gate does not catch:** declared table column widths
   not honored (boleto/DANFE header cells at equal widths), the boleto recibo's fixed `height: 175mm`
-  not honored (ficha top at 131.9 mm instead of 186 mm), the linha digitável drawn past the right page
-  edge (pdftotext drops it, pypdf/pdfminer still extract it), the DANFE overflowing to a second page
+  not honored (the ficha's bank code is at 105.1 mm from the top in vellora, 187.4 mm in Chrome;
+  pdfminer glyph boxes), the linha digitável drawn past the right page edge (pdftotext drops it,
+  pypdf/pdfminer still extract it), likewise the recibo's "Agência / Código" and "Nosso Número" values
+  (glyph boxes end at x = 215.5 mm on a 209.9 mm page, so pdftotext extracts one of their two copies),
+  the DANFE overflowing to a second page
   and its CODE-128C not decoding although its module is a whole CSS px, the sparksuite logo `<img>`
   silently not painted (0 image XObjects; strict render succeeded), and anchor drifts vs Chrome of
   11.2 mm (text stress, page 1), 11.5 mm (sparksuite) and 5.5 mm (Postmark). Causes are NOT
@@ -88,9 +100,29 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
   vellora's own table/pagination handling, since a minimal `height: 100mm` probe is honored.
 - **CONFIRMED — what already works:** strict acceptance of all five documents, determinism (DET-1 and
   DET-2 under another TZ/LANG; the vellora sha256 values were also identical across two separate runs
-  of the whole corpus, while the Chrome reference PDFs differ run to run), all font-size minimums of the DANFE that could be located, money
-  column right edges aligned to 0 mm spread, required text extraction for the text-stress, invoice
-  and receipt documents in all three extractors.
+  of the whole corpus, while the Chrome reference PDFs differ run to run), every DANFE glyph at or
+  above its MOC-AII 3.7 minimum (DANFE-F1–F11: 3511 of 3511 glyphs attributed to a category, on both
+  of vellora's pages), money column right edges aligned to 0 mm spread with every token assigned to a
+  column, required text extraction for the text-stress, invoice and receipt documents in all three
+  extractors.
 - **Observed, cause unknown:** in a probe with 114 absolutely positioned bars, vellora painted one
   merged rectangle at the top of the page; with 3 absolutely positioned children it placed them
   correctly. Probe HTML is reproducible from `lib/itf.mjs` (not committed as a fixture).
+
+## Oracle regressions (independent validator round, 2026-10-21)
+
+An independent validator injected defects into the fixtures; four were not caught by the first
+version of these oracles. Each is now caught, re-checked by re-injecting it into the committed
+fixtures, and pinned by a self-test that needs no renderer:
+
+| Injection | Why it passed before | Now caught by | Regression test |
+|---|---|---|---|
+| i05 delete the boleto via label "Ficha de Compensação" | the string is a substring of "Autenticação Mecânica - Ficha de Compensação"; BOL-T3 measured the first line containing it | BOL-X1/X2 (pinned count 2 → "1/2×"), BOL-T3 ("not found in region belowBarcode") in both engines, and `node --test` (HTML count ≠ pinned) | `oracles.test.mjs` i05 ×3, `fixtures.test.mjs` required-text counts |
+| i07 one DANFE block title at 4 pt | DANFE-F1..F9 measured one sample string each | DANFE-F1 ("min 4pt Cálculo do imposto") and DANFE-F10 floor, both engines | `oracles.test.mjs` i07, `fixtures.test.mjs` data-moc coverage |
+| i08a non-permissive LICENSE text containing "MIT License" | only `/MIT License/` was matched | sha256(LICENSE) ≠ `sources.json` licenceSha256 | `fixtures.test.mjs` OSS licence |
+| i10b one saldo token 4.5 mm off its column | gap clustering split it into a 1-token cluster, which was dropped | TXT-A1 (Saldo spread 4.5 mm), both engines | `oracles.test.mjs` i10b |
+
+Found while fixing them: the dashed cut-line detector also accepted text rows (> 600 rows per boleto
+page met its old test), which produced the wrong vellora ficha-top value above; pinned by
+`oracles.test.mjs` "cut". Previously caught injections re-checked against the new code (i01, i04,
+i06, i08b, i10a, i11b) are still caught.

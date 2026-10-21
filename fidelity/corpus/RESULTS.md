@@ -5,7 +5,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 | Field | Value |
 |---|---|
-| date | 2026-10-21T01:29:32Z |
+| date | 2026-10-21T04:36:13Z |
 | os | darwin 27.0.0 arm64 (macOS 27.0.1) |
 | cpu | Apple M5 Pro |
 | node | v22.23.2 |
@@ -14,7 +14,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 | poppler | pdftoppm version 26.06.0 |
 | python | 3.12.13 |
 | pythonPackages | zxing-cpp 3.1.1, pillow 13.0.0, pypdf 6.21.1, pdfminer.six 20260107 |
-| gitHead | 0086dae9bba0b4b8fd247703ad0a5bf776f3f2fa |
+| gitHead | ae54650ad5c27d5e1e97c1c86f4d0c7c7d949701 |
 | command | node fidelity/corpus/render-corpus.mjs --snapshot fidelity/corpus/RESULTS.md |
 | authority | INDICATIVE (local macOS run; the pinned Linux CI run is authoritative) |
 
@@ -22,31 +22,31 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 | Engine | PASS | FAIL | N/A | NOT-RUN |
 |---|---|---|---|---|
-| vellora | 57 | 33 | 0 | 0 |
-| chrome | 64 | 5 | 21 | 0 |
+| vellora | 61 | 31 | 0 | 0 |
+| chrome | 66 | 5 | 21 | 0 |
 
 ## boleto-febraban — spec geometry (103 mm)
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
-- vellora PDF sha256 `c2988b5a3715d432cc027f032e0c75b0bd23b04233e63f76aa290ed6f565551c` (35707 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `1656ce867e376ecbf25387e14f777a63c6ccab34eec4d486718fcfb96409401c` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- vellora PDF sha256 `ed99899192b04820d957b7de743df24035eb7a7be63f0d7fa705e218f7e274bd` (35704 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `33adcfe6adf1950cb64ef2443444097a99cb39e5d096abb995153bb33067b0bc` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
 | BOL-P1 | PASS — 1 (expected 1) | PASS — 1 (expected 1) |
-| BOL-X1 | FAIL — 15/16 missing @linhaDigitavel.formatada | PASS — 16/16 |
-| BOL-X2 | FAIL — pdftotext 15/16; pypdf 16/16; pdfminer 16/16 | PASS — pdftotext 16/16; pypdf 16/16; pdfminer 16/16 |
+| BOL-X1 | FAIL — 13/16 missing @linhaDigitavel.formatada, @titulo.nossoNumero (1/2×), @beneficiario.agenciaCodigo (1/2×) | PASS — 16/16 |
+| BOL-X2 | FAIL — pdftotext 13/16; pypdf 16/16; pdfminer 16/16 | PASS — pdftotext 16/16; pypdf 16/16; pdfminer 16/16 |
 | BOL-B1 | FAIL — decodes false, validates false | FAIL — decodes false, validates false |
 | BOL-B2 | FAIL — DVs true, rebuilds barcode true, printed text found false | PASS — DVs true, rebuilds barcode true, printed text found true |
 | BOL-G1 | PASS — 102.9123 (target 103 ± 0.3) | FAIL — 102.4043 (target 103 ± 0.3) |
 | BOL-G2 | PASS — 12.954 (target 13 ± 0.3) | PASS — 12.9963 (target 13 ± 0.3) |
-| BOL-G3 | PASS — 5.033 (target 5 ± 0.3) | PASS — 5.033 (target 5 ± 0.3) |
-| BOL-G4 | FAIL — 35.912 (target 12 ± 0.5) | PASS — 12.0149 (target 12 ± 0.5) |
+| BOL-G3 | PASS — 5.0377 (target 5 ± 0.3) | PASS — 4.9953 (target 5 ± 0.3) |
+| BOL-G4 | FAIL — ficha_relative_mm.barcode_centre_above_ficha_bottom not measurable (no dashed cut line detected) | PASS — 12.0149 (target 12 ± 0.5) |
 | BOL-G5 | FAIL — edge_error_mm.max not measurable (bar count mismatch: measured 108 vs expected 114 (merged or missing bars)) | FAIL — edge_error_mm.max not measurable (bar count mismatch: measured 107 vs expected 114 (merged or missing bars)) |
-| BOL-G6 | FAIL — 131.8683 (target 186 ± 0.5) | PASS — 186.0127 (target 186 ± 0.5) |
-| BOL-T1 | PASS — 20.6pt GSCMBG+LiberationSans-Bold | PASS — 20.59pt AAAAAA+LiberationSans-Bold |
-| BOL-T2 | PASS — 14.5pt WUINBZ+LiberationSans | PASS — 14.5pt BAAAAA+LiberationSans |
-| BOL-T3 | PASS — 7pt WUINBZ+LiberationSans | PASS — 7pt BAAAAA+LiberationSans |
+| BOL-G6 | FAIL — ficha_relative_mm.ficha_top not measurable (no dashed cut line detected) | PASS — 186.0127 (target 186 ± 0.5) |
+| BOL-T1 | PASS — 20.6pt GSCMBG+LiberationSans-Bold; 2/2 occurrences | PASS — 20.59pt AAAAAA+LiberationSans-Bold; 2/2 occurrences |
+| BOL-T2 | PASS — 14.5pt WUINBZ+LiberationSans; 2/2 occurrences | PASS — 14.5pt BAAAAA+LiberationSans; 2/2 occurrences |
+| BOL-T3 | PASS — 6pt WUINBZ+LiberationSans | PASS — 6pt BAAAAA+LiberationSans |
 | BOL-R1 | FAIL — worst BOL-T2 88.36 mm (tol 1) | N/A — is the reference |
 | DET-1 | PASS — true | N/A |
 | DET-2 | PASS — TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256 | N/A |
@@ -55,25 +55,25 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## boleto-febraban — DIAGNOSTIC px-grid geometry (107.16 mm) (DIAGNOSTIC)
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
-- vellora PDF sha256 `f8605d6b5835c5f1a829264ef98c16a53321114aaab5e903675ad9cc34205762` (35788 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `fa63eb6931fd8c148307c1ee9d26dfda778ef49012012e9182a44d15cd6b2681` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- vellora PDF sha256 `4f260dd899cb1437262777755ffd154d7fa3a48167e2625916748a41aab3a9dc` (35784 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `a3e91bc6e92a5e066d30af236d629cfb56b2b77f6f8adf72003d0d5ed2236c92` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
 | BOL-P1 | PASS — 1 (expected 1) | PASS — 1 (expected 1) |
-| BOL-X1 | FAIL — 15/16 missing @linhaDigitavel.formatada | PASS — 16/16 |
-| BOL-X2 | FAIL — pdftotext 15/16; pypdf 16/16; pdfminer 16/16 | PASS — pdftotext 16/16; pypdf 16/16; pdfminer 16/16 |
+| BOL-X1 | FAIL — 13/16 missing @linhaDigitavel.formatada, @titulo.nossoNumero (1/2×), @beneficiario.agenciaCodigo (1/2×) | PASS — 16/16 |
+| BOL-X2 | FAIL — pdftotext 13/16; pypdf 16/16; pdfminer 16/16 | PASS — pdftotext 16/16; pypdf 16/16; pdfminer 16/16 |
 | BOL-B1 | PASS — decodes true, validates true | PASS — decodes true, validates true |
 | BOL-B2 | FAIL — DVs true, rebuilds barcode true, printed text found false | PASS — DVs true, rebuilds barcode true, printed text found true |
 | BOL-G1 | PASS — 107.1457 (target 107.1563 ± 0.3) | PASS — 107.188 (target 107.1563 ± 0.3) |
 | BOL-G2 | PASS — 12.954 (target 13 ± 0.3) | PASS — 12.9963 (target 13 ± 0.3) |
-| BOL-G3 | PASS — 5.033 (target 5 ± 0.3) | PASS — 5.033 (target 5 ± 0.3) |
-| BOL-G4 | FAIL — 35.912 (target 12 ± 0.5) | PASS — 12.0149 (target 12 ± 0.5) |
+| BOL-G3 | PASS — 5.0377 (target 5 ± 0.3) | PASS — 4.9953 (target 5 ± 0.3) |
+| BOL-G4 | FAIL — ficha_relative_mm.barcode_centre_above_ficha_bottom not measurable (no dashed cut line detected) | PASS — 12.0149 (target 12 ± 0.5) |
 | BOL-G5 | PASS — 0.0212 (max 0.05) | PASS — 0.0318 (max 0.05) |
-| BOL-G6 | FAIL — 131.8683 (target 186 ± 0.5) | PASS — 186.0127 (target 186 ± 0.5) |
-| BOL-T1 | PASS — 20.6pt GSCMBG+LiberationSans-Bold | PASS — 20.59pt AAAAAA+LiberationSans-Bold |
-| BOL-T2 | PASS — 14.5pt WUINBZ+LiberationSans | PASS — 14.5pt BAAAAA+LiberationSans |
-| BOL-T3 | PASS — 7pt WUINBZ+LiberationSans | PASS — 7pt BAAAAA+LiberationSans |
+| BOL-G6 | FAIL — ficha_relative_mm.ficha_top not measurable (no dashed cut line detected) | PASS — 186.0127 (target 186 ± 0.5) |
+| BOL-T1 | PASS — 20.6pt GSCMBG+LiberationSans-Bold; 2/2 occurrences | PASS — 20.59pt AAAAAA+LiberationSans-Bold; 2/2 occurrences |
+| BOL-T2 | PASS — 14.5pt WUINBZ+LiberationSans; 2/2 occurrences | PASS — 14.5pt BAAAAA+LiberationSans; 2/2 occurrences |
+| BOL-T3 | PASS — 6pt WUINBZ+LiberationSans | PASS — 6pt BAAAAA+LiberationSans |
 | BOL-R1 | FAIL — worst BOL-T2 88.36 mm (tol 1) | N/A — is the reference |
 | DET-1 | PASS — true | N/A |
 | DET-2 | PASS — TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256 | N/A |
@@ -82,8 +82,8 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## danfe — retrato, folhas soltas, laser
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
-- vellora PDF sha256 `4faecace832a7b20f10b56bbb2d0892d6b66cdc79e4e56c1ede5bf1337f3731e` (47201 bytes, 2 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
-- Chrome PDF sha256 `95f3cd1e69ada2a43dfbae7cfe58222e2500fca6bcc6b6de072765540ec7863f` (1 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
+- vellora PDF sha256 `87bfb793eb7950822042f2f920271708574681dd880e58fcc0a94ad1ed2b063f` (47220 bytes, 2 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
+- Chrome PDF sha256 `d5247ccda3ee94bcbc7a8bdae4d61ceb7f902901c893acd7151ead1420943cfc` (1 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -96,24 +96,26 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 | DANFE-B4 | PASS — 25.8657 (min 2.65) | PASS — 2.921 (min 2.65) |
 | DANFE-B5 | FAIL — 0.5927 (min 2.65) | PASS — 3.175 (min 2.65) |
 | DANFE-M1 | FAIL — L 2.498 T 3.429 R 0 B 16.552 (each in [2, 8]) | PASS — L 2.371 T 4.233 R 2.498 B 3.344 (each in [2, 8]) |
-| DANFE-F0 | PASS — EOAYXZ+LiberationSerif, SWPJVR+LiberationSerif-Bold | PASS — AAAAAA+LiberationSerif, BAAAAA+LiberationSerif-Bold |
-| DANFE-F1 | PASS — 6pt SWPJVR+LiberationSerif-Bold | PASS — 5.99pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F2 | PASS — 5.5pt EOAYXZ+LiberationSerif | PASS — 5.49pt AAAAAA+LiberationSerif |
-| DANFE-F3 | PASS — 6pt EOAYXZ+LiberationSerif | PASS — 5.99pt AAAAAA+LiberationSerif |
-| DANFE-F4a | PASS — 14pt SWPJVR+LiberationSerif-Bold | PASS — 13.98pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F4b | PASS — 10pt SWPJVR+LiberationSerif-Bold | PASS — 9.99pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F4c | PASS — 8pt EOAYXZ+LiberationSerif | PASS — 7.99pt AAAAAA+LiberationSerif |
-| DANFE-F5 | PASS — 8.5pt SWPJVR+LiberationSerif-Bold | PASS — 8.49pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F6a | FAIL — text not found on the page | PASS — 11.99pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F6b | PASS — 8pt SWPJVR+LiberationSerif-Bold | PASS — 7.99pt BAAAAA+LiberationSerif-Bold |
-| DANFE-F7 | PASS — 6.5pt EOAYXZ+LiberationSerif | PASS — 6.49pt AAAAAA+LiberationSerif |
-| DANFE-F8 | FAIL — text not found on the page | PASS — 6.99pt AAAAAA+LiberationSerif |
-| DANFE-F9 | PASS — 10pt EOAYXZ+LiberationSerif | PASS — 9.99pt AAAAAA+LiberationSerif |
+| DANFE-F0 | PASS — DKHVPI+LiberationSerif, SWPJVR+LiberationSerif-Bold | PASS — AAAAAA+LiberationSerif, BAAAAA+LiberationSerif-Bold |
+| DANFE-F1 | PASS — 7/7 segments; min 6pt "Fatura/Duplicatas" | PASS — 7/7 segments; min 5.99pt "Transportador/Volumes transportados" |
+| DANFE-F2 | PASS — 14/14 segments; min 5.5pt "B.cálc. ICMS"; 2 merged with a neighbour | PASS — 14/14 segments; min 5.49pt "Descrição do produto/serviço" |
+| DANFE-F3 | PASS — 55/55 segments; min 6pt "Recebemos de Distribuidora Exemplo de Componentes Ltda. os p" | PASS — 55/55 segments; min 5.99pt "Duplicata — vencimento — valor" |
+| DANFE-F4a | PASS — 1/1 segments; min 14pt "DANFE" | PASS — 1/1 segments; min 13.98pt "DANFE" |
+| DANFE-F4b | PASS — 4/4 segments; min 10pt "Nº 000.012.345" | PASS — 4/4 segments; min 9.99pt "Nº 000.012.345" |
+| DANFE-F4c | PASS — 3/3 segments; min 8pt "DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA" | PASS — 3/3 segments; min 7.99pt "DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA" |
+| DANFE-F5 | PASS — 1/1 segments; min 8.5pt "3526 1012 3456 7800 0195 5500 1000 0123 4517 0524 3180" | PASS — 1/1 segments; min 8.49pt "3526 1012 3456 7800 0195 5500 1000 0123 4517 0524 3180" |
+| DANFE-F6a | PASS — 1/1 segments; min 12pt "Distribuidora Exemplo de Componentes Ltda." | PASS — 1/1 segments; min 11.99pt "Distribuidora Exemplo de Componentes Ltda." |
+| DANFE-F6b | PASS — 3/3 segments; min 8pt "Distrito Industrial — Campinas / SP — CEP 13069-000" | PASS — 3/3 segments; min 7.99pt "Distrito Industrial — Campinas / SP — CEP 13069-000" |
+| DANFE-F7 | PASS — 168/168 segments; min 6.5pt "Gabinete mid-tower com painel lateral de vidro temperado" | PASS — 168/168 segments; min 6.49pt "Cooler para processador com dissipador em alumínio" |
+| DANFE-F8 | PASS — 3/3 segments; min 7pt "SEM VALOR FISCAL — NF-e emitida em ambiente de homologação (" | PASS — 3/3 segments; min 6.99pt "SEM VALOR FISCAL — NF-e emitida em ambiente de homologação (" |
+| DANFE-F9 | PASS — 49/49 segments; min 10pt "Consulta de autenticidade no portal nacional da NF-e www.nfe" | PASS — 49/49 segments; min 9.99pt "Consulta de autenticidade no portal nacional da NF-e www.nfe" |
+| DANFE-F10 | PASS — min 5.5pt ("C" p1; floor 5pt) | PASS — min 5.49pt ("C" p1; floor 5pt) |
+| DANFE-F11 | PASS — 3511/3511 glyphs attributed | PASS — 3511/3511 glyphs attributed |
 | DANFE-L1a | PASS — 6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 1.56) mm | PASS — 5.99pt BAAAAA+LiberationSerif-Bold; pos Δ(-0.12, 1.51) mm |
 | DANFE-L1b | FAIL — 6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 3.15) mm | PASS — 5.99pt BAAAAA+LiberationSerif-Bold; pos Δ(-0.12, 2.28) mm |
 | DANFE-L1c | FAIL — 6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 4.71) mm | PASS — 5.99pt BAAAAA+LiberationSerif-Bold; pos Δ(-0.12, 3) mm |
 | DANFE-L1d | FAIL — 6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 5.96) mm | FAIL — 5.99pt BAAAAA+LiberationSerif-Bold; pos Δ(-0.12, 3.17) mm |
-| DANFE-R1 | FAIL — DANFE-F6a: anchor text not found in vellora | N/A — is the reference |
+| DANFE-R1 | FAIL — DANFE-A4: anchor text not found in vellora | N/A — is the reference |
 | DET-1 | PASS — true | N/A |
 | DET-2 | PASS — TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256 | N/A |
 | PDF-S1 | PASS — pypdf 6.21.1 strict | PASS — pypdf 6.21.1 strict |
@@ -121,13 +123,13 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## text-stress-ptbr — self-authored text stress
 
 - vellora PDF sha256 `7b7da6ec0a1ce5ff91a10177b34ff428a29abee6fb3d304ce4f571d7fbc8d94c` (86726 bytes, 8 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
-- Chrome PDF sha256 `e7c7e03aba4521a39c895d333ffe8796352e7326fa3c4049d2178cc3a17a7053` (7 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
+- Chrome PDF sha256 `adcb4cfbce07d46d67164209afb336125a23031bab061bad082c857b1f77fb20` (7 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
 | TXT-X1 | PASS — 10/10 | PASS — 10/10 |
 | TXT-X2 | PASS — pdftotext 10/10; pypdf 10/10; pdfminer 10/10 | PASS — pdftotext 10/10; pypdf 10/10; pdfminer 10/10 |
-| TXT-A1 | PASS — 3 columns, worst right-edge spread 0 mm (max 0.3) | PASS — 3 columns, worst right-edge spread 0.003 mm (max 0.3) |
+| TXT-A1 | PASS — 46 tokens in 3 columns, worst right-edge spread 0 mm (Débito (R$); max 0.3) | PASS — 69 tokens in 3 columns, worst right-edge spread 0.003 mm (Débito (R$); max 0.3) |
 | TXT-P1 | FAIL — 8 vs reference 7 | N/A — 7 (is the reference) |
 | TXT-R1 | FAIL — worst TXT-S4 11.24 mm (tol 1) | N/A — is the reference |
 | DET-1 | PASS — true | N/A |
@@ -137,7 +139,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## oss-sparksuite-invoice — sparksuite simple-html-invoice-template (MIT)
 
 - vellora PDF sha256 `0ab1373776b259a77a2cb964dbfea0b679bdb67412bb00ba132ffce2a219b613` (24164 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `8cc84c30e36ac236cc142864147ddbfcd7001f79ea0577d48800b63b43cf8c14` (1 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `430f63931fb44df36170dfe0bb3d426b3ac32b7e3006530d61b3e9382d8ad6d0` (1 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -154,7 +156,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## oss-postmark-receipt — Postmark receipt (MIT)
 
 - vellora PDF sha256 `9e7452fe3547424552acb343a1ff436559cf7272d8560471e63b083fb30db7da` (31042 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `0d7e8a56a93ea0d9310a38059e35c36da89a26c0861f15f65b999e158e56e039` (2 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `71dae8edab8cfee5df5540d662d322b42e44e6a60eaf02487cf813c1499fd952` (2 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|

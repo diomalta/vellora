@@ -185,7 +185,9 @@ test("danfe: every body text node carries a data-moc category judged by corpus.j
     "p = Segments(); p.feed(sys.stdin.read())",
     "print(json.dumps({'mocs': sorted({m for _, m in p.out}), 'untagged': [t for t, _ in p.untagged], 'n': len(p.out)}))",
   ].join("\n");
-  const out = JSON.parse(execFileSync(PY, ["-I", "-B", "-c", code], { input: html, encoding: "utf8" }));
+  const out = JSON.parse(
+    execFileSync(PY, ["-I", "-B", "-c", code], { input: html, encoding: "utf8" }),
+  );
   assert.deepEqual(out.untagged, [], "text outside any data-moc element");
   assert.ok(out.n > 300, `only ${out.n} segments`);
   const judged = new Set(fx.fontRules.categories.map((c) => c.moc));
