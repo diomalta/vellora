@@ -2,9 +2,13 @@
 //!
 //! ```text
 //! cargo run --release -p vellora-core --example layout_dump -- \
-//!   --html <templated.html> --out <dump.json> \
+//!   --html <templated.html> --out <dump.json> [--pdf <render.pdf>] \
 //!   [--font <face.ttf>]... [--image <src>=<file>]... [--base-url <url>]
 //! ```
+//!
+//! `--pdf` additionally writes the normal `vellora_core::render` output for the
+//! same input (fixed creation date), so a paginated probe can be compared with
+//! the pre-pagination layers.
 //!
 //! Calls `vellora_core::debug_layout_dump`, which runs `render`'s exact
 //! validation + layout sequence (stopping before pagination) with an observer,
@@ -180,6 +184,8 @@ fn to_json(dump: &LayoutDump) -> V {
                         V::Num(b.y),
                         V::Num(b.width),
                         V::Num(b.height),
+                        V::Num(b.margin_top),
+                        V::Num(b.margin_bottom),
                     ])
                 })
                 .collect();
@@ -201,7 +207,10 @@ fn to_json(dump: &LayoutDump) -> V {
                 .collect();
             V::Obj(vec![
                 ("name", V::Str(layer.name.clone())),
-                ("box_fields", V::Str("node_id,depth,x,y,w,h".into())),
+                (
+                    "box_fields",
+                    V::Str("node_id,depth,x,y,w,h,margin_top,margin_bottom".into()),
+                ),
                 ("boxes", V::Arr(boxes)),
                 (
                     "run_fields",
@@ -308,7 +317,12 @@ fn to_json(dump: &LayoutDump) -> V {
 fn run() -> Result<(), String> {
     let mut html_path: Option<String> = None;
     let mut out_path: Option<String> = None;
-    let mut opts = RenderOptions::default();
+    let mut pdf_path: Option<String> = None;
+    let mut opts = RenderOptions {
+        // Fixed, like every vellora render: never wall-clock.
+        creation_date: Some((2026, 6, 25)),
+        ..Default::default()
+    };
     let mut images: HashMap<String, Vec<u8>> = HashMap::new();
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -316,6 +330,7 @@ fn run() -> Result<(), String> {
         match arg.as_str() {
             "--html" => html_path = Some(value()?),
             "--out" => out_path = Some(value()?),
+            "--pdf" => pdf_path = Some(value()?),
             "--base-url" => opts.base_url = Some(value()?),
             "--font" => {
                 let path = value()?;
@@ -342,6 +357,12 @@ fn run() -> Result<(), String> {
     to_json(&dump).write(&mut json);
     json.push('\n');
     std::fs::write(&out_path, json).map_err(|e| format!("{out_path}: {e}"))?;
+    if let Some(pdf_path) = pdf_path {
+        // The normal render of the same input (same options), for the PAGINATED probe
+        // (fidelity/layout-diff/pdf-probe.mjs): where pre-pagination layers and PDF disagree.
+        let pdf = vellora_core::render(&html, &opts).map_err(|e| format!("{e:?}"))?;
+        std::fs::write(&pdf_path, pdf).map_err(|e| format!("{pdf_path}: {e}"))?;
+    }
     Ok(())
 }
 

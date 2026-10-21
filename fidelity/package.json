@@ -4,6 +4,13 @@
   "private": true,
   "type": "module",
   "description": "Fidelity oracles for the native renderer: WPT reftests, layout-tree diff, external PDF/text/barcode oracles. NOT published and NOT a root workspace member, so browser/Python tooling never enters a published package's dependency graph.",
-  "scripts": {},
-  "devDependencies": {}
+  "scripts": {
+    "layout-diff": "node layout-diff/run.mjs",
+    "layout-diff:compare": "node layout-diff/compare.mjs",
+    "layout-diff:pdf-probe": "node layout-diff/pdf-probe.mjs",
+    "test:layout-diff": "node --test \"layout-diff/test/*.test.mjs\""
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.15.0"
+  }
 }

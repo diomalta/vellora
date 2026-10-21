@@ -1379,6 +1379,9 @@ pub struct DumpBox {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    /// Blitz's resolved vertical margins (pagination re-stacks fragments with them).
+    pub margin_top: f64,
+    pub margin_bottom: f64,
     pub runs: Vec<DumpRunGeom>,
 }
 
@@ -1497,6 +1500,8 @@ fn dump_layer(name: &str, boxes: &[LaidOutBox]) -> DumpLayer {
                 y: b.y,
                 width: b.width,
                 height: b.height,
+                margin_top: b.margin_top,
+                margin_bottom: b.margin_bottom,
                 runs: b
                     .text_runs
                     .iter()
