@@ -168,14 +168,16 @@ computes `caught` from the oracle's own output:
 | barcode | valid ITF (Santander example, pixel-aligned modules); same with a wrong DV | pass; decoded but rejected by the mod-11 check |
 | barcode (Code 128) | CODE-128C of the fixtures/danfe chave (1 CSS px modules), vellora and Chrome; same chave with a wrong cDV | pass; decoded but rejected by the NF-e mod-11 cDV |
 | layout-consensus | notification re-rendered with the body translated by +6 pt | median signed dx shifts by 6 ± 1 pt |
+| pdf-probe v2 (×4, `layout-diff/lib/pdf-probe-canaries.mjs`, mutations by `py/pdf_mutate.py`) | notification vs its Chrome reference: the +6 pt render; one word redacted; one glyph run moved 2 pt away from Chrome; every FontDescriptor /Ascent rewritten to 450 | the gate's pdf-probe comparison FAILs on dx (median change 6 ± 1 pt); unpaired-chrome +1 and the word's pairing gate; that word's dy gates (+2 ± 0.05 pt); NOTHING is reported (while the v1 extractor's gate fires: control) |
 
 A canary that cannot run (Chrome or WeasyPrint unavailable) is listed as not-run with the
-reason. Of the 38 rows, 30 are detection canaries (`caught` true/false; each must be caught, the
+reason. Of the 42 rows, 34 are detection canaries (`caught` true/false; each must be caught, the
 gate fails otherwise) and 8 are measurements (`caught: null`, never gated): the 6 Chrome renders of
 the copy-paste canaries show what a browser keeps for the same input, and the 2 renders of the
 0.254 mm (0.96 CSS px) ITF modules test whether an engine keeps sub-pixel bars. (Earlier text said
 "two rows"; the Phase A manifests said 24 caught / 8 measurement-only, before the veraPDF and Code
-128 canaries existed.) `run-all.mjs` records the split as `canaryCounts`.
+128 canaries existed; 38 / 30 before the 4 pdf-probe v2 canaries.) `run-all.mjs` records the split
+as `canaryCounts`.
 
 ## Output
 

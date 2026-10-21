@@ -47,6 +47,12 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 - **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
   (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
   against its predecessor.
+- **pdf-probe semantics.** Since 2026-10-21 every link's gated pdf-probe section
+  (`pdf-probe/<fixture>.json`) is semantics 2 ("pdf-probe v2 re-score" below); the gate refuses
+  to compare it with a semantics-1 section, so a new link is gated with v2 only. The v1 sections
+  the links 00-start to 07 were gated with are kept under `attachments/pdf-probe-v1/` and their
+  `acceptedRegressions` (v1 keys) are history; the committed-canary test reproduces those
+  verdicts on the v1 sections.
 
 ## `00-start`: beta.4 + whitespace test fix + reader fix + hardened oracles
 
@@ -986,3 +992,116 @@ the content boxes are wider than 600 px, so they did not apply then and do not a
 
 The `committed-canary` self-test asserts that `07-media-print` PASSes against `06-page-rules`
 with no acceptances and no changed item.
+
+## pdf-probe v2 re-score (2026-10-21, branch `phaseb/oracle-v2`)
+
+GATE-P1 now measures pdf-probe semantics 2 (`fidelity/layout-diff/README.md`, "pdf-probe v2"):
+PyMuPDF baselines instead of pdftotext bbox tops (D1), position pairs keyed by the Chrome word
+instead of k-th occurrence pairs (D2), and unpaired words recorded and gated (D3). Every committed
+link was re-scored OFFLINE from the PDFs of the run it was written from; no other value of any
+baseline changed (CONFIRMED: every manifest equals its previous version except `files` and the new
+`pdfProbeRescore` block).
+
+**Where the sections live (decision).**
+
+- `pdf-probe/<fixture>.json` is the v2 section, the one the gate compares and the writer writes
+  for new runs.
+- The v1 files a link was gated with moved byte for byte to `attachments/pdf-probe-v1/` (same
+  sha256; only the `manifest.files` keys were renamed). Moving keeps one meaning for the gated
+  location (current semantics) in the writer, the loader and the gate, while the history stays
+  verifiable: `loadBaselineDir(dir, { pdfProbe: "v1" })` reads it, and
+  `committed-canary.test.mjs` reproduces every historical verdict (150 / 40 / 2587 / 18 / 13
+  accepted keys) on it.
+- Phase A `beta4` keeps its v1 in `layout-diff-ab/` (unchanged). `pin` had no pdf-probe section.
+- `acceptedRegressions` are unchanged. Their pdf-probe keys are v1 keys and match no v2 item; the
+  debt ledger supersedes them.
+
+**How (per link, recorded in `manifest.json pdfProbeRescore`).**
+`node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/<link> --run
+~/.cache/vellora-fidelity/<run copy>`, 2026-10-21 ~20:10Z, darwin 27.0.0 arm64, Node v22.23.2,
+Python 3.12.13, PyMuPDF 1.28.2 (local, INDICATIVE). Before writing, the script checks (all CONFIRMED):
+
+- the run copy's `summary.json` sha256 equals the manifest's source (11/11 links);
+- the run's own v1 `pdf-probe.json`, re-compacted, equals the committed v1 section for every
+  fixture (10 links; pin had none), so these are the PDFs the link measured;
+- integrity before and after, and (gate schema) no file outside `manifest.files`.
+
+**Missing inputs (CONFIRMED).**
+
+- `pin`: its run kept the PDFs of invoice and notification only; boleto, boleto-febraban, danfe,
+  oss-postmark-receipt, oss-sparksuite-invoice, receipt and text-stress-ptbr are recorded as
+  missing. pin's v2 section covers the 2 fixtures.
+- `beta4`: its v1 section came from a Phase A A/B probe whose PDFs no run copy kept
+  (`run-all-beta4-20261021T054809Z/layout-diff/*/run-all/` has no PDFs). The PDFs of the
+  `beta4-gated` run stand in, for beta4's 4 fixtures only, recorded as `source.substitute` with the
+  evidence: every v1 pair of that run equals beta4's A/B probe (boleto 254, invoice 541,
+  notification 244, receipt 151 pairs, 0 differing) and `beta4-gated/README.md` records
+  byte-identical corpus PDFs. Without the stand-in, every comparison against beta4 would be refused.
+
+**v2 gate of the chain** (`fidelity/layout-diff/snapshots/2026-10-21/pdf-probe-v2/rescore-report.json`,
+`node fidelity/gate/pdf-probe-rescore-report.mjs`; gating = gating pdf-probe items, each link's
+own v1-era acceptances applied, which match no v2 key):
+
+| link | vs previous link: gating (per fixture) | v1 pdf-probe items accepted then | vs 00-start: gating |
+|---|---|---|---|
+| beta4 vs pin | 619 (invoice 394, notification 225) | — (pin had no pdf-probe) | — |
+| beta4-gated vs beta4 | 0 (5 fixtures not comparable) | — | — |
+| 00-start vs beta4-gated | 0, no item at all (identical PDFs) | 0 | 0 |
+| 01-pagination-gaps | 55 (danfe 41 dy, sparksuite 14 dy); 749 improvements, 153 boleto-febraban words newly paired | 117 | 55 |
+| 02-delete-noop-passes | 0, no item at all (identical PDFs) | 0 | 55 |
+| 03-table-passes | 84 (danfe 36, text-stress-ptbr 48 incl. 16 lost pairings); 653 newly paired | 40 | 134 |
+| 04-block-offset | 1403 (danfe 442, text-stress-ptbr 314, boleto 231, postmark 138, boleto-febraban 109, notification 90, receipt 44, sparksuite 35); 1401 improvements | 2569 | 946 |
+| 05-walk-rewrite | 6: postmark "The [Product Name] team" lost (4 pairings), unpaired-chrome 42 → 46, unpaired-vellora 0 → 3 | 0 (v1: a non-gating "changed") | 922 |
+| 06-page-rules | 0; 81 improvements | 12 | 922 |
+| 07-media-print | 0, no item at all (identical PDFs) | 0 | 922 (danfe 295, boleto 231, postmark 140, text-stress-ptbr 122, notification 77, boleto-febraban 39, sparksuite 18) |
+
+**The v1-accepted pdf-probe words under v2.** Each v1 key is mapped to the vellora word it named
+(the run copy's v1 `pdf-probe.json`), then to the PyMuPDF word with the same page, text and x
+whose baseline is within 1.2 em below the pdftotext box top, then to its v2 pair; that pair's |d|
+on the accepted axis is compared with the same Chrome word's pair in the previous link and in
+00-start. improved / worse = |d| changed by more than 1 pt; within = at most 1 pt (v2: unchanged);
+unpaired = no v2 pair in the link (after) or in the compared link (before); unmapped = no single
+PyMuPDF word (pdftotext and PyMuPDF split words differently).
+
+| link · label | n | vs previous: improved / within / worse / unpaired / unmapped | vs 00-start: improved / within / worse / unpaired / unmapped |
+|---|---|---|---|
+| 01 · pdf-probe-compensating-drift | 117 | 63 / 19 / 18 (sparksuite 14, danfe 4) / 6 / 11 | = previous |
+| 03 · pdf-probe-pairing-artefact | 16 | 1 / 4 / 0 / 11 / 0 | 1 / 3 / 1 / 11 / 0 |
+| 03 · coincidental-match-of-wrong-geometry | 24 | 0 / 0 / 24 / 0 / 0 | 0 / 0 / 24 / 0 / 0 |
+| 04 · pdf-probe-ascent-artefact | 697 | 472 / 211 / 0 / 0 / 14 | 493 / 138 / 16 (danfe) / 36 / 14 |
+| 04 · compensating-drift (words) | 672 | 0 / 0 / 660 / 0 / 12 | 70 / 0 / 421 / 169 / 12 |
+| 04 · misplaced-word-uniform-shift | 1189 | 51 / 0 / 640 / 496 / 2 | 21 / 0 / 379 / 787 / 2 |
+| 04 · pdf-probe-pairing-artefact | 11 | 4 / 0 / 0 / 7 / 0 | 2 / 0 / 0 / 9 / 0 |
+| 06 · pdf-probe-pairing-artefact | 12 | 12 / 0 / 0 / 0 / 0 | 12 / 0 / 0 / 0 / 0 |
+
+Reading it (CONFIRMED from the numbers above; the per-fixture split is in the report):
+
+- **D1 was real**: none of step 04's 697 ascent artefacts is worse beyond 1 pt against step 03;
+  472 are better by more than 1 pt.
+- **Step 01's compensating drift was mostly an oracle artefact**: 82 of 117 are not worse (63
+  better), 18 are still worse beyond 1 pt (14 sparksuite, 4 danfe).
+- **D2 was real**: step 06's 12 pairing artefacts all improved; step 03's and 04's are unchanged,
+  improved or unpaired (a v1 pair across rows or pages), with one word worse against 00-start.
+- **The remaining debt is real and gated now**: step 03's 24 coincidental matches, step 04's 660
+  compensating-drift words and 640 misplaced words are worse beyond 1 pt under v2.
+- **Against 00-start the tail of the chain is worse on 922 v2 items** (the accumulated drift of D4
+  is visible this way, not by link-to-link tolerance).
+
+**Head of the chain (07) per fixture, v1 → v2** (pairs; unpaired vellora / Chrome; worst / median
+|dx| and |dy| in pt; v1 counts same-page pairs, its "unpaired" = words − pairs):
+
+| fixture | v1 | v2 |
+|---|---|---|
+| boleto | 254; 0/0; dx 1.66/1.09; dy 21.61/8.70 | 297; 0/0; dx 1.67/0.76; dy 19.85/7.85 |
+| boleto-febraban | 315; 0/0; dx 4.68/0.85; dy 7.91/1.74 | 315; 0/0; dx 4.68/0.85; dy 6.67/1.42 |
+| danfe | 590 (40 cross-page); 0/0; dx 505.14/2.45; dy 42.29/9.07 | 590; 40/40; dx 11.05/2.45; dy 17.82/7.15 |
+| invoice | 541; 0/0; dx 7.08/0.35; dy 3.54/0.63 | 541; 0/0; dx 7.08/0.35; dy 2.65/1.15 |
+| notification | 248; 0/0; dx 0.72/0.35; dy 7.85/2.52 | 248; 0/0; dx 0.75/0.35; dy 5.60/0.35 |
+| oss-postmark-receipt | 133 (3 cross-page); 0/39; dx 9.97/0.97; dy 37.22/10.84 | 134; 3/46; dx 9.97/0.97; dy 35.10/8.85 |
+| oss-sparksuite-invoice | 46; 0/0; dx 3.23/3.22; dy 13.90/4.90 | 46; 0/0; dx 3.23/3.22; dy 11.77/2.77 |
+| receipt | 151; 0/0; dx 0.95/0.23; dy 4.38/1.95 | 151; 0/0; dx 0.95/0.23; dy 2.60/0.35 |
+| text-stress-ptbr | 1113 (707 cross-page); 20/7; dx 375.18/0.22; dy 731.88/240.36 | 751; 1095/1082; dx 35.66/0.24; dy 34.15/3.35 |
+
+v1's worst values of hundreds of pt were pairs of different instances; text-stress-ptbr (8 pages
+vs 7) leaves 1082 of Chrome's 1833 words without a partner within 36 pt on the same page, which
+v1 hid as cross-page or mis-paired pairs.

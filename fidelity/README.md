@@ -75,7 +75,9 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
   on BOTH sides (the Phase A baselines only carry value strings): REF-W max/p95 (mm), REF-R worst
   anchor (mm), page-count deltas, required-string counts per extractor, EXT-2 missing/extra per
   extractor, DANFE/BOL geometry excess outside the spec window, segments/glyphs, LET-1 (mm),
-  LET-2, TXT-B1, and per-word pdf-probe dx/dy (pt). Each metric has a tolerance class.
+  LET-2, TXT-B1, and per-word pdf-probe dx/dy (pt; semantics 2: baselines, position pairs keyed
+  by the Chrome word, unpaired words counted; a section of another semantics is REFUSED). Each
+  metric has a tolerance class.
 - **WPT**: per-test outcomes; a lost CLEAN pass gates, a lost FLAGGED pass is reported; a test
   that starts to error gates; comparison is refused unless both sides carry the same Chrome ink
   data (`inkCheck`). `wpt/run.mjs` writes `outcomes.json` on every run for this, and refuses
@@ -105,9 +107,11 @@ which predate the layout-diff allowlist, are classified with its frozen copy
 
 ## Canaries
 
-`oracles/run-fixtures.mjs` runs 38 canary rows on every invocation; `summary.json canaryCounts`
-splits them: **30 detection canaries** (4 qpdf structural, 2 veraPDF PDF/A rule breakers, 9 text
-extractor, 6 copy-paste, 4 ITF, 4 Code 128, 1 layout-consensus), each must be caught, and **8
+`oracles/run-fixtures.mjs` runs 42 canary rows on every invocation; `summary.json canaryCounts`
+splits them: **34 detection canaries** (4 qpdf structural, 2 veraPDF PDF/A rule breakers, 9 text
+extractor, 6 copy-paste, 4 ITF, 4 Code 128, 1 layout-consensus, 4 pdf-probe v2: +6 pt shift, one
+word deleted, one glyph run moved 2 pt, /Ascent rewritten that must NOT be flagged; since
+2026-10-21, 30/38 before), each must be caught, and **8
 measurement-only rows** (`caught: null`: the 6 Chrome renders of the copy-paste canaries and the 2
 sub-CSS-px ITF renders), which show a behaviour and test no oracle. Phase A manifests said "24
 caught / 8 measurement-only" (24 detection canaries then) while `oracles/README.md` said "two rows
