@@ -162,3 +162,58 @@ export function syntheticDump(boxes = BOXES) {
 }
 
 export const ID = IDS;
+
+// ---- planted defects on a real dump (same shape as the validator's in-pipeline injections) ----
+
+const BOX_FIELD = { x: 2, y: 3, w: 4, h: 5 };
+
+function layersFrom(dump, fromLayer) {
+  const k = dump.layers.findIndex((l) => l.name === fromLayer);
+  if (k < 0) throw new Error(`no layer ${fromLayer}`);
+  return dump.layers.slice(k);
+}
+
+function nodeIdOf(dump, path) {
+  const node = dump.nodes.find((n) => n.path === path);
+  if (!node) throw new Error(`no node ${path}`);
+  return node.id;
+}
+
+/**
+ * Move ONE box (not its runs, not its descendants) by `delta` in `fromLayer` and every later
+ * layer: a pass that mis-places one box and the change persists (validator injection A).
+ */
+export function plantBoxShift(dump, path, fromLayer, delta) {
+  const id = nodeIdOf(dump, path);
+  for (const layer of layersFrom(dump, fromLayer)) {
+    const box = layer.boxes.find((b) => b[0] === id);
+    for (const [k, v] of Object.entries(delta)) box[BOX_FIELD[k]] += v;
+  }
+  return dump;
+}
+
+/**
+ * A pass makes one box `grow` px taller in `fromLayer` and every later layer, with flow
+ * consequences: its ancestors grow by the same amount and every box after its subtree (walk
+ * order), with its text runs, moves down (validator injection C).
+ */
+export function plantFlowGrowth(dump, path, fromLayer, grow) {
+  const id = nodeIdOf(dump, path);
+  const parentOf = new Map(dump.nodes.map((n) => [n.id, n.parent]));
+  const ancestors = new Set();
+  for (let p = parentOf.get(id); p !== null && p !== undefined; p = parentOf.get(p)) {
+    ancestors.add(p);
+  }
+  for (const layer of layersFrom(dump, fromLayer)) {
+    const i = layer.boxes.findIndex((b) => b[0] === id);
+    const depth = layer.boxes[i][1];
+    let end = i + 1;
+    while (end < layer.boxes.length && layer.boxes[end][1] > depth) end += 1;
+    layer.boxes.forEach((b, j) => {
+      if (j === i || ancestors.has(b[0])) b[BOX_FIELD.h] += grow;
+      if (j >= end) b[BOX_FIELD.y] += grow;
+    });
+    for (const run of layer.runs) if (run[0] >= end) run[3] += grow;
+  }
+  return dump;
+}

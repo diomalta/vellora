@@ -182,7 +182,11 @@ export function normalizeSnapshot(snapshot) {
   doc.layout.nodeIndex.forEach((nodeIdx, li) => {
     const entry = layoutOf.get(nodeIdx);
     if (entry) {
+      // Further layout objects of the same DOM node. For a pseudo-element these include the
+      // anonymous LayoutText of its generated `content:` (CONFIRMED 2026-10-21 on a block
+      // ::before: entry 1 = the pseudo box, entry 2 = text "Before block" with its textBox).
       entry.extra += 1;
+      entry.more.push(li);
       return;
     }
     const styles = {};
@@ -190,7 +194,17 @@ export function normalizeSnapshot(snapshot) {
       styles[styleNames[k]] = str(s);
     });
     const [x, y, w, h] = doc.layout.bounds[li];
-    layoutOf.set(nodeIdx, { li, x, y, w, h, styles, text: str(doc.layout.text?.[li]), extra: 0 });
+    layoutOf.set(nodeIdx, {
+      li,
+      x,
+      y,
+      w,
+      h,
+      styles,
+      text: str(doc.layout.text?.[li]),
+      extra: 0,
+      more: [],
+    });
   });
 
   const fragmentsOf = new Map();
@@ -247,6 +261,20 @@ export function normalizeSnapshot(snapshot) {
         ...f,
         text: text.slice(f.start, f.start + f.length),
       }));
+    } else if (pseudoOf.has(i) && layout) {
+      // Generated text of a pseudo-element: every layout object of this node that carries text.
+      const parts = [layout.li, ...layout.more]
+        .map((li) => ({ li, text: str(doc.layout.text?.[li]) }))
+        .filter((p) => p.text);
+      if (parts.length) {
+        record.text = parts.map((p) => p.text).join("");
+        record.fragments = parts.flatMap((p) =>
+          (fragmentsOf.get(p.li) ?? []).map((f) => ({
+            ...f,
+            text: p.text.slice(f.start, f.start + f.length),
+          })),
+        );
+      }
     }
     const self = out.length;
     out.push(record);

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Compare two layout-diff runs of the SAME HTML with different vellora builds (e.g. the Blitz pin
 // vs a Blitz bump) and attribute every change to the first layer where it appears:
-//   change already in B0  => the bump changed raw Blitz layout
+//   change already in N0  => the bump changed raw Blitz layout (Blitz on the source HTML)
+//   N0 unchanged, B0 changed => Blitz reacts differently to html_normalize's output (or, without
+//                              N0 in both runs, the bump changed Blitz on html_normalize's output)
 //   B0/L0 unchanged, a pass output changed => a vellora post-layout pass reacts differently
 //   all pre-pagination layers unchanged but the PDF moved => pagination / PDF emit
 //
@@ -10,8 +12,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { FIXTURE_IDS, repoRoot } from "./lib/fixture-html.mjs";
-import { shortPath } from "./lib/report.mjs";
-import { normText } from "./lib/vellora-model.mjs";
+import { firstOverTol, shortPath } from "./lib/report.mjs";
+import { isBlitzKind, normText } from "./lib/vellora-model.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name);
@@ -35,7 +37,7 @@ function table(headers, rows) {
  * build b than in build a. The parts sum to the change in the final layer. Only |part| > 0.01.
  */
 function contributions(chain, aPer, bPer, key) {
-  const layers = chain.filter((n) => n !== "B0");
+  const layers = chain;
   const out = {};
   let prevA = null;
   let prevB = null;
@@ -74,7 +76,12 @@ function firstChange(chain, aLayers, bLayers, keys, tol) {
 }
 
 export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
-  const chain = a.layers.map((l) => l.name);
+  // Layers present in BOTH runs, in a's order (a run without the N0 source layer is comparable
+  // from B0 on).
+  const bNames = new Set(b.layers.map((l) => l.name));
+  const shared = a.layers.filter((l) => bNames.has(l.name));
+  const chain = shared.map((l) => l.name);
+  const textChain = shared.filter((l) => !isBlitzKind(l.kind)).map((l) => l.name);
   const finalName = a.final_layer;
   const chromeMismatch = [];
   const boxChanges = [];
@@ -148,32 +155,20 @@ export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
       },
       magnitude: r2(magnitude),
       first_changed_layer: firstChange(
-        chain.filter((n) => n !== "B0"),
+        textChain,
         ta.per_layer,
         t.per_layer,
         ["dx", "dy"],
         tolerance,
       ),
-      first_changed_layer_x: firstChange(
-        chain.filter((n) => n !== "B0"),
-        ta.per_layer,
-        t.per_layer,
-        ["dx"],
-        tolerance,
-      ),
-      first_changed_layer_y: firstChange(
-        chain.filter((n) => n !== "B0"),
-        ta.per_layer,
-        t.per_layer,
-        ["dy"],
-        tolerance,
-      ),
+      first_changed_layer_x: firstChange(textChain, ta.per_layer, t.per_layer, ["dx"], tolerance),
+      first_changed_layer_y: firstChange(textChain, ta.per_layer, t.per_layer, ["dy"], tolerance),
       a_final: { dx: fa.dx, dy: fa.dy },
       b_final: { dx: fb.dx, dy: fb.dy },
-      a_trajectory: chain.filter((n) => n !== "B0").map((n) => ta.per_layer[n]?.dx),
-      b_trajectory: chain.filter((n) => n !== "B0").map((n) => t.per_layer[n]?.dx),
-      x_contributions: contributions(chain, ta.per_layer, t.per_layer, "dx"),
-      y_contributions: contributions(chain, ta.per_layer, t.per_layer, "dy"),
+      a_trajectory: textChain.map((n) => ta.per_layer[n]?.dx),
+      b_trajectory: textChain.map((n) => t.per_layer[n]?.dx),
+      x_contributions: contributions(textChain, ta.per_layer, t.per_layer, "dx"),
+      y_contributions: contributions(textChain, ta.per_layer, t.per_layer, "dy"),
     });
   }
   const tally = (items, key = "first_changed_layer", filter = () => true) => {
@@ -186,6 +181,7 @@ export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
     .sort((x, y) => Math.abs(y.change_in_final.dx) - Math.abs(x.change_in_final.dx));
   return {
     final_layer: finalName,
+    shared_layers: chain,
     chrome_reference_identical: chromeMismatch.length === 0,
     chrome_mismatch_sample: chromeMismatch.slice(0, 5),
     boxes_changed_in_final: boxChanges.length,
@@ -280,7 +276,7 @@ function main() {
   const results = [];
   let md = `# Layout diff comparison: ${la} → ${lb}\n\n`;
   md +=
-    "Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer where b's delta-vs-Chromium differs from a's by more than the tolerance: `B0` = the bump changed raw Blitz layout; `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.\n\n";
+    "Same templated HTML, same Chromium reference, two vellora builds. A change is attributed to the FIRST layer (of the layers both runs have) where b's delta-vs-Chromium differs from a's by more than the tolerance: `N0` = the bump changed raw Blitz layout of the source HTML; `B0` = Blitz's layout of html_normalize's output changed (raw Blitz when N0 is absent from either run and html_normalize changed nothing); `L0` = raw Blitz/Parley text as read by the walk; a pass name = that vellora post-layout pass reacts differently to the new input. PDF rows: same-page words aligned by text from poppler `pdftotext -bbox`; `introduced_after_layout` = PDF Δ − pre-pagination Δ (both pt), i.e. what pagination/emit added.\n\n";
   for (const fixture of fixtures) {
     const a = read(fixture, la, "diff.json");
     const b = read(fixture, lb, "diff.json");
@@ -310,19 +306,24 @@ function main() {
       [
         [
           "first divergent box",
-          `${shortPath(a.headline.box?.path)} (${a.headline.box?.type}) by ${a.headline.box?.introduced_by}`,
-          `${shortPath(b.headline.box?.path)} (${b.headline.box?.type}) by ${b.headline.box?.introduced_by}`,
+          `${shortPath(a.headline.box?.path)} (${a.headline.box?.type}) first over tol. ${firstOverTol(a.headline.box)}`,
+          `${shortPath(b.headline.box?.path)} (${b.headline.box?.type}) first over tol. ${firstOverTol(b.headline.box)}`,
         ],
         [
           "first divergent text",
-          `"${a.headline.text?.text}" by ${a.headline.text?.introduced_by}`,
-          `"${b.headline.text?.text}" by ${b.headline.text?.introduced_by}`,
+          `"${a.headline.text?.text}" first over tol. ${firstOverTol(a.headline.text)}`,
+          `"${b.headline.text?.text}" first over tol. ${firstOverTol(b.headline.text)}`,
         ],
-        ...a.layer_stats.map((s, i) => [
-          `${s.layer}: box/text diverged, mean box err`,
-          `${s.box_events_diverged}/${s.text_events_diverged}, ${s.mean_abs_box_error}`,
-          `${b.layer_stats[i]?.box_events_diverged}/${b.layer_stats[i]?.text_events_diverged}, ${b.layer_stats[i]?.mean_abs_box_error}`,
-        ]),
+        ...a.layer_stats.map((s) => {
+          const o = b.layer_stats.find((x) => x.layer === s.layer);
+          return [
+            `${s.layer}: box/text diverged, mean box err`,
+            `${s.box_events_diverged}/${s.text_events_diverged}, ${s.mean_abs_box_error}`,
+            o
+              ? `${o.box_events_diverged}/${o.text_events_diverged}, ${o.mean_abs_box_error}`
+              : "(layer not in this run)",
+          ];
+        }),
       ],
     );
     md += `\n- boxes whose final pre-pagination geometry changed: ${cmp.boxes_changed_in_final}; by first changed layer: ${JSON.stringify(cmp.boxes_by_first_changed_layer)}\n`;
@@ -356,7 +357,7 @@ function main() {
       ]),
     );
     md += `\nLayer order of the trajectories: ${a.layers
-      .filter((l) => l.name !== "B0")
+      .filter((l) => !isBlitzKind(l.kind))
       .map((l) => l.name)
       .join(" → ")}\n\n`;
     md += "Largest text-run changes (px; Δ = b − a of vellora−Chromium):\n\n";
