@@ -1,14 +1,46 @@
-// Barcode oracle: rasterize every page at 300 dpi (poppler pdftoppm), decode ITF with
-// zxing-cpp (host venv) and zbarimg (tools image), compare with the expected digits, and run the
-// FEBRABAN/BCB check-digit validation on anything decoded.
+// Barcode oracle: rasterize every page at 300 dpi (poppler pdftoppm), decode the document's
+// symbology with zxing-cpp (host venv) and zbarimg (tools image), compare with the expected
+// digits, and validate anything decoded with the document's own check digits:
+//   itf      boleto (BCB Carta-Circular 2926): FEBRABAN/BCB mod-11 general DV (lib/febraban.mjs)
+//   code128  DANFE chave de acesso (MOC 7.0 Anexo II 2, CODE-128C): NF-e mod-11 cDV, reusing the
+//            corpus validator (fidelity/corpus/lib/nfe.mjs, MOC Visao Geral 2.2.6.2)
 import { mkdirSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
+import { validateChave } from "../../corpus/lib/nfe.mjs";
 import { TOOLS_IMAGE, inspectImage, toolsRun } from "./docker.mjs";
 import { findExecutable, run, versionLine } from "./exec.mjs";
 import { validateBoletoBarcode } from "./febraban.mjs";
 import { PY_DIR, pythonUnavailableReason, venvPython } from "./paths.mjs";
 
 export const BARCODE_DPI = 300;
+
+/**
+ * Per symbology: the zxing page key (py/decode_barcode.py), the zbar config and the validator of a
+ * decoded 44-digit text ({ applicable, valid, errors }).
+ */
+export const SYMBOLOGIES = Object.freeze({
+  itf: {
+    label: "ITF",
+    zxingKey: "itf",
+    zbar: ["-Sdisable", "-Si25.enable"],
+    validate: (text) => ({ text, ...validateBoletoBarcode(text) }),
+  },
+  code128: {
+    label: "Code 128",
+    zxingKey: "code128",
+    zbar: ["-Sdisable", "-Scode128.enable"],
+    validate: (text) => {
+      const v = validateChave(text);
+      return {
+        text,
+        applicable: true,
+        valid: v.ok,
+        errors: v.ok ? "" : (v.reason ?? `chave cDV ${v.actual}, expected ${v.expected}`),
+        rule: "NF-e chave de acesso mod-11 cDV (MOC 7.0 Visao Geral 2.2.6.2)",
+      };
+    },
+  },
+});
 
 /** Rasterize with pdftoppm; returns { pngs, dpi, tool } or { notRun: reason } (never throws). */
 export async function rasterize(pdfPath, outDir, { dpi = BARCODE_DPI } = {}) {
@@ -38,7 +70,7 @@ export async function rasterize(pdfPath, outDir, { dpi = BARCODE_DPI } = {}) {
   };
 }
 
-async function decodeWithZxing(pngs) {
+async function decodeWithZxing(pngs, sym) {
   const python = venvPython();
   if (!python) {
     return { decoder: "zxing-cpp", status: "not-run", reason: pythonUnavailableReason() };
@@ -58,11 +90,12 @@ async function decodeWithZxing(pngs) {
   }
   const parsed = JSON.parse(result.stdout);
   const symbols = parsed.pages.flatMap((page) =>
-    page.itf.map((symbol) => ({ page: page.page, ...symbol })),
+    (page[sym.zxingKey] ?? []).map((symbol) => ({ page: page.page, ...symbol })),
   );
+  const ownFormat = sym.zxingKey === "itf" ? "ITF" : "Code128";
   const otherLinear = parsed.pages.flatMap((page) =>
     page.anyLinear
-      .filter((symbol) => symbol.format !== "ITF")
+      .filter((symbol) => symbol.format !== ownFormat)
       .map((symbol) => ({ page: page.page, ...symbol })),
   );
   return {
@@ -76,21 +109,15 @@ async function decodeWithZxing(pngs) {
 
 /**
  * zbarimg exit codes (zbarimg(1)): 0 = symbols found, 4 = no symbol found, others = error.
- * `-Sdisable -Si25.enable` restricts zbar to Interleaved 2 of 5.
+ * `-Sdisable -Si25.enable` restricts zbar to Interleaved 2 of 5, `-Scode128.enable` to Code 128.
  */
-async function decodeWithZbar(pngs, workDir) {
+async function decodeWithZbar(pngs, workDir, sym) {
   const image = await inspectImage(TOOLS_IMAGE);
   if (!image.available) {
     return { decoder: "zbar", status: "not-run", reason: image.reason };
   }
   const versionResult = await toolsRun(["zbarimg", "--version"]);
-  const args = [
-    "zbarimg",
-    "-q",
-    "-Sdisable",
-    "-Si25.enable",
-    ...pngs.map((png) => `/work/${basename(png)}`),
-  ];
+  const args = ["zbarimg", "-q", ...sym.zbar, ...pngs.map((png) => `/work/${basename(png)}`)];
   const result = await toolsRun(args, {
     mounts: [{ host: workDir, container: "/work", readonly: true }],
   });
@@ -119,22 +146,34 @@ async function decodeWithZbar(pngs, workDir) {
 }
 
 /**
- * @param expect { digits?: string } - the 44-digit barcode the document is supposed to carry.
+ * @param expect { digits?: string, symbology?: "itf" | "code128" } - the 44-digit barcode the
+ * document is supposed to carry and its symbology (default itf).
  * Verdicts: "pass" (an ITF symbol decoded to the expected digits by at least one decoder and no
  * decoder disagrees), "fail" (expected digits not decoded / decoders disagree / DV invalid),
  * "info" (no expectation and nothing decoded), "not-run".
  */
 export async function barcodeOracle({ pdfPath, workDir, expect = {} }) {
+  const symbology = expect.symbology ?? "itf";
+  const sym = SYMBOLOGIES[symbology];
+  if (!sym) {
+    return {
+      oracle: "barcode",
+      status: "not-run",
+      reason: `unknown symbology ${symbology}`,
+      expect,
+    };
+  }
   const raster = await rasterize(pdfPath, workDir);
   if (raster.notRun) {
     return { oracle: "barcode", status: "not-run", reason: raster.notRun, expect };
   }
-  const decoders = [await decodeWithZxing(raster.pngs), await decodeWithZbar(raster.pngs, workDir)];
+  const decoders = [
+    await decodeWithZxing(raster.pngs, sym),
+    await decodeWithZbar(raster.pngs, workDir, sym),
+  ];
   const ran = decoders.filter((d) => d.status === "ran");
   const decodedTexts = [...new Set(ran.flatMap((d) => d.symbols.map((s) => s.text)))];
-  const validations = decodedTexts
-    .filter((text) => /^\d{44}$/.test(text))
-    .map((text) => ({ text, ...validateBoletoBarcode(text) }));
+  const validations = decodedTexts.filter((text) => /^\d{44}$/.test(text)).map(sym.validate);
 
   const problems = [];
   if (ran.length === 0) {
@@ -152,7 +191,7 @@ export async function barcodeOracle({ pdfPath, workDir, expect = {} }) {
       if (!texts.includes(expect.digits)) {
         problems.push(
           texts.length === 0
-            ? `${decoder.decoder}: no ITF symbol decoded (expected ${expect.digits})`
+            ? `${decoder.decoder}: no ${sym.label} symbol decoded (expected ${expect.digits})`
             : `${decoder.decoder}: decoded ${JSON.stringify(texts)}, expected ${expect.digits}`,
         );
       }
@@ -160,7 +199,9 @@ export async function barcodeOracle({ pdfPath, workDir, expect = {} }) {
   }
   for (const validation of validations) {
     if (validation.applicable && !validation.valid) {
-      problems.push(`decoded ${validation.text} fails BCB/FEBRABAN check: ${validation.errors}`);
+      problems.push(
+        `decoded ${validation.text} fails ${symbology === "itf" ? "BCB/FEBRABAN" : "NF-e chave"} check: ${validation.errors}`,
+      );
     }
   }
   let status;
@@ -174,6 +215,7 @@ export async function barcodeOracle({ pdfPath, workDir, expect = {} }) {
   return {
     oracle: "barcode",
     status,
+    symbology,
     problems,
     expect,
     decodedTexts,

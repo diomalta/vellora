@@ -1,64 +1,35 @@
 // Chromium reference renderer for the corpus (INDICATIVE locally; see fidelity/ACCEPTANCE.md).
-// Uses the Chrome CLI (--headless --print-to-pdf) instead of puppeteer-core so the corpus adds no
-// npm dependency to fidelity/package.json (owned by another area). CI should pin a Chrome for
-// Testing build via @puppeteer/browsers and pass its path in VELLORA_CHROME.
+// Since 2026-10-21 this is the ONE shared reference setup (fidelity/lib/chrome-reference.mjs):
+// the same font alias table and the same puppeteer-core print path (print media, fonts awaited,
+// page.pdf A4 / preferCSSPageSize / printBackground) as the oracles and layout-diff. It replaced a
+// Chrome CLI `--print-to-pdf` driver with its own alias table (the corpus could disagree with the
+// oracles about what "Chrome's rendering" of the same HTML is). CI should pin a Chrome for Testing
+// build via @puppeteer/browsers and pass its path in VELLORA_CHROME.
 import { execFile } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { writeFileSync } from "node:fs";
 import { promisify } from "node:util";
+import {
+  DEFAULT_CHROME,
+  FONT_ALIASES,
+  PRINT_OPTIONS,
+  bundledFontFaceCss,
+  launchReferenceChrome,
+  printPdf,
+  referenceHtml,
+} from "../../lib/chrome-reference.mjs";
 
 const execFileAsync = promisify(execFile);
 
-export const DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+export { DEFAULT_CHROME, FONT_ALIASES };
 
-/**
- * Family -> bundled Liberation face, so Chrome lays text out with the same font files vellora
- * embeds (crates/vellora-core/src/fonts). Mirrors FONT_ALIASES in benchmarks/visual-fidelity.mjs
- * (replicated, not imported: that module runs its main on import).
- */
-export const FONT_ALIASES = [
-  {
-    families: ["Liberation Sans", "Arial", "Helvetica", "Helvetica Neue", "Nunito Sans", "Tahoma"],
-    regular: "LiberationSans-Regular.ttf",
-    bold: "LiberationSans-Bold.ttf",
-  },
-  {
-    families: ["Liberation Serif", "Times New Roman", "Georgia"],
-    regular: "LiberationSerif-Regular.ttf",
-    bold: "LiberationSerif-Bold.ttf",
-  },
-  {
-    families: ["Liberation Mono", "Courier New", "Menlo", "Consolas"],
-    regular: "LiberationMono-Regular.ttf",
-    bold: "LiberationMono-Bold.ttf",
-  },
-];
-
+/** The shared @font-face block for the bundled files in `fontDir`. */
 export function fontFaceCss(fontDir) {
-  const rules = [];
-  for (const alias of FONT_ALIASES) {
-    const regular = pathToFileURL(join(fontDir, alias.regular)).href;
-    const bold = pathToFileURL(join(fontDir, alias.bold)).href;
-    for (const family of alias.families) {
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${JSON.stringify(regular)}); font-weight: 400; }`,
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${JSON.stringify(bold)}); font-weight: 700; }`,
-      );
-    }
-  }
-  return rules.join("\n");
+  return bundledFontFaceCss(fontDir);
 }
 
-/** Inject the font aliases and a <base> (for relative asset URLs) right after <head>. */
+/** Inline local images, inject a <base> (other relative URLs) and the font aliases. */
 export function prepareReferenceHtml(html, { fontDir, baseDir }) {
-  const base = pathToFileURL(`${baseDir}/`).href;
-  const inject = `<base href="${base}"><style>${fontFaceCss(fontDir)}</style>`;
-  if (/<head[^>]*>/i.test(html)) {
-    return html.replace(/<head[^>]*>/i, (m) => `${m}${inject}`);
-  }
-  return `${inject}${html}`;
+  return referenceHtml(html, { baseDir, fontDir });
 }
 
 export async function chromeVersion(chrome = process.env.VELLORA_CHROME || DEFAULT_CHROME) {
@@ -71,25 +42,13 @@ export async function chromePrintToPdf(
   outPdf,
   chrome = process.env.VELLORA_CHROME || DEFAULT_CHROME,
 ) {
-  const work = mkdtempSync(join(tmpdir(), "vellora-corpus-chrome-"));
+  const ref = await launchReferenceChrome(chrome);
   try {
-    const htmlPath = join(work, "reference.html");
-    writeFileSync(htmlPath, html);
-    const args = [
-      "--headless=new",
-      "--disable-gpu",
-      "--no-first-run",
-      "--no-default-browser-check",
-      "--allow-file-access-from-files",
-      `--user-data-dir=${join(work, "profile")}`,
-      "--no-pdf-header-footer",
-      "--virtual-time-budget=5000",
-      `--print-to-pdf=${outPdf}`,
-      pathToFileURL(htmlPath).href,
-    ];
-    await execFileAsync(chrome, args, { timeout: 120_000 });
-    return { command: [chrome, ...args.slice(0, -2), "--print-to-pdf=<out>", "<html>"].join(" ") };
+    writeFileSync(outPdf, await printPdf(ref, html));
+    return {
+      command: `puppeteer-core ${ref.version} page.pdf(${JSON.stringify(PRINT_OPTIONS)}) (fidelity/lib/chrome-reference.mjs)`,
+    };
   } finally {
-    rmSync(work, { recursive: true, force: true });
+    await ref.close();
   }
 }

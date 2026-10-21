@@ -1,11 +1,12 @@
 // Chromium reference layout: ONE continuous flow (no fragmentation) at the same viewport width
 // vellora hands Blitz, captured with CDP DOMSnapshot.captureSnapshot. Comparable only to vellora's
 // PRE-pagination layers (B0/L0/pass layers), never to paginated PDF geometry.
+// Launch flags and the Chrome executable come from the ONE shared reference setup
+// (fidelity/lib/chrome-reference.mjs), also used by the corpus and the oracles.
 import { existsSync } from "node:fs";
+import { CHROME_ARGS, DEFAULT_CHROME } from "../../lib/chrome-reference.mjs";
 
-export const DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-
-export const CHROME_ARGS = ["--no-sandbox", "--disable-dev-shm-usage", "--hide-scrollbars"];
+export { CHROME_ARGS, DEFAULT_CHROME };
 
 /**
  * Computed styles requested from DOMSnapshot, in this order (normalizeSnapshot indexes by it).
@@ -27,7 +28,7 @@ export function resolveChrome(explicit) {
 
 export async function launchChrome(executablePath) {
   const { default: puppeteer } = await import("puppeteer-core");
-  return puppeteer.launch({ executablePath, headless: true, args: CHROME_ARGS });
+  return puppeteer.launch({ executablePath, headless: true, args: [...CHROME_ARGS] });
 }
 
 /**

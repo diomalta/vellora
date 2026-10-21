@@ -4,6 +4,7 @@
 //
 // The mapping itself is the integrator's reading of ACCEPTANCE.md (label: DESIGN TARGET). Where an
 // area already evaluates a criterion by ID (corpus), its verdict is copied through unchanged.
+import { classifyCheckFailures } from "../layout-diff/lib/expected-failures.mjs";
 
 /** Verdict vocabulary (corpus uses PASS/FAIL/N/A/NOT-RUN; the oracles add warn/info). */
 export const STATUSES = Object.freeze(["PASS", "FAIL", "WARN", "INFO", "N/A", "NOT-RUN"]);
@@ -315,17 +316,22 @@ export function pdfaDeterminism(det) {
  * ACCEPTANCE criterion is decided by the pre-pagination diff (LET-1/LET-2 need pagination, REF-W is
  * the oracles' consensus). The checks tell whether the attribution can be trusted.
  */
-export function fromLayoutDiffRow(row) {
+export function fromLayoutDiffRow(row, { expectedFailures = [] } = {}) {
   if (!row) {
     return { status: "not-run", reason: "fixture missing from the layout-diff summary" };
   }
   const box = row.first_box;
   const text = row.first_text;
+  const layer = finalLayer(row);
+  // The FINAL layer is the last layout_normalize pass in layer_stats order. per_layer key order
+  // ends with the diagnostic unrounded layers (N0u, B0u), which are NOT the final layout: taking
+  // the last key reported B0u (Phase A known issue, fixed here).
   const final = (item) => {
     if (!item?.per_layer) return null;
-    const layers = Object.keys(item.per_layer);
-    return item.per_layer[layers.at(-1)] ?? null;
+    const delta = layer ? item.per_layer[layer] : null;
+    return delta ? { layer, ...delta } : null;
   };
+  const checks = classifyCheckFailures(row.fixture, row.checks_summary ?? {}, expectedFailures);
   const regressions = Object.fromEntries(
     Object.entries(row.regressions_by_layer ?? {})
       .filter(([, x]) => x.box_events_vs_previous_layer || x.text_events_vs_previous_layer)
@@ -340,6 +346,12 @@ export function fromLayoutDiffRow(row) {
     checksFailed: row.checks_summary?.failed ?? [],
     checksWarned: row.checks_summary?.warned ?? [],
     checksNotRun: row.checks_summary?.not_run ?? [],
+    // Allowlist (fidelity/layout-diff/expected-check-failures.json): failures with a recorded
+    // reason and expiry condition do not gate; an entry whose check passes has EXPIRED and gates.
+    checksExpectedFailures: checks.expected,
+    checksUnexpectedFailures: checks.unexpected,
+    checksExpired: checks.expired,
+    finalLayer: layer,
     firstBox: box
       ? {
           type: box.type,
@@ -370,6 +382,17 @@ export function fromLayoutDiffRow(row) {
     regressionEventsByLayer: regressions,
     htmlNormalize: row.html_normalize ?? null,
   };
+}
+
+/** Last layout_normalize pass of a layout-diff summary row (layer_stats order), else last real layer. */
+export function finalLayer(row) {
+  const stats = row?.layer_stats ?? [];
+  const pass = stats.filter((l) => l.kind === "pass").at(-1);
+  if (pass) return pass.layer;
+  const real = stats.filter((l) => !/u$/.test(l.layer)).at(-1);
+  if (real) return real.layer;
+  const keys = Object.keys(row?.first_box?.per_layer ?? row?.first_text?.per_layer ?? {});
+  return keys.filter((k) => !/u$/.test(k)).at(-1) ?? null;
 }
 
 /** WPT summary.json + ratchet.json -> per-directory pass rates and WPT-1 / WPT-2 verdicts. */
@@ -416,12 +439,20 @@ export function fromWpt(summary, ratchet) {
   } else if (ratchet.status !== "ok") {
     wpt2 = verdict("WPT-2", "wpt", "NOT-RUN", ratchet.reason ?? `ratchet ${ratchet.status}`);
   } else {
+    // Only CLEAN passes gate (fidelity/ACCEPTANCE.md WPT-2): a flagged pass was never proven.
     const n = ratchet.counts?.regressions ?? 0;
+    const clean = ratchet.counts?.regressionsOfCleanPasses ?? n;
     wpt2 = verdict(
       "WPT-2",
       "wpt",
-      n === 0 ? "PASS" : "FAIL",
-      `${n} regressions (${ratchet.counts?.regressionsOfCleanPasses ?? 0} of clean passes), ${ratchet.counts?.improvements ?? 0} improvements, ${ratchet.counts?.unchanged ?? 0} unchanged vs ${ratchet.expectationsEngine ?? "baseline"}`,
+      clean === 0 ? "PASS" : "FAIL",
+      `${clean} regressions of clean passes (${n - clean} of flagged passes, reported only), ${ratchet.counts?.improvements ?? 0} improvements, ${ratchet.counts?.unchanged ?? 0} unchanged vs ${ratchet.expectationsEngine ?? "baseline"}`,
+      {
+        metrics: [
+          { metric: "cleanPassRegressions", value: clean, better: "lower", tolClass: "count" },
+          { metric: "flaggedPassRegressions", value: n - clean, better: "info" },
+        ],
+      },
     );
   }
   return {
@@ -439,6 +470,58 @@ export function fromWpt(summary, ratchet) {
       ? { status: ratchet.status, counts: ratchet.counts ?? null, reason: ratchet.reason ?? null }
       : null,
     criteria: [wpt1, wpt2],
+  };
+}
+
+/**
+ * WPT-3: the WPT crashtests of the default suites (fidelity/wpt/crashtests.mjs) - no panic, crash
+ * or timeout. Absolute here; the gate also ratchets each test (ok -> panic/crash/timeout gates).
+ */
+export function fromCrashtests(doc, step) {
+  if (!doc?.results) {
+    return verdict("WPT-3", "wpt:crashtests", "NOT-RUN", step?.reason ?? "crashtests.json missing");
+  }
+  const bad = Object.entries(doc.results).filter(([, o]) =>
+    ["panic", "crash", "timeout"].includes(o),
+  );
+  const harness = Object.values(doc.results).filter((o) => o === "error").length;
+  const total = Object.keys(doc.results).length;
+  return verdict(
+    "WPT-3",
+    "wpt:crashtests",
+    bad.length ? "FAIL" : "PASS",
+    `${bad.length} of ${total} crashtests panic/crash/time out${
+      bad.length
+        ? `: ${bad
+            .slice(0, 4)
+            .map(([t, o]) => `${t} ${o}`)
+            .join("; ")}`
+        : ""
+    }; ${harness} harness error(s); counts ${JSON.stringify(doc.counts)}`,
+    {
+      metrics: [
+        { metric: "broken", value: bad.length, better: "lower", tolClass: "count" },
+        { metric: "total", value: total, better: "info" },
+      ],
+    },
+  );
+}
+
+/**
+ * Canary counts (fidelity/README.md "trusted only after it caught a broken input"): detection
+ * canaries have caught true/false, measurement rows caught null (they show a behaviour, they do
+ * not test an oracle).
+ */
+export function canaryCounts(canaries) {
+  const list = canaries ?? [];
+  const detection = list.filter((c) => c.caught !== null);
+  return {
+    total: list.length,
+    detection: detection.length,
+    caught: detection.filter((c) => c.caught === true).length,
+    notCaught: detection.filter((c) => c.ran !== false && c.caught === false).length,
+    notRun: list.filter((c) => c.ran === false).length,
+    measurement: list.filter((c) => c.caught === null).length,
   };
 }
 

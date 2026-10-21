@@ -2,9 +2,11 @@
 
 Usage: python -I decode_barcode.py PAGE.png [PAGE.png ...]
 Prints one JSON object: {"decoder": "zxing-cpp", "version": ..., "pages": [...]}.
-Only ITF (Interleaved 2 of 5, the symbology mandated for boletos by BCB Carta-Circular 2926)
-is requested, so an unrelated symbol cannot be mistaken for the boleto barcode; the decoder is
-also asked for all linear formats separately so a wrong-symbology render is still reported.
+ITF (Interleaved 2 of 5, mandated for boletos by BCB Carta-Circular 2926) and Code 128 (mandated
+as CODE-128C for the DANFE chave de acesso by MOC 7.0 Anexo II, section 2; the same zxing-cpp
+format the corpus decoder fidelity/corpus/decode_barcodes.py uses) are requested SEPARATELY, so an
+unrelated symbol cannot be mistaken for the document's barcode; the decoder is also asked for all
+linear formats so a wrong-symbology render is still reported.
 """
 
 import json
@@ -39,10 +41,12 @@ def formats(name):
 def main(paths):
     pages = []
     itf = formats("ITF")
+    code128 = formats("Code128")
     linear = formats("LinearCodes")
     for index, path in enumerate(paths, start=1):
         image = Image.open(path).convert("L")
         itf_results = zxingcpp.read_barcodes(image, formats=itf)
+        code128_results = zxingcpp.read_barcodes(image, formats=code128)
         linear_results = zxingcpp.read_barcodes(image, formats=linear)
         pages.append(
             {
@@ -51,6 +55,7 @@ def main(paths):
                 "widthPx": image.width,
                 "heightPx": image.height,
                 "itf": [describe(r) for r in itf_results],
+                "code128": [describe(r) for r in code128_results],
                 "anyLinear": [describe(r) for r in linear_results],
             }
         )

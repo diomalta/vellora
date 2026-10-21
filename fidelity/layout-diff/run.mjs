@@ -16,9 +16,11 @@
 //         <out>/summary-<label>.{json,md}. vellora-dump-source.json is the N0 dump (layout_dump
 //         --no-html-normalize); a --dump-repo whose example predates that flag runs without N0
 //         (reported as the not-run check `source_html_layer`, never silently).
-// Exit code: 0 = every check passed (warnings allowed); 2 = at least one input-parity or
-// self-consistency check FAILED (lib/checks.mjs) — all reports are still written, and failures are
-// printed at the top of each report and of the summary. --allow-check-failures exits 0 anyway.
+// Exit code: 0 = every check passed (warnings allowed) or failed only as listed in
+// expected-check-failures.json; 2 = a check FAILED that is not allowlisted for its fixture, or an
+// allowlisted check now passes (entry expired: remove it) — all reports are still written, and
+// failures are printed at the top of each report and of the summary. --allow-check-failures exits
+// 0 anyway.
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -32,6 +34,7 @@ import {
   resolveChrome,
 } from "./lib/chrome-snapshot.mjs";
 import { blitzLabel, captureEnv } from "./lib/env.mjs";
+import { classifyCheckFailures, loadExpectedFailures } from "./lib/expected-failures.mjs";
 import { FIXTURE_IDS, prepareFixture, repoRoot } from "./lib/fixture-html.mjs";
 import { bundledFontFaceCss, bundledFontHashes } from "./lib/fonts.mjs";
 import { baselineSpecs, diffLayouts } from "./lib/match.mjs";
@@ -81,6 +84,7 @@ async function main() {
     ? join(dumpRepo, "target", "release", "examples", "layout_dump")
     : buildDumpTool(dumpRepo);
   const fontCss = bundledFontFaceCss(repoRoot);
+  const expectedFailures = loadExpectedFailures();
 
   const browser = await launchChrome(chromePath);
   env.chrome_user_agent = await browser.userAgent();
@@ -168,7 +172,11 @@ async function main() {
         join(dir, "report.html"),
         markdownToHtml(md, `layout diff ${fixture} ${label}`),
       );
-      rows.push({ fixture, result });
+      rows.push({
+        fixture,
+        result,
+        allowlist: classifyCheckFailures(fixture, result.checks_summary, expectedFailures),
+      });
       const b = result.headline.box;
       const t = result.headline.text;
       const pr = result.headline.first_pass_regression;
@@ -202,6 +210,7 @@ async function main() {
       attribution_valid: r.result.checks_summary.attribution_valid,
       checks: r.result.checks,
       checks_summary: r.result.checks_summary,
+      check_allowlist: r.allowlist,
       // Compact here (full records with per-layer deltas and ancestors are in each diff.json).
       first_divergence_by_layer: Object.fromEntries(
         Object.entries(r.result.first_divergence_by_layer).map(([layer, f]) => [
@@ -235,10 +244,16 @@ async function main() {
     })),
   });
   process.stdout.write(`summary: ${join(out, `summary-${label}.md`)}\n`);
-  const failing = rows.filter((r) => r.result.checks_summary.failed.length);
+  const expectedNote = rows.filter((r) => r.allowlist.expected.length);
+  if (expectedNote.length) {
+    process.stdout.write(
+      `EXPECTED check failures (expected-check-failures.json): ${expectedNote.map((r) => `${r.fixture} (${r.allowlist.expected.map((e) => e.check).join(", ")})`).join("; ")}\n`,
+    );
+  }
+  const failing = rows.filter((r) => r.allowlist.unexpected.length || r.allowlist.expired.length);
   if (failing.length) {
     process.stderr.write(
-      `CHECKS FAILED in ${failing.map((r) => `${r.fixture} (${r.result.checks_summary.failed.join(", ")})`).join("; ")}${flag("--allow-check-failures") ? " — exit 0 (--allow-check-failures)" : " — exit 2"}\n`,
+      `CHECKS FAILED in ${failing.map((r) => `${r.fixture} (${[...r.allowlist.unexpected, ...r.allowlist.expired.map((e) => `${e.check}: allowlist entry EXPIRED, the check passes; remove it`)].join(", ")})`).join("; ")}${flag("--allow-check-failures") ? " — exit 0 (--allow-check-failures)" : " — exit 2"}\n`,
     );
     if (!flag("--allow-check-failures")) process.exitCode = 2;
   }

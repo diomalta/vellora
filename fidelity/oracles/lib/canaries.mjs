@@ -3,6 +3,7 @@
 // `caught` is computed from the oracle's own output, never assumed.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { code128cPattern } from "../../corpus/lib/code128c.mjs";
 import { barcodeOracle } from "./barcode.mjs";
 import { chromePdf } from "./chrome.mjs";
 import { mod11BarcodeDv } from "./febraban.mjs";
@@ -11,6 +12,16 @@ import { layoutOracle } from "./layout.mjs";
 import { qpdfOracle } from "./qpdf.mjs";
 import { textOracle } from "./text.mjs";
 import { renderNative } from "./vellora.mjs";
+import { veraPdfOracle } from "./verapdf.mjs";
+
+/** fixtures/danfe chave de acesso (cDV 0 per MOC 7.0 Visao Geral 2.2.6.2; corpus node --test). */
+export const VALID_NFE_CHAVE = "35261012345678000195550010000123451705243180";
+
+/** Same chave with its cDV (last digit) changed: still CODE-128C-encodable, invalid as a chave. */
+export function invalidChaveDv(chave = VALID_NFE_CHAVE) {
+  const dv = Number(chave.at(-1));
+  return `${chave.slice(0, -1)}${(dv + 1) % 10}`;
+}
 
 /** Santander v36 worked example (p.6-14): a barcode with a valid mod-11 DV (8). */
 export const VALID_BOLETO_BARCODE = "03398204600000273719028203356661245780020101";
@@ -74,6 +85,81 @@ export function corruptLargestFlateStream(bytes) {
   const from = best.start + Math.floor(best.length / 2);
   for (let k = 0; k < 64; k += 1) out[from + k] ^= 0x5a;
   return out;
+}
+
+/**
+ * Rename a PDF name token in place, keeping the byte length (so every xref offset stays valid and
+ * qpdf stays clean): the canary then isolates veraPDF's rule check from structural damage.
+ * Returns { bytes, count } (count = occurrences renamed; 0 means the canary cannot run).
+ */
+export function renamePdfName(bytes, from, to) {
+  if (from.length !== to.length) throw new Error("renamePdfName keeps the byte length");
+  const buffer = Buffer.from(bytes);
+  const needle = Buffer.from(from, "latin1");
+  const replacement = Buffer.from(to, "latin1");
+  let count = 0;
+  for (
+    let at = buffer.indexOf(needle);
+    at !== -1;
+    at = buffer.indexOf(needle, at + needle.length)
+  ) {
+    replacement.copy(buffer, at);
+    count += 1;
+  }
+  return { bytes: buffer, count };
+}
+
+/**
+ * PDF/A-2b canaries: a vellora render that CLAIMS PDF/A-2b, broken in a way ISO 19005-2 forbids,
+ * must FAIL veraPDF. Both edits rename a key in uncompressed object dictionaries (krilla writes
+ * them uncompressed; a count of 0 makes the canary not-run, never a silent pass).
+ *   /OutputIntents -> /OutputIntentz  the catalog loses its PDF/A output intent (device-dependent
+ *                                     colour then has no intent; veraPDF 1.30.3 reports rule
+ *                                     6.2.10-2, CONFIRMED 2026-10-21)
+ *   /FontFile2 -> /FontFilf2          the font program is no longer embedded (veraPDF reports
+ *                                     6.2.11.4.1-1, CONFIRMED 2026-10-21)
+ */
+export const VERAPDF_CANARIES = Object.freeze([
+  {
+    id: "output-intent-removed",
+    from: "/OutputIntents",
+    to: "/OutputIntentz",
+    rule: "OutputIntent removed",
+  },
+  {
+    id: "font-not-embedded",
+    from: "/FontFile2",
+    to: "/FontFilf2",
+    rule: "font program not embedded",
+  },
+]);
+
+/** CODE-128C canary page (1 CSS px modules, 10-module quiet zones) for a digit string. */
+export function code128CanaryHtml(digits, pattern) {
+  const cells = [...pattern]
+    .map((run, i) => {
+      const color = i % 2 === 0 ? "#000" : "#fff";
+      return `<div style="flex: none; width: ${Number(run)}px; height: 12mm; background: ${color};"></div>`;
+    })
+    .join("");
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Code 128 canary</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    body { margin: 0; font-family: "Vellora Mono", monospace; font-size: 9pt; }
+    .symbol { display: flex; padding: 0 10px; background: #fff; }
+  </style>
+</head>
+<body>
+  <p>Code 128 canary</p>
+  <div class="symbol">${cells}</div>
+  <p>${digits}</p>
+</body>
+</html>
+`;
 }
 
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -215,6 +301,40 @@ export async function runCanaries({
         observed: `status=${result.status} exit=${result.check?.exitCode} problems=${JSON.stringify((result.structuralProblems ?? []).slice(0, 2))} damage=${JSON.stringify((result.check?.damage ?? []).slice(0, 1))}`,
         caught: result.status === "fail",
         ran: result.status !== "not-run",
+      });
+    }
+  }
+
+  // 1b. veraPDF: a render that CLAIMS PDF/A-2b but breaks a rule must FAIL (not only plain renders
+  //     failing as a negative control). The unmodified PDF/A render is checked too, so a catch is
+  //     attributable to the edit.
+  {
+    const pdfaBytes = await renderNative(textFixture.templatedHtml, { pdfa: "PDF/A-2b" });
+    const clean = await veraPdfOracle({
+      pdfPath: await write(join(outDir, "verapdf-clean-pdfa.pdf"), pdfaBytes),
+      expectCompliant: true,
+    });
+    for (const c of VERAPDF_CANARIES) {
+      const name = `veraPDF: PDF/A-2b claim kept, ${c.from} renamed ${c.to} (${c.rule})`;
+      const mutated = renamePdfName(pdfaBytes, c.from, c.to);
+      if (mutated.count === 0) {
+        canaries.push(
+          notRun("verapdf", name, `${c.from} not found uncompressed in the PDF/A render`),
+        );
+        continue;
+      }
+      const result = await veraPdfOracle({
+        pdfPath: await write(join(outDir, `verapdf-${c.id}.pdf`), mutated.bytes),
+        expectCompliant: true,
+      });
+      canaries.push({
+        oracle: "verapdf",
+        canary: name,
+        mustReport: "status = fail (compliant false) while the unmodified render is compliant",
+        observed: `unmodified: ${clean.status} compliant=${clean.compliant}; mutated (${mutated.count}x): status=${result.status} compliant=${result.compliant} failed rules ${JSON.stringify((result.report?.rules ?? []).map((r) => `${r.clause}-${r.testNumber}`).slice(0, 4))}`,
+        caught: clean.status === "pass" && result.status === "fail",
+        ran: clean.status !== "not-run" && result.status !== "not-run",
+        ...(result.status === "not-run" ? { reason: result.reason } : {}),
       });
     }
   }
@@ -404,6 +524,44 @@ export async function runCanaries({
               : testCase.expectStatus === "pass"
                 ? result.status === "pass"
                 : result.status === "fail" && decoded.includes(testCase.digits),
+          ran: result.status !== "not-run",
+        });
+      }
+    }
+  }
+
+  // 4b. barcode, Code 128 (DANFE-B1): a pixel-aligned CODE-128C of a valid chave must decode and
+  //     validate; the same chave with a wrong cDV must decode and be REJECTED by the NF-e check.
+  {
+    const cases = [
+      { id: "code128c-valid-px", digits: VALID_NFE_CHAVE, expectStatus: "pass" },
+      { id: "code128c-bad-cdv-px", digits: invalidChaveDv(), expectStatus: "fail" },
+    ];
+    for (const testCase of cases) {
+      const html = code128CanaryHtml(testCase.digits, code128cPattern(testCase.digits));
+      for (const engine of ["vellora", "chrome"]) {
+        if (engine === "chrome" && !chrome) {
+          canaries.push(notRun("barcode", `${testCase.id} rendered by chrome`, noChrome));
+          continue;
+        }
+        const bytes =
+          engine === "vellora" ? await renderNative(html) : await chromePdf(chrome, html);
+        const pdfPath = await write(join(outDir, `${testCase.id}.${engine}.pdf`), bytes);
+        const result = await barcodeOracle({
+          pdfPath,
+          workDir: join(outDir, `${testCase.id}.${engine}-raster`),
+          expect: { digits: testCase.digits, symbology: "code128" },
+        });
+        const decoded = result.decodedTexts ?? [];
+        canaries.push({
+          oracle: "barcode",
+          canary: `${testCase.id} rendered by ${engine}`,
+          mustReport: `status=${testCase.expectStatus}${testCase.expectStatus === "fail" ? " with the digits decoded and the cDV rejected" : ""}`,
+          observed: `status=${result.status} decoded=${JSON.stringify(decoded)} problems=${JSON.stringify(result.problems ?? [])}`,
+          caught:
+            testCase.expectStatus === "pass"
+              ? result.status === "pass"
+              : result.status === "fail" && decoded.includes(testCase.digits),
           ran: result.status !== "not-run",
         });
       }

@@ -19,13 +19,10 @@ import { extractAll, textOracle } from "./text.mjs";
 import { veraPdfOracle } from "./verapdf.mjs";
 
 export const ORACLE_IDS = Object.freeze(["qpdf", "verapdf", "text", "barcode", "layout"]);
-const BARCODE_CLASSES = new Set(["boleto"]);
-/** Classes whose barcode symbology is known but not implemented: reported, never skipped. */
-const UNIMPLEMENTED_BARCODE_CLASSES = new Map([
-  [
-    "danfe",
-    "DANFE carries a Code 128 access-key barcode; only ITF (boleto) decoding is implemented",
-  ],
+/** Document classes that carry a barcode, with its symbology (lib/barcode.mjs SYMBOLOGIES). */
+const BARCODE_CLASSES = new Map([
+  ["boleto", "itf"],
+  ["danfe", "code128"],
 ]);
 
 /** Bump when the meaning of a cached reference artifact changes. */
@@ -275,14 +272,9 @@ export async function runOracles({ pdfPath, refs, pdfa, docClass, expect = {}, o
   }
 
   const wantsBarcode = BARCODE_CLASSES.has(docClass) || Boolean(expect.barcode);
+  const symbology = expect.barcode?.symbology ?? BARCODE_CLASSES.get(docClass) ?? "itf";
   if (!selected.has("barcode")) {
     results.barcode = skip("barcode", "not selected");
-  } else if (UNIMPLEMENTED_BARCODE_CLASSES.has(docClass)) {
-    results.barcode = {
-      oracle: "barcode",
-      status: "not-run",
-      reason: UNIMPLEMENTED_BARCODE_CLASSES.get(docClass),
-    };
   } else if (!wantsBarcode) {
     results.barcode = skip(
       "barcode",
@@ -293,12 +285,14 @@ export async function runOracles({ pdfPath, refs, pdfa, docClass, expect = {}, o
       barcodeOracle({
         pdfPath,
         workDir: join(workDir, "barcode-raster"),
-        expect: { digits: expect.barcode?.digits },
+        expect: { digits: expect.barcode?.digits, symbology },
       }),
     );
-    results.barcode.documentData = await guarded("barcode-document-data", () =>
-      boletoTextChecks(pdfPath, expect),
-    );
+    if (symbology === "itf") {
+      results.barcode.documentData = await guarded("barcode-document-data", () =>
+        boletoTextChecks(pdfPath, expect),
+      );
+    }
   }
 
   if (!selected.has("layout")) {
