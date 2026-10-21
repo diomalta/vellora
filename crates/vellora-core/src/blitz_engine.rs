@@ -36,21 +36,21 @@ pub struct LaidOutBox {
     pub height: f64,
     pub margin_top: f64,
     pub margin_bottom: f64,
-    /// Explicit computed `width: <percentage>` hint from CSS. Blitz currently
-    /// loses this in some auto table layout cases; we keep the hint so the
-    /// post-walk table pass can preserve browser-like column proportions.
+    /// Explicit computed `width: <percentage>` hint from CSS. Blitz 0.3.0-beta.4
+    /// turns a percentage cell or `<col>` width into `auto` unless the table uses
+    /// the fixed layout (blitz-dom `layout/table.rs`, `build_table_context` and
+    /// `collect_table_cells`); we keep the hint so the post-walk table pass can
+    /// preserve browser-like column proportions.
     pub width_pct_hint: Option<f64>,
     /// Whether this box is a table with `table-layout: fixed`.
     pub table_layout_fixed: bool,
     /// Whether this box computes `border-collapse: collapse`.
     pub table_border_collapse: bool,
-    /// Whether computed `text-align` resolves to a right/end alignment.
-    pub text_align_right: bool,
+    /// Where this box's line boxes sit on the inline axis: computed `text-align`,
+    /// with `start`/`end` resolved against `direction` (see [`InlineAlign`]).
+    pub text_align: InlineAlign,
     /// Table-cell span in columns. Non-cell boxes use `1`.
     pub colspan: usize,
-    /// Table-cell span in rows. Non-cell boxes use `1`. The fixed-table column
-    /// pass needs this to skip columns a rowspan still occupies in later rows.
-    pub rowspan: usize,
     /// `break-inside: avoid` (or the legacy `page-break-inside: avoid`) applies
     /// to this element, from a `<style>` rule or its inline `style`.
     pub break_inside_avoid: bool,
@@ -67,6 +67,32 @@ pub struct LaidOutBox {
     pub rounded_borders: Vec<RoundedBorder>,
     /// Raster images owned by this node.
     pub image_runs: Vec<ImageRun>,
+}
+
+/// Physical inline-axis alignment of a box's line boxes, from its computed
+/// `text-align` (CSS Text 3 §6.1): `left`/`right`/`center` as written, `start` and
+/// `end` resolved against the box's `direction`, and `justify` treated as its
+/// last-line alignment (`text-align-last: auto` = `start`), the only line a
+/// one-line cell has. A post-layout pass that changes a box's width without
+/// re-running inline layout moves the box's text by this alignment: `Left` by 0,
+/// `Center` by half the width change, `Right` by all of it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InlineAlign {
+    Left,
+    Center,
+    Right,
+}
+
+impl InlineAlign {
+    /// How far a line aligned this way moves when its box's content width
+    /// changes by `width_change` (left edge fixed).
+    pub fn shift_for_width_change(self, width_change: f64) -> f64 {
+        match self {
+            InlineAlign::Left => 0.0,
+            InlineAlign::Center => width_change / 2.0,
+            InlineAlign::Right => width_change,
+        }
+    }
 }
 
 /// A solid visual rectangle in document coordinates.
@@ -431,10 +457,6 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
         crate::layout_normalize::normalize_painted_table_cell_text_baselines,
     ),
     (
-        "fixed_table_widths",
-        crate::layout_normalize::normalize_fixed_table_widths,
-    ),
-    (
         "table_percent_widths",
         crate::layout_normalize::normalize_table_percent_widths,
     ),
@@ -537,8 +559,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         walk(base, root_id, 0.0, 0.0, 0, &mut sink);
     }
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
-    // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (see the
-    // ordering notes there, e.g. why the inline inset twin runs LAST).
+    // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order.
     for &(name, pass) in LAYOUT_NORMALIZE_PASSES {
         pass(&mut boxes);
         observer.after_pass(name, &boxes);
@@ -672,9 +693,8 @@ fn walk(
         width_pct_hint: width_percentage_hint(node),
         table_layout_fixed: table_layout_fixed(node),
         table_border_collapse: table_border_collapse(node),
-        text_align_right: text_align_right(node),
+        text_align: inline_align(node),
         colspan: colspan(node),
-        rowspan: rowspan(node),
         break_inside_avoid: inline_breaks.avoid_inside
             || sink.breaks.avoid_inside.contains(&node_id),
         break_before_page: inline_breaks.page_before || sink.breaks.page_before.contains(&node_id),
@@ -763,6 +783,33 @@ fn table_border_collapse(node: &blitz_dom::Node) -> bool {
         .is_some_and(|styles| matches!(styles.clone_border_collapse(), BorderCollapse::Collapse))
 }
 
+/// The box's computed `text-align` as a physical side ([`InlineAlign`]). Blitz
+/// hands the same keyword to Parley (`stylo_to_parley::text_align`, blitz-dom
+/// 0.3.0-beta.4), which resolves `start`/`end` against the paragraph direction.
+fn inline_align(node: &blitz_dom::Node) -> InlineAlign {
+    use style::computed_values::direction::T as Direction;
+    use style::values::specified::TextAlignKeyword;
+
+    let Some(styles) = node.primary_styles() else {
+        return InlineAlign::Left;
+    };
+    let rtl = matches!(styles.clone_direction(), Direction::Rtl);
+    let (start, end) = if rtl {
+        (InlineAlign::Right, InlineAlign::Left)
+    } else {
+        (InlineAlign::Left, InlineAlign::Right)
+    };
+    match styles.clone_text_align() {
+        TextAlignKeyword::Left | TextAlignKeyword::MozLeft => InlineAlign::Left,
+        TextAlignKeyword::Right | TextAlignKeyword::MozRight => InlineAlign::Right,
+        TextAlignKeyword::Center | TextAlignKeyword::MozCenter => InlineAlign::Center,
+        TextAlignKeyword::Start | TextAlignKeyword::Justify => start,
+        TextAlignKeyword::End => end,
+    }
+}
+
+/// Whether computed `text-align` is right/end (direction not considered). Only
+/// the inline padding-right compensation of [`read_text_runs`] uses it.
 fn text_align_right(node: &blitz_dom::Node) -> bool {
     node.primary_styles().is_some_and(|styles| {
         use style::values::specified::TextAlignKeyword;
@@ -776,14 +823,6 @@ fn text_align_right(node: &blitz_dom::Node) -> bool {
 
 fn colspan(node: &blitz_dom::Node) -> usize {
     node.attr(blitz_dom::local_name!("colspan"))
-        .and_then(|value| value.parse::<usize>().ok())
-        .filter(|value| *value > 0)
-        .unwrap_or(1)
-        .min(1000)
-}
-
-fn rowspan(node: &blitz_dom::Node) -> usize {
-    node.attr(blitz_dom::local_name!("rowspan"))
         .and_then(|value| value.parse::<usize>().ok())
         .filter(|value| *value > 0)
         .unwrap_or(1)

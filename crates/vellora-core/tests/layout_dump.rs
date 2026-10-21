@@ -70,7 +70,6 @@ fn layers_are_l0_then_every_named_pass_in_order() {
         [
             "L0",
             "painted_table_cell_text_baselines",
-            "fixed_table_widths",
             "table_percent_widths",
             "auto_table_compact_columns",
         ]

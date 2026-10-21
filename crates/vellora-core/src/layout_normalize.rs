@@ -4,7 +4,7 @@
 //! computed layout. Keeping them outside `blitz_engine` prevents browser-compat
 //! policy from crowding the module that owns upstream Blitz contact.
 
-use crate::blitz_engine::{LaidOutBox, VisualRect};
+use crate::blitz_engine::{InlineAlign, LaidOutBox, VisualRect};
 
 const PAINTED_TABLE_CELL_TEXT_RAISE_PX: f64 = 2.0;
 
@@ -51,95 +51,16 @@ fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64
     }
 }
 
-pub(crate) fn normalize_fixed_table_widths(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_layout_fixed {
-            let end = subtree_end_by_depth(boxes, i);
-            normalize_fixed_table_widths_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
-        }
-    }
-}
-
-fn normalize_fixed_table_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
-    let table_depth = boxes[table_idx].depth;
-    let table_x = boxes[table_idx].x;
-    let table_width = boxes[table_idx].width;
-    if !table_width.is_finite() || table_width <= 0.0 {
-        return;
-    }
-
-    let mut rows: Vec<Vec<usize>> = Vec::new();
-    let mut column_count = 0usize;
-    let mut i = table_idx + 1;
-    while i < end {
-        match boxes[i].tag.as_deref() {
-            Some("table") if boxes[i].depth > table_depth => {
-                i = subtree_end_by_depth(boxes, i).min(end);
-            }
-            Some("tr") => {
-                let row_end = subtree_end_by_depth(boxes, i).min(end);
-                let cell_depth = boxes[i].depth + 1;
-                let cells: Vec<usize> = (i + 1..row_end)
-                    .filter(|idx| {
-                        boxes[*idx].depth == cell_depth
-                            && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
-                    })
-                    .collect();
-                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
-                column_count = column_count.max(row_columns);
-                rows.push(cells);
-                i = row_end;
-            }
-            _ => i += 1,
-        }
-    }
-
-    if column_count < 2 {
-        return;
-    }
-
-    let track_width = table_width / column_count as f64;
-    // Per-column occupancy: how many further rows a rowspan from above keeps the
-    // column filled. Without this the column cursor resets to 0 every row, so a
-    // single-cell continuation row under a `rowspan` lands back in column 0 and
-    // overlaps the spanning cell instead of skipping to the first free column.
-    let mut occupancy = vec![0usize; column_count];
-    for cells in rows {
-        let mut column = 0usize;
-        for idx in cells {
-            while column < column_count && occupancy[column] > 0 {
-                column += 1;
-            }
-            if column >= column_count {
-                break;
-            }
-            let span = boxes[idx].colspan.min(column_count - column).max(1);
-            let rows_spanned = boxes[idx].rowspan.max(1);
-            let target_x = table_x + track_width * column as f64;
-            let target_width = track_width * span as f64;
-            adjust_subtree_inline_geometry(boxes, idx, target_x, target_width);
-            if rows_spanned > 1 {
-                for slot in occupancy.iter_mut().skip(column).take(span) {
-                    *slot = (*slot).max(rows_spanned);
-                }
-            }
-            column += span;
-        }
-        // Consume one row of every active rowspan now that this row is placed.
-        for slot in occupancy.iter_mut() {
-            *slot = slot.saturating_sub(1);
-        }
-    }
-}
-
+/// Give `width: <percentage>` cells of auto-layout tables their share of the row.
+/// Blitz 0.3.0-beta.4 drops a percentage cell width to `auto` unless the table
+/// uses the fixed layout, where it resolves the percentage itself (blitz-dom
+/// `layout/table.rs`, `collect_table_cells` / `percent_track`) the way Chrome
+/// does; so `table-layout: fixed` tables are left alone (port step 03; Chrome
+/// probe in `tests/layout_fidelity.rs`).
 pub(crate) fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
     let mut i = 0;
     while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") {
+        if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
             let end = subtree_end_by_depth(boxes, i);
             normalize_table_percent_widths_in_range(boxes, i, end);
             i = end;
@@ -227,7 +148,7 @@ fn normalize_auto_table_compact_columns_in_range(
     for row in &rows {
         for (column, &idx) in row.iter().enumerate() {
             current_widths[column] = f64::max(current_widths[column], boxes[idx].width);
-            compact[column] |= boxes[idx].text_align_right;
+            compact[column] |= boxes[idx].text_align == InlineAlign::Right;
             min_widths[column] = f64::max(min_widths[column], intrinsic_cell_width(&boxes[idx]));
         }
     }
@@ -301,7 +222,7 @@ fn intrinsic_cell_width(cell: &LaidOutBox) -> f64 {
         .map(|run| cell.x + cell.width - (run.origin_x + text_run_width(run)))
         .filter(|gap| gap.is_finite() && *gap >= 0.0)
         .fold(f64::INFINITY, f64::min);
-    let padding = if cell.text_align_right {
+    let padding = if cell.text_align == InlineAlign::Right {
         right_gap
     } else {
         left_gap
@@ -391,6 +312,18 @@ fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
     }
 }
 
+/// Move the cell at `root_idx` to `target_x` and give it `target_width`: the cell
+/// and its subtree translate by the left-edge change `dx`, and only the cell's
+/// own box (and its full-width / right-edge paint) takes the width change `dw`.
+///
+/// The cell's own text is not re-laid out, so its lines move the way a browser's
+/// lines would in the resized cell: by `dx` plus the share of `dw` its computed
+/// `text-align` gives them (left 0, center dw/2, right dw; CSS Text 3 §6.1). A
+/// right-aligned value thus keeps ending at the cell's content edge (Chrome
+/// 155.0.8059.85 probes in `tests/layout_fidelity.rs`, port step 03). Moving it
+/// by `dx` alone, as before, slid it off that edge by `dw` (invoice price
+/// columns +13.6 px vs Chrome at port step 02). Descendant boxes keep their
+/// width, so their own text moves by `dx` only.
 fn adjust_subtree_inline_geometry(
     boxes: &mut [LaidOutBox],
     root_idx: usize,
@@ -412,8 +345,13 @@ fn adjust_subtree_inline_geometry(
                 border.width = (border.width + dw).max(0.0);
             }
         }
+        let text_dx = if is_root {
+            dx + b.text_align.shift_for_width_change(dw)
+        } else {
+            dx
+        };
         for run in &mut b.text_runs {
-            run.origin_x += dx;
+            run.origin_x += text_dx;
         }
         for image in &mut b.image_runs {
             image.x += dx;

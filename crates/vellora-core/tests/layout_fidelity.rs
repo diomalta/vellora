@@ -434,11 +434,23 @@ fn right_aligned_table_text_ends_at_cell_content_edge() {
     );
 }
 
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 672 px =
+// the A4 content width at 16 mm margins, 2026-10-21; probe `short_numeric_columns`
+// in fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
+// the four columns are 324.50 / 73.30 / 143.19 / 131.02 px, description ratio 0.483,
+// quantity ratio 0.109. Chrome hands the spare width out in proportion to each
+// column's max-content width; Blitz 0.3.0-beta.4 gives every auto column an equal
+// share (282 / 99 / 150 / 141 px: ratios 0.420 / 0.147). The
+// `auto_table_compact_columns` heuristic narrows the right-aligned columns
+// (336.95 / 84.00 / 131.08 / 119.97: 0.501 / 0.125). This test pins that the
+// column BOXES stay within 0.025 of Chrome's ratios, which raw Blitz misses; it
+// does not claim the heuristic is right: in this table the quantity text ends
+// 22.8 px right of Chrome's with the pass and 17.2 px left of it without.
 #[test]
-fn auto_table_keeps_short_numeric_columns_compact() {
+fn auto_table_keeps_short_numeric_columns_near_chromes_widths() {
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; margin: 16mm; }
-        body { margin: 0; font-family: sans-serif; font-size: 10.5pt; line-height: 1.45; }
+        body { margin: 0; font-family: "Liberation Sans"; font-size: 10.5pt; line-height: 1.45; }
         table { width: 100%; border-collapse: collapse; }
         th {
             font-size: 9pt;
@@ -497,16 +509,16 @@ fn auto_table_keeps_short_numeric_columns_compact() {
     let quantity_ratio = first_row_cells[1].width / row_width;
 
     assert!(
-        description_ratio >= 0.49,
-        "description column should keep the spare auto-table width, got ratio={description_ratio:.3}; cells={:?}",
+        (description_ratio - 0.483).abs() <= 0.025,
+        "description column should stay near Chrome's ratio 0.483, got ratio={description_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
             .map(|cell| (cell.x, cell.width))
             .collect::<Vec<_>>()
     );
     assert!(
-        quantity_ratio <= 0.13,
-        "short quantity column should stay compact, got ratio={quantity_ratio:.3}; cells={:?}",
+        (quantity_ratio - 0.109).abs() <= 0.025,
+        "short quantity column should stay near Chrome's ratio 0.109, got ratio={quantity_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
             .map(|cell| (cell.x, cell.width))
@@ -514,8 +526,14 @@ fn auto_table_keeps_short_numeric_columns_compact() {
     );
 }
 
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 672 px,
+// 2026-10-21; probe `invoice_test_fixture` in
+// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json)
+// starts the quantity column of this invoice at 348.23 of 672 px: ratio 0.518.
+// Raw Blitz 0.3.0-beta.4 starts it at 307 (0.457, equal share of the spare width
+// per auto column); `auto_table_compact_columns` moves it to 341.58 (0.508).
 #[test]
-fn auto_table_gives_right_aligned_columns_browser_like_breathing_room() {
+fn auto_table_starts_invoice_quantity_column_near_chrome() {
     let (laid, _pb) = lay_out_for_render(INVOICE);
     let item_run = text_run_containing(&laid, "Suporte");
     let item_cell = laid
@@ -552,12 +570,87 @@ fn auto_table_gives_right_aligned_columns_browser_like_breathing_room() {
     let quantity_start_ratio = (first_row_cells[1].x - row_left) / row_width;
 
     assert!(
-        quantity_start_ratio <= 0.510,
-        "quantity column should begin near Chromium's auto-table distribution, got ratio={quantity_start_ratio:.3}; cells={:?}",
+        (quantity_start_ratio - 0.518).abs() <= 0.02,
+        "quantity column should begin near Chrome's ratio 0.518, got ratio={quantity_start_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
             .map(|cell| (cell.x, cell.width))
             .collect::<Vec<_>>()
+    );
+}
+
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 657 px =
+// the A4 content width at 18 mm margins, 2026-10-21; probe `compact_aligned` in
+// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
+// columns 344.38 / 68.83 / 107.09 / 136.70 px (in proportion to max-content). In
+// every cell the line sits where its `text-align` puts it in the cell's content
+// box (padding 10 px): right-aligned "40" ends at 403.20 = 413.20 - 10, the
+// centred "UN" is centred on 466.75, the `<th>` "Descricao" (centred by the UA
+// `th` rule) on 172.19, and "R$ 1.300,00" ends at 647.00. vellora's
+// `auto_table_compact_columns` pass gives the columns other widths (a heuristic,
+// see the test above), so this test checks the same relation against vellora's
+// post-pass cells, plus Chrome's absolute 647.00 for the last column, whose right
+// edge both engines share. Before port step 03 the pass moved each cell's text by
+// the left-edge change only: "40" ended at 409.4 instead of 392.0, "UN" sat 7.5 px
+// off centre and the header 16.7 px off.
+#[test]
+fn compact_columns_keep_each_line_where_its_text_align_puts_it() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: "Liberation Sans"; font-size: 10pt; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 4px 10px; }
+        .num { text-align: right; white-space: nowrap; }
+        .mid { text-align: center; }
+    </style></head><body>
+        <table>
+            <thead><tr><th>Descricao</th><th class="num">Qtd.</th><th>Unidade</th><th class="num">Total</th></tr></thead>
+            <tbody>
+                <tr><td>Suporte de fixacao em aluminio A20</td><td class="num">40</td><td class="mid">UN</td><td class="num">R$ 1.300,00</td></tr>
+                <tr><td>Parafuso sextavado</td><td class="num">125</td><td class="mid">CX</td><td class="num">R$ 87,50</td></tr>
+            </tbody>
+        </table>
+    </body></html>"#;
+    const PADDING: f64 = 10.0;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let owner = |needle: &str| {
+        laid.boxes
+            .iter()
+            .find(|b| {
+                matches!(b.tag.as_deref(), Some("td" | "th"))
+                    && b.text_runs.iter().any(|r| r.text.contains(needle))
+            })
+            .unwrap_or_else(|| panic!("missing cell containing {needle:?}"))
+    };
+    let span = |needle: &str| {
+        let run = text_run_containing(&laid, needle);
+        (run.origin_x, run.origin_x + run_width(run))
+    };
+
+    for needle in ["Qtd.", "40", "125", "Total", "R$ 1.300,00", "R$ 87,50"] {
+        let cell = owner(needle);
+        let (_, right) = span(needle);
+        let content_right = cell.x + cell.width - PADDING;
+        assert!(
+            (right - content_right).abs() <= 1.0,
+            "right-aligned {needle:?} should end at its cell's content edge {content_right:.2}, got {right:.2}"
+        );
+    }
+    for needle in ["Descricao", "Unidade", "UN", "CX"] {
+        let cell = owner(needle);
+        let (left, right) = span(needle);
+        let centre = cell.x + cell.width / 2.0;
+        assert!(
+            ((left + right) / 2.0 - centre).abs() <= 1.0,
+            "centred {needle:?} should be centred on {centre:.2}, got {:.2}",
+            (left + right) / 2.0
+        );
+    }
+    let (_, total_right) = span("R$ 1.300,00");
+    assert!(
+        (total_right - 647.0).abs() <= 1.0,
+        "last column's value should end where Chrome ends it (647.00), got {total_right:.2}"
     );
 }
 
@@ -646,8 +739,131 @@ fn percentage_table_cell_width_preserves_column_proportion() {
     );
 }
 
+// Chrome 155.0.8059.85, print media, bundled Liberation fonts (the shared
+// fidelity/lib/chrome-reference.mjs setup), viewport 657 px = the A4 content width
+// at 18 mm margins, 2026-10-21; numbers in fidelity/baselines/port/03-table-passes/
+// attachments/chrome-probes-table-passes.json (`percent_aligned`): the 38 % cells
+// are 228 px wide, the value cells x 228 w 372; the right-aligned "R$ 4.875,50"
+// ends at 592.00 (cell right 600 - padding 8) and the centred "15/05/2026" starts
+// at 377.31 (centre 414.0 = centre of the 236..592 content box). Blitz
+// 0.3.0-beta.4 turns a % cell width into `auto` in an auto-layout table
+// (blitz-dom layout/table.rs `collect_table_cells`), so `table_percent_widths`
+// resizes these cells. Their text has to follow its alignment; moving it by the
+// cell's left-edge change alone put the value at 495.5 and the date at 329.0.
+const PERCENT_ALIGNED: &str = r#"<!DOCTYPE html><html><head><style>
+    @page { size: A4; margin: 18mm; }
+    body { margin: 0; font-family: "Liberation Sans"; font-size: 11pt; }
+    table { width: 600px; border-collapse: collapse; }
+    td { padding: 6px 8px; }
+    td.k { width: 38%; }
+    td.v { text-align: right; }
+    td.c { text-align: center; }
+</style></head><body>
+    <table>
+        <tr><td class="k">Valor em aberto</td><td class="v">R$ 4.875,50</td></tr>
+        <tr><td class="k">Vencimento original</td><td class="c">15/05/2026</td></tr>
+    </table>
+</body></html>"#;
+
 #[test]
-fn fixed_table_layout_colspans_preserve_equal_tracks() {
+fn percent_width_pass_moves_right_and_centre_aligned_text_with_the_cell() {
+    let (laid, _pb) = lay_out_for_render(PERCENT_ALIGNED);
+    let cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .collect();
+    assert_eq!(cells.len(), 4, "expected two two-cell rows, got {cells:?}");
+    for row in cells.chunks(2) {
+        assert!(
+            (row[0].width - 228.0).abs() <= 1.0
+                && (row[1].x - 228.0).abs() <= 1.0
+                && (row[1].width - 372.0).abs() <= 1.0,
+            "cells should take Chrome's 228 / 372 px split, got {:?}",
+            row.iter().map(|c| (c.x, c.width)).collect::<Vec<_>>()
+        );
+    }
+
+    let value = text_run_containing(&laid, "R$ 4.875,50");
+    let value_right = value.origin_x + run_width(value);
+    assert!(
+        (value_right - 592.0).abs() <= 1.0,
+        "right-aligned value should end where Chrome ends it (592.00), got {value_right}"
+    );
+    let date = text_run_containing(&laid, "15/05/2026");
+    assert!(
+        (date.origin_x - 377.31).abs() <= 1.0,
+        "centred date should start where Chrome starts it (377.31), got {}",
+        date.origin_x
+    );
+}
+
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 657 px,
+// 2026-10-21; probe `fixed_percent` in
+// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
+// in a 400 px fixed table a first-row `width: 25%` cell with 4 px side padding
+// takes 108 px (25 % of 400 plus the padding; CSS 2.2 §17.5.2.1) and the two auto
+// columns 146 px each. Blitz 0.3.0-beta.4 resolves percentages itself in the fixed
+// layout (blitz-dom layout/table.rs `percent_track`) and lands exactly there, so
+// `table_percent_widths` leaves fixed tables alone; it used to re-split this row
+// to 100 / 150 / 150 (WPT css/CSS2/tables/fixed-table-layout-026.xht went fail ->
+// pass when the pass stopped doing so, port step 03).
+#[test]
+fn percent_width_pass_leaves_fixed_tables_to_blitz() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: "Liberation Sans"; font-size: 9pt; }
+        table { width: 400px; table-layout: fixed; border-collapse: collapse; }
+        td { padding: 2px 4px; }
+        td.k { width: 25%; }
+        td.num { text-align: right; }
+    </style></head><body>
+        <table>
+            <tr><td class="k">Data</td><td>Historico</td><td class="num">Valor</td></tr>
+            <tr><td>01/06</td><td>Tarifa</td><td class="num">12,00</td></tr>
+        </table>
+    </body></html>"#;
+
+    let (laid, _pb) = lay_out_for_render(html);
+    let cells: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .collect();
+    assert_eq!(
+        cells.len(),
+        6,
+        "expected two three-cell rows, got {cells:?}"
+    );
+    for row in cells.chunks(3) {
+        for (cell, (x, width)) in row
+            .iter()
+            .zip([(0.0, 108.0), (108.0, 146.0), (254.0, 146.0)])
+        {
+            assert!(
+                (cell.x - x).abs() <= 0.5 && (cell.width - width).abs() <= 0.5,
+                "cell should keep Chrome's fixed column ({x}, {width}), got ({}, {})",
+                cell.x,
+                cell.width
+            );
+        }
+    }
+}
+
+// Chrome 155.0.8059.85 (print media, viewport 657 px, 2026-10-21; probe
+// `fixed_colspans` in fidelity/baselines/port/03-table-passes/attachments/
+// chrome-probes-table-passes.json) gives the four fixed tracks 99.75 px border
+// boxes: row 1 (0.5, 299.25) + (299.75, 99.75), row 2 (0.5 | 100.25 | 200.0 |
+// 299.75, 99.75 each). Widths come from the table width alone, so the generic
+// `sans-serif` face (system Helvetica in Chrome) does not matter here. Blitz
+// 0.3.0-beta.4 implements CSS 2.2 §17.5.2.1 itself (blitz-dom layout/table.rs
+// `build_table_context`: `minmax(0, 1fr)` tracks); it lays each collapsed border
+// out as a whole-width gutter (the table's `gap`) where Chrome splits it between
+// the neighbours (§17.6.2), so a cell edge may sit up to one 1 px border (plus
+// rounding) away from Chrome's: tolerance 2 px. The pin-era `fixed_table_widths`
+// pass forced 100 px tracks; it is gone (port step 03).
+#[test]
+fn fixed_table_layout_colspans_span_chromes_equal_tracks() {
     let html = r#"<!DOCTYPE html><html><head><style>
         @page { size: A4; margin: 18mm; }
         body { margin: 0; font-family: sans-serif; font-size: 9pt; }
@@ -666,36 +882,106 @@ fn fixed_table_layout_colspans_preserve_equal_tracks() {
         .iter()
         .filter(|b| b.tag.as_deref() == Some("td"))
         .collect();
-
     assert_eq!(cells.len(), 6, "expected six table cells, got {cells:?}");
-    let first_row_wide = cells[0];
-    let first_row_last = cells[1];
-    let second_row = &cells[2..];
 
-    assert!(
-        (first_row_wide.width - 300.0).abs() <= 1.0,
-        "colspan=3 should occupy three fixed 100px tracks, got width={}",
-        first_row_wide.width
-    );
-    assert!(
-        (first_row_last.width - 100.0).abs() <= 1.0,
-        "last cell should occupy one fixed 100px track, got width={}",
-        first_row_last.width
-    );
-    for (idx, cell) in second_row.iter().enumerate() {
+    let chrome = [
+        (0.5, 299.25),
+        (299.75, 99.75),
+        (0.5, 99.75),
+        (100.25, 99.75),
+        (200.0, 99.75),
+        (299.75, 99.75),
+    ];
+    for (idx, (cell, (x, width))) in cells.iter().zip(chrome).enumerate() {
         assert!(
-            (cell.width - 100.0).abs() <= 1.0,
-            "second row cell {idx} should occupy one fixed 100px track, got width={}",
+            (cell.x - x).abs() <= 2.0 && (cell.width - width).abs() <= 2.0,
+            "cell {idx} should sit on Chrome's fixed track ({x}, {width}), got ({}, {})",
+            cell.x,
             cell.width
         );
     }
+    // The colspan=3 cell ends exactly where the third track ends.
+    let wide_right = cells[0].x + cells[0].width;
+    let third_right = cells[4].x + cells[4].width;
     assert!(
-        (first_row_last.x - (first_row_wide.x + first_row_wide.width)).abs() <= 1.0,
-        "fixed tracks should keep adjacent colspan cells flush, wide=({}, {}), last=({}, {})",
-        first_row_wide.x,
-        first_row_wide.width,
-        first_row_last.x,
-        first_row_last.width
+        (wide_right - third_right).abs() <= 0.5,
+        "colspan=3 should end with the third track, got {wide_right} vs {third_right}"
+    );
+}
+
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 657 px,
+// 2026-10-21; probes `fixed_cols` and `fixed_cells` in
+// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
+// a 400 px fixed table takes the `<col>` widths 60 / 220 and gives the rest (120)
+// to the auto column; without `<col>`s, a first-row `width: 80px` cell with 4 px
+// side padding takes 88 px and the two auto columns split the rest, 156 each
+// (CSS 2.2 §17.5.2.1). The right-aligned "Valor" ends at 396.0 (400 - padding 4).
+// Blitz 0.3.0-beta.4 lays both out exactly so. The removed `fixed_table_widths`
+// pass split every fixed table into equal tracks (133.33 px here), which broke
+// the DANFE / boleto / bank-statement grids that are built from `<col>` widths.
+#[test]
+fn fixed_table_layout_takes_col_and_first_row_cell_widths() {
+    let cols = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: "Liberation Sans"; font-size: 9pt; }
+        table { width: 400px; table-layout: fixed; border-collapse: collapse; }
+        td { padding: 2px 4px; }
+        td.num { text-align: right; }
+    </style></head><body>
+        <table>
+            <colgroup><col style="width: 60px"><col style="width: 220px"><col></colgroup>
+            <tr><td>Data</td><td>Historico</td><td class="num">Valor</td></tr>
+            <tr><td>01/06</td><td>Tarifa</td><td class="num">12,00</td></tr>
+        </table>
+    </body></html>"#;
+    let first_row_cells = r#"<!DOCTYPE html><html><head><style>
+        @page { size: A4; margin: 18mm; }
+        body { margin: 0; font-family: "Liberation Sans"; font-size: 9pt; }
+        table { width: 400px; table-layout: fixed; border-collapse: collapse; }
+        td { padding: 2px 4px; }
+    </style></head><body>
+        <table>
+            <tr><td style="width: 80px">Data</td><td>Historico</td><td>Valor</td></tr>
+            <tr><td>01/06</td><td>Tarifa bancaria</td><td>12,00</td></tr>
+        </table>
+    </body></html>"#;
+
+    for (html, chrome) in [
+        (cols, [(0.0, 60.0), (60.0, 220.0), (280.0, 120.0)]),
+        (
+            first_row_cells,
+            [(0.0, 88.0), (88.0, 156.0), (244.0, 156.0)],
+        ),
+    ] {
+        let (laid, _pb) = lay_out_for_render(html);
+        let cells: Vec<_> = laid
+            .boxes
+            .iter()
+            .filter(|b| b.tag.as_deref() == Some("td"))
+            .collect();
+        assert_eq!(
+            cells.len(),
+            6,
+            "expected two three-cell rows, got {cells:?}"
+        );
+        for row in cells.chunks(3) {
+            for (cell, (x, width)) in row.iter().zip(chrome) {
+                assert!(
+                    (cell.x - x).abs() <= 0.5 && (cell.width - width).abs() <= 0.5,
+                    "cell should take Chrome's fixed column ({x}, {width}), got ({}, {})",
+                    cell.x,
+                    cell.width
+                );
+            }
+        }
+    }
+
+    let (laid, _pb) = lay_out_for_render(cols);
+    let valor = text_run_containing(&laid, "Valor");
+    let valor_right = valor.origin_x + run_width(valor);
+    assert!(
+        (valor_right - 396.0).abs() <= 1.0,
+        "right-aligned header should end where Chrome ends it (396.0), got {valor_right}"
     );
 }
 
@@ -1376,6 +1662,11 @@ fn totals_grand_label_stays_on_one_line_when_table_has_room() {
 // `rowspan="4"` instruction cell. The three single-cell rows below the rowspan
 // must skip the columns the rowspan still occupies and land in the rightmost
 // column — not reset to column 0 (which overlaps the instruction cell).
+// Chrome 155.0.8059.85 (print media, viewport 672 px, 2026-10-21; probe
+// `boleto_rowspan_grid` in fidelity/baselines/port/03-table-passes/attachments/
+// chrome-probes-table-passes.json) puts all four right-column cells at x 503.75.
+// Blitz 0.3.0-beta.4 places them itself (`grid_auto_flow: RowDense` in blitz-dom
+// layout/table.rs), at x 504, without the removed `fixed_table_widths` pass.
 const BOLETO_ROWSPAN_GRID: &str = r#"<!DOCTYPE html><html><head><style>
     @page { size: A4; margin: 16mm; }
     * { box-sizing: border-box; }

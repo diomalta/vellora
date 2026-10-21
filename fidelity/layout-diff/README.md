@@ -42,13 +42,16 @@ rendering.
   parent's origin; out-of-flow boxes still accumulate DOM-parent offsets.
 - Post-layout passes, in this exact order (the single list `LAYOUT_NORMALIZE_PASSES` in
   `blitz_engine.rs`, iterated by `resolve_and_walk`):
-  1. `painted_table_cell_text_baselines` 2. `fixed_table_widths` 3. `table_percent_widths`
-  4. `auto_table_compact_columns`.
-  Until `phaseb/02-delete-noop-passes` (2026-10-21) the list also had `vertical_margin_collapse`
-  and `collapsed_table_medium_border_insets` (before 1.) and `collapsed_table_medium_border_insets_x`
-  (after 4.); dumps and reports from earlier runs (this directory's `snapshots/`, the `pin` and
-  `beta4` baselines) still carry those layers. Evidence for the removal:
-  `fidelity/baselines/port/02-delete-noop-passes/`.
+  1. `painted_table_cell_text_baselines` 2. `table_percent_widths` 3. `auto_table_compact_columns`.
+  Passes 2 and 3 resize table cells without re-running inline layout; since
+  `phaseb/03-table-passes` a resized cell's own text moves by the left-edge change plus the share
+  of the width change its computed `text-align` gives it (left 0, center half, right all).
+  Until `phaseb/03-table-passes` (2026-10-21) the list also had `fixed_table_widths` (between 1.
+  and 2.); until `phaseb/02-delete-noop-passes` it also had `vertical_margin_collapse` and
+  `collapsed_table_medium_border_insets` (before 1.) and `collapsed_table_medium_border_insets_x`
+  (after the last); dumps and reports from earlier runs (this directory's `snapshots/`, the `pin`,
+  `beta4` and earlier `port/` baselines) still carry those layers. Evidence for the removals:
+  `fidelity/baselines/port/02-delete-noop-passes/`, `fidelity/baselines/port/03-table-passes/`.
 - Pagination (since `phaseb/01-pagination-gaps`, 2026-10-21) keeps Blitz's flow y within a page:
   one translation per page, set by the page's first fragment (page 1: the flow origin, so the
   leading body margin/padding/first margin stay; after an unforced break: the page top; after a
@@ -68,7 +71,7 @@ rendering.
 | `B0` | Blitz's own layout tree of **html_normalize's output** (what the render path lays out). With N0 present, **N0 → B0 is html_normalize's step**. Without N0, B0 is raw Blitz only if html_normalize changed nothing. |
 | `B0u` | Same B0 tree from `unrounded_layout`. Diagnostic only. |
 | `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` dropped). |
-| 7 pass layers | `LaidOutBox` list after each pass above, named after it. The last one is the final pre-pagination layer (`final_layer`, the headline's layer). |
+| pass layers | `LaidOutBox` list after each pass above, named after it (3 since `phaseb/03-table-passes`; 7 in the Phase A dumps). The last one is the final pre-pagination layer (`final_layer`, the headline's layer). |
 | `P` | Pagination (schema-2 dumps): the final layer with every box `paginate` placed moved by its fragment's in-page drift (`placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages; a repeated `<thead>` takes its first injection). Boxes pagination never places (html/body/table/tbody, flattened wrappers, fragments with nothing to paint) paint nothing: **n/a** in P, not lost; text runs on them would be lost. |
 
 **Text in N0/B0 (schema-2 dumps).** The dump also carries `blitz_runs`: every Parley glyph run of
