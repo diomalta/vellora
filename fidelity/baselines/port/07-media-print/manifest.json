@@ -1,0 +1,358 @@
+{
+  "schema": "vellora-fidelity/baseline/2",
+  "name": "07-media-print",
+  "labels": {
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "what": "Baseline for the fidelity value ratchet (fidelity/gate/): verdicts with values, WPT per-test outcomes with Chrome ink flags, crashtests, per-word pdf-probe, canaries, code checks.",
+    "note": "Written by the orchestrator after the step-07 agent hit the session limit between its gated run (PASS, 0 gating) and writing this baseline. The run is unchanged: same run dir, same commit deb60b5, 0 dirty."
+  },
+  "provenance": {
+    "runId": "20261021T162148Z",
+    "date": "Wed Oct 21 16:21:48 UTC 2026",
+    "dateIso": "2026-10-21T16:21:48Z",
+    "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/06-page-rules --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/07-media-print",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "deb60b580ca0d4d13cc13517a3dfc3f58c5c62bc",
+      "branch": "phaseb/07-media-print",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "468acb8a9279b8d8be7f52f04759a61f9c497829c1612b156c2c665e5b813fd6"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    }
+  },
+  "environment": {
+    "date": "Wed Oct 21 16:21:48 UTC 2026",
+    "dateIso": "2026-10-21T16:21:48Z",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "cpuCount": 18,
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "chrome": {
+      "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "version": "Google Chrome 155.0.8059.85"
+    },
+    "poppler": {
+      "pdftoppm": "pdftoppm version 26.06.0",
+      "pdftotext": "pdftotext version 26.06.0",
+      "pdftocairo": "pdftocairo version 26.06.0",
+      "pdfinfo": "pdfinfo version 26.06.0",
+      "pdffonts": "pdffonts version 26.06.0",
+      "pdfimages": "pdfimages version 26.06.0"
+    },
+    "python": {
+      "interpreter": "Python 3.12.13",
+      "packages": {
+        "cffi": "2.1.1",
+        "charset-normalizer": "3.5.2",
+        "cryptography": "50.0.2",
+        "pdfminer-six": "20260107",
+        "pillow": "12.3.0",
+        "pycparser": "3.11",
+        "pymupdf": "1.28.2",
+        "zxing-cpp": "3.1.1",
+        "pypdf": "6.21.1",
+        "fonttools": "4.67.0"
+      }
+    },
+    "docker": {
+      "server": "29.8.2",
+      "toolsImage": {
+        "image": "vellora-fidelity-tools:baseline-beta4",
+        "present": true,
+        "id": "sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+        "architecture": "arm64"
+      },
+      "verapdfImage": {
+        "image": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+        "present": true,
+        "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+        "architecture": "amd64"
+      }
+    },
+    "git": {
+      "head": "deb60b580ca0d4d13cc13517a3dfc3f58c5c62bc",
+      "branch": "phaseb/07-media-print",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "468acb8a9279b8d8be7f52f04759a61f9c497829c1612b156c2c665e5b813fd6"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    },
+    "command": "node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/06-page-rules --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/07-media-print",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)"
+  },
+  "source": {
+    "run": "fidelity/results/run-all/07-media-print",
+    "summarySha256": "c7b9be00d8ef876f8974aded168f5bae3d27948b3bc667ab3e1f0fd3825f2fbf",
+    "note": "fidelity/results/ is gitignored; the run directory is not committed"
+  },
+  "canaryCounts": {
+    "total": 38,
+    "detection": 30,
+    "caught": 30,
+    "notCaught": 0,
+    "notRun": 0,
+    "measurement": 8
+  },
+  "totals": {
+    "all": {
+      "counts": {
+        "PASS": 140,
+        "FAIL": 40,
+        "WARN": 7,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 20,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 12,
+          "FAIL": 1,
+          "WARN": 7,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 11,
+          "FAIL": 12,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 10,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 2,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 71,
+          "FAIL": 22,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 6,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "excludingDiagnostic": {
+      "counts": {
+        "PASS": 118,
+        "FAIL": 36,
+        "WARN": 6,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 18,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 11,
+          "FAIL": 1,
+          "WARN": 6,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 10,
+          "FAIL": 11,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 9,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 1,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 56,
+          "FAIL": 19,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 5,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "failedControls": [],
+    "stepsByStatus": {
+      "ok": 20
+    }
+  },
+  "gate": {
+    "verdict": "PASS",
+    "baseline": "fidelity/baselines/port/06-page-rules",
+    "counts": {
+      "gating": 0,
+      "unchanged": 15513,
+      "withinTolerance": 0
+    },
+    "refusals": [],
+    "accepted": [],
+    "gating": [],
+    "writtenDespiteVerdict": false
+  },
+  "acceptedRegressions": [],
+  "extraction": {
+    "command": "node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/07-media-print --root fidelity/baselines/port --name 07-media-print --attach fidelity/results/run-all/07-media-print/gate-vs-beta4/gate-report.json=gate-report-vs-beta4.json --attach fidelity/results/run-all/07-media-print/gate-vs-beta4/gate-report.md=gate-report-vs-beta4.md --attach fidelity/results/run-all/07-media-print/gate-vs-pin/gate-report.json=gate-report-vs-pin.json --attach fidelity/results/run-all/07-media-print/gate-vs-pin/gate-report.md=gate-report-vs-pin.md --attach /tmp/pdf-identity-vs-06-page-rules.json=pdf-identity-vs-06-page-rules.json --note Written by the orchestrator after the step-07 agent hit the session limit between its gated run (PASS, 0 gating) and writing this baseline. The run is unchanged: same run dir, same commit deb60b5, 0 dirty.",
+    "date": "2026-10-21T18:42:01.493Z"
+  },
+  "files": {
+    "attachments/gate-report-vs-beta4.json": "91b9b66b974cc353ec98b4821e85d90cb30d017d49a1fb104909fc573c452cd1",
+    "attachments/gate-report-vs-beta4.md": "dcd9dd827f5d349928a0b8485f1288198160a57ceabfeaadbd9b26580293157a",
+    "attachments/gate-report-vs-pin.json": "5141172210cabd9ea0c6aa326cd8009d9bc0372eb50599af94bae4dfee7ef5c2",
+    "attachments/gate-report-vs-pin.md": "91eab3d93bd30c948274a2a63bfe2abd47861ed6ad2286e3415852b930d7d0b3",
+    "attachments/pdf-identity-vs-06-page-rules.json": "8d7eea649fa6f5c32addc31eedcc1d0a589e2471066f63a50a55006802fe27ce",
+    "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
+    "code-checks.json": "06650507775bad76cab1118a606081fe245310488066156955671cbfe1848067",
+    "fixtures/boleto-febraban.json": "78171ad229a2125993f3ee8e9c46bbdd2a95c0726158997e6fe6f5e615e189d7",
+    "fixtures/boleto-febraban.px-grid.json": "7df20863f276d6bebf01c66ef5dae346e681c1adab5859f39181730006266bd6",
+    "fixtures/boleto.json": "fe33b652ce92ac0e37ae3ed00a408d2528d43fb7f94c066ec7382ff0b07b7522",
+    "fixtures/danfe.json": "0f38013f744362c15811649dfd64d8dcb0c66a691f96355b41158eb396760aef",
+    "fixtures/invoice.json": "c71f25fe37aa88aa9a6a3c1db38361edaf620732a411c44684b5675e8d53d575",
+    "fixtures/notification.json": "a986aff1c0774b5f5d39ef607880094615065d3a4712c4cb8e82ae9a468cf2a3",
+    "fixtures/oss-postmark-receipt.json": "694d0e5924fade79404c5524d456bb5ababcddd3c4b921c061910a31eeb4c19b",
+    "fixtures/oss-sparksuite-invoice.json": "f7eac4c2b5b51647f01aa5dd58c07f9329dca7fe5eeda44c4340cd2d07594a22",
+    "fixtures/receipt.json": "8727b22c8f5aac4a5c0a8924d4b5633fbe05ac7eb0041a3817978382f8917c98",
+    "fixtures/text-stress-ptbr.json": "e6a1af0fd9fd1737ad8b354f7ee9f4334d2a82607fc0e1494a3a5bbd4b610f93",
+    "gate-report.json": "eae9c20070a207a9731cbc0742352e97ff12bdb2f92a64aeb804a98df5272bd3",
+    "gate-report.md": "0f641004099d56ac65a69ee9eb6c66ca8e8832e61dcf74c315b65cff6c207844",
+    "metrics.json": "a8433fd0d9a8ed6c048e8f02a091f41fc8f7e102f229629514efea006ae41113",
+    "pdf-probe/boleto-febraban.json": "cdc5dab13b8d0346ec8769e187d26522a927a6301f444a26b14f551eee2f64d4",
+    "pdf-probe/boleto.json": "2887e24305c10c5a0f08073ee96d9f6ffeb617388e13bab587af9599ae595d2d",
+    "pdf-probe/danfe.json": "269339142619130c2ac4d4679db5b6762e4f4b5ac533534aeb052c88ca612567",
+    "pdf-probe/invoice.json": "acab86f099384ad8f7489be1730bc5b45feb5c168bd86a49d66abafcbf32794f",
+    "pdf-probe/notification.json": "64ae5de0eda3f7dfa8c6715bef6236c9b2cced6c8bf5e982953a08fa10a88ffa",
+    "pdf-probe/oss-postmark-receipt.json": "360b54d57bae9421407fb6daf97faaf296065dc46589eb6fa1853c8abb2f1ac9",
+    "pdf-probe/oss-sparksuite-invoice.json": "6839335e0d7d697a2a188972366df85ecbe01642030734bdca70ab7aac9519bc",
+    "pdf-probe/receipt.json": "b00ea659b6ea72249b31c085f90a4a48ca68ad30b34671efb2c3d17b0ba7cf0d",
+    "pdf-probe/text-stress-ptbr.json": "9c0194f46ae3a645995a7fbe8aed1979c9074d891382588bc4f3fe83f325c308",
+    "wpt/by-directory.json": "a4b51415fa52854057b5ecd34d98e625b6fb4712f7a3e601acc4b6542c8487bb",
+    "wpt/crashtests.json": "27643397f13ca97d832665c365f91ad99e7c5f4ab8829b6867dd6f3f6f7f0a35",
+    "wpt/expectations-blitz-0.3.0-beta.4.json": "0082006e075405aec2ed794e7eadb339c1730eb1579494049133cee3f88d682d"
+  },
+  "formatting": "biome format --write (repo biome.json) before hashing"
+}

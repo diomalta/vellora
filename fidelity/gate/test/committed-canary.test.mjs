@@ -353,3 +353,27 @@ test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRe
     assert.deepEqual([x.class, x.before, x.after], ["improvement", before, after], key);
   }
 });
+
+test("port/07-media-print passes vs port/06-page-rules with no acceptedRegressions and no change", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "06-page-rules"));
+  const step = loadBaselineDir(join(baselines, "port", "07-media-print"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/06-page-rules");
+  assert.deepEqual(step.manifest.acceptedRegressions, []);
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  // Styling for print changes which @media rules cascade; no corpus document or WPT reftest
+  // has a print/screen rule that applies at its page size, so every compared value is
+  // unchanged and the 38 vellora PDFs are byte-identical to step 06's
+  // (attachments/pdf-identity-vs-06-page-rules.json). The behaviour is covered by
+  // crates/vellora-core/tests/media_print.rs (Chrome 155 probes).
+  const r = compareSnapshots(prev, step);
+  assert.equal(r.verdict, "PASS");
+  assert.deepEqual(
+    r.items.filter((x) => x.class !== "unchanged").map((x) => `${x.class} ${x.key}`),
+    [],
+  );
+});

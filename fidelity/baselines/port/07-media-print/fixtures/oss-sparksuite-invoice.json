@@ -1,0 +1,230 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "oss-sparksuite-invoice",
+  "fixture": "oss-sparksuite-invoice",
+  "variant": "data.json",
+  "class": "invoice",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "INV-P1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1 (expected 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-P2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1 vs reference 1",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "INV-X1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6/6",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-X2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pdftotext 6/6; pypdf 6/6; pdfminer 6/6",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-I1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1 (expected >= 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "INV-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "worst INV-S4 4.15 mm (tol 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 3 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "pdftotext pass (missing 0, extra 0); pdfminer.six pass (missing 0, extra 0); pymupdf pass (missing 0, extra 0)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "1 pages vs Chrome 1 (WeasyPrint 1)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "NOT-RUN",
+      "value": "0 consensus words at 2 pt (coverage 0)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (7422748520c52cab7d2f064002820342317c1ff25090beaad9de5880773b7fb3)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "auto_table_compact_columns",
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "N0",
+      "finalDelta": {
+        "layer": "auto_table_compact_columns",
+        "status": "diverged",
+        "dx": 2,
+        "dy": 2,
+        "dw": -4
+      }
+    },
+    "firstText": {
+      "text": "Invoice #: 123",
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "N0",
+      "finalDelta": {
+        "layer": "auto_table_compact_columns",
+        "status": "diverged",
+        "dx": -2,
+        "dy": 2,
+        "dy_basis": "baseline",
+        "dw": 0,
+        "dright": -2
+      }
+    },
+    "firstPassRegression": null,
+    "regressionEventsByLayer": {},
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": false,
+      "wrappers_recorded": 0,
+      "wrappers_located": 0
+    }
+  }
+}

@@ -925,3 +925,64 @@ The `committed-canary` self-test asserts that `06-page-rules` FAILs against `05-
 without acceptances (exactly the 13 accepted keys gate), PASSes with them, checks the label
 counts, and checks the targets: notification EXT-2 per extractor, receipt EXT-2, boleto and
 receipt REF-W max, and `page-size-006`.
+
+## `07-media-print`: documents are styled for print media
+
+Branch `phaseb/07-media-print` (from `phaseb/06-page-rules` `d8b86c6`), code commit `deb60b5`.
+
+- **Before this step Blitz styled every document for `screen`.** vellora never set
+  `DocumentConfig::media_type`, so `@media screen` rules cascaded and `@media print` rules did not:
+  the opposite of Chrome's print path (the optional Chromium engine's `--print-to-pdf` and the
+  fidelity references' `emulateMediaType("print")`).
+- **`blitz_engine` builds every document with `media_type = print`**: body, margin boxes and the
+  parse-only helpers. In Servo mode Stylo reads the media type only to evaluate media query
+  lists, so this changes which `@media` rules cascade and nothing else. The layout dump reports
+  `print` (`blitz_engine::DOCUMENT_MEDIA_TYPE`).
+- **`break_css` reads the `break-*`/`page-break-*` rules of an `@media` block whose query matches
+  print**, with `page_css`'s evaluator (media type only; a query with a feature does not match).
+  Before, every `@media` block was skipped, so `@media print { .x { page-break-before: always } }`
+  was lost.
+- New Chrome 155-verified tests: `crates/vellora-core/tests/media_print.rs` (8). They cover:
+  - `@media print`/`screen`, `not`/`only`/`all` and `display` toggles;
+  - the page context inheriting the root's `@media print` styles;
+  - `break-before`, `page-break-before` and `break-inside` inside `@media print`.
+
+  Body text is within 0.31 pt of Chrome on both axes. On the step-06 build the same probes
+  printed the screen variants and ignored the print breaks.
+- Follow-ups, not changed here:
+  - Blitz ignores the `media` attribute of `<style>` (empty `MediaList`).
+  - Stylo evaluates media features against the `@page` content box, while Chrome uses its own
+    print page.
+  - `break_css` treats a query with a feature as not matching, while Stylo evaluates it.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T162148Z` (2026-10-21 16:21:48Z), 20/20 steps ok, git `deb60b5` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/06-page-rules --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/07-media-print`, then `node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/07-media-print --root fidelity/baselines/port --name 07-media-print --attach …` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z` |
+| written by | the orchestrator. The step agent hit the session limit after its gated run and before it wrote this baseline. The run, the commit and the gate verdict are the agent's, unchanged |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/06-page-rules` (previous link; `gate-report.{json,md}`) | **PASS**, no `acceptedRegressions` | gating 0, unchanged 15513 |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 533 gating (06: 533); improvement 1754 (06: 1754) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 63 gating (06: 63); improvement 1326 (06: 1326) |
+
+**Nothing measurable moved.** The corpus has three `@media` queries: `only screen and
+(max-width: 500px)`, `only screen and (max-width: 600px)` (twice) and `(prefers-color-scheme: dark)`.
+None of them changed a render, which the byte identity below proves; the WPT ratchet shows no
+transition either. HYPOTHESIS for the screen rules: before this step the media type matched, but
+the content boxes are wider than 600 px, so they did not apply then and do not apply now.
+- All 38 `vellora*.pdf` files of the run (corpus, oracles and canaries; Chrome and WeasyPrint
+  references excluded) are byte-identical to step 06's
+  (`attachments/pdf-identity-vs-06-page-rules.json`).
+- WPT pass / clean stays at 3664 / 3107 (45.53 % / 38.61 %), with no transitions.
+- Verdict totals excluding diagnostic variants stay at PASS 118, FAIL 36, WARN 6, NOT-RUN 3.
+- The step is kept for correctness against Chrome's print path, proven by `media_print.rs`. No
+  oracle shows it.
+
+The `committed-canary` self-test asserts that `07-media-print` PASSes against `06-page-rules`
+with no acceptances and no changed item.
