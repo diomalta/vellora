@@ -46,6 +46,18 @@ const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
 const AUTHORITY =
   "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)";
 
+/**
+ * Copy a report into the baseline under the same rule as the files written here: text reports
+ * (.json/.md/.txt) get the local checkout and home path rewritten (<repo>/..., ~/...); anything else
+ * is copied byte for byte. A gate report embeds the run's argv verbatim (e.g. an absolute
+ * `--chrome-from` path), so copying it raw would commit the local home path.
+ */
+export function copyPortable(src, dest, root = repoRoot) {
+  if (/\.(json|md|txt)$/i.test(dest)) {
+    writeFileSync(dest, portable(readFileSync(src, "utf8"), root));
+  } else copyFileSync(src, dest);
+}
+
 /** `biome format --write` with the repo's pinned biome (a note instead when it is missing). */
 function biomeFormat(path) {
   const bin = join(repoRoot, "node_modules", ".bin", "biome");
@@ -82,7 +94,7 @@ export function writeBaseline({
   if (attach.length) mkdirSync(join(outDir, "attachments"), { recursive: true });
   for (const a of attach) {
     const [src, as] = a.split("=").length === 2 ? a.split("=") : [a, null];
-    copyFileSync(resolve(src), join(outDir, "attachments", as ?? src.split("/").pop()));
+    copyPortable(resolve(src), join(outDir, "attachments", as ?? src.split("/").pop()));
   }
   const s = snap.summary;
   const env = s.environment ?? {};
@@ -174,8 +186,8 @@ export function writeBaseline({
           detail: i.detail,
         })),
     };
-    copyFileSync(join(gateDir, "gate-report.json"), join(outDir, "gate-report.json"));
-    copyFileSync(join(gateDir, "gate-report.md"), join(outDir, "gate-report.md"));
+    copyPortable(join(gateDir, "gate-report.json"), join(outDir, "gate-report.json"));
+    copyPortable(join(gateDir, "gate-report.md"), join(outDir, "gate-report.md"));
   }
   // The baseline is committed and `npm run lint` (biome) checks JSON under fidelity/baselines:
   // format with the repo's own biome BEFORE hashing, so the recorded sha256s stay valid.

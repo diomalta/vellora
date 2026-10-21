@@ -15,7 +15,7 @@ instead of by our own eyes. Private, unpublished, and not a root workspace membe
 | `corpus/` | Real-document corpus (boleto, DANFE, text stress, OSS invoice/receipt under `fixtures/`) and its spec-derived checks. |
 | `lib/chrome-reference.mjs` | THE Chromium reference setup: one font alias table + one puppeteer-core print path, used by corpus, oracles and layout-diff. |
 | `gate/` | The value ratchet: snapshot loaders, metric parser, tolerances, comparator, report, baseline writer, code-checks step, self-tests. |
-| `baselines/` | Committed baselines the gate compares against (`pin/`, `beta4/`: Phase A shape; `<name>/` written by `gate/write-baseline.mjs`: gate shape) and `wpt/<engine>.json` expectations. |
+| `baselines/` | Committed baselines the gate compares against (`pin/`, `beta4/`: Phase A shape; `<name>/` written by `gate/write-baseline.mjs`: gate shape; `port/NN-name/`: the Phase B port chain, each step gated against the previous one, convention in `baselines/port/README.md`) and `wpt/<engine>.json` expectations. |
 | `ACCEPTANCE.md` | Per-document-class acceptance criteria, each traced to a primary source, plus the gate rules and tolerances (section 8). |
 | `run-all.mjs`, `combine/` | Single entry point over every area, the combined summary, and the LET-*/TXT-B1 evaluation (`combine/letter.mjs`). |
 
@@ -93,7 +93,10 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
 
 Self-tests: `gate/test/` (synthetic regression, synthetic accepted regression, every rule, and a
 real canary on committed data: `baselines/beta4` against `baselines/pin` must flag notification
-REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT clean-pass regressions).
+REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT clean-pass regressions; and the head of
+the port chain, `baselines/port/00-start`, must pass its sha256 integrity check and PASS against
+`baselines/beta4-gated`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
+`<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).
 
 ## Canaries
 

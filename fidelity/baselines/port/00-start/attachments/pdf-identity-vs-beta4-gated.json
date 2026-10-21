@@ -1,0 +1,189 @@
+{
+  "schema": "vellora-fidelity/pdf-identity/1",
+  "what": "sha256 of every vellora.pdf a run-all run wrote (corpus, oracles plain + PDF/A-2b, layout-diff dump renders), compared with the same path of the previous step's run",
+  "run": "run-all 20261021T074902Z (phaseb/stage1 5099808)",
+  "previous": "run-all 20261021T072047Z (beta4-gated, phaseb/gate fb2924a)",
+  "command": "node /tmp/s1c-scripts/pdf-identity.mjs <run> <previous run> <out> (S1c, 2026-10-21)",
+  "counts": {
+    "files": 29,
+    "identical": 29,
+    "differ": 0,
+    "missingInPrevious": 0
+  },
+  "rows": [
+    {
+      "file": "corpus/boleto-febraban.px-grid/vellora.pdf",
+      "sha256": "3b602e1908b5487f46890cecd53e0dd3e4c20219c6a32030f72a6a17df1b1c2f",
+      "previous": "3b602e1908b5487f46890cecd53e0dd3e4c20219c6a32030f72a6a17df1b1c2f",
+      "identical": true
+    },
+    {
+      "file": "corpus/boleto-febraban/vellora.pdf",
+      "sha256": "db4780ef4dfaa54de4891fdbb9b3de16d10bfc8d015a2245bfdd577eea6f07fe",
+      "previous": "db4780ef4dfaa54de4891fdbb9b3de16d10bfc8d015a2245bfdd577eea6f07fe",
+      "identical": true
+    },
+    {
+      "file": "corpus/danfe/vellora.pdf",
+      "sha256": "c6c7eff8ef21c7edb2548a2b0760c6e35da48b9136435c6e85448c155cc4b97c",
+      "previous": "c6c7eff8ef21c7edb2548a2b0760c6e35da48b9136435c6e85448c155cc4b97c",
+      "identical": true
+    },
+    {
+      "file": "corpus/oss-postmark-receipt/vellora.pdf",
+      "sha256": "6686a0888eb12f5c33017aa716d28ec90aad5a4e09e9ee5c57db668e2d094d0e",
+      "previous": "6686a0888eb12f5c33017aa716d28ec90aad5a4e09e9ee5c57db668e2d094d0e",
+      "identical": true
+    },
+    {
+      "file": "corpus/oss-sparksuite-invoice/vellora.pdf",
+      "sha256": "1240f663dba921451d735ae7efa49d48b7252d3094e6f5e7cd11fba6de90de2c",
+      "previous": "1240f663dba921451d735ae7efa49d48b7252d3094e6f5e7cd11fba6de90de2c",
+      "identical": true
+    },
+    {
+      "file": "corpus/text-stress-ptbr/vellora.pdf",
+      "sha256": "ae4417621848a87ef664abc8aa5f9bf987c3ac77756d9571fd74e28dfd0c158e",
+      "previous": "ae4417621848a87ef664abc8aa5f9bf987c3ac77756d9571fd74e28dfd0c158e",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/boleto-febraban/run-all/vellora.pdf",
+      "sha256": "3d505cd5712e5b6e93c681b9bf2bbd94b75cb63241621aaebf5d3a51e06f37dd",
+      "previous": "3d505cd5712e5b6e93c681b9bf2bbd94b75cb63241621aaebf5d3a51e06f37dd",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/boleto/run-all/vellora.pdf",
+      "sha256": "6669127e5ac236bbd116a2fd27fcf9a6d5dbf812449ede02cd006814b6c9c4e1",
+      "previous": "6669127e5ac236bbd116a2fd27fcf9a6d5dbf812449ede02cd006814b6c9c4e1",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/danfe/run-all/vellora.pdf",
+      "sha256": "a77a9e8546ed86a9b91d12dd37f041762a5b022d83168302902be2a1eac12275",
+      "previous": "a77a9e8546ed86a9b91d12dd37f041762a5b022d83168302902be2a1eac12275",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/invoice/run-all/vellora.pdf",
+      "sha256": "4db1ab29f3e31956fb2feaae717477880be8ad3b0bf14eecb1778c2dafaee5fb",
+      "previous": "4db1ab29f3e31956fb2feaae717477880be8ad3b0bf14eecb1778c2dafaee5fb",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/notification/run-all/vellora.pdf",
+      "sha256": "294722a70d89022ba0a3dd3e73ab52b3e32afcdc409d33ca49033096edcf0c80",
+      "previous": "294722a70d89022ba0a3dd3e73ab52b3e32afcdc409d33ca49033096edcf0c80",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+      "sha256": "08d4eb1fa7c858aa4861f2c3ce15c5324553bc6d33d924b2eb38face953c8647",
+      "previous": "08d4eb1fa7c858aa4861f2c3ce15c5324553bc6d33d924b2eb38face953c8647",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+      "sha256": "b5eaf49563ba9486376bb75f1e4fcf4ecd29962a1e873c22ac2b3f4d2cdbcc92",
+      "previous": "b5eaf49563ba9486376bb75f1e4fcf4ecd29962a1e873c22ac2b3f4d2cdbcc92",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/receipt/run-all/vellora.pdf",
+      "sha256": "ab3ef55509c94383562c572c3d30b2704f332141aa00ee2cda32fe3f82e97f14",
+      "previous": "ab3ef55509c94383562c572c3d30b2704f332141aa00ee2cda32fe3f82e97f14",
+      "identical": true
+    },
+    {
+      "file": "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+      "sha256": "5dee45e704a9bbf7e71cbfbaba27468c8aec2e41df766a9e55d35738eb057b29",
+      "previous": "5dee45e704a9bbf7e71cbfbaba27468c8aec2e41df766a9e55d35738eb057b29",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/boleto-febraban.px-grid/pdfa/vellora.pdf",
+      "sha256": "1d3093ddc1788a303b2343047ef7ce373231712f577a4c3eb0b64dbefa6b4555",
+      "previous": "1d3093ddc1788a303b2343047ef7ce373231712f577a4c3eb0b64dbefa6b4555",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/boleto-febraban/pdfa/vellora.pdf",
+      "sha256": "15c7d6d4da5b4aa06018d2f93d7aee7ad76c31f1fd217b3cba0a496789a4b884",
+      "previous": "15c7d6d4da5b4aa06018d2f93d7aee7ad76c31f1fd217b3cba0a496789a4b884",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/danfe/pdfa/vellora.pdf",
+      "sha256": "2855b7ad60232a83af33f3cc716fbd42fb6a22fa3d1d367d5c081a3c82fd9157",
+      "previous": "2855b7ad60232a83af33f3cc716fbd42fb6a22fa3d1d367d5c081a3c82fd9157",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/oss-postmark-receipt/pdfa/vellora.pdf",
+      "sha256": "6833a237890e692c0a5cc3bff0dc928d5fe4cd80d0061b7aa5dbc3a2d40f1013",
+      "previous": "6833a237890e692c0a5cc3bff0dc928d5fe4cd80d0061b7aa5dbc3a2d40f1013",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/oss-sparksuite-invoice/pdfa/vellora.pdf",
+      "sha256": "cd9c61e45dbb102346bc98d238cdeb9bb1ba980cae870602278f1c9533bd02ca",
+      "previous": "cd9c61e45dbb102346bc98d238cdeb9bb1ba980cae870602278f1c9533bd02ca",
+      "identical": true
+    },
+    {
+      "file": "oracles/corpus/text-stress-ptbr/pdfa/vellora.pdf",
+      "sha256": "915c1891536611ab97188e1b0e019bd463efd10e825ad19ccba644993a58d4fc",
+      "previous": "915c1891536611ab97188e1b0e019bd463efd10e825ad19ccba644993a58d4fc",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/boleto/pdfa/vellora.pdf",
+      "sha256": "a6e7d3c628bb7e571df004f322f53e5ce5dc44b328ba603a0fdd955da0053632",
+      "previous": "a6e7d3c628bb7e571df004f322f53e5ce5dc44b328ba603a0fdd955da0053632",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/boleto/plain/vellora.pdf",
+      "sha256": "16a52faba0ef314562bf6d6ad3a9a9b2d977e132c217744918abbcd19ad99234",
+      "previous": "16a52faba0ef314562bf6d6ad3a9a9b2d977e132c217744918abbcd19ad99234",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/invoice/pdfa/vellora.pdf",
+      "sha256": "a68605f127118ec694c1c9c50816def2ffa553822b32d13be00b446e31d02f70",
+      "previous": "a68605f127118ec694c1c9c50816def2ffa553822b32d13be00b446e31d02f70",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/invoice/plain/vellora.pdf",
+      "sha256": "2ad9f43d2f8ea085ef215ba63fefda197f2861ccc883a55b37bff4df5c11dc11",
+      "previous": "2ad9f43d2f8ea085ef215ba63fefda197f2861ccc883a55b37bff4df5c11dc11",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/notification/pdfa/vellora.pdf",
+      "sha256": "c51a1e60f61837ebf1fde2e419538a973e4620c9d07219705b06a67b542ff4f3",
+      "previous": "c51a1e60f61837ebf1fde2e419538a973e4620c9d07219705b06a67b542ff4f3",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/notification/plain/vellora.pdf",
+      "sha256": "99969eddd1979e22921e499edf6ac6ffa6f997f61c9276630d8b8bff50c7358d",
+      "previous": "99969eddd1979e22921e499edf6ac6ffa6f997f61c9276630d8b8bff50c7358d",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/receipt/pdfa/vellora.pdf",
+      "sha256": "c8a5493b9ab47d120598666c0a19cdaca67968d27c041a0966fac69273e49165",
+      "previous": "c8a5493b9ab47d120598666c0a19cdaca67968d27c041a0966fac69273e49165",
+      "identical": true
+    },
+    {
+      "file": "oracles/fixtures/receipt/plain/vellora.pdf",
+      "sha256": "49b253ea4bf3f7dfcd6e6248d540e21661649bf565c689af58b6d820443ef3ec",
+      "previous": "49b253ea4bf3f7dfcd6e6248d540e21661649bf565c689af58b6d820443ef3ec",
+      "identical": true
+    }
+  ]
+}

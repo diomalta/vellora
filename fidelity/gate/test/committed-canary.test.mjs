@@ -79,3 +79,22 @@ test("beta.4 vs beta.4: no regression; the only gating items are the 2 postmark 
     ],
   );
 });
+
+test("port/00-start (head of the port chain, baselines/port/README.md) passes vs beta4-gated", () => {
+  const start = loadBaselineDir(join(baselines, "port", "00-start"));
+  assert.equal(start.integrity.ok, true, start.integrity.problems.join("; "));
+  assert.equal(start.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(start.manifest.gate.verdict, "PASS");
+  assert.equal(start.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(start.manifest.gate.baseline, "fidelity/baselines/beta4-gated");
+  assert.deepEqual(start.manifest.acceptedRegressions, []);
+  assert.equal(Object.keys(start.crashtests.results).length, 239);
+  assert.ok(start.codeChecks.length === 4 && start.codeChecks.every((c) => c.status === "pass"));
+  const r = compareSnapshots(loadBaselineDir(join(baselines, "beta4-gated")), start);
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The only change: 13 WPT css-text tests fail -> pass (phaseb/text-hook's reader fix).
+  const improved = r.items.filter((x) => x.class === "improvement");
+  assert.equal(improved.length, 13);
+  assert.ok(improved.every((x) => x.key.startsWith("wpt|css/css-text/")));
+});
