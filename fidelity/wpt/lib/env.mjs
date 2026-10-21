@@ -11,9 +11,11 @@ function run(cmd, args, opts = {}) {
   // spawnSync (no shell) so tools that print their version on stderr (pdftoppm -v) are captured.
   const r = spawnSync(cmd, args, { encoding: "utf8", timeout: 15000, ...opts });
   if (r.error) return { error: String(r.error.message ?? r.error) };
-  const out = (r.stdout || r.stderr || "").trim();
-  if (r.status !== 0 && !out) return { error: `${cmd} exited ${r.status}` };
-  return out;
+  if (r.status !== 0) {
+    const detail = (r.stderr || r.stdout || "").trim().split("\n")[0];
+    return { error: `${cmd} exited ${r.status}${detail ? `: ${detail}` : ""}` };
+  }
+  return (r.stdout || r.stderr || "").trim();
 }
 
 function firstLine(v) {

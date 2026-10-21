@@ -46,7 +46,8 @@ writeFileSync(join(dir, ".git", "info", "sparse-checkout"), `${SPARSE_PATTERNS.j
 
 let head = "";
 try {
-  head = git(["rev-parse", "HEAD"]);
+  // A fresh repository has no HEAD yet; keep git's "ambiguous argument" message off the console.
+  head = git(["rev-parse", "HEAD"], { stdio: ["ignore", "pipe", "ignore"] });
 } catch {
   head = "";
 }
