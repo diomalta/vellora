@@ -1509,19 +1509,6 @@ fn inline_align(node: &blitz_dom::Node) -> InlineAlign {
     }
 }
 
-/// Whether computed `text-align` is right/end (direction not considered). Only
-/// the inline padding-right compensation of [`read_text_runs`] uses it.
-fn text_align_right(node: &blitz_dom::Node) -> bool {
-    node.primary_styles().is_some_and(|styles| {
-        use style::values::specified::TextAlignKeyword;
-
-        matches!(
-            styles.clone_text_align(),
-            TextAlignKeyword::Right | TextAlignKeyword::End | TextAlignKeyword::MozRight
-        )
-    })
-}
-
 fn colspan(node: &blitz_dom::Node) -> usize {
     node.attr(blitz_dom::local_name!("colspan"))
         .and_then(|value| value.parse::<usize>().ok())
@@ -1987,11 +1974,17 @@ fn read_text_runs(
     let layout = &text_layout.layout;
     let line_box_top = abs_y + text_layout.block_offset as f64;
     let mut runs = Vec::new();
+    // A right-aligned line keeps its right edge, so the runs before an inline's padding-right
+    // move left by it instead of the runs after it moving right. The side is the physical one
+    // Parley aligned the line to: `start`/`end` resolved against `direction` ([`inline_align`],
+    // port step 09; before it `end` always counted as right and `start` never did, so rtl text
+    // was off by the padding, Chrome 155 `tests/text_probes.rs`).
+    let right_aligned = inline_align(node) == InlineAlign::Right;
 
     for line in layout.lines() {
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
-        let line_padding_right_px = if text_align_right(node) {
+        let line_padding_right_px = if right_aligned {
             let mut paddings: Vec<f64> = line
                 .items()
                 .filter_map(|item| match item {

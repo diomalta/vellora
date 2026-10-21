@@ -159,6 +159,97 @@ fn mixed_weight_probe_matches_chrome() {
     assert!(pdf_text_collapsed(MIXED_WEIGHT).contains("LTDA — CNPJ 12.345.678/0001-90"));
 }
 
+/// Page-local x in pt of the first non-space glyph of each named run on page 1 (the render
+/// path through pagination), i.e. what PyMuPDF reports as the word's x.
+fn page_x_pt(html: &str, words: &[&str]) -> Vec<f64> {
+    let page_box = page_css::parse_page_box(html);
+    let laid_out = lay_out_like_render(html);
+    let paginated = vellora_core::pagination::paginate(&laid_out, &page_box);
+    words
+        .iter()
+        .map(|word| {
+            let run = paginated.pages[0]
+                .text_runs
+                .iter()
+                .find(|run| {
+                    let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+                    let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+                    run.text[start..end].trim() == *word
+                })
+                .unwrap_or_else(|| panic!("{word:?} on page 1"));
+            let leading_space: f64 = run
+                .glyphs
+                .iter()
+                .take_while(|g| run.text[g.text_start..g.text_end].trim().is_empty())
+                .map(|g| f64::from(g.advance))
+                .sum();
+            (run.origin_x + leading_space) * 0.75
+        })
+        .collect()
+}
+
+#[test]
+fn rtl_start_and_end_align_the_inline_padding_like_chrome() {
+    // Port step 09: the padding-right compensation of a right-aligned line follows the side
+    // Parley aligned the line to (`text-align` with `start`/`end` resolved against `direction`),
+    // not the keyword: `direction: rtl; text-align: start` is right-aligned, `end` left-aligned.
+    // Chrome 155 (`fidelity/baselines/port/09-review-fixes/attachments/
+    // chrome-probes-review-fixes.json`, probes r_*), x of "Aaa", "Bbb", "Ccc" in pt on an A4
+    // page with 10 mm margins; `<span>Bbb</span>` has padding-right 20 px (and padding-left 7 px
+    // in the first two). Step 08: rtl start (264.37, 286.69, 324.69), rtl end (13.35, 35.66,
+    // 73.67), rtl root (502.12, 524.44, 562.44): every run off by the 15 pt padding.
+    const TOL_PT: f64 = 0.75;
+    // KNOWN GAP (unchanged, ltr too): a span's padding-LEFT does not move the runs (5.25 pt).
+    const PADDING_LEFT_PT: f64 = 7.0 * 0.75;
+    let probe = |align: &str, dir: &str, html_dir: &str, padding: &str| {
+        format!(
+            "<!DOCTYPE html><html{html_dir}><head><style>@page {{ size: A4; margin: 10mm }} \
+             body {{ margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: \
+             20px; }} p {{ margin: 0; }} div {{ {align} width: 400px }} span {{ {padding} }}\
+             </style></head><body><div{dir}>Aaa <span>Bbb</span> Ccc</div></body></html>"
+        )
+    };
+    let both = "padding-right: 20px; padding-left: 7px";
+    let cases: &[(&str, String, [f64; 3], [f64; 3])] = &[
+        (
+            "rtl start (right-aligned)",
+            probe("text-align: start;", " dir=\"rtl\"", "", both),
+            [244.27, 271.84, 309.84],
+            [PADDING_LEFT_PT, 0.0, 0.0],
+        ),
+        (
+            "rtl end (left-aligned)",
+            probe("text-align: end;", " dir=\"rtl\"", "", both),
+            [28.50, 56.07, 94.08],
+            [0.0, -PADDING_LEFT_PT, -PADDING_LEFT_PT],
+        ),
+        (
+            "ltr end (right-aligned, unchanged)",
+            probe("text-align: end;", "", "", both),
+            [244.27, 271.84, 309.84],
+            [PADDING_LEFT_PT, 0.0, 0.0],
+        ),
+        (
+            "rtl root, start",
+            probe("", "", " dir=\"rtl\"", "padding-right: 20px"),
+            [487.79, 510.12, 548.12],
+            [0.0, 0.0, 0.0],
+        ),
+    ];
+    for (what, html, chrome, gap) in cases {
+        let x = page_x_pt(html, &["Aaa", "Bbb", "Ccc"]);
+        for i in 0..3 {
+            assert!(
+                (x[i] - chrome[i] - gap[i]).abs() <= TOL_PT,
+                "{what}: run {i} at {:.2} pt, Chrome {:.2} pt (+ known gap {:.2})",
+                x[i],
+                chrome[i],
+                gap[i]
+            );
+        }
+    }
+}
+
 #[test]
 fn inline_padding_probe_matches_chrome() {
     let lines = visual_lines(&lay_out_like_render(INLINE_PADDING));
