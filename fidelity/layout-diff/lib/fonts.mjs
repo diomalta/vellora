@@ -39,6 +39,19 @@ export function chromeFontFor(face) {
   return null;
 }
 
+/**
+ * Every CSS family that reaches `face` in Chrome through FONT_ALIASES (e.g. "Vellora Sans" and
+ * "Liberation Sans" both reach LiberationSans-Regular.ttf), with the weight that selects it.
+ * null for faces without an injected Chrome counterpart (DejaVu fallback, Blitz bullet font).
+ */
+export function aliasFamiliesFor(face) {
+  for (const alias of FONT_ALIASES) {
+    if (face === alias.regular) return { families: alias.families, weight: 400 };
+    if (face === alias.bold) return { families: alias.families, weight: 700 };
+  }
+  return null;
+}
+
 export function bundledFontDir(repoRoot) {
   return join(repoRoot, "crates", "vellora-core", "src", "fonts");
 }

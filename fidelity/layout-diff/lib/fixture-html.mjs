@@ -59,8 +59,20 @@ export function inlineLocalImageSources(html, fixtureDir) {
   });
 }
 
+/** Marker attribute of the injected font block (checked by lib/checks.mjs). */
+export const FONT_STYLE_MARKER = "data-vellora-fidelity-fonts";
+
+/**
+ * Insert `markup` right after the opening <head> tag. Throws when there is no <head> tag: a silent
+ * no-op would let Chromium fall back to system fonts (the font-parity failure mode).
+ */
 function injectIntoHead(html, markup) {
-  return html.replace(/<head([^>]*)>/i, `<head$1>\n${markup}`);
+  if (!/<head(\s[^>]*)?>/i.test(html)) {
+    throw new Error(
+      "browserHtmlFor: no <head> tag to inject the bundled @font-face block into; Chromium would fall back to system fonts (font parity lost). Add a <head> to the fixture.",
+    );
+  }
+  return html.replace(/<head(\s[^>]*)?>/i, (tag) => `${tag}\n${markup}`);
 }
 
 /** Browser-side HTML: <base> + bundled @font-face block, both inside <head> only. */
@@ -71,7 +83,7 @@ export function browserHtmlFor(nativeHtml, fixtureDir, root = repoRoot) {
   }
   return injectIntoHead(
     html,
-    `    <style data-vellora-fidelity-fonts>\n${bundledFontFaceCss(root)}\n    </style>`,
+    `    <style ${FONT_STYLE_MARKER}>\n${bundledFontFaceCss(root)}\n    </style>`,
   );
 }
 

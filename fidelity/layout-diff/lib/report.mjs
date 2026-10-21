@@ -37,7 +37,36 @@ function table(headers, rows) {
   return `${out.join("\n")}\n`;
 }
 
-export function attributionText(div, finalName) {
+/** "layer coord ±step" list, e.g. "B0 dy +6.52; table_percent_widths dy +10". */
+export function stepsText(steps) {
+  if (!steps?.length) return "";
+  return steps.map((st) => `${st.layer} ${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)}`).join("; ");
+}
+
+export function worsenedText(worsened) {
+  if (!worsened?.length) return "";
+  return worsened
+    .map((w) => `${w.layer} ${w.coord} ${num(w.from)}→${num(w.to)}`)
+    .join("; ");
+}
+
+function dominantText(item) {
+  if (!item?.dominant_layer) return "";
+  const st = item.dominant_step;
+  return st ? `${item.dominant_layer} (${st.coord} ${st.step > 0 ? "+" : ""}${num(st.step)})` : item.dominant_layer;
+}
+
+/** Banner when input parity failed: the attribution below is not about the engines. */
+function invalidPrefix(result) {
+  const s = result?.checks_summary;
+  if (!s || s.input_parity_ok) return "";
+  const ids = result.checks
+    .filter((c) => c.class === "input-parity" && c.status === "fail")
+    .map((c) => c.id);
+  return `INVALID — input parity failed (${ids.join(", ")}); the engines were not given the same problem, so this is NOT evidence about Blitz or vellora: `;
+}
+
+export function attributionText(div, finalName, result) {
   if (!div) return "no divergence beyond tolerance";
   const layer = div.introduced_by;
   const b0 = div.per_layer?.B0;
@@ -57,7 +86,7 @@ export function attributionText(div, finalName) {
   } else {
     text = `diverges only in ${finalName}`;
   }
-  return text;
+  return `${invalidPrefix(result)}${text}`;
 }
 
 function eventLabel(div) {
@@ -87,16 +116,13 @@ function layerTable(div, layers) {
   );
 }
 
-function divergenceSection(title, div, result) {
+function divergenceSection(title, div, result, none = "No divergence beyond tolerance.") {
   let md = `## ${title}\n\n`;
-  if (!div) return `${md}No divergence beyond tolerance.\n\n`;
+  if (!div) return `${md}${none}\n\n`;
   md += `- **${eventLabel(div)}** (event #${div.order})\n`;
-  md += `- introduced by: **${div.introduced_by ?? "n/a"}** — ${attributionText(div, result.final_layer)}\n`;
-  if (div.changed_by?.length) {
-    md += `- later layers that changed its max |Δ|: ${div.changed_by
-      .map((c) => `\`${c.layer}\` ${num(c.from)} → ${num(c.to)}`)
-      .join(", ")}\n`;
-  }
+  md += `- first over tolerance: **${div.introduced_by ?? "n/a"}** — ${attributionText(div, result.final_layer, result)}\n`;
+  md += `- dominant layer (largest step of the final Δ): **${dominantText(div) || "n/a"}**; worsened by (> tolerance, per coordinate): ${worsenedText(div.worsened_by) || "none"}\n`;
+  md += `- step decomposition (sums to the final Δ): ${stepsText(div.steps) || "none"}\n`;
   if (div.type === "text") {
     md += `- Chromium fragment: "${esc(div.chrome_text)}" at x=${num(div.chrome.x)} y=${num(div.chrome.y)} w=${num(div.chrome.w)}; vellora faces: ${div.faces.join(", ")}${div.joined ? " (joined fragments)" : ""}\n`;
   }
@@ -121,8 +147,106 @@ function quad(v) {
   return v ? [v.dx, v.dy, v.dw, v.dh].map(num).join(", ") : "—";
 }
 
+export const ATTRIBUTION_NOTE =
+  "Two attribution answers per item. **first over tolerance** (JSON `introduced_by`) = the first layer of B0 → L0 → passes whose |Δ vs Chromium| exceeds tolerance: it answers 'is raw Blitz already off?', and a pass that adds +10 px to a box already +6.5 px off at B0 is still labelled B0 there. **dominant layer** = the layer with the largest step (step = layer Δ − previous layer Δ; steps sum exactly to the final Δ) and **worsened by** = every layer that grew |Δ| of any single coordinate by more than tolerance: these answer 'which layer changed the error'. `Regressions by layer` lists every event each layer worsened.";
+
+function checksSection(result) {
+  if (!result.checks) return "";
+  let md = "## Checks (input parity and dump self-consistency)\n\n";
+  md += table(
+    ["check", "class", "status", "detail"],
+    result.checks.map((c) => [c.id, c.class, c.status === "fail" ? "**FAIL**" : c.status, c.detail]),
+  );
+  return `${md}\n`;
+}
+
+function checksBanner(result) {
+  const s = result.checks_summary;
+  if (!s || s.failed.length === 0) return "";
+  const parts = [];
+  if (!s.input_parity_ok) {
+    parts.push(
+      "INPUT PARITY FAILED: Chromium and Blitz were not given the same problem; every attribution below is INVALID as engine evidence",
+    );
+  }
+  if (!s.self_consistency_ok) {
+    parts.push(
+      "SELF-CONSISTENCY FAILED: some DOM-path keys or dump records are wrong; results for the affected subtree are unreliable",
+    );
+  }
+  return `> **CHECKS FAILED (${s.failed.join(", ")})** — ${parts.join(". ")}. See \`Checks\`.\n\n`;
+}
+
+function regressionSection(result) {
+  const r = result.regressions_by_layer;
+  if (!r) return "";
+  let md = "## Regressions by layer\n\n";
+  md +=
+    "Events each layer made WORSE by more than tolerance (any single checked coordinate's |Δ| grew vs the previous layer; for B0, vs Chromium = already over tolerance). Independent of the first-over-tolerance label, so a pass that worsens an already-divergent box is listed here.\n\n";
+  md += table(
+    ["layer", "box events worsened", "text events worsened", "first box worsened", "largest box worsening", "first text worsened", "largest text worsening"],
+    result.layers.map((l) => {
+      const x = r[l.name];
+      const lb = x.largest_box;
+      const lt = x.largest_text;
+      return [
+        l.name,
+        x.box_events,
+        l.kind === "blitz" ? "n/a" : x.text_events,
+        x.first_box ? `${eventLabel(x.first_box)} (${worsenedText(x.first_box.worsened_by.filter((w) => w.layer === l.name))})` : "—",
+        lb ? `${eventLabel(lb)} ${lb.coord} ${num(lb.from)}→${num(lb.to)}` : "—",
+        x.first_text ? `${eventLabel(x.first_text)} (${worsenedText(x.first_text.worsened_by.filter((w) => w.layer === l.name))})` : "—",
+        lt ? `${eventLabel(lt)} ${lt.coord} ${num(lt.from)}→${num(lt.to)}` : "—",
+      ];
+    }),
+  );
+  const passRows = result.layers
+    .filter((l) => l.kind !== "blitz")
+    .flatMap((l) => r[l.name].events.map((e) => [l.name, e]));
+  if (passRows.length) {
+    md += `\nEvery event worsened by L0 or a pass (first 40 per layer; B0 omitted: it is the raw-Blitz divergence list):\n\n`;
+    md += table(
+      ["layer", "event", "coord", "from → to", "first over tol.", "dominant"],
+      passRows
+        .filter(([name]) => name !== "L0" || true)
+        .map(([name, e]) => [name, eventLabel(e), e.coord, `${num(e.from)} → ${num(e.to)}`, e.introduced_by ?? "", e.dominant_layer ?? ""]),
+    );
+  }
+  return `${md}\n`;
+}
+
+function missingSection(result) {
+  const m = result.headline.first_missing;
+  let md = "## First compared Chromium box with no vellora box (final layer)\n\n";
+  if (!m) return `${md}None: every compared Chromium box has a vellora box.\n\n`;
+  md += `- **${shortPath(m.path)}** (\`${m.tag}\`, event #${m.order}); Chromium box x=${num(m.chrome?.x)} y=${num(m.chrome?.y)} w=${num(m.chrome?.w)} h=${num(m.chrome?.h)}; present in vellora layers: ${m.present_in.join(", ") || "none"}; ${m.total_missing} such box(es) in total\n\n`;
+  return md;
+}
+
+function marginSection(result) {
+  const m = result.margins;
+  if (!m) return "";
+  let md = "## Margins (not part of the x/y/w/h attribution)\n\n";
+  md += `${m.note}\n\n`;
+  md += `- boxes with vellora margins: ${m.boxes_with_margins}; changed by the passes (L0 → final): ${m.changed_by_passes}\n`;
+  md += `- differ from Chromium COMPUTED margins by > tolerance (L0): ${m.chromium_computed_available ? m.differ_from_chromium_computed : "n/a (snapshot has no computed margins)"}\n`;
+  if (m.differ_from_chromium_computed_sample.length) {
+    md += "\n";
+    md += table(
+      ["path", "vellora L0 mt / mb", "Chromium computed mt / mb"],
+      m.differ_from_chromium_computed_sample.map((x) => [
+        shortPath(x.path),
+        `${num(x.vellora_L0.mt)} / ${num(x.vellora_L0.mb)}`,
+        `${num(x.chromium_computed.mt)} / ${num(x.chromium_computed.mb)}`,
+      ]),
+    );
+  }
+  return `${md}\n`;
+}
+
 export function renderMarkdown({ fixture, label, env, parity, result }) {
   let md = `# Layout diff — ${fixture} (${label})\n\n> ${SCOPE_NOTE}\n\n`;
+  md += checksBanner(result);
   md +=
     "Deltas are vellora − Chromium in CSS px. Paths abbreviate `html>body:nth-child(2)` as `body`.\n\n";
   md += "## Environment\n\n";
@@ -136,6 +260,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
   md += `- tools: ${Object.entries(env.tools ?? {})
     .map(([k, v]) => `${k} ${v}`)
     .join(", ")}\n\n`;
+  md += checksSection(result);
   md += "## Input parity\n\n";
   for (const line of parity) md += `- ${line}\n`;
   md += "\n## Layers (attribution chain order)\n\n";
@@ -153,6 +278,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
   md += `\nTolerance: box ${result.config.tolerance} px, text ${result.config.textTolerance} px. `;
   md +=
     "Box events: ENTER checks x/y/width (top-down), EXIT checks height (bottom-up, so html/body are not 'first' just because they absorb descendants' error). Text runs are checked between a box's enter and exit.\n\n";
+  md += `${ATTRIBUTION_NOTE}\n\n`;
   md += divergenceSection(
     `Headline: first divergent box in ${result.final_layer}`,
     result.headline.box,
@@ -163,6 +289,27 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
     result.headline.text,
     result,
   );
+  const pr = result.headline.first_pass_regression ?? {};
+  md += divergenceSection(
+    "First box event a layout_normalize pass made worse (> tolerance)",
+    pr.box,
+    result,
+    "None: no pass worsened any box event by more than tolerance.",
+  );
+  md += divergenceSection(
+    "First text run a layout_normalize pass made worse (> tolerance)",
+    pr.text,
+    result,
+    "None: no pass worsened any text run by more than tolerance.",
+  );
+  md += divergenceSection(
+    "First box event vellora's walk (L0) made worse than raw Blitz (B0)",
+    result.headline.first_walk_regression?.box,
+    result,
+    "None: L0 never worsened a box event vs B0 by more than tolerance.",
+  );
+  md += missingSection(result);
+  md += regressionSection(result);
   md += "## First divergence per layer\n\n";
   md += table(
     ["layer", "first box", "box Δ", "first text", "text Δ (dx, dy)"],
@@ -216,7 +363,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
   );
   md += `\n## Top ${result.config.top} box divergences in ${result.final_layer} (absolute)\n\n`;
   md += table(
-    ["path", "dx", "dy", "dw", "dh", "introduced by"],
+    ["path", "dx", "dy", "dw", "dh", "first over tol.", "dominant (step)", "worsened by", "steps"],
     result.top_boxes.map((b) => [
       shortPath(b.path),
       num(b.delta.dx),
@@ -224,13 +371,16 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
       num(b.delta.dw),
       num(b.delta.dh),
       b.introduced_by ?? "",
+      dominantText(b),
+      worsenedText(b.worsened_by),
+      stepsText(b.steps),
     ]),
   );
   md += `\n## Top ${result.config.top} LOCAL box divergences\n\n`;
   md +=
     "rdx/rdy = the error a box ADDS to what it inherits: after a previous compared sibling in the same row, relative to that sibling's right edge (dx+dw) and dy; after a stacked sibling, relative to its bottom edge (dy+dh); a first child, relative to its parent's dx/dy. Isolates where cumulative drift originates.\n\n";
   md += table(
-    ["path", "rdx", "rdy", "dw", "dh", "introduced by"],
+    ["path", "rdx", "rdy", "dw", "dh", "first over tol.", "dominant (step)", "worsened by"],
     result.top_local_boxes.map((b) => [
       shortPath(b.path),
       num(b.local.rdx),
@@ -238,11 +388,13 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
       num(b.delta.dw),
       num(b.delta.dh),
       b.introduced_by ?? "",
+      dominantText(b),
+      worsenedText(b.worsened_by),
     ]),
   );
   md += `\n## Top ${result.config.top} text-run divergences in ${result.final_layer}\n\n`;
   md += table(
-    ["owner", "text", "dx", "dy", "dw", "dright", "faces", "introduced by"],
+    ["owner", "text", "dx", "dy", "dw", "dright", "faces", "first over tol.", "dominant (step)", "worsened by"],
     result.top_text.map((t) => [
       shortPath(t.owner),
       t.text.length > 48 ? `${t.text.slice(0, 45)}...` : t.text,
@@ -252,8 +404,30 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
       num(t.delta?.dright),
       t.faces.join(" "),
       t.introduced_by ?? "",
+      dominantText(t),
+      worsenedText(t.worsened_by),
     ]),
   );
+  if (result.top_local_text) {
+    md += `\n## Top ${result.config.top} LOCAL text-run divergences\n\n`;
+    md +=
+      "rdx/rdy = the run's Δ minus its owner box's dx/dy (final layer), so runs that only ride along with a shifted owner rank low (de-duplicates cascades, like the local box table).\n\n";
+    md += table(
+      ["owner", "text", "rdx", "rdy", "dx", "dy", "first over tol.", "dominant (step)", "worsened by"],
+      result.top_local_text.map((t) => [
+        shortPath(t.owner),
+        t.text.length > 48 ? `${t.text.slice(0, 45)}...` : t.text,
+        num(t.local?.rdx),
+        num(t.local?.rdy),
+        num(t.delta?.dx),
+        num(t.delta?.dy),
+        t.introduced_by ?? "",
+        dominantText(t),
+        worsenedText(t.worsened_by),
+      ]),
+    );
+  }
+  md += `\n${marginSection(result)}`;
   const c = result.counts;
   md += "\n## Match counts and node policy\n\n";
   md += `- Chromium elements under html (head excluded) by policy: ${Object.entries(
@@ -306,17 +480,44 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
 
 export function renderSummaryMarkdown({ label, env, rows }) {
   let md = `# Layout diff summary (${label})\n\n> ${SCOPE_NOTE}\n\n`;
+  const failing = rows.filter((r) => r.result.checks_summary?.failed.length);
+  if (failing.length) {
+    md += `> **WARNING — CHECKS FAILED** in ${failing
+      .map(
+        (r) =>
+          `${r.fixture} (${r.result.checks_summary.failed.join(", ")}${r.result.checks_summary.input_parity_ok ? "" : "; INPUT PARITY: attribution INVALID"})`,
+      )
+      .join("; ")}. See the checks table below and each fixture's report.\n\n`;
+  }
   md += `- date: \`${env.date_utc}\`; blitz: \`${env.blitz}\`; commit: \`${env.git_commit}\` (${env.git_dirty}); chrome: \`${env.chrome_version}\`; node: \`${env.node}\`; rustc: \`${env.rustc}\`\n`;
   md += `- command: \`${env.command}\`\n\n`;
+  const ids = [...new Set(rows.flatMap((r) => (r.result.checks ?? []).map((c) => c.id)))];
+  if (ids.length) {
+    md += "## Checks\n\n";
+    md += table(
+      ["check", ...rows.map((r) => r.fixture)],
+      ids.map((id) => [
+        id,
+        ...rows.map((r) => {
+          const c = r.result.checks?.find((x) => x.id === id);
+          return c ? (c.status === "fail" ? "**FAIL**" : c.status) : "";
+        }),
+      ]),
+    );
+    md += "\n";
+  }
+  md += `${ATTRIBUTION_NOTE}\n\n`;
   md += table(
     [
       "fixture",
       "first divergent box (final layer)",
       "Δ",
-      "introduced by",
+      "first over tol.",
+      "dominant (step)",
       "first divergent text run",
       "text Δ (dx, dy)",
-      "introduced by",
+      "first over tol.",
+      "dominant (step)",
       "matched boxes",
     ],
     rows.map((r) => {
@@ -333,12 +534,33 @@ export function renderSummaryMarkdown({ label, env, rows }) {
               .map(num)
               .join(", ")
           : "",
-        b?.introduced_by ?? "",
+        `${b?.introduced_by ?? ""}${r.result.checks_summary && !r.result.checks_summary.input_parity_ok ? " (INVALID: input parity)" : ""}`,
+        dominantText(b),
         t ? eventLabel(t) : "none",
         tv ? `${num(tv.dx)}, ${num(tv.dy)}` : "",
         t?.introduced_by ?? "",
+        dominantText(t),
         `${r.result.counts.matched_boxes}/${r.result.counts.vellora_l0_boxes}`,
       ];
+    }),
+  );
+  md += "\nPass regressions (events a `layout_normalize` pass made worse by > tolerance):\n\n";
+  md += table(
+    ["fixture", "box events worsened, by pass", "text runs worsened, by pass", "first box a pass worsened", "first text run a pass worsened"],
+    rows.map((r) => {
+      const reg = r.result.regressions_by_layer ?? {};
+      const passes = r.result.layers.filter((l) => l.kind === "pass").map((l) => l.name);
+      const fmt = (key) =>
+        passes
+          .filter((p) => reg[p]?.[key])
+          .map((p) => `${p} ${reg[p][key]}`)
+          .join(", ") || "0";
+      const pr = r.result.headline.first_pass_regression ?? {};
+      const label = (e) =>
+        e
+          ? `${eventLabel(e)} (${worsenedText(e.worsened_by.filter((w) => passes.includes(w.layer)))})`
+          : "none";
+      return [r.fixture, fmt("box_events"), fmt("text_events"), label(pr.box), label(pr.text)];
     }),
   );
   return md;

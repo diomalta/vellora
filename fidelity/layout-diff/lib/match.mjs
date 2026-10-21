@@ -6,6 +6,16 @@
 // preceding siblings), then TEXT events for the runs it owns, then its children, then an EXIT event
 // (height: decided bottom-up by its content). Checking height on exit keeps html/body from always
 // being "first" just because their height absorbs every descendant's error.
+//
+// Two attribution answers per event (they differ when the error is already over tolerance early):
+//   first_over_tolerance (JSON key `introduced_by`, kept for compatibility): the FIRST layer of
+//     B0 -> L0 -> passes whose |delta vs Chromium| exceeds tolerance. Answers "is raw Blitz already
+//     off?", NOT "which layer made it worse": a pass that adds +10 px to a box that is already
+//     +6.5 px off at B0 is still labelled B0 here.
+//   steps / dominant_layer / worsened_by: the exact per-layer decomposition of the final delta
+//     (step = layer delta - previous layer delta; they sum to the final delta) and every layer
+//     that grew |delta| of any single coordinate by more than tolerance. This is the "which layer
+//     changed the error" answer; regressions_by_layer lists, per layer, every event it worsened.
 import { baselineKey } from "./chrome-snapshot.mjs";
 import { chromeFontFor } from "./fonts.mjs";
 import { attributionChain, normText } from "./vellora-model.mjs";
@@ -37,6 +47,80 @@ function boxDelta(v, c) {
 
 function maxAbs(...values) {
   return Math.max(0, ...values.filter(Number.isFinite).map(Math.abs));
+}
+
+/** Coordinates each kind of item is checked on. */
+export const COORDS = {
+  enter: ["dx", "dy", "dw"],
+  exit: ["dh"],
+  text: ["dx", "dy"],
+  box: ["dx", "dy", "dw", "dh"],
+};
+
+/**
+ * Exact per-layer decomposition of one item's error vs Chromium over `layers` (chain order).
+ * step(layer) = delta(layer) - delta(previous layer present); the first layer's step is its own
+ * delta (Chromium = 0), so the steps of every coordinate sum to the final delta. worsening(layer) =
+ * max over coordinates of |delta(layer)| - |delta(previous)| — per coordinate, so a pass that adds
+ * dy +5 to a box already at dx +6.5 is not hidden by a max-abs magnitude that stays 6.5.
+ *  - dominant_layer: the layer with the largest |step| (ties: earliest).
+ *  - worsened_by: every layer whose worsening exceeds `tolerance` (the regression signal; for
+ *    the first layer this means "already over tolerance vs Chromium").
+ *  - changed_by: every layer after the first that moved any coordinate by more than 0.01 px.
+ */
+export function decompose(perLayer, layers, coords, tolerance) {
+  const steps = [];
+  let prev = null;
+  for (const name of layers) {
+    const v = perLayer[name];
+    if (!v || !coords.some((k) => Number.isFinite(v[k]))) continue;
+    let best = { abs: 0, coord: null, signed: 0 };
+    let worst = { by: Number.NEGATIVE_INFINITY, coord: null, from: 0, to: 0 };
+    for (const k of coords) {
+      const cur = Number.isFinite(v[k]) ? v[k] : 0;
+      const before = prev && Number.isFinite(prev[k]) ? prev[k] : 0;
+      const s = cur - before;
+      if (Math.abs(s) > best.abs) best = { abs: Math.abs(s), coord: k, signed: s };
+      const w = Math.abs(cur) - Math.abs(before);
+      if (w > worst.by) worst = { by: w, coord: k, from: before, to: cur };
+    }
+    steps.push({
+      layer: name,
+      first: prev === null,
+      step: round(best.signed),
+      coord: best.coord,
+      worsening: round(worst.by),
+      worsening_coord: worst.coord,
+      from: round(worst.from),
+      to: round(worst.to),
+    });
+    prev = v;
+  }
+  let dominant = null;
+  for (const st of steps) {
+    if (Math.abs(st.step) > 0.01 && (!dominant || Math.abs(st.step) > Math.abs(dominant.step))) {
+      dominant = st;
+    }
+  }
+  return {
+    steps: steps
+      .filter((st) => Math.abs(st.step) > 0.01)
+      .map((st) => ({ layer: st.layer, coord: st.coord, step: st.step })),
+    dominant_layer: dominant?.layer ?? null,
+    dominant_step: dominant ? { coord: dominant.coord, step: dominant.step } : null,
+    worsened_by: steps
+      .filter((st) => st.worsening > tolerance)
+      .map((st) => ({
+        layer: st.layer,
+        coord: st.worsening_coord,
+        from: st.from,
+        to: st.to,
+        by: st.worsening,
+      })),
+    changed_by: steps
+      .filter((st) => !st.first && Math.abs(st.step) > 0.01)
+      .map((st) => ({ layer: st.layer, coord: st.coord, step: st.step })),
+  };
 }
 
 /** Chromium records -> policy-classified element tree + text fragments. */
@@ -290,6 +374,11 @@ export function diffLayouts({
         path: el.path,
         tag: el.tag,
         chrome: el.box,
+        // Chromium COMPUTED margins of the element itself (not collapsed); null on snapshots
+        // captured before margins were requested.
+        chrome_margin: Number.isFinite(el.margin_top)
+          ? { mt: el.margin_top, mb: el.margin_bottom }
+          : null,
         parent: comparedAncestor,
         prev,
         layers: {},
@@ -297,7 +386,7 @@ export function diffLayouts({
       for (const layer of [...chain, unrounded]) {
         const v = layer.boxes.get(el.path);
         row.layers[layer.name] = v
-          ? { x: v.x, y: v.y, w: v.w, h: v.h, ...boxDelta(v, el.box) }
+          ? { x: v.x, y: v.y, w: v.w, h: v.h, mt: v.mt, mb: v.mb, ...boxDelta(v, el.box) }
           : null;
       }
       boxRows.set(el.path, row);
@@ -357,11 +446,18 @@ export function diffLayouts({
     };
   };
 
+  const textChain = chain.filter((l) => l.kind !== "blitz").map((l) => l.name);
+  const boxChain = chain.map((l) => l.name);
+  const kindOf = new Map(chain.map((l) => [l.name, l.kind]));
   const evaluated = events.map((event, order) => {
     const perLayer = {};
     for (const layer of chain) perLayer[layer.name] = evalEvent(event, layer);
     if (event.type !== "text") perLayer.B0u = evalEvent(event, unrounded);
-    return { order, event, perLayer };
+    const dec =
+      event.type === "text"
+        ? decompose(perLayer, textChain, COORDS.text, textTolerance)
+        : decompose(perLayer, boxChain, COORDS[event.type], tolerance);
+    return { order, event, perLayer, dec };
   });
 
   const introducedBy = (perLayer, eventType) => {
@@ -396,32 +492,18 @@ export function diffLayouts({
         e.perLayer[layerName]?.status === "diverged",
     );
     if (!hit) return null;
-    const ownerPath = hit.event.path;
-    return {
-      order: hit.order,
-      ...describe(hit.event),
-      introduced_by: introducedBy(hit.perLayer, hit.event.type),
-      changed_by: changedBy(hit.perLayer),
-      per_layer: hit.perLayer,
-      ancestors: ancestorsOf(ownerPath),
-    };
+    return detail(hit);
   };
 
-  /** Layers (after the first) that changed this event's max |Δ| by more than 0.01 px. */
-  const changedBy = (perLayer) => {
-    const out = [];
-    let prev = null;
-    for (const layer of chain) {
-      const v = perLayer[layer.name];
-      if (!v || (v.status !== "ok" && v.status !== "diverged")) continue;
-      const m = maxAbs(v.dx, v.dy, v.dw, v.dh);
-      if (prev && Math.abs(m - prev.m) > 0.01) {
-        out.push({ layer: layer.name, from: round(prev.m), to: round(m) });
-      }
-      prev = { m };
-    }
-    return out;
-  };
+  /** Full record of one evaluated event (headline sections). */
+  const detail = (e) => ({
+    order: e.order,
+    ...describe(e.event),
+    introduced_by: introducedBy(e.perLayer, e.event.type),
+    ...e.dec,
+    per_layer: e.perLayer,
+    ancestors: ancestorsOf(e.event.path),
+  });
 
   const firstByLayer = {};
   for (const layer of chain) {
@@ -430,6 +512,61 @@ export function diffLayouts({
       text: layer.kind === "blitz" ? null : firstDivergence(layer.name, "text"),
     };
   }
+
+  // ---- regressions: which layer made which event worse (independent of first-over-tolerance) ----
+  const worsenedBy = (e, name) => e.dec.worsened_by.find((w) => w.layer === name);
+  const brief = (e, w) => ({
+    order: e.order,
+    ...describe(e.event),
+    coord: w.coord,
+    from: w.from,
+    to: w.to,
+    by: w.by,
+    introduced_by: introducedBy(e.perLayer, e.event.type),
+    dominant_layer: e.dec.dominant_layer,
+  });
+  const regressionsByLayer = {};
+  for (const layer of chain) {
+    const hits = evaluated
+      .map((e) => ({ e, w: worsenedBy(e, layer.name) }))
+      .filter((h) => h.w);
+    const boxHits = hits.filter((h) => h.e.event.type !== "text");
+    const textHits = hits.filter((h) => h.e.event.type === "text");
+    const largest = (list) => [...list].sort((a, b) => b.w.by - a.w.by)[0] ?? null;
+    regressionsByLayer[layer.name] = {
+      kind: layer.kind,
+      box_events: boxHits.length,
+      text_events: textHits.length,
+      first_box: boxHits[0] ? detail(boxHits[0].e) : null,
+      first_text: textHits[0] ? detail(textHits[0].e) : null,
+      largest_box: largest(boxHits) ? brief(largest(boxHits).e, largest(boxHits).w) : null,
+      largest_text: largest(textHits) ? brief(largest(textHits).e, largest(textHits).w) : null,
+      events: hits.slice(0, 40).map((h) => brief(h.e, h.w)),
+    };
+  }
+  const firstWorsenedByKind = (kind, eventKind) => {
+    const hit = evaluated.find(
+      (e) =>
+        (eventKind === "text" ? e.event.type === "text" : e.event.type !== "text") &&
+        e.dec.worsened_by.some((w) => kindOf.get(w.layer) === kind),
+    );
+    return hit ? detail(hit) : null;
+  };
+  const missingEnters = evaluated.filter(
+    (e) => e.event.type === "enter" && e.perLayer[final.name]?.status === "missing",
+  );
+  const firstMissing = missingEnters[0]
+    ? {
+        order: missingEnters[0].order,
+        path: missingEnters[0].event.path,
+        tag: boxRows.get(missingEnters[0].event.path)?.tag,
+        chrome: boxRows.get(missingEnters[0].event.path)?.chrome,
+        present_in: Object.entries(missingEnters[0].perLayer)
+          .filter(([, v]) => v.status !== "missing")
+          .map(([k]) => k),
+        total_missing: missingEnters.length,
+      }
+    : null;
 
   // ---- per-box ranking ----
   const boxIntroduced = (row) => {
@@ -464,19 +601,37 @@ export function diffLayouts({
         magnitude: round(maxAbs(v.dx, v.dy, v.dw, v.dh)),
         local_magnitude: round(maxAbs(rdx, rdy, v.dw, v.dh)),
         introduced_by: boxIntroduced(r),
+        ...decompose(r.layers, boxChain, COORDS.box, tolerance),
       };
     });
   const topBoxes = [...ranked].sort((a, b) => b.magnitude - a.magnitude).slice(0, top);
   const topLocal = [...ranked].sort((a, b) => b.local_magnitude - a.local_magnitude).slice(0, top);
   const textEvents = evaluated.filter((e) => e.event.type === "text");
-  const topText = textEvents
-    .map((e) => ({
+  const textRanked = textEvents.map((e) => {
+    const d = e.perLayer[final.name];
+    // LOCAL text error: the run's delta minus its owner box's x/y delta, so runs that merely
+    // ride along with a shifted owner (cascade) rank low, like top_local_boxes.
+    const owner = boxRows.get(e.event.path)?.layers[final.name];
+    const local =
+      owner && Number.isFinite(d?.dx)
+        ? { rdx: round(d.dx - owner.dx), rdy: round(d.dy - owner.dy) }
+        : null;
+    return {
       ...describe(e.event),
-      delta: e.perLayer[final.name],
-      magnitude: round(maxAbs(e.perLayer[final.name]?.dx, e.perLayer[final.name]?.dy)),
+      delta: d,
+      local,
+      magnitude: round(maxAbs(d?.dx, d?.dy)),
+      local_magnitude: local ? round(maxAbs(local.rdx, local.rdy)) : round(maxAbs(d?.dx, d?.dy)),
       introduced_by: introducedBy(e.perLayer, "text"),
-    }))
-    .sort((a, b) => b.magnitude - a.magnitude)
+      dominant_layer: e.dec.dominant_layer,
+      dominant_step: e.dec.dominant_step,
+      steps: e.dec.steps,
+      worsened_by: e.dec.worsened_by,
+    };
+  });
+  const topText = [...textRanked].sort((a, b) => b.magnitude - a.magnitude).slice(0, top);
+  const topLocalText = [...textRanked]
+    .sort((a, b) => b.local_magnitude - a.local_magnitude)
     .slice(0, top);
 
   // ---- per-layer stats and pass effects ----
@@ -508,6 +663,38 @@ export function diffLayouts({
     }
     return stat;
   });
+
+  // ---- margins (NOT part of the x/y/w/h attribution; pagination re-stacks with them) ----
+  const l0Name = l0.name;
+  const marginRows = rows.filter((r) => r.layers[l0Name] && Number.isFinite(r.layers[l0Name].mt));
+  const passChangedMargins = marginRows.filter((r) => {
+    const a = r.layers[l0Name];
+    const b = r.layers[final.name];
+    return b && (Math.abs(a.mt - b.mt) > 0.01 || Math.abs(a.mb - b.mb) > 0.01);
+  });
+  const vsComputed = marginRows.filter(
+    (r) =>
+      r.chrome_margin &&
+      (Math.abs(r.layers[l0Name].mt - r.chrome_margin.mt) > tolerance ||
+        Math.abs(r.layers[l0Name].mb - r.chrome_margin.mb) > tolerance),
+  );
+  const margins = {
+    note: "vellora margins are Blitz's resolved layout.margin as read by the walk (L0) and after the passes; Chromium values are COMPUTED margins of the element itself (not collapsed through descendants). Not part of the x/y/w/h attribution.",
+    boxes_with_margins: marginRows.length,
+    chromium_computed_available: marginRows.some((r) => r.chrome_margin),
+    changed_by_passes: passChangedMargins.length,
+    changed_by_passes_sample: passChangedMargins.slice(0, 12).map((r) => ({
+      path: r.path,
+      L0: { mt: round(r.layers[l0Name].mt), mb: round(r.layers[l0Name].mb) },
+      final: { mt: round(r.layers[final.name].mt), mb: round(r.layers[final.name].mb) },
+    })),
+    differ_from_chromium_computed: vsComputed.length,
+    differ_from_chromium_computed_sample: vsComputed.slice(0, 20).map((r) => ({
+      path: r.path,
+      vellora_L0: { mt: round(r.layers[l0Name].mt), mb: round(r.layers[l0Name].mb) },
+      chromium_computed: r.chrome_margin,
+    })),
+  };
 
   // ---- match counts ----
   const chromeCounts = countBy(tree.elements.map((e) => e.policy));
@@ -549,12 +736,26 @@ export function diffLayouts({
     final_layer: final.name,
     // The first divergent BOX (enter: x/y/w, exit: h) and, separately, the first divergent TEXT
     // run in the final pre-pagination layer, each with the layer that introduced it.
-    headline: firstByLayer[final.name],
+    headline: {
+      ...firstByLayer[final.name],
+      // First event (pre-order) that a layout_normalize pass made worse by > tolerance, and the
+      // same for vellora's walk vs raw Blitz (boxes only: B0 has no text).
+      first_pass_regression: {
+        box: firstWorsenedByKind("pass", "box"),
+        text: firstWorsenedByKind("pass", "text"),
+      },
+      first_walk_regression: { box: firstWorsenedByKind("walk", "box") },
+      // First compared Chromium box with NO vellora box in the final layer (never "diverged").
+      first_missing: firstMissing,
+    },
     first_divergence_by_layer: firstByLayer,
+    regressions_by_layer: regressionsByLayer,
+    margins,
     layer_stats: layerStats,
     top_boxes: topBoxes,
     top_local_boxes: topLocal,
     top_text: topText,
+    top_local_text: topLocalText,
     counts: {
       chrome_elements_by_policy: chromeCounts,
       vellora_l0_boxes: l0Paths.length,
@@ -580,14 +781,26 @@ export function diffLayouts({
     boxes: rows.map((r) => ({
       path: r.path,
       chrome: r.chrome,
+      chrome_margin: r.chrome_margin,
       layers: Object.fromEntries(Object.entries(r.layers).map(([k, v]) => [k, pick(v)])),
     })),
-    text_events: textEvents.map((e) => ({ ...describe(e.event), per_layer: e.perLayer })),
+    text_events: textEvents.map((e) => ({
+      ...describe(e.event),
+      per_layer: e.perLayer,
+      dominant_layer: e.dec.dominant_layer,
+      worsened_by: e.dec.worsened_by,
+    })),
   };
 }
 
 function pick(v) {
-  return v ? { dx: v.dx, dy: v.dy, dw: v.dw, dh: v.dh } : null;
+  if (!v) return null;
+  const out = { dx: v.dx, dy: v.dy, dw: v.dw, dh: v.dh };
+  if (Number.isFinite(v.mt)) {
+    out.mt = round(v.mt);
+    out.mb = round(v.mb);
+  }
+  return out;
 }
 
 function mean(values) {

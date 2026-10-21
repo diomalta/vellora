@@ -5,12 +5,16 @@
 //   node fidelity/layout-diff/run.mjs [--fixtures invoice,receipt,boleto,notification]
 //     [--dump-repo <checkout>] [--label <name>] [--chrome <path>] [--out <dir>]
 //     [--tolerance 0.5] [--text-tolerance 0.5] [--top 20] [--include-inline] [--no-build]
+//     [--allow-check-failures]
 //
 // --dump-repo: checkout whose crates/vellora-core provides the layout_dump example (default: this
 // one). Templating ALWAYS uses this checkout's built `vellora` package, so two dump repos (e.g. the
 // Blitz pin and a Blitz bump) are compared on byte-identical HTML.
 // Output: <out>/<fixture>/<label>/{native.html,browser.html,vellora-dump.json,chrome-snapshot.json,
 //         diff.json,report.md,report.html} and <out>/summary-<label>.{json,md}.
+// Exit code: 0 = every check passed (warnings allowed); 2 = at least one input-parity or
+// self-consistency check FAILED (lib/checks.mjs) — all reports are still written, and failures are
+// printed at the top of each report and of the summary. --allow-check-failures exits 0 anyway.
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -22,6 +26,7 @@ import {
   normalizeSnapshot,
   resolveChrome,
 } from "./lib/chrome-snapshot.mjs";
+import { runChecks, summarizeChecks } from "./lib/checks.mjs";
 import { blitzLabel, captureEnv } from "./lib/env.mjs";
 import { FIXTURE_IDS, prepareFixture, repoRoot } from "./lib/fixture-html.mjs";
 import { bundledFontFaceCss, bundledFontHashes } from "./lib/fonts.mjs";
@@ -121,6 +126,14 @@ async function main() {
         `Dump self-checks: run-metadata misalignments ${model.runMetaMismatches.length}, layer order violations ${model.layerOrderViolations.length} (both expected 0).`,
         `Input sha256: native ${createHash("sha256").update(prepared.nativeHtml).digest("hex").slice(0, 16)}…, browser ${createHash("sha256").update(prepared.browserHtml).digest("hex").slice(0, 16)}…`,
       ];
+      result.checks = runChecks({
+        dump,
+        model,
+        probes,
+        browserHtml: prepared.browserHtml,
+        result,
+      });
+      result.checks_summary = summarizeChecks(result.checks);
       const report = { fixture, label, env, parity, result };
       json(join(dir, "diff.json"), { fixture, label, env, parity, ...result });
       const md = renderMarkdown(report);
@@ -132,9 +145,13 @@ async function main() {
       rows.push({ fixture, result });
       const b = result.headline.box;
       const t = result.headline.text;
+      const pr = result.headline.first_pass_regression;
       process.stdout.write(
-        `${fixture} [${label}] first box: ${b ? `${b.type} ${b.path} (${b.introduced_by})` : "none"}; first text: ${t ? `"${t.text}" (${t.introduced_by})` : "none"}\n`,
+        `${fixture} [${label}] first box: ${b ? `${b.type} ${b.path} (first over tol. ${b.introduced_by}, dominant ${b.dominant_layer})` : "none"}; first text: ${t ? `"${t.text}" (first over tol. ${t.introduced_by}, dominant ${t.dominant_layer})` : "none"}; first pass regression: box ${pr.box ? `${pr.box.path} by ${pr.box.worsened_by.map((w) => w.layer).join("+")}` : "none"}, text ${pr.text ? `"${pr.text.text}" by ${pr.text.worsened_by.map((w) => w.layer).join("+")}` : "none"}\n`,
       );
+      for (const c of result.checks.filter((x) => x.status === "fail")) {
+        process.stderr.write(`${fixture} [${label}] CHECK FAILED ${c.id} (${c.class}): ${c.detail}\n`);
+      }
     }
   } finally {
     await browser.close();
@@ -149,12 +166,23 @@ async function main() {
       fixture: r.fixture,
       first_box: r.result.headline.box,
       first_text: r.result.headline.text,
+      first_pass_regression: r.result.headline.first_pass_regression,
+      first_missing: r.result.headline.first_missing,
+      checks: r.result.checks,
+      checks_summary: r.result.checks_summary,
       first_divergence_by_layer: r.result.first_divergence_by_layer,
       layer_stats: r.result.layer_stats,
       counts: r.result.counts,
     })),
   });
   process.stdout.write(`summary: ${join(out, `summary-${label}.md`)}\n`);
+  const failing = rows.filter((r) => r.result.checks_summary.failed.length);
+  if (failing.length) {
+    process.stderr.write(
+      `CHECKS FAILED in ${failing.map((r) => `${r.fixture} (${r.result.checks_summary.failed.join(", ")})`).join("; ")}${flag("--allow-check-failures") ? " — exit 0 (--allow-check-failures)" : " — exit 2"}\n`,
+    );
+    if (!flag("--allow-check-failures")) process.exitCode = 2;
+  }
 }
 
 main().catch((err) => {

@@ -7,6 +7,14 @@ export const DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Go
 
 export const CHROME_ARGS = ["--no-sandbox", "--disable-dev-shm-usage", "--hide-scrollbars"];
 
+/**
+ * Computed styles requested from DOMSnapshot, in this order (normalizeSnapshot indexes by it).
+ * margin-top/margin-bottom are Chromium's COMPUTED (used) margins of the element itself, NOT the
+ * collapsed margin of a flow: a parent whose last child's margin collapses through it still
+ * reports its own margin here.
+ */
+export const SNAPSHOT_STYLES = ["display", "position", "margin-top", "margin-bottom"];
+
 export function resolveChrome(explicit) {
   const path = explicit ?? process.env.VELLORA_FIDELITY_CHROME ?? DEFAULT_CHROME;
   if (!existsSync(path)) {
@@ -47,14 +55,54 @@ export async function captureSnapshot(browser, html, { width, height }) {
         .map((face) => `${face.family} ${face.weight} ${face.style}`),
     }));
     const snapshot = await cdp.send("DOMSnapshot.captureSnapshot", {
-      computedStyles: ["display", "position"],
+      computedStyles: SNAPSHOT_STYLES,
       includeDOMRects: true,
     });
+    probes.platformFonts = await platformFonts(cdp);
     const userAgent = await browser.userAgent();
     return { snapshot, probes, userAgent };
   } finally {
     await page.close();
   }
+}
+
+/**
+ * Fonts Chromium ACTUALLY rendered text with (CSS.getPlatformFontsForNode), aggregated over every
+ * element that has a non-blank direct text child. The call reports only a node's own child text
+ * nodes (CONFIRMED 2026-10-21: on <body> it does not aggregate the subtree), hence the walk.
+ * `isCustomFont: false` = a system font, i.e. the bundled @font-face did not reach that text.
+ */
+export async function platformFonts(cdp) {
+  await cdp.send("DOM.enable");
+  await cdp.send("CSS.enable");
+  const { root } = await cdp.send("DOM.getDocument", { depth: -1 });
+  const elements = [];
+  const walk = (n) => {
+    const hasText = (n.children ?? []).some((c) => c.nodeType === 3 && c.nodeValue.trim());
+    if (n.nodeType === 1 && hasText && !["HEAD", "STYLE", "SCRIPT", "TITLE"].includes(n.nodeName)) {
+      elements.push(n);
+    }
+    for (const c of n.children ?? []) walk(c);
+  };
+  walk(root);
+  const usage = new Map();
+  for (const el of elements) {
+    const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId: el.nodeId });
+    for (const f of fonts) {
+      const key = `${f.familyName}|${f.postScriptName}|${f.isCustomFont}`;
+      const entry = usage.get(key) ?? {
+        family: f.familyName,
+        postScriptName: f.postScriptName,
+        custom: f.isCustomFont,
+        glyphs: 0,
+        elements: 0,
+      };
+      entry.glyphs += f.glyphCount;
+      entry.elements += 1;
+      usage.set(key, entry);
+    }
+  }
+  return { elements_probed: elements.length, fonts: [...usage.values()] };
 }
 
 /**
@@ -127,7 +175,9 @@ export function normalizeSnapshot(snapshot) {
     if (parent >= 0) children[parent].push(i);
   }
 
-  const styleNames = ["display", "position"];
+  // Indexed by the order the styles were requested in (SNAPSHOT_STYLES; older snapshots and the
+  // test builder request only the first two).
+  const styleNames = SNAPSHOT_STYLES;
   const layoutOf = new Map();
   doc.layout.nodeIndex.forEach((nodeIdx, li) => {
     const entry = layoutOf.get(nodeIdx);
@@ -151,6 +201,10 @@ export function normalizeSnapshot(snapshot) {
     fragmentsOf.set(li, list);
   });
 
+  const px = (v) => {
+    const n = Number.parseFloat(v ?? "");
+    return Number.isFinite(n) ? n : null;
+  };
   const out = [];
   const attr = (i, name) => {
     const a = nodes.attributes?.[i] ?? [];
@@ -180,6 +234,8 @@ export function normalizeSnapshot(snapshot) {
       box: layout ? { x: layout.x, y: layout.y, w: layout.w, h: layout.h } : null,
       display: layout?.styles.display ?? null,
       position: layout?.styles.position ?? null,
+      margin_top: px(layout?.styles["margin-top"]),
+      margin_bottom: px(layout?.styles["margin-bottom"]),
       layoutObjects: layout ? 1 + layout.extra : 0,
       text: null,
       fragments: [],
