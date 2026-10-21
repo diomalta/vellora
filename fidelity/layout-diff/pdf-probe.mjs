@@ -12,6 +12,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { printPdf } from "../lib/chrome-reference.mjs";
 import { launchChrome, resolveChrome } from "./lib/chrome-snapshot.mjs";
 import { blitzLabel, captureEnv } from "./lib/env.mjs";
 import { FIXTURE_IDS, repoRoot } from "./lib/fixture-html.mjs";
@@ -107,21 +108,10 @@ async function main() {
         "--pdf",
         vPdf,
       ]);
-      const page = await browser.newPage();
+      // The ONE shared print path (fidelity/lib/chrome-reference.mjs): print media, fonts
+      // awaited, page.pdf({ format: "A4", preferCSSPageSize: true, printBackground: true }).
       const cPdf = join(dir, "chrome.pdf");
-      try {
-        await page.emulateMediaType("print");
-        await page.setContent(readFileSync(join(dir, "browser.html"), "utf8"), {
-          waitUntil: "load",
-        });
-        await page.evaluate(() => document.fonts.ready.then(() => true));
-        writeFileSync(
-          cPdf,
-          await page.pdf({ format: "A4", preferCSSPageSize: true, printBackground: true }),
-        );
-      } finally {
-        await page.close();
-      }
+      writeFileSync(cPdf, await printPdf(browser, readFileSync(join(dir, "browser.html"), "utf8")));
       const vWords = pdfWords(pdftotext, vPdf);
       const cWords = pdfWords(pdftotext, cPdf);
       const pairs = alignWords(vWords, cWords).map(([v, c]) => ({

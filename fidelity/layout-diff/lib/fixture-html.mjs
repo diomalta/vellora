@@ -6,7 +6,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { inlineLocalImageSources } from "../../lib/chrome-reference.mjs";
 import { bundledFontFaceCss } from "./fonts.mjs";
+
+export { inlineLocalImageSources };
 
 export const FIXTURE_IDS = ["invoice", "receipt", "boleto", "notification"];
 
@@ -28,35 +31,6 @@ export function loadFixture(id, root = repoRoot) {
     html: readFileSync(htmlPath, "utf8"),
     data: JSON.parse(readFileSync(dataPath, "utf8")),
   };
-}
-
-function imageMimeType(path) {
-  const lower = path.toLowerCase();
-  if (lower.endsWith(".png")) return "image/png";
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-  if (lower.endsWith(".gif")) return "image/gif";
-  if (lower.endsWith(".webp")) return "image/webp";
-  if (lower.endsWith(".svg")) return "image/svg+xml";
-  return null;
-}
-
-/** Copy of benchmarks/visual-fidelity.mjs inlineLocalImageSources (not exported there). */
-export function inlineLocalImageSources(html, fixtureDir) {
-  return html.replace(/\bsrc=(["'])([^"']+)\1/gi, (match, quote, src) => {
-    if (/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(src)) {
-      return match;
-    }
-    const imagePath = resolve(fixtureDir, src);
-    if (!existsSync(imagePath)) {
-      return match;
-    }
-    const mimeType = imageMimeType(imagePath);
-    if (!mimeType) {
-      return match;
-    }
-    const data = readFileSync(imagePath).toString("base64");
-    return `src=${quote}data:${mimeType};base64,${data}${quote}`;
-  });
 }
 
 /** Marker attribute of the injected font block (checked by lib/checks.mjs). */

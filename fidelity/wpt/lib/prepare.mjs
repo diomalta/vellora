@@ -22,7 +22,7 @@
 //      test and reference cannot draw them as real glyphs and a pass says nothing about them;
 //      `cssUrlResources` — CSS url() references outside @font-face (backgrounds, list images,
 //      content images, ...), which vellora never loads (it has no channel for them).
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { urlToRel } from "./discover.mjs";
 import { findTags, parseAttributes } from "./html-meta.mjs";
@@ -38,7 +38,9 @@ function readTreeFile(wptRoot, rel) {
   const key = `${wptRoot}\0${rel}`;
   if (bytesCache.has(key)) return bytesCache.get(key);
   const p = join(wptRoot, rel);
-  const value = existsSync(p) ? new Uint8Array(readFileSync(p)) : null;
+  // A URL that resolves to a DIRECTORY (e.g. `url(.)`, `src=""` against a directory base) is a
+  // missing resource, not a harness crash (EISDIR seen in css/css-text/crashtests).
+  const value = existsSync(p) && statSync(p).isFile() ? new Uint8Array(readFileSync(p)) : null;
   if (bytesCache.size > 2000) bytesCache.clear();
   bytesCache.set(key, value);
   return value;

@@ -44,6 +44,7 @@ import {
   HARNESS_SEMANTICS,
   chromeReuseMismatch,
   expectationsMismatch,
+  inkCheckLabel,
   makeRunId,
   partialRunReason,
   wptPinProblems,
@@ -60,6 +61,7 @@ import {
   summaryMarkdown,
   upstreamCrossTab,
 } from "./lib/report.mjs";
+import { upstreamComparability, upstreamShaFor } from "./lib/upstream-map.mjs";
 import { DEFAULT_SUITES } from "./suites.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -220,6 +222,10 @@ if (opts.updateExpectations) {
     fatal("--update-expectations refused: --chain-references is not wptrunner semantics");
   if (opts.allowUnpinned)
     fatal("--update-expectations refused: --allow-unpinned results are not a baseline");
+  if (!opts.chrome && !opts.chromeFrom)
+    fatal(
+      "--update-expectations refused: the expectations need Chrome ink data (suspect-pass flags); pass --chrome <path> or --chrome-from <results.json>",
+    );
 }
 if (!existsSync(join(opts.wpt, "fonts", "Ahem.ttf"))) {
   console.error(
@@ -437,7 +443,17 @@ const inkCheck = chromeRan ? inkCheckSummary(results, inkStatus) : null;
 // 5. Upstream cross-tab (Blitz's own published WPT report for the same Blitz commit).
 let upstream = null;
 if (opts.upstream !== "none") {
-  const sha = opts.upstream === "auto" ? env.engine.blitzDom?.rev : opts.upstream;
+  // crates.io builds have no git rev in Cargo.lock: map the version to its tag commit and the
+  // nearest upstream run (lib/upstream-map.mjs, evidence recorded there).
+  const mapped = opts.upstream === "auto" ? upstreamShaFor(env.engine.blitzDom) : null;
+  const sha = opts.upstream === "auto" ? mapped?.sha : opts.upstream;
+  if (opts.upstream === "auto" && !sha) {
+    upstream = {
+      sha: null,
+      status: "not-run",
+      reason: `no git rev and no BLITZ_RELEASES entry for blitz-dom ${env.engine.blitzDom?.version} (fidelity/wpt/lib/upstream-map.mjs)`,
+    };
+  }
   if (sha) {
     const report = await loadUpstreamReport({
       sha,
@@ -445,15 +461,18 @@ if (opts.upstream !== "none") {
       offline: opts.offline,
     });
     if (report.error) {
-      upstream = { sha, status: "not-run", reason: report.error };
+      upstream = { sha, via: mapped?.via ?? "--upstream", status: "not-run", reason: report.error };
     } else {
       for (const r of results) r.upstream = report.statuses.get(r.test) ?? "ABSENT";
+      const upstreamWptRevision = report.run?.wpt_revision ?? report.runInfo?.revision ?? null;
       upstream = {
         sha,
+        via: mapped?.via ?? "--upstream",
         status: "ok",
         source: report.url,
-        upstreamWptRevision: report.run?.wpt_revision ?? report.runInfo?.revision ?? null,
+        upstreamWptRevision,
         ourWptRevision: env.wpt.commit,
+        ...upstreamComparability(env.wpt.commit, upstreamWptRevision),
         caveats: [
           "Upstream = Blitz's own runner (blitz-paint/vello screen paint, 800x600) with the `floats` feature enabled; vellora builds blitz-dom with default-features = false (no `floats`).",
           "Upstream treats a reftest without <meta name=fuzzy> as passing when dify (threshold 0.1, anti-aliasing detection) finds no difference; this runner requires exact pixel equality (wptrunner rule). Upstream is therefore an upper bound, not a like-for-like oracle.",
@@ -516,9 +535,12 @@ writeJson(join(outDir, "summary.json"), {
   },
   upstream: upstream && {
     sha: upstream.sha,
+    via: upstream.via,
     status: upstream.status,
     reason: upstream.reason,
     upstreamWptRevision: upstream.upstreamWptRevision,
+    sameWptRevision: upstream.sameWptRevision,
+    comparabilityNote: upstream.note,
     counts: upstream.counts,
     matrix: upstream.matrix,
   },
@@ -539,7 +561,11 @@ if (opts.expectations !== "none") {
     const expected = JSON.parse(readFileSync(file, "utf8"));
     const why = !pin.ok
       ? `the WPT tree is not exactly the pin (${pinProblems.join("; ")})`
-      : expectationsMismatch(expected, { wptCommit: env.wpt.commit, config });
+      : expectationsMismatch(expected, {
+          wptCommit: env.wpt.commit,
+          config,
+          inkCheck: inkCheckLabel(inkCheck, chromeInfo?.browserVersion),
+        });
     if (why) {
       ratchet = { status: "not-run", reason: why, file };
       console.error(`run: ratchet against ${file} not run: ${why}`);
@@ -554,15 +580,41 @@ if (opts.expectations !== "none") {
     process.exitCode = 2;
   }
 }
+// Shell-quoted so the recorded command can be pasted back (e.g. a Chrome path with spaces).
+const quote = (v) => (/^[\w@%+=:,./-]+$/.test(v) ? v : `'${v.replace(/'/g, "'\\''")}'`);
+const runCommand = `node fidelity/wpt/run.mjs ${process.argv.slice(2).map(quote).join(" ")}`.trim();
+const inkLabel = inkCheckLabel(inkCheck, chromeInfo?.browserVersion);
+// Per-test outcomes of THIS run in the expectations shape, always written: the fidelity gate
+// (fidelity/gate/) compares them with the expectations of a committed baseline directory.
+writeJson(
+  join(outDir, "outcomes.json"),
+  buildExpectations({
+    results,
+    env,
+    suites: opts.suites,
+    command: runCommand,
+    config,
+    inkCheck: inkLabel,
+  }),
+);
 if (opts.updateExpectations) {
   if (!pin.ok) fatal(`--update-expectations refused: ${pinProblems.join("; ")}`);
-  // Shell-quoted so the recorded command can be pasted back (e.g. a Chrome path with spaces).
-  const quote = (v) => (/^[\w@%+=:,./-]+$/.test(v) ? v : `'${v.replace(/'/g, "'\\''")}'`);
-  const command = `node fidelity/wpt/run.mjs ${process.argv.slice(2).map(quote).join(" ")}`.trim();
-  const ink = inkCheck?.status === "ok" ? `chrome ${chromeInfo?.browserVersion}` : "not-run";
+  // Expectations without Chrome ink data would record every ink-suspect pass as clean.
+  if (inkLabel === "not-run") {
+    fatal(
+      `--update-expectations refused: no Chrome ink data (${inkCheck?.reason ?? "run with --chrome <path> or --chrome-from <results.json>"})`,
+    );
+  }
   writeJson(
     expectationsPath,
-    buildExpectations({ results, env, suites: opts.suites, command, config, inkCheck: ink }),
+    buildExpectations({
+      results,
+      env,
+      suites: opts.suites,
+      command: runCommand,
+      config,
+      inkCheck: inkLabel,
+    }),
   );
   console.log(`run: wrote ${expectationsPath}`);
 }

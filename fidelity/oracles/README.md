@@ -37,10 +37,12 @@ cd fidelity/oracles && node --test                                 # unit tests
 cd fidelity/oracles && VELLORA_ORACLE_INTEGRATION=1 node --test    # + real tools / real render
 ```
 
-`--html` is the final HTML the PDF was rendered from (templated, images inlined). Chrome and
-WeasyPrint render that same HTML with vellora's bundled Liberation fonts injected as `@font-face`
-data URLs (`lib/html-prep.mjs`; the alias table is a copy of `benchmarks/visual-fidelity.mjs` with a
-drift test, because importing that module runs its harness). `--pdfa` means "this PDF claims PDF/A-2b"
+`--html` is the final HTML the PDF was rendered from (templated). Chrome and WeasyPrint render
+that same HTML, local images inlined, with vellora's bundled Liberation fonts injected as
+`@font-face` data URLs. The alias table and the Chrome driver are the ONE shared reference setup,
+`fidelity/lib/chrome-reference.mjs` (also used by the corpus and layout-diff; a superset of
+`benchmarks/visual-fidelity.mjs`, with a drift test that reads that file as text because importing
+it runs its harness). `--pdfa` means "this PDF claims PDF/A-2b"
 (veraPDF must pass); `--no-pdfa` means it does not (veraPDF is then a negative control and must
 fail); neither means report-only. `--expect` takes
 `{ "barcode": { "digits": "<44>" }, "linhaDigitavel": "<47 digits>" }`.
@@ -133,7 +135,11 @@ does not exist is treated like a missing venv.
   mod-11 general DV), and Banco Santander "Código de Barras – Cobrança" v36 (Abril 2025) for the
   mod-10 field DVs and test vectors. UNVERIFIED ASSUMPTION: the Santander mod-10 rule applies to
   every bank, since the FEBRABAN cobrança specification itself was not obtained. Not implemented:
-  arrecadação (leading `8`), reported as not applicable; DANFE Code 128, reported as `not-run`.
+  arrecadação (leading `8`), reported as not applicable. **DANFE (Code 128)**: since 2026-10-21 the
+  class `danfe` (or `--expect` with `"symbology": "code128"`) decodes CODE-128C with zxing-cpp and
+  zbar (`-Sdisable -Scode128.enable`) and validates the chave's mod-11 cDV with the corpus
+  validator (`fidelity/corpus/lib/nfe.mjs`, MOC 7.0 Visão Geral 2.2.6.2); DANFE-B1 is no longer
+  not-run.
 - **layout-consensus** (`lib/layout.mjs`, `lib/consensus.mjs`, `py/words.py`): word anchors are
   the pen origin x of the first glyph and the baseline y (PyMuPDF `rawdict`). Box tops are not
   used, because they come from producer-declared font ascents (see
@@ -154,17 +160,22 @@ computes `caught` from the oracle's own output:
 | Oracle | Broken input | Must report |
 |---|---|---|
 | qpdf | `startxref` shifted by 17 bytes; file truncated to 60 %; trailing `%%EOF` removed; 64 bytes XORed inside the largest FlateDecode stream (offsets intact) | status = fail |
-| veraPDF | every plain-mode fixture render (no PDF/A claims) | non-compliant |
+| veraPDF | every plain-mode fixture render (no PDF/A claims): negative CONTROL, counted per fixture, not a canary row | non-compliant |
+| veraPDF | the boleto PDF/A-2b render with `/OutputIntents` renamed `/OutputIntentz`, and with `/FontFile2` renamed `/FontFilf2` (same byte length: qpdf stays clean, the PDF/A claim stays) | status = fail while the unmodified render passes (veraPDF 1.30.3 reports 6.2.10-2 and 6.2.11.4.1-1, CONFIRMED 2026-10-21) |
 | text (×3 extractors) | fixture re-rendered with one body word replaced by a marker, scored against the original references | the word is subject-only missing and the marker subject-only extra |
 | text (×3 extractors) | invoice re-rendered with its first body `de` deleted (`de` is also in the footer), and again with its first `R$` deleted | status = fail with that token subject-only missing |
 | copy-paste (×3) | U+FB01 written into the text; NFD accents in the text | `copyPaste.pass === false` |
 | barcode | valid ITF (Santander example, pixel-aligned modules); same with a wrong DV | pass; decoded but rejected by the mod-11 check |
+| barcode (Code 128) | CODE-128C of the fixtures/danfe chave (1 CSS px modules), vellora and Chrome; same chave with a wrong cDV | pass; decoded but rejected by the NF-e mod-11 cDV |
 | layout-consensus | notification re-rendered with the body translated by +6 pt | median signed dx shifts by 6 ± 1 pt |
 
 A canary that cannot run (Chrome or WeasyPrint unavailable) is listed as not-run with the
-reason. Two rows are measurements, not pass/fail canaries. The Chrome render of the copy-paste canaries
-shows what a browser keeps for the same input. The 0.254 mm (0.96 CSS px) ITF modules test whether
-an engine keeps sub-pixel bars.
+reason. Of the 38 rows, 30 are detection canaries (`caught` true/false; each must be caught, the
+gate fails otherwise) and 8 are measurements (`caught: null`, never gated): the 6 Chrome renders of
+the copy-paste canaries show what a browser keeps for the same input, and the 2 renders of the
+0.254 mm (0.96 CSS px) ITF modules test whether an engine keeps sub-pixel bars. (Earlier text said
+"two rows"; the Phase A manifests said 24 caught / 8 measurement-only, before the veraPDF and Code
+128 canaries existed.) `run-all.mjs` records the split as `canaryCounts`.
 
 ## Output
 

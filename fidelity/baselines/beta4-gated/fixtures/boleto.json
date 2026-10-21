@@ -1,0 +1,185 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "boleto",
+  "fixture": "boleto",
+  "variant": "data.json",
+  "class": "boleto",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 3 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "oracles",
+      "status": "PASS",
+      "value": "two in-process renders byte-identical",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "WARN",
+      "value": "pdftotext warn (missing 0, extra 0); pdfminer.six warn (missing 0, extra 0); pymupdf pass (missing 0, extra 0)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "BOL-B1",
+      "oracle": "oracles:barcode",
+      "status": "FAIL",
+      "value": "zxing-cpp: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200); zbar: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "second decoder pair: zxing-cpp and zbar, plus the BCB mod-11/mod-10 DVs",
+      "note": "fixtures/boleto prints the barcode as TEXT ('representação textual — não escaneável'), so no ITF symbol is expected to decode; the oracle reports that as a fail of the expectation."
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "1 pages vs Chrome 1 (WeasyPrint 1)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 4.64 mm, p95 2.48 mm over 106 consensus words (Chrome and WeasyPrint within 2 pt; coverage 0.357)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 0.357,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "oracles",
+      "status": "PASS",
+      "value": "two in-process renders byte-identical",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "BOL-D1",
+      "oracle": "corpus:audit",
+      "status": "FAIL",
+      "value": "DV geral printed 1, expected 5",
+      "kind": "criterion"
+    },
+    {
+      "criterion": "BOL-D2",
+      "oracle": "corpus:audit",
+      "status": "FAIL",
+      "value": "3 of 3 field DVs wrong; rebuilds printed barcode: false",
+      "kind": "criterion"
+    },
+    {
+      "criterion": "BOL-D3",
+      "oracle": "corpus:audit",
+      "status": "FAIL",
+      "value": "fator 9999 -> 2025-02-21 / 2049-10-13 vs printed 2026-07-15; valor field 123.45 vs printed 1842.5",
+      "kind": "criterion"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "type": "exit",
+      "path": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "N0",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dh": -1.078
+      }
+    },
+    "firstText": {
+      "text": "999-9",
+      "owner": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2)",
+      "firstOverTolerance": "L0",
+      "dominantLayer": "L0",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": -1.616,
+        "dy": -12.437,
+        "dy_basis": "baseline",
+        "dw": 0.027,
+        "dright": -1.589
+      }
+    },
+    "firstPassRegression": {
+      "path": "html>body:nth-child(2)>table:nth-child(6)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "type": "enter",
+      "by": [
+        "fixed_table_widths overshoot dw -1.25->0.75"
+      ]
+    },
+    "regressionEventsByLayer": {
+      "painted_table_cell_text_baselines": {
+        "box": 0,
+        "text": 11
+      },
+      "fixed_table_widths": {
+        "box": 4,
+        "text": 3
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": true,
+      "wrappers_recorded": 24,
+      "wrappers_located": 24
+    }
+  }
+}

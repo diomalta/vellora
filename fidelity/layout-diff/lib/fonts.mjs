@@ -1,29 +1,17 @@
-// Bundled-font parity for the Chrome side. FONT_ALIASES is a verbatim copy of the constant of the
-// same name in benchmarks/visual-fidelity.mjs (that file runs main() at import time, so it cannot
-// be imported). test/fonts.test.mjs extracts the literal from the benchmarks source and fails on
-// drift. Every alias points Chrome at the SAME .ttf files vellora embeds via include_bytes!
-// (crates/vellora-core/src/fonts/), so both engines shape with identical font files.
+// Bundled-font parity for the Chrome side. FONT_ALIASES is the ONE shared table of
+// fidelity/lib/chrome-reference.mjs (a superset of benchmarks/visual-fidelity.mjs, checked by
+// test/fonts.test.mjs). Every alias points Chrome at the SAME .ttf files vellora embeds via
+// include_bytes! (crates/vellora-core/src/fonts/), so both engines shape with identical font files.
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  FONT_ALIASES,
+  aliasFor,
+  bundledFontFaceCss as sharedFontFaceCss,
+} from "../../lib/chrome-reference.mjs";
 
-export const FONT_ALIASES = [
-  {
-    families: ["Vellora Sans", "Inter", "Helvetica Neue", "Arial", "Liberation Sans"],
-    regular: "LiberationSans-Regular.ttf",
-    bold: "LiberationSans-Bold.ttf",
-  },
-  {
-    families: ["Liberation Serif", "Georgia", "Times New Roman"],
-    regular: "LiberationSerif-Regular.ttf",
-    bold: "LiberationSerif-Bold.ttf",
-  },
-  {
-    families: ["Vellora Mono", "Liberation Mono", "Menlo", "Consolas", "Courier New"],
-    regular: "LiberationMono-Regular.ttf",
-    bold: "LiberationMono-Bold.ttf",
-  },
-];
+export { FONT_ALIASES };
 
 /**
  * Bundled face file (as reported per run by the vellora dump) -> the CSS family/weight that reaches
@@ -31,12 +19,9 @@ export const FONT_ALIASES = [
  * bullet font have no injected Chrome counterpart: null.
  */
 export function chromeFontFor(face) {
-  for (const alias of FONT_ALIASES) {
-    const family = alias.families.find((f) => f.startsWith("Liberation"));
-    if (face === alias.regular) return { family, weight: 400 };
-    if (face === alias.bold) return { family, weight: 700 };
-  }
-  return null;
+  const alias = aliasFor(face);
+  if (!alias) return null;
+  return { family: alias.families.find((f) => f.startsWith("Liberation")), weight: alias.weight };
 }
 
 /**
@@ -45,38 +30,16 @@ export function chromeFontFor(face) {
  * null for faces without an injected Chrome counterpart (DejaVu fallback, Blitz bullet font).
  */
 export function aliasFamiliesFor(face) {
-  for (const alias of FONT_ALIASES) {
-    if (face === alias.regular) return { families: alias.families, weight: 400 };
-    if (face === alias.bold) return { families: alias.families, weight: 700 };
-  }
-  return null;
+  return aliasFor(face);
 }
 
 export function bundledFontDir(repoRoot) {
   return join(repoRoot, "crates", "vellora-core", "src", "fonts");
 }
 
-function fontDataUrl(repoRoot, fileName) {
-  const bytes = readFileSync(join(bundledFontDir(repoRoot), fileName)).toString("base64");
-  return `data:font/ttf;base64,${bytes}`;
-}
-
-/** Same rule shape as benchmarks/visual-fidelity.mjs bundledFontFaceCss(). */
+/** The shared @font-face block (data: URLs of the bundled files). */
 export function bundledFontFaceCss(repoRoot) {
-  const rules = [];
-  for (const alias of FONT_ALIASES) {
-    const regular = fontDataUrl(repoRoot, alias.regular);
-    const bold = fontDataUrl(repoRoot, alias.bold);
-    for (const family of alias.families) {
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${regular}) format("truetype"); font-weight: 400; font-style: normal; }`,
-      );
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${bold}) format("truetype"); font-weight: 700; font-style: normal; }`,
-      );
-    }
-  }
-  return rules.join("\n");
+  return sharedFontFaceCss(bundledFontDir(repoRoot));
 }
 
 /** sha256 of every bundled font file, recorded in each result's environment block. */

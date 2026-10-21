@@ -43,10 +43,14 @@ node fidelity/corpus/render-corpus.mjs --snapshot fidelity/corpus/RESULTS.md   #
 
 `render-corpus.mjs` needs poppler (`pdftoppm`, `pdftotext`, `pdfinfo`, `pdffonts`, `pdfimages`) and a
 Chrome binary (`VELLORA_CHROME`, default `/Applications/Google Chrome.app/...`; `--no-chrome` skips the
-reference and marks reference criteria NOT-RUN). The Chromium reference is driven through the Chrome
-CLI (`--headless=new --print-to-pdf`) rather than puppeteer-core, a deliberate deviation so the corpus
-adds no npm dependency to `fidelity/package.json` (owned by another area). CI should pin a Chrome for
-Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
+reference and marks reference criteria NOT-RUN). Since 2026-10-21 the Chromium reference is the ONE
+shared reference setup of `fidelity/lib/chrome-reference.mjs` (same alias table and puppeteer-core
+print path as the oracles and layout-diff; `npm --prefix fidelity ci` provides puppeteer-core). It
+replaced a Chrome CLI (`--headless=new --print-to-pdf`) driver with its own alias table. CONFIRMED
+on the first gated run (2026-10-21, Blitz 0.3.0-beta.4): every corpus criterion value, vellora's
+AND Chrome's, is identical to the Phase A beta.4 run with the CLI driver (vellora PDF sha256s equal,
+Chrome PDF bytes differ). CI should pin a Chrome for Testing build with `@puppeteer/browsers` and
+pass its path in `VELLORA_CHROME`.
 
 ## Files
 

@@ -10,15 +10,29 @@ import {
 } from "../lib/html-prep.mjs";
 import { REPO_ROOT } from "../lib/paths.mjs";
 
-test("FONT_ALIASES copy has not drifted from benchmarks/visual-fidelity.mjs (read as text)", () => {
+test("the shared FONT_ALIASES is a superset of benchmarks/visual-fidelity.mjs (read as text)", () => {
   // Read, never import: importing that module runs its harness and rmSync()s its output dir.
+  // The fidelity table (fidelity/lib/chrome-reference.mjs) may add families a fixture uses
+  // (Helvetica, Nunito Sans, Tahoma), but every benchmark family must reach the SAME file here.
   const source = readFileSync(join(REPO_ROOT, "benchmarks", "visual-fidelity.mjs"), "utf8");
   const start = source.indexOf("const FONT_ALIASES");
   const block = source.slice(start, source.indexOf("];", start) + 2);
   assert.ok(block.length > 20, "FONT_ALIASES block not found in benchmarks/visual-fidelity.mjs");
-  const quoted = [...block.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  const ours = FONT_ALIASES.flatMap((alias) => [...alias.families, alias.regular, alias.bold]);
-  assert.deepEqual([...ours].sort(), [...quoted].sort());
+  for (const entry of block.split(/\},\s*\{/)) {
+    const quoted = [...entry.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    const files = quoted.filter((q) => q.endsWith(".ttf"));
+    const families = quoted.filter((q) => !q.endsWith(".ttf"));
+    assert.equal(files.length, 2, `benchmark alias without regular+bold: ${entry}`);
+    for (const family of families) {
+      const ours = FONT_ALIASES.find((a) => a.families.includes(family));
+      assert.ok(ours, `benchmark family "${family}" missing from the shared table`);
+      assert.deepEqual([ours.regular, ours.bold], files, `"${family}" maps to other files`);
+    }
+  }
+  assert.ok(
+    FONT_ALIASES[0].families.includes("Helvetica"),
+    "Helvetica must reach Liberation Sans (oss-postmark-receipt parity, 2026-10-21)",
+  );
   for (const alias of FONT_ALIASES) {
     assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.regular)));
     assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.bold)));

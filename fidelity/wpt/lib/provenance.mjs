@@ -83,7 +83,7 @@ export function comparisonConfig(config) {
  * The engine and vellora build may differ (that is the point of a ratchet); the test files and the
  * comparison semantics may not.
  */
-export function expectationsMismatch(expected, { wptCommit, config }) {
+export function expectationsMismatch(expected, { wptCommit, config, inkCheck }) {
   if (expected.schema !== 2) {
     return `expectations schema ${expected.schema ?? "?"} is not 2 (regenerate with --update-expectations)`;
   }
@@ -93,7 +93,17 @@ export function expectationsMismatch(expected, { wptCommit, config }) {
   const want = JSON.stringify(expected.comparison ?? null);
   const have = JSON.stringify(comparisonConfig(config));
   if (want !== have) return `comparison settings differ: expectations ${want}, run ${have}`;
+  // Clean vs flagged passes depend on the Chrome ink data: a run without it (or with another
+  // Chrome) would count every ink-flagged pass of the expectations as "clean" or vice versa.
+  if (inkCheck !== undefined && (expected.inkCheck ?? "not-run") !== inkCheck) {
+    return `inkCheck mismatch: expectations "${expected.inkCheck ?? "not-run"}", run "${inkCheck}" (run with --chrome or --chrome-from)`;
+  }
   return null;
+}
+
+/** inkCheck label of a run, as stored in an expectations file. */
+export function inkCheckLabel(inkCheck, browserVersion) {
+  return inkCheck?.status === "ok" ? `chrome ${browserVersion}` : "not-run";
 }
 
 /** Same check for reusing Chrome outcomes from an earlier results.json (`--chrome-from`). */

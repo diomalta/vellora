@@ -1,40 +1,53 @@
 #!/usr/bin/env node
-// Single entry point for the Phase A fidelity oracles. Runs, in this order and each as its own
-// child process (so one tool crashing never hides another's results):
+// Single entry point for the fidelity oracles. Runs, in this order and each as its own child
+// process (so one tool crashing never hides another's results):
 //
+//   code-checks      fidelity/gate/code-checks.mjs         cargo test, vitest, lint, fidelity tests
 //   wpt              fidelity/wpt/run.mjs                  default WPT reftest suites + ratchet
+//   wpt-crashtests   fidelity/wpt/crashtests.mjs           the 239 WPT crashtests (panic oracle)
 //   corpus           fidelity/corpus/render-corpus.mjs     corpus fixtures vs ACCEPTANCE criteria
 //                    fidelity/corpus/audit-existing-boleto.mjs   BOL-D1..D3 on fixtures/boleto
 //   oracles-fixtures fidelity/oracles/run-fixtures.mjs     legacy fixtures x {plain, pdfa} + canaries
 //   oracles-corpus   fidelity/oracles/run.mjs per corpus PDF: plain (all oracles, veraPDF as a
 //                    negative control) and a PDF/A-2b render (qpdf + veraPDF), rendered here
 //   layout-diff      fidelity/layout-diff/run.mjs          per-layer attribution, every fixture
+//   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF
 //
 // then writes ONE combined summary: <out>/summary.json (+ summary.md) with the environment, the
 // exact commands, per-step exit codes, per-fixture per-oracle verdicts keyed by the criterion IDs
-// of fidelity/ACCEPTANCE.md, and per-WPT-directory pass rates.
+// of fidelity/ACCEPTANCE.md, per-WPT-directory pass rates and canary counts. With --gate it then
+// runs the VALUE RATCHET (fidelity/gate/) against a committed baseline directory.
 //
-//   node fidelity/run-all.mjs [--out <dir>] [--chrome <path> | --no-chrome] [--wpt-chrome]
-//     [--only wpt,corpus,oracles-fixtures,oracles-corpus,layout-diff] [--skip <steps>]
-//     [--wpt-arg <arg>]... [--tools-image <ref>] [--no-canaries] [--gate]
+//   node fidelity/run-all.mjs [--out <dir>] [--chrome <path> | --no-chrome]
+//     [--wpt-chrome | --chrome-from <wpt results.json>]
+//     [--only <steps>] [--skip <steps>] [--wpt-arg <arg>]... [--tools-image <ref>]
+//     [--no-canaries] [--gate --baseline <fidelity/baselines/<name>> [--accept <file>]]
 //   npm --prefix fidelity run all -- [same options]
 //
 // --chrome      Chrome for every Chromium reference (default $VELLORA_FIDELITY_CHROME, else the
 //               local macOS Chrome). Local Chrome results are INDICATIVE; CI passes a pinned
 //               Chrome for Testing (fidelity/wpt/install-chrome.mjs, layout-diff/install-chrome.mjs).
-// --wpt-chrome  also run the WPT Chrome print oracle (about 9 more minutes); without it the WPT
-//               ratchet still runs (it only needs the committed baseline), but the Chrome-derived
-//               suspect-pass flags are absent, so passRateClean is higher than with it.
+// --wpt-chrome  run the WPT Chrome print oracle live (about 9 more minutes).
+// --chrome-from reuse the Chrome outcomes + ink signatures of an earlier wpt results.json (same WPT
+//               commit and comparison settings; Chrome's results do not depend on vellora). Without
+//               one of these two the WPT suspect-pass flags lack the ink data: the WPT ratchet is
+//               then refused (inkCheck mismatch) and --gate refuses to start.
 // --wpt-arg     extra argument passed through to wpt/run.mjs (repeatable), e.g. a subset:
 //               --wpt-arg css/CSS2/tables  or  --wpt-arg --filter --wpt-arg <regex>.
 // --tools-image the oracles' Docker tools image (default $VELLORA_FIDELITY_TOOLS_IMAGE, else
 //               vellora-fidelity-tools:local). Build it from the committed recipe first.
-// --gate        exit 3 when WPT-2 (ratchet: 0 regressions) FAILS. Without it the run only measures.
+// --gate        after the run, compare it with --baseline (fidelity/gate/run.mjs: per-metric
+//               tolerances, WPT clean-pass ratchet, crashtests, canaries, code checks, layout-diff
+//               check allowlist) and write <out>/gate/gate-report.{json,md}. --accept lists
+//               regressions proven to be corrections (reason + evidence), see fidelity/gate/.
 //
-// Exit code: 0 = every selected step ran and wrote its summary (verdicts may still contain FAIL:
-// Phase A measures, it does not gate); 1 = a step crashed or did not write its summary file;
-// 3 = --gate and WPT-2 failed. layout-diff's own exit 2 (a self-consistency check failed, e.g.
-// receipt's known html_normalize defect) is recorded per fixture, not treated as a crash.
+// Exit code: 0 = every selected step ran and wrote its summary (and, with --gate, the gate
+// passed); 1 = a step crashed or did not write its summary file; 2 = --gate refused (missing
+// --baseline / ink data, or the run is not comparable with the baseline); 3 = --gate FAILED (a
+// regression beyond tolerance or an absolute failure: red code check, uncaught canary,
+// unexpected layout-diff check failure, expired allowlist entry). Without --gate the run only
+// measures. layout-diff's own exit 2 (a check failed that is not in
+// layout-diff/expected-check-failures.json) is recorded per fixture, not treated as a crash.
 //
 // Nothing here changes how vellora renders: every step only calls the public renderPdf / the
 // debug layout dump, and the PDF/A variant is rendered with the corpus' own fixed options.
@@ -52,25 +65,39 @@ import {
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { DEFAULT_CHROME, captureEnvironment, portable, preflight } from "./combine/env.mjs";
+import { let3From, letterVerdicts, statementVerdict } from "./combine/letter.mjs";
 import {
   PT_PER_MM,
   REF_W,
   annotateFontParity,
+  canaryCounts,
   corpusKey,
   failedControls,
   fromBoletoAudit,
   fromCorpusEntry,
+  fromCrashtests,
   fromLayoutDiffRow,
   fromOracleRecord,
   fromWpt,
   pdfaDeterminism,
   tally,
 } from "./combine/verdicts.mjs";
+import { gateRefusal, runGate } from "./gate/run.mjs";
+import { loadExpectedFailures } from "./layout-diff/lib/expected-failures.mjs";
 import { FIXTURE_IDS as LEGACY_FIXTURE_IDS } from "./oracles/lib/html-prep.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
-const STEP_IDS = ["wpt", "corpus", "oracles-fixtures", "oracles-corpus", "layout-diff"];
+const STEP_IDS = [
+  "code-checks",
+  "wpt",
+  "wpt-crashtests",
+  "corpus",
+  "oracles-fixtures",
+  "oracles-corpus",
+  "layout-diff",
+  "pdf-probe",
+];
 /** Fixtures under fixtures/ that are deliberately not measured, with the reason. */
 const EXCLUDED_FIXTURES = {
   "invoice-broken":
@@ -91,6 +118,9 @@ function parseArgs(argv) {
     toolsImage: process.env.VELLORA_FIDELITY_TOOLS_IMAGE ?? "vellora-fidelity-tools:local",
     canaries: true,
     gate: false,
+    baseline: null,
+    accept: null,
+    chromeFrom: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -108,6 +138,9 @@ function parseArgs(argv) {
     else if (a === "--tools-image") opts.toolsImage = next();
     else if (a === "--no-canaries") opts.canaries = false;
     else if (a === "--gate") opts.gate = true;
+    else if (a === "--baseline") opts.baseline = resolve(next());
+    else if (a === "--accept") opts.accept = resolve(next());
+    else if (a === "--chrome-from") opts.chromeFrom = resolve(next());
     else if (a === "--help" || a === "-h") opts.help = true;
     else throw new Error(`unknown option ${a} (see the header of fidelity/run-all.mjs)`);
   }
@@ -175,6 +208,22 @@ function notRun(id, reason) {
   return { id, status: "not-run", reason };
 }
 
+/** The committed WPT expectations file of a baseline directory, or null. */
+function baselineWptExpectations(dir) {
+  const wptDir = join(dir, "wpt");
+  if (!existsSync(wptDir)) return null;
+  const f = readdirSync(wptDir).find((x) => /^expectations-.*\.json$/.test(x));
+  return f ? join(wptDir, f) : null;
+}
+
+/** Absolute path of an executable on PATH, or null. */
+function whichSync(name) {
+  for (const dir of (process.env.PATH ?? "").split(":")) {
+    if (dir && existsSync(join(dir, name))) return join(dir, name);
+  }
+  return null;
+}
+
 /** Fixture directories under fixtures/ (index.html + data.json), sorted. */
 function discoverFixtures() {
   const dir = join(repoRoot, "fixtures");
@@ -199,6 +248,15 @@ async function main() {
     return;
   }
   const selected = STEP_IDS.filter((s) => opts.only.includes(s) && !opts.skip.includes(s));
+  const baselineExpectations = opts.baseline ? baselineWptExpectations(opts.baseline) : null;
+  if (opts.gate) {
+    const why = gateRefusal({ ...opts, allSteps: STEP_IDS }, selected);
+    if (why) {
+      process.stderr.write(`run-all: --gate refused before running anything: ${why}\n`);
+      process.exitCode = 2;
+      return;
+    }
+  }
   const runId = new Date()
     .toISOString()
     .replace(/[-:]/g, "")
@@ -237,7 +295,9 @@ async function main() {
 
   const steps = [];
   const dirs = {
+    codeChecks: join(outDir, "code-checks"),
     wpt: join(outDir, "wpt"),
+    crashtests: join(outDir, "wpt-crashtests"),
     corpus: join(outDir, "corpus"),
     oraclesFixtures: join(outDir, "oracles", "fixtures"),
     oraclesCorpus: join(outDir, "oracles", "corpus"),
@@ -249,11 +309,33 @@ async function main() {
     return b.length ? `prerequisite failed: ${b.join("; ")}` : null;
   };
 
-  // 1. WPT reftests (default suites unless --wpt-arg narrows them) + ratchet vs the baseline.
+  // 0. The repo's own tests and lint (red is an absolute gate failure).
+  {
+    const why = gate("code-checks");
+    steps.push(
+      why
+        ? notRun("code-checks", why)
+        : await runNode({
+            id: "code-checks",
+            script: "fidelity/gate/code-checks.mjs",
+            args: ["--out", dirs.codeChecks],
+            outputs: [join(dirs.codeChecks, "summary.json")],
+            logDir,
+            timeoutMin: 120,
+          }),
+    );
+  }
+
+  // 1. WPT reftests (default suites unless --wpt-arg narrows them) + ratchet vs the baseline's
+  //    expectations (--baseline) or the committed expectations of this engine id.
   {
     const why = gate("wpt");
     const args = ["--out", dirs.wpt, ...opts.wptArgs];
+    if (baselineExpectations && !opts.wptArgs.includes("--expectations")) {
+      args.push("--expectations", baselineExpectations);
+    }
     if (opts.wptChrome && chromeOk) args.push("--chrome", opts.chrome);
+    else if (opts.chromeFrom) args.push("--chrome-from", opts.chromeFrom);
     steps.push(
       why
         ? notRun("wpt", why)
@@ -261,7 +343,23 @@ async function main() {
             id: "wpt",
             script: "fidelity/wpt/run.mjs",
             args,
-            outputs: [join(dirs.wpt, "summary.json")],
+            outputs: [join(dirs.wpt, "summary.json"), join(dirs.wpt, "outcomes.json")],
+            logDir,
+          }),
+    );
+  }
+
+  // 1b. WPT crashtests: does vellora panic/crash on any of them?
+  {
+    const why = gate("wpt-crashtests");
+    steps.push(
+      why
+        ? notRun("wpt-crashtests", why)
+        : await runNode({
+            id: "wpt-crashtests",
+            script: "fidelity/wpt/crashtests.mjs",
+            args: ["--out", dirs.crashtests],
+            outputs: [join(dirs.crashtests, "crashtests.json")],
             logDir,
           }),
     );
@@ -364,6 +462,14 @@ async function main() {
             `${JSON.stringify({ barcode: { digits: data.expected.barcodeDigits }, linhaDigitavel: data.expected.linhaDigits }, null, 2)}\n`,
           );
           args.push("--expect", expectPath);
+        } else if (entry.class === "danfe" && data.expected?.chaveDigits) {
+          // DANFE-B1: the chave de acesso as CODE-128C (MOC 7.0 Anexo II 2), second decoder pair.
+          const expectPath = join(dir, "expect.json");
+          writeFileSync(
+            expectPath,
+            `${JSON.stringify({ barcode: { digits: data.expected.chaveDigits, symbology: "code128" } }, null, 2)}\n`,
+          );
+          args.push("--expect", expectPath);
         }
         steps.push(
           await runNode({
@@ -440,19 +546,105 @@ async function main() {
   }
   const layoutSummary = readJson(join(dirs.layoutDiff, "summary-run-all.json"));
 
+  // 5b. pdf-probe: vellora's PDF words vs Chrome's PDF words (pdftotext -bbox), per fixture. Uses
+  //     the native.html/browser.html layout-diff just wrote, so it only runs after it.
+  {
+    const why =
+      gate("pdf-probe") ??
+      (layoutSummary ? null : "layout-diff wrote no summary (pdf-probe reuses its inputs)");
+    const pdftotext = whichSync("pdftotext");
+    steps.push(
+      why || !pdftotext
+        ? notRun("pdf-probe", why ?? "pdftotext not on PATH")
+        : await runNode({
+            id: "pdf-probe",
+            script: "fidelity/layout-diff/pdf-probe.mjs",
+            args: [
+              "--fixtures",
+              layoutSummary.fixtures.map((f) => f.fixture).join(","),
+              "--label",
+              "run-all",
+              "--out",
+              dirs.layoutDiff,
+              "--pdftotext",
+              pdftotext,
+              ...(chromeOk ? ["--chrome", opts.chrome] : []),
+            ],
+            outputs: layoutSummary.fixtures.map((f) =>
+              join(dirs.layoutDiff, f.fixture, "run-all", "pdf-probe.json"),
+            ),
+            logDir,
+          }),
+    );
+  }
+
   // 6. Combine.
   const wptSummary = readJson(join(dirs.wpt, "summary.json"));
   const wptRatchet = readJson(join(dirs.wpt, "ratchet.json"));
+  const crashDoc = readJson(join(dirs.crashtests, "crashtests.json"));
   const wpt = fromWpt(wptSummary, wptRatchet);
+  wpt.criteria.push(
+    fromCrashtests(
+      crashDoc,
+      steps.find((s) => s.id === "wpt-crashtests"),
+    ),
+  );
+  const codeChecks = readJson(join(dirs.codeChecks, "summary.json"));
+  const expectedFailures = loadExpectedFailures();
   const layoutRow = (id) => layoutSummary?.fixtures?.find((f) => f.fixture === id);
   const layoutFor = (id) => {
     if (!layoutSummary) {
       const step = steps.find((s) => s.id === "layout-diff");
       return { status: "not-run", reason: step?.reason ?? "layout-diff did not run" };
     }
-    return fromLayoutDiffRow(layoutRow(id));
+    return fromLayoutDiffRow(layoutRow(id), { expectedFailures });
   };
   const oracleRecord = (...p) => readJson(join(...p, "result.json"));
+  // LET-1/2/3 (letter class) and TXT-B1 (statement table) from the layout oracle's word lists.
+  const readText = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+  const LETTER_FIXTURES = {
+    notification: {
+      words: join(dirs.oraclesFixtures, "notification", "plain", "layout"),
+      html: join(dirs.oraclesFixtures, "notification", "templated.html"),
+      let3: "REF-P",
+    },
+    "text-stress-ptbr": {
+      words: join(dirs.oraclesCorpus, "text-stress-ptbr", "plain", "layout"),
+      html: join(dirs.corpus, "text-stress-ptbr", "templated.html"),
+      after: "6. Termos e condições",
+      let3: "TXT-P1",
+      statement: join(repoRoot, "fixtures", "text-stress-ptbr", "data.json"),
+    },
+  };
+  const letterFor = (key, verdicts) => {
+    const cfg = LETTER_FIXTURES[key];
+    if (!cfg) return [];
+    const words = (who) => readJson(join(cfg.words, `words-${who}.json`));
+    const out = [
+      ...letterVerdicts({
+        html: readText(cfg.html),
+        subject: words("subject"),
+        chrome: words("chrome"),
+        weasyprint: words("weasyprint"),
+        after: cfg.after ?? null,
+      }),
+      let3From(verdicts, cfg.let3),
+    ];
+    if (cfg.statement) {
+      const data = readJson(cfg.statement);
+      out.push(
+        statementVerdict({
+          subject: words("subject"),
+          chrome: words("chrome"),
+          months: (data?.meses ?? []).map((m) => ({
+            label: `Lançamentos de ${m.nome} de 2026`,
+            dates: m.lancamentos.map((l) => l.data),
+          })),
+        }),
+      );
+    }
+    return out;
+  };
 
   const fixtures = [];
   for (const id of legacyIds) {
@@ -462,6 +654,7 @@ async function main() {
       verdicts.push(...fromOracleRecord(rec, { mode, docClass: id }));
     }
     if (id === "boleto" && audit) verdicts.push(...fromBoletoAudit(audit));
+    verdicts.push(...letterFor(id, verdicts));
     const layoutDiff = layoutFor(id);
     fixtures.push({
       key: id,
@@ -495,6 +688,7 @@ async function main() {
         kind: "criterion",
       });
     }
+    if (entry.data === "data.json") verdicts.push(...letterFor(entry.id, verdicts));
     // layout-diff renders data.json only, so a data variant has no attribution of its own; its
     // font-parity result (same template, same fonts) still applies to the variant's references.
     const baseLayout = layoutFor(entry.id);
@@ -567,6 +761,14 @@ async function main() {
       caught: c.caught,
       reason: c.reason,
     })),
+    canaryCounts: canaryCounts(oraclesSummary?.canaries),
+    codeChecks: codeChecks?.checks?.map((c) => ({
+      id: c.id,
+      command: c.command,
+      status: c.status,
+      exitCode: c.exitCode,
+      failures: c.failures,
+    })),
     outputs: Object.fromEntries(Object.entries(dirs).map(([k, v]) => [k, rel(v)])),
   };
   const portableSummary = portable(summary, repoRoot);
@@ -574,16 +776,33 @@ async function main() {
   writeFileSync(join(outDir, "summary.md"), renderMarkdown(portableSummary));
   process.stdout.write(`run-all: summary ${join(outDir, "summary.json")}\n`);
   const t = summary.totals.excludingDiagnostic.counts;
+  const cc = summary.canaryCounts;
   process.stdout.write(
     `run-all: verdicts (non-diagnostic) ${Object.entries(t)
       .map(([k, v]) => `${k} ${v}`)
       .join(
         ", ",
-      )}; WPT pass ${wpt.totals?.passRate ?? "-"}% of ${wpt.totals?.reftests ?? 0}; ${crashed.length} step(s) errored\n`,
+      )}; WPT pass ${wpt.totals?.passRate ?? "-"}% of ${wpt.totals?.reftests ?? 0}; canaries ${cc.caught}/${cc.detection} detection caught (+${cc.measurement} measurement-only); ${crashed.length} step(s) errored\n`,
   );
   if (crashed.length) process.exitCode = 1;
-  else if (opts.gate && wpt.criteria.find((c) => c.criterion === "WPT-2")?.status === "FAIL") {
-    process.exitCode = 3;
+  if (opts.gate) {
+    // The value ratchet against the committed baseline (fidelity/gate/).
+    const { report, exitCode } = runGate({
+      baselineDir: opts.baseline,
+      runDir: outDir,
+      acceptFile: opts.accept,
+      outDir: join(outDir, "gate"),
+      command,
+      date: env.dateIso,
+    });
+    process.stdout.write(
+      `run-all: gate ${report.verdict} vs ${rel(opts.baseline)}: ${Object.entries(report.counts)
+        .map(([k, v]) => `${k} ${v}`)
+        .join(", ")}${report.refusals.length ? `; REFUSED: ${report.refusals.join("; ")}` : ""}\n` +
+        `run-all: gate report ${join(outDir, "gate", "gate-report.md")}\n`,
+    );
+    // Gate verdict first (a crashed step is itself a gate failure); else keep the crash code.
+    if (exitCode !== 0) process.exitCode = exitCode;
   }
 }
 
@@ -635,6 +854,8 @@ function renderMarkdown(s) {
     "",
     `Controls not behaving as expected: ${s.totals.failedControls.length ? s.totals.failedControls.map((c) => `${c.fixture} ${c.criterion} ${c.status}`).join("; ") : "none"}.`,
     `Verdicts carrying a reference caveat (status kept): ${s.totals.all.caveated}.`,
+    `Canaries: ${s.canaryCounts ? `${s.canaryCounts.caught} of ${s.canaryCounts.detection} detection canaries caught (${s.canaryCounts.notCaught} not caught, ${s.canaryCounts.notRun} not run) + ${s.canaryCounts.measurement} measurement-only rows (caught = null; they show a behaviour, they do not test an oracle)` : "not run"}.`,
+    `Code checks: ${s.codeChecks?.length ? s.codeChecks.map((c) => `${c.id} ${c.status}${c.failures?.length ? ` (${c.failures.join(", ")})` : ""}`).join("; ") : "not run"}.`,
     "",
   ];
   for (const f of s.fixtures) {
@@ -652,7 +873,7 @@ function renderMarkdown(s) {
     const l = f.layoutDiff;
     if (l?.status === "ran") {
       lines.push(
-        `layout-diff (attribution, not a verdict): attribution valid ${l.attributionValid}; failed checks ${l.checksFailed.join(", ") || "none"}; first box ${l.firstBox ? `${l.firstBox.type} \`${l.firstBox.path}\` first over tolerance ${l.firstBox.firstOverTolerance}, dominant ${l.firstBox.dominantLayer}` : "none"}; first text ${l.firstText ? `"${esc(l.firstText.text)}" first over tolerance ${l.firstText.firstOverTolerance}, dominant ${l.firstText.dominantLayer}` : "none"}; regression events by layer ${Object.entries(
+        `layout-diff (attribution, not a verdict): attribution valid ${l.attributionValid}; failed checks ${l.checksFailed.join(", ") || "none"} (expected per allowlist: ${(l.checksExpectedFailures ?? []).map((e) => e.check).join(", ") || "none"}; unexpected: ${(l.checksUnexpectedFailures ?? []).join(", ") || "none"}; expired entries: ${(l.checksExpired ?? []).map((e) => e.check).join(", ") || "none"}); final layer ${l.finalLayer ?? "-"}; first box ${l.firstBox ? `${l.firstBox.type} \`${l.firstBox.path}\` first over tolerance ${l.firstBox.firstOverTolerance}, dominant ${l.firstBox.dominantLayer}` : "none"}; first text ${l.firstText ? `"${esc(l.firstText.text)}" first over tolerance ${l.firstText.firstOverTolerance}, dominant ${l.firstText.dominantLayer}` : "none"}; regression events by layer ${Object.entries(
           l.regressionEventsByLayer,
         )
           .map(([k, v]) => `${k} ${v.box}/${v.text}`)

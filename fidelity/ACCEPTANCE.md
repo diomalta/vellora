@@ -17,11 +17,15 @@ current status is a dated, INDICATIVE snapshot in [`corpus/RESULTS.md`](corpus/R
 - Units: mm on the page, origin top-left. Rasters are poppler `pdftoppm -r 600 -gray`
   (1 px = 0.0423 mm). PDF pt = 1/72 in; CSS px = 1/96 in = 0.2646 mm.
 - **Reference.** Where no spec fixes a number, vellora is compared with a Chromium reference
-  rendering of the same templated HTML with the same Liberation font files (`corpus/lib/chrome-ref.mjs`).
-  Locally that is Chrome 155.0.8059.85 (INDICATIVE); CI must pin a Chrome for Testing build via
-  `@puppeteer/browsers` and record it. DESIGN TARGET: the consensus reference becomes Chromium **and**
-  WeasyPrint (→ oracles); where they disagree by more than the tolerance the criterion reports
-  "reference disagreement" instead of PASS/FAIL.
+  rendering of the same templated HTML with the same Liberation font files. Since 2026-10-21 the
+  corpus, the oracles and layout-diff share ONE reference setup, `lib/chrome-reference.mjs`: one
+  font alias table (a superset of `benchmarks/visual-fidelity.mjs`, incl. Helvetica, Nunito Sans
+  and Tahoma → Liberation Sans) and one puppeteer-core print path (print media, fonts awaited,
+  `page.pdf({ format: "A4", preferCSSPageSize: true, printBackground: true })`; the corpus used a
+  Chrome CLI `--print-to-pdf` driver with its own table before). Locally that is Chrome
+  155.0.8059.85 (INDICATIVE); CI must pin a Chrome for Testing build via `@puppeteer/browsers` and
+  record it. The oracles' REF-W and LET-1/LET-2 use the consensus of Chromium **and** WeasyPrint:
+  where they disagree by more than the consensus tolerance the item is "disputed" and not scored.
 - **Barcodes are not judged against Chromium.** CONFIRMED in this run: Chromium also snaps box
   edges to whole CSS px, so its rendering of a 0.2543 mm-module ITF is not decodable either. The
   barcode reference is the ideal raster drawn directly from `data.json` (no renderer), which must
@@ -35,14 +39,14 @@ current status is a dated, INDICATIVE snapshot in [`corpus/RESULTS.md`](corpus/R
 | DET-2 | A render in a child process with `TZ=America/Sao_Paulo LANG=LC_ALL=pt_BR.UTF-8` is byte-identical to DET-1 | exact | SPEC repo invariant (no wall-clock, no host locale) | corpus (`render-one.mjs`) |
 | DET-3 | Linux CI bytes equal the macOS bytes for the same pin | exact | DESIGN TARGET (no platform input reaches the PDF writer; unverified) | → oracles / CI (not run) |
 | PDF-S1 | The PDF parses in pypdf strict mode | no exception | DESIGN TARGET (weak structural sanity only; not a validity proof) | corpus (pypdf 6.21.1) |
-| PDF-Q1 | `qpdf --check` reports no errors and no warnings | 0 / 0 | DESIGN TARGET (qpdf is the de-facto structural checker) | → oracles (qpdf not installed locally: not run) |
-| PDF-A1 | Renders with `pdfa: "PDF/A-2b"` pass veraPDF's PDF/A-2B profile | 0 failed rules | SPEC ISO 19005-2 level B as encoded by the veraPDF validation profile (standard not read in this run: UNVERIFIED ASSUMPTION on the exact rule set) | → oracles (veraPDF in Docker; not run) |
+| PDF-Q1 | `qpdf --check` reports no errors and no warnings, and the file's own xref/stream structure checks pass | 0 / 0 | DESIGN TARGET (qpdf is the de-facto structural checker) | oracles (qpdf 12.2.0 in the tools image; evaluated by `run-all.mjs` on every fixture, plain and PDF/A-2b; 4 structural canaries must fail) |
+| PDF-A1 | Renders with `pdfa: "PDF/A-2b"` pass veraPDF's PDF/A-2B profile | 0 failed rules | SPEC ISO 19005-2 level B as encoded by the veraPDF validation profile (standard not read: UNVERIFIED ASSUMPTION on the exact rule set) | oracles (veraPDF 1.30.3 in Docker; evaluated by `run-all.mjs` on the PDF/A-2b render of every fixture; the plain render is a negative control; two canaries that keep the PDF/A claim but remove the OutputIntent or un-embed the font program must FAIL) |
 | EXT-1 | Every required text string (per fixture, whitespace-normalized; `loose` entries whitespace-free) is extracted by poppler `pdftotext`, verbatim at least once AND case-insensitively at least `count` times, where `count` is pinned to the string's occurrences in the templated HTML (checked by `node --test`), so a string that also sits inside another line cannot hide a deleted copy | 100 % | DESIGN TARGET (documents must be machine-readable; for boleto/DANFE the strings are the SPEC-mandated fields listed below) | corpus |
 | EXT-2 | The same strings are extracted by pypdf **and** pdfminer.six (three independent extractors agree) | 100 % each | DESIGN TARGET | corpus (pdftotext 26.06.0, pypdf 6.21.1, pdfminer.six 20260107) |
-| EXT-3 | Extracted text is NFC and keeps every diacritic of the source (no decomposed or dropped marks) | exact | DESIGN TARGET | → oracles (not run; EXT-1/2 cover presence only) |
+| EXT-3 | Extracted text is NFC and keeps every diacritic of the source (no decomposed or dropped marks) | exact | DESIGN TARGET | oracles (copy-paste check of pdftotext, pdfminer.six, PyMuPDF; evaluated by `run-all.mjs`; U+FB01 / NFD canaries must fail) |
 | REF-P | Page count equals the reference's | exact | DESIGN TARGET | corpus (`pagesVsReference`) |
 | REF-R | Glyph-box position of each listed anchor text differs from the reference by at most the tolerance (x and top) | 1.0 mm | DESIGN TARGET (below half an 8 pt line ≈ 1.4 mm, so a whole-line drift fails; the beta.4 notification regression was ≈ 22.5 pt ≈ 7.9 mm) | corpus (pdfminer anchors; per class IDs `BOL-R1`, `DANFE-R1`, `TXT-R1`, `INV-R1`) |
-| REF-W | Max word-position error vs the consensus reference over all words | ≤ 1.0 mm; ≤ 0.5 mm p95 | DESIGN TARGET | → layout-diff / oracles (not run by the corpus) |
+| REF-W | Max word-position error vs the consensus reference over all words (pen origin x, baseline y; scored only where Chrome and WeasyPrint agree within 2 pt) | ≤ 1.0 mm; ≤ 0.5 mm p95 | DESIGN TARGET | oracles layout consensus (evaluated by `run-all.mjs`; max and p95 are VALUE-ratcheted by the gate, see "Gate") |
 
 ## 1. Boleto de pagamento (`fixtures/boleto-febraban`)
 
@@ -85,7 +89,7 @@ deliberately violates BOL-G1 (+4.16 mm, its G1 target is overridden to 107.16 mm
 | DANFE-D2 | Totals: Σ item values = valor dos produtos; valor da nota = produtos + IPI; Σ duplicatas = valor da nota | exact | DESIGN TARGET (internal consistency of synthetic data) | corpus (node --test) |
 | DANFE-P1 | One folha, "FOLHA 1/1" printed at the top | exact | SPEC MOC-AII 3.10.2 | corpus |
 | DANFE-X1 / X2 | Required text: "DANFE", "DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA", chave in 11 blocks of 4, number, emitente name + CNPJ, destinatário name + CNPJ, valor total, ICMS, protocolo, "SEM VALOR FISCAL", "PROTOCOLO DE AUTORIZAÇÃO DE USO", and the non-suppressible product column headers | 100 % | SPEC MOC-AII 3 (SEM VALOR FISCAL in homologação), 3.1.1, 3.1.3, 3.1.7, 3.7.4, 3.9.1 | corpus |
-| DANFE-B1 | The chave barcode decodes as Code 128 to exactly the chave and passes DANFE-D1 | exact | SPEC MOC-AII 2 ("CODE-128C") | corpus (zxing-cpp) |
+| DANFE-B1 | The chave barcode decodes as Code 128 to exactly the chave and passes DANFE-D1 | exact | SPEC MOC-AII 2 ("CODE-128C") | corpus (zxing-cpp) + oracles (second decoder pair zxing-cpp + zbar `-Scode128.enable`, NF-e cDV via `corpus/lib/nfe.mjs`; valid / wrong-cDV Code 128 canaries) |
 | DANFE-B2 | Total symbol width ≥ 6 cm (non-impact printers) | ≥ 60 mm | SPEC MOC-AII 2 | corpus |
 | DANFE-B3 | Bar height ≥ 0.8 cm and inside the 1.48 cm barcode quadro | [8, 14.8] mm | SPEC MOC-AII 2 (min); 3.8.1 quadro height (max, sugestão) | corpus |
 | DANFE-B4 / B5 | Clear margin left / right ≥ 10 modules (fixture module 1 CSS px = 0.2646 mm ≥ the 0.02 cm minimum) | ≥ 2.65 mm | SPEC MOC-AII 2 ("Margem clara ... no mínimo ... 10 módulos") | corpus |
@@ -134,22 +138,23 @@ No regulation fixes these layouts; the reference is Chromium (later Chromium + W
 | INV-I1 | Every `<img>` the template declares with intrinsic dimensions is painted (≥ 1 image XObject for the sparksuite logo) | ≥ declared count | DESIGN TARGET (a silently dropped image is a fidelity failure even when the strict gate accepts the input) | corpus (`pdfimages -list`) |
 | INV-R1 / TXT-R1 | REF-R on 4–5 anchor texts per document | 1.0 mm | DESIGN TARGET | corpus |
 | TXT-A1 | Right-aligned money columns: right edges of all money tokens in a column agree. Tokens are words (cells pdfminer merges into one line still split), assigned to the column of the nearest money header ("Débito (R$)", "Crédito (R$)", "Saldo (R$)") by right edge, so an isolated misaligned token is measured; a money token farther than half the header spacing from every header fails the criterion | ≤ 0.3 mm spread (≈ 1 CSS px, DESIGN TARGET); 0 unassigned | DESIGN TARGET | corpus (pdfminer, page 2) |
-| TXT-B1 | Repeated `<thead>` on every statement page; no month `<tbody>` split across pages unless taller than a page | exact | DESIGN TARGET (COMPATIBILITY.md documents both behaviours as supported/partial) | → layout-diff (not run by the corpus; visible in the PDFs) |
+| TXT-B1 | Repeated `<thead>` on every statement page; no month `<tbody>` split across pages unless taller than a page (a split the Chrome reference also makes counts as "taller than a page") | exact | DESIGN TARGET (COMPATIBILITY.md documents both behaviours as supported/partial) | run-all (`combine/letter.mjs` on the layout oracle's word lists of vellora's and Chrome's PDFs: every page holding a statement date row between the "5. Extrato detalhado" and "6. Termos" headings holds the header cells; each month label and its rows on one page) |
 
 ## 4. Letter / notification (existing `fixtures/notification`; "Termos" section of `text-stress-ptbr`)
 
 | ID | Criterion | Tolerance | Source | Oracle |
 |---|---|---|---|---|
-| LET-1 | Vertical position of the last paragraph and the signature block vs the reference | ≤ 1.0 mm | DESIGN TARGET (the beta.4 regression put the bottom text ≈ 22.5 pt too high) | → layout-diff (not run by the corpus) |
-| LET-2 | Line count of every paragraph equals the reference (same line breaks) | exact | DESIGN TARGET | → layout-diff / oracles |
-| LET-3 | REF-P page count | exact | DESIGN TARGET | corpus for `text-stress-ptbr`; → oracles for `notification` |
+| LET-1 | Vertical position (first-word baseline) of the last paragraph and of every signature line vs the Chrome/WeasyPrint consensus (references within 2 pt of each other; otherwise the anchor is disputed and not scored) | ≤ 1.0 mm | DESIGN TARGET (the beta.4 regression put the bottom text ≈ 22.5 pt too high) | run-all (`combine/letter.mjs` on the layout oracle's word lists; `notification`; for `text-stress-ptbr` the "6. Termos" section) |
+| LET-2 | Line count of every paragraph (`<p>`) equals the reference (Chrome and WeasyPrint agreeing; a paragraph they disagree on is disputed, not scored) | exact | DESIGN TARGET | run-all (`combine/letter.mjs`, same word lists) |
+| LET-3 | REF-P page count | exact | DESIGN TARGET | run-all: = TXT-P1 (corpus) for `text-stress-ptbr`, = REF-P (oracles) for `notification` |
 
 ## 5. WPT conformance
 
 | ID | Criterion | Tolerance | Source | Oracle |
 |---|---|---|---|---|
-| WPT-1 | Pinned WPT commit, pinned test list; pass/fail per reftest recorded with the vellora pin | — | DESIGN TARGET | → wpt (not run) |
-| WPT-2 | Ratchet: no test that passes in `fidelity/baselines/` may fail on a new pin | 0 regressions | DESIGN TARGET | → wpt |
+| WPT-1 | Pinned WPT commit, pinned test list; outcome per reftest recorded with the vellora build | — | DESIGN TARGET | wpt (evaluated by `run-all.mjs`: WPT `9d8aceec…` exact pin, 8047 reftests in the 25 default suites) |
+| WPT-2 | Ratchet: no CLEAN pass of the baseline (a pass with no suspect-pass flag) may stop passing or become suspect; a test that rendered may not start to error / time out; a FLAGGED pass that is lost is reported, not gated. Needs the Chrome ink data on both sides (same `inkCheck`): live `--wpt-chrome` or `--chrome-from` | 0 regressions of clean passes | DESIGN TARGET (a flagged pass was never proven: test and reference may both have lost the same content) | wpt + gate |
+| WPT-3 | The WPT crashtests of the default suites (239 at the pin) never panic, crash or time out; ratcheted per test (ok → panic/crash/timeout gates) | 0 | DESIGN TARGET (a crashtest only asserts "no crash"; a clean strict-gate rejection is ok) | wpt (`wpt/crashtests.mjs`) + gate |
 
 ## 6. Text extraction (all classes)
 
@@ -161,7 +166,48 @@ required strings is the same in all three extractors (→ oracles, not run).
 DET-1, DET-2 (run here), DET-3 (→ CI). Nothing added by the corpus changes the bytes of a normal
 render: the corpus only reads fixtures and calls the public `renderPdf` with fixed metadata.
 
+## 8. Gate: the value ratchet (`gate/`)
+
+Phase A gated on statuses only, and that was blind: the pin and beta.4 runs had identical verdict
+totals (PASS 124 / FAIL 52 / WARN 4 / NOT-RUN 3) while REF-W got worse (notification 3.60 → 8.54 mm,
+invoice 2.44 → 3.91 mm). A step now merges only when
+`node fidelity/run-all.mjs --gate --baseline fidelity/baselines/<previous step>` exits 0 (or the
+same comparison over an existing run: `node fidelity/gate/run.mjs --baseline … --run …`).
+
+| ID | Rule | Tolerance | Source |
+|---|---|---|---|
+| GATE-S1 | Status ratchet per verdict row (fixture × criterion × oracle × mode): PASS > WARN/INFO > FAIL. A measured row that becomes NOT-RUN/N/A, or disappears from the run, regresses (never silently absent). NOT-RUN → measured is "newly measured", not a regression | — | DESIGN TARGET |
+| GATE-V1 | Value ratchet per metric (table below). Both sides are parsed by ONE parser (`gate/metrics.mjs`) from the verdict values, so Phase A baselines (strings only) and new runs (structured `metrics`) compare like for like; a metric that was measurable and is not any more regresses | per class | DESIGN TARGET |
+| GATE-W1 | WPT-2 and WPT-3 per test (above); the comparison is REFUSED (exit 2) unless WPT commit, comparison settings and `inkCheck` are identical | 0 | DESIGN TARGET |
+| GATE-P1 | pdf-probe (vellora's PDF words vs Chrome's PDF words, pdftotext -bbox, same page): per word, \|dx\| and \|dy\| may not grow; a word may not move to another page than Chrome's | 1.0 pt | DESIGN TARGET |
+| GATE-K1 | Every DETECTION canary of the run is caught (absolute); a baseline canary missing from the run regresses. Measurement-only rows (`caught: null`) are not gated | all | SPEC repo rule (fidelity/README.md: an oracle is trusted only after it caught a broken input) |
+| GATE-C1 | `cargo test --workspace --no-fail-fast`, `npm run test:ts`, `npm run lint`, `npm --prefix fidelity test` are green (absolute; `npm test` is not used because it stops after test:rust) | all green | SPEC repo rule (CLAUDE.md commands) |
+| GATE-L1 | layout-diff self-consistency/input-parity checks: a failure not listed for its fixture in `layout-diff/expected-check-failures.json` fails; a listed check that passes has EXPIRED and fails until the entry is removed | — | DESIGN TARGET |
+| GATE-R1 | Completeness: `--gate` refuses to start with a step skipped (`--only`/`--skip`), `--no-canaries`, or WPT narrowed (`--filter`, `--limit`, a suite path), and without Chrome ink data; the comparison is REFUSED when the baseline measured a section the run lacks (WPT outcomes, crashtests, code checks, canaries, pdf-probe) and when a run-all run lacks code checks, canaries or crashtests | — | DESIGN TARGET (a skipped check must never read as a passed one) |
+| GATE-A1 | A regression passes only as an `acceptedRegressions` entry (`--accept`; key, reason, evidence; optional `after` binds it to the accepted value so a later, worse value is not hidden). Evidence must prove the OLD value was wrong (false pass, oracle artefact) with Chrome + WeasyPrint consensus or WPT reference analysis. The baseline writer copies the list into `manifest.json` | — | Phase B merge rule |
+
+Tolerance classes (`gate/tolerances.mjs`; a metric regresses when it moves the bad way by MORE
+than this):
+
+| Class | Tolerance | Metrics | Rationale | Label |
+|---|---|---|---|---|
+| position-mm | 0.1 mm | REF-W `maxMm`/`p95Mm`; REF-R `worstMm` (BOL-R1, DANFE-R1, TXT-R1, INV-R1); DANFE-L1 `posErrMm`; LET-1 `worstMm` | 10× the 0.01 mm the values are reported with; below one CSS px (0.26 mm), the smallest step of a px-snapping layout; equal inputs give equal values (Phase A repeat run) | DESIGN TARGET |
+| geometry-excess-mm | 0.05 mm | distance OUTSIDE the spec window: BOL-G1…G6, DANFE-B2…B5, DANFE-M1 (per side), TXT-A1 | inside the window the spec admits any value, so only the excess is ratcheted (the raw value is reported); 0.05 mm ≈ one 600 dpi raster pixel (0.042 mm) | DESIGN TARGET |
+| count | 0 | required strings found (X1, X2 per extractor), EXT-2 missing / extra / status rank per extractor, DANFE-F segments and F11 glyphs, BOL-T occurrences, INV-I1 shortfall, barcode decodes/validates, LET-2 mismatched paragraphs, TXT-B1 pages without header / months split, WPT-2 clean-pass regressions, WPT-3 broken crashtests | integer counts from deterministic tools: any loss is a change of the document | DESIGN TARGET |
+| page-delta | 0 | \|pages − reference\| (REF-P, BOL-P1, DANFE-P1, INV-P1/P2, TXT-P1, LET-3) | a page break moving is never noise | DESIGN TARGET |
+| pdf-probe-pt | 1.0 pt | per word \|dx\|, \|dy\| vs Chrome's PDF | an order of magnitude below the Phase A regressions it must catch (+9 pt price column, −14 pt signature), above pdftotext bbox rounding | DESIGN TARGET |
+| font-excess-pt | 0.05 pt | reserved for font-size windows | the 0.05 pt ACCEPTANCE already applies to font sizes | SPEC-derived unit |
+
+Reported, never gated: REF-W consensus word count and coverage, raw values inside a spec window,
+WPT flagged-pass losses, layout-diff per-layer attribution, PDF bytes (a layout change is expected
+to change them; determinism is DET-1: two renders of one input are byte-identical, by status).
+
 ## Per-fixture map
+
+This table is the corpus' first INDICATIVE run (kept for its spec notes). The CURRENT status of
+every criterion, with values, is the latest committed gated baseline (`baselines/<name>/fixtures/`,
+`metrics.json`, `gate-report.md`); LET-1/2/3, TXT-B1, PDF-Q1, PDF-A1, EXT-3, REF-W, WPT-1/2/3 and
+the oracles' DANFE-B1 are all evaluated there now.
 
 Status column = the INDICATIVE run in `corpus/RESULTS.md` (2026-10-21T04:36:13Z, macOS 27.0.1
 arm64, Apple M5 Pro, Node v22.23.2, rustc 1.96.0, Chrome 155.0.8059.85, poppler 26.06.0, gitHead

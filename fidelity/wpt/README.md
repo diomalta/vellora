@@ -260,6 +260,20 @@ report per tested commit in [DioxusLabs/blitz-wpt-results](https://github.com/Di
 run, the nearest run is `23b9b26a9b` = beta.4 + one non-layout commit). `run.mjs --upstream auto` downloads the report for the Blitz rev in
 `Cargo.lock` into `fidelity/.cache/blitz-wpt-results/` (zstd via `node:zlib`) and cross-tabs it.
 
+**crates.io builds** have no git rev in `Cargo.lock`. `lib/upstream-map.mjs` maps the version to its
+tag commit and to the nearest upstream run, with the evidence recorded in the table (CONFIRMED
+2026-10-21): `0.3.0-beta.4` = tag `v0.3.0-beta.4` (object `560b324f`) = commit
+`92b11f1bd8ab7975411328b0406a95a09445b4e7`; no upstream run is keyed by it (`summary/runs.json`,
+1203 runs); `23b9b26a9b` is 1 commit ahead and changes only `apps/bump`, `Cargo.toml`, `Cargo.lock`
+and `justfile` (GitHub compare API), run at WPT `cd1d8aa5bfebc15d1af2af230c7ff95f9e582a4c`.
+UNVERIFIED ASSUMPTION: that `Cargo.lock` change moved no dependency the renderer uses. The summary
+records `upstream.via`, `sameWptRevision` and a comparability note. **Same-revision comparison**:
+our pin (`9d8aceec0`) is not the upstream run's WPT revision, so test files can differ; to compare
+like for like, fetch that revision and run unpinned (no ratchet):
+`node fidelity/wpt/fetch-wpt.mjs --commit cd1d8aa5bfebc15d1af2af230c7ff95f9e582a4c --dir fidelity/.cache/wpt-cd1d8aa5b`
+then `node fidelity/wpt/run.mjs --wpt fidelity/.cache/wpt-cd1d8aa5b --allow-unpinned --upstream auto`
+(`sameWptRevision: true` in its summary).
+
 How Blitz's runner differs from this one (all CONFIRMED from its source), which is why the upstream
 number is an **upper bound**, not a like-for-like oracle:
 
@@ -303,6 +317,25 @@ with schema 1. `--update-expectations` is refused (exit 2, before anything rende
 (`--filter`, `--limit`, suites other than the default set), `--chain-references` and unpinned
 trees; regenerate intentionally and commit the diff with the reason. Local macOS runs are
 indicative; the authoritative baseline should come from the pinned Linux CI run (DESIGN TARGET).
+
+**Ink data is required (2026-10-21).** Clean vs flagged passes depend on the Chrome ink flags, so:
+`--update-expectations` is refused unless the run has Chrome ink data (`--chrome` or
+`--chrome-from`), and the ratchet is refused on an `inkCheck` mismatch (expectations "chrome X" vs
+a run without Chrome, or another Chrome). Every run writes `outcomes.json` (the expectations shape
+of THIS run); the fidelity gate (`fidelity/gate/`, `run-all.mjs --gate`) compares it with the
+expectations of a committed baseline directory: a lost CLEAN pass or a clean pass that becomes
+suspect gates, a lost FLAGGED pass is only reported, a test that starts to error gates.
+
+## Crashtests (`crashtests.mjs`, WPT-3)
+
+The default suites contain 239 crashtests (`-crash` flag or a `crashtests/` directory; counted as
+`notRun.crashtest` by `run.mjs`). `node fidelity/wpt/crashtests.mjs [--out <dir>]` renders each one
+through the real pipeline in forked workers (`lib/crash-worker.mjs`) and records ok / panic /
+crash / timeout / error / skip (`lib/crash-outcome.mjs`: a strict-gate rejection is ok; error is a
+HARNESS failure). Output `crashtests.json`; `run-all.mjs` runs it and the gate ratchets each test
+(ok → panic/crash/timeout gates). CONFIRMED 2026-10-21 at Blitz 0.3.0-beta.4: 239 ok (128 rendered,
+111 rejected cleanly by the strict gate), after fixing a harness EISDIR crash in `lib/prepare.mjs`
+(a resource URL resolving to a directory is now a missing resource).
 
 ## Results on the current pin (CONFIRMED, local macOS run — indicative, not the CI baseline)
 
