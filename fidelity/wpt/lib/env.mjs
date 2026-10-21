@@ -74,7 +74,9 @@ export function gitInfo(dir) {
   const status = run("git", ["-C", dir, "status", "--porcelain", "--untracked-files=all"]);
   const lines = typeof status === "string" ? status.split("\n").filter(Boolean) : null;
   return {
-    commit: typeof sha === "string" ? sha : null,
+    // Only a full SHA is a commit: run e47e77f/20261021T012358Z recorded git's "fatal: not a git
+    // repository" message as the commit and used it in its directory name.
+    commit: typeof sha === "string" && /^[0-9a-f]{40}$/.test(sha) ? sha : null,
     toplevel: typeof top === "string" ? top : null,
     branch: typeof branch === "string" ? branch : null,
     dirtyTrackedFiles: lines ? lines.filter((l) => !l.startsWith("??")).length : null,

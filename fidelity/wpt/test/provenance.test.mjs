@@ -80,6 +80,18 @@ test("pin: gitInfo counts untracked files and detects an enclosing repository", 
   }
 });
 
+test("gitInfo outside any repository reports null, never git's error text", () => {
+  const dir = mkdtempSync(join(tmpdir(), "no-git-"));
+  try {
+    const info = gitInfo(dir);
+    assert.equal(info.commit, null);
+    assert.equal(info.dirtyTrackedFiles, null);
+    assert.equal(info.untrackedFiles, null);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("run id: only safe characters; a build without git is named by its source hash", () => {
   const dateIso = "2026-10-21T01:23:58.123Z";
   assert.equal(

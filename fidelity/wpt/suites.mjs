@@ -4,9 +4,14 @@
 // fixtures/). A directory is in the default run when its tests exercise layout or paint behaviour
 // those documents depend on: block formatting + margin collapsing, inline/line-box layout, tables,
 // boxes/borders/backgrounds, lists/generated content, positioning, floats, and fragmentation /
-// paged media. Directories that mainly test the CSS parser/cascade (owned by Stylo and covered
-// upstream by Servo/Stylo's own WPT runs), interactive UI, media queries or bidi/i18n (outside
-// vellora's current document subset) are excluded and listed below so the omission is explicit.
+// paged media. Directories are excluded by the FEATURE they test, never by the script of their
+// text: those that mainly test the CSS parser/cascade (owned by Stylo and covered upstream by
+// Servo/Stylo's own WPT runs), interactive UI, media queries, stacking order, or the bidi
+// algorithm (direction/unicode-bidi) are excluded and listed below so the omission is explicit.
+// Tests whose text is in scripts no available face covers (e.g. css/css-text/i18n: CJK, Thai,
+// Ethiopic line breaking) stay in the default run — excluding a directory vellora scores 0% on
+// would shrink the denominator — and every such test carries the `uncoveredCodepoints` prepare
+// flag, so its failures are attributable and its passes are reported as flagged, not clean.
 // Any WPT path can still be run ad hoc: `node fidelity/wpt/run.mjs css/CSS2/selectors`.
 
 /** @type {{ path: string, why: string }[]} */
@@ -51,7 +56,10 @@ export const EXCLUDED_SUITES = [
   { path: "css/CSS2/css21-errata", why: "mixed errata, few tests" },
   { path: "css/CSS2/csswg-issues", why: "mixed issue repros, few tests" },
   { path: "css/CSS2/css1", why: "legacy CSS1 suite, overlaps the CSS2 directories above" },
-  { path: "css/CSS2/bidi-text", why: "bidi/RTL is outside vellora's current document subset" },
+  {
+    path: "css/CSS2/bidi-text",
+    why: "tests the bidi algorithm (direction/unicode-bidi), outside the document subset",
+  },
   { path: "css/CSS2/i18n", why: "no reftests at the pinned commit" },
   { path: "css/CSS2/ui", why: "cursor/outline/UI: not document layout" },
   { path: "css/CSS2/media", why: "media queries/types: not layout" },
