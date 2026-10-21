@@ -1,0 +1,83 @@
+{
+  "invoice": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "receipt": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "boleto": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "notification": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "boleto-febraban": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "danfe": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "text-stress-ptbr": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "oss-sparksuite-invoice": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  },
+  "oss-postmark-receipt": {
+    "finalA": "collapsed_table_medium_border_insets_x",
+    "finalB": "auto_table_compact_columns",
+    "finalBoxesIdentical": true,
+    "finalRunsIdentical": true,
+    "commonLayersIdentical": true,
+    "paginationIdentical": true,
+    "blitzTreeIdentical": true
+  }
+}

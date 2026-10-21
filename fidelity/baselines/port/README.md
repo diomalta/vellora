@@ -187,3 +187,79 @@ Verdict totals: all PASS 128 → 131, FAIL 55 → 52 (WARN 4, NOT-RUN 3); exclud
 
 The `committed-canary` self-test now also asserts that `01-pagination-gaps` FAILs against `00-start`
 without acceptances (exactly the 150 accepted keys gate) and PASSes with them.
+
+## `02-delete-noop-passes`: remove three layout_normalize passes Blitz beta.4 made wrong
+
+Branch `phaseb/02-delete-noop-passes` (from `phaseb/01-pagination-gaps` `8bc8adf`), code commit
+`6e5cb8d`: `normalize_vertical_margin_collapse`, `normalize_collapsed_table_medium_border_insets`
+and `normalize_collapsed_table_medium_border_insets_x` (and their helpers) are deleted from
+`layout_normalize.rs` and `LAYOUT_NORMALIZE_PASSES`. The render path and the layout dump now run 4
+passes (`painted_table_cell_text_baselines`, `fixed_table_widths`, `table_percent_widths`,
+`auto_table_compact_columns`). New Chrome-verified tests in `crates/vellora-core/tests/layout_fidelity.rs`:
+`adjacent_block_margins_collapse_without_whitespace_between_siblings` and
+`collapsed_table_keeps_half_its_outer_border_around_the_cells`. Both fail with the old passes
+(gap 10 instead of 40; insets 0 instead of 4). The kept browser-behaviour tests are still green
+with and without the passes.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T102146Z` (2026-10-21 10:21:46Z), 20/20 steps ok, run-all exit 0 (gate PASS), git `6e5cb8d` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/01-pagination-gaps --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/02-delete-noop-passes` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-02-delete-noop-passes-20261021T102146Z`; scratch evidence data (captured WPT inputs, dumps, both `layout_dump` binaries): `~/.cache/vellora-fidelity/step02-delete-noop-passes-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/01-pagination-gaps` (previous link; `gate-report.{json,md}`) | **PASS**, `acceptedRegressions: []` | improvement 3, gating 0, unchanged 15476 |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 110 gating, the same keys as `01-pagination-gaps`' post-hoc report; improvement 637 → 640 |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 100 gating, the same keys as `01`'s; improvement 712 → 715 |
+
+- **WPT**: pass 3073 → 3076, clean 2503 → 2506 (38.19 % / 31.10 % → 38.23 % / 31.14 %). Three tests
+  go fail → clean pass: `css/CSS2/box-display/multiple-block-in-inlines-margins-collapse.html`,
+  `css/CSS2/margin-padding-clear/margin-collapse-101.xht`, `-105.xht`. No pass is lost.
+- **Everything else is unchanged.** All 29 `vellora*.pdf` files of the run are byte-identical to
+  the step-01 run's (`attachments/pdf-identity-vs-01-pagination-gaps.json`). For every layout-diff
+  fixture, the final pre-pagination layer, every common layer, the Blitz tree and the pagination
+  trace equal step 01's (`attachments/layout-dump-identity-vs-01-pagination-gaps.json`). Verdict
+  totals are 131 / 52 / 4 / 3 (excluding diagnostic variants: 112 / 44 / 4 / 3). Canaries 30/30
+  caught, crashtests 239/239 ok, code checks green, layout-diff check failures limited to the 5
+  allowlisted ones.
+
+### Re-verification before deleting (CONFIRMED, 2026-10-21, same env)
+
+- **Corpus** (`attachments/corpus-layer-identity.json`): on the full dumps of the 9 layout-diff
+  fixtures of the step-01 run, each of the three passes changes 0 boxes and 0 runs. This covers
+  every box, not only the ones matched to Chrome.
+- **WPT** (`attachments/wpt-removed-passes.json`): the passes are *not* no-ops on WPT. A recording
+  bridge (scratch shim for `wpt/run.mjs --vellora`) captured the 10 592 distinct render inputs.
+  Dumped with the step-01 `layout_dump`, `vertical_margin_collapse` fires on 136 inputs and the two
+  inset passes on 16 each; 865 inputs are unsupported and cannot be dumped. Deleting the passes
+  changes the PDF of exactly those 152 inputs and of no other one.
+- **Are those firings right? Measured against Chrome** on the same prepared HTML (layout-diff's
+  Chrome snapshot, bundled fonts):
+  - `vertical_margin_collapse` subtracts min(margin-bottom, margin-top) from a gap Blitz has already
+    collapsed. It fires only when two collapsible-tag siblings have no whitespace text between them.
+    It touches 201 sibling pairs:
+    - 153: Blitz's gap equalled Chrome's (±0.5 px) and the pass broke it
+    - 20: the pass moved the gap further from Chrome's
+    - 6: closer to Chrome's without reaching it (display: table-* divs with negative gaps)
+    - 22: no Chrome box to compare (html_normalize wrappers)
+    - 0: the pass produced Chrome's gap
+  - The inset passes set 95 cell-to-table edge insets of 2..4.5 px to 0. Chrome's inset at those
+    edges is never 0: it is 1 to 110 px. For a real collapsed border it is half the outer border
+    (CSS 2.2 §17.6.2).
+  - layout-diff's absolute per-layer stats on the same 152 inputs:
+    - inset (y) pass: boxes 3 improved / 23 worsened
+    - inset (x) pass: boxes 4 / 16
+    - margin pass: boxes 153 / 83, runs 392 / 278
+
+    The margin pass's apparent improvements are compensating drift: where the pass wrongly lifts a
+    block that an earlier Blitz error placed too low, the block ends up closer to Chrome.
+- Chrome probe numbers for the tests: `attachments/chrome-probes-noop-passes.json`. The scratch
+  drivers are kept as text (`attachments/scratch-*.mjs.txt`; not part of the repo).
+
+The `committed-canary` self-test asserts that `02-delete-noop-passes` PASSes against
+`01-pagination-gaps` with no acceptances and that its only non-unchanged items are the 3 WPT
+improvements.

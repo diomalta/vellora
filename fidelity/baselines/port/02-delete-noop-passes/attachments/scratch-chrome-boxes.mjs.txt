@@ -1,0 +1,36 @@
+// Scratch probe (not part of the repo): Chrome border boxes of every element with an id and of
+// every table/td, for the probe documents in probes.json, laid out by the ONE shared reference
+// setup (fidelity/lib/chrome-reference.mjs: print media, bundled Liberation @font-face block),
+// viewport width = the A4 content width vellora hands Blitz (210 mm - 2 x 18 mm = 657.64 CSS px,
+// truncated to 657 like vellora's viewport).
+//   node chrome-boxes.mjs probes.json > chrome-boxes.json
+import { readFileSync } from "node:fs";
+import {
+  launchReferenceChrome,
+  referenceHtml,
+  withPrintPage,
+} from "../../../lib/chrome-reference.mjs";
+
+const probes = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const chrome = await launchReferenceChrome();
+const out = { chrome: chrome.version, userAgent: chrome.userAgent, viewport: [657, 1000], probes: {} };
+try {
+  for (const [name, html] of Object.entries(probes)) {
+    out.probes[name] = await withPrintPage(chrome, referenceHtml(html), async (page) => {
+      await page.setViewport({ width: 657, height: 1000, deviceScaleFactor: 1 });
+      return page.evaluate(() => {
+        const r = {};
+        let n = 0;
+        for (const el of document.querySelectorAll("[id], table, td")) {
+          const b = el.getBoundingClientRect();
+          const key = el.id || `${el.tagName.toLowerCase()}#${n++}`;
+          r[key] = { x: b.x, y: b.y, w: b.width, h: b.height };
+        }
+        return r;
+      });
+    });
+  }
+} finally {
+  await chrome.close();
+}
+console.log(JSON.stringify(out, null, 1));

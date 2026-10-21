@@ -1,0 +1,101 @@
+// Scratch (not part of the repo): layout-diff per-layer stats on WPT inputs.
+// For each captured WPT input whose PDF changed with the deletion (compare-wpt.json `changed`),
+// dump it with the PRE-deletion layout_dump (all 7 passes as layers), lay the SAME prepared HTML
+// out in Chrome (layout-diff's captureSnapshot: print media, viewport = the dump's, bundled
+// @font-face block + Ahem from the WPT server via <base>), run layout-diff's diffLayouts and keep
+// each deleted layer's effect_vs_previous (boxes/runs moved, better, worse, regressed vs Chrome).
+//   node wpt-layer-diff.mjs <layout_dump bin> <capture dir> <compare-wpt.json> <out.json>
+import { spawnSync } from "node:child_process";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { captureSnapshot, launchChrome, normalizeSnapshot } from "../../layout-diff/lib/chrome-snapshot.mjs";
+import { bundledFontFaceCss } from "../../layout-diff/lib/fonts.mjs";
+import { diffLayouts } from "../../layout-diff/lib/match.mjs";
+import { velloraModel } from "../../layout-diff/lib/vellora-model.mjs";
+import { startServer } from "../../wpt/lib/chrome.mjs";
+
+const repoRoot = new URL("../../..", import.meta.url).pathname.replace(/\/$/, "");
+const wptRoot = join(repoRoot, "fidelity", ".cache", "wpt");
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const DELETED = [
+  "vertical_margin_collapse",
+  "collapsed_table_medium_border_insets",
+  "collapsed_table_medium_border_insets_x",
+];
+const [bin, capture, cmpFile, outFile] = process.argv.slice(2);
+const cmp = JSON.parse(readFileSync(cmpFile, "utf8"));
+const fontCss = bundledFontFaceCss(repoRoot);
+const { server, origin } = await startServer(wptRoot);
+const browser = await launchChrome(CHROME);
+const rows = [];
+try {
+  for (const c of cmp.changed) {
+    const dir = join(capture, "inputs", c.key);
+    const meta = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8"));
+    const out = join(tmpdir(), `step02-${c.key}.json`);
+    const args = ["--html", join(dir, "in.html"), "--out", out];
+    for (const f of meta.fonts) args.push("--font", join(capture, "fonts", f));
+    for (const [src, h] of Object.entries(meta.images)) args.push("--image", `${src}=${join(capture, "images", h)}`);
+    if (meta.baseUrl) args.push("--base-url", meta.baseUrl);
+    const r = spawnSync(bin, args, { encoding: "utf8" });
+    if (r.status !== 0) {
+      rows.push({ url: c.url, error: r.stderr.slice(0, 200) });
+      continue;
+    }
+    const dump = JSON.parse(readFileSync(out, "utf8"));
+    rmSync(out);
+    const rel = c.url;
+    const base = `${origin}/${rel.split("/").slice(0, -1).join("/")}/`;
+    const html = readFileSync(join(dir, "in.html"), "utf8");
+    const inject = `<base href="${base}"><style>@font-face { font-family: Ahem; src: url(/fonts/Ahem.ttf); }</style><style data-vellora-fidelity-fonts>\n${fontCss}\n</style>`;
+    const browserHtml = /<head(\s[^>]*)?>/i.test(html)
+      ? html.replace(/<head(\s[^>]*)?>/i, (t) => `${t}${inject}`)
+      : `<head>${inject}</head>${html}`;
+    const { snapshot } = await captureSnapshot(browser, browserHtml, {
+      width: dump.viewport.width_px,
+      height: dump.viewport.height_px,
+    });
+    const result = diffLayouts({
+      chrome: normalizeSnapshot(snapshot),
+      vellora: velloraModel(dump),
+      baselines: null,
+    });
+    const eff = {};
+    for (const s of result.layer_stats) {
+      if (!DELETED.includes(s.layer)) continue;
+      const e = s.effect_vs_previous;
+      eff[s.layer] = {
+        boxes_moved: e.boxes_moved,
+        boxes_improved: e.boxes_improved,
+        boxes_worsened: e.boxes_worsened,
+        boxes_regressed: e.boxes_regressed,
+        runs_moved: e.runs_moved,
+        runs_improved: e.runs_improved,
+        runs_worsened: e.runs_worsened,
+        runs_regressed: e.runs_regressed,
+        top_box_regressions: (e.top_box_regressions ?? []).slice(0, 2),
+      };
+    }
+    rows.push({ url: rel, fired: c.fired, effects: eff });
+    process.stderr.write(".");
+  }
+} finally {
+  await browser.close();
+  server.close();
+}
+const agg = {};
+for (const r of rows) {
+  if (!r.effects) continue;
+  for (const [layer, e] of Object.entries(r.effects)) {
+    const a = (agg[layer] ??= { inputs: 0, inputsWithMatchedMoves: 0, inputsNetWorse: 0, inputsNetBetter: 0, boxes_moved: 0, boxes_improved: 0, boxes_worsened: 0, boxes_regressed: 0, runs_moved: 0, runs_improved: 0, runs_worsened: 0, runs_regressed: 0 });
+    a.inputs++;
+    if (e.boxes_moved || e.runs_moved) a.inputsWithMatchedMoves++;
+    const net = e.boxes_improved + e.runs_improved - e.boxes_worsened - e.runs_worsened;
+    if (net < 0) a.inputsNetWorse++;
+    if (net > 0) a.inputsNetBetter++;
+    for (const k of Object.keys(a)) if (k in e && typeof e[k] === "number") a[k] += e[k];
+  }
+}
+writeFileSync(outFile, JSON.stringify({ agg, rows }, null, 1));
+console.log(JSON.stringify({ agg, errors: rows.filter((r) => r.error).length }, null, 1));

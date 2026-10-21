@@ -1,0 +1,48 @@
+// For each vellora layout dump given on the command line, report, per layout_normalize pass, how
+// many boxes (x,y,w,h,margins) and text runs (origin, advance) differ from the previous layer.
+// Every code path of the three passes under review that mutates anything also mutates a box's
+// x/y/width/height, so "0 boxes and 0 runs differ" == "the pass did not fire".
+//   node layer-identity.mjs <dump.json>... [--json]
+import { readFileSync } from "node:fs";
+
+export function layerEffects(dump) {
+  const out = {};
+  for (let i = 1; i < dump.layers.length; i++) {
+    const prev = dump.layers[i - 1];
+    const cur = dump.layers[i];
+    let boxes = 0;
+    let runs = 0;
+    const n = Math.max(prev.boxes.length, cur.boxes.length);
+    for (let j = 0; j < n; j++) {
+      if (JSON.stringify(prev.boxes[j]) !== JSON.stringify(cur.boxes[j])) boxes++;
+    }
+    const m = Math.max(prev.runs.length, cur.runs.length);
+    for (let j = 0; j < m; j++) {
+      if (JSON.stringify(prev.runs[j]) !== JSON.stringify(cur.runs[j])) runs++;
+    }
+    out[cur.name] = { boxes, runs, totalBoxes: cur.boxes.length, totalRuns: cur.runs.length };
+  }
+  return out;
+}
+
+if (process.argv[1]?.endsWith("layer-identity.mjs")) {
+  const files = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  const asJson = process.argv.includes("--json");
+  const all = {};
+  for (const f of files) {
+    const dump = JSON.parse(readFileSync(f, "utf8"));
+    all[f] = layerEffects(dump);
+  }
+  if (asJson) {
+    console.log(JSON.stringify(all, null, 1));
+  } else {
+    for (const [f, eff] of Object.entries(all)) {
+      console.log(f);
+      for (const [name, e] of Object.entries(eff)) {
+        console.log(
+          `  ${name.padEnd(40)} boxes ${e.boxes}/${e.totalBoxes}  runs ${e.runs}/${e.totalRuns}`,
+        );
+      }
+    }
+  }
+}

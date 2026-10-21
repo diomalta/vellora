@@ -1,0 +1,64 @@
+// Scratch shim for fidelity/wpt/run.mjs --vellora: the real vellora build of the worktree, with a
+// recording NativeBridge around the real addon bridge. For every bridge call (the templated HTML +
+// resolved options that reach the Rust core) it stores the input once (content-addressed) and
+// appends { key, pdf sha256 | error } to a per-process JSONL log. Not part of the repo.
+//   VELLORA_SHIM_DIST=<worktree>/packages/vellora/dist/index.js
+//   VELLORA_SHIM_OUT=<dir>   (inputs/<key>/..., fonts/<sha>, images/<sha>, log-<pid>.jsonl)
+//   VELLORA_SHIM_SAVE_INPUTS=0  only log hashes (second run)
+import { createHash } from "node:crypto";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const dist = process.env.VELLORA_SHIM_DIST;
+const out = process.env.VELLORA_SHIM_OUT;
+const saveInputs = process.env.VELLORA_SHIM_SAVE_INPUTS !== "0";
+if (!dist || !out) throw new Error("VELLORA_SHIM_DIST and VELLORA_SHIM_OUT are required");
+const v = await import(pathToFileURL(dist).href);
+
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+mkdirSync(join(out, "inputs"), { recursive: true });
+mkdirSync(join(out, "fonts"), { recursive: true });
+mkdirSync(join(out, "images"), { recursive: true });
+const log = join(out, `log-${process.pid}.jsonl`);
+
+const real = new v.NativeAddonBridge();
+v.setNativeBridge({
+  async render(html, opts) {
+    const fonts = (opts.fonts ?? []).map((f) => {
+      const h = sha(f);
+      if (saveInputs && !existsSync(join(out, "fonts", h))) writeFileSync(join(out, "fonts", h), f);
+      return h;
+    });
+    const images = {};
+    for (const [src, bytes] of Object.entries(opts.images ?? {})) {
+      const h = sha(bytes);
+      if (saveInputs && !existsSync(join(out, "images", h)))
+        writeFileSync(join(out, "images", h), bytes);
+      images[src] = h;
+    }
+    const meta = { fonts, images, baseUrl: opts.baseUrl ?? null, pdfa: opts.pdfa ?? null };
+    const key = sha(`${html}\u0000${JSON.stringify(meta)}`);
+    if (saveInputs) {
+      const dir = join(out, "inputs", key);
+      if (!existsSync(join(dir, "meta.json"))) {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, "in.html"), html);
+        writeFileSync(join(dir, "meta.json"), JSON.stringify(meta));
+      }
+    }
+    try {
+      const pdf = await real.render(html, opts);
+      appendFileSync(log, `${JSON.stringify({ key, pdf: sha(pdf) })}\n`);
+      return pdf;
+    } catch (err) {
+      appendFileSync(
+        log,
+        `${JSON.stringify({ key, error: String(err?.message ?? err).slice(0, 200) })}\n`,
+      );
+      throw err;
+    }
+  },
+});
+
+export * from "file://<repo>/packages/vellora/dist/index.js";

@@ -132,3 +132,32 @@ test("port/01-pagination-gaps passes vs port/00-start only with its acceptedRegr
   const refw = item(r, "notification|REF-W|oracles:layout|plain|criterion#1|maxMm");
   assert.deepEqual([refw.class, refw.before, refw.after], ["improvement", 8.54, 1.63]);
 });
+
+test("port/02-delete-noop-passes passes vs port/01-pagination-gaps with no acceptedRegressions", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "01-pagination-gaps"));
+  const step = loadBaselineDir(join(baselines, "port", "02-delete-noop-passes"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/01-pagination-gaps");
+  assert.deepEqual(step.manifest.acceptedRegressions, []);
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const r = compareSnapshots(prev, step);
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The only change: 3 WPT margin-collapse tests fail -> clean pass (the removed
+  // vertical_margin_collapse pass collapsed margins Blitz had already collapsed).
+  assert.deepEqual(
+    r.items
+      .filter((x) => x.class !== "unchanged")
+      .map((x) => `${x.class} ${x.key}`)
+      .sort(),
+    [
+      "improvement wpt|css/CSS2/box-display/multiple-block-in-inlines-margins-collapse.html",
+      "improvement wpt|css/CSS2/margin-padding-clear/margin-collapse-101.xht",
+      "improvement wpt|css/CSS2/margin-padding-clear/margin-collapse-105.xht",
+    ],
+  );
+});

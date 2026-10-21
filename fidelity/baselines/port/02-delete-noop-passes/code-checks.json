@@ -1,0 +1,48 @@
+{
+  "checks": [
+    {
+      "id": "cargo-test",
+      "command": "cargo test --workspace --no-fail-fast",
+      "why": "npm run test:rust (= cargo test), every crate incl. crates/vellora-core/tests/layout_dump.rs",
+      "exitCode": 0,
+      "status": "pass",
+      "error": null,
+      "durationS": 1.8,
+      "failures": [],
+      "log": "fidelity/results/run-all/02-delete-noop-passes/code-checks/cargo-test.log"
+    },
+    {
+      "id": "vitest",
+      "command": "npm run test:ts",
+      "why": "npm run test:ts (vitest run)",
+      "exitCode": 0,
+      "status": "pass",
+      "error": null,
+      "durationS": 2.6,
+      "failures": [],
+      "log": "fidelity/results/run-all/02-delete-noop-passes/code-checks/vitest.log"
+    },
+    {
+      "id": "lint",
+      "command": "npm run lint",
+      "why": "clippy -D warnings + cargo fmt --check + biome check",
+      "exitCode": 0,
+      "status": "pass",
+      "error": null,
+      "durationS": 0.6,
+      "failures": [],
+      "log": "fidelity/results/run-all/02-delete-noop-passes/code-checks/lint.log"
+    },
+    {
+      "id": "fidelity-test",
+      "command": "npm --prefix fidelity test",
+      "why": "node --test self-tests of every fidelity area (incl. the gate's own)",
+      "exitCode": 0,
+      "status": "pass",
+      "error": null,
+      "durationS": 3,
+      "failures": [],
+      "log": "fidelity/results/run-all/02-delete-noop-passes/code-checks/fidelity-test.log"
+    }
+  ]
+}

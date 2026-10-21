@@ -1,0 +1,33 @@
+// Scratch probe (not part of the repo): vellora's final pre-pagination boxes (last layout_normalize
+// layer of a layout_dump) for the elements with an id / table / td of each probe in probes.json.
+//   node vellora-boxes.mjs <layout_dump bin> probes.json <workdir>
+import { spawnSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
+const [bin, probesFile, work] = process.argv.slice(2);
+const probes = JSON.parse(readFileSync(probesFile, "utf8"));
+const out = {};
+for (const [name, html] of Object.entries(probes)) {
+  const h = join(work, `${name}.html`);
+  const d = join(work, `${name}.dump.json`);
+  writeFileSync(h, html);
+  const r = spawnSync(bin, ["--html", h, "--out", d], { encoding: "utf8" });
+  if (r.status !== 0) throw new Error(r.stderr);
+  const dump = JSON.parse(readFileSync(d, "utf8"));
+  const nodes = new Map(dump.nodes.map((n) => [n.id, n]));
+  const res = { layers: dump.layers.map((l) => l.name), boxes: {} };
+  const last = dump.layers.at(-1);
+  const fields = String(last.box_fields).split(",");
+  const f = Object.fromEntries(fields.map((k, i) => [k, i]));
+  let n = 0;
+  for (const b of last.boxes) {
+    const node = nodes.get(b[f.node_id]);
+    if (!node || node.kind !== "element") continue;
+    if (!(node.id_attr || node.tag === "table" || node.tag === "td")) continue;
+    const key = node.id_attr || `${node.tag}#${n++}`;
+    res.boxes[key] = { x: b[f.x], y: b[f.y], w: b[f.w], h: b[f.h] };
+  }
+  out[name] = res;
+}
+console.log(JSON.stringify(out, null, 1));

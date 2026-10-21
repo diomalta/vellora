@@ -1,0 +1,1109 @@
+{
+  "pages": {
+    "vellora": 1,
+    "chrome": 2
+  },
+  "words": {
+    "vellora": 137,
+    "chrome": 175,
+    "aligned": 137
+  },
+  "pairs": [
+    {
+      "k": "[Product#1",
+      "text": "[Product",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 1.97
+    },
+    {
+      "k": "Name]#1",
+      "text": "Name]",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 1.97
+    },
+    {
+      "k": "Hi#1",
+      "text": "Hi",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 6.52
+    },
+    {
+      "k": "Maria#1",
+      "text": "Maria",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 6.52
+    },
+    {
+      "k": "Exemplo,#1",
+      "text": "Exemplo,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 6.52
+    },
+    {
+      "k": "Thanks#1",
+      "text": "Thanks",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "for#1",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "using#1",
+      "text": "using",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "[Product#2",
+      "text": "[Product",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Name].#1",
+      "text": "Name].",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "This#1",
+      "text": "This",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "email#1",
+      "text": "email",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "is#1",
+      "text": "is",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "the#1",
+      "text": "the",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "receipt#1",
+      "text": "receipt",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "for#2",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "your#1",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "purchase.#1",
+      "text": "purchase.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "No#1",
+      "text": "No",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "payment#1",
+      "text": "payment",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "is#2",
+      "text": "is",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "due.#1",
+      "text": "due.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "This#2",
+      "text": "This",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "purchase#1",
+      "text": "purchase",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "will#1",
+      "text": "will",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "appear#1",
+      "text": "appear",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "as#1",
+      "text": "as",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "“[Credit#1",
+      "text": "“[Credit",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Card#1",
+      "text": "Card",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Statement#1",
+      "text": "Statement",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Name]”#1",
+      "text": "Name]”",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "on#1",
+      "text": "on",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "your#2",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "credit#1",
+      "text": "credit",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "card#1",
+      "text": "card",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "statement#1",
+      "text": "statement",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "for#3",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "your#3",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Visa#1",
+      "text": "Visa",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "ending#1",
+      "text": "ending",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "in#1",
+      "text": "in",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "4242.#1",
+      "text": "4242.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "Need#1",
+      "text": "Need",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "to#1",
+      "text": "to",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "update#1",
+      "text": "update",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "your#4",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "payment#2",
+      "text": "payment",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "information?#1",
+      "text": "information?",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 5.72
+    },
+    {
+      "k": "10%#1",
+      "text": "10%",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 8.77
+    },
+    {
+      "k": "off#1",
+      "text": "off",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 8.77
+    },
+    {
+      "k": "your#5",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 8.77
+    },
+    {
+      "k": "next#1",
+      "text": "next",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 8.77
+    },
+    {
+      "k": "purchase!#1",
+      "text": "purchase!",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 8.77
+    },
+    {
+      "k": "Thanks#2",
+      "text": "Thanks",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "for#4",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "your#6",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "support!#1",
+      "text": "support!",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "Here&apos;s#1",
+      "text": "Here&apos;s",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "a#1",
+      "text": "a",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "coupon#1",
+      "text": "coupon",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "for#5",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "10%#2",
+      "text": "10%",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "off#2",
+      "text": "off",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "your#7",
+      "text": "your",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "next#2",
+      "text": "next",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.53,
+      "dy": 7.84
+    },
+    {
+      "k": "purchase#2",
+      "text": "purchase",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "if#1",
+      "text": "if",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "used#1",
+      "text": "used",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "by#1",
+      "text": "by",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "November#1",
+      "text": "November",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "15,#1",
+      "text": "15,",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "2026.#1",
+      "text": "2026.",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.52,
+      "dy": 7.09
+    },
+    {
+      "k": "Use#1",
+      "text": "Use",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 10.22
+    },
+    {
+      "k": "this#1",
+      "text": "this",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 10.22
+    },
+    {
+      "k": "discount#1",
+      "text": "discount",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 10.22
+    },
+    {
+      "k": "now...#1",
+      "text": "now...",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.9,
+      "dy": 10.22
+    },
+    {
+      "k": "#RCPT-2026-000417#1",
+      "text": "#RCPT-2026-000417",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.22,
+      "dy": 16.71
+    },
+    {
+      "k": "October#1",
+      "text": "October",
+      "page": 1,
+      "samePage": true,
+      "dx": -4.28,
+      "dy": 16.71
+    },
+    {
+      "k": "15,#2",
+      "text": "15,",
+      "page": 1,
+      "samePage": true,
+      "dx": -4.28,
+      "dy": 16.71
+    },
+    {
+      "k": "2026#1",
+      "text": "2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -4.28,
+      "dy": 16.71
+    },
+    {
+      "k": "Description#1",
+      "text": "Description",
+      "page": 1,
+      "samePage": true,
+      "dx": 5.47,
+      "dy": 21.69
+    },
+    {
+      "k": "Amount#1",
+      "text": "Amount",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.52,
+      "dy": 21.69
+    },
+    {
+      "k": "Pro#1",
+      "text": "Pro",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "plan#1",
+      "text": "plan",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "—#1",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "monthly#1",
+      "text": "monthly",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "subscription#1",
+      "text": "subscription",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "(Oct#1",
+      "text": "(Oct",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "15#1",
+      "text": "15",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "–#1",
+      "text": "–",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "Nov#1",
+      "text": "Nov",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "14,#1",
+      "text": "14,",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "2026)#1",
+      "text": "2026)",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 23.59
+    },
+    {
+      "k": "$49.00#1",
+      "text": "$49.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.53,
+      "dy": 16.97
+    },
+    {
+      "k": "$27.00#1",
+      "text": "$27.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.53,
+      "dy": 18.47
+    },
+    {
+      "k": "Additional#1",
+      "text": "Additional",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 25.09
+    },
+    {
+      "k": "seats#1",
+      "text": "seats",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 25.09
+    },
+    {
+      "k": "×#1",
+      "text": "×",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 25.09
+    },
+    {
+      "k": "3#1",
+      "text": "3",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 25.09
+    },
+    {
+      "k": "$15.00#1",
+      "text": "$15.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.53,
+      "dy": 19.97
+    },
+    {
+      "k": "Priority#1",
+      "text": "Priority",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 26.59
+    },
+    {
+      "k": "support#1",
+      "text": "support",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 26.59
+    },
+    {
+      "k": "add-on#1",
+      "text": "add-on",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 26.59
+    },
+    {
+      "k": "−$10.00#1",
+      "text": "−$10.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.53,
+      "dy": 21.47
+    },
+    {
+      "k": "Credit#1",
+      "text": "Credit",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 28.09
+    },
+    {
+      "k": "applied#1",
+      "text": "applied",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 28.09
+    },
+    {
+      "k": "from#1",
+      "text": "from",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 28.09
+    },
+    {
+      "k": "referral#1",
+      "text": "referral",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.72,
+      "dy": 28.09
+    },
+    {
+      "k": "Total#1",
+      "text": "Total",
+      "page": 1,
+      "samePage": true,
+      "dx": 9.97,
+      "dy": 29.72
+    },
+    {
+      "k": "$81.00#1",
+      "text": "$81.00",
+      "page": 1,
+      "samePage": true,
+      "dx": -6.53,
+      "dy": 29.72
+    },
+    {
+      "k": "If#1",
+      "text": "If",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "you#1",
+      "text": "you",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "have#1",
+      "text": "have",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "any#1",
+      "text": "any",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "questions#1",
+      "text": "questions",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "about#1",
+      "text": "about",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "this#2",
+      "text": "this",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "receipt,#1",
+      "text": "receipt,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "simply#1",
+      "text": "simply",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "reply#1",
+      "text": "reply",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "to#2",
+      "text": "to",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "this#3",
+      "text": "this",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "email#2",
+      "text": "email",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "or#1",
+      "text": "or",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "reach#1",
+      "text": "reach",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "out#1",
+      "text": "out",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "to#3",
+      "text": "to",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "our#1",
+      "text": "our",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "support#2",
+      "text": "support",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "team#1",
+      "text": "team",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "for#6",
+      "text": "for",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.96,
+      "dy": 34.22
+    },
+    {
+      "k": "help.#1",
+      "text": "help.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.96,
+      "dy": 34.22
+    },
+    {
+      "k": "Cheers,#1",
+      "text": "Cheers,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "The#1",
+      "text": "The",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "[Product#3",
+      "text": "[Product",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "Name]#2",
+      "text": "Name]",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    },
+    {
+      "k": "team#2",
+      "text": "team",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.97,
+      "dy": 34.22
+    }
+  ]
+}
