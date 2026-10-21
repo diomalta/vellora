@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Boleto de Pagamento — {{ titulo.nossoNumero }}</title>
+  <!--
+    Boleto de pagamento authored from primary specs (fidelity/corpus/SOURCES.md):
+      [BCB-2926] BCB Carta-Circular 2.926/2000 (Ficha de Compensacao dimensions, fields, barcode)
+      [BCB-3598] BCB Circular 3.598/2012 art. 4 par. 2 (minimum information)
+      [CAIXA]    Caixa 67.119 v014 (OUT/2022) — field list, campo livre, check digits, linha digitavel
+    Geometry contract checked by fidelity/ACCEPTANCE.md (all lengths in mm):
+      page A4, @page margin 5 mm -> content box 200 x 287 mm
+      .recibo 175 + .corte 6 + .ficha 105 = 286 mm (1 mm slack keeps the ficha on page 1)
+      .ficha: 200 x 105 mm [BCB-2926 03.a: 95-108 x 170-216]; at the bottom of the sheet [BCB-2926 05.b]
+      barcode: starts 5.0 mm from the ficha left edge, 103 x 13 mm, centre 12 mm above the ficha
+               bottom edge [BCB-2926 V]; ITF elements come from data.json (codigoBarras.elementos)
+      bank code: 20.6pt bold -> digit height 20.6pt x 0.688 em = 5.0 mm [BCB-2926 I]; linha digitavel
+               14.5pt -> digit height 3.52 mm [BCB-2926 II: 3.5-4 mm]; "Ficha de Compensacao" 7pt -> 1.8 mm [<= 2 mm, BCB-2926 V]
+               (Liberation Sans digit/cap height 0.688 em, measured from the bundled TTF with fontTools)
+    Bars are flex items with explicit widths; this is the fractional-geometry probe of the corpus.
+  -->
+  <style>
+    @page {
+      size: A4;
+      margin: 5mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Liberation Sans", Arial, sans-serif;
+      font-size: 8pt;
+      line-height: 1.15;
+      color: #000;
+    }
+
+    .recibo {
+      height: 175mm;
+      overflow: hidden;
+    }
+
+    .corte {
+      height: 6mm;
+      border-bottom: 0.3mm dashed #000;
+      font-size: 6pt;
+      text-align: right;
+      padding-top: 2.5mm;
+    }
+
+    /* The barcode zone is anchored to the ficha bottom (margin-top: auto in a column flexbox), so
+       the mandated "12 mm from the ficha bottom to the barcode centre" does not depend on how much
+       the grid above it grows in a given engine. */
+    .ficha {
+      height: 105mm;
+      width: 200mm;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ficha > table {
+      flex: none;
+    }
+
+    table.cab {
+      width: 200mm;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table.cab td {
+      height: 9mm;
+      padding: 0 1mm;
+      vertical-align: bottom;
+      border-bottom: 0.5mm solid #000;
+    }
+
+    td.banco-id {
+      width: 26mm;
+      font-size: 7.5pt;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    td.banco-cod {
+      width: 21mm;
+      font-size: 20.6pt;
+      padding: 0;
+      white-space: nowrap;
+      font-weight: bold;
+      text-align: center;
+      border-left: 0.5mm solid #000;
+      border-right: 0.5mm solid #000;
+    }
+
+    td.linha {
+      width: 153mm;
+      font-size: 14.5pt;
+      padding: 0 0.5mm;
+      text-align: right;
+      word-spacing: 0.278em;
+      white-space: nowrap;
+    }
+
+    table.grade {
+      width: 200mm;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table.grade td {
+      border: 0.2mm solid #000;
+      padding: 0.3mm 1mm 0 1mm;
+      vertical-align: top;
+      overflow: hidden;
+    }
+
+    .r7 td {
+      height: 7mm;
+    }
+
+    .r9 td {
+      height: 9mm;
+    }
+
+    .r65 td {
+      height: 6.5mm;
+    }
+
+    .r6 td {
+      height: 6mm;
+    }
+
+    .r10 td {
+      height: 9.5mm;
+    }
+
+    .r45 td {
+      height: 4mm;
+    }
+
+    .rotulo {
+      display: block;
+      font-size: 6pt;
+      line-height: 1.1;
+    }
+
+    .valor {
+      display: block;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .valor.negrito {
+      font-weight: bold;
+    }
+
+    .dir .valor {
+      text-align: right;
+    }
+
+    .instrucoes .valor {
+      font-size: 8pt;
+    }
+
+    .zona {
+      flex: none;
+      margin-top: auto;
+      height: 22.5mm;
+      width: 200mm;
+      display: flex;
+    }
+
+    .zona-barras {
+      flex: none;
+      width: 118mm;
+    }
+
+    .zona-autent {
+      flex: none;
+      width: 82mm;
+      font-size: 6pt;
+      text-align: right;
+      padding-top: 0.5mm;
+    }
+
+    .itf {
+      display: flex;
+      height: 13mm;
+      margin-top: 4mm;
+      margin-left: 5mm;
+    }
+
+    .itf div {
+      flex: none;
+      height: 13mm;
+    }
+
+    .itf .b {
+      background: #000;
+    }
+
+    .itf .s {
+      background: #fff;
+    }
+
+    .via {
+      margin-left: 5mm;
+      margin-top: 1mm;
+      font-size: 7pt;
+    }
+
+    h1.recibo-titulo {
+      font-size: 9pt;
+      margin: 0 0 1mm 0;
+      text-align: right;
+    }
+
+    table.demo {
+      width: 200mm;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 4mm;
+    }
+
+    table.demo th,
+    table.demo td {
+      border-bottom: 0.2mm solid #000;
+      padding: 0.8mm 1mm;
+      font-size: 8pt;
+      text-align: left;
+    }
+
+    table.demo th {
+      font-size: 6pt;
+    }
+
+    table.demo .num {
+      text-align: right;
+    }
+
+    .aviso {
+      margin-top: 4mm;
+      font-size: 7pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== RECIBO DO PAGADOR (Caixa 3.2 required fields) ===================== -->
+  <div class="recibo">
+    <h1 class="recibo-titulo">Recibo do Pagador</h1>
+    <table class="cab">
+      <tr>
+        <td class="banco-id">{{ banco.identificacao }}</td>
+        <td class="banco-cod">{{ banco.codigoCompensacao }}</td>
+        <td class="linha">{{ linhaDigitavel.formatada }}</td>
+      </tr>
+    </table>
+    <table class="grade">
+      <colgroup>
+        <col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 50mm">
+      </colgroup>
+      <tr class="r9">
+        <td colspan="3"><span class="rotulo">Beneficiário</span><span class="valor negrito">{{ beneficiario.nome }}</span></td>
+        <td colspan="2"><span class="rotulo">CPF/CNPJ do Beneficiário</span><span class="valor">{{ beneficiario.cnpj }}</span></td>
+        <td class="dir"><span class="rotulo">Agência / Código do Beneficiário</span><span class="valor">{{ beneficiario.agenciaCodigo }}</span></td>
+      </tr>
+      <tr class="r9">
+        <td colspan="6"><span class="rotulo">Endereço do Beneficiário</span><span class="valor">{{ beneficiario.enderecoLinha }} — {{ beneficiario.cidadeUfCep }}</span></td>
+      </tr>
+      <tr class="r9">
+        <td><span class="rotulo">Data do documento</span><span class="valor">{{ titulo.dataDocumento }}</span></td>
+        <td><span class="rotulo">Nr. do documento</span><span class="valor">{{ titulo.numeroDocumento }}</span></td>
+        <td><span class="rotulo">Aceite</span><span class="valor">{{ titulo.aceite }}</span></td>
+        <td colspan="2"><span class="rotulo">Data do processamento</span><span class="valor">{{ titulo.dataProcessamento }}</span></td>
+        <td class="dir"><span class="rotulo">Nosso Número</span><span class="valor">{{ titulo.nossoNumero }}</span></td>
+      </tr>
+      <tr class="r9">
+        <td colspan="4"><span class="rotulo">Pagador</span><span class="valor">{{ pagador.nome }}</span></td>
+        <td colspan="2"><span class="rotulo">CPF/CNPJ do Pagador</span><span class="valor">{{ pagador.cpf }}</span></td>
+      </tr>
+      <tr class="r9">
+        <td><span class="rotulo">Carteira</span><span class="valor">{{ titulo.carteira }}</span></td>
+        <td><span class="rotulo">Espécie</span><span class="valor">{{ titulo.moeda }}</span></td>
+        <td><span class="rotulo">Vencimento</span><span class="valor negrito">{{ titulo.vencimento }}</span></td>
+        <td colspan="2" class="dir"><span class="rotulo">Valor do Documento</span><span class="valor negrito">{{ titulo.valor }}</span></td>
+        <td class="dir"><span class="rotulo">Valor Cobrado</span><span class="valor">&nbsp;</span></td>
+      </tr>
+    </table>
+
+    <table class="demo">
+      <colgroup><col style="width: 30mm"><col style="width: 130mm"><col style="width: 40mm"></colgroup>
+      <thead>
+        <tr><th>Referência</th><th>Demonstrativo</th><th class="num">Valor (R$)</th></tr>
+      </thead>
+      <tbody>
+        {% for item in demonstrativo %}
+        <tr><td>{{ item.referencia }}</td><td>{{ item.descricao }}</td><td class="num">{{ item.valor }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="aviso">Autenticação Mecânica — Recibo do Pagador</p>
+  </div>
+
+  <div class="corte">Corte na linha pontilhada</div>
+
+  <!-- ===================== FICHA DE COMPENSACAO (BCB-2926; Caixa 4.1.2 Modelo II) ===================== -->
+  <div class="ficha">
+    <table class="cab">
+      <tr>
+        <td class="banco-id">{{ banco.identificacao }}</td>
+        <td class="banco-cod">{{ banco.codigoCompensacao }}</td>
+        <td class="linha">{{ linhaDigitavel.formatada }}</td>
+      </tr>
+    </table>
+    <table class="grade">
+      <colgroup>
+        <col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 30mm"><col style="width: 50mm">
+      </colgroup>
+      <tr class="r7">
+        <td colspan="5"><span class="rotulo">Local de pagamento</span><span class="valor">{{ localPagamento }}</span></td>
+        <td class="dir"><span class="rotulo">Vencimento</span><span class="valor negrito">{{ titulo.vencimento }}</span></td>
+      </tr>
+      <tr class="r9">
+        <td colspan="5"><span class="rotulo">Beneficiário</span><span class="valor">{{ beneficiario.nome }} — CNPJ {{ beneficiario.cnpj }}</span><span class="rotulo">{{ beneficiario.enderecoLinha }} — {{ beneficiario.cidadeUfCep }}</span></td>
+        <td class="dir"><span class="rotulo">Agência / Código do Beneficiário</span><span class="valor">{{ beneficiario.agenciaCodigo }}</span></td>
+      </tr>
+      <tr class="r65">
+        <td><span class="rotulo">Data do documento</span><span class="valor">{{ titulo.dataDocumento }}</span></td>
+        <td><span class="rotulo">Nr. do Documento</span><span class="valor">{{ titulo.numeroDocumento }}</span></td>
+        <td><span class="rotulo">Espécie DOC</span><span class="valor">{{ titulo.especie }}</span></td>
+        <td><span class="rotulo">Aceite</span><span class="valor">{{ titulo.aceite }}</span></td>
+        <td><span class="rotulo">Data do processamento</span><span class="valor">{{ titulo.dataProcessamento }}</span></td>
+        <td class="dir"><span class="rotulo">Nosso Número</span><span class="valor">{{ titulo.nossoNumero }}</span></td>
+      </tr>
+      <tr class="r65">
+        <td><span class="rotulo">Uso do Banco</span><span class="valor">&nbsp;</span></td>
+        <td><span class="rotulo">Carteira</span><span class="valor">{{ titulo.carteira }}</span></td>
+        <td><span class="rotulo">Espécie Moeda</span><span class="valor">{{ titulo.moeda }}</span></td>
+        <td><span class="rotulo">Qtde moeda</span><span class="valor">&nbsp;</span></td>
+        <td><span class="rotulo">xValor</span><span class="valor">&nbsp;</span></td>
+        <td class="dir"><span class="rotulo">(=) Valor do Documento</span><span class="valor negrito">{{ titulo.valor }}</span></td>
+      </tr>
+      <tr class="r6">
+        <td colspan="5" rowspan="5" class="instrucoes"><span class="rotulo">Instruções (Texto de Responsabilidade do Beneficiário)</span>{% for linha in instrucoes %}<span class="valor">{{ linha }}</span>{% endfor %}</td>
+        <td class="dir"><span class="rotulo">(-) Desconto</span></td>
+      </tr>
+      <tr class="r6">
+        <td class="dir"><span class="rotulo">(-) Outras Deduções/Abatimento</span></td>
+      </tr>
+      <tr class="r6">
+        <td class="dir"><span class="rotulo">(+) Mora/Multa/Juros</span></td>
+      </tr>
+      <tr class="r6">
+        <td class="dir"><span class="rotulo">(+) Outros Acréscimos</span></td>
+      </tr>
+      <tr class="r6">
+        <td class="dir"><span class="rotulo">(=) Valor Cobrado</span></td>
+      </tr>
+      <tr class="r10">
+        <td colspan="6"><span class="rotulo">Pagador</span><span class="valor">{{ pagador.nome }} — CPF {{ pagador.cpf }}</span><span class="rotulo">{{ pagador.enderecoLinha }} — {{ pagador.cidadeUfCep }}</span></td>
+      </tr>
+      <tr class="r45">
+        <td colspan="6"><span class="rotulo">Sacador/Avalista</span></td>
+      </tr>
+    </table>
+    <div class="zona">
+      <div class="zona-barras">
+        <div class="itf">{% for e in codigoBarras.elementos %}<div class="{{ e.k }}" style="width: {{ e.w }}"></div>{% endfor %}</div>
+        <div class="via">Ficha de Compensação</div>
+      </div>
+      <div class="zona-autent">Autenticação Mecânica - Ficha de Compensação</div>
+    </div>
+  </div>
+
+</body>
+</html>

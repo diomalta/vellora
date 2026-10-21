@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Extrato e relatório — {{ titular }}</title>
+  <!--
+    Self-authored TEXT stress document (fidelity/corpus). Exercises, on purpose:
+      - pt-BR diacritics (pangram), U+2212 minus, NBSP, en/em dashes, curly quotes, "ª"/"º"
+      - ligature candidates (fi, fl, ff, ffi, ffl) in Liberation Sans / Serif
+      - very long words and unbreakable tokens in narrow boxes (overflow-wrap: anywhere)
+      - mixed weights and families on one line (regular / bold / serif / mono / italic request:
+        the renderer bundles no italic face, so <em> documents what the engine does)
+      - right-aligned money columns (debit / credit / balance) with 1-9 digit widths
+      - a multi-page table: repeated <thead>, one <tbody> per month with break-inside: avoid
+      - break-before: page for the closing section; @bottom-center page counter
+    All values come from data.json (derived; see fidelity/corpus/build-fixtures.mjs).
+  -->
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 15mm 18mm 15mm;
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-family: "Liberation Sans", Arial, sans-serif;
+        font-size: 8pt;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: "Liberation Sans", Arial, sans-serif;
+      font-size: 10pt;
+      line-height: 1.35;
+      color: #111;
+    }
+
+    h1 {
+      font-size: 17pt;
+      margin: 0 0 2mm 0;
+    }
+
+    h2 {
+      font-size: 12pt;
+      margin: 5mm 0 2mm 0;
+    }
+
+    p {
+      margin: 0 0 2.5mm 0;
+    }
+
+    .serif {
+      font-family: "Liberation Serif", "Times New Roman", serif;
+    }
+
+    .mono {
+      font-family: "Liberation Mono", "Courier New", monospace;
+    }
+
+    .estreito {
+      width: 42mm;
+      border: 0.3mm solid #999;
+      padding: 1.5mm;
+      overflow-wrap: anywhere;
+      margin-bottom: 3mm;
+    }
+
+    table.resumo {
+      border-collapse: collapse;
+      margin: 2mm 0 4mm 0;
+    }
+
+    table.resumo td {
+      padding: 0.8mm 3mm 0.8mm 0;
+    }
+
+    table.resumo td.num {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    table.extrato {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 8.5pt;
+    }
+
+    table.extrato th {
+      background: #e8e8e8;
+      border-bottom: 0.4mm solid #333;
+      padding: 1.2mm 1.5mm;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    table.extrato td {
+      border-bottom: 0.2mm solid #ccc;
+      padding: 1mm 1.5mm;
+      vertical-align: top;
+    }
+
+    table.extrato .num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    table.extrato tbody {
+      break-inside: avoid;
+    }
+
+    table.extrato tr.mes td {
+      background: #f4f4f4;
+      font-weight: bold;
+      border-bottom: 0.3mm solid #666;
+    }
+
+    .termos {
+      break-before: page;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Relatório de conciliação — exceções &amp; observações</h1>
+  <p><strong>Titular:</strong> {{ titular }} · {{ conta }} · Período: {{ periodo }}</p>
+
+  <h2>1. Acentuação e pontuação</h2>
+  <p>À noite, vovô Kowalsky vê o ímã cair no pé do pinguim queixoso e vovó põe açúcar no chá de tâmaras do jabuti feliz.</p>
+  <p class="serif">Ação, coração, pão, mãe, órgão, avô, avó, saúde, ruído, ninguém, útil, já, através, lâmpada, ônibus, Ibañez, “aspas curvas”, ‘simples’, 1ª via, nº 42 — travessão – meia-risca … reticências.</p>
+
+  <h2>2. Ligaduras e pesos misturados</h2>
+  <p>fiscal final fluxo afinidade eficiência office waffle suffix affluent shuffle firefly flâmula</p>
+  <p class="serif">fiscal final fluxo afinidade eficiência office waffle suffix affluent shuffle firefly flâmula</p>
+  <p>Regular, <strong>negrito</strong>, <span class="serif">serifada</span>, <span class="serif"><strong>serifada negrito</strong></span>, <span class="mono">mono 0123456789</span>, <span class="mono"><strong>mono negrito</strong></span>, <em>itálico solicitado</em>, <small>menor</small> e <span style="font-size: 14pt;">maior</span> — tudo na mesma linha de base.</p>
+
+  <h2>3. Palavras longas e tokens sem quebra</h2>
+  <div class="estreito">Pneumoultramicroscopicossilicovulcanoconiótico e inconstitucionalissimamente cabem numa caixa de 42&nbsp;mm.</div>
+  <div class="estreito mono">NFe35261012345678000195550010000123451705243180</div>
+  <p>Valores com espaço inseparável: R$&nbsp;1.234,56 · R$&nbsp;99.999.999,99 · sinal de menos: −1.234,56 (U+2212) vs -1.234,56 (hífen).</p>
+
+  <h2>4. Resumo</h2>
+  <table class="resumo">
+    <tr><td>Saldo inicial</td><td class="num">{{ saldoInicial }}</td></tr>
+    <tr><td>Total de débitos</td><td class="num">{{ totais.debitos }}</td></tr>
+    <tr><td>Total de créditos</td><td class="num">{{ totais.creditos }}</td></tr>
+    <tr><td>Saldo final</td><td class="num">{{ totais.saldoFinal }}</td></tr>
+  </table>
+
+  <h2>5. Extrato detalhado</h2>
+  <table class="extrato">
+    <colgroup>
+      <col style="width: 17mm"><col style="width: 74mm"><col style="width: 17mm"><col style="width: 24mm"><col style="width: 24mm"><col style="width: 24mm">
+    </colgroup>
+    <thead>
+      <tr><th>Data</th><th>Histórico</th><th>Documento</th><th class="num">Débito (R$)</th><th class="num">Crédito (R$)</th><th class="num">Saldo (R$)</th></tr>
+    </thead>
+    {% for mes in meses %}
+    <tbody>
+      <tr class="mes"><td colspan="5">Lançamentos de {{ mes.nome }} de 2026</td><td class="num">{{ mes.saldoMes }}</td></tr>
+      {% for l in mes.lancamentos %}
+      <tr><td>{{ l.data }}</td><td>{{ l.historico }}</td><td class="mono">{{ l.documento }}</td><td class="num">{{ l.debito }}</td><td class="num">{{ l.credito }}</td><td class="num">{{ l.saldo }}</td></tr>
+      {% endfor %}
+    </tbody>
+    {% endfor %}
+  </table>
+
+  <div class="termos">
+    <h2>6. Termos e condições (texto corrido)</h2>
+    <p>Este extrato é um documento sintético gerado para testes de fidelidade tipográfica. Nenhum dos valores, nomes ou números de documento corresponde a pessoa, empresa ou conta real. A conciliação considera lançamentos efetivados até as 23h59 do último dia útil do período; lançamentos agendados não são exibidos.</p>
+    <p class="serif">Em caso de divergência, a instituição fictícia responsável compromete-se a analisar a reclamação no prazo de até 10 (dez) dias úteis, informando o protocolo de atendimento. A eficiência do fluxo de conciliação depende da afinidade entre os sistemas de origem e destino; finalmente, recomenda-se arquivar este documento por cinco anos.</p>
+    <p>Fim do documento. Saldo final apurado: <strong>R$&nbsp;{{ totais.saldoFinal }}</strong>.</p>
+  </div>
+
+</body>
+</html>

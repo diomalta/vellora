@@ -1,0 +1,996 @@
+{
+  "_generated": "DERIVED by fidelity/corpus/build-fixtures.mjs from fidelity/corpus/inputs/boleto-febraban.json (geometry: pxGrid). Do not edit.",
+  "banco": {
+    "identificacao": "BANCO EXEMPLO",
+    "codigoCompensacao": "104-0"
+  },
+  "beneficiario": {
+    "nome": "Oficina Exemplo de Testes Ltda.",
+    "cnpj": "11.222.333/0001-81",
+    "enderecoLinha": "Rua das Acácias, 1500, Sala 42 — Jardim Sintético",
+    "cidadeUfCep": "São José dos Exemplos / SP — CEP 01310-930",
+    "agenciaCodigo": "1234 / 246813-1"
+  },
+  "pagador": {
+    "nome": "Maria da Conceição Exemplo",
+    "cpf": "123.456.789-09",
+    "enderecoLinha": "Avenida Paulista, 1000, Apto 101 — Bela Vista",
+    "cidadeUfCep": "São Paulo / SP — CEP 01310-100"
+  },
+  "titulo": {
+    "nossoNumero": "14/000000000417001-1",
+    "numeroDocumento": "NF-2026/00417",
+    "especie": "DM",
+    "aceite": "N",
+    "dataDocumento": "15/10/2026",
+    "dataProcessamento": "15/10/2026",
+    "vencimento": "30/11/2026",
+    "valor": "1.842,50",
+    "carteira": "RG",
+    "moeda": "R$"
+  },
+  "localPagamento": "EM TODA A REDE BANCÁRIA E SEUS CORRESPONDENTES ATÉ O VALOR LIMITE",
+  "instrucoes": [
+    "Após o vencimento, cobrar multa de 2,00% e juros de mora de 1,00% ao mês.",
+    "Desconto de R$ 92,13 para pagamento até 20/11/2026.",
+    "Não receber após 60 dias do vencimento.",
+    "DOCUMENTO DE TESTE — SEM VALOR. Fixture sintética do vellora (fidelity/corpus)."
+  ],
+  "demonstrativo": [
+    {
+      "referencia": "10/2026",
+      "descricao": "Revisão programada — mão de obra",
+      "valor": "980,00"
+    },
+    {
+      "referencia": "10/2026",
+      "descricao": "Peças de reposição (filtros, óleo sintético)",
+      "valor": "712,50"
+    },
+    {
+      "referencia": "10/2026",
+      "descricao": "Alinhamento e balanceamento",
+      "valor": "150,00"
+    }
+  ],
+  "linhaDigitavel": {
+    "formatada": "10492.46810 31000.100045 00041.700139 7 16460000184250",
+    "campos": [
+      "10492.46810",
+      "31000.100045",
+      "00041.700139",
+      "7",
+      "16460000184250"
+    ]
+  },
+  "codigoBarras": {
+    "digitos": "10497164600001842502468131000100040004170013",
+    "geometria": "DIAGNOSTIC ONLY - narrow 1 CSS px, wide 3 CSS px, length 405 px = 107.16 mm (+4.16 mm vs the mandated 103 mm). Isolates px-snapping from encoding errors.",
+    "narrowMm": 0.2646,
+    "wideMm": 0.7937,
+    "lengthMm": 107.1563,
+    "heightMm": 13,
+    "elementos": [
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      }
+    ]
+  },
+  "expected": {
+    "barcodeDigits": "10497164600001842502468131000100040004170013",
+    "linhaDigits": "10492468103100010004500041700139716460000184250",
+    "dvGeral": 7,
+    "fatorVencimento": 1646,
+    "vencimentoIso": "2026-11-30",
+    "valorCentavos": 184250,
+    "campoLivre": "2468131000100040004170013",
+    "dvCampoLivre": 3,
+    "dvBeneficiario": 1,
+    "dvNossoNumero": 1
+  }
+}

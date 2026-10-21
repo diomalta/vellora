@@ -1,0 +1,214 @@
+{
+  "_comment": "Synthetic inputs for fixtures/danfe (DANFE retrato, folhas soltas, MOC 7.0 Anexo II). The chave de acesso, its DV, the CODE-128C bars, CNPJ/CPF DVs and every total are DERIVED by fidelity/corpus/build-fixtures.mjs; never edit fixtures/danfe/data.json by hand. Ambiente de homologacao: the DANFE carries SEM VALOR FISCAL (MOC 7.0 Anexo II, section 3).",
+  "ide": {
+    "cUF": "35",
+    "dataEmissao": "2026-10-15",
+    "horaEmissao": "10:24:31",
+    "dataSaida": "2026-10-15",
+    "horaSaida": "14:00:00",
+    "mod": "55",
+    "serie": "1",
+    "nNF": "12345",
+    "tpEmis": "1",
+    "cNF": "70524318",
+    "tpNF": "1",
+    "naturezaOperacao": "VENDA DE MERCADORIA ADQUIRIDA DE TERCEIROS",
+    "protocolo": "135260000123456",
+    "dataHoraAutorizacao": "15/10/2026 10:25:02"
+  },
+  "emitente": {
+    "razaoSocial": "Distribuidora Exemplo de Componentes Ltda.",
+    "cnpjBase": "123456780001",
+    "ie": "110.042.490.114",
+    "ieSt": "",
+    "endereco": {
+      "logradouro": "Rua dos Testes",
+      "numero": "1234",
+      "complemento": "Galpão 3",
+      "bairro": "Distrito Industrial",
+      "municipio": "Campinas",
+      "uf": "SP",
+      "cep": "13069-000"
+    },
+    "fone": "(19) 3555-0100"
+  },
+  "destinatario": {
+    "razaoSocial": "Comércio Fictício de Eletrônicos São João Ltda.",
+    "cnpjBase": "987654320001",
+    "ie": "407.112.348.110",
+    "endereco": {
+      "logradouro": "Avenida das Nações Unidas",
+      "numero": "12901",
+      "bairro": "Brooklin Paulista",
+      "municipio": "São Paulo",
+      "uf": "SP",
+      "cep": "04578-000"
+    },
+    "fone": "(11) 3555-0199"
+  },
+  "duplicatas": [
+    { "numero": "001", "vencimento": "2026-11-14", "fracao": 0.34 },
+    { "numero": "002", "vencimento": "2026-12-14", "fracao": 0.33 },
+    { "numero": "003", "vencimento": "2027-01-13", "fracao": 0.33 }
+  ],
+  "transportador": {
+    "razaoSocial": "Transportes Exemplares S.A.",
+    "modFrete": "0 - REMETENTE (CIF)",
+    "codigoAntt": "",
+    "placa": "ABC1D23",
+    "ufPlaca": "SP",
+    "cnpjBase": "445556660001",
+    "endereco": "Rodovia Anhanguera, km 98",
+    "municipio": "Campinas",
+    "uf": "SP",
+    "ie": "244.556.677.118",
+    "volumes": {
+      "quantidade": "6",
+      "especie": "CAIXA",
+      "marca": "EXEMPLO",
+      "numeracao": "1 A 6",
+      "pesoBruto": "48,600",
+      "pesoLiquido": "45,100"
+    }
+  },
+  "aliquotaIcms": 18,
+  "itens": [
+    {
+      "codigo": "CMP-0001",
+      "descricao": "Placa-mãe micro-ATX com chipset B760, 4 slots DDR5",
+      "ncm": "84733041",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 89990,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0002",
+      "descricao": "Memória DDR5 16 GB 5600 MT/s",
+      "ncm": "84733042",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 8,
+      "vUnCentavos": 32950,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0003",
+      "descricao": "SSD NVMe 1 TB PCIe 4.0",
+      "ncm": "84717012",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 6,
+      "vUnCentavos": 41900,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0004",
+      "descricao": "Fonte de alimentação 650 W 80 Plus Bronze",
+      "ncm": "85044021",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 38990,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0005",
+      "descricao": "Gabinete mid-tower com painel lateral de vidro temperado",
+      "ncm": "84733099",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 27500,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0006",
+      "descricao": "Cabo de força tripolar NBR 14136, 1,8 m",
+      "ncm": "85444200",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 20,
+      "vUnCentavos": 1890,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0007",
+      "descricao": "Pasta térmica de prata, seringa 4 g",
+      "ncm": "34039900",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 10,
+      "vUnCentavos": 2450,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0008",
+      "descricao": "Processador 6 núcleos 12 threads, soquete LGA1700",
+      "ncm": "85423190",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 112900,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0009",
+      "descricao": "Cooler para processador com dissipador em alumínio",
+      "ncm": "84145990",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 14990,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0010",
+      "descricao": "Teclado ABNT2 com fio, USB",
+      "ncm": "84716052",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 12,
+      "vUnCentavos": 8990,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0011",
+      "descricao": "Mouse óptico 1600 dpi, USB",
+      "ncm": "84716053",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 12,
+      "vUnCentavos": 4590,
+      "aliqIpi": 0
+    },
+    {
+      "codigo": "CMP-0012",
+      "descricao": "Monitor LED 23,8\" Full HD, entrada HDMI",
+      "ncm": "85285200",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": 4,
+      "vUnCentavos": 74900,
+      "aliqIpi": 0
+    }
+  ],
+  "informacoesComplementares": [
+    "SEM VALOR FISCAL — NF-e emitida em ambiente de homologação (fixture sintética do vellora, fidelity/corpus).",
+    "Pedido de compra nº PC-2026-0815. Entrega no horário comercial.",
+    "Valor aproximado dos tributos: R$ 4.203,37 (Fonte: IBPT) — valor fictício."
+  ]
+}

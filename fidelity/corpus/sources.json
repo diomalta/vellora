@@ -1,0 +1,138 @@
+{
+  "_comment": "Primary sources for the corpus fixtures. fetch-sources.mjs downloads each 'documents' entry into fidelity/.cache/corpus/sources/ (gitignored) and verifies its sha256. Nothing here is committed as a binary; see SOURCES.md for licence posture and what each document is used for.",
+  "fetchedAt": "2026-10-21 between 00:20 and 00:35 UTC (first retrieval; sha256 recorded then)",
+  "documents": [
+    {
+      "id": "BCB-2926",
+      "file": "bcb-c_circ_2926.pdf",
+      "url": "https://www.bcb.gov.br/pre/normativos/c_circ/2000/pdf/c_circ_2926_v1_O.pdf",
+      "title": "Banco Central do Brasil — Carta-Circular nº 2.926, de 24 de julho de 2000 (Bloqueto de Cobrança modelo CADOC 24044-4, inclusão do fator de vencimento; especificações e instruções de preenchimento)",
+      "version": "as published by BCB (PDF CreationDate 2012-05-21); 4 pages",
+      "sha256": "2bd983daccbb947b1bb6ddca7ba90eef4eb833bc40afe4eea6158b2b932c0a36"
+    },
+    {
+      "id": "BCB-3598",
+      "file": "bcb-circ_3598.pdf",
+      "url": "https://www.bcb.gov.br/pre/normativos/circ/2012/pdf/circ_3598_v2_l.pdf",
+      "title": "Banco Central do Brasil — Circular nº 3.598, de 6 de junho de 2012 (institui o boleto de pagamento), text consolidated with Circular nº 3.656/2013",
+      "version": "v2 (consolidated); 5 pages",
+      "sha256": "0b90d602cf83ac976829c62039d6ba4c8a417d1fd67d355735ec75c08e85fe8c"
+    },
+    {
+      "id": "BCB-2414",
+      "file": "bcb-c_circ_2414.pdf",
+      "url": "https://www.bcb.gov.br/pre/normativos/c_circ/1993/pdf/c_circ_2414_v1_O.pdf",
+      "title": "Banco Central do Brasil — Carta-Circular nº 2.414, de 7 de outubro de 1993 (ficha de compensação com código de barras de 44 posições, modelo CADOC 24044-4)",
+      "version": "as published by BCB; 2 pages (context only)",
+      "sha256": "642696032dadf306054b4354a755b9c37a153b5baee83662ed41094a7315672d"
+    },
+    {
+      "id": "CAIXA",
+      "file": "caixa-ESP_COD_BARRAS_SIGCB.pdf",
+      "url": "https://www.caixa.gov.br/Downloads/cobranca-caixa/ESP_COD_BARRAS_SIGCB_COBRANCA_CAIXA.pdf",
+      "title": "CAIXA — Especificações técnicas para emissão de boletos, Cobrança Bancária CAIXA – SIGCB (padronização para emissão com código de barras e QR Code)",
+      "version": "67.119 v014, OUT/2022, vigência 19/10/2022; 43 pages",
+      "sha256": "904f8594efae11b72a52b667a9f800c749d229dd2a8a38379f36663223b0d1d1",
+      "needsCookies": true
+    },
+    {
+      "id": "BANPARA",
+      "file": "banpara-impressao-boletos-v1-2.pdf",
+      "url": "https://www.banpara.b.br/PortalImagens/2tdgh54u/manual-de-procedimento-de-impressao-de-boletos-por-terceiros-cobranca-banpara-v1-2.pdf?mode=pad&rnd=133740022625430000",
+      "title": "Banpará — Manual de Procedimento de Impressão de Boletos por Terceiros, Cobrança Registrada Banpará",
+      "version": "Versão 1.2 (PDF CreationDate 2023-05-15); 12 pages",
+      "sha256": "5b10dd0cfbc2121c3d723ec20ecb526843b23febcf6d98cea1e21f49ffc5a9c8"
+    },
+    {
+      "id": "FEBRABAN-ARREC",
+      "file": "febraban-layout-codigo-de-barras.pdf",
+      "url": "https://cmsarquivos.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20ATUALIZADO.pdf",
+      "title": "FEBRABAN — Layout - Código de Barras (documentos de arrecadação / convênios)",
+      "version": "Versão 06 (available from 01.11.2020; PDF CreationDate 2020-06-30); 23 pages (context only: arrecadação, not boleto de cobrança)",
+      "sha256": "a22b04c9cd047a6e71e0a73db6db57da41a76050344cc01626b736479430292b"
+    },
+    {
+      "id": "MOC-AII",
+      "file": "nfe-moc7-anexo-ii-danfe.pdf",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=f+NhsSn3%2F5M%3D",
+      "title": "Portal Nacional da NF-e — Manual de Orientação do Contribuinte, Anexo II – Manual de Especificações Técnicas do DANFE e Código de Barras",
+      "version": "Versão 7.00 – Outubro de 2020 (PDF CreationDate 2020-11-04; the PDF Title metadata wrongly says 'Anexo III'); 28 pages",
+      "sha256": "729c04fd1374188c29eb21ca60342741b24a014003d4c2ff1bbb455bb1a6a60e",
+      "needsCookies": true
+    },
+    {
+      "id": "MOC-VG",
+      "file": "nfe-moc7-visao-geral.pdf",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=LrBx7WT9PuA%3D",
+      "title": "Portal Nacional da NF-e — Manual de Orientação do Contribuinte, MOC 7.0 – Visão Geral (NF-e e NFC-e)",
+      "version": "MOC versão 7.0; 150 pages",
+      "sha256": "f664dcf94b77cabb32311620d85a7eb02cdf86adb2d4632ce178af2572dd2ad1",
+      "needsCookies": true
+    }
+  ],
+  "notObtained": [
+    {
+      "title": "Banco do Brasil — Especificações Técnicas para Confecção de Boleto de Pagamento (Doc5175Bloqueto.pdf / espeboletobb.pdf)",
+      "url": "https://www.bb.com.br/docs/pub/emp/empl/dwn/Doc5175Bloqueto.pdf",
+      "reason": "HTTP 403 (bot protection) for the User-Agent 'vellora-fidelity-tooling'; third-party mirrors (tdn.totvs.com) answered with a Cloudflare challenge. Not used."
+    },
+    {
+      "title": "ISO/IEC 16390:2007 Information technology — Automatic identification and data capture techniques — Interleaved 2 of 5 bar code symbology specification",
+      "url": "https://www.iso.org/standard/43898.html",
+      "reason": "Paywalled; not accessed. The narrow:wide ratio range and quiet-zone minimum it defines are therefore UNVERIFIED ASSUMPTIONS in ACCEPTANCE.md."
+    },
+    {
+      "title": "GS1 General Specifications (ITF-14 symbol parameters)",
+      "url": "https://www.gs1.org/docs/barcodes/GS1_General_Specifications.pdf",
+      "reason": "HTTP 403 for the User-Agent 'vellora-fidelity-tooling'. Not used."
+    },
+    {
+      "title": "AIM USS Interleaved 2-of-5 (mirror)",
+      "url": "https://live.expresscorp.com/uploads/specifications/49/USS-I-2of-5.pdf",
+      "reason": "HTTP 522 (origin timeout). Not used."
+    }
+  ],
+  "upstreamTemplates": [
+    {
+      "fixture": "oss-sparksuite-invoice",
+      "repo": "https://github.com/sparksuite/simple-html-invoice-template",
+      "commit": "7d74fe34c862b7712f1a23a3f12147a4a8bd53e1",
+      "file": "invoice.html",
+      "fileSha256": "a7fe870a3e9bd20e6c3bacacdee648e93ef2976ec587d47b7c84b1b84b5f48bc",
+      "licence": "MIT",
+      "licenceFile": "LICENSE",
+      "licenceSha256": "c8ad2d5202a41fe59c78d51327a7050f933faee646acc0ec869d745e73a43b03"
+    },
+    {
+      "fixture": "oss-postmark-receipt",
+      "repo": "https://github.com/ActiveCampaign/postmark-templates",
+      "commit": "fa73527acb4eb59cf673a54572d213e908f1515c",
+      "file": "templates/basic/receipt/content.html",
+      "fileSha256": "1f6a3f3168eafdcaefd3843a4dc3b6d24cc82e8f042fe59963a973bce1bdf50b",
+      "licence": "MIT",
+      "licenceFile": "LICENSE",
+      "licenceSha256": "a0f51a51a3e1b378cd992ce42968b51f1699740170d33c0a66f80035ea6376d2"
+    }
+  ],
+  "excludedTemplates": [
+    {
+      "repo": "https://github.com/CourtBouillon/weasyprint-samples",
+      "commit": "6dc675b05a5cba59576dfaa8881ea6ccdccb13cc",
+      "reason": "No LICENSE file at that commit; README.rst states the samples are 'in the public domain' except fonts and the book text, and that book/letter/poster were designed by Madcats. A README public-domain statement is not CC0/MIT/BSD/Apache, so excluded by the corpus licence rule."
+    },
+    {
+      "repo": "https://github.com/anvilco/html-pdf-invoice-template",
+      "commit": "bd4513888d47cfa7d6cc272fbb37fe8b79e298b6",
+      "reason": "package.json says \"license\": \"MIT\" but the repository has no LICENSE file (GitHub licence API: none). The rule requires a LICENSE file at a pinned commit, so excluded."
+    },
+    {
+      "repo": "https://github.com/SolidInvoice/SolidInvoice",
+      "commit": "3c2e57e08e37729e2135868120f00a74ff4cb9b9",
+      "reason": "NOT excluded on licence (MIT per GitHub licence API and the template header) but NOT adapted in this run: the PDF template (src/InvoiceBundle/Resources/views/Pdf/invoice.html.twig) depends on Twig macros, an external pdf.css and mPDF-only tags (htmlpagefooter, watermarktext, {PAGENO}). Candidate for a future multi-page OSS invoice fixture."
+    },
+    {
+      "repo": "Invoice Ninja / Odoo",
+      "reason": "Elastic-2.0 / LGPL — excluded by the task's licence rule."
+    }
+  ]
+}

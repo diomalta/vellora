@@ -1,0 +1,369 @@
+{
+  "_comment": "Corpus manifest consumed by fidelity/corpus/render-corpus.mjs. Criterion IDs are defined (with sources and tolerance labels) in fidelity/ACCEPTANCE.md. Text entries starting with '@' are data.json paths; { text, match: 'loose' } ignores whitespace (tokens that wrap inside narrow boxes). Geometry is in mm, page coordinates (origin top-left).",
+  "fixtures": [
+    {
+      "id": "boleto-febraban",
+      "class": "boleto",
+      "variants": [
+        { "data": "data.json", "label": "spec geometry (103 mm)" },
+        {
+          "data": "data.px-grid.json",
+          "label": "DIAGNOSTIC px-grid geometry (107.16 mm)",
+          "diagnostic": true,
+          "overrides": { "BOL-G1": { "target": 107.1563 } }
+        }
+      ],
+      "expectedPages": 1,
+      "barcode": {
+        "format": "ITF",
+        "expected": "@expected.barcodeDigits",
+        "validator": "boleto",
+        "geometry": {
+          "x0_mm": 10,
+          "y_center_mm": 279,
+          "height_mm": 13,
+          "cut_search_mm": [180, 192]
+        }
+      },
+      "requiredText": [
+        "@linhaDigitavel.formatada",
+        "@banco.codigoCompensacao",
+        "@beneficiario.nome",
+        "@beneficiario.cnpj",
+        "@beneficiario.enderecoLinha",
+        "@pagador.nome",
+        "@pagador.cpf",
+        "@titulo.vencimento",
+        "@titulo.valor",
+        "@titulo.nossoNumero",
+        "@beneficiario.agenciaCodigo",
+        "Recibo do Pagador",
+        "Ficha de Compensação",
+        "Autenticação Mecânica - Ficha de Compensação",
+        "Local de pagamento",
+        "Instruções (Texto de Responsabilidade do Beneficiário)"
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "BOL-T1", "text": "@banco.codigoCompensacao", "min_pt": 20.55, "bold": true },
+          {
+            "id": "BOL-T2",
+            "text": "@linhaDigitavel.campos.0",
+            "min_pt": 14.42,
+            "max_pt": 16.48
+          },
+          { "id": "BOL-T3", "text": "Ficha de Compensação", "min_pt": 0, "max_pt": 8.0 }
+        ]
+      },
+      "criteria": [
+        { "id": "BOL-P1", "check": "pages" },
+        { "id": "BOL-X1", "check": "text" },
+        { "id": "BOL-X2", "check": "textAgree" },
+        { "id": "BOL-B1", "check": "barcodeDecode" },
+        { "id": "BOL-B2", "check": "linhaConsistent" },
+        {
+          "id": "BOL-G1",
+          "check": "geometry",
+          "path": "measured.length_mm",
+          "target": 103,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G2",
+          "check": "geometry",
+          "path": "measured.height_mm",
+          "target": 13,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G3",
+          "check": "geometry",
+          "path": "ficha_relative_mm.barcode_start_from_ficha_left",
+          "target": 5,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G4",
+          "check": "geometry",
+          "path": "ficha_relative_mm.barcode_centre_above_ficha_bottom",
+          "target": 12,
+          "tol": 0.5
+        },
+        { "id": "BOL-G5", "check": "geometry", "path": "edge_error_mm.max", "max": 0.05 },
+        {
+          "id": "BOL-G6",
+          "check": "geometry",
+          "path": "ficha_relative_mm.ficha_top",
+          "target": 186,
+          "tol": 0.5
+        },
+        { "id": "BOL-T1", "check": "fontRule" },
+        { "id": "BOL-T2", "check": "fontRule" },
+        { "id": "BOL-T3", "check": "fontRule" },
+        { "id": "BOL-R1", "check": "refPos", "rules": ["BOL-T1", "BOL-T2", "BOL-T3"], "tol": 1.0 },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "danfe",
+      "class": "danfe",
+      "variants": [{ "data": "data.json", "label": "retrato, folhas soltas, laser" }],
+      "expectedPages": 1,
+      "barcode": {
+        "format": "Code128",
+        "expected": "@expected.chaveDigits",
+        "validator": "nfe",
+        "geometry": { "x0_mm": 131.06, "y_center_mm": 32.8, "height_mm": 10 }
+      },
+      "requiredText": [
+        "DANFE",
+        "DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA",
+        "@chave.formatada",
+        "@nf.numero",
+        "@emitente.razaoSocial",
+        "@emitente.cnpj",
+        "@destinatario.razaoSocial",
+        "@destinatario.cnpj",
+        "@imposto.vNF",
+        "@imposto.vIcms",
+        "@nf.protocolo",
+        "SEM VALOR FISCAL",
+        "PROTOCOLO DE AUTORIZAÇÃO DE USO",
+        "FOLHA 1/1",
+        "CÓDIGO PRODUTO",
+        "DESCRIÇÃO DO PRODUTO/SERVIÇO",
+        "NCM/SH",
+        "CST",
+        "CFOP",
+        "UN",
+        "QUANT.",
+        "VALOR UNIT.",
+        "VALOR TOTAL",
+        "B.CÁLC. ICMS",
+        "VALOR ICMS",
+        "ALÍQ. ICMS"
+      ],
+      "fontRules": {
+        "page": 1,
+        "families": ["LiberationSerif", "LiberationMono", "TimesNewRoman", "CourierNew"],
+        "rules": [
+          { "id": "DANFE-F1", "text": "DESTINATÁRIO/REMETENTE", "min_pt": 5, "bold": true },
+          { "id": "DANFE-F2", "text": "DESCRIÇÃO DO PRODUTO/SERVIÇO", "min_pt": 5 },
+          { "id": "DANFE-F3", "text": "NATUREZA DA OPERAÇÃO", "min_pt": 6 },
+          { "id": "DANFE-F4a", "text": "DANFE", "min_pt": 12, "bold": true },
+          { "id": "DANFE-F4b", "text": "@nf.numero", "min_pt": 10, "bold": true },
+          { "id": "DANFE-F4c", "text": "DOCUMENTO", "min_pt": 8 },
+          { "id": "DANFE-F5", "text": "@chave.formatada", "min_pt": 8.5, "bold": true },
+          { "id": "DANFE-F6a", "text": "@emitente.razaoSocial", "min_pt": 12, "bold": true },
+          { "id": "DANFE-F6b", "text": "@emitente.enderecoLinha1", "min_pt": 8, "bold": true },
+          { "id": "DANFE-F7", "text": "CMP-0001", "min_pt": 6 },
+          { "id": "DANFE-F8", "text": "SEM VALOR FISCAL", "min_pt": 6 },
+          { "id": "DANFE-F9", "text": "@destinatario.razaoSocial", "min_pt": 10 },
+          {
+            "id": "DANFE-L1a",
+            "text": "DESTINATÁRIO/REMETENTE",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 83.0, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1b",
+            "text": "FATURA/DUPLICATAS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 112.1, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1c",
+            "text": "TRANSPORTADOR/VOLUMES TRANSPORTADOS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 146.0, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1d",
+            "text": "DADOS DOS PRODUTOS/SERVIÇOS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 175.7, "tol_mm": 3 }
+          }
+        ]
+      },
+      "criteria": [
+        { "id": "DANFE-P1", "check": "pages" },
+        { "id": "DANFE-X1", "check": "text" },
+        { "id": "DANFE-X2", "check": "textAgree" },
+        { "id": "DANFE-B1", "check": "barcodeDecode" },
+        { "id": "DANFE-B2", "check": "geometry", "path": "measured.length_mm", "min": 60 },
+        {
+          "id": "DANFE-B3",
+          "check": "geometry",
+          "path": "measured.height_mm",
+          "min": 8,
+          "max": 14.8
+        },
+        { "id": "DANFE-B4", "check": "geometry", "path": "measured.quiet_left_mm", "min": 2.65 },
+        { "id": "DANFE-B5", "check": "geometry", "path": "measured.quiet_right_mm", "min": 2.65 },
+        { "id": "DANFE-M1", "check": "margins", "min": 2, "max": 8 },
+        { "id": "DANFE-F0", "check": "fontFamily" },
+        { "id": "DANFE-F1", "check": "fontRule" },
+        { "id": "DANFE-F2", "check": "fontRule" },
+        { "id": "DANFE-F3", "check": "fontRule" },
+        { "id": "DANFE-F4a", "check": "fontRule" },
+        { "id": "DANFE-F4b", "check": "fontRule" },
+        { "id": "DANFE-F4c", "check": "fontRule" },
+        { "id": "DANFE-F5", "check": "fontRule" },
+        { "id": "DANFE-F6a", "check": "fontRule" },
+        { "id": "DANFE-F6b", "check": "fontRule" },
+        { "id": "DANFE-F7", "check": "fontRule" },
+        { "id": "DANFE-F8", "check": "fontRule" },
+        { "id": "DANFE-F9", "check": "fontRule" },
+        { "id": "DANFE-L1a", "check": "fontRule" },
+        { "id": "DANFE-L1b", "check": "fontRule" },
+        { "id": "DANFE-L1c", "check": "fontRule" },
+        { "id": "DANFE-L1d", "check": "fontRule" },
+        {
+          "id": "DANFE-R1",
+          "check": "refPos",
+          "rules": [
+            "DANFE-L1a",
+            "DANFE-L1b",
+            "DANFE-L1c",
+            "DANFE-L1d",
+            "DANFE-F4a",
+            "DANFE-F5",
+            "DANFE-F6a",
+            "DANFE-F8",
+            "DANFE-F9"
+          ],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "text-stress-ptbr",
+      "class": "text",
+      "variants": [{ "data": "data.json", "label": "self-authored text stress" }],
+      "expectedPages": null,
+      "requiredText": [
+        "À noite, vovô Kowalsky vê o ímã cair no pé do pinguim queixoso e vovó põe açúcar no chá de tâmaras do jabuti feliz.",
+        "fiscal final fluxo afinidade eficiência office waffle suffix affluent shuffle firefly flâmula",
+        { "text": "Pneumoultramicroscopicossilicovulcanoconiótico", "match": "loose" },
+        { "text": "inconstitucionalissimamente", "match": "loose" },
+        { "text": "NFe35261012345678000195550010000123451705243180", "match": "loose" },
+        "−1.234,56 (U+2212)",
+        "@totais.saldoFinal",
+        "@totais.debitos",
+        "Lançamentos de dezembro de 2026",
+        "Fim do documento."
+      ],
+      "moneyColumnsPage": 2,
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "TXT-S1", "text": "1. Acentuação e pontuação", "min_pt": 0 },
+          { "id": "TXT-S2", "text": "2. Ligaduras e pesos misturados", "min_pt": 0 },
+          { "id": "TXT-S3", "text": "3. Palavras longas e tokens sem quebra", "min_pt": 0 },
+          { "id": "TXT-S4", "text": "4. Resumo", "min_pt": 0 },
+          { "id": "TXT-S5", "text": "5. Extrato detalhado", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "TXT-X1", "check": "text" },
+        { "id": "TXT-X2", "check": "textAgree" },
+        { "id": "TXT-A1", "check": "moneyAlign", "max": 0.3 },
+        { "id": "TXT-P1", "check": "pagesVsReference" },
+        {
+          "id": "TXT-R1",
+          "check": "refPos",
+          "rules": ["TXT-S1", "TXT-S2", "TXT-S3", "TXT-S4", "TXT-S5"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "oss-sparksuite-invoice",
+      "class": "invoice",
+      "variants": [
+        { "data": "data.json", "label": "sparksuite simple-html-invoice-template (MIT)" }
+      ],
+      "expectedPages": 1,
+      "expectedImages": 1,
+      "requiredText": [
+        "Invoice #: 123",
+        "Sparksuite, Inc.",
+        "Acme Corp.",
+        "Website design",
+        "$300.00",
+        "Total: $385.00"
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "INV-S1", "text": "Invoice #: 123", "min_pt": 0 },
+          { "id": "INV-S2", "text": "Payment Method", "min_pt": 0 },
+          { "id": "INV-S3", "text": "Website design", "min_pt": 0 },
+          { "id": "INV-S4", "text": "Total: $385.00", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "INV-P1", "check": "pages" },
+        { "id": "INV-P2", "check": "pagesVsReference" },
+        { "id": "INV-X1", "check": "text" },
+        { "id": "INV-X2", "check": "textAgree" },
+        { "id": "INV-I1", "check": "images" },
+        {
+          "id": "INV-R1",
+          "check": "refPos",
+          "rules": ["INV-S1", "INV-S2", "INV-S3", "INV-S4"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "oss-postmark-receipt",
+      "class": "receipt",
+      "variants": [{ "data": "data.json", "label": "Postmark receipt (MIT)" }],
+      "expectedPages": null,
+      "requiredText": [
+        "Hi Maria Exemplo,",
+        "#RCPT-2026-000417",
+        "Additional seats × 3",
+        "−$10.00",
+        "$81.00",
+        "[Product Name]"
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "RCP-S1", "text": "Hi Maria Exemplo,", "min_pt": 0 },
+          { "id": "RCP-S2", "text": "10% off your next purchase!", "min_pt": 0 },
+          { "id": "RCP-S3", "text": "#RCPT-2026-000417", "min_pt": 0 },
+          { "id": "RCP-S4", "text": "Credit applied from referral", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "INV-P2", "check": "pagesVsReference" },
+        { "id": "INV-X1", "check": "text" },
+        { "id": "INV-X2", "check": "textAgree" },
+        {
+          "id": "INV-R1",
+          "check": "refPos",
+          "rules": ["RCP-S1", "RCP-S2", "RCP-S3", "RCP-S4"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    }
+  ]
+}

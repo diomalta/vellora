@@ -1,0 +1,20 @@
+{
+  "_comment": "Sample model for the Postmark 'receipt' template (variable names exactly as upstream; values are synthetic).",
+  "name": "Maria Exemplo",
+  "purchase_date": "October 15, 2026",
+  "credit_card_brand": "Visa",
+  "credit_card_last_four": "4242",
+  "billing_url": "https://example.com/billing",
+  "expiration_date": "November 15, 2026",
+  "receipt_id": "#RCPT-2026-000417",
+  "date": "October 15, 2026",
+  "receipt_details": [
+    { "description": "Pro plan — monthly subscription (Oct 15 – Nov 14, 2026)", "amount": "$49.00" },
+    { "description": "Additional seats × 3", "amount": "$27.00" },
+    { "description": "Priority support add-on", "amount": "$15.00" },
+    { "description": "Credit applied from referral", "amount": "−$10.00" }
+  ],
+  "total": "$81.00",
+  "support_url": "https://example.com/support",
+  "action_url": "https://example.com/receipts/RCPT-2026-000417.pdf"
+}

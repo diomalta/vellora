@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>DANFE — NF-e {{ nf.numero }} série {{ nf.serie }}</title>
+  <!--
+    DANFE, A-4 retrato, folhas soltas, laser — authored from MOC 7.0 Anexo II (Manual de
+    Especificacoes Tecnicas do DANFE e Codigo de Barras, versao 7.00, outubro/2020); chave de acesso
+    from MOC 7.0 Visao Geral 2.2.6. See fidelity/corpus/SOURCES.md and fidelity/ACCEPTANCE.md.
+    Mandatory rules encoded here:
+      3.6.2  margins 0.2-0.8 cm on every side -> @page 0.42 / 0.25 / 0.2 / 0.25 cm
+      3.7    Times New Roman or Courier New -> "Liberation Serif" (metric-compatible substitute; the
+             renderer bundles no Times New Roman — recorded deviation)
+      3.7.1  block titles >= 5pt bold caps (6pt); 3.7.2 product headers >= 5pt caps (5.5pt);
+      3.7.3  other labels >= 6pt caps (6pt); 3.7.4 DANFE >= 12pt bold (14pt), number/serie/folha/
+             tipo >= 10pt bold (10pt), DOCUMENTO AUXILIAR... / ENTRADA / SAIDA >= 8pt (8pt);
+      3.7.5  chave bold (8.5pt, see ACCEPTANCE: 10pt does not fit the 8.00 cm laser box);
+      3.7.6  emitente bold, razao social >= 12pt (12pt), other emitente data >= 8pt (8pt);
+      3.7.7  product content >= 6pt (6.5pt); 3.7.8 informacoes complementares >= 6pt (7pt);
+      3.7.9  other field content >= 10pt (10pt)
+      3.1.1  chave printed as 11 blocks of 4 digits; 2 CODE-128C of the chave (1 CSS px module:
+             >= 0.02 cm module and >= 6 cm total; 1.00 cm tall >= 0.8 cm)
+      3.1.7  item divider line between products; non-suppressible columns kept in order
+    Suggested (non-mandatory, 3.8.1) positions are followed band by band; the total width is
+    20.50 cm instead of 20.57 cm so the right margin stays >= 0.2 cm (3.6.2 wins over 3.8).
+  -->
+  <style>
+    @page {
+      size: A4;
+      margin: 0.42cm 0.25cm 0.2cm 0.25cm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Liberation Serif", "Times New Roman", serif;
+      color: #000;
+      line-height: 1;
+    }
+
+    table.b {
+      width: 20.5cm;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table.b td {
+      border: 0.5pt solid #000;
+      padding: 0.04cm 0.08cm 0 0.08cm;
+      vertical-align: top;
+      overflow: hidden;
+    }
+
+    tr.h085 td {
+      height: 0.85cm;
+    }
+
+    .rot {
+      display: block;
+      font-size: 6pt;
+      text-transform: uppercase;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .val {
+      display: block;
+      font-size: 10pt;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .val.neg {
+      font-weight: bold;
+    }
+
+    .dir .val {
+      text-align: right;
+    }
+
+    .titulo {
+      height: 0.42cm;
+      padding-top: 0.12cm;
+      font-size: 6pt;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .picote {
+      height: 0.42cm;
+      border-bottom: 0.5pt dashed #000;
+      margin-bottom: 0;
+    }
+
+    .picote-wrap {
+      height: 0.42cm;
+    }
+
+    td.canhoto-nf {
+      text-align: center;
+      vertical-align: middle;
+      font-weight: bold;
+    }
+
+    td.canhoto-nf .grande {
+      display: block;
+      font-size: 12pt;
+    }
+
+    td.canhoto-nf .num {
+      display: block;
+      font-size: 10pt;
+    }
+
+    tr.cabecalho td {
+      height: 3.92cm;
+    }
+
+    td.emitente {
+      font-weight: bold;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    td.emitente .razao {
+      display: block;
+      font-size: 12pt;
+      margin-bottom: 0.15cm;
+    }
+
+    td.emitente .linha {
+      display: block;
+      font-size: 8pt;
+      line-height: 1.25;
+    }
+
+    td.danfe {
+      text-align: center;
+      padding-top: 0.12cm;
+    }
+
+    td.danfe .sigla {
+      display: block;
+      font-size: 14pt;
+      font-weight: bold;
+    }
+
+    td.danfe .doc {
+      display: block;
+      font-size: 8pt;
+      line-height: 1;
+      margin-bottom: 0.1cm;
+    }
+
+    td.danfe .oper {
+      display: flex;
+      margin-bottom: 0.1cm;
+    }
+
+    td.danfe .ops {
+      flex: none;
+      width: 1.8cm;
+      font-size: 8pt;
+      line-height: 1.05;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    td.danfe .tipo {
+      flex: none;
+      width: 0.55cm;
+      height: 0.55cm;
+      border: 0.5pt solid #000;
+      font-size: 10pt;
+      font-weight: bold;
+      text-align: center;
+      padding-top: 0.08cm;
+    }
+
+    td.danfe .ident {
+      display: block;
+      font-size: 10pt;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    td.direita {
+      padding: 0;
+    }
+
+    .q-barras {
+      height: 1.48cm;
+      border-bottom: 0.5pt solid #000;
+      padding-top: 0.24cm;
+    }
+
+    .c128 {
+      display: flex;
+      height: 1cm;
+      width: 7.329cm;
+      margin: 0 auto;
+    }
+
+    .c128 div {
+      flex: none;
+      height: 1cm;
+    }
+
+    .c128 .b {
+      background: #000;
+    }
+
+    .c128 .s {
+      background: #fff;
+    }
+
+    .q-chave {
+      height: 0.96cm;
+      border-bottom: 0.5pt solid #000;
+      padding: 0.04cm 0.08cm 0 0.08cm;
+    }
+
+    .q-chave .val {
+      font-size: 8.5pt;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .q-campo1 {
+      height: 1.48cm;
+      padding: 0.1cm 0.1cm 0 0.1cm;
+      font-size: 10pt;
+      text-align: center;
+      line-height: 1.1;
+      overflow: hidden;
+    }
+
+    td.protocolo .val {
+      text-align: center;
+    }
+
+    table.prod {
+      width: 20.5cm;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .quadro-prod {
+      height: 6.37cm;
+      border: 0.5pt solid #000;
+      overflow: hidden;
+    }
+
+    table.prod th {
+      font-size: 5.5pt;
+      font-weight: normal;
+      text-transform: uppercase;
+      border-bottom: 0.5pt solid #000;
+      border-right: 0.5pt solid #000;
+      padding: 0.04cm 0.04cm;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 1.1;
+    }
+
+    table.prod td {
+      font-size: 6.5pt;
+      padding: 0.05cm 0.04cm;
+      border-right: 0.5pt solid #000;
+      border-bottom: 0.5pt dashed #000;
+      vertical-align: top;
+      line-height: 1.15;
+    }
+
+    table.prod td.n {
+      text-align: right;
+    }
+
+    table.prod td.c {
+      text-align: center;
+    }
+
+    tr.adic td {
+      height: 3.07cm;
+    }
+
+    td.infcpl .txt {
+      display: block;
+      font-size: 7pt;
+      line-height: 1.25;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CANHOTO (3.8.1: RECEBEMOS DE... 16.10 x 0.85 at 0.25/0.42; NF-e box 4.50 x 1.70) -->
+  <table class="b">
+    <colgroup><col style="width: 4.1cm"><col style="width: 11.9cm"><col style="width: 4.5cm"></colgroup>
+    <tr class="h085">
+      <td colspan="2"><span class="rot">Recebemos de {{ emitente.razaoSocial }} os produtos e/ou serviços constantes da nota fiscal eletrônica indicada ao lado</span></td>
+      <td rowspan="2" class="canhoto-nf"><span class="grande">NF-e</span><span class="num">Nº {{ nf.numero }}</span><span class="num">SÉRIE {{ nf.serie }}</span></td>
+    </tr>
+    <tr class="h085">
+      <td><span class="rot">Data de recebimento</span></td>
+      <td><span class="rot">Identificação e assinatura do recebedor</span></td>
+    </tr>
+  </table>
+  <div class="picote-wrap"><div class="picote" style="height: 0.21cm;"></div></div>
+
+  <!-- DADOS DA NF-e: emitente 10.00 | DANFE 2.54 | barcode / chave / campos variaveis 7.96 (laser) -->
+  <table class="b">
+    <colgroup><col style="width: 10cm"><col style="width: 2.54cm"><col style="width: 7.96cm"></colgroup>
+    <tr class="cabecalho">
+      <td class="emitente">
+        <span class="razao">{{ emitente.razaoSocial }}</span>
+        <span class="linha">{{ emitente.enderecoLinha1 }}</span>
+        <span class="linha">{{ emitente.enderecoLinha2 }}</span>
+        <span class="linha">{{ emitente.fone }}</span>
+      </td>
+      <td class="danfe">
+        <span class="sigla">DANFE</span>
+        <span class="doc">DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA</span>
+        <div class="oper"><div class="ops">0 - ENTRADA<br>1 - SAÍDA</div><div class="tipo">{{ nf.tipo }}</div></div>
+        <span class="ident">Nº {{ nf.numero }}</span>
+        <span class="ident">SÉRIE {{ nf.serie }}</span>
+        <span class="ident">FOLHA {{ nf.folha }}</span>
+      </td>
+      <td class="direita">
+        <div class="q-barras"><div class="c128">{% for e in codigoBarras.elementos %}<div class="{{ e.k }}" style="width: {{ e.w }}"></div>{% endfor %}</div></div>
+        <div class="q-chave"><span class="rot">Chave de acesso</span><span class="val">{{ chave.formatada }}</span></div>
+        <div class="q-campo1">Consulta de autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br/portal ou no site da Sefaz Autorizadora</div>
+      </td>
+    </tr>
+  </table>
+  <table class="b">
+    <colgroup><col style="width: 12.54cm"><col style="width: 7.96cm"></colgroup>
+    <tr class="h085">
+      <td><span class="rot">Natureza da operação</span><span class="val">{{ nf.naturezaOperacao }}</span></td>
+      <td class="protocolo"><span class="rot">Protocolo de autorização de uso</span><span class="val">{{ nf.protocolo }}</span></td>
+    </tr>
+  </table>
+  <table class="b">
+    <colgroup><col style="width: 6.86cm"><col style="width: 6.86cm"><col style="width: 6.78cm"></colgroup>
+    <tr class="h085">
+      <td><span class="rot">Inscrição estadual</span><span class="val">{{ emitente.ie }}</span></td>
+      <td><span class="rot">Inscrição estadual do subst. trib.</span><span class="val">{{ emitente.ieSt }}</span></td>
+      <td><span class="rot">CNPJ</span><span class="val">{{ emitente.cnpj }}</span></td>
+    </tr>
+  </table>
+
+  <!-- DESTINATARIO/REMETENTE -->
+  <div class="titulo">Destinatário/Remetente</div>
+  <table class="b">
+    <!-- column boundaries = union of the 3.8.1 field edges (cm from the left margin) -->
+    <colgroup><col style="width: 7.11cm"><col style="width: 3.05cm"><col style="width: 1.01cm"><col style="width: 1.15cm"><col style="width: 2.67cm"><col style="width: 2.66cm"><col style="width: 2.85cm"></colgroup>
+    <tr class="h085">
+      <td colspan="4"><span class="rot">Nome/Razão social</span><span class="val">{{ destinatario.razaoSocial }}</span></td>
+      <td colspan="2"><span class="rot">CNPJ/CPF</span><span class="val neg">{{ destinatario.cnpj }}</span></td>
+      <td><span class="rot">Data da emissão</span><span class="val">{{ nf.dataEmissao }}</span></td>
+    </tr>
+    <tr class="h085">
+      <td colspan="2"><span class="rot">Endereço</span><span class="val">{{ destinatario.endereco }}</span></td>
+      <td colspan="3"><span class="rot">Bairro/Distrito</span><span class="val">{{ destinatario.bairro }}</span></td>
+      <td><span class="rot">CEP</span><span class="val">{{ destinatario.cep }}</span></td>
+      <td><span class="rot">Data da saída</span><span class="val neg">{{ nf.dataSaida }}</span></td>
+    </tr>
+    <tr class="h085">
+      <td><span class="rot">Município</span><span class="val">{{ destinatario.municipio }}</span></td>
+      <td colspan="2"><span class="rot">Fone/Fax</span><span class="val">{{ destinatario.fone }}</span></td>
+      <td><span class="rot">UF</span><span class="val">{{ destinatario.uf }}</span></td>
+      <td colspan="2"><span class="rot">Inscrição estadual</span><span class="val">{{ destinatario.ie }}</span></td>
+      <td><span class="rot">Hora da saída</span><span class="val neg">{{ nf.horaSaida }}</span></td>
+    </tr>
+  </table>
+
+  <!-- FATURA/DUPLICATAS -->
+  <div class="titulo">Fatura/Duplicatas</div>
+  <table class="b">
+    <tr class="h085">
+      <td>{% for d in duplicatas %}<span class="val" style="display: inline-block; font-size: 8pt; margin-right: 0.6cm;">Dup. {{ d.numero }} — Venc. {{ d.vencimento }} — R$ {{ d.valor }}</span>{% endfor %}</td>
+    </tr>
+  </table>
+
+  <!-- CALCULO DO IMPOSTO -->
+  <div class="titulo">Cálculo do imposto</div>
+  <table class="b">
+    <colgroup><col style="width: 4.06cm"><col style="width: 4.06cm"><col style="width: 4.06cm"><col style="width: 4.06cm"><col style="width: 4.26cm"></colgroup>
+    <tr class="h085">
+      <td class="dir"><span class="rot">Base de cálculo do ICMS</span><span class="val">{{ imposto.bcIcms }}</span></td>
+      <td class="dir"><span class="rot">Valor do ICMS</span><span class="val">{{ imposto.vIcms }}</span></td>
+      <td class="dir"><span class="rot">Base de cálculo do ICMS ST</span><span class="val">{{ imposto.bcIcmsSt }}</span></td>
+      <td class="dir"><span class="rot">Valor do ICMS ST</span><span class="val">{{ imposto.vIcmsSt }}</span></td>
+      <td class="dir"><span class="rot">Valor total dos produtos</span><span class="val">{{ imposto.vProd }}</span></td>
+    </tr>
+  </table>
+  <table class="b">
+    <colgroup><col style="width: 3.3cm"><col style="width: 3.3cm"><col style="width: 3.3cm"><col style="width: 3.3cm"><col style="width: 3.3cm"><col style="width: 4cm"></colgroup>
+    <tr class="h085">
+      <td class="dir"><span class="rot">Valor do frete</span><span class="val">{{ imposto.vFrete }}</span></td>
+      <td class="dir"><span class="rot">Valor do seguro</span><span class="val">{{ imposto.vSeguro }}</span></td>
+      <td class="dir"><span class="rot">Desconto</span><span class="val">{{ imposto.vDesc }}</span></td>
+      <td class="dir"><span class="rot">Outras desp. acessórias</span><span class="val">{{ imposto.vOutro }}</span></td>
+      <td class="dir"><span class="rot">Valor do IPI</span><span class="val">{{ imposto.vIpi }}</span></td>
+      <td class="dir"><span class="rot">Valor total da nota</span><span class="val neg">{{ imposto.vNF }}</span></td>
+    </tr>
+  </table>
+
+  <!-- TRANSPORTADOR/VOLUMES TRANSPORTADOS -->
+  <div class="titulo">Transportador/Volumes transportados</div>
+  <table class="b">
+    <!-- column boundaries = union of the 3.8.1 field edges (cm from the left margin) -->
+    <colgroup><col style="width: 2.92cm"><col style="width: 3.05cm"><col style="width: 3.05cm"><col style="width: 2.79cm"><col style="width: 1.78cm"><col style="width: 0.26cm"><col style="width: 2.03cm"><col style="width: 0.76cm"><col style="width: 0.64cm"><col style="width: 3.22cm"></colgroup>
+    <tr class="h085">
+      <td colspan="3"><span class="rot">Nome/Razão social</span><span class="val">{{ transportador.razaoSocial }}</span></td>
+      <td><span class="rot">Frete por conta</span><span class="val" style="font-size: 7pt;">{{ transportador.modFrete }}</span></td>
+      <td><span class="rot">Código ANTT</span><span class="val">{{ transportador.codigoAntt }}</span></td>
+      <td colspan="2"><span class="rot">Placa do veículo</span><span class="val">{{ transportador.placa }}</span></td>
+      <td><span class="rot">UF</span><span class="val">{{ transportador.ufPlaca }}</span></td>
+      <td colspan="2"><span class="rot">CNPJ/CPF</span><span class="val">{{ transportador.cnpj }}</span></td>
+    </tr>
+    <tr class="h085">
+      <td colspan="3"><span class="rot">Endereço</span><span class="val">{{ transportador.endereco }}</span></td>
+      <td colspan="4"><span class="rot">Município</span><span class="val">{{ transportador.municipio }}</span></td>
+      <td><span class="rot">UF</span><span class="val">{{ transportador.uf }}</span></td>
+      <td colspan="2"><span class="rot">Inscrição estadual</span><span class="val">{{ transportador.ie }}</span></td>
+    </tr>
+    <tr class="h085">
+      <td><span class="rot">Quantidade</span><span class="val">{{ transportador.volumes.quantidade }}</span></td>
+      <td><span class="rot">Espécie</span><span class="val">{{ transportador.volumes.especie }}</span></td>
+      <td><span class="rot">Marca</span><span class="val">{{ transportador.volumes.marca }}</span></td>
+      <td colspan="3"><span class="rot">Numeração</span><span class="val">{{ transportador.volumes.numeracao }}</span></td>
+      <td colspan="3" class="dir"><span class="rot">Peso bruto</span><span class="val">{{ transportador.volumes.pesoBruto }}</span></td>
+      <td class="dir"><span class="rot">Peso líquido</span><span class="val">{{ transportador.volumes.pesoLiquido }}</span></td>
+    </tr>
+  </table>
+
+  <!-- DADOS DOS PRODUTOS/SERVICOS (quadro 20.57 x 6.77 suggested; columns in 3.8.1 order). Height
+       reduced to 6.37 cm to absorb collapsed-border accumulation of the bands above (3.10.3 allows
+       reductions only in this quadro). -->
+  <div class="titulo">Dados dos produtos/serviços</div>
+  <div class="quadro-prod">
+    <table class="prod">
+      <colgroup>
+        <col style="width: 1.6cm"><col style="width: 5.9cm"><col style="width: 1.2cm"><col style="width: 0.7cm"><col style="width: 0.8cm"><col style="width: 0.6cm"><col style="width: 1.3cm"><col style="width: 1.4cm"><col style="width: 1.5cm"><col style="width: 1.5cm"><col style="width: 1.3cm"><col style="width: 1.1cm"><col style="width: 0.8cm"><col style="width: 0.8cm">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Código produto</th><th>Descrição do produto/serviço</th><th>NCM/SH</th><th>CST</th><th>CFOP</th><th>UN</th><th>Quant.</th><th>Valor unit.</th><th>Valor total</th><th>B.cálc. ICMS</th><th>Valor ICMS</th><th>Valor IPI</th><th>Alíq. ICMS</th><th>Alíq. IPI</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in itens %}
+        <tr><td>{{ it.codigo }}</td><td>{{ it.descricao }}</td><td class="c">{{ it.ncm }}</td><td class="c">{{ it.cst }}</td><td class="c">{{ it.cfop }}</td><td class="c">{{ it.un }}</td><td class="n">{{ it.qtd }}</td><td class="n">{{ it.vUn }}</td><td class="n">{{ it.vTotal }}</td><td class="n">{{ it.bcIcms }}</td><td class="n">{{ it.vIcms }}</td><td class="n">{{ it.vIpi }}</td><td class="n">{{ it.aliqIcms }}</td><td class="n">{{ it.aliqIpi }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CALCULO DO ISSQN -->
+  <div class="titulo">Cálculo do ISSQN</div>
+  <table class="b">
+    <colgroup><col style="width: 5.08cm"><col style="width: 5.08cm"><col style="width: 5.08cm"><col style="width: 5.26cm"></colgroup>
+    <tr class="h085">
+      <td><span class="rot">Inscrição municipal</span><span class="val">&nbsp;</span></td>
+      <td class="dir"><span class="rot">Valor total dos serviços</span><span class="val">&nbsp;</span></td>
+      <td class="dir"><span class="rot">Base de cálculo do ISSQN</span><span class="val">&nbsp;</span></td>
+      <td class="dir"><span class="rot">Valor do ISSQN</span><span class="val">&nbsp;</span></td>
+    </tr>
+  </table>
+
+  <!-- DADOS ADICIONAIS (informacoes complementares 12.95 x 3.07; reservado ao fisco) -->
+  <div class="titulo">Dados adicionais</div>
+  <table class="b">
+    <colgroup><col style="width: 12.95cm"><col style="width: 7.55cm"></colgroup>
+    <tr class="adic">
+      <td class="infcpl"><span class="rot">Informações complementares</span>{% for l in informacoesComplementares %}<span class="txt">{{ l }}</span>{% endfor %}</td>
+      <td><span class="rot">Reservado ao fisco</span></td>
+    </tr>
+  </table>
+
+</body>
+</html>
