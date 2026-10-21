@@ -1,0 +1,1843 @@
+{
+  "schema": "vellora-fidelity/chrome-probes/1",
+  "step": "port/08-html-parse",
+  "date": "2026-10-21",
+  "env": "darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; Google Chrome 155.0.8059.85 (local, INDICATIVE)",
+  "chrome": "Chrome/155.0.8059.85",
+  "printPath": "fidelity/lib/chrome-reference.mjs: referenceHtml (bundled Liberation/DejaVu @font-face), page.setContent (HTML parser), emulateMediaType print, page.pdf {\"format\":\"A4\",\"preferCSSPageSize\":true,\"printBackground\":true}",
+  "wordReader": "PyMuPDF rawdict character origins (pen x of the first glyph, baseline), PDF pt, top-left origin (scratch/probe_words.py)",
+  "vellora08": "renderPdf(html, undefined, { strict: true }) on the step-08 build (HTML parse)",
+  "vellora07Parser": "the same build with blitz_engine's HTML branch switched to blitz-html's DocumentHtmlParser::parse_into_mutator (= HtmlDocument::from_html, the parser of step 07) by a temporary env toggle, reverted before commit",
+  "compatModeNote": "document.compatMode on the same print page (setContent) and after page.goto(file://...html) (how @vellora/engine-chromium loads HTML): identical for every probe. Limited-quirks reports CSS1Compat; the image-only line distinguishes it (Chrome line box 20 px instead of 25 px, the Quirks Mode Standard's line height calculation quirk)",
+  "probes": {
+    "br_html5": {
+      "html": "<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      }
+    },
+    "img_html5": {
+      "html": "<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 25
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 45,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 102
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      }
+    },
+    "br_xhtml_transitional": {
+      "html": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 90.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 90.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 90.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": ["The", "Product", "team", "Suite", "1234", "Tail", "line"],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 15.31
+      }
+    },
+    "img_xhtml_transitional": {
+      "html": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 40,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 98.25
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      }
+    },
+    "br_xhtml_strict": {
+      "html": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 90.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 90.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 90.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": ["The", "Product", "team", "Suite", "1234", "Tail", "line"],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 15.31
+      }
+    },
+    "img_xhtml_strict": {
+      "html": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 25
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 45,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 102
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      }
+    },
+    "br_xml_prolog_strict": {
+      "html": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 90.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 90.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 90.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": ["The", "Product", "team", "Suite", "1234", "Tail", "line"],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 15.31
+      }
+    },
+    "img_xml_prolog_strict": {
+      "html": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "CSS1Compat",
+      "compatModeFileUrl": "CSS1Compat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 25
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 45,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 102
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      }
+    },
+    "br_xml_prolog_only": {
+      "html": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "BackCompat",
+      "compatModeFileUrl": "BackCompat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 90.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 90.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 90.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": ["The", "Product", "team", "Suite", "1234", "Tail", "line"],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 15.31
+      }
+    },
+    "img_xml_prolog_only": {
+      "html": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "BackCompat",
+      "compatModeFileUrl": "BackCompat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 40,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 98.25
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      }
+    },
+    "br_root_xmlns": {
+      "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><p>Thanks for using Product.<br>The Product team</p><p>1234 Street Rd.<br>Suite 1234<br/>Tail line</p></body></html>",
+      "compatMode": "BackCompat",
+      "compatModeFileUrl": "BackCompat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "p",
+          "text": "Thanks for using Product.The Product team",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 40
+        },
+        {
+          "tag": "p",
+          "text": "1234 Street Rd.Suite 1234Tail line",
+          "x": 0,
+          "y": 50,
+          "w": 800,
+          "h": 60
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Thanks",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "for",
+          "x": 99.68,
+          "baseline": 68.25
+        },
+        {
+          "text": "using",
+          "x": 117.02,
+          "baseline": 68.25
+        },
+        {
+          "text": "Product.",
+          "x": 149.04,
+          "baseline": 68.25
+        },
+        {
+          "text": "The",
+          "x": 57,
+          "baseline": 83.25
+        },
+        {
+          "text": "Product",
+          "x": 81.01,
+          "baseline": 83.25
+        },
+        {
+          "text": "team",
+          "x": 125.7,
+          "baseline": 83.25
+        },
+        {
+          "text": "1234",
+          "x": 57,
+          "baseline": 105.75
+        },
+        {
+          "text": "Street",
+          "x": 87.02,
+          "baseline": 105.75
+        },
+        {
+          "text": "Rd.",
+          "x": 122.38,
+          "baseline": 105.75
+        },
+        {
+          "text": "Suite",
+          "x": 57,
+          "baseline": 120.75
+        },
+        {
+          "text": "1234",
+          "x": 87.68,
+          "baseline": 120.75
+        },
+        {
+          "text": "Tail",
+          "x": 57,
+          "baseline": 135.75
+        },
+        {
+          "text": "line",
+          "x": 78.34,
+          "baseline": 135.75
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "The",
+          "x": 56.69,
+          "baseline": 82.94
+        },
+        {
+          "text": "Product",
+          "x": 80.7,
+          "baseline": 82.94
+        },
+        {
+          "text": "team",
+          "x": 125.39,
+          "baseline": 82.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 105.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 105.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 105.44
+        },
+        {
+          "text": "Suite",
+          "x": 56.69,
+          "baseline": 120.44
+        },
+        {
+          "text": "1234",
+          "x": 87.38,
+          "baseline": 120.44
+        },
+        {
+          "text": "Tail",
+          "x": 56.69,
+          "baseline": 135.44
+        },
+        {
+          "text": "line",
+          "x": 78.03,
+          "baseline": 135.44
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Thanks",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "for",
+          "x": 99.38,
+          "baseline": 67.94
+        },
+        {
+          "text": "using",
+          "x": 116.72,
+          "baseline": 67.94
+        },
+        {
+          "text": "Product.",
+          "x": 148.73,
+          "baseline": 67.94
+        },
+        {
+          "text": "1234",
+          "x": 56.69,
+          "baseline": 90.44
+        },
+        {
+          "text": "Street",
+          "x": 86.72,
+          "baseline": 90.44
+        },
+        {
+          "text": "Rd.",
+          "x": 122.07,
+          "baseline": 90.44
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 0.31
+      },
+      "vellora07ParserVsChrome": {
+        "missing": ["The", "Product", "team", "Suite", "1234", "Tail", "line"],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 15.31
+      }
+    },
+    "img_root_xmlns": {
+      "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>t</title><style>@page { size: A4; margin: 20mm; } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 16px; line-height: 20px; } p { margin: 0 0 10px 0; }</style></head><body><div>Before</div><div><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\" width=\"20\" height=\"20\"></div><div>After</div></body></html>",
+      "compatMode": "BackCompat",
+      "compatModeFileUrl": "BackCompat",
+      "chromeBoxesCssPx": [
+        {
+          "tag": "div",
+          "text": "Before",
+          "x": 0,
+          "y": 0,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 800,
+          "h": 20
+        },
+        {
+          "tag": "img",
+          "text": "",
+          "x": 0,
+          "y": 20,
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "div",
+          "text": "After",
+          "x": 0,
+          "y": 40,
+          "w": 800,
+          "h": 20
+        }
+      ],
+      "chromeWords": [
+        {
+          "text": "Before",
+          "x": 57,
+          "baseline": 68.25
+        },
+        {
+          "text": "After",
+          "x": 57,
+          "baseline": 98.25
+        }
+      ],
+      "vellora08Words": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora07ParserWords": [
+        {
+          "text": "Before",
+          "x": 56.69,
+          "baseline": 67.94
+        },
+        {
+          "text": "After",
+          "x": 56.69,
+          "baseline": 101.69
+        }
+      ],
+      "vellora08VsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      },
+      "vellora07ParserVsChrome": {
+        "missing": [],
+        "maxAbsDxPt": 0.31,
+        "maxAbsDyPt": 3.44
+      }
+    }
+  }
+}

@@ -377,3 +377,58 @@ test("port/07-media-print passes vs port/06-page-rules with no acceptedRegressio
     [],
   );
 });
+
+test("port/08-html-parse passes vs port/07-media-print with no acceptedRegressions; the postmark text is back", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "07-media-print"));
+  const step = loadBaselineDir(join(baselines, "port", "08-html-parse"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/07-media-print");
+  assert.deepEqual(step.manifest.acceptedRegressions, []);
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  // Every document is parsed as HTML. oss-postmark-receipt (XHTML 1.0 Transitional doctype) was
+  // parsed as XML by blitz-html's sniffing from step 05 to 07 and lost the text after its three
+  // <br>; that is what step 05 accepted as 9 'html-normalize-compensation' rows, retired here.
+  // Without acceptances the comparison passes, and its only non-unchanged items are those 9
+  // rows coming back plus the pdf-probe pairing change ("Download as PDF" now lies below the
+  // page edge of vellora's single page, as at step 04; "The [Product Name] team" pairs again).
+  const r = compareSnapshots(prev, step);
+  assert.equal(r.verdict, "PASS");
+  const pm = "oss-postmark-receipt";
+  const expected = [
+    [`${pm}|INV-X1|corpus||criterion#1`, "FAIL", "PASS"],
+    [`${pm}|INV-X2|corpus||criterion#1`, "FAIL", "PASS"],
+    [`${pm}|INV-X1|corpus||criterion#1|found`, 5, 6],
+    [`${pm}|INV-X2|corpus||criterion#1|found.pdftotext`, 5, 6],
+    [`${pm}|INV-X2|corpus||criterion#1|found.pypdf`, 5, 6],
+    [`${pm}|INV-X2|corpus||criterion#1|found.pdfminer`, 5, 6],
+    // Back to their step-04 values: 38, 2, 40.
+    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pdftotext`, 39, 38],
+    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pdfminer.six`, 11, 2],
+    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pymupdf`, 41, 40],
+  ];
+  for (const [key, before, after] of expected) {
+    const x = item(r, key);
+    assert.deepEqual([x.class, x.before, x.after], ["improvement", before, after], key);
+  }
+  assert.deepEqual(
+    r.items
+      .filter((x) => x.class !== "unchanged")
+      .map((x) => `${x.class} ${x.key}`)
+      .sort(),
+    [...expected.map(([k]) => `improvement ${k}`), `changed pdf-probe|${pm}|unpaired`].sort(),
+  );
+  // No WPT outcome moves: the harness keeps an XML parse for the nodes WPT serves as XML.
+  assert.equal(r.items.filter((x) => x.check === "wpt" && x.class !== "unchanged").length, 0);
+  // Against step 04 (before the XML parse cost text) no postmark value differs at all: its
+  // three PDFs are byte-identical to step 04's (attachments/pdf-identity-vs-07-media-print.json).
+  const s04 = loadBaselineDir(join(baselines, "port", "04-block-offset"));
+  const r04 = compareSnapshots(s04, step);
+  assert.deepEqual(
+    r04.items.filter((x) => x.key.includes(pm) && x.class !== "unchanged").map((x) => x.key),
+    [],
+  );
+});

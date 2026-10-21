@@ -98,7 +98,9 @@ the port chain, `baselines/port/00-start`, must pass its sha256 integrity check 
 `baselines/beta4-gated`; `baselines/port/01-pagination-gaps` must FAIL against `00-start` on
 exactly its 150 `acceptedRegressions` and PASS with them; `02-delete-noop-passes` must PASS against
 `01` with none; `03-table-passes`, `04-block-offset` and `05-walk-rewrite` must FAIL against their
-predecessor on exactly their 40, 2587 and 18 and PASS with them; the Phase A baselines `pin`/`beta4`,
+predecessor on exactly their 40, 2587 and 18 and PASS with them; `06-page-rules` likewise with its
+13; `07-media-print` must PASS against `06` with no change, and `08-html-parse` against `07` with no
+acceptance and only the oss-postmark-receipt text rows improving; the Phase A baselines `pin`/`beta4`,
 which predate the layout-diff allowlist, are classified with its frozen copy
 `layout-diff/expected-check-failures-phase-a.json`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).

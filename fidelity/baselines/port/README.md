@@ -720,6 +720,9 @@ non-literal families of steps 01, 03 and 04.**
     html_normalize did not change were already parsed as XML before this step. The parse-mode
     decision is a follow-up: HTML for every text/html input diverges from Chrome on WPT `.xht`
     files, which Chrome loads as XML.
+  - **Retired by `08-html-parse`.** The orchestrator rejected these 9 as real text loss. Step 08
+    parses every document as HTML; the 9 rows return to their step-04 values and the postmark
+    PDFs are byte-identical to step 04's (section `08-html-parse` below).
 
 **Fallback if the 12 are rejected: ablation "walk only" (`attachments/ablation-walk-only-*`).**
 It is `e9dc7e4` with html_normalize restored. Its gate against 04, run 2026-10-21 in the same
@@ -986,3 +989,217 @@ the content boxes are wider than 600 px, so they did not apply then and do not a
 
 The `committed-canary` self-test asserts that `07-media-print` PASSes against `06-page-rules`
 with no acceptances and no changed item.
+
+## `08-html-parse`: every document is parsed as HTML
+
+Branch `phaseb/08-html-parse` (from `phaseb/07-media-print` `2c3a7bd`), code commit `14dc2b1`.
+
+- **Before this step blitz-html chose the parser by sniffing the content.** blitz-html
+  0.3.0-beta.4 `HtmlDocument::from_html` (`DocumentHtmlParser::parse_into_mutator`,
+  `src/html_sink.rs` lines 91-99) used xml5ever when the input started with `<?xml`, when its
+  first line was a DOCTYPE containing `XHTML`/`xhtml`, or when the root `<html>` declared
+  `xmlns="http://www.w3.org/1999/xhtml"`. In XML `<br>` is not void, so the text after it became
+  the `<br>`'s content and was never drawn. vellora's input is a `text/html` string
+  (`renderPdf(html)`; `@vellora/engine-chromium` loads it from an `index.html` file and the
+  fidelity references with `page.setContent`), and Chrome parses `text/html` with the HTML parser
+  whatever the doctype.
+- **`blitz_engine` now parses every document as HTML**: the body, the margin-box documents and
+  the parse-only helpers (depth gate, denied-element walk). `parse_into` builds each
+  `BaseDocument` with the same `DocumentConfig` and runs `html5ever::parse_document` with
+  blitz-html's `DocumentHtmlParser` sink and blitz-html's HTML-branch `ParseOpts`, copied field
+  by field (`html_parse_opts`). `HtmlDocument` cannot be built from a `BaseDocument` (private
+  field, no constructor), so the module holds `BaseDocument` directly. The input string is not
+  modified.
+- **html5ever is pinned to `=0.40.1`**, the version blitz-html resolves (`Cargo.lock` has one
+  html5ever). `parse_document(DocumentHtmlParser::new(..), ..)` only compiles while both crates
+  link the same html5ever, because the sink implements blitz-html's `TreeSink`.
+  `tests/html_parse.rs::html5ever_is_the_one_blitz_html_resolves` also checks `Cargo.lock`.
+- **The XML parse stays reachable for fidelity tooling only.** `DocumentSyntax::Xml` is used by
+  `vellora_core::debug_render_xhtml` (`#[doc(hidden)]`, next to `debug_layout_dump`), which the
+  new `examples/xhtml_render.rs` runs for the WPT harness (below). `renderPdf`, `@vellora/native`
+  and the CLI cannot reach it.
+- New tests:
+  - `crates/vellora-core/tests/html_parse.rs` (7). They cover text after `<br>` under six document
+    starts at Chrome's positions, the public `render`, the image-only line (no-quirks match and
+    the quirks known gap), the raw postmark template, the fidelity XML path, and the html5ever pin.
+  - `blitz_engine.rs` unit tests (3): DOM identity with the step-07 parser for HTML-sniffed
+    input, `<br>` void under the HTML parse, and html5ever's document mode against Blitz's.
+  - `lib.rs` unit tests (2): byte-identical PDFs to the step-07 parser for HTML-sniffed input,
+    and the postmark loss reproduced with the step-07 parser.
+
+    The step-07 parser is kept as a `#[cfg(test)]` `DocumentSyntax::BlitzSniffed`.
+  - `fidelity/wpt/test/xhtml-bridge.test.mjs` (7).
+
+  On the step-07 parser (a temporary env toggle in a scratch build, reverted before the commit)
+  4 of the 7 `html_parse.rs` tests fail. The two image-line tests and the Cargo.lock test pass on
+  both.
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T191737Z` (2026-10-21 19:17:37Z), 20/20 steps ok, run-all exit 0 (gate PASS), git `14dc2b1` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/07-media-print --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/08-html-parse` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom/blitz-html 0.3.0-beta.4, html5ever 0.40.1, xml5ever 0.40.0; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-08-html-parse-20261021T191737Z`. The two WPT measurement runs, the census, the probes (HTML, Chrome and vellora PDFs, `dom.json`) and the scratch drivers: `~/.cache/vellora-fidelity/step08-html-parse-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/07-media-print` (previous link; `gate-report.{json,md}`) | **PASS**, `acceptedRegressions: []` | improvement 9, changed 1, gating 0, unchanged 15504 |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 524 gating (07: 533): exactly the 9 postmark rows are gone, nothing new |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 56 gating (07: 63): 7 postmark rows gone, nothing new |
+| `port/04-block-offset` (post-hoc, extra: `attachments/gate-report-vs-04-block-offset.*`) | FAIL | 21 gating: step 05's 9 accepted WPT items and step 06's 12 accepted pdf-probe items. **No postmark item differs from step 04** |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle (oss-postmark-receipt) | 07 → 08 | step 04 |
+|---|---|---|
+| INV-X1 status / found | FAIL 5/6 → **PASS 6/6** | PASS 6/6 |
+| INV-X2 found pdftotext / pypdf / pdfminer | 5 / 5 / 5 → **6 / 6 / 6** (PASS) | 6 / 6 / 6 |
+| EXT-2 missing pdftotext / pdfminer.six / PyMuPDF | 39 / 11 / 41 → **38 / 2 / 40** | 38 / 2 / 40 |
+| pdf-probe pairs (`changed`, reported) | 136 → 137 aligned: 133 pairs identical, "The [Product Name] team" (4) pairs again, "Download as PDF" (3) no longer pairs (below) | 137 |
+| REF-P / REF-W / INV-R1 | unchanged: 1 page vs Chrome 2 (WeasyPrint 2) / NOT-RUN / 10.26 mm | the same |
+
+Verdict totals: all PASS 140 → 142, FAIL 40 → 38, WARN 7, NOT-RUN 3; excluding diagnostic
+variants 118 → 120, 36 → 34, 6, 3. The two new PASSes are postmark INV-X1 and INV-X2.
+
+### What did not move, and the postmark tail
+
+- **PDF bytes** (`attachments/pdf-identity-vs-07-media-print.json`): 44 of the 47 vellora PDFs
+  are byte-identical to step 07's. They cover the corpus, the oracles including canaries, and
+  layout-diff. The 3 that differ are postmark's plain, PDF/A-2b and layout-diff renders, and all
+  3 are **byte-identical to step 04's** (`postmarkVsStep04`, sha256 `7ee04b03…` for the plain
+  render). Every `<!DOCTYPE html>` document therefore renders exactly as before. The `lib.rs`
+  unit test proves the same per document against the step-07 parser.
+- WPT pass / clean stays at 3664 / 3107 (45.53 % / 38.61 %) with no transitions. Also unchanged:
+  crashtests 239/239 ok, canaries 30/30 caught, DET-1/DET-2 PASS, code checks green.
+- **REF-W stays NOT-RUN for a reference-side reason.** Chrome and WeasyPrint never agree on a
+  word's y within 2 pt for this template: 0 of 114 matched words, while 76 agree on x. So REF-W
+  has no consensus word to score.
+- **REF-P stays 1 vs 2, and the tail is drawn below the page edge.** This is a pre-existing
+  pagination defect, unchanged since step 04.
+  - The template body is one layout table, 1518 px tall. vellora's paginator places it whole on
+    page 1 (layout dump pagination trace: one `oversize-block`, bottom 1518 px), where Chrome
+    breaks it onto page 2.
+  - pdfminer.six reads the tail where vellora draws it (`Suite 1234` at 1103.65 pt on an
+    841.92 pt page). pdftotext and PyMuPDF clip it: those are their 38 / 40 missing tokens, from
+    "Download as PDF" to "Suite 1234".
+  - Against step 07, "Download as PDF" (3 tokens) moves from top 826.62 pt (inside the bottom
+    margin band, visible) to 846.12 pt (below the page edge). The restored line "The [Product
+    Name] team" sits above it. This is where step 04 drew it too.
+  - The text is in the PDF and was not lost by this step. It is not visible either, as at step 04.
+    Follow-up: fragment an oversize layout table across pages.
+
+### WPT `.xht` nodes (`attachments/xht-parse-measurement.json`)
+
+WPT serves `.xht`/`.xhtml`/`.xml` as `application/xhtml+xml` (`fidelity/wpt/lib/chrome.mjs`), so
+Chrome parses them as XML. The 8047 reftests have 10906 distinct nodes (tests and references,
+prepared HTML):
+
+- 5000 `.html` nodes, none of which blitz-html's sniff sent to XML at step 07;
+- 5906 `.xht` nodes: 5756 sniffed as XML by their XHTML doctype, 134 by an `<?xml` prolog and
+  9 by a leading `<html xmlns>`. The other 7 start with `<!DOCTYPE html>` and were parsed as
+  HTML at step 07.
+
+5746 tests have a node that was parsed as XML at step 07.
+
+- **(b) every node through the product's HTML parse** (measured on the step-08 core with the
+  step-07 harness, `--xhtml-parser html` today):
+  - 1518 pass → fail (1474 clean, 44 flagged), 175 fail → pass, 2 pass-blank → fail;
+  - pass 3664 → 2321.
+  - Every one of the 1695 changed tests has a node parsed as XML at step 07, and an `.xht` node
+    with a CDATA section (`xhtmlHazards`; 6 of them also have a self-closing non-void
+    element). In a `<style>`, the HTML parse hands the CSS parser `<![CDATA[`, whose `[` opens a
+    simple block that runs to the matching `]`. The rules wrapped in it are dropped (CONFIRMED on
+    a probe: an `.xht`-style sheet of `body`, `.a`, `.b` rules lost all three under the HTML parse
+    and applied all three under the XML parse). That measures the HTML parser on input Chrome
+    never parses as HTML.
+- **(a) XML parse for the XML-served nodes**, chosen: 0 transitions, 8047 unchanged (also in the
+  gated run).
+  - The only nodes whose parser differs from step 07 are the 7 sniff misses, now XML as in
+    Chrome. Their 5 tests keep their outcome (`left`/`right-offset-position-fixed-001` pass,
+    `abspos-inline-008` and `table-vertical-align-baseline-008/009` fail; Chrome passes all 5).
+  - The two table tests' differing pixels go from 10000 to 68400 and 41700. HYPOTHESIS: Blitz
+    lays out the XML DOM's `table>tr` (no implied `tbody`) differently.
+- **How (a) is wired.** `fidelity/wpt/lib/vellora-render.mjs` passes
+  `_bridge: lib/xhtml-bridge.mjs` to the usual `renderPdf(..., { strict: true, fonts, images,
+  baseUrl })` call for an XML-served node. So templating, the strict orchestration and the
+  diagnostic mapping are the product's.
+  - The bridge spawns one `xhtml_render` process per render. That example binary reads a
+    `VXR1` record stream on stdin and runs `debug_render_xhtml` on an 8 MiB-stack thread (the
+    libuv stack of the napi binding).
+  - It returns the PDF, or the napi binding's error fields (`feature/line/col/hint`,
+    `profile/errors`, or the panic message).
+  - It re-raises a fatal signal in the worker (crash parity), and exits when orphaned.
+  - `wpt/run.mjs` builds the binary in the measured checkout (`--xhtml-render <bin>` overrides
+    it) and records `config.xmlServedNodes`.
+- **`HARNESS_SEMANTICS` stays 2.** It versions the verdict rules for a given rendering
+  (`lib/provenance.mjs`). This change alters vellora's renderings of 7 nodes and the Chrome side
+  is untouched, so `--chrome-from` reuse stays valid. `xmlServedNodes` is not part of
+  `comparisonConfig`.
+- Crashtests (239) are all `.html`; `crash-worker.mjs` does not use the bridge.
+
+### Document mode (finding; Chrome probes, `attachments/chrome-probes-html-parse.json`)
+
+- **html5ever picks Chrome's mode** (unit test `html5ever_picks_chromes_document_mode_and_blitz_ignores_it`):
+  - no-quirks for `<!DOCTYPE html>` and XHTML 1.0 Strict;
+  - limited-quirks for XHTML 1.0 Transitional;
+  - quirks with no doctype (`<html xmlns>` alone, or an `<?xml` prolog alone).
+
+  Chrome 155's `document.compatMode` is CSS1Compat for the first three and BackCompat for the
+  last two. It is the same after `page.setContent` and after a `file://` load.
+- **Blitz ignores the mode.** blitz-html's sink stores it in `DocumentHtmlParser::quirks_mode`
+  (`html_sink.rs` line 296), and nothing reads it. blitz-dom builds its Stylist with
+  `QuirksMode::NoQuirks` (`document.rs` line 444) and returns `NoQuirks` from
+  `TDocument::quirks_mode` (`stylo.rs` line 249).
+- **Measured gap: an image-only line** (20 px image, `line-height: 20px`).
+  - Chrome's line box is 25 px in no-quirks mode and 20 px in limited-quirks and quirks mode (the
+    Quirks Mode Standard's line height calculation quirk).
+  - "After" sits at 102.00 pt and 98.25 pt respectively.
+  - vellora prints 101.69 pt in every mode: 3.44 pt below Chrome in the limited-quirks and quirks
+    documents. `html_parse.rs::image_only_line_ignores_the_quirks_line_height_rule_known_gap`
+    pins today's value.
+  - Not fixable in `blitz_engine.rs`: Blitz exposes no quirks mode. The postmark template has no
+    `<img>`.
+- **Text probes.** In the 6 `br_*` probes (all six document starts), vellora draws all 14 of
+  Chrome's words within 0.31 pt on both axes. Chrome snaps the 20 mm margin to device pixels.
+  The step-07 parser drew 7 of 14 in the 5 XML-sniffed starts: "The Product team", "Suite
+  1234" and "Tail line" were lost, and the second paragraph moved up 15.31 pt.
+
+### Other changes
+
+- **layout-diff allowlist**: the two oss-postmark-receipt entries
+  (`source_dom_keys_vs_chromium`, `dom_key_alignment`) expired as their expiry condition said
+  ("when vellora parses text/html input as HTML regardless of an XHTML doctype"). They are
+  removed, and `expected-check-failures.json` is now empty. The frozen Phase A copy is unchanged.
+- `fidelity/wpt/README.md`: pipeline step 3 describes the XML-served nodes. The known-gap bullet
+  that said vellora parsed `.xht` as HTML is corrected: it was wrong before this step too. A
+  document-mode gap is added.
+- `COMPATIBILITY.md` has no row about parsing (it is generated from `validation.rs`'s
+  denylists), so it is unchanged.
+
+### Retires step 05's 9 postmark acceptances
+
+Step 05 accepted 9 oss-postmark-receipt rows as `html-normalize-compensation`. They are INV-X1
+status and found, INV-X2 status and found per extractor, and EXT-2 missing per extractor. The
+orchestrator rejected that acceptance as real text loss. This step retires them: all 9 are back
+at their step-04 values without any `acceptedRegressions` entry. The 3 WPT float tests of the
+same label stay as step 05 recorded them (a Blitz float defect, unrelated to parsing).
+
+Follow-ups (not changed here):
+
+- fragment an oversize layout table across pages (postmark REF-P 1 vs 2, its clipped tail);
+- quirks and limited-quirks mode in Blitz (upstream);
+- a COMPATIBILITY row on HTML parsing and the no-quirks gap (via `scripts/gen-compatibility.mjs`);
+- the XML-DOM table layout of `table-vertical-align-baseline-008/009`;
+- vellora's own source scanners (`page_css`, presumably `break_css` too) do not unwrap a CDATA
+  section. Under the XML parse an author `@page { margin: 0 }` inside `<![CDATA[ … ]]>` is not
+  applied, while the element rules of the same sheet are (CONFIRMED on the probe above: `.a` at
+  x 120.35 pt, i.e. the default 16 mm page margin + 75 pt, against 75.00 pt without the CDATA
+  markers; `scratch/cdata-check.mjs` in the evidence directory). This was the case at step 07 too,
+  and it affects only XML-served WPT nodes.
+
+The `committed-canary` self-test asserts that `08-html-parse` PASSes against `07-media-print`
+with no acceptances, and that its only non-unchanged items are the 9 postmark improvements
+(values above) and the pdf-probe pairing change. It also asserts that no WPT item moves and that
+no postmark item differs from `04-block-offset`.
