@@ -53,6 +53,9 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   the links 00-start to 07 were gated with are kept under `attachments/pdf-probe-v1/` and their
   `acceptedRegressions` (v1 keys) are history; the committed-canary test reproduces those
   verdicts on the v1 sections.
+  The pair keys name Chrome words, so the gate REFUSES a pdf-probe comparison whose Chrome
+  reference words differ (`reference.chromeWordsSha256`): a deliberate change of a fixture's
+  template (or of Chrome) needs the previous link re-measured with it before the next link is gated.
 
 ## `00-start`: beta.4 + whitespace test fix + reader fix + hardened oracles
 
@@ -1016,6 +1019,20 @@ baseline changed (CONFIRMED: every manifest equals its previous version except `
 - `acceptedRegressions` are unchanged. Their pdf-probe keys are v1 keys and match no v2 item; the
   debt ledger supersedes them.
 
+**Gate rules of v2 beyond "|dx|, |dy| may not grow" (DESIGN TARGET; the orchestrator may reverse any).**
+
+- A Chrome word that loses its vellora partner gates twice: its `…|pairing` item and the fixture's
+  `unpaired-chrome` count.
+- `unpaired-vellora` (words Chrome does not print where vellora does) gates too. At step 05 it
+  fires on postmark's newly drawn "Download as PDF" (0 → 3), which may be progress: no Chrome word
+  lies within 36 pt of it.
+- A fixture the baseline measured and the run lacks is `removed` (gates); v1 ignored it.
+- The text key is case-sensitive (v1 lower-cased): a text-transform difference makes the words
+  unpaired instead of measured.
+- Near the bound: step 04's postmark "The [Product Name] team" paired at dy 35.1 pt, 0.9 pt inside
+  the 36 pt bound; a small worsening of such a word reads as a lost pairing.
+- `withinTolerance` counts every sub-tolerance change of a v2 pair (v1 counted none, D4).
+
 **How (per link, recorded in `manifest.json pdfProbeRescore`).**
 `node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/<link> --run
 ~/.cache/vellora-fidelity/<run copy>`, 2026-10-21 ~20:10Z, darwin 27.0.0 arm64, Node v22.23.2,
@@ -1025,6 +1042,11 @@ Python 3.12.13, PyMuPDF 1.28.2 (local, INDICATIVE). Before writing, the script c
 - the run's own v1 `pdf-probe.json`, re-compacted, equals the committed v1 section for every
   fixture (10 links; pin had none), so these are the PDFs the link measured;
 - integrity before and after, and (gate schema) no file outside `manifest.files`.
+
+After the re-score, a fresh `layout-diff/run.mjs` + `pdf-probe.mjs` run of this branch (the step-07
+crates, a new render and a new Chrome 155 print) reproduced all 9 committed `07-media-print` v2
+sections exactly (compacted JSON equal; CONFIRMED 2026-10-21), so the next link's pdf-probe gate
+compares like with like.
 
 **Missing inputs (CONFIRMED).**
 
