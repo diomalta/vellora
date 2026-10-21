@@ -163,6 +163,71 @@ export function syntheticDump(boxes = BOXES) {
 
 export const ID = IDS;
 
+/**
+ * Schema-2 variant of syntheticDump: raw Blitz text (`blitz_runs`, equal to L0's runs) and a
+ * one-page pagination trace placing div#a and p at their flow positions (div#b is a flattened
+ * wrapper and html/body are structural: pagination never places them). Flow gap a -> p = 10 px
+ * (a ends at 20, p starts at 30) and the gap used is a's 10 px margin-bottom, so P == final.
+ */
+export function syntheticDumpV2(boxes = BOXES) {
+  const dump = syntheticDump(boxes);
+  dump.schema = "vellora-layout-dump/2";
+  const raw = (owner, text, x, y, advance) => ({
+    owner,
+    brush: owner,
+    line: 0,
+    text,
+    font_size: 12,
+    ascent: 11,
+    descent: 3,
+    face: "LiberationSans-Regular.ttf",
+    glyphs: text.length,
+    x,
+    y,
+    advance,
+    offset: 0,
+    baseline: 11,
+    block_offset: 0,
+  });
+  dump.blitz_runs = [raw(IDS.a, "Hello", 0, 14, 40), raw(IDS.p, "World", 0, 44, 44)];
+  const place = (root, tag, nodeIds, top, bottom, extra) => ({
+    kind: "block",
+    root,
+    root_tag: tag,
+    node_ids: nodeIds,
+    table_id: null,
+    top,
+    bottom,
+    trailing_gap: 0,
+    gap_source: "margin-bottom",
+    page: 0,
+    new_page: null,
+    cursor_before: 0,
+    pending_gap: 0,
+    pending_gap_source: "none",
+    gap_applied: 0,
+    gap_note: "none",
+    header_injected: null,
+    placed_top: top,
+    ...extra,
+  });
+  dump.pagination = {
+    page_count: 1,
+    groups_split: 0,
+    placements: [
+      place(IDS.a, "div", [IDS.a, IDS.ta], 0, 20, { trailing_gap: 10 }),
+      place(IDS.p, "p", [IDS.p, IDS.tp], 30, 50, {
+        cursor_before: 20,
+        pending_gap: 10,
+        pending_gap_source: "margin-bottom",
+        gap_applied: 10,
+        gap_note: "applied",
+      }),
+    ],
+  };
+  return dump;
+}
+
 // ---- planted defects on a real dump (same shape as the validator's in-pipeline injections) ----
 
 const BOX_FIELD = { x: 2, y: 3, w: 4, h: 5 };

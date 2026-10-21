@@ -36,6 +36,8 @@ pub mod break_css;
 pub mod css_scan;
 mod fonts;
 mod html_normalize;
+#[doc(hidden)]
+pub mod layout_dump;
 mod layout_normalize;
 pub mod page_css;
 pub mod pagination;
@@ -105,17 +107,23 @@ pub fn render(html_bytes: &[u8], opts: &RenderOptions) -> Result<Vec<u8>, Vellor
 /// Debug/fidelity tooling ONLY (`fidelity/layout-diff/`), never the render path:
 /// runs exactly [`render`]'s validation + layout sequence (same function, same
 /// gates, same errors) with an observer that snapshots vellora's box list at
-/// every layout stage — Blitz's own layout tree (`B0`), the box walk (`L0`), and
-/// after each named `layout_normalize` pass — keyed by stable source-DOM paths.
-/// Stops before pagination. Not a stable API; the shape may change freely.
+/// every layout stage — Blitz's own layout tree and raw text runs (`B0`), the box
+/// walk (`L0`), and after each named `layout_normalize` pass — keyed by stable
+/// source-DOM paths, then traces [`pagination::paginate`] over the final layer
+/// (`P`: fragments, gaps, cursor, pages). Stops before PDF emit. Not a stable
+/// API; the shape may change freely. Model and JSON: [`layout_dump`].
 #[doc(hidden)]
 pub fn debug_layout_dump(
     html_bytes: &[u8],
     opts: &RenderOptions,
-) -> Result<blitz_engine::LayoutDump, VelloraError> {
-    let mut capture = blitz_engine::DumpCapture::default();
-    let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
-    Ok(capture.finish(page_box))
+) -> Result<layout_dump::LayoutDump, VelloraError> {
+    let mut capture = layout_dump::DumpCapture::default();
+    let (laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
+    // Fidelity layer `P`: the same `paginate` the render path runs (`paginate`
+    // is `paginate_traced(.., None)`), here with a trace of every placement.
+    let mut trace = pagination::PaginationTrace::default();
+    let _ = pagination::paginate_traced(&laid_out, &page_box, Some(&mut trace));
+    Ok(capture.finish(page_box, Some(trace)))
 }
 
 /// [`debug_layout_dump`] with html_normalize SKIPPED: Blitz lays out the input
@@ -126,10 +134,11 @@ pub fn debug_layout_dump(
 pub fn debug_layout_dump_source_html(
     html_bytes: &[u8],
     opts: &RenderOptions,
-) -> Result<blitz_engine::LayoutDump, VelloraError> {
-    let mut capture = blitz_engine::DumpCapture::source_html();
+) -> Result<layout_dump::LayoutDump, VelloraError> {
+    let mut capture = layout_dump::DumpCapture::source_html();
     let (_laid_out, page_box) = validate_and_lay_out(html_bytes, opts, &mut capture)?;
-    Ok(capture.finish(page_box))
+    // Not what `render` paginates (html_normalize skipped): no pagination layer.
+    Ok(capture.finish(page_box, None))
 }
 
 /// Steps 1-3 of [`render`] (validation gates, `@page` box, Blitz layout +

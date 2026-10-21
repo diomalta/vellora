@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Per-layer layout-tree diff: Chromium continuous-flow DOMSnapshot vs vellora's layout layers
 // (N0 Blitz on the source HTML, B0 Blitz on html_normalize's output, L0 box walk, one layer per
-// layout_normalize pass).
+// layout_normalize pass, and — schema-2 dumps — P, pagination's in-page drift). Schema-2 dumps
+// also give N0/B0 the raw Blitz/Parley text, so text is attributed raw Blitz vs vellora's reader.
 //
 //   node fidelity/layout-diff/run.mjs [--fixtures invoice,receipt,boleto,notification]
 //     [--dump-repo <checkout>] [--label <name>] [--chrome <path>] [--out <dir>]
@@ -148,6 +149,14 @@ async function main() {
         `html_normalize: ${model.domAlteredByHtmlNormalize ? "ALTERED the DOM" : "changed nothing"} (wrappers recorded ${model.normalize.wrappers_recorded}, located in the Blitz DOM ${model.normalize.wrappers_located}${model.normalize.wrappers_recorded === model.normalize.wrappers_located ? "" : " — MISMATCH: a wrapper is not where it was recorded, later keys shift"}). ${model.source ? "N0 (Blitz on the source HTML) present: the N0 → B0 step is html_normalize's." : `N0 NOT RUN${sourceNote ? ` (${sourceNote})` : ""}: B0 is Blitz on html_normalize's output, so html_normalize and raw Blitz are NOT separated.`}`,
         `Blitz anonymous blocks (B0 only): ${model.anonymous.length}; anonymous inline roots holding text (text Blitz shaped that vellora's DOM-children walk never reads): ${model.anonymousTextBlocks.length}${model.anonymousTextBlocks.length ? ` — ${model.anonymousTextBlocks.map((a) => `"${a.text.trim().slice(0, 40)}"`).join("; ")}` : ""}.`,
         `Dump self-checks: run-metadata misalignments ${model.runMetaMismatches.length}, layer order violations ${model.layerOrderViolations.length} (both expected 0).`,
+        `Raw Blitz text (dump schema ${model.schema ?? "?"}): ${model.layers
+          .filter((l) => l.kind === "blitz" || l.kind === "blitz-source")
+          .map(
+            (l) =>
+              `${l.name} ${l.hasText ? `${l.runs.length} runs, ${model.blitzTextUnreadByWalk[l.name]?.length ?? 0} never read by the walk` : "none (schema-1 dump)"}`,
+          )
+          .join("; ")}.`,
+        `Pagination (layer P): ${model.pagination ? `${model.pagination.page_count} page(s), ${model.pagination.placements.length} fragment placements, ${model.pagination.final_boxes_not_placed} final-layer boxes never placed (structural / flattened wrappers: n/a in P)` : "no trace in this dump (schema 1): P not run"}.`,
         `Input sha256: native ${createHash("sha256").update(prepared.nativeHtml).digest("hex").slice(0, 16)}…, browser ${createHash("sha256").update(prepared.browserHtml).digest("hex").slice(0, 16)}…`,
       ];
       result.checks = runChecks({
@@ -172,8 +181,9 @@ async function main() {
       const b = result.headline.box;
       const t = result.headline.text;
       const pr = result.headline.first_pass_regression;
+      const pg = result.headline.first_pagination_regression;
       process.stdout.write(
-        `${fixture} [${label}]${result.checks_summary.attribution_valid ? "" : " ATTRIBUTION INVALID (input parity failed)"} first box: ${b ? `${b.type} ${b.path} (first over tol. ${b.first_over_tolerance}, dominant ${b.dominant_layer})` : "none"}; first text: ${t ? `"${t.text}" (first over tol. ${t.first_over_tolerance}, dominant ${t.dominant_layer})` : "none"}; first pass regression: box ${pr.box ? `${pr.box.type} ${pr.box.path} by ${regressedText(pr.box, "pass")}` : "none"}, text ${pr.text ? `"${pr.text.text}" by ${regressedText(pr.text, "pass")}` : "none"}\n`,
+        `${fixture} [${label}]${result.checks_summary.attribution_valid ? "" : " ATTRIBUTION INVALID (input parity failed)"} first box: ${b ? `${b.type} ${b.path} (first over tol. ${b.first_over_tolerance}, dominant ${b.dominant_layer})` : "none"}; first text: ${t ? `"${t.text}" (first over tol. ${t.first_over_tolerance}, dominant ${t.dominant_layer})` : "none"}; first pass regression: box ${pr.box ? `${pr.box.type} ${pr.box.path} by ${regressedText(pr.box, "pass")}` : "none"}, text ${pr.text ? `"${pr.text.text}" by ${regressedText(pr.text, "pass")}` : "none"}${pg ? `; first pagination regression: box ${pg.box ? `${pg.box.type} ${pg.box.path}` : "none"}, text ${pg.text ? `"${pg.text.text}" dy ${pg.text.per_layer.P?.dy}` : "none"}` : ""}\n`,
       );
       for (const c of result.checks.filter((x) => x.status === "fail")) {
         process.stderr.write(
@@ -197,6 +207,8 @@ async function main() {
       first_pass_regression: r.result.headline.first_pass_regression,
       first_walk_regression: r.result.headline.first_walk_regression,
       first_html_normalize_regression: r.result.headline.first_html_normalize_regression,
+      first_pagination_regression: r.result.headline.first_pagination_regression,
+      post_pagination_layer: r.result.post_pagination_layer,
       first_missing: r.result.headline.first_missing,
       html_normalize: r.result.html_normalize,
       attribution_valid: r.result.checks_summary.attribution_valid,

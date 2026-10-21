@@ -13,7 +13,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { FIXTURE_IDS, repoRoot } from "./lib/fixture-html.mjs";
 import { firstOverTol, shortPath } from "./lib/report.mjs";
-import { isBlitzKind, normText } from "./lib/vellora-model.mjs";
+import { layerHasText, normText } from "./lib/vellora-model.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name);
@@ -78,10 +78,13 @@ function firstChange(chain, aLayers, bLayers, keys, tol) {
 export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
   // Layers present in BOTH runs, in a's order (a run without the N0 source layer is comparable
   // from B0 on).
-  const bNames = new Set(b.layers.map((l) => l.name));
-  const shared = a.layers.filter((l) => bNames.has(l.name));
+  const bByName = new Map(b.layers.map((l) => [l.name, l]));
+  const shared = a.layers.filter((l) => bByName.has(l.name));
   const chain = shared.map((l) => l.name);
-  const textChain = shared.filter((l) => !isBlitzKind(l.kind)).map((l) => l.name);
+  // Text layers both runs carry text in (raw Blitz text only exists in schema-2 dumps).
+  const textChain = shared
+    .filter((l) => layerHasText(l) && layerHasText(bByName.get(l.name)))
+    .map((l) => l.name);
   const finalName = a.final_layer;
   const chromeMismatch = [];
   const boxChanges = [];
@@ -182,6 +185,7 @@ export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
   return {
     final_layer: finalName,
     shared_layers: chain,
+    text_layers: textChain,
     chrome_reference_identical: chromeMismatch.length === 0,
     chrome_mismatch_sample: chromeMismatch.slice(0, 5),
     boxes_changed_in_final: boxChanges.length,
@@ -384,10 +388,7 @@ function main() {
         t.b_trajectory.map(r2).join(" → "),
       ]),
     );
-    md += `\nLayer order of the trajectories: ${a.layers
-      .filter((l) => !isBlitzKind(l.kind))
-      .map((l) => l.name)
-      .join(" → ")}\n\n`;
+    md += `\nLayer order of the trajectories: ${cmp.text_layers.join(" → ")}\n\n`;
     md += "Largest text-run changes (px; Δ = b − a of vellora−Chromium):\n\n";
     md += table(
       [

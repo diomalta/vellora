@@ -7,9 +7,15 @@
 // (height: decided bottom-up by its content). Checking height on exit keeps html/body from always
 // being "first" just because their height absorbs every descendant's error.
 //
-// Chain (attribution order): [N0 ->] B0 -> L0 -> one layer per layout_normalize pass.
+// Chain (attribution order): [N0 ->] B0 -> L0 -> one layer per layout_normalize pass [-> P].
 //   N0  Blitz on the SOURCE HTML (html_normalize skipped; optional, needs a source dump). Raw Blitz.
 //   B0  Blitz on html_normalize's OUTPUT. With N0 present, the N0 -> B0 step is html_normalize's.
+//       Schema-2 dumps give N0/B0 the RAW Blitz/Parley text too, so for text the B0 -> L0 step
+//       is vellora's reader (read_text_runs compensations, dropped block_offset, walk).
+//   P   pagination (schema-2 dumps): the final layer moved by pagination's in-page drift (see
+//       paginationLayer in vellora-model.mjs). The headline and `final_layer` stay the LAST
+//       PRE-PAGINATION layer; P is reported as its own step (first_pagination_regression,
+//       regressions_by_layer.P) so pre-pagination numbers keep their meaning.
 //
 // Two attribution answers per item (they differ as soon as an error exists early in the chain):
 //   first_over_tolerance: the FIRST layer whose |delta vs Chromium| exceeds tolerance (or that lost
@@ -24,7 +30,7 @@
 //     natural first divergence (headline) comes earlier.
 import { baselineKey } from "./chrome-snapshot.mjs";
 import { chromeFontFor } from "./fonts.mjs";
-import { attributionChain, isBlitzKind, normText } from "./vellora-model.mjs";
+import { attributionChain, layerHasText, normText } from "./vellora-model.mjs";
 
 /** Replaced elements keep a real box when display:inline; other inline boxes are text-only. */
 export const REPLACED_TAGS = new Set([
@@ -336,9 +342,15 @@ export function alignRuns(runs, frags) {
   return { pairs, unmatchedRuns, unmatchedFrags };
 }
 
-/** Geometry of a (possibly joined) vellora run group in one layer. */
+/**
+ * Geometry of a (possibly joined) vellora run group in one layer. Run keys are L0 keys; a raw
+ * Blitz layer maps them to its own runs (`runKeyOf`) and answers "unaligned" when one has no raw
+ * counterpart (not a lost run: Parley split it differently or it is not comparable).
+ */
 function runGeom(layer, runKeys) {
-  const runs = runKeys.map((k) => layer.runIndex.get(k)).filter(Boolean);
+  const keys = layer.runKeyOf ? runKeys.map((k) => layer.runKeyOf.get(k)) : runKeys;
+  if (layer.runKeyOf && keys.some((k) => k === undefined)) return "unaligned";
+  const runs = keys.map((k) => layer.runIndex.get(k)).filter(Boolean);
   if (runs.length !== runKeys.length) return null;
   const x = Math.min(...runs.map((r) => r.x));
   const right = Math.max(...runs.map((r) => r.x + r.w));
@@ -359,7 +371,9 @@ export function diffLayouts({
   for (const layer of vellora.layers) {
     layer.runIndex = new Map(layer.runs.map((r) => [r.key, r]));
   }
-  const final = chain[chain.length - 1];
+  // The headline/final layer is the last PRE-pagination layer; P (if any) is reported separately.
+  const final = [...chain].reverse().find((l) => l.kind !== "pagination") ?? chain.at(-1);
+  const pLayer = chain.find((l) => l.kind === "pagination") ?? null;
   const tree = chromeTree(chrome, { includeInline });
   const l0 = vellora.layers.find((l) => l.name === "L0");
   const b0 = vellora.layers.find((l) => l.name === "B0");
@@ -472,11 +486,12 @@ export function diffLayouts({
 
   const evalEvent = (event, layer) => {
     if (event.type === "text") {
-      if (isBlitzKind(layer.kind)) return { status: "n/a" };
+      if (!layerHasText(layer)) return { status: "n/a" };
       const g = runGeom(
         layer,
         event.pair.runs.map((r) => r.key),
       );
+      if (g === "unaligned") return { status: "n/a", note: "no aligned raw run" };
       if (!g) return { status: "missing" };
       const f = event.pair.frag;
       const ascent = chromeAscent(event.pair.runs[0]);
@@ -493,7 +508,8 @@ export function diffLayouts({
     }
     const row = boxRows.get(event.path);
     const v = row.layers[layer.name];
-    if (!v) return { status: "missing" };
+    // Pagination places only painted fragments; an unplaced box paints nothing: n/a, not lost.
+    if (!v) return { status: layer.kind === "pagination" ? "n/a" : "missing" };
     if (event.type === "enter") {
       const m = maxAbs(v.dx, v.dy, v.dw);
       return { status: m > tolerance ? "diverged" : "ok", dx: v.dx, dy: v.dy, dw: v.dw };
@@ -515,7 +531,7 @@ export function diffLayouts({
     };
   };
 
-  const textChain = chain.filter((l) => !isBlitzKind(l.kind)).map((l) => l.name);
+  const textChain = chain.filter((l) => layerHasText(l)).map((l) => l.name);
   const boxChain = chain.map((l) => l.name);
   const kindOf = new Map(chain.map((l) => [l.name, l.kind]));
   const evaluated = events.map((event, order) => {
@@ -587,7 +603,7 @@ export function diffLayouts({
   for (const layer of chain) {
     firstByLayer[layer.name] = {
       box: firstDivergence(layer.name, "box"),
-      text: isBlitzKind(layer.kind) ? null : firstDivergence(layer.name, "text"),
+      text: layerHasText(layer) ? firstDivergence(layer.name, "text") : null,
     };
   }
 
@@ -671,7 +687,12 @@ export function diffLayouts({
     return null;
   };
   const rowPerLayer = (row) =>
-    Object.fromEntries(boxChain.map((n) => [n, row.layers[n] ?? { status: "missing" }]));
+    Object.fromEntries(
+      boxChain.map((n) => [
+        n,
+        row.layers[n] ?? { status: kindOf.get(n) === "pagination" ? "n/a" : "missing" },
+      ]),
+    );
   const rows = [...boxRows.values()];
   const ranked = rows
     .filter((r) => r.layers[final.name])
@@ -839,9 +860,19 @@ export function diffLayouts({
   return {
     schema: "vellora-layout-diff/2",
     config: { tolerance, textTolerance, includeInline, top },
-    layers: chain.map((l) => ({ name: l.name, kind: l.kind })),
+    layers: chain.map((l) => ({ name: l.name, kind: l.kind, has_text: layerHasText(l) })),
     unrounded_layers: unroundedLayers.map((l) => l.name),
     final_layer: final.name,
+    post_pagination_layer: pLayer?.name ?? null,
+    // Placement-by-placement pagination trace (gaps, cursor, offsets); null for schema-1 dumps.
+    pagination: vellora.pagination ?? null,
+    // Raw Blitz text no L0 run pairs with, per text-bearing Blitz layer (text the walk drops).
+    blitz_text_unread_by_walk: Object.fromEntries(
+      Object.entries(vellora.blitzTextUnreadByWalk ?? {}).map(([layer, runs]) => [
+        layer,
+        { count: runs.length, sample: runs.slice(0, 12) },
+      ]),
+    ),
     html_normalize: {
       source_layer: n0 ? "N0" : null,
       dom_altered: vellora.domAlteredByHtmlNormalize ?? null,
@@ -862,8 +893,20 @@ export function diffLayouts({
         box: firstRegressionByKind("pass", false),
         text: firstRegressionByKind("pass", true),
       },
-      first_walk_regression: { box: firstRegressionByKind("walk", false) },
-      first_html_normalize_regression: n0 ? { box: firstRegressionByKind("blitz", false) } : null,
+      first_walk_regression: {
+        box: firstRegressionByKind("walk", false),
+        text: firstRegressionByKind("walk", true),
+      },
+      first_html_normalize_regression: n0
+        ? { box: firstRegressionByKind("blitz", false), text: firstRegressionByKind("blitz", true) }
+        : null,
+      // First event pagination (P) made worse than the final pre-pagination layer (schema-2 dumps).
+      first_pagination_regression: pLayer
+        ? {
+            box: firstRegressionByKind("pagination", false),
+            text: firstRegressionByKind("pagination", true),
+          }
+        : null,
       // First compared Chromium box with NO vellora box in the final layer.
       first_missing: firstMissing,
     },
@@ -998,7 +1041,7 @@ function passEffect({
   for (const r of rows) {
     const a = r.layers[prev.name];
     const b = r.layers[layer.name];
-    if (a && !b) eff.boxes_lost += 1;
+    if (a && !b && layer.kind !== "pagination") eff.boxes_lost += 1;
     if (!a || !b) continue;
     const moved = ["x", "y", "w", "h"].some((k) => Math.abs(a[k] - b[k]) > 0.01);
     if (!moved) continue;
@@ -1030,7 +1073,7 @@ function passEffect({
     .map(({ order, ...r }) => r);
   eff.largest_box_regression = [...boxRegs].sort((x, y) => y.by - x.by)[0] ?? null;
   const runRegs = [];
-  if (!isBlitzKind(prev.kind)) {
+  if (layerHasText(prev) && layerHasText(layer)) {
     for (const e of textEvents) {
       const a = evalEvent(e.event, prev);
       const b = evalEvent(e.event, layer);

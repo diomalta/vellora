@@ -1,0 +1,284 @@
+{
+  "schema": "vellora-fidelity/s1b-part1-determinism/1",
+  "date_utc": "2026-10-21T07:19:00.555Z",
+  "note": "Part 1 of phaseb/text-hook (layout-dump hook refactor + raw Blitz text + pagination trace) vs its base feat/blitz-beta4-port dd2c22f. PDFs: fidelity/baselines/beta4/determinism/render-sha-ab.mjs (production renderPdf -> addon; inputs from fixtures/, plain + PDF/A-2b) run once on the base build (before any code change) and once on the Part 1 build of the same worktree. Dumps: layout_dump example on all 9 fixtures (normal + --no-html-normalize + --pdf), schema-1 fields compared after stripping the schema-2 additions (schema, blitz_runs, pagination).",
+  "commands": [
+    "node fidelity/baselines/beta4/determinism/render-sha-ab.mjs --a . --b . --out <file>",
+    "cargo build --release -p vellora-core --example layout_dump && layout_dump --html <fixture.native.html> --out <dump.json> [--pdf <f.pdf> | --no-html-normalize]"
+  ],
+  "env_base": {
+    "date_utc": "2026-10-21T06:54:00Z",
+    "os": "darwin 27.0.0 arm64",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2/fidelity/baselines/beta4/determinism/render-sha-ab.mjs --a . --b . --out /tmp/s1b/base/render-sha-base.json",
+    "repo": "/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "git_commit": "dd2c22f89cda8a93fb8cab4d1188172fb41cc0e2",
+    "git_dirty": "clean",
+    "crates": {
+      "blitz-dom": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-html": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-traits": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "krilla": [
+        {
+          "version": "0.8.2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "parley": [
+        {
+          "version": "0.12.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "stylo": [
+        {
+          "version": "0.22.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "taffy": [
+        {
+          "version": "0.15.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ]
+    },
+    "blitz": "blitz-0.3.0-beta.4",
+    "tools": {
+      "puppeteer-core": "25.15.0"
+    }
+  },
+  "env_part1": {
+    "date_utc": "2026-10-21T07:18:15Z",
+    "os": "darwin 27.0.0 arm64",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2/fidelity/baselines/beta4/determinism/render-sha-ab.mjs --a . --b . --out /tmp/s1b/new1/render-sha-2.json",
+    "repo": "/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "git_commit": "dd2c22f89cda8a93fb8cab4d1188172fb41cc0e2",
+    "git_dirty": "dirty",
+    "crates": {
+      "blitz-dom": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-html": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-traits": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "krilla": [
+        {
+          "version": "0.8.2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "parley": [
+        {
+          "version": "0.12.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "stylo": [
+        {
+          "version": "0.22.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "taffy": [
+        {
+          "version": "0.15.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ]
+    },
+    "blitz": "blitz-0.3.0-beta.4",
+    "tools": {
+      "puppeteer-core": "25.15.0"
+    }
+  },
+  "pdf": {
+    "total": 20,
+    "identical": 20,
+    "result": "IDENTICAL",
+    "rows": {
+      "boleto-febraban/data.json/pdfa": {
+        "base": "15c7d6d4da5b4aa06018d2f93d7aee7ad76c31f1fd217b3cba0a496789a4b884",
+        "part1": "15c7d6d4da5b4aa06018d2f93d7aee7ad76c31f1fd217b3cba0a496789a4b884",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "boleto-febraban/data.json/plain": {
+        "base": "db4780ef4dfaa54de4891fdbb9b3de16d10bfc8d015a2245bfdd577eea6f07fe",
+        "part1": "db4780ef4dfaa54de4891fdbb9b3de16d10bfc8d015a2245bfdd577eea6f07fe",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "boleto-febraban/data.px-grid.json/pdfa": {
+        "base": "1d3093ddc1788a303b2343047ef7ce373231712f577a4c3eb0b64dbefa6b4555",
+        "part1": "1d3093ddc1788a303b2343047ef7ce373231712f577a4c3eb0b64dbefa6b4555",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "boleto-febraban/data.px-grid.json/plain": {
+        "base": "3b602e1908b5487f46890cecd53e0dd3e4c20219c6a32030f72a6a17df1b1c2f",
+        "part1": "3b602e1908b5487f46890cecd53e0dd3e4c20219c6a32030f72a6a17df1b1c2f",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "boleto/data.json/pdfa": {
+        "base": "3e08e9e7aedca355857fdff3da6c5bcf6e75d03a7e996ef0485ebbea84c96b0f",
+        "part1": "3e08e9e7aedca355857fdff3da6c5bcf6e75d03a7e996ef0485ebbea84c96b0f",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "boleto/data.json/plain": {
+        "base": "36f9d8d8d2fc814986b54b88a99c25c3cd3a53dadda3572d104303db746428c0",
+        "part1": "36f9d8d8d2fc814986b54b88a99c25c3cd3a53dadda3572d104303db746428c0",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "danfe/data.json/pdfa": {
+        "base": "2855b7ad60232a83af33f3cc716fbd42fb6a22fa3d1d367d5c081a3c82fd9157",
+        "part1": "2855b7ad60232a83af33f3cc716fbd42fb6a22fa3d1d367d5c081a3c82fd9157",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "danfe/data.json/plain": {
+        "base": "c6c7eff8ef21c7edb2548a2b0760c6e35da48b9136435c6e85448c155cc4b97c",
+        "part1": "c6c7eff8ef21c7edb2548a2b0760c6e35da48b9136435c6e85448c155cc4b97c",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "invoice/data.json/pdfa": {
+        "base": "eaaa85f4474361a788b885229be376d25f87b9fd2c7c7dea8fae1be99298c24a",
+        "part1": "eaaa85f4474361a788b885229be376d25f87b9fd2c7c7dea8fae1be99298c24a",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "invoice/data.json/plain": {
+        "base": "a93de728efa3fe7307991fc72dcf4d6c8dc787381c360c39f4bf33f71da092bd",
+        "part1": "a93de728efa3fe7307991fc72dcf4d6c8dc787381c360c39f4bf33f71da092bd",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "notification/data.json/pdfa": {
+        "base": "c9271255a1e5ccb473207ea958a94f284c3d403073d68c76a74c24d6c7e2869b",
+        "part1": "c9271255a1e5ccb473207ea958a94f284c3d403073d68c76a74c24d6c7e2869b",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "notification/data.json/plain": {
+        "base": "ec63378ab1aed170b4e84d2101bf3a42cc33c0b607b8f2d739683be520e25d97",
+        "part1": "ec63378ab1aed170b4e84d2101bf3a42cc33c0b607b8f2d739683be520e25d97",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "oss-postmark-receipt/data.json/pdfa": {
+        "base": "6833a237890e692c0a5cc3bff0dc928d5fe4cd80d0061b7aa5dbc3a2d40f1013",
+        "part1": "6833a237890e692c0a5cc3bff0dc928d5fe4cd80d0061b7aa5dbc3a2d40f1013",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "oss-postmark-receipt/data.json/plain": {
+        "base": "6686a0888eb12f5c33017aa716d28ec90aad5a4e09e9ee5c57db668e2d094d0e",
+        "part1": "6686a0888eb12f5c33017aa716d28ec90aad5a4e09e9ee5c57db668e2d094d0e",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "oss-sparksuite-invoice/data.json/pdfa": {
+        "base": "cd9c61e45dbb102346bc98d238cdeb9bb1ba980cae870602278f1c9533bd02ca",
+        "part1": "cd9c61e45dbb102346bc98d238cdeb9bb1ba980cae870602278f1c9533bd02ca",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "oss-sparksuite-invoice/data.json/plain": {
+        "base": "1240f663dba921451d735ae7efa49d48b7252d3094e6f5e7cd11fba6de90de2c",
+        "part1": "1240f663dba921451d735ae7efa49d48b7252d3094e6f5e7cd11fba6de90de2c",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "receipt/data.json/pdfa": {
+        "base": "4b5ab4271bb03da530a49721d1177c50c2f4a0c446a31c81fb10de500096ec4c",
+        "part1": "4b5ab4271bb03da530a49721d1177c50c2f4a0c446a31c81fb10de500096ec4c",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "receipt/data.json/plain": {
+        "base": "ba9f5ea3975113b625830038960336a56b77e75ac0145576c787fd836b660fdc",
+        "part1": "ba9f5ea3975113b625830038960336a56b77e75ac0145576c787fd836b660fdc",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "text-stress-ptbr/data.json/pdfa": {
+        "base": "915c1891536611ab97188e1b0e019bd463efd10e825ad19ccba644993a58d4fc",
+        "part1": "915c1891536611ab97188e1b0e019bd463efd10e825ad19ccba644993a58d4fc",
+        "identical": true,
+        "part1_stable_in_process": true
+      },
+      "text-stress-ptbr/data.json/plain": {
+        "base": "ae4417621848a87ef664abc8aa5f9bf987c3ac77756d9571fd74e28dfd0c158e",
+        "part1": "ae4417621848a87ef664abc8aa5f9bf987c3ac77756d9571fd74e28dfd0c158e",
+        "identical": true,
+        "part1_stable_in_process": true
+      }
+    }
+  },
+  "dumps_schema1_fields_vs_base": [
+    "SAME boleto-febraban.dump-source.json",
+    "SAME boleto-febraban.dump.json",
+    "SAME boleto-febraban.pdf 3d505cd5712e",
+    "SAME boleto.dump-source.json",
+    "SAME boleto.dump.json",
+    "SAME boleto.pdf 6669127e5ac2",
+    "SAME danfe.dump-source.json",
+    "SAME danfe.dump.json",
+    "SAME danfe.pdf a77a9e8546ed",
+    "SAME invoice.dump-source.json",
+    "SAME invoice.dump.json",
+    "SAME invoice.pdf 4db1ab29f3e3",
+    "SAME notification.dump-source.json",
+    "SAME notification.dump.json",
+    "SAME notification.pdf 294722a70d89",
+    "SAME oss-postmark-receipt.dump-source.json",
+    "SAME oss-postmark-receipt.dump.json",
+    "SAME oss-postmark-receipt.pdf 08d4eb1fa7c8",
+    "SAME oss-sparksuite-invoice.dump-source.json",
+    "SAME oss-sparksuite-invoice.dump.json",
+    "SAME oss-sparksuite-invoice.pdf b5eaf49563ba",
+    "SAME receipt.dump-source.json",
+    "SAME receipt.dump.json",
+    "SAME receipt.pdf ab3ef55509c9",
+    "SAME text-stress-ptbr.dump-source.json",
+    "SAME text-stress-ptbr.dump.json",
+    "SAME text-stress-ptbr.pdf 5dee45e704a9",
+    "ALL SAME"
+  ]
+}

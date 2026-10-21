@@ -3,7 +3,9 @@
 // HTML to PDF with vellora (vellora_core::render via the layout_dump example of --dump-repo) and
 // with Chrome (page.pdf, print media, preferCSSPageSize, bundled fonts), extract word boxes with an
 // independent extractor (poppler pdftotext -bbox) and align words by text. Answers "is a PDF-level
-// delta already present in the pre-pagination layers, or introduced by pagination/emit?".
+// delta already present in the pre-pagination layers, or introduced by pagination/emit?". With a
+// schema-2 dump (pagination trace), every vellora word is also mapped to the fragment pagination
+// placed it with, and its dy is split into pagination's in-page drift (layer P) and the rest.
 //
 //   node fidelity/layout-diff/pdf-probe.mjs --label <name> [--dump-repo <checkout>]
 //     [--fixtures notification,invoice] [--chrome <path>] [--out <dir>] [--pdftotext <bin>]
@@ -15,7 +17,9 @@ import { join, resolve } from "node:path";
 import { launchChrome, resolveChrome } from "./lib/chrome-snapshot.mjs";
 import { blitzLabel, captureEnv } from "./lib/env.mjs";
 import { FIXTURE_IDS, repoRoot } from "./lib/fixture-html.mjs";
-import { normText } from "./lib/vellora-model.mjs";
+import { normText, paginationLayer } from "./lib/vellora-model.mjs";
+
+const PX_TO_PT = 0.75;
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name);
@@ -66,6 +70,29 @@ export function alignWords(a, b) {
     if (match) pairs.push([w, match]);
   }
   return pairs;
+}
+
+/**
+ * The pagination placement a vellora PDF word belongs to: same page, and the word's vertical
+ * centre inside the placed fragment span (page-local content box + @page margin-top, in pt).
+ * `placements` are paginationLayer summary rows (offset_vs_flow / drift in CSS px).
+ */
+export function fragmentAt(placements, marginTopPx, word) {
+  const yc = (word.y + word.h / 2) / PX_TO_PT - marginTopPx;
+  const hit = placements.find(
+    (r) =>
+      r.page === word.page - 1 &&
+      yc >= r.placed_top - 0.5 &&
+      yc <= r.placed_top + (r.bottom - r.top) + 0.5,
+  );
+  return hit
+    ? {
+        placement: hit.index,
+        root: hit.path,
+        offset_vs_flow_pt: Math.round(hit.offset_vs_flow * PX_TO_PT * 100) / 100,
+        drift_pt: Math.round(hit.drift * PX_TO_PT * 100) / 100,
+      }
+    : null;
 }
 
 function pdfWords(pdftotext, pdfPath) {
@@ -124,14 +151,33 @@ async function main() {
       }
       const vWords = pdfWords(pdftotext, vPdf);
       const cWords = pdfWords(pdftotext, cPdf);
-      const pairs = alignWords(vWords, cWords).map(([v, c]) => ({
-        text: v.text,
-        vellora: { page: v.page, x: v.x, y: v.y },
-        chrome: { page: c.page, x: c.x, y: c.y },
-        samePage: v.page === c.page,
-        dx_pt: Math.round((v.x - c.x) * 100) / 100,
-        dy_pt: Math.round((v.y - c.y) * 100) / 100,
-      }));
+      const dump = JSON.parse(readFileSync(join(dir, "vellora-dump.json"), "utf8"));
+      const nodeById = new Map(dump.nodes.map((n) => [n.id, n]));
+      const pag = dump.pagination
+        ? paginationLayer(dump.pagination, { boxes: new Map(), runs: [] }, nodeById).summary
+        : null;
+      const pairs = alignWords(vWords, cWords).map(([v, c]) => {
+        const frag = pag ? fragmentAt(pag.placements, dump.page.margin_top, v) : null;
+        const dy = Math.round((v.y - c.y) * 100) / 100;
+        return {
+          text: v.text,
+          vellora: { page: v.page, x: v.x, y: v.y },
+          chrome: { page: c.page, x: c.x, y: c.y },
+          samePage: v.page === c.page,
+          dx_pt: Math.round((v.x - c.x) * 100) / 100,
+          dy_pt: dy,
+          // Layer P: the fragment pagination placed this word with and its in-page drift; the
+          // rest of dy (dy_pt − drift_pt) is what the pre-pagination layers + emit carry.
+          ...(pag
+            ? {
+                pagination: frag,
+                dy_without_pagination_drift_pt: frag
+                  ? Math.round((dy - frag.drift_pt) * 100) / 100
+                  : null,
+              }
+            : {}),
+        };
+      });
       const result = {
         schema: "vellora-layout-diff/pdf-probe/1",
         fixture,
@@ -143,6 +189,16 @@ async function main() {
           chrome: Math.max(0, ...cWords.map((w) => w.page)),
         },
         words: { vellora: vWords.length, chrome: cWords.length, aligned: pairs.length },
+        pagination: pag
+          ? {
+              page_count: pag.page_count,
+              placements: pag.placements.length,
+              words_mapped_to_a_fragment: pairs.filter((x) => x.pagination).length,
+              words_with_drift_over_1pt: pairs.filter(
+                (x) => x.samePage && Math.abs(x.pagination?.drift_pt ?? 0) > 1,
+              ).length,
+            }
+          : null,
         pairs,
       };
       writeFileSync(join(dir, "pdf-probe.json"), `${JSON.stringify(result, null, 2)}\n`);

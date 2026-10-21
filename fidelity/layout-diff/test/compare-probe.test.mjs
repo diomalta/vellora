@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { compareRuns } from "../compare.mjs";
 import { diffLayouts } from "../lib/match.mjs";
 import { velloraModel } from "../lib/vellora-model.mjs";
-import { alignWords, parseBbox } from "../pdf-probe.mjs";
+import { alignWords, fragmentAt, parseBbox } from "../pdf-probe.mjs";
 import { ID, PATHS, chromeRecords, syntheticDump } from "./helpers.mjs";
 
 const BASELINES = new Map([["Liberation Sans|400|12", { ascent: 11, descent: 3 }]]);
@@ -42,4 +42,38 @@ test("pdftotext -bbox parsing and occurrence-based word alignment", () => {
   const pairs = alignWords(v, c);
   assert.equal(pairs.length, 3);
   assert.equal(pairs[2][1].y, 40);
+});
+
+test("fragmentAt maps a PDF word to the pagination placement that put it there", () => {
+  // margin-top 60 px; placement 1 spans page-local 100..140 px on page 1 (pt: 120..150 + 45).
+  const placements = [
+    {
+      index: 0,
+      page: 0,
+      path: "a",
+      top: 0,
+      bottom: 90,
+      placed_top: 0,
+      offset_vs_flow: 0,
+      drift: 0,
+    },
+    {
+      index: 1,
+      page: 0,
+      path: "b",
+      top: 120,
+      bottom: 160,
+      placed_top: 100,
+      offset_vs_flow: -20,
+      drift: -20,
+    },
+  ];
+  const word = { page: 1, y: (60 + 110) * 0.75, h: 9 }; // centre at 170 + 6 = 176 px - 60 = 116
+  assert.deepEqual(fragmentAt(placements, 60, word), {
+    placement: 1,
+    root: "b",
+    offset_vs_flow_pt: -15,
+    drift_pt: -15,
+  });
+  assert.equal(fragmentAt(placements, 60, { ...word, page: 2 }), null);
 });

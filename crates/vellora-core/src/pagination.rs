@@ -39,6 +39,90 @@ pub struct PaginationReport {
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
 const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
 
+/// Debug/fidelity trace of [`paginate`]'s decisions (fidelity layer `P`, read by
+/// `fidelity/layout-diff/`). Filled only by [`paginate_traced`] with `Some`; the
+/// render path passes `None`, so it never exists there. Not a stable API.
+#[doc(hidden)]
+#[derive(Debug, Clone, Default)]
+pub struct PaginationTrace {
+    /// One record per fragment placed on a page, in placement order.
+    pub placements: Vec<FragmentPlacement>,
+    /// Keep-together groups split back into their members (each member is then
+    /// placed, and recorded, on its own).
+    pub groups_split: usize,
+    pub page_count: usize,
+}
+
+/// Where one fragment landed. Flow coordinates (`top`/`bottom`) are Blitz's
+/// continuous-flow CSS px; `placed_top` is the page-local CSS px (content-box
+/// origin, before the `@page` margin is added) that `top` was moved to.
+#[doc(hidden)]
+#[derive(Debug, Clone)]
+pub struct FragmentPlacement {
+    /// `block` (a top-level box or a flattened wrapper's child), `row` (a table
+    /// row), `group` (a `break-inside: avoid` group placed whole), or the
+    /// `oversize-` prefixed variant when the fragment did not fit an empty page.
+    pub kind: &'static str,
+    /// Node ids of the fragment's boxes, in document order (the first is its root).
+    pub node_ids: Vec<usize>,
+    pub root_tag: Option<String>,
+    /// Table root of a row/group fragment.
+    pub table_id: Option<usize>,
+    /// Flow span (min top, max bottom of its boxes; cells only for rows).
+    pub top: f64,
+    pub bottom: f64,
+    /// This fragment's own trailing gap (the gap requested before the NEXT one).
+    pub trailing_gap: f64,
+    /// Which rule produced `trailing_gap` (see `Fragment::gap_source`).
+    pub gap_source: &'static str,
+    /// 0-based page index.
+    pub page: usize,
+    /// Why this fragment opened a new page: `forced-break`, `overflow`,
+    /// `oversize` (it did not fit an empty page), or `after-oversize` (the
+    /// previous fragment was oversize and closed its page); `None` when it
+    /// continued the current page (or was the very first fragment).
+    pub new_page: Option<&'static str>,
+    /// Used height of the page before this fragment (and before its gap).
+    pub cursor_before: f64,
+    /// The previous fragment's trailing gap and its source, i.e. the gap this
+    /// fragment asked for.
+    pub pending_gap: f64,
+    pub pending_gap_source: &'static str,
+    /// The gap actually added above it, and why it differs from `pending_gap`:
+    /// `applied`, `none` (nothing pending), `page-start` (gaps vanish at a page
+    /// top), `dropped-to-fit` (the fragment fits only without the gap).
+    pub gap_applied: f64,
+    pub gap_note: &'static str,
+    /// A repeated `<thead>` band injected right above this fragment (it sits at
+    /// `placed_top - height`).
+    pub header_injected: Option<InjectedHeader>,
+    /// Page-local y the fragment's `top` was placed at.
+    pub placed_top: f64,
+}
+
+/// A table's `<thead>` band as injected above a row (trace only).
+#[doc(hidden)]
+#[derive(Debug, Clone)]
+pub struct InjectedHeader {
+    pub table_id: usize,
+    /// Node ids of the band's boxes, in document order.
+    pub node_ids: Vec<usize>,
+    /// Flow top of the band and its height.
+    pub top: f64,
+    pub height: f64,
+}
+
+impl InjectedHeader {
+    fn new(table_id: usize, header: &TableHeader) -> Self {
+        Self {
+            table_id,
+            node_ids: header.boxes.iter().map(|b| b.node_id).collect(),
+            top: header.top,
+            height: header.height,
+        }
+    }
+}
+
 /// A fragmentable unit: a top-level flow item, or a single table row. Each
 /// carries its absolute Y span so the breaker can place it on a page.
 struct Fragment {
@@ -47,6 +131,13 @@ struct Fragment {
     top: f64,
     bottom: f64,
     trailing_gap: f64,
+    /// Which rule set `trailing_gap` (debug trace only; never read by layout):
+    /// `margin-bottom` (the root box's Blitz margin), `margin-bottom+wrapper` /
+    /// `wrapper-margin-bottom` (plus / only a flattened wrapper's own margin, see
+    /// `emit_wrapper_child_fragments`), `flow-gap` (next fragment's flow top −
+    /// this bottom, when the gap was 0), `group-gap` (inherited from a
+    /// keep-together group), `none` (table parts).
+    gap_source: &'static str,
     /// Root table node for table-row/header fragments.
     table_id: Option<usize>,
     /// If this fragment is a `<thead>`, its boxes get repeated for that table.
@@ -68,6 +159,18 @@ struct TableHeader {
 
 /// Paginate a laid-out document against the `@page` box.
 pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
+    paginate_traced(doc, page_box, None)
+}
+
+/// [`paginate`] that, given `Some(trace)`, also records every placement decision
+/// (fidelity layer `P`). Debug/fidelity tooling only: the trace is write-only
+/// here, so its presence cannot change the pages (the render path passes `None`).
+#[doc(hidden)]
+pub fn paginate_traced(
+    doc: &LaidOutDoc,
+    page_box: &PageBox,
+    mut trace: Option<&mut PaginationTrace>,
+) -> Paginated {
     let usable_h = page_box.content_height();
     let margin_l = page_box.margin_left;
     let margin_t = page_box.margin_top;
@@ -84,6 +187,10 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut thead_repeated: Vec<bool> = Vec::new();
     let mut oversize_hit = false;
     let mut pending_gap = 0.0_f64;
+    // Trace only: the source of `pending_gap`, and whether an oversize fragment
+    // closed the previous page (never read by layout).
+    let mut pending_gap_source: &'static str = "none";
+    let mut page_closed_by_oversize = false;
     // Tracks whether the current page already carries the header band. Reset on
     // every page break and re-set whenever a tbody row injects the header, so the
     // header leads the table-start page AND every continuation page —
@@ -155,8 +262,15 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             for member in members.into_iter().rev() {
                 queue.push_front(member);
             }
+            if let Some(t) = trace.as_deref_mut() {
+                t.groups_split += 1;
+            }
             continue;
         }
+
+        // Trace only: why (if at all) this fragment opens a new page.
+        let mut new_page: Option<&'static str> =
+            std::mem::take(&mut page_closed_by_oversize).then_some("after-oversize");
 
         // A forced break starts this fragment on a fresh page.
         if frag.break_before && !current.is_empty() {
@@ -168,14 +282,21 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             );
             cursor = 0.0;
             headers_on_current.clear();
+            new_page = Some("forced-break");
         }
 
         let mut page_gap = if current.is_empty() { 0.0 } else { pending_gap };
+        let mut gap_note = if current.is_empty() {
+            "page-start"
+        } else {
+            "applied"
+        };
         if page_gap > 0.0
             && cursor + frag_height + lead_h + page_gap > fit_limit
             && cursor + frag_height + lead_h <= fit_limit
         {
             page_gap = 0.0;
+            gap_note = "dropped-to-fit";
         }
 
         // Oversized single fragment (e.g. a row taller than an empty page):
@@ -192,13 +313,33 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                     &mut thead_repeated,
                     !headers_on_current.is_empty(),
                 );
+                new_page = Some("oversize");
             }
             cursor = 0.0;
             headers_on_current.clear();
             // Even an oversize table row keeps its header band on its own page.
+            let mut header_injected = None;
             if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
                 inject_header(&mut current, &mut cursor, header);
                 headers_on_current.insert(table_id);
+                header_injected = Some(InjectedHeader::new(table_id, header));
+            }
+            if let Some(t) = trace.as_deref_mut() {
+                t.placements.push(placement_record(
+                    &frag,
+                    PlacementState {
+                        oversize: true,
+                        page: page_slices.len(),
+                        new_page,
+                        cursor_before: 0.0,
+                        pending_gap,
+                        pending_gap_source,
+                        gap_applied: 0.0,
+                        gap_note: "page-start",
+                        header_injected,
+                        placed_top: cursor,
+                    },
+                ));
             }
             let mut placed = reposition(&frag.boxes, frag.top, cursor);
             current.append(&mut placed);
@@ -212,6 +353,8 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             headers_on_current.clear();
             oversize_hit = true;
             pending_gap = frag.trailing_gap;
+            pending_gap_source = frag.gap_source;
+            page_closed_by_oversize = true;
             continue;
         }
 
@@ -228,24 +371,49 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             cursor = 0.0;
             headers_on_current.clear();
             page_gap = 0.0;
+            new_page = Some("overflow");
         }
 
         let page_gap = if current.is_empty() { 0.0 } else { page_gap };
+        if current.is_empty() {
+            gap_note = "page-start";
+        }
+        let cursor_before = cursor;
         cursor += page_gap;
 
         // A table row entering a page without the header (table start OR a
         // continuation page) gets the header band re-injected at the top first.
+        let mut header_injected = None;
         if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
             if !headers_on_current.contains(&table_id) {
                 inject_header(&mut current, &mut cursor, header);
                 headers_on_current.insert(table_id);
+                header_injected = Some(InjectedHeader::new(table_id, header));
             }
         }
 
+        if let Some(t) = trace.as_deref_mut() {
+            t.placements.push(placement_record(
+                &frag,
+                PlacementState {
+                    oversize: false,
+                    page: page_slices.len(),
+                    new_page,
+                    cursor_before,
+                    pending_gap,
+                    pending_gap_source,
+                    gap_applied: page_gap,
+                    gap_note: if pending_gap == 0.0 { "none" } else { gap_note },
+                    header_injected,
+                    placed_top: cursor,
+                },
+            ));
+        }
         let mut placed = reposition(&frag.boxes, frag.top, cursor);
         current.append(&mut placed);
         cursor += frag_height;
         pending_gap = frag.trailing_gap;
+        pending_gap_source = frag.gap_source;
     }
 
     if !current.is_empty() {
@@ -264,6 +432,9 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     }
 
     let total = page_slices.len();
+    if let Some(t) = trace {
+        t.page_count = total;
+    }
 
     // Phase two: build PdfPages, resolving running header/footer counters now
     // that the total page count is known.
@@ -312,6 +483,50 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             oversize_hit,
         },
         pages,
+    }
+}
+
+/// The placement-time facts of one [`FragmentPlacement`] (trace only).
+struct PlacementState {
+    oversize: bool,
+    page: usize,
+    new_page: Option<&'static str>,
+    cursor_before: f64,
+    pending_gap: f64,
+    pending_gap_source: &'static str,
+    gap_applied: f64,
+    gap_note: &'static str,
+    header_injected: Option<InjectedHeader>,
+    placed_top: f64,
+}
+
+fn placement_record(frag: &Fragment, state: PlacementState) -> FragmentPlacement {
+    let kind = match (frag.members.is_empty(), frag.is_row(), state.oversize) {
+        (false, _, false) => "group",
+        (false, _, true) => "oversize-group",
+        (true, true, false) => "row",
+        (true, true, true) => "oversize-row",
+        (true, false, false) => "block",
+        (true, false, true) => "oversize-block",
+    };
+    FragmentPlacement {
+        kind,
+        node_ids: frag.boxes.iter().map(|b| b.node_id).collect(),
+        root_tag: frag.boxes.first().and_then(|b| b.tag.clone()),
+        table_id: frag.table_id,
+        top: frag.top,
+        bottom: frag.bottom,
+        trailing_gap: frag.trailing_gap,
+        gap_source: frag.gap_source,
+        page: state.page,
+        new_page: state.new_page,
+        cursor_before: state.cursor_before,
+        pending_gap: state.pending_gap,
+        pending_gap_source: state.pending_gap_source,
+        gap_applied: state.gap_applied,
+        gap_note: state.gap_note,
+        header_injected: state.header_injected,
+        placed_top: state.placed_top,
     }
 }
 
@@ -417,6 +632,7 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
                 top,
                 bottom,
                 trailing_gap: b.margin_bottom,
+                gap_source: "margin-bottom",
                 table_id: None,
                 is_thead: false,
                 break_before: b.break_before_page,
@@ -448,6 +664,7 @@ fn finalize_fragments(fragments: &mut Vec<Fragment>) {
         if let Some(last) = fragment.members.last_mut() {
             if last.trailing_gap == 0.0 {
                 last.trailing_gap = group_gap;
+                last.gap_source = "group-gap";
             }
         }
     }
@@ -488,6 +705,7 @@ fn apply_inter_fragment_gaps(fragments: &mut [Fragment]) {
             continue;
         }
         fragments[i].trailing_gap = (fragments[next_i].top - fragments[i].bottom).max(0.0);
+        fragments[i].gap_source = "flow-gap";
     }
 }
 
@@ -571,6 +789,7 @@ fn emit_wrapper_child_fragments(
             top: 0.0,
             bottom: 0.0,
             trailing_gap: 0.0,
+            gap_source: "none",
             table_id: None,
             is_thead: false,
             break_before: false,
@@ -582,6 +801,7 @@ fn emit_wrapper_child_fragments(
                 top,
                 bottom,
                 trailing_gap: child_root.margin_bottom,
+                gap_source: "margin-bottom",
                 table_id: None,
                 is_thead: false,
                 break_before,
@@ -595,7 +815,13 @@ fn emit_wrapper_child_fragments(
 
     if out.len() > before && wrapper_trailing_gap > 0.0 {
         if let Some(last) = out.last_mut() {
+            let own_gap = last.trailing_gap;
             last.trailing_gap += wrapper_trailing_gap;
+            last.gap_source = if own_gap == 0.0 {
+                "wrapper-margin-bottom"
+            } else {
+                "margin-bottom+wrapper"
+            };
         }
     }
 }
@@ -630,6 +856,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
                     top,
                     bottom,
                     trailing_gap: 0.0,
+                    gap_source: "none",
                     table_id,
                     is_thead,
                     break_before: !is_thead && (b.break_before_page || pending_break_before),
@@ -664,6 +891,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
                         top,
                         bottom,
                         trailing_gap: 0.0,
+                        gap_source: "none",
                         table_id,
                         is_thead: false,
                         break_before,
