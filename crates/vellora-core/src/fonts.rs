@@ -150,6 +150,30 @@ pub fn first_unparseable_font(custom: &[Vec<u8>]) -> Option<usize> {
     })
 }
 
+/// File name of the bundled face whose bytes `data` are, if any (debug layout
+/// dump only: labels which face each shaped run used, e.g. to flag DejaVu
+/// fallback hits that have no Chromium counterpart). Bundled blobs are
+/// registered straight from these statics, so pointer identity matches first;
+/// a byte comparison covers copies.
+pub(crate) fn bundled_face_name(data: &[u8]) -> Option<&'static str> {
+    const FACES: &[(&str, &[u8])] = &[
+        ("LiberationSans-Regular.ttf", LIBERATION_SANS),
+        ("LiberationSans-Bold.ttf", LIBERATION_SANS_BOLD),
+        ("LiberationSerif-Regular.ttf", LIBERATION_SERIF),
+        ("LiberationSerif-Bold.ttf", LIBERATION_SERIF_BOLD),
+        ("LiberationMono-Regular.ttf", LIBERATION_MONO),
+        ("LiberationMono-Bold.ttf", LIBERATION_MONO_BOLD),
+        ("DejaVuSans.ttf", DEJAVU_SANS),
+        ("DejaVuSans-Bold.ttf", DEJAVU_SANS_BOLD),
+        ("blitz-bullet-font.otf", blitz_dom::BULLET_FONT),
+    ];
+    FACES
+        .iter()
+        .find(|(_, face)| std::ptr::eq(face.as_ptr(), data.as_ptr()) && face.len() == data.len())
+        .or_else(|| FACES.iter().find(|(_, face)| *face == data))
+        .map(|(name, _)| *name)
+}
+
 fn register_family(
     collection: &mut Collection,
     family_ids: &mut Vec<FamilyId>,

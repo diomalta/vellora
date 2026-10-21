@@ -14,6 +14,7 @@
       "fidelity/.cache",
       "fidelity/results",
       "fidelity/.venv",
+      "fidelity/node_modules",
       ".remember",
       ".codex",
       ".claude"

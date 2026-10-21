@@ -1,0 +1,147 @@
+diff --git a/crates/vellora-core/src/blitz_engine.rs b/crates/vellora-core/src/blitz_engine.rs
+index 711ed38..ca5a438 100644
+--- a/crates/vellora-core/src/blitz_engine.rs
++++ b/crates/vellora-core/src/blitz_engine.rs
+@@ -1566,7 +1566,7 @@ fn dump_node(
+ ) -> DumpNode {
+     let display = node.primary_styles().map(|s| s.clone_display());
+     DumpNode {
+-        node_id: node.id,
++        node_id: node.id.as_u64() as usize,
+         kind,
+         tag: if node.is_text_node() {
+             None
+@@ -1581,8 +1581,8 @@ fn dump_node(
+             .map(str::to_string),
+         dom_path,
+         synthetic,
+-        parent: node.parent,
+-        layout_parent: node.layout_parent.get(),
++        parent: node.parent.map(|p| p.as_u64() as usize),
++        layout_parent: node.layout_parent.get().map(|p| p.as_u64() as usize),
+         inline_root: node.flags.is_inline_root(),
+         display_outside: display.map(|d| format!("{:?}", d.outside())),
+         display_inside: display.map(|d| format!("{:?}", d.inside())),
+@@ -1597,8 +1597,8 @@ fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<Du
+     // 1) Locate the synthetic wrappers by element-index chain (element children
+     //    only, from the document node) — the same chain the normalizer recorded.
+     let wanted: HashSet<&[usize]> = wrapper_chains.iter().map(Vec::as_slice).collect();
+-    let mut synthetic: HashSet<usize> = HashSet::new();
+-    let mut stack: Vec<(usize, Vec<usize>)> = vec![(base.root_node().id, Vec::new())];
++    let mut synthetic: HashSet<NodeId> = HashSet::new();
++    let mut stack: Vec<(NodeId, Vec<usize>)> = vec![(base.root_node().id, Vec::new())];
+     while let Some((id, chain)) = stack.pop() {
+         let Some(node) = base.get_node(id) else {
+             continue;
+@@ -1625,14 +1625,14 @@ fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<Du
+     //    children count as children of the wrapper's own (logical) parent.
+     let root = base.root_node();
+     let mut out = vec![dump_node(root, "document", "#document".to_string(), false)];
+-    let mut stack: Vec<(usize, String)> = vec![(root.id, String::new())];
++    let mut stack: Vec<(NodeId, String)> = vec![(root.id, String::new())];
+     while let Some((id, path)) = stack.pop() {
+         let Some(node) = base.get_node(id) else {
+             continue;
+         };
+-        let mut sequence: Vec<usize> = Vec::new();
++        let mut sequence: Vec<NodeId> = Vec::new();
+         let mut wrapper_index = 0usize;
+-        let mut work: Vec<usize> = node.children.iter().rev().copied().collect();
++        let mut work: Vec<NodeId> = node.children.iter().rev().copied().collect();
+         while let Some(child) = work.pop() {
+             let Some(child_node) = base.get_node(child) else {
+                 continue;
+@@ -1651,7 +1651,7 @@ fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<Du
+             }
+         }
+         let mut element_k = 0usize;
+-        let mut next: Vec<(usize, String)> = Vec::new();
++        let mut next: Vec<(NodeId, String)> = Vec::new();
+         for child in sequence {
+             let Some(child_node) = base.get_node(child) else {
+                 continue;
+@@ -1683,7 +1683,7 @@ fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<Du
+             }
+         }
+         if !path.is_empty() {
+-            for (pseudo, name) in [(node.before, "before"), (node.after, "after")] {
++            for (pseudo, name) in [(node.before(), "before"), (node.after(), "after")] {
+                 if let Some(pseudo_node) = pseudo.and_then(|p| base.get_node(p)) {
+                     out.push(dump_node(
+                         pseudo_node,
+@@ -1704,28 +1704,33 @@ fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<Du
+ fn dump_blitz_tree(base: &BaseDocument, nodes: &mut Vec<DumpNode>) -> Vec<DumpBlitzBox> {
+     use std::collections::HashMap;
+ 
+-    let mut path_of: HashMap<usize, String> = nodes
++    let mut path_of: HashMap<NodeId, String> = nodes
+         .iter()
+-        .map(|n| (n.node_id, n.dom_path.clone()))
++        .map(|n| (NodeId::from_u64(n.node_id as u64), n.dom_path.clone()))
+         .collect();
+-    let mut anon_count: HashMap<usize, usize> = HashMap::new();
++    let mut anon_count: HashMap<Option<NodeId>, usize> = HashMap::new();
+     let mut out = Vec::new();
+     // (node, parent abs x/y from final_layout, parent abs x/y from unrounded_layout, depth)
+-    let mut stack: Vec<(usize, f64, f64, f64, f64, usize)> =
++    let mut stack: Vec<(NodeId, f64, f64, f64, f64, usize)> =
+         vec![(base.root_element().id, 0.0, 0.0, 0.0, 0.0, 0)];
+     while let Some((id, px, py, upx, upy, depth)) = stack.pop() {
+         let Some(node) = base.get_node(id) else {
+             continue;
+         };
+-        let fl = &node.final_layout;
+-        let ul = &node.unrounded_layout;
++        if !node_has_layout_data(node) {
++            continue;
++        }
++        let fl = node.final_layout();
++        let ul = node.unrounded_layout();
+         let x = px + fl.location.x as f64;
+         let y = py + fl.location.y as f64;
+         let ux = upx + ul.location.x as f64;
+         let uy = upy + ul.location.y as f64;
+         if !path_of.contains_key(&id) {
+-            let parent = node.layout_parent.get().unwrap_or(usize::MAX);
+-            let parent_path = path_of.get(&parent).cloned().unwrap_or_else(|| "?".into());
++            let parent = node.layout_parent.get();
++            let parent_path = parent
++                .and_then(|p| path_of.get(&p).cloned())
++                .unwrap_or_else(|| "?".into());
+             let j = anon_count.entry(parent).or_insert(0);
+             *j += 1;
+             let path = format!("{parent_path}>::blitz-anon({j})");
+@@ -1746,7 +1751,7 @@ fn dump_blitz_tree(base: &BaseDocument, nodes: &mut Vec<DumpNode>) -> Vec<DumpBl
+             None
+         };
+         out.push(DumpBlitzBox {
+-            node_id: id,
++            node_id: id.as_u64() as usize,
+             depth,
+             x,
+             y,
+@@ -1810,7 +1815,7 @@ fn dump_run_meta(base: &BaseDocument, boxes: &[LaidOutBox]) -> (Vec<DumpRunMeta>
+ }
+ 
+ fn node_run_meta(base: &BaseDocument, node_id: usize, box_index: usize) -> Vec<DumpRunMeta> {
+-    let Some(node) = base.get_node(node_id) else {
++    let Some(node) = base.get_node(NodeId::from_u64(node_id as u64)) else {
+         return Vec::new();
+     };
+     if !node.flags.is_inline_root() {
+@@ -1849,13 +1854,13 @@ fn node_run_meta(base: &BaseDocument, node_id: usize, box_index: usize) -> Vec<D
+             if taken == 0 {
+                 continue;
+             }
+-            let metrics = run.metrics();
++            let metrics = run.font_metrics();
+             let font = run.font();
+             out.push(DumpRunMeta {
+                 box_index,
+                 run_index: out.len(),
+                 owner_node_id: node_id,
+-                brush_node_id: glyph_run.style().brush.id,
++                brush_node_id: glyph_run.style().brush.id.as_u64() as usize,
+                 line_index,
+                 text: String::new(),
+                 font_size: run.font_size(),
