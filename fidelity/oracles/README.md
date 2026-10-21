@@ -79,31 +79,56 @@ letter-spacing or `text-transform`. Re-check the changelog before moving the pin
 
 Every oracle returns `{ oracle, status, tool versions, ... }` with status `pass`, `warn`, `fail`,
 `info`, `not-run` (with a `reason`) or `skipped` (with a `reason`). A tool that cannot run is
-reported as `not-run`. It is never dropped silently.
+reported as `not-run`. It is never dropped silently, and it never aborts the run: each oracle runs
+inside `guarded()` (an exception becomes `not-run` with the message). Without Chrome, `text` and
+`layout` are `not-run` while qpdf, veraPDF and barcode still run. A `VELLORA_FIDELITY_PYTHON` that
+does not exist is treated like a missing venv.
 
-- **qpdf** (`lib/qpdf.mjs`): `--check`, `--show-xref` and `--show-npages`. There is also an
-  independent xref check that re-reads the bytes at every uncompressed offset and requires
-  `N G obj` there.
+- **qpdf** (`lib/qpdf.mjs`): `--check`, `--show-xref` and `--show-npages`, plus checks of the
+  file's OWN structure, because qpdf repairs a damaged file and `--show-xref` then returns the
+  repaired offsets. The classic xref is parsed from `startxref` (subsections, trailer `/Size`,
+  `/Prev`), and every in-use offset must hold `N G obj`. `%%EOF` must be in the last 1024 bytes.
+  Every object region must close with `endobj`, `endstream` must follow the `/Length` bytes, and
+  every FlateDecode stream must inflate with its zlib Adler-32 check (`qpdf --check` does not
+  decode font streams). Verdict: `fail` = any structural problem, qpdf exit 2, or qpdf output
+  saying it repaired the file (`file is damaged`, `reconstruct`, `can't find startxref`); `warn`
+  = qpdf exit 3 with none of those; `pass` = exit 0 and no problem. A cross-reference stream is
+  reported (`xref.own.kind = "stream"`) and its offsets come from qpdf's table; parsing xref
+  streams ourselves is not implemented (vellora writes classic tables).
 - **veraPDF** (`lib/verapdf.mjs`): PDF/A-2B. Failed rules are reported with their ISO 19005-2
   clause and test number. A plain render failing PDF/A-2B counts as a *pass* of the negative control.
-- **text** (`lib/text.mjs`, `lib/tokens.mjs`): the expected text is Chrome's
-  `document.body.innerText` under emulated print media, NFC-normalized with whitespace collapsed
-  (deliberately not NFKC). Each extractor's tokens are aligned with a character-weighted LCS and
-  split into in-order, boundary-only (word-split/merge differences such as letter-spaced digits
-  or a wrap after a hyphen), reordered, missing and extra. **Attribution:** every extractor also
-  reads Chrome's own PDF of the same HTML. A token an extractor drops or adds for both PDFs is
-  *explained*, and only *subject-only* tokens count against vellora. Tokens that appear in
-  Chrome's PDF but not in innerText and are missing from vellora (paginator-generated content such
-  as `@page` margin boxes) are reported as `controlGeneratedAbsentFromSubject`. **Copy-paste:**
-  ligature presentation forms (U+FB00–FB06), nonspacing marks (NFD), U+FFFD, private-use and
-  control characters, plus every expected word with diacritics or `ff`/`fi`/`fl` must appear
-  verbatim. Verdict: `fail` = subject-only missing tokens or a subject-only copy-paste defect;
-  `warn` = subject-only extra/reordered tokens or absent generated content.
+- **text** (`lib/text.mjs`, `lib/tokens.mjs`, `lib/margin-boxes.mjs`): every extractor reads the
+  subject AND Chrome's own PDF of the same HTML (the control). Text is NFC-normalized with
+  whitespace collapsed (deliberately not NFKC). **Verdict basis:** the subject is compared with
+  the control DIRECTLY, by the same extractor and by token COUNT: a character-weighted LCS
+  alignment, boundary-only groups (word split/merge such as letter-spaced digits or a wrap after
+  a hyphen), then order-free pairing of what is left (`reordered`). A token the subject has
+  fewer copies of than the control is `missing`. Ligature presentation forms are folded
+  (U+FB01 → `fi`) for this comparison only. **Margin boxes:** `@page` margin-box `content`
+  templates are read from every `@page` block in the HTML's `<style>` elements (strings, CSS
+  escapes, decimal `counter(page)` / `counter(pages)`). On page *p* of *N* (the PDF's own page
+  count) the instantiated text, e.g. `Página 2 de 3`, is removed from that page as ONE contiguous
+  run (case-insensitive, for `text-transform`). Only those positions are removed, so a body `de`
+  can never be cancelled by the footer `de`. A template with no literal letter (counters only) or
+  with unsupported parts (`attr()`, `string()`, non-decimal counters) is listed and never
+  removed. Chrome's innerText (print media) gives the recall metrics (`subject`, `control`), and
+  it is the verdict reference only when there is no control. **Copy-paste:** the raw text fails
+  on ligature presentation forms (U+FB00–FB06), nonspacing marks (NFD), U+FFFD, private-use and
+  C0 control characters; these are never excused by the control. Every innerText word with a
+  diacritic or `ff`/`fi`/`fl` must also occur in the subject body (ligatures folded) at least as
+  many times as in the control body. That is a count, so one dropped cedilla among four `ação`
+  fails, and a control U+FB01 cannot excuse a subject that dropped the letter. Verdict: `fail` =
+  any `subjectOnly.missing` token or a copy-paste failure; `warn` = `subjectOnly.extra` /
+  `reordered` tokens, or fewer margin-box runs than the control (`marginBoxes.absent`); `pass`
+  otherwise. Before 2026-10-21 each PDF was compared with innerText and the subject's buckets
+  were cancelled against the control's by token identity. That hid a deleted body `de` behind
+  the footer `de`, and the reverted WIP 8d068f5 hid a deleted `R$` (validator findings).
 - **barcode** (`lib/barcode.mjs`, `lib/febraban.mjs`): `pdftoppm -r 300 -gray`, then ITF decoding
   with zxing-cpp and zbar, compared with `--expect` digits. Any 44-digit decode is validated
   against the BCB/FEBRABAN rules. For boletos, the printed barcode and linha digitável (from
   `--expect` and from the PDF text) are DV-checked as **document data**. A failure there is a
-  finding about the data, not about rendering. Implemented from primary sources cited in the code:
+  finding about the data, not about rendering. The linha is searched in every text extractor that
+  ran; when none ran, `linhasInExtractedText` is `{ status: "not-run", reason }`, never `[]`. Implemented from primary sources cited in the code:
   BCB Carta-Circular nº 2926 (24/07/2000), Anexo, items 01.b.II and 01.b.V Nota 1 (layout and the
   mod-11 general DV), and Banco Santander "Código de Barras – Cobrança" v36 (Abril 2025) for the
   mod-10 field DVs and test vectors. UNVERIFIED ASSUMPTION: the Santander mod-10 rule applies to
@@ -128,23 +153,31 @@ computes `caught` from the oracle's own output:
 
 | Oracle | Broken input | Must report |
 |---|---|---|
-| qpdf | `startxref` shifted by 17 bytes; file truncated to 60 % | status ≠ pass |
+| qpdf | `startxref` shifted by 17 bytes; file truncated to 60 %; trailing `%%EOF` removed; 64 bytes XORed inside the largest FlateDecode stream (offsets intact) | status = fail |
 | veraPDF | every plain-mode fixture render (no PDF/A claims) | non-compliant |
 | text (×3 extractors) | fixture re-rendered with one body word replaced by a marker, scored against the original references | the word is subject-only missing and the marker subject-only extra |
+| text (×3 extractors) | invoice re-rendered with its first body `de` deleted (`de` is also in the footer), and again with its first `R$` deleted | status = fail with that token subject-only missing |
 | copy-paste (×3) | U+FB01 written into the text; NFD accents in the text | `copyPaste.pass === false` |
 | barcode | valid ITF (Santander example, pixel-aligned modules); same with a wrong DV | pass; decoded but rejected by the mod-11 check |
 | layout-consensus | notification re-rendered with the body translated by +6 pt | median signed dx shifts by 6 ± 1 pt |
 
-Two rows are measurements, not pass/fail canaries. The Chrome render of the copy-paste canaries
+A canary that cannot run (Chrome or WeasyPrint unavailable) is listed as not-run with the
+reason. Two rows are measurements, not pass/fail canaries. The Chrome render of the copy-paste canaries
 shows what a browser keeps for the same input. The 0.254 mm (0.96 CSS px) ITF modules test whether
 an engine keeps sub-pixel bars.
 
 ## Output
 
 `fidelity/results/oracles/<run-id>/` (gitignored): `<fixture>/<mode>/{vellora.pdf,result.json}`,
-`<fixture>/reference/{chrome.pdf,chrome-innertext.txt,weasyprint.pdf,weasyprint.json}`,
-`canaries/`, and `summary.json`. Every record carries `environment` (date from `date -u`,
-OS/kernel without host name, CPU, Node, rustc, Chrome, Docker, poppler, Python packages, image IDs),
+`<fixture>/reference/{chrome.pdf,chrome-innertext.txt,weasyprint.pdf,weasyprint.json,meta.json}`,
+`canaries/`, and `summary.json`. **Reference reuse** is keyed on content, not on the directory:
+`meta.json` stores sha256 of the reference HTML (fonts and `<base>` included), the Chrome version
+and executable, the tools image ID, and the sha256 of each cached file. Any mismatch re-renders,
+and without Chrome nothing is reused. Each record's `input.references` holds the HTML sha256, the
+reference file facts and the cache outcome (`hit`, `miss: rendered`, `stale: re-rendered`).
+Result shape: `schemaVersion` 2 (see `lib/record.mjs`). Every record carries `environment` (date from `date -u`,
+OS/kernel without host name, CPU, Node, rustc, Chrome (or why it was unavailable), puppeteer-core,
+Docker, poppler, Python packages, image IDs),
 the exact `command`, input sha256s, and `deterministic` (two renders compared byte-for-byte).
 Paths are rewritten to `<repo>/…` and `~/…`. Committed snapshots of reviewed runs live in
 `reports/`.
@@ -160,6 +193,19 @@ Then `node fidelity/oracles/run-fixtures.mjs`, upload `fidelity/results/oracles/
 `summary.json` against `fidelity/baselines/`.
 
 ## Known gaps
+
+- The text verdict trusts Chrome's PDF as the reference: content that Chrome's text layer and
+  vellora's both lose is invisible (the innerText metrics still show it). Hyphenation differences
+  (`hyphens: auto`) between the two PDFs would show up as missing + extra. No fixture uses
+  `hyphens` today.
+- Margin-box templates come from `<style>` elements only (not `<link>` or `style=""`), and page
+  selectors (`:first`, `:left`) are not modelled. A template's presence is detected on each page
+  instead of being assumed. A margin box printed with wrong counters is not removed, so it shows
+  up as extra tokens plus `marginBoxes.absent`.
+- Measured finding, not an oracle gap: vellora does not render the notification footer. The
+  footer is declared in a SECOND `@page` block, and `page_css::parse_page_box` reads only the
+  first `@page` rule (`crates/vellora-core/src/page_css.rs:92`, CONFIRMED by source read). The
+  text oracle reports it as `marginBoxes.absent` (warn) in all three extractors.
 
 - Local results are indicative: macOS arm64, branded Chrome 155.0.8059.85, veraPDF under amd64
   emulation.
