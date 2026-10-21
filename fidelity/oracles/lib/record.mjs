@@ -3,7 +3,13 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { REPO_ROOT } from "./paths.mjs";
 
-export const SCHEMA_VERSION = 1;
+/**
+ * 2 (2026-10-21): text verdict against the control by count (subjectOnly from the direct
+ * comparison, marginBoxes replaces controlGeneratedAbsentFromSubject), qpdf `objects` /
+ * `structuralProblems`, barcode.documentData.linhasInExtractedText is {status, ...}, records
+ * carry input.references (reference HTML sha256, file facts, cache outcome).
+ */
+export const SCHEMA_VERSION = 2;
 
 export function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");

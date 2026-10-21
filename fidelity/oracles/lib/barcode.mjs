@@ -6,20 +6,26 @@ import { basename, join } from "node:path";
 import { TOOLS_IMAGE, inspectImage, toolsRun } from "./docker.mjs";
 import { findExecutable, run, versionLine } from "./exec.mjs";
 import { validateBoletoBarcode } from "./febraban.mjs";
-import { PY_DIR, venvPython } from "./paths.mjs";
+import { PY_DIR, pythonUnavailableReason, venvPython } from "./paths.mjs";
 
 export const BARCODE_DPI = 300;
 
+/** Rasterize with pdftoppm; returns { pngs, dpi, tool } or { notRun: reason } (never throws). */
 export async function rasterize(pdfPath, outDir, { dpi = BARCODE_DPI } = {}) {
   const pdftoppm = await findExecutable("pdftoppm", "PDFTOPPM_BIN");
   if (!pdftoppm) {
-    throw new Error("pdftoppm not found (install poppler or set PDFTOPPM_BIN)");
+    return { notRun: "pdftoppm not found (install poppler or set PDFTOPPM_BIN)" };
   }
   mkdirSync(outDir, { recursive: true });
   const prefix = join(outDir, "page");
-  const result = await run(pdftoppm, ["-r", String(dpi), "-gray", "-png", pdfPath, prefix]);
+  let result;
+  try {
+    result = await run(pdftoppm, ["-r", String(dpi), "-gray", "-png", pdfPath, prefix]);
+  } catch (error) {
+    return { notRun: `cannot run ${pdftoppm}: ${error.message}` };
+  }
   if (result.code !== 0) {
-    throw new Error(`pdftoppm failed (${result.code}): ${result.stderr.trim()}`);
+    return { notRun: `pdftoppm failed (${result.code}): ${result.stderr.trim()}` };
   }
   const pngs = readdirSync(outDir)
     .filter((name) => /^page-\d+\.png$/.test(name))
@@ -35,9 +41,18 @@ export async function rasterize(pdfPath, outDir, { dpi = BARCODE_DPI } = {}) {
 async function decodeWithZxing(pngs) {
   const python = venvPython();
   if (!python) {
-    return { decoder: "zxing-cpp", status: "not-run", reason: "fidelity/.venv missing" };
+    return { decoder: "zxing-cpp", status: "not-run", reason: pythonUnavailableReason() };
   }
-  const result = await run(python, ["-I", join(PY_DIR, "decode_barcode.py"), ...pngs]);
+  let result;
+  try {
+    result = await run(python, ["-I", join(PY_DIR, "decode_barcode.py"), ...pngs]);
+  } catch (error) {
+    return {
+      decoder: "zxing-cpp",
+      status: "not-run",
+      reason: `cannot run ${python}: ${error.message}`,
+    };
+  }
   if (result.code !== 0) {
     return { decoder: "zxing-cpp", status: "not-run", reason: result.stderr.trim() };
   }
@@ -111,6 +126,9 @@ async function decodeWithZbar(pngs, workDir) {
  */
 export async function barcodeOracle({ pdfPath, workDir, expect = {} }) {
   const raster = await rasterize(pdfPath, workDir);
+  if (raster.notRun) {
+    return { oracle: "barcode", status: "not-run", reason: raster.notRun, expect };
+  }
   const decoders = [await decodeWithZxing(raster.pngs), await decodeWithZbar(raster.pngs, workDir)];
   const ran = decoders.filter((d) => d.status === "ran");
   const decodedTexts = [...new Set(ran.flatMap((d) => d.symbols.map((s) => s.text)))];

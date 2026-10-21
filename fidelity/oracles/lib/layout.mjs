@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { flattenWords, scoreConsensus } from "./consensus.mjs";
 import { TOOLS_IMAGE, inspectImage, toolsRun } from "./docker.mjs";
 import { run } from "./exec.mjs";
-import { PY_DIR, venvPython } from "./paths.mjs";
+import { PY_DIR, pythonUnavailableReason, venvPython } from "./paths.mjs";
 
 /**
  * Render reference HTML with WeasyPrint (network disabled, so only inlined data: URLs load).
@@ -53,7 +53,7 @@ export async function renderWeasyPrint(referenceHtml, workDir) {
 export async function wordAnchors(pdfPath) {
   const python = venvPython();
   if (!python) {
-    throw new Error("fidelity/.venv missing (see fidelity/oracles/README.md)");
+    throw new Error(pythonUnavailableReason());
   }
   const result = await run(python, ["-I", join(PY_DIR, "words.py"), pdfPath]);
   if (result.code !== 0) {
@@ -86,6 +86,13 @@ export async function layoutOracle({
   }
   if (!chromePdfPath) {
     return { oracle: "layout-consensus", status: "not-run", reason: "no Chrome reference PDF" };
+  }
+  if (!venvPython()) {
+    return {
+      oracle: "layout-consensus",
+      status: "not-run",
+      reason: `PyMuPDF word anchors: ${pythonUnavailableReason()}`,
+    };
   }
   const [chromeWords, weasyWords, subjectWords] = [
     await wordAnchors(chromePdfPath),

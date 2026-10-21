@@ -43,6 +43,14 @@ function expectationsFor(fixture) {
   return {};
 }
 
+/** Linha occurrences found in the PDF text (max over extractors), or "not-run: <reason>". */
+function linhaCount(search) {
+  if (!search) {
+    return null;
+  }
+  return search.status === "ran" ? search.maxOccurrences : `not-run: ${search.reason}`;
+}
+
 function summarizeResult(results) {
   const text = results.text?.extractors?.map((e) => ({
     extractor: e.name,
@@ -81,7 +89,7 @@ function summarizeResult(results) {
           expectedLinhaValid: results.barcode.documentData.expectedLinhaDigitavel?.valid ?? null,
           expectedLinhaErrors: results.barcode.documentData.expectedLinhaDigitavel?.errors ?? [],
           linhaMatchesBarcode: results.barcode.documentData.linhaMatchesBarcode,
-          linhasFoundInPdfText: results.barcode.documentData.linhasInExtractedText.length,
+          linhasFoundInPdfText: linhaCount(results.barcode.documentData.linhasInExtractedText),
         }
       : null,
     layout: layout.status,
@@ -142,7 +150,15 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
 
   const { renderTemplate } = await loadVellora();
-  const chrome = await launchChrome();
+  let chrome = null;
+  let chromeError = null;
+  try {
+    chrome = await launchChrome();
+  } catch (error) {
+    // Reported, not fatal: qpdf / veraPDF / barcode still run; text and layout are not-run.
+    chromeError = error?.message ?? String(error);
+    console.log(`Chrome unavailable: ${chromeError}`);
+  }
   const summary = {
     schemaVersion: SCHEMA_VERSION,
     suite: "vellora-fidelity-oracles/fixtures",
@@ -152,7 +168,7 @@ async function main() {
     canaries: [],
   };
   try {
-    summary.environment = await captureEnvironment({ chrome });
+    summary.environment = await captureEnvironment({ chrome, chromeError });
     const processed = new Map();
     for (const id of fixtures) {
       const fixture = loadFixture(id);
@@ -166,6 +182,8 @@ async function main() {
         baseDir: fixture.dir,
         refDir: join(fixtureDir, "reference"),
         chrome,
+        chromeError,
+        withWeasyPrint: only.includes("layout"),
       });
       const expect = expectationsFor(fixture);
       processed.set(id, { fixtureId: id, templatedHtml, refs });
@@ -207,11 +225,7 @@ async function main() {
             pdfa,
             expect,
             oracles: only,
-            references: {
-              chromePdf: fileFacts(refs.chromePdfPath),
-              weasyprintPdf: refs.weasy?.pdfPath ? fileFacts(refs.weasy.pdfPath) : null,
-              weasyprint: refs.weasy?.tool ?? { notRun: refs.weasy?.notRun },
-            },
+            references: refs.facts,
           },
           results,
         };
@@ -232,12 +246,15 @@ async function main() {
     if (!hasFlag(argv, "--no-canaries")) {
       const textFixture = processed.get("boleto") ?? [...processed.values()][0];
       const layoutFixture = processed.get("notification") ?? [...processed.values()][0];
+      const deletionFixture = processed.get("invoice") ?? textFixture;
       if (textFixture?.velloraPlainPdfBytes) {
         summary.canaries = await runCanaries({
           outDir: join(outDir, "canaries"),
           chrome,
+          chromeError,
           textFixture,
           layoutFixture,
+          deletionFixture,
         });
         for (const canary of summary.canaries) {
           const verdict =
@@ -257,7 +274,7 @@ async function main() {
       }
     }
   } finally {
-    await chrome.close();
+    await chrome?.close();
   }
   writeFileSync(join(outDir, "summary.json"), `${JSON.stringify(portable(summary), null, 2)}\n`);
   console.log(`summary: ${join(outDir, "summary.json")}`);

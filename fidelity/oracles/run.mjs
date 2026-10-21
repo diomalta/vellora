@@ -65,18 +65,35 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
 
   const needsChrome = only.includes("text") || only.includes("layout");
-  const chrome = needsChrome ? await launchChrome() : null;
+  let chrome = null;
+  let chromeError = needsChrome ? null : "not needed by the selected oracles";
+  if (needsChrome) {
+    try {
+      chrome = await launchChrome();
+    } catch (error) {
+      // qpdf / veraPDF / barcode do not need Chrome: keep going, report text/layout not-run.
+      chromeError = error?.message ?? String(error);
+    }
+  }
   try {
-    const environment = await captureEnvironment({ chrome });
+    const environment = await captureEnvironment({ chrome, chromeError });
     const refs = htmlPath
       ? await referenceArtifacts({
           templatedHtml: readFileSync(htmlPath, "utf8"),
           baseDir,
           refDir: join(outDir, "reference"),
           chrome,
+          chromeError,
           injectFonts: !hasFlag(argv, "--no-font-injection"),
+          withWeasyPrint: only.includes("layout"),
         })
-      : { expectedText: null, errors: ["no --html"], weasy: { notRun: "no --html" } };
+      : {
+          expectedText: null,
+          chromePdfPath: null,
+          errors: ["no --html"],
+          weasy: { notRun: "no --html" },
+          facts: null,
+        };
     const results = await runOracles({
       pdfPath,
       refs,
@@ -98,6 +115,7 @@ async function main() {
         pdfa: pdfa ?? null,
         expect,
         oracles: only,
+        references: refs.facts,
       },
       results,
     };

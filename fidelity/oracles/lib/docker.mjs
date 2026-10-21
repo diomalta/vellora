@@ -38,6 +38,26 @@ export function toolsRecipeSha256() {
 }
 
 /**
+ * Reason for a failed `docker image inspect`. "Error response from daemon: No such image" comes
+ * FROM the daemon, so it means the image is missing, not that the daemon is down (the previous
+ * /daemon/ test reported a missing image as "daemon not reachable").
+ */
+export function inspectFailureReason(image, stderr) {
+  const text = String(stderr).trim();
+  if (/No such image|No such object|not found/i.test(text)) {
+    return `image ${image} not present locally (build/pull it first; see fidelity/oracles/README.md)`;
+  }
+  if (
+    /Cannot connect to the Docker daemon|Is the docker daemon running|error during connect/i.test(
+      text,
+    )
+  ) {
+    return `docker daemon not reachable: ${text}`;
+  }
+  return `docker image inspect ${image} failed: ${text || "no output"}`;
+}
+
+/**
  * Inspect a local image. Returns { available: true, id, architecture } or
  * { available: false, reason } — callers turn the reason into a "not-run" verdict.
  */
@@ -46,21 +66,14 @@ export async function inspectImage(image) {
   if (!bin) {
     return { available: false, reason: "docker CLI not found on PATH (set DOCKER_BIN)" };
   }
-  const result = await run(bin, [
-    "image",
-    "inspect",
-    image,
-    "--format",
-    "{{.Id}} {{.Architecture}}",
-  ]);
+  let result;
+  try {
+    result = await run(bin, ["image", "inspect", image, "--format", "{{.Id}} {{.Architecture}}"]);
+  } catch (error) {
+    return { available: false, reason: `cannot run ${bin}: ${error.message}` };
+  }
   if (result.code !== 0) {
-    const daemonDown = /Cannot connect|daemon/i.test(result.stderr);
-    return {
-      available: false,
-      reason: daemonDown
-        ? `docker daemon not reachable: ${result.stderr.trim()}`
-        : `image ${image} not present locally (build/pull it first; see fidelity/oracles/README.md)`,
-    };
+    return { available: false, reason: inspectFailureReason(image, result.stderr) };
   }
   const [id, architecture] = result.stdout.trim().split(" ");
   return { available: true, id, architecture };
