@@ -445,15 +445,263 @@ fn count_tag_in_document(base: &BaseDocument, tag: &str) -> usize {
 /// ([`crate::validation`]) calls this BEFORE any recursive resolve/layout/walk,
 /// rejecting over-deep input cleanly instead of letting Stylo/Taffy/our own walk
 /// abort the process. Element depth only (text nodes are not counted).
+///
+/// Past [`PARSE_DEPTH_LIMIT`] the parse stops early and the value is a lower bound (see
+/// [`NestingDepth`]).
 pub fn max_nesting_depth(html: &str) -> usize {
-    max_nesting_depth_as(html, DocumentSyntax::Html)
+    max_nesting_depth_as(html, DocumentSyntax::Html).depth
 }
+
+/// The element nesting depth the depth gate measured.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct NestingDepth {
+    pub depth: usize,
+    /// `false` when the HTML parse stopped early because an element went deeper than
+    /// [`PARSE_DEPTH_LIMIT`]; `depth` is then a lower bound of the depth at that point.
+    pub exact: bool,
+}
+
+/// How deep the depth gate lets html5ever nest elements before it stops parsing: Blink's
+/// `HTMLConstructionSite::kMaximumHTMLParserDOMTreeDepth` (512; Chromium
+/// `third_party/blink/renderer/core/html/parser/html_construction_site.h`, read 2026-10-21).
+///
+/// Why stop at all (port step 09): html5ever 0.40.1 checks "has a `p` element in button scope"
+/// for every `<div>`, `<p>`, `<section>`, … start tag by walking the whole stack of open
+/// elements (`tree_builder/mod.rs` `in_scope`), so `n` nested `<div>`s cost O(n²) (CONFIRMED:
+/// 25 000 → 1.3 s, 50 000 → 5.3 s through the napi addon at step 08). Blink keeps its stack
+/// bounded instead: past 512 open elements it inserts new nodes as siblings
+/// (`HTMLConstructionSite::Attach`), so Chrome builds a different tree for such input anyway.
+/// The gate rejects anything deeper than [`crate::validation::MAX_NESTING_DEPTH`] (192), well
+/// below this limit, so stopping here changes the outcome only for a document whose parse puts
+/// an element deeper than 512 and whose adoption-agency or foster-parenting moves later bring
+/// every element back to 192 or less: that document is rejected now.
+pub(crate) const PARSE_DEPTH_LIMIT: usize = 512;
 
 /// [`max_nesting_depth`] of the DOM `syntax` builds (the fidelity-only XHTML render,
 /// [`crate::debug_render_xhtml`], measures the tree it lays out).
-pub(crate) fn max_nesting_depth_as(html: &str, syntax: DocumentSyntax) -> usize {
-    let doc = build_document(html, &[], syntax);
-    let base: &BaseDocument = &doc;
+pub(crate) fn max_nesting_depth_as(html: &str, syntax: DocumentSyntax) -> NestingDepth {
+    let doc = match syntax {
+        DocumentSyntax::Html => {
+            let mut doc = BaseDocument::new(document_config(crate::fonts::build_font_context(&[])));
+            if let Some(depth) = parse_html_depth_bounded(&mut doc, html, PARSE_DEPTH_LIMIT) {
+                return NestingDepth {
+                    depth,
+                    exact: false,
+                };
+            }
+            doc
+        }
+        // The XML parse (fidelity tooling only) has no scope walks to bound.
+        _ => build_document(html, &[], syntax),
+    };
+    NestingDepth {
+        depth: element_depth(&doc),
+        exact: true,
+    }
+}
+
+/// [`parse_into`]'s HTML parse with the elements' depth followed as they are inserted: the
+/// input is fed in chunks and the parse stops after the first chunk that put an element deeper
+/// than `limit` (see [`PARSE_DEPTH_LIMIT`]), returning that element depth. `None`: the whole
+/// document was parsed, into exactly the DOM [`parse_into`] builds (the sink only observes).
+fn parse_html_depth_bounded(doc: &mut BaseDocument, html: &str, limit: usize) -> Option<usize> {
+    /// Bytes per chunk: html5ever's own `read_from` reads 4 KiB at a time.
+    const CHUNK: usize = 4096;
+    let mut mutr = doc.mutate();
+    let sink = DepthProbe {
+        inner: DocumentHtmlParser::new(&mut mutr),
+        depths: std::cell::RefCell::new(std::collections::HashMap::new()),
+        deepest: std::cell::Cell::new(0),
+    };
+    let mut parser = html5ever::parse_document(sink, html_parse_opts());
+    let mut start = 0;
+    while start < html.len() {
+        let mut end = (start + CHUNK).min(html.len());
+        while !html.is_char_boundary(end) {
+            end += 1;
+        }
+        parser.process(html5ever::tendril::StrTendril::from_slice(
+            &html[start..end],
+        ));
+        start = end;
+        // The document node is depth 0 and the root element 1, so an element's DOM nesting
+        // depth (the root element's is 0) is its recorded depth minus one.
+        let deepest = parser.tokenizer.sink.sink.deepest.get().saturating_sub(1);
+        if deepest > limit {
+            return Some(deepest);
+        }
+    }
+    parser.finish();
+    drop(mutr);
+    None
+}
+
+/// A transparent `TreeSink` over blitz-html's [`DocumentHtmlParser`] that records the depth of
+/// every node it inserts (the document is 0): a child is one deeper than its parent, a node
+/// inserted before a sibling is as deep as that sibling. Subtrees that the tree builder moves
+/// later (`reparent_children`, the adoption agency's re-appends) keep the depth they were
+/// inserted at; the record is only read against [`PARSE_DEPTH_LIMIT`].
+struct DepthProbe<'m, 'doc> {
+    inner: DocumentHtmlParser<'m, 'doc>,
+    /// Recorded depth per node (lookup only, never iterated).
+    depths: std::cell::RefCell<std::collections::HashMap<NodeId, usize>>,
+    /// The deepest recorded depth so far.
+    deepest: std::cell::Cell<usize>,
+}
+
+impl DepthProbe<'_, '_> {
+    fn depth_of(&self, id: NodeId) -> usize {
+        self.depths.borrow().get(&id).copied().unwrap_or(0)
+    }
+
+    fn record(&self, id: NodeId, depth: usize) {
+        self.depths.borrow_mut().insert(id, depth);
+        if depth > self.deepest.get() {
+            self.deepest.set(depth);
+        }
+    }
+}
+
+impl html5ever::tree_builder::TreeSink for DepthProbe<'_, '_> {
+    type Handle = NodeId;
+    type Output = ();
+    type ElemName<'a>
+        = <DocumentHtmlParser<'static, 'static> as html5ever::tree_builder::TreeSink>::ElemName<'a>
+    where
+        Self: 'a;
+
+    fn finish(self) -> Self::Output {
+        self.inner.finish()
+    }
+    fn parse_error(&self, msg: std::borrow::Cow<'static, str>) {
+        self.inner.parse_error(msg)
+    }
+    fn get_document(&self) -> NodeId {
+        self.inner.get_document()
+    }
+    fn elem_name<'a>(&'a self, target: &'a NodeId) -> Self::ElemName<'a> {
+        self.inner.elem_name(target)
+    }
+    fn create_element(
+        &self,
+        name: html5ever::QualName,
+        attrs: Vec<html5ever::Attribute>,
+        flags: html5ever::tree_builder::ElementFlags,
+    ) -> NodeId {
+        self.inner.create_element(name, attrs, flags)
+    }
+    fn create_comment(&self, text: html5ever::tendril::StrTendril) -> NodeId {
+        self.inner.create_comment(text)
+    }
+    fn create_pi(
+        &self,
+        target: html5ever::tendril::StrTendril,
+        data: html5ever::tendril::StrTendril,
+    ) -> NodeId {
+        self.inner.create_pi(target, data)
+    }
+    fn append(&self, parent: &NodeId, child: html5ever::tree_builder::NodeOrText<NodeId>) {
+        if let html5ever::tree_builder::NodeOrText::AppendNode(id) = &child {
+            self.record(*id, self.depth_of(*parent) + 1);
+        }
+        self.inner.append(parent, child)
+    }
+    fn append_based_on_parent_node(
+        &self,
+        element: &NodeId,
+        prev_element: &NodeId,
+        child: html5ever::tree_builder::NodeOrText<NodeId>,
+    ) {
+        if let html5ever::tree_builder::NodeOrText::AppendNode(id) = &child {
+            // Inserted before `element` or appended to `prev_element`: record the deeper.
+            let depth = self
+                .depth_of(*element)
+                .max(self.depth_of(*prev_element) + 1);
+            self.record(*id, depth);
+        }
+        self.inner
+            .append_based_on_parent_node(element, prev_element, child)
+    }
+    fn append_doctype_to_document(
+        &self,
+        name: html5ever::tendril::StrTendril,
+        public_id: html5ever::tendril::StrTendril,
+        system_id: html5ever::tendril::StrTendril,
+    ) {
+        self.inner
+            .append_doctype_to_document(name, public_id, system_id)
+    }
+    fn mark_script_already_started(&self, node: &NodeId) {
+        self.inner.mark_script_already_started(node)
+    }
+    fn pop(&self, node: &NodeId) {
+        self.inner.pop(node)
+    }
+    fn get_template_contents(&self, target: &NodeId) -> NodeId {
+        let contents = self.inner.get_template_contents(target);
+        self.record(contents, self.depth_of(*target) + 1);
+        contents
+    }
+    fn same_node(&self, x: &NodeId, y: &NodeId) -> bool {
+        self.inner.same_node(x, y)
+    }
+    fn set_quirks_mode(&self, mode: html5ever::tree_builder::QuirksMode) {
+        self.inner.set_quirks_mode(mode)
+    }
+    fn append_before_sibling(
+        &self,
+        sibling: &NodeId,
+        new_node: html5ever::tree_builder::NodeOrText<NodeId>,
+    ) {
+        if let html5ever::tree_builder::NodeOrText::AppendNode(id) = &new_node {
+            self.record(*id, self.depth_of(*sibling));
+        }
+        self.inner.append_before_sibling(sibling, new_node)
+    }
+    fn add_attrs_if_missing(&self, target: &NodeId, attrs: Vec<html5ever::Attribute>) {
+        self.inner.add_attrs_if_missing(target, attrs)
+    }
+    fn associate_with_form(
+        &self,
+        target: &NodeId,
+        form: &NodeId,
+        nodes: (&NodeId, Option<&NodeId>),
+    ) {
+        self.inner.associate_with_form(target, form, nodes)
+    }
+    fn remove_from_parent(&self, target: &NodeId) {
+        self.inner.remove_from_parent(target)
+    }
+    fn reparent_children(&self, node: &NodeId, new_parent: &NodeId) {
+        self.inner.reparent_children(node, new_parent)
+    }
+    fn is_mathml_annotation_xml_integration_point(&self, handle: &NodeId) -> bool {
+        self.inner
+            .is_mathml_annotation_xml_integration_point(handle)
+    }
+    fn set_current_line(&self, line_number: u64) {
+        self.inner.set_current_line(line_number)
+    }
+    fn allow_declarative_shadow_roots(&self, intended_parent: &NodeId) -> bool {
+        self.inner.allow_declarative_shadow_roots(intended_parent)
+    }
+    fn attach_declarative_shadow(
+        &self,
+        location: &NodeId,
+        template: &NodeId,
+        attrs: &[html5ever::Attribute],
+    ) -> bool {
+        self.inner
+            .attach_declarative_shadow(location, template, attrs)
+    }
+    fn maybe_clone_an_option_into_selectedcontent(&self, option: &NodeId) {
+        self.inner
+            .maybe_clone_an_option_into_selectedcontent(option)
+    }
+}
+
+/// Maximum element nesting depth of a parsed document (root element 0), with an explicit stack.
+fn element_depth(base: &BaseDocument) -> usize {
     let root_id = base.root_element().id;
     let mut max_depth = 0usize;
     // (node_id, depth-of-this-node-counting-only-elements).
@@ -2116,6 +2364,89 @@ mod tests {
             let new = build_document(html, &[], DocumentSyntax::Html);
             let old = build_document(html, &[], DocumentSyntax::BlitzSniffed);
             assert_eq!(dom_lines(&new), dom_lines(&old), "{html}");
+        }
+    }
+
+    /// Documents the depth-bounded parse must build exactly like [`parse_into`]: multi-chunk
+    /// input (a multibyte character across the 4 KiB chunk boundary), misnested formatting
+    /// (adoption agency), foster-parented table text, templates and nesting near the limit.
+    fn bounded_parse_samples() -> Vec<String> {
+        let mut docs: Vec<String> = HTML_SNIFFED.iter().map(|s| s.to_string()).collect();
+        docs.push(format!(
+            "<!DOCTYPE html><p>{}é{}</p><div>{}</div>",
+            "a".repeat(4095 - "<!DOCTYPE html><p>".len()),
+            "ç".repeat(3000),
+            "<span>x</span>".repeat(700)
+        ));
+        docs.push(
+            "<b><i><div><p>aaa</b>bbb</i>ccc</p></div><table>stray<tr><td>x</td></tr>t</table>"
+                .to_string(),
+        );
+        docs.push(
+            "<template><div><p>in template</p></div></template><select><option>o</option></select>"
+                .to_string(),
+        );
+        // Element depth = body (1) + the nest; the open tags of one repeat nest `per` deep.
+        for (open, close, per) in [
+            ("<div>", "</div>", 1),
+            ("<span>", "</span>", 1),
+            ("<p>", "", 1),
+            ("<b><div>", "", 2),
+        ] {
+            for depth in [1, 191, 192, 193, 300, 511] {
+                let n = depth / per;
+                docs.push(format!(
+                    "<!DOCTYPE html><body>{}x{}",
+                    open.repeat(n),
+                    close.repeat(n)
+                ));
+            }
+        }
+        docs
+    }
+
+    #[test]
+    fn the_depth_bounded_parse_builds_the_same_dom_when_it_runs_to_the_end() {
+        for html in bounded_parse_samples() {
+            let mut bounded =
+                BaseDocument::new(document_config(crate::fonts::build_font_context(&[])));
+            assert_eq!(
+                parse_html_depth_bounded(&mut bounded, &html, PARSE_DEPTH_LIMIT),
+                None
+            );
+            let full = build_document(&html, &[], DocumentSyntax::Html);
+            assert_eq!(
+                dom_lines(&bounded),
+                dom_lines(&full),
+                "{}",
+                &html[..html.len().min(200)]
+            );
+        }
+    }
+
+    #[test]
+    fn the_depth_gate_is_exact_below_the_parse_limit_and_stops_past_it() {
+        for html in bounded_parse_samples() {
+            let full = element_depth(&build_document(&html, &[], DocumentSyntax::Html));
+            assert!(full <= PARSE_DEPTH_LIMIT, "{full}");
+            assert_eq!(
+                max_nesting_depth_as(&html, DocumentSyntax::Html),
+                NestingDepth {
+                    depth: full,
+                    exact: true
+                },
+                "{}",
+                &html[..html.len().min(200)]
+            );
+        }
+        for depth in [513, 600, 20_000] {
+            let html = format!("<!DOCTYPE html><body>{}x", "<div>".repeat(depth));
+            let measured = max_nesting_depth_as(&html, DocumentSyntax::Html);
+            assert!(!measured.exact, "{depth}: {measured:?}");
+            assert!(
+                measured.depth > PARSE_DEPTH_LIMIT && measured.depth <= depth + 2,
+                "{depth}: {measured:?}"
+            );
         }
     }
 

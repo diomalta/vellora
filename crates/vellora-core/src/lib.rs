@@ -195,7 +195,9 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     let html = std::str::from_utf8(html_bytes)
         .map_err(|e| VelloraError::Render(format!("input is not valid UTF-8: {e}")))?;
 
-    // 1a) CSS subset gate: a cheap byte scan, no HTML parse.
+    // 1a) CSS subset gate: linear byte scans and the `@page` sheet walk, no HTML parse. It
+    // runs before the depth gate, so nothing in it may recurse per nesting level
+    // (`tests/deep_input.rs`).
     validation::validate_css(html)?;
 
     // 1a') Depth gate: reject pathologically deep nesting BEFORE the recursive

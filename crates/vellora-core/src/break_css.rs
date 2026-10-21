@@ -125,7 +125,15 @@ fn top_level_rules(css: &str) -> Vec<(String, String)> {
                 i += 1;
                 prelude_start = i;
             }
-            b';' if css[prelude_start..i].trim_start().starts_with('@') => {
+            b';' if {
+                // Drop the prelude's leading white space for good (every reader of the
+                // prelude trims it): re-trimming it at every `;` cost O(n²) on
+                // `<white space>a;;;…` (port step 09).
+                let rest = &css[prelude_start..i];
+                prelude_start = i - rest.trim_start().len();
+                bytes[prelude_start] == b'@'
+            } =>
+            {
                 i += 1;
                 prelude_start = i;
             }

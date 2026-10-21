@@ -166,8 +166,10 @@ pub fn validate(html: &str) -> Result<(), VelloraError> {
     validate_css(html)
 }
 
-/// CSS-only validation: a cheap byte scan of the source stylesheet, NO HTML
-/// parse. Used by the render path so the only HTML parse is the layout parse.
+/// CSS-only validation, NO HTML parse: byte scans of the document's CSS regions for denied
+/// features, plus `page_css`'s `@page` sheet walk (`css:page-varying-width`). It runs before
+/// [`validate_nesting_depth`], so every pass is a single linear scan with no recursion per
+/// nesting level (port step 09, `tests/deep_input.rs`).
 pub fn validate_css(html: &str) -> Result<(), VelloraError> {
     match scan_css(html) {
         Some(diag) => Err(VelloraError::Unsupported(diag)),
@@ -189,15 +191,18 @@ pub(crate) fn validate_nesting_depth_as(
     html: &str,
     syntax: blitz_engine::DocumentSyntax,
 ) -> Result<(), VelloraError> {
-    let depth = blitz_engine::max_nesting_depth_as(html, syntax);
+    let measured = blitz_engine::max_nesting_depth_as(html, syntax);
+    let depth = measured.depth;
     if depth > MAX_NESTING_DEPTH {
+        // An early-stopped parse (`blitz_engine::PARSE_DEPTH_LIMIT`) only knows a lower bound.
+        let at_least = if measured.exact { "" } else { "at least " };
         return Err(VelloraError::Unsupported(Diagnostic {
             feature: "max-nesting-depth".to_string(),
             line: None,
             col: None,
             hint: format!(
-                "document nests elements {depth} deep; the maximum is {MAX_NESTING_DEPTH}. \
-                 Flatten deeply-nested markup before rendering."
+                "document nests elements {at_least}{depth} deep; the maximum is \
+                 {MAX_NESTING_DEPTH}. Flatten deeply-nested markup before rendering."
             ),
         }));
     }
@@ -379,6 +384,13 @@ fn strip_css_comments_and_strings(css: &str) -> String {
     let bytes = css.as_bytes();
     let mut out = String::with_capacity(css.len());
     let mut i = 0;
+    // Per quote kind (`"`, `'`): the start of a string scan that ran to the end of the region
+    // without a close quote or a terminator. A scan reads a pure function of its start
+    // position, and every later quote of that kind lies inside that scan as an ESCAPED byte
+    // (unescaped, it would have closed the string), so the scan that opens there is a suffix of
+    // the first one: it is unterminated too. Without this, `"` followed by `\"` repeated cost
+    // O(n²) (one scan to the end per quote; port step 09).
+    let mut unterminated_from = [usize::MAX; 2];
     while i < bytes.len() {
         if i + 1 < bytes.len() && bytes[i] == b'/' && bytes[i + 1] == b'*' {
             let mut j = i + 2;
@@ -424,6 +436,13 @@ fn strip_css_comments_and_strings(css: &str) -> String {
             // continuation, which is consumed, not a bad-string terminator), so we
             // track escapes while locating the terminator.
             let quote = bytes[i];
+            let kind = usize::from(quote == b'\'');
+            if i >= unterminated_from[kind] {
+                // Known unterminated (see `unterminated_from`): leave it literal, as below.
+                out.push(quote as char);
+                i += 1;
+                continue;
+            }
             let mut j = i + 1;
             let mut blanked = String::new();
             let mut closed = false;
@@ -461,6 +480,7 @@ fn strip_css_comments_and_strings(css: &str) -> String {
             } else {
                 // Unterminated, no newline/`}`: do NOT blank. Emit the opening quote
                 // verbatim and let the outer loop re-scan the rest as literal CSS.
+                unterminated_from[kind] = i + 1;
                 out.push(quote as char);
                 i += 1;
             }
@@ -685,4 +705,162 @@ fn offset_to_line_col(s: &str, offset: usize) -> (u32, u32) {
         }
     }
     (line, col)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `strip_css_comments_and_strings` of port steps 00 to 08, kept to prove the linear one
+    /// blanks every input exactly as it did (only the unterminated-string rescans changed).
+    #[allow(clippy::all)]
+    fn legacy_strip(css: &str) -> String {
+        let bytes = css.as_bytes();
+        let mut out = String::with_capacity(css.len());
+        let mut i = 0;
+        while i < bytes.len() {
+            if i + 1 < bytes.len() && bytes[i] == b'/' && bytes[i + 1] == b'*' {
+                let mut j = i + 2;
+                out.push(' ');
+                out.push(' ');
+                while j + 1 < bytes.len() && !(bytes[j] == b'*' && bytes[j + 1] == b'/') {
+                    out.push(' ');
+                    j += 1;
+                }
+                if j + 1 < bytes.len() {
+                    out.push(' ');
+                    out.push(' ');
+                    j += 2;
+                } else {
+                    // Unterminated comment: pad the remainder.
+                    while j < bytes.len() {
+                        out.push(' ');
+                        j += 1;
+                    }
+                }
+                i = j;
+            } else if bytes[i] == b'"' || bytes[i] == b'\'' {
+                // A CSS string. We blank its interior to spaces so a denied keyword
+                // *inside a value* (e.g. `content: "see animation: details"`) is not
+                // mistaken for a real declaration. But the gate must FAIL
+                // CLOSED: a malformed/unterminated string must never swallow a denied
+                // declaration that follows it. We classify how the string ends and
+                // only commit the blanking when it is a real, terminated value.
+                //
+                //   * close quote found  -> terminated value: blank interior, keep the
+                //     close quote (the false-positive case the blanking exists for).
+                //   * unescaped newline (\n \r \f) or `}` -> CSS *bad-string* / block
+                //     terminator: blank the interior up to it, then leave the
+                //     terminator and everything after it as literal text so a later
+                //     declaration is still scanned.
+                //   * end-of-region, no close quote, no newline/`}` -> a genuinely
+                //     unterminated single-line string: do NOT blank at all — emit the
+                //     opening quote then leave the rest as literal, so a following
+                //     denied declaration (e.g. `content:"abc\";animation:spin`) is
+                //     still scanned rather than blanked away.
+                //
+                // A `\` escapes the next byte (including a `\<newline>` line
+                // continuation, which is consumed, not a bad-string terminator), so we
+                // track escapes while locating the terminator.
+                let quote = bytes[i];
+                let mut j = i + 1;
+                let mut blanked = String::new();
+                let mut closed = false;
+                let mut bad_string = false;
+                while j < bytes.len() {
+                    if bytes[j] == quote {
+                        closed = true;
+                        break;
+                    }
+                    if matches!(bytes[j], b'\n' | b'\r' | 0x0c | b'}') {
+                        bad_string = true;
+                        break;
+                    }
+                    if bytes[j] == b'\\' && j + 1 < bytes.len() {
+                        blanked.push(' ');
+                        j += 1;
+                    }
+                    let ch_len = utf8_len(bytes[j]);
+                    for _ in 0..ch_len {
+                        blanked.push(' ');
+                    }
+                    j += ch_len;
+                }
+                if closed || bad_string {
+                    // A real value (terminated, or a bad-string ended by newline/`}`):
+                    // commit the blanked interior. For a terminated value also keep the
+                    // close quote; for a bad-string leave the newline/`}` as literal.
+                    out.push(quote as char);
+                    out.push_str(&blanked);
+                    if closed {
+                        out.push(bytes[j] as char);
+                        j += 1;
+                    }
+                    i = j;
+                } else {
+                    // Unterminated, no newline/`}`: do NOT blank. Emit the opening quote
+                    // verbatim and let the outer loop re-scan the rest as literal CSS.
+                    out.push(quote as char);
+                    i += 1;
+                }
+            } else {
+                // Keep ASCII bytes as-is; multibyte chars are copied whole.
+                let ch_len = utf8_len(bytes[i]);
+                out.push_str(&css[i..i + ch_len]);
+                i += ch_len;
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn stripping_matches_the_quadratic_version_on_every_generated_input() {
+        // Deterministic LCG over an alphabet of the bytes the scan cares about.
+        const ALPHABET: &[&str] = &[
+            "\"", "'", "\\", "}", "\n", "\r", "a", " ", "/*", "*/", "\u{e9}", ";", "{", "\u{c}",
+        ];
+        let mut state = 7u64;
+        let mut next = || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            (state >> 33) as usize
+        };
+        for _ in 0..20_000 {
+            let len = next() % 40;
+            let css: String = (0..len)
+                .map(|_| ALPHABET[next() % ALPHABET.len()])
+                .collect();
+            assert_eq!(
+                strip_css_comments_and_strings(&css),
+                legacy_strip(&css),
+                "{css:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn unterminated_escaped_strings_cost_linear_time() {
+        // `"` then `\"` repeated, with no close quote, newline or `}`: every quote opened a scan
+        // to the end of the region before port step 09.
+        let time = |n: usize| {
+            let css = format!("p {{ content: \"{}", "\\\"".repeat(n));
+            (0..3)
+                .map(|_| {
+                    let started = std::time::Instant::now();
+                    let out = strip_css_comments_and_strings(&css);
+                    assert_eq!(out.len(), css.len());
+                    started.elapsed()
+                })
+                .min()
+                .expect("three runs")
+        };
+        let small = time(25_000);
+        let large = time(100_000);
+        // Linear: ~4x for 4x the input; the quadratic scan: ~16x.
+        assert!(
+            large < small * 9 + std::time::Duration::from_millis(50),
+            "25 000 -> {small:?}, 100 000 -> {large:?}"
+        );
+    }
 }

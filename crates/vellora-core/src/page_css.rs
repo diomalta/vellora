@@ -253,14 +253,14 @@ impl PageSide {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 struct RawDeclaration {
     property: String,
     value: String,
     important: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 struct PageSelector {
     /// A page type name (`@page wide`): never matches (no `page` property support).
     named: bool,
@@ -292,7 +292,7 @@ impl PageSelector {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct PageRule {
     /// Byte offset of the rule's `@page` in the source HTML.
     offset: usize,
@@ -337,7 +337,7 @@ impl PageSheet {
         let mut builder = SheetBuilder::default();
         for region in crate::css_scan::style_blocks(html) {
             let css = blank_comments(&region.text);
-            builder.walk(&css, region.offset, u32::MAX, "");
+            builder.walk(&css, region.offset);
         }
         PageSheet {
             rules: builder.rules,
@@ -381,6 +381,13 @@ impl PageSheet {
                 entries.push((key(d.important, index), Target::Page, d));
             }
             for (name, declarations) in &rule.margin_boxes {
+                // Only the boxes vellora draws are cascaded (the others are rejected by the
+                // strict gate, `css:page-margin-box`, or are not margin boxes at all). Skipping
+                // them here keeps `boxes` below at two slots: before port step 09 every distinct
+                // name got a slot found by a linear search, O(names²).
+                if margin_box_name(name).is_none() {
+                    continue;
+                }
                 for (index, d) in declarations.iter().enumerate() {
                     entries.push((key(d.important, index), Target::MarginBox(name), d));
                 }
@@ -462,37 +469,114 @@ fn set_declaration(list: &mut Vec<Declaration>, d: &RawDeclaration) {
 // Stylesheet walk.
 // ---------------------------------------------------------------------------------------------
 
+/// Cascade layers, as a tree: a layer is a node under its parent layer, the root (node 0) is
+/// "unlayered". A layer's rank is its position in layer order, which is the order in which the
+/// layers are first named (`@layer` statement or block), whatever their nesting.
+///
+/// Port step 09: the layers used to be a list of dotted names (`a.a.a…`) searched linearly, so
+/// `n` layers cost O(n²) time and `n` nested layers O(n²) memory. A dotted name is the path of
+/// its `.`-separated segments, so two names are equal exactly when their paths are: the tree
+/// gives every layer the rank the dotted list gave it.
+struct LayerTree {
+    /// `(parent node, segment)` → node.
+    children: std::collections::HashMap<(u32, String), u32>,
+    /// Rank of each node (index = node id) once the layer is named; `None` for a node that only
+    /// exists as the prefix of a dotted name (`a` in `@layer a.b`).
+    ranks: Vec<Option<u32>>,
+    next_rank: u32,
+}
+
+impl Default for LayerTree {
+    fn default() -> Self {
+        LayerTree {
+            children: std::collections::HashMap::new(),
+            ranks: vec![None],
+            next_rank: 0,
+        }
+    }
+}
+
+impl LayerTree {
+    /// The unlayered root.
+    const ROOT: u32 = 0;
+
+    fn new_node(&mut self) -> u32 {
+        self.ranks.push(None);
+        u32::try_from(self.ranks.len() - 1).unwrap_or(u32::MAX)
+    }
+
+    /// The node of the (possibly dotted) layer `name` inside `parent`, created on first sight.
+    fn node(&mut self, parent: u32, name: &str) -> u32 {
+        name.split('.').fold(parent, |node, segment| {
+            let key = (node, segment.to_string());
+            if let Some(&child) = self.children.get(&key) {
+                return child;
+            }
+            let child = self.new_node();
+            self.children.insert(key, child);
+            child
+        })
+    }
+
+    /// A new anonymous layer (`@layer { … }`): every one is distinct, so it has no key.
+    fn anonymous(&mut self) -> u32 {
+        self.new_node()
+    }
+
+    /// The rank of `node`, given on its first naming (layer order = order of first appearance).
+    fn rank(&mut self, node: u32) -> u32 {
+        let slot = &mut self.ranks[node as usize];
+        *slot.get_or_insert_with(|| {
+            let rank = self.next_rank.min(u32::MAX - 1);
+            self.next_rank = self.next_rank.saturating_add(1);
+            rank
+        })
+    }
+}
+
 #[derive(Default)]
 struct SheetBuilder {
     rules: Vec<PageRule>,
-    /// Cascade layer names (dotted for nested layers) in layer order.
-    layers: Vec<String>,
-    anonymous_layers: usize,
+    layers: LayerTree,
+}
+
+/// A block the sheet walk is inside of (a matching `@media` or an `@layer` block): its cascade
+/// layer rank (`u32::MAX` unlayered) and layer node.
+#[derive(Clone, Copy)]
+struct Frame {
+    layer: u32,
+    layer_node: u32,
 }
 
 impl SheetBuilder {
-    /// Rank of a layer, registering it on first sight (layer order = order of first appearance).
-    fn layer_rank(&mut self, name: String) -> u32 {
-        let index = match self.layers.iter().position(|l| *l == name) {
-            Some(i) => i,
-            None => {
-                self.layers.push(name);
-                self.layers.len() - 1
-            }
-        };
-        u32::try_from(index)
-            .unwrap_or(u32::MAX - 1)
-            .min(u32::MAX - 1)
-    }
-
-    /// Walk the rules of one CSS text (comments blanked). `base` maps a text offset back to the
-    /// HTML; `layer` and `layer_name` are the enclosing cascade layer (`u32::MAX`/"" unlayered).
-    fn walk(&mut self, css: &str, base: usize, layer: u32, layer_name: &str) {
+    /// Walk the rules of one CSS text (comments blanked); `base` maps a text offset back to the
+    /// HTML.
+    ///
+    /// One linear pass with an explicit stack of the blocks it is inside of (port step 09): a
+    /// matching `@media` block or an `@layer` block pushes a [`Frame`] and the walk continues
+    /// inside it; the `}` that closes it pops it. Every other block (`@page`, a style rule, an
+    /// `@supports`, a non-matching `@media`, …) is skipped with one forward scan. Before this
+    /// step the walk recursed into each `@media`/`@layer` block and re-scanned it to find its
+    /// end, so nesting cost O(depth²) time and native stack per level: 20 000 nested
+    /// `@media all {` aborted the Node process through the napi addon (SIGILL, stack overflow,
+    /// which `catch_unwind` cannot catch), and this walk runs in `validate_css`, before the
+    /// nesting-depth gate (SEC-1).
+    fn walk(&mut self, css: &str, base: usize) {
         let bytes = css.as_bytes();
+        let unlayered = Frame {
+            layer: u32::MAX,
+            layer_node: LayerTree::ROOT,
+        };
+        let mut frames: Vec<Frame> = Vec::new();
         let mut i = 0;
         while i < bytes.len() {
             let c = bytes[i];
-            if c.is_ascii_whitespace() || c == b';' || c == b'}' {
+            if c == b'}' {
+                frames.pop();
+                i += 1;
+                continue;
+            }
+            if c.is_ascii_whitespace() || c == b';' {
                 i += 1;
                 continue;
             }
@@ -504,6 +588,10 @@ impl SheetBuilder {
                 i += 3;
                 continue;
             }
+            let frame = frames.last().copied().unwrap_or(unlayered);
+            // A statement (an at-rule or a stray prelude) ended by the `}` that closes the
+            // enclosing block leaves that `}` to pop the block.
+            let after_statement = |stop: usize| if bytes[stop] == b'}' { stop } else { stop + 1 };
             if c == b'@' {
                 let name_end = ident_end(bytes, i + 1);
                 let name = css[i + 1..name_end].to_ascii_lowercase();
@@ -516,42 +604,44 @@ impl SheetBuilder {
                         for layer_part in prelude.split(',') {
                             let part = layer_part.trim();
                             if !part.is_empty() {
-                                self.layer_rank(join_layer(layer_name, part));
+                                let node = self.layers.node(frame.layer_node, part);
+                                self.layers.rank(node);
                             }
                         }
                     }
-                    i = stop + 1;
+                    i = after_statement(stop);
                     continue;
                 }
-                let end = find_block_end(bytes, stop).unwrap_or(bytes.len());
-                let block = &css[stop + 1..end.min(bytes.len())];
                 match name.as_str() {
-                    "page" => {
-                        if let Some(rule) = parse_page_rule(prelude, block, base + i, layer) {
-                            self.rules.push(rule);
-                        }
-                    }
-                    "media" => {
-                        if media_matches(prelude) {
-                            self.walk(block, base + stop + 1, layer, layer_name);
-                        }
+                    "media" if media_matches(prelude) => {
+                        frames.push(frame);
+                        i = stop + 1;
                     }
                     "layer" => {
-                        let full = if prelude.is_empty() {
-                            self.anonymous_layers += 1;
-                            join_layer(
-                                layer_name,
-                                &format!("\u{0}anonymous{}", self.anonymous_layers),
-                            )
+                        let node = if prelude.is_empty() {
+                            self.layers.anonymous()
                         } else {
-                            join_layer(layer_name, prelude)
+                            self.layers.node(frame.layer_node, prelude)
                         };
-                        let rank = self.layer_rank(full.clone());
-                        self.walk(block, base + stop + 1, rank, &full);
+                        frames.push(Frame {
+                            layer: self.layers.rank(node),
+                            layer_node: node,
+                        });
+                        i = stop + 1;
                     }
-                    _ => {}
+                    _ => {
+                        let end = find_block_end(bytes, stop).unwrap_or(bytes.len());
+                        if name == "page" {
+                            let block = &css[stop + 1..end.min(bytes.len())];
+                            if let Some(rule) =
+                                parse_page_rule(prelude, block, base + i, frame.layer)
+                            {
+                                self.rules.push(rule);
+                            }
+                        }
+                        i = end + 1;
+                    }
                 }
-                i = end + 1;
                 continue;
             }
             // A qualified (style) rule: skip its selector and block.
@@ -559,19 +649,11 @@ impl SheetBuilder {
                 return;
             };
             if !is_block {
-                i = stop + 1;
+                i = after_statement(stop);
                 continue;
             }
             i = find_block_end(bytes, stop).unwrap_or(bytes.len()) + 1;
         }
-    }
-}
-
-fn join_layer(parent: &str, name: &str) -> String {
-    if parent.is_empty() {
-        name.to_string()
-    } else {
-        format!("{parent}.{name}")
     }
 }
 
@@ -676,7 +758,18 @@ fn split_block(block: &str) -> (Vec<RawDeclaration>, Vec<(String, String)>) {
     let mut i = 0;
     let mut start = 0;
     let mut depth = 0i32;
+    // Whether `block[start..i]` holds non-white-space text, i.e. `!block[start..i].trim()
+    // .is_empty()`, kept as the walk goes: re-trimming that slice at every `@` cost O(n²) on
+    // `x@@@…` (port step 09).
+    let mut content = false;
     while i < bytes.len() {
+        let at_rule_start = bytes[i] == b'@' && depth == 0 && !content;
+        if !content && block.is_char_boundary(i) {
+            content = block[i..]
+                .chars()
+                .next()
+                .is_some_and(|c| !c.is_whitespace());
+        }
         match bytes[i] {
             b'"' | b'\'' => {
                 i = skip_string(bytes, i);
@@ -688,7 +781,7 @@ fn split_block(block: &str) -> (Vec<RawDeclaration>, Vec<(String, String)>) {
             }
             b'(' => depth += 1,
             b')' => depth = (depth - 1).max(0),
-            b'@' if depth == 0 && block[start..i].trim().is_empty() => {
+            b'@' if at_rule_start => {
                 // A nested at-rule: name up to `{` (or `;` for a statement), then its block.
                 let Some((stop, is_block)) = find_prelude_end(bytes, i) else {
                     return (declarations, nested);
@@ -704,17 +797,20 @@ fn split_block(block: &str) -> (Vec<RawDeclaration>, Vec<(String, String)>) {
                     i = stop + 1;
                 }
                 start = i.min(bytes.len());
+                content = false;
                 continue;
             }
             b';' if depth == 0 => {
                 push_declaration(&mut declarations, &block[start..i]);
                 start = i + 1;
+                content = false;
             }
             b'{' if depth == 0 => {
                 // A stray block inside the declarations: skip it with the text before it.
                 let end = find_block_end(bytes, i).unwrap_or(bytes.len());
                 i = end + 1;
                 start = i.min(bytes.len());
+                content = false;
                 continue;
             }
             _ => {}
@@ -1205,5 +1301,448 @@ mod tests {
         let html = style("@page { margin: 0 } @page :first { margin: 1cm }");
         let at = varying_width_rule(&html).expect("rejected");
         assert!(html[at..].starts_with("@page :first"));
+    }
+
+    /// The sheet walk of port steps 06 to 08, verbatim but for names: it recursed into each
+    /// matching `@media` and every `@layer` block, kept layers as dotted names in a list, and
+    /// split `@page` blocks re-trimming the text before every `@`. Kept to prove that the
+    /// single-pass walk reads every well-formed sheet exactly as it did.
+    mod legacy {
+        use super::super::{
+            blank_comments, find_block_end, find_prelude_end, ident_end, media_matches,
+            parse_page_selectors, push_declaration, skip_string, PageRule, RawDeclaration,
+        };
+
+        #[derive(Default)]
+        struct SheetBuilder {
+            rules: Vec<PageRule>,
+            layers: Vec<String>,
+            anonymous_layers: usize,
+        }
+
+        pub(super) fn parse(html: &str) -> Vec<PageRule> {
+            let mut builder = SheetBuilder::default();
+            for region in crate::css_scan::style_blocks(html) {
+                let css = blank_comments(&region.text);
+                builder.walk(&css, region.offset, u32::MAX, "");
+            }
+            builder.rules
+        }
+
+        impl SheetBuilder {
+            fn layer_rank(&mut self, name: String) -> u32 {
+                let index = match self.layers.iter().position(|l| *l == name) {
+                    Some(i) => i,
+                    None => {
+                        self.layers.push(name);
+                        self.layers.len() - 1
+                    }
+                };
+                u32::try_from(index)
+                    .unwrap_or(u32::MAX - 1)
+                    .min(u32::MAX - 1)
+            }
+
+            fn walk(&mut self, css: &str, base: usize, layer: u32, layer_name: &str) {
+                let bytes = css.as_bytes();
+                let mut i = 0;
+                while i < bytes.len() {
+                    let c = bytes[i];
+                    if c.is_ascii_whitespace() || c == b';' || c == b'}' {
+                        i += 1;
+                        continue;
+                    }
+                    if css[i..].starts_with("<!--") {
+                        i += 4;
+                        continue;
+                    }
+                    if css[i..].starts_with("-->") {
+                        i += 3;
+                        continue;
+                    }
+                    if c == b'@' {
+                        let name_end = ident_end(bytes, i + 1);
+                        let name = css[i + 1..name_end].to_ascii_lowercase();
+                        let Some((stop, is_block)) = find_prelude_end(bytes, name_end) else {
+                            return;
+                        };
+                        let prelude = css[name_end..stop].trim();
+                        if !is_block {
+                            if name == "layer" {
+                                for layer_part in prelude.split(',') {
+                                    let part = layer_part.trim();
+                                    if !part.is_empty() {
+                                        self.layer_rank(join_layer(layer_name, part));
+                                    }
+                                }
+                            }
+                            i = stop + 1;
+                            continue;
+                        }
+                        let end = find_block_end(bytes, stop).unwrap_or(bytes.len());
+                        let block = &css[stop + 1..end.min(bytes.len())];
+                        match name.as_str() {
+                            "page" => {
+                                if let Some(rule) = parse_page_rule(prelude, block, base + i, layer)
+                                {
+                                    self.rules.push(rule);
+                                }
+                            }
+                            "media" => {
+                                if media_matches(prelude) {
+                                    self.walk(block, base + stop + 1, layer, layer_name);
+                                }
+                            }
+                            "layer" => {
+                                let full = if prelude.is_empty() {
+                                    self.anonymous_layers += 1;
+                                    join_layer(
+                                        layer_name,
+                                        &format!("\u{0}anonymous{}", self.anonymous_layers),
+                                    )
+                                } else {
+                                    join_layer(layer_name, prelude)
+                                };
+                                let rank = self.layer_rank(full.clone());
+                                self.walk(block, base + stop + 1, rank, &full);
+                            }
+                            _ => {}
+                        }
+                        i = end + 1;
+                        continue;
+                    }
+                    let Some((stop, is_block)) = find_prelude_end(bytes, i) else {
+                        return;
+                    };
+                    if !is_block {
+                        i = stop + 1;
+                        continue;
+                    }
+                    i = find_block_end(bytes, stop).unwrap_or(bytes.len()) + 1;
+                }
+            }
+        }
+
+        fn join_layer(parent: &str, name: &str) -> String {
+            if parent.is_empty() {
+                name.to_string()
+            } else {
+                format!("{parent}.{name}")
+            }
+        }
+
+        fn parse_page_rule(
+            prelude: &str,
+            block: &str,
+            offset: usize,
+            layer: u32,
+        ) -> Option<PageRule> {
+            let selectors = parse_page_selectors(prelude)?;
+            let (declarations, nested) = split_block(block);
+            let margin_boxes = nested
+                .into_iter()
+                .filter_map(|(name, body)| {
+                    let name = name.trim().to_ascii_lowercase();
+                    let name = name.strip_prefix('@')?.trim().to_string();
+                    Some((name, split_block(&body).0))
+                })
+                .collect();
+            Some(PageRule {
+                offset,
+                selectors,
+                layer,
+                declarations,
+                margin_boxes,
+            })
+        }
+
+        pub(super) fn split_block(block: &str) -> (Vec<RawDeclaration>, Vec<(String, String)>) {
+            let bytes = block.as_bytes();
+            let mut declarations = Vec::new();
+            let mut nested = Vec::new();
+            let mut i = 0;
+            let mut start = 0;
+            let mut depth = 0i32;
+            while i < bytes.len() {
+                match bytes[i] {
+                    b'"' | b'\'' => {
+                        i = skip_string(bytes, i);
+                        continue;
+                    }
+                    b'\\' => {
+                        i += 2;
+                        continue;
+                    }
+                    b'(' => depth += 1,
+                    b')' => depth = (depth - 1).max(0),
+                    b'@' if depth == 0 && block[start..i].trim().is_empty() => {
+                        let Some((stop, is_block)) = find_prelude_end(bytes, i) else {
+                            return (declarations, nested);
+                        };
+                        if is_block {
+                            let end = find_block_end(bytes, stop).unwrap_or(bytes.len());
+                            nested.push((
+                                block[i..stop].to_string(),
+                                block[stop + 1..end.min(bytes.len())].to_string(),
+                            ));
+                            i = end + 1;
+                        } else {
+                            i = stop + 1;
+                        }
+                        start = i.min(bytes.len());
+                        continue;
+                    }
+                    b';' if depth == 0 => {
+                        push_declaration(&mut declarations, &block[start..i]);
+                        start = i + 1;
+                    }
+                    b'{' if depth == 0 => {
+                        let end = find_block_end(bytes, i).unwrap_or(bytes.len());
+                        i = end + 1;
+                        start = i.min(bytes.len());
+                        continue;
+                    }
+                    _ => {}
+                }
+                i += 1;
+            }
+            if start < bytes.len() {
+                push_declaration(&mut declarations, &block[start..]);
+            }
+            (declarations, nested)
+        }
+    }
+
+    /// Deterministic generator of well-formed sheets (a fixed LCG, no randomness at run time).
+    struct Sheets(u64);
+
+    impl Sheets {
+        fn next(&mut self) -> usize {
+            self.0 = self
+                .0
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            (self.0 >> 33) as usize
+        }
+
+        fn pick<'a>(&mut self, items: &[&'a str]) -> &'a str {
+            items[self.next() % items.len()]
+        }
+
+        fn page_body(&mut self) -> String {
+            let mut body = String::new();
+            for _ in 0..self.next() % 4 {
+                body.push_str(self.pick(&[
+                    " margin: 10mm;",
+                    " margin-top: 2cm !important;",
+                    " size: A4 landscape;",
+                    " size: 300px 200px;",
+                    " font-size: 9pt;",
+                    " color: red",
+                    " margin-left : 1in ;",
+                    "\u{a0}@top-center { content: \"T\" }",
+                    " x@y: 1px;",
+                    " content: \"a;b}\" counter(page);",
+                    " @bottom-center { content: \"P\" counter(page) \" / \" counter(pages); font-size: 8px }",
+                    " @bottom-right { content: \"R\" }",
+                    " @top-center{content:'t';}",
+                    " { stray } margin-bottom: 3mm;",
+                ]));
+            }
+            body
+        }
+
+        fn sheet(&mut self, depth: usize) -> String {
+            let mut css = String::new();
+            for _ in 0..self.next() % 5 {
+                let kind = self.next() % 12;
+                let item = match kind {
+                    0 | 1 => {
+                        let selector = self.pick(&[
+                            "",
+                            ":first",
+                            ":left",
+                            ":right",
+                            ":blank",
+                            "wide",
+                            ":first, :left",
+                            ":nth(1)",
+                            "wide:first",
+                        ]);
+                        format!("@page {selector} {{{} }}", self.page_body())
+                    }
+                    2 | 3 if depth < 5 => {
+                        let query = self.pick(&[
+                            "print",
+                            "screen",
+                            "all",
+                            "not screen",
+                            "print and (min-width: 1px)",
+                            "only print, tv",
+                            "",
+                        ]);
+                        format!("@media {query} {{ {} }}", self.sheet(depth + 1))
+                    }
+                    4 | 5 if depth < 5 => {
+                        let name = self.pick(&["a", "b", "a.b", "c.d.e", "", "a . b", "b.a"]);
+                        format!("@layer {name} {{ {} }}", self.sheet(depth + 1))
+                    }
+                    6 => format!("@layer {};", self.pick(&["a", "b, a", "a.b, c", "z.y.x"])),
+                    7 if depth < 5 => {
+                        format!("@supports (display: block) {{ {} }}", self.sheet(depth + 1))
+                    }
+                    8 => "p.x { color: red; content: \"}{;\" }".to_string(),
+                    9 => "/* @page { margin: 1px } */ <!-- --> @import \"x.css\";".to_string(),
+                    10 => "@font-face { font-family: x; src: url(\"a}.ttf\") }".to_string(),
+                    _ => "div > p:is(.a, .b) { margin: 0 }".to_string(),
+                };
+                css.push_str(&item);
+                css.push(' ');
+            }
+            css
+        }
+    }
+
+    #[test]
+    fn the_single_pass_walk_reads_well_formed_sheets_like_the_recursive_walk() {
+        let mut sheets = Sheets(9);
+        let mut compared = 0;
+        let mut with_rules = 0;
+        for _ in 0..3000 {
+            let css = sheets.sheet(0);
+            let second = sheets.sheet(0);
+            let html = format!(
+                "<!DOCTYPE html><html><head><style>{css}</style><style>{second}</style></head>\
+                 <body><p>x</p></body></html>"
+            );
+            let old = legacy::parse(&html);
+            let new = PageSheet::parse(&html).rules;
+            assert_eq!(new, old, "{html}");
+            compared += 1;
+            with_rules += usize::from(!old.is_empty());
+        }
+        assert_eq!(compared, 3000);
+        assert!(
+            with_rules > 1000,
+            "{with_rules} of the sheets have @page rules"
+        );
+        for block in [
+            " x@@@@ margin: 1px; @top-center { content: 'a' } ",
+            "  \u{a0}@bottom-center{content:\"b\"} margin: 2px",
+            " (@x) @y { } margin: 3px; @z;",
+            " a \\@ b; @top-center { } ",
+        ] {
+            assert_eq!(split_block(block), legacy::split_block(block), "{block:?}");
+        }
+    }
+
+    /// Run `f` on a thread with a 256 KiB stack: a walk that recursed once per nesting level
+    /// would overflow it at a few thousand levels.
+    fn on_small_stack<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> T {
+        std::thread::Builder::new()
+            .stack_size(256 * 1024)
+            .spawn(f)
+            .expect("spawn")
+            .join()
+            .expect("no panic")
+    }
+
+    #[test]
+    fn deeply_nested_media_and_layer_blocks_do_not_recurse() {
+        const DEPTH: usize = 200_000;
+        let nest = |open: &str, close: &str| {
+            style(&format!(
+                "{}@page {{ margin: 7mm }}{} @page :first {{ margin-top: 9mm }}",
+                open.repeat(DEPTH),
+                close.repeat(DEPTH)
+            ))
+        };
+        for (open, close) in [
+            ("@media all { ", "}"),
+            ("@layer a { ", "}"),
+            ("@layer { ", "}"),
+            ("@media print { @layer b { ", "} }"),
+        ] {
+            let html = nest(open, close);
+            let started = std::time::Instant::now();
+            let (pb, varying) =
+                on_small_stack(move || (parse_page_box(&html), varying_width_rule(&html)));
+            assert!(
+                (pb.margin_left - 7.0 * PX_PER_MM).abs() < 1e-9,
+                "{open}: the innermost @page applies ({})",
+                pb.margin_left
+            );
+            assert!(
+                (pb.margin_top - 9.0 * PX_PER_MM).abs() < 1e-9,
+                "{open}: the unlayered rule after the nest applies ({})",
+                pb.margin_top
+            );
+            assert_eq!(varying, None);
+            // Generous: the recursive walk took 1.3 s for 10 000 levels (release build).
+            assert!(
+                started.elapsed() < std::time::Duration::from_secs(20),
+                "{open}: {:?}",
+                started.elapsed()
+            );
+        }
+        // A `@layer` statement deep inside the nest orders the layers it names.
+        let html = style(&format!(
+            "{}@layer late, early; @layer early {{ @page {{ margin: 3mm }} }} \
+             @layer late {{ @page {{ margin: 5mm }} }}{}",
+            "@media print { ".repeat(DEPTH),
+            "}".repeat(DEPTH)
+        ));
+        let pb = on_small_stack(move || parse_page_box(&html));
+        assert!(
+            (pb.margin_top - 3.0 * PX_PER_MM).abs() < 1e-9,
+            "{}",
+            pb.margin_top
+        );
+    }
+
+    #[test]
+    fn many_layers_and_margin_box_names_cost_linear_time() {
+        // Before port step 09 each layer name was found by a linear search of the list, and
+        // each margin box name by a linear search of the boxes cascaded so far: O(n²).
+        let layers = |n: usize| {
+            style(
+                &(0..n)
+                    .map(|i| format!("@layer l{i} {{ @page {{ margin: 1mm }} }}"))
+                    .collect::<String>(),
+            )
+        };
+        let boxes = |n: usize| {
+            style(&format!(
+                "@page :first {{ {} @bottom-center {{ content: 'x' }} }}",
+                (0..n)
+                    .map(|i| format!("@b{i} {{ content: 'x' }}"))
+                    .collect::<String>()
+            ))
+        };
+        for (what, make) in [
+            ("layers", &layers as &dyn Fn(usize) -> String),
+            ("boxes", &boxes),
+        ] {
+            let time = |n: usize| {
+                let html = make(n);
+                (0..3)
+                    .map(|_| {
+                        let started = std::time::Instant::now();
+                        let pb = parse_page_box(&html);
+                        assert!(pb.margin_top > 0.0);
+                        let _ = varying_width_rule(&html);
+                        started.elapsed()
+                    })
+                    .min()
+                    .expect("three runs")
+            };
+            let small = time(5_000);
+            let large = time(20_000);
+            // Linear: ~4x for 4x the input; quadratic: ~16x.
+            assert!(
+                large < small * 9 + std::time::Duration::from_millis(50),
+                "{what}: 5 000 -> {small:?}, 20 000 -> {large:?}"
+            );
+        }
     }
 }

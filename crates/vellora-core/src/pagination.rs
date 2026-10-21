@@ -1286,7 +1286,15 @@ impl<'a> PageGeometry<'a> {
     /// The box of page `index` (0-based).
     fn page(&mut self, index: usize) -> &PageBox {
         while self.pages.len() <= index {
-            let next = self.base.for_page(self.pages.len(), self.rtl);
+            let n = self.pages.len();
+            // A page's box depends only on whether it is page 1 and on its side (left/right), so
+            // page n ≥ 3 is page n − 2 again; this resolves at most three pages, not one cascade
+            // of every `@page` rule per page (port step 09).
+            let next = if n >= 3 {
+                self.pages[n - 2].clone()
+            } else {
+                self.base.for_page(n, self.rtl)
+            };
             self.pages.push(next);
         }
         &self.pages[index]
