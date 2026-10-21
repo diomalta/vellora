@@ -10,6 +10,7 @@
 //   removed         measured in the baseline, absent from the run (never silently absent); GATES
 //   reported        a regression that is shown but does not gate (WPT flagged passes)
 //   improvement | newly-measured | added | changed | not-comparable   never gate
+import { pdfProbeComparability, sectionSemantics } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { CRASH_BAD, STATUS_RANK, TOLERANCES, UNMEASURED } from "./tolerances.mjs";
 import { compareCrashtests, compareWpt } from "./wpt.mjs";
@@ -229,8 +230,172 @@ function compareCanaries(before, after, items, counts) {
   }
 }
 
-/** Per-word pdf-probe ratchet (|dx|, |dy| of same-page pairs, page moves). */
+/**
+ * Per-word pdf-probe ratchet. Dispatches on the sections' semantics (the caller refused mixed
+ * semantics first, see pdfProbeComparability): v1 = k-th occurrence pairs, pdftotext bbox tops;
+ * v2 = Chrome-keyed position pairs, PyMuPDF baselines (fidelity/layout-diff/lib/pdf-probe-v2.mjs).
+ */
 export function comparePdfProbe(before, after, items, counts) {
+  const semantics = sectionSemantics(Object.values(after ?? {})[0]);
+  if (semantics === 2) comparePdfProbeV2(before, after, items, counts);
+  else comparePdfProbeV1(before, after, items, counts);
+}
+
+/**
+ * pdf-probe v2 (semantics 2). Keys are Chrome words (`p<page>|<text>#<n>`), identical across runs
+ * of the same Chrome and templated HTML, so the same key is the same word on both sides.
+ *   both paired            |dx|, |dy| may not grow by more than pdf-probe-pt (1 pt); a smaller
+ *                          move counts as withinTolerance
+ *   paired -> unpaired     regression: the word is missing, on another page than Chrome's, or
+ *                          farther than settings.maxDistancePt from every same-text Chrome word
+ *   unpaired -> paired     newly-measured
+ *   unpaired-chrome /      per-fixture counts (Chrome words vellora lacks / vellora words Chrome
+ *   unpaired-vellora       lacks), count class: any increase gates
+ *   fixture missing        removed (gates)
+ */
+function comparePdfProbeV2(before, after, items, counts) {
+  const tol = TOLERANCES["pdf-probe-pt"].tol;
+  const eps = 1e-9;
+  const base = { group: "pdf-probe", check: "pdf-probe" };
+  for (const [fixture, a] of Object.entries(after ?? {})) {
+    const b = before?.[fixture];
+    if (!b) {
+      items.push({
+        ...base,
+        key: `pdf-probe|${fixture}`,
+        class: "not-comparable",
+        gating: false,
+        before: "absent",
+        after: `${a.pairs.length} pairs`,
+        detail: "baseline has no pdf-probe for this fixture",
+      });
+      continue;
+    }
+    const bound = a.settings?.maxDistancePt;
+    const was = new Map(b.pairs.map((p) => [p.k, p]));
+    const now = new Set(a.pairs.map((p) => p.k));
+    for (const p of a.pairs) {
+      const key = `pdf-probe|${fixture}|${p.k}`;
+      const q = was.get(p.k);
+      if (!q) {
+        items.push({
+          ...base,
+          key: `${key}|pairing`,
+          class: "newly-measured",
+          gating: false,
+          before: "unpaired",
+          after: `dx ${p.dx} dy ${p.dy}`,
+          detail: `Chrome's "${p.text}" (page ${p.page}) now has a vellora counterpart`,
+        });
+        continue;
+      }
+      for (const axis of ["dx", "dy"]) {
+        const d = Math.abs(p[axis]) - Math.abs(q[axis]);
+        const item = {
+          ...base,
+          key: `${key}|${axis}`,
+          tolClass: "pdf-probe-pt",
+          tol,
+          before: q[axis],
+          after: p[axis],
+          delta: d,
+        };
+        if (d > tol + eps) {
+          items.push({
+            ...item,
+            class: "regression",
+            gating: true,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`,
+          });
+        } else if (d < -(tol + eps)) {
+          items.push({
+            ...item,
+            class: "improvement",
+            gating: false,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt`,
+          });
+        } else {
+          counts.unchanged++;
+          if (Math.abs(p[axis] - q[axis]) > eps) counts.withinTolerance++;
+        }
+      }
+    }
+    for (const q of b.pairs) {
+      if (now.has(q.k)) continue;
+      items.push({
+        ...base,
+        key: `pdf-probe|${fixture}|${q.k}|pairing`,
+        class: "regression",
+        gating: true,
+        before: `dx ${q.dx} dy ${q.dy}`,
+        after: "unpaired",
+        detail: `Chrome's "${q.text}" (page ${q.page}) lost its vellora counterpart: missing, on another page, or more than ${bound ?? "?"} pt away`,
+      });
+    }
+    for (const [field, name, what] of [
+      ["unpairedChrome", "unpaired-chrome", "Chrome words vellora lacks"],
+      ["unpairedVellora", "unpaired-vellora", "vellora words Chrome lacks"],
+    ]) {
+      const bv = b.words?.[field];
+      const av = a.words?.[field];
+      const item = {
+        ...base,
+        key: `pdf-probe|${fixture}|${name}`,
+        tolClass: "count",
+        tol: TOLERANCES.count.tol,
+        before: bv,
+        after: av,
+        delta: av - bv,
+      };
+      if (typeof bv !== "number" || typeof av !== "number") {
+        items.push({
+          ...item,
+          class: "regression",
+          gating: true,
+          detail: `${what}: count missing`,
+        });
+      } else if (av - bv > TOLERANCES.count.tol) {
+        const was2 = new Set((b[field] ?? []).map((w) => w.k ?? `${w.page}|${w.text}`));
+        const added = (a[field] ?? []).filter((w) => !was2.has(w.k ?? `${w.page}|${w.text}`));
+        items.push({
+          ...item,
+          class: "regression",
+          gating: true,
+          detail: `${what}: ${bv} -> ${av}${
+            added.length
+              ? ` (e.g. ${added
+                  .slice(0, 5)
+                  .map((w) => `"${w.text}" p${w.page}`)
+                  .join(", ")})`
+              : ""
+          }`,
+        });
+      } else if (av < bv) {
+        items.push({
+          ...item,
+          class: "improvement",
+          gating: false,
+          detail: `${what}: ${bv} -> ${av}`,
+        });
+      } else counts.unchanged++;
+    }
+  }
+  for (const [fixture, b] of Object.entries(before ?? {})) {
+    if (after?.[fixture]) continue;
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}`,
+      class: "removed",
+      gating: true,
+      before: `${b.pairs.length} pairs`,
+      after: "absent",
+      detail: "fixture measured by the baseline's pdf-probe is missing from the run",
+    });
+  }
+}
+
+/** pdf-probe v1 (semantics 1, history): |dx|, |dy| of same-page k-th occurrence pairs, page moves. */
+function comparePdfProbeV1(before, after, items, counts) {
   const tol = TOLERANCES["pdf-probe-pt"].tol;
   for (const [fixture, a] of Object.entries(after ?? {})) {
     const b = before?.[fixture];
@@ -487,7 +652,13 @@ export function compareSnapshots(before, after, { accept = [] } = {}) {
   }
 
   compareCanaries(before.canaries, after.canaries, items, counts);
-  if (after.pdfProbe) comparePdfProbe(before.pdfProbe, after.pdfProbe, items, counts);
+  if (after.pdfProbe) {
+    // Like WPT's inkCheck/HARNESS_SEMANTICS: sections measured with different semantics or
+    // settings are not comparable; the gate refuses instead of producing items.
+    const why = pdfProbeComparability(before.pdfProbe, after.pdfProbe);
+    if (why) refusals.push(`pdf-probe: ${why}`);
+    else comparePdfProbe(before.pdfProbe, after.pdfProbe, items, counts);
+  }
   absoluteChecks(after, items);
   refusals.push(...missingSections(before, after));
   if (before.integrity && !before.integrity.ok) {

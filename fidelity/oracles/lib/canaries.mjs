@@ -4,11 +4,18 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { code128cPattern } from "../../corpus/lib/code128c.mjs";
+import {
+  CANARY_NAMES as PDF_PROBE_CANARIES,
+  PDF_PROBE_CANARY_ORACLE,
+  pdfProbeCanaries,
+} from "../../layout-diff/lib/pdf-probe-canaries.mjs";
 import { barcodeOracle } from "./barcode.mjs";
 import { chromePdf } from "./chrome.mjs";
+import { findExecutable } from "./exec.mjs";
 import { mod11BarcodeDv } from "./febraban.mjs";
 import { itfCanaryHtml } from "./itf.mjs";
 import { layoutOracle } from "./layout.mjs";
+import { pythonUnavailableReason, venvPython } from "./paths.mjs";
 import { qpdfOracle } from "./qpdf.mjs";
 import { textOracle } from "./text.mjs";
 import { renderNative } from "./vellora.mjs";
@@ -569,7 +576,16 @@ export async function runCanaries({
   }
 
   // 5. layout: the fixture rendered by vellora with its body translated by +6pt must show a
-  //    ~+6pt shift of the median signed dx against the consensus.
+  //    ~+6pt shift of the median signed dx against the consensus. The shifted render needs only
+  //    vellora; pdf-probe's canaries (6) reuse it.
+  const shiftCss =
+    "<style>body { margin-left: 6pt !important; margin-right: -6pt !important; }</style>";
+  const shiftedPdfPath = layoutFixture?.templatedHtml
+    ? await write(
+        join(outDir, "layout-shift-6pt.pdf"),
+        await renderNative(layoutFixture.templatedHtml.replace(/<\/head>/i, `${shiftCss}</head>`)),
+      )
+    : null;
   if (!layoutFixture?.refs?.weasy?.pdfPath || !layoutFixture?.refs?.chromePdfPath) {
     canaries.push(
       notRun(
@@ -581,10 +597,7 @@ export async function runCanaries({
       ),
     );
   } else {
-    const shiftCss =
-      "<style>body { margin-left: 6pt !important; margin-right: -6pt !important; }</style>";
-    const shifted = layoutFixture.templatedHtml.replace(/<\/head>/i, `${shiftCss}</head>`);
-    const pdfPath = await write(join(outDir, "layout-shift-6pt.pdf"), await renderNative(shifted));
+    const pdfPath = shiftedPdfPath;
     const base = await layoutOracle({
       pdfPath: layoutFixture.velloraPlainPdfPath,
       chromePdfPath: layoutFixture.refs.chromePdfPath,
@@ -608,6 +621,48 @@ export async function runCanaries({
       caught: shift !== null && Math.abs(shift - 6) <= 1,
       ran: base.status !== "not-run" && moved.status !== "not-run",
     });
+  }
+
+  // 6. pdf-probe v2 (layout-diff/lib/pdf-probe-canaries.mjs): the +6pt render, one word deleted,
+  //    one glyph run moved 2pt, and the declared /Ascent rewritten (must NOT be flagged), each
+  //    through the gate's own pdf-probe comparison of vellora's PDF vs Chrome's.
+  {
+    const chromeRef = layoutFixture?.refs?.chromePdfPath;
+    const python = venvPython();
+    const id = layoutFixture?.fixtureId ?? "layout fixture";
+    const why = !layoutFixture?.velloraPlainPdfPath
+      ? "no vellora render of the layout fixture"
+      : !chromeRef
+        ? noChrome
+        : !python
+          ? `PyMuPDF word extractor: ${pythonUnavailableReason()}`
+          : null;
+    if (why) {
+      for (const name of Object.values(PDF_PROBE_CANARIES)) {
+        canaries.push(notRun(PDF_PROBE_CANARY_ORACLE, `${id}: ${name}`, why));
+      }
+    } else {
+      const pdftotext = await findExecutable("pdftotext", "PDFTOTEXT_BIN");
+      try {
+        canaries.push(
+          ...pdfProbeCanaries({
+            velloraPdf: layoutFixture.velloraPlainPdfPath,
+            chromePdf: chromeRef,
+            shiftedPdf: shiftedPdfPath,
+            workDir: join(outDir, "pdf-probe"),
+            python,
+            pdftotext,
+            label: id,
+          }),
+        );
+      } catch (error) {
+        // A canary that crashed did not test the oracle: not-run, which the gate fails (GATE-K1).
+        const reason = `pdf-probe canaries crashed: ${(error?.message ?? String(error)).slice(0, 300)}`;
+        for (const name of Object.values(PDF_PROBE_CANARIES)) {
+          canaries.push(notRun(PDF_PROBE_CANARY_ORACLE, `${id}: ${name}`, reason));
+        }
+      }
+    }
   }
 
   return canaries;

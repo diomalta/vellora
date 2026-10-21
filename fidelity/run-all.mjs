@@ -11,7 +11,8 @@
 //   oracles-corpus   fidelity/oracles/run.mjs per corpus PDF: plain (all oracles, veraPDF as a
 //                    negative control) and a PDF/A-2b render (qpdf + veraPDF), rendered here
 //   layout-diff      fidelity/layout-diff/run.mjs          per-layer attribution, every fixture
-//   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF
+//   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF (v2:
+//                    PyMuPDF baselines, position pairing, unpaired words; needs fidelity/.venv)
 //
 // then writes ONE combined summary: <out>/summary.json (+ summary.md) with the environment, the
 // exact commands, per-step exit codes, per-fixture per-oracle verdicts keyed by the criterion IDs
@@ -85,6 +86,7 @@ import {
 import { gateRefusal, runGate } from "./gate/run.mjs";
 import { loadExpectedFailures } from "./layout-diff/lib/expected-failures.mjs";
 import { FIXTURE_IDS as LEGACY_FIXTURE_IDS } from "./oracles/lib/html-prep.mjs";
+import { pythonUnavailableReason, venvPython } from "./oracles/lib/paths.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -214,14 +216,6 @@ function baselineWptExpectations(dir) {
   if (!existsSync(wptDir)) return null;
   const f = readdirSync(wptDir).find((x) => /^expectations-.*\.json$/.test(x));
   return f ? join(wptDir, f) : null;
-}
-
-/** Absolute path of an executable on PATH, or null. */
-function whichSync(name) {
-  for (const dir of (process.env.PATH ?? "").split(":")) {
-    if (dir && existsSync(join(dir, name))) return join(dir, name);
-  }
-  return null;
 }
 
 /** Fixture directories under fixtures/ (index.html + data.json), sorted. */
@@ -546,16 +540,17 @@ async function main() {
   }
   const layoutSummary = readJson(join(dirs.layoutDiff, "summary-run-all.json"));
 
-  // 5b. pdf-probe: vellora's PDF words vs Chrome's PDF words (pdftotext -bbox), per fixture. Uses
-  //     the native.html/browser.html layout-diff just wrote, so it only runs after it.
+  // 5b. pdf-probe (semantics 2): vellora's PDF words vs Chrome's PDF words (PyMuPDF baselines,
+  //     position pairing), per fixture. Uses the native.html/browser.html layout-diff just wrote,
+  //     so it only runs after it.
   {
     const why =
       gate("pdf-probe") ??
-      (layoutSummary ? null : "layout-diff wrote no summary (pdf-probe reuses its inputs)");
-    const pdftotext = whichSync("pdftotext");
+      (layoutSummary ? null : "layout-diff wrote no summary (pdf-probe reuses its inputs)") ??
+      (venvPython() ? null : `PyMuPDF word extractor: ${pythonUnavailableReason()}`);
     steps.push(
-      why || !pdftotext
-        ? notRun("pdf-probe", why ?? "pdftotext not on PATH")
+      why
+        ? notRun("pdf-probe", why)
         : await runNode({
             id: "pdf-probe",
             script: "fidelity/layout-diff/pdf-probe.mjs",
@@ -566,8 +561,6 @@ async function main() {
               "run-all",
               "--out",
               dirs.layoutDiff,
-              "--pdftotext",
-              pdftotext,
               ...(chromeOk ? ["--chrome", opts.chrome] : []),
             ],
             outputs: layoutSummary.fixtures.map((f) =>
