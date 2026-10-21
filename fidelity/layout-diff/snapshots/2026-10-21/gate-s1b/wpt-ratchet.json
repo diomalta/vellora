@@ -1,0 +1,91 @@
+{
+  "status": "ok",
+  "expectationsEngine": "blitz-0.3.0-beta.4",
+  "expectationsVellora": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
+  "expectationsWpt": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+  "expectationsInkCheck": "chrome Chrome/155.0.8059.85",
+  "counts": {
+    "regressions": 0,
+    "regressionsOfCleanPasses": 0,
+    "regressionsOfFlaggedPasses": 0,
+    "sightGained": 0,
+    "improvements": 13,
+    "changed": 0,
+    "added": 0,
+    "missing": 0,
+    "unchanged": 8034
+  },
+  "regressions": [],
+  "sightGained": [],
+  "improvements": [
+    {
+      "test": "css/css-text/shaping/shaping-000.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-004.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-005.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-006.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-007.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-012.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping-013.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/shaping/shaping_lig-000.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/text-encoding/shaping-tatweel-002.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/word-break/word-break-break-all-inline-002.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/word-break/word-break-break-all-inline-003.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/word-break/word-break-break-all-inline-005.html",
+      "expected": "fail",
+      "actual": "pass"
+    },
+    {
+      "test": "css/css-text/word-break/word-break-break-all-inline-006.html",
+      "expected": "fail",
+      "actual": "pass"
+    }
+  ],
+  "changed": [],
+  "added": [],
+  "missing": [],
+  "file": "/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2/fidelity/baselines/wpt/blitz-0.3.0-beta.4.json"
+}

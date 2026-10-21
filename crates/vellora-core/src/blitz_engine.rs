@@ -463,13 +463,15 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
 
 /// Hooks onto the layout stages of [`resolve_and_walk`]. Every method defaults to
 /// a no-op; the render path uses [`NoObserver`], so production behavior and PDF
-/// bytes are unchanged. The debug layout dump ([`DumpCapture`]) is the only real
-/// implementation. Kept in this module because `after_walk` sees Blitz types.
+/// bytes are unchanged. The debug layout dump
+/// ([`crate::layout_dump::DumpCapture`]) is the only real implementation. No
+/// Blitz type crosses this trait: `after_walk` gets a [`BlitzSnapshot`], whose
+/// only operation is an owned, Blitz-free copy of the laid-out tree.
 pub(crate) trait LayoutObserver {
     /// When `true`, html_normalize is NOT run: Blitz parses and lays out the input
-    /// HTML exactly as given. Only the debug dump's source-HTML variant
-    /// ([`DumpCapture::source_html`], fidelity layer `N0`) returns `true`; it
-    /// isolates what html_normalize changes from what Blitz itself computes.
+    /// HTML exactly as given. Only the debug dump's source-HTML variant (fidelity
+    /// layer `N0`) returns `true`; it isolates what html_normalize changes from
+    /// what Blitz itself computes.
     fn skip_html_normalize(&self) -> bool {
         false
     }
@@ -479,7 +481,13 @@ pub(crate) trait LayoutObserver {
         None
     }
     /// After the box walk, before any normalize pass (layer `L0`).
-    fn after_walk(&mut self, _base: &BaseDocument, _boxes: &[LaidOutBox], _viewport: (u32, u32)) {}
+    fn after_walk(
+        &mut self,
+        _blitz: &BlitzSnapshot<'_>,
+        _boxes: &[LaidOutBox],
+        _viewport: (u32, u32),
+    ) {
+    }
     /// After each named pass of [`LAYOUT_NORMALIZE_PASSES`].
     fn after_pass(&mut self, _name: &'static str, _boxes: &[LaidOutBox]) {}
 }
@@ -545,7 +553,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         };
         walk(base, root_id, 0.0, 0.0, 0, &mut sink);
     }
-    observer.after_walk(base, &boxes, viewport_px);
+    observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
     // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (see the
     // ordering notes there, e.g. why the inline inset twin runs LAST).
     for &(name, pass) in LAYOUT_NORMALIZE_PASSES {
@@ -1184,7 +1192,7 @@ fn read_text_runs(
                 .items()
                 .filter_map(|item| match item {
                     parley::PositionedLayoutItem::GlyphRun(gr) => {
-                        Some(inline_padding_right_px(base, gr.style().brush.id))
+                        Some(run_padding_right_px(base, node.id, gr.style().brush.id))
                     }
                     _ => None,
                 })
@@ -1218,35 +1226,9 @@ fn read_text_runs(
 
             let style = glyph_run.style();
             let color = brush_color(base, style.brush.id);
-            let padding_right_px = inline_padding_right_px(base, style.brush.id);
+            let padding_right_px = run_padding_right_px(base, node.id, style.brush.id);
 
-            let key = {
-                let range = run.text_range();
-                (run.index(), range.start, range.end)
-            };
-            let consumed = consumed_by_run.entry(key).or_insert(0);
-            let glyph_count = glyph_run.glyphs().count();
-            let mut glyphs = Vec::new();
-            for (g, range) in run
-                .visual_clusters()
-                .flat_map(|cluster| {
-                    let range = cluster.text_range();
-                    cluster.glyphs().map(move |glyph| (glyph, range.clone()))
-                })
-                .skip(*consumed)
-                .take(glyph_count)
-            {
-                glyphs.push(Glyph {
-                    id: g.id,
-                    advance: g.advance,
-                    x_offset: g.x,
-                    y_offset: g.y,
-                    text_start: range.start,
-                    text_end: range.end,
-                });
-            }
-            *consumed += glyph_count;
-
+            let glyphs = take_run_glyphs(&glyph_run, &mut consumed_by_run);
             if glyphs.is_empty() {
                 continue;
             }
@@ -1266,6 +1248,62 @@ fn read_text_runs(
     }
 
     runs
+}
+
+/// Glyph-run -> line-run cluster key: `(run index, text range start, text range end)`.
+type RunClusterKey = (usize, usize, usize);
+
+/// The glyphs of one positioned glyph run, read from its Parley run's visual
+/// clusters (for the cluster -> source-byte ranges ToUnicode needs). A run split
+/// into several glyph runs on one line is consumed in order: `consumed_by_run`
+/// (reset per line) counts the glyphs already taken from each run. Shared by
+/// [`read_text_runs`] and the debug dump capture so both read identical runs.
+fn take_run_glyphs<B: parley::Brush>(
+    glyph_run: &parley::GlyphRun<'_, B>,
+    consumed_by_run: &mut std::collections::HashMap<RunClusterKey, usize>,
+) -> Vec<Glyph> {
+    let run = glyph_run.run();
+    let key = {
+        let range = run.text_range();
+        (run.index(), range.start, range.end)
+    };
+    let consumed = consumed_by_run.entry(key).or_insert(0);
+    let glyph_count = glyph_run.glyphs().count();
+    let mut glyphs = Vec::new();
+    for (g, range) in run
+        .visual_clusters()
+        .flat_map(|cluster| {
+            let range = cluster.text_range();
+            cluster.glyphs().map(move |glyph| (glyph, range.clone()))
+        })
+        .skip(*consumed)
+        .take(glyph_count)
+    {
+        glyphs.push(Glyph {
+            id: g.id,
+            advance: g.advance,
+            x_offset: g.x,
+            y_offset: g.y,
+            text_start: range.start,
+            text_end: range.end,
+        });
+    }
+    *consumed += glyph_count;
+    glyphs
+}
+
+/// The inline padding-right compensation of one glyph run: the padding of the
+/// INLINE element that styled it. A run styled by the inline root itself (text
+/// directly inside the block/cell, e.g. `<td style="padding:4px">Total <b>9</b>`)
+/// gets none: the root's padding is its content-box inset, already applied once
+/// by the walk, and Chrome advances the following run by nothing (CONFIRMED,
+/// `tests/fixtures/text-probes/whitespace.html`, td-leading-trailing).
+fn run_padding_right_px(base: &BaseDocument, inline_root: NodeId, brush: NodeId) -> f64 {
+    if brush == inline_root {
+        0.0
+    } else {
+        inline_padding_right_px(base, brush)
+    }
 }
 
 /// Blitz's inline layout currently exposes glyph positions without advancing
@@ -1309,602 +1347,189 @@ fn brush_color(base: &BaseDocument, node_id: NodeId) -> [u8; 3] {
 }
 
 // ===========================================================================
-// Debug layout dump (fidelity tooling only — see `crate::debug_layout_dump`).
+// Debug layout dump capture point (fidelity tooling only — see
+// `crate::debug_layout_dump` and `crate::layout_dump`).
 //
-// Everything below is reached ONLY through `DumpCapture`, the non-production
-// `LayoutObserver`. The render path passes `NoObserver`, so none of this runs in
-// (or can change the bytes of) a normal render. It lives in this module because
-// reading Blitz's DOM, layout tree, and Parley runs is Blitz contact.
+// Reached ONLY through `LayoutObserver::after_walk` of a non-production observer;
+// the render path passes `NoObserver`, which never calls `capture`. This is the
+// whole Blitz-touching part of the dump: one read of the laid-out tree into the
+// owned, Blitz-free `crate::layout_dump::RawTree`. Keying, layers, alignment and
+// serialization live in `crate::layout_dump`, which imports no Blitz type.
 // ===========================================================================
 
-/// Owned snapshot of every layout stage of one document. Produced by
-/// [`crate::debug_layout_dump`]; consumed by `fidelity/layout-diff/`. Not a
-/// stable API.
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct LayoutDump {
-    /// Viewport handed to Blitz: the @page content box TRUNCATED to whole CSS px
-    /// (`content_width_px as u32` in `resolve_and_walk`).
-    pub viewport_width_px: u32,
-    pub viewport_height_px: u32,
-    /// The resolved `@page` box (its untruncated content box is width - margins).
-    pub page: crate::page_css::PageBox,
-    /// Media type Blitz evaluated the stylesheets against. `build_document` never
-    /// sets `DocumentConfig::media_type`, so this is Blitz's default, `screen`.
-    pub media_type: &'static str,
-    /// `false` only for the source-HTML dump ([`DumpCapture::source_html`]):
-    /// html_normalize was skipped and Blitz laid out the input HTML as given.
-    pub html_normalize_applied: bool,
-    /// Wrappers html_normalize recorded inserting, and how many of them were
-    /// located in the Blitz parse of its output (expected equal).
-    pub normalize_wrappers_recorded: usize,
-    pub normalize_wrappers_located: usize,
-    /// Every node seen in the DOM walk or in Blitz's layout tree.
-    pub nodes: Vec<DumpNode>,
-    /// `B0`: Blitz's own layout tree, walked through `layout_children` (which
-    /// includes anonymous blocks) from the root element, accumulating each node's
-    /// `final_layout` (and `unrounded_layout`) location under its layout parent.
-    pub blitz_tree: Vec<DumpBlitzBox>,
-    /// `L0` (vellora's DOM-children walk, before any pass), then one layer per
-    /// [`LAYOUT_NORMALIZE_PASSES`] entry, in order. Box `i` of every layer is the
-    /// same node: passes never add, drop, or reorder boxes (checked, see
-    /// `layer_order_violations`).
-    pub layers: Vec<DumpLayer>,
-    /// Metadata per text run, aligned to `(box_index, run_index)` of the layers.
-    pub runs: Vec<DumpRunMeta>,
-    /// L0 box indices whose Parley runs could not be re-aligned to the walk's
-    /// runs (metadata omitted for them; expected empty).
-    pub run_meta_mismatches: Vec<usize>,
-    /// Layers whose box node-id sequence differs from `L0` (expected empty).
-    pub layer_order_violations: Vec<String>,
+/// Read-only view of the laid-out Blitz document handed to
+/// [`LayoutObserver::after_walk`]. The document itself stays private to this
+/// module: the only thing an observer can do with it is take an owned,
+/// Blitz-free copy ([`BlitzSnapshot::capture`]).
+pub(crate) struct BlitzSnapshot<'a> {
+    base: &'a BaseDocument,
 }
 
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct DumpNode {
-    pub node_id: usize,
-    /// `element`, `anonymous`, `pseudo`, `text`, `comment`, or `document`.
-    pub kind: &'static str,
-    pub tag: Option<String>,
-    pub id_attr: Option<String>,
-    pub class_attr: Option<String>,
-    /// Stable key in the SOURCE DOM, e.g. `html>body:nth-child(2)>div:nth-child(1)`.
-    /// `:nth-child(k)` counts element siblings (CSS semantics) with html_normalize
-    /// wrappers made transparent, so keys equal the browser's for the same input.
-    /// Nodes without a source counterpart end in a `::`/`#` segment
-    /// (`::vellora-wrapper(j)`, `::blitz-anon(j)`, `::before`, `::after`, `#text`).
-    pub dom_path: String,
-    /// Inserted by html_normalize (absent from the source DOM).
-    pub synthetic: bool,
-    pub parent: Option<usize>,
-    pub layout_parent: Option<usize>,
-    pub inline_root: bool,
-    pub display_outside: Option<String>,
-    pub display_inside: Option<String>,
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct DumpBlitzBox {
-    pub node_id: usize,
-    pub depth: usize,
-    /// Border box, absolute document CSS px, from the ROUNDED `final_layout`
-    /// (what vellora's walk reads).
-    pub x: f64,
-    pub y: f64,
-    pub width: f64,
-    pub height: f64,
-    /// Same box from `unrounded_layout` (Taffy output before `round_layout`).
-    pub ux: f64,
-    pub uy: f64,
-    pub uwidth: f64,
-    pub uheight: f64,
-    /// `[top, right, bottom, left]` border / padding widths (final layout).
-    pub border: [f64; 4],
-    pub padding: [f64; 4],
-    /// For inline roots: the text Blitz shaped for this box (first 240 chars).
-    pub inline_text: Option<String>,
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct DumpLayer {
-    /// `L0`, or the [`LAYOUT_NORMALIZE_PASSES`] name of the pass just applied.
-    pub name: String,
-    pub boxes: Vec<DumpBox>,
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct DumpBox {
-    pub node_id: usize,
-    pub depth: usize,
-    pub x: f64,
-    pub y: f64,
-    pub width: f64,
-    pub height: f64,
-    /// Blitz's resolved vertical margins (pagination re-stacks fragments with them).
-    pub margin_top: f64,
-    pub margin_bottom: f64,
-    pub runs: Vec<DumpRunGeom>,
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone, Copy)]
-pub struct DumpRunGeom {
-    /// Baseline origin, absolute document CSS px.
-    pub origin_x: f64,
-    pub origin_y: f64,
-    /// Sum of the run's glyph advances (CSS px).
-    pub advance: f64,
-}
-
-#[doc(hidden)]
-#[derive(Debug, Clone)]
-pub struct DumpRunMeta {
-    pub box_index: usize,
-    pub run_index: usize,
-    /// Inline root owning the run.
-    pub owner_node_id: usize,
-    /// Node whose computed style shaped the run (e.g. a `<span>`).
-    pub brush_node_id: usize,
-    pub line_index: usize,
-    /// Source text the run's glyph clusters cover.
-    pub text: String,
-    pub font_size: f32,
-    /// Parley run metrics (CSS px).
-    pub ascent: f32,
-    pub descent: f32,
-    /// Parley line metrics, relative to the inline root's content box.
-    pub line_baseline: f32,
-    pub line_top: f32,
-    pub line_bottom: f32,
-    /// Bundled face file name, else `custom-or-unknown`.
-    pub face: &'static str,
-    pub glyph_count: usize,
-}
-
-/// The debug-dump [`LayoutObserver`] (see [`crate::debug_layout_dump`]).
-#[doc(hidden)]
-#[derive(Default)]
-pub struct DumpCapture {
-    skip_html_normalize: bool,
-    wrapper_chains: Vec<Vec<usize>>,
-    viewport_px: (u32, u32),
-    wrappers_located: usize,
-    nodes: Vec<DumpNode>,
-    blitz_tree: Vec<DumpBlitzBox>,
-    layers: Vec<DumpLayer>,
-    runs: Vec<DumpRunMeta>,
-    run_meta_mismatches: Vec<usize>,
-    layer_order_violations: Vec<String>,
-}
-
-impl LayoutObserver for DumpCapture {
-    fn skip_html_normalize(&self) -> bool {
-        self.skip_html_normalize
+impl BlitzSnapshot<'_> {
+    /// Owned copy of every node reachable from the document node through DOM
+    /// children, `::before`/`::after` and Blitz's `layout_children` (which hold
+    /// anonymous blocks), with its layout and, for inline roots, its Parley runs
+    /// read exactly as [`read_text_runs`] reads them (same iteration and skip
+    /// rule, via [`take_run_glyphs`]) but WITHOUT vellora's reader compensations:
+    /// raw `GlyphRun::offset()`/`baseline()` and the root's `block_offset`.
+    pub(crate) fn capture(&self) -> crate::layout_dump::RawTree {
+        capture_raw_tree(self.base)
     }
+}
 
-    fn normalize_trace(&mut self) -> Option<&mut Vec<Vec<usize>>> {
-        Some(&mut self.wrapper_chains)
-    }
+fn raw_id(id: NodeId) -> usize {
+    id.as_u64() as usize
+}
 
-    fn after_walk(&mut self, base: &BaseDocument, boxes: &[LaidOutBox], viewport: (u32, u32)) {
-        self.viewport_px = viewport;
-        let (mut nodes, located) = dump_dom_nodes(base, &self.wrapper_chains);
-        self.blitz_tree = dump_blitz_tree(base, &mut nodes);
-        self.nodes = nodes;
-        self.wrappers_located = located;
-        let (runs, mismatches) = dump_run_meta(base, boxes);
-        self.runs = runs;
-        self.run_meta_mismatches = mismatches;
-        self.layers.push(dump_layer("L0", boxes));
-    }
+fn capture_raw_tree(base: &BaseDocument) -> crate::layout_dump::RawTree {
+    use crate::layout_dump::{RawLayout, RawNode, RawTree};
 
-    fn after_pass(&mut self, name: &'static str, boxes: &[LaidOutBox]) {
-        let layer = dump_layer(name, boxes);
-        let same_order = self.layers.first().is_some_and(|l0| {
-            l0.boxes.len() == layer.boxes.len()
-                && l0
-                    .boxes
-                    .iter()
-                    .zip(&layer.boxes)
-                    .all(|(a, b)| a.node_id == b.node_id)
-        });
-        if !same_order {
-            self.layer_order_violations.push(name.to_string());
+    let document = base.root_node().id;
+    let mut nodes = Vec::new();
+    let mut runs = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut stack = vec![document];
+    while let Some(id) = stack.pop() {
+        if !seen.insert(id) {
+            continue;
         }
-        self.layers.push(layer);
-    }
-}
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        let layout_children: Option<Vec<NodeId>> = node
+            .layout_children
+            .borrow()
+            .as_ref()
+            .map(|c| c.iter().copied().collect());
+        stack.extend(node.children.iter().copied());
+        stack.extend(node.before());
+        stack.extend(node.after());
+        stack.extend(layout_children.iter().flatten().copied());
 
-impl DumpCapture {
-    /// A capture that SKIPS html_normalize (fidelity layer `N0`: Blitz on the
-    /// source HTML). Its Blitz tree is keyed by the source DOM with no wrappers.
-    pub fn source_html() -> Self {
-        Self {
-            skip_html_normalize: true,
-            ..Self::default()
-        }
-    }
-
-    pub(crate) fn finish(self, page: crate::page_css::PageBox) -> LayoutDump {
-        LayoutDump {
-            viewport_width_px: self.viewport_px.0,
-            viewport_height_px: self.viewport_px.1,
-            page,
-            media_type: "screen",
-            html_normalize_applied: !self.skip_html_normalize,
-            normalize_wrappers_recorded: self.wrapper_chains.len(),
-            normalize_wrappers_located: self.wrappers_located,
-            nodes: self.nodes,
-            blitz_tree: self.blitz_tree,
-            layers: self.layers,
-            runs: self.runs,
-            run_meta_mismatches: self.run_meta_mismatches,
-            layer_order_violations: self.layer_order_violations,
-        }
-    }
-}
-
-fn dump_layer(name: &str, boxes: &[LaidOutBox]) -> DumpLayer {
-    DumpLayer {
-        name: name.to_string(),
-        boxes: boxes
-            .iter()
-            .map(|b| DumpBox {
-                node_id: b.node_id,
-                depth: b.depth,
-                x: b.x,
-                y: b.y,
-                width: b.width,
-                height: b.height,
-                margin_top: b.margin_top,
-                margin_bottom: b.margin_bottom,
-                runs: b
-                    .text_runs
-                    .iter()
-                    .map(|r| DumpRunGeom {
-                        origin_x: r.origin_x,
-                        origin_y: r.origin_y,
-                        advance: r.glyphs.iter().map(|g| g.advance as f64).sum(),
-                    })
-                    .collect(),
-            })
-            .collect(),
-    }
-}
-
-fn dump_node_kind(base: &BaseDocument, node: &blitz_dom::Node) -> &'static str {
-    if node.id == base.root_node().id {
-        "document"
-    } else if node.is_anonymous() {
-        "anonymous"
-    } else if node.is_element() {
-        "element"
-    } else if node.is_text_node() {
-        "text"
-    } else {
-        "comment"
-    }
-}
-
-fn dump_node(
-    node: &blitz_dom::Node,
-    kind: &'static str,
-    dom_path: String,
-    synthetic: bool,
-) -> DumpNode {
-    let display = node.primary_styles().map(|s| s.clone_display());
-    DumpNode {
-        node_id: node.id.as_u64() as usize,
-        kind,
-        tag: if node.is_text_node() {
-            None
+        let kind = if id == document {
+            "document"
+        } else if node.is_anonymous() {
+            "anonymous"
+        } else if node.is_element() {
+            "element"
+        } else if node.is_text_node() {
+            "text"
         } else {
-            node.data
-                .downcast_element()
-                .map(|el| el.name.local.to_string())
-        },
-        id_attr: node.attr(blitz_dom::local_name!("id")).map(str::to_string),
-        class_attr: node
-            .attr(blitz_dom::local_name!("class"))
-            .map(str::to_string),
-        dom_path,
-        synthetic,
-        parent: node.parent.map(|p| p.as_u64() as usize),
-        layout_parent: node.layout_parent.get().map(|p| p.as_u64() as usize),
-        inline_root: node.flags.is_inline_root(),
-        display_outside: display.map(|d| format!("{:?}", d.outside())),
-        display_inside: display.map(|d| format!("{:?}", d.inside())),
-    }
-}
-
-/// Key every DOM node by its SOURCE-DOM path (see [`DumpNode::dom_path`]).
-/// Returns the nodes plus how many recorded html_normalize wrappers were located.
-fn dump_dom_nodes(base: &BaseDocument, wrapper_chains: &[Vec<usize>]) -> (Vec<DumpNode>, usize) {
-    use std::collections::HashSet;
-
-    // 1) Locate the synthetic wrappers by element-index chain (element children
-    //    only, from the document node) — the same chain the normalizer recorded.
-    let wanted: HashSet<&[usize]> = wrapper_chains.iter().map(Vec::as_slice).collect();
-    let mut synthetic: HashSet<NodeId> = HashSet::new();
-    let mut stack: Vec<(NodeId, Vec<usize>)> = vec![(base.root_node().id, Vec::new())];
-    while let Some((id, chain)) = stack.pop() {
-        let Some(node) = base.get_node(id) else {
-            continue;
+            "comment"
         };
-        let mut element_index = 0usize;
-        for &child in &node.children {
-            let Some(child_node) = base.get_node(child) else {
-                continue;
-            };
-            if !child_node.is_element() {
-                continue;
+        let display = node.primary_styles().map(|s| s.clone_display());
+        let text_layout = node
+            .flags
+            .is_inline_root()
+            .then(|| node.data.downcast_element())
+            .flatten()
+            .and_then(|el| el.inline_layout_data.as_ref());
+        let layout = node_has_layout_data(node).then(|| {
+            let fl = node.final_layout();
+            let ul = node.unrounded_layout();
+            RawLayout {
+                x: fl.location.x as f64,
+                y: fl.location.y as f64,
+                width: fl.size.width as f64,
+                height: fl.size.height as f64,
+                ux: ul.location.x as f64,
+                uy: ul.location.y as f64,
+                uwidth: ul.size.width as f64,
+                uheight: ul.size.height as f64,
+                border: [
+                    fl.border.top,
+                    fl.border.right,
+                    fl.border.bottom,
+                    fl.border.left,
+                ]
+                .map(f64::from),
+                padding: [
+                    fl.padding.top,
+                    fl.padding.right,
+                    fl.padding.bottom,
+                    fl.padding.left,
+                ]
+                .map(f64::from),
             }
-            let mut child_chain = chain.clone();
-            child_chain.push(element_index);
-            element_index += 1;
-            if wanted.contains(child_chain.as_slice()) {
-                synthetic.insert(child);
-            }
-            stack.push((child, child_chain));
+        });
+        if let Some(tl) = text_layout {
+            capture_raw_runs(raw_id(id), tl, &mut runs);
         }
-    }
-
-    // 2) Assign logical paths: a synthetic wrapper is transparent, i.e. its
-    //    children count as children of the wrapper's own (logical) parent.
-    let root = base.root_node();
-    let mut out = vec![dump_node(root, "document", "#document".to_string(), false)];
-    let mut stack: Vec<(NodeId, String)> = vec![(root.id, String::new())];
-    while let Some((id, path)) = stack.pop() {
-        let Some(node) = base.get_node(id) else {
-            continue;
-        };
-        let mut sequence: Vec<NodeId> = Vec::new();
-        let mut wrapper_index = 0usize;
-        let mut work: Vec<NodeId> = node.children.iter().rev().copied().collect();
-        while let Some(child) = work.pop() {
-            let Some(child_node) = base.get_node(child) else {
-                continue;
-            };
-            if synthetic.contains(&child) {
-                wrapper_index += 1;
-                out.push(dump_node(
-                    child_node,
-                    "element",
-                    format!("{path}>::vellora-wrapper({wrapper_index})"),
-                    true,
-                ));
-                work.extend(child_node.children.iter().rev().copied());
+        nodes.push(RawNode {
+            id: raw_id(id),
+            kind,
+            tag: if node.is_text_node() {
+                None
             } else {
-                sequence.push(child);
-            }
-        }
-        let mut element_k = 0usize;
-        let mut next: Vec<(NodeId, String)> = Vec::new();
-        for child in sequence {
-            let Some(child_node) = base.get_node(child) else {
-                continue;
-            };
-            let kind = dump_node_kind(base, child_node);
-            match kind {
-                "element" | "anonymous" => {
-                    element_k += 1;
-                    let tag = child_node
-                        .data
-                        .downcast_element()
-                        .map(|el| el.name.local.to_string())
-                        .unwrap_or_default();
-                    let child_path = if path.is_empty() {
-                        tag
-                    } else {
-                        format!("{path}>{tag}:nth-child({element_k})")
-                    };
-                    out.push(dump_node(child_node, kind, child_path.clone(), false));
-                    next.push((child, child_path));
-                }
-                "text" => out.push(dump_node(child_node, kind, format!("{path}>#text"), false)),
-                _ => out.push(dump_node(
-                    child_node,
-                    kind,
-                    format!("{path}>#{kind}"),
-                    false,
-                )),
-            }
-        }
-        if !path.is_empty() {
-            for (pseudo, name) in [(node.before(), "before"), (node.after(), "after")] {
-                if let Some(pseudo_node) = pseudo.and_then(|p| base.get_node(p)) {
-                    out.push(dump_node(
-                        pseudo_node,
-                        "pseudo",
-                        format!("{path}>::{name}"),
-                        false,
-                    ));
-                }
-            }
-        }
-        stack.extend(next.into_iter().rev());
-    }
-    (out, synthetic.len())
-}
-
-/// `B0`: Blitz's own layout tree. Anonymous blocks (absent from the DOM walk)
-/// are appended to `nodes`, keyed under their layout parent.
-fn dump_blitz_tree(base: &BaseDocument, nodes: &mut Vec<DumpNode>) -> Vec<DumpBlitzBox> {
-    use std::collections::HashMap;
-
-    let mut path_of: HashMap<NodeId, String> = nodes
-        .iter()
-        .map(|n| (NodeId::from_u64(n.node_id as u64), n.dom_path.clone()))
-        .collect();
-    let mut anon_count: HashMap<Option<NodeId>, usize> = HashMap::new();
-    let mut out = Vec::new();
-    // (node, parent abs x/y from final_layout, parent abs x/y from unrounded_layout, depth)
-    let mut stack: Vec<(NodeId, f64, f64, f64, f64, usize)> =
-        vec![(base.root_element().id, 0.0, 0.0, 0.0, 0.0, 0)];
-    while let Some((id, px, py, upx, upy, depth)) = stack.pop() {
-        let Some(node) = base.get_node(id) else {
-            continue;
-        };
-        if !node_has_layout_data(node) {
-            continue;
-        }
-        let fl = node.final_layout();
-        let ul = node.unrounded_layout();
-        let x = px + fl.location.x as f64;
-        let y = py + fl.location.y as f64;
-        let ux = upx + ul.location.x as f64;
-        let uy = upy + ul.location.y as f64;
-        if !path_of.contains_key(&id) {
-            let parent = node.layout_parent.get();
-            let parent_path = parent
-                .and_then(|p| path_of.get(&p).cloned())
-                .unwrap_or_else(|| "?".into());
-            let j = anon_count.entry(parent).or_insert(0);
-            *j += 1;
-            let path = format!("{parent_path}>::blitz-anon({j})");
-            nodes.push(dump_node(
-                node,
-                dump_node_kind(base, node),
-                path.clone(),
-                false,
-            ));
-            path_of.insert(id, path);
-        }
-        let inline_text = if node.flags.is_inline_root() {
-            node.data
-                .downcast_element()
-                .and_then(|el| el.inline_layout_data.as_ref())
-                .map(|tl| tl.text.chars().take(240).collect())
-        } else {
-            None
-        };
-        out.push(DumpBlitzBox {
-            node_id: id.as_u64() as usize,
-            depth,
-            x,
-            y,
-            width: fl.size.width as f64,
-            height: fl.size.height as f64,
-            ux,
-            uy,
-            uwidth: ul.size.width as f64,
-            uheight: ul.size.height as f64,
-            border: [
-                fl.border.top as f64,
-                fl.border.right as f64,
-                fl.border.bottom as f64,
-                fl.border.left as f64,
-            ],
-            padding: [
-                fl.padding.top as f64,
-                fl.padding.right as f64,
-                fl.padding.bottom as f64,
-                fl.padding.left as f64,
-            ],
-            inline_text,
+                node.data
+                    .downcast_element()
+                    .map(|el| el.name.local.to_string())
+            },
+            id_attr: node.attr(blitz_dom::local_name!("id")).map(str::to_string),
+            class_attr: node
+                .attr(blitz_dom::local_name!("class"))
+                .map(str::to_string),
+            parent: node.parent.map(raw_id),
+            children: node.children.iter().copied().map(raw_id).collect(),
+            layout_parent: node.layout_parent.get().map(raw_id),
+            layout_children: layout_children.map(|c| c.into_iter().map(raw_id).collect()),
+            before: node.before().map(raw_id),
+            after: node.after().map(raw_id),
+            inline_root: node.flags.is_inline_root(),
+            display_outside: display.map(|d| format!("{:?}", d.outside())),
+            display_inside: display.map(|d| format!("{:?}", d.inside())),
+            layout,
+            inline_text: text_layout.map(|tl| tl.text.clone()),
+            block_offset: text_layout.map_or(0.0, |tl| tl.block_offset as f64),
         });
-        if let Some(children) = node.layout_children.borrow().as_ref() {
-            for &child in children.iter().rev() {
-                stack.push((child, x, y, ux, uy, depth + 1));
-            }
-        }
     }
-    out
+    RawTree {
+        document: raw_id(document),
+        root_element: raw_id(base.root_element().id),
+        nodes,
+        runs,
+    }
 }
 
-/// Re-read each inline root's Parley runs with EXACTLY `read_text_runs`'s
-/// iteration and skip rule, so metadata aligns 1:1 with the walk's `TextRun`s.
-/// A box whose counts disagree is reported in the mismatch list instead.
-fn dump_run_meta(base: &BaseDocument, boxes: &[LaidOutBox]) -> (Vec<DumpRunMeta>, Vec<usize>) {
-    let mut out = Vec::new();
-    let mut mismatches = Vec::new();
-    for (box_index, b) in boxes.iter().enumerate() {
-        if b.text_runs.is_empty() {
-            continue;
-        }
-        let metas = node_run_meta(base, b.node_id, box_index);
-        let aligned = metas.len() == b.text_runs.len()
-            && metas
-                .iter()
-                .zip(&b.text_runs)
-                .all(|(m, r)| m.glyph_count == r.glyphs.len());
-        if !aligned {
-            mismatches.push(box_index);
-            continue;
-        }
-        for (mut meta, run) in metas.into_iter().zip(&b.text_runs) {
-            let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
-            let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
-            meta.text = run.text.get(start..end).unwrap_or("").to_string();
-            out.push(meta);
-        }
-    }
-    (out, mismatches)
-}
-
-fn node_run_meta(base: &BaseDocument, node_id: usize, box_index: usize) -> Vec<DumpRunMeta> {
-    let Some(node) = base.get_node(NodeId::from_u64(node_id as u64)) else {
-        return Vec::new();
-    };
-    if !node.flags.is_inline_root() {
-        return Vec::new();
-    }
-    let Some(text_layout) = node
-        .data
-        .downcast_element()
-        .and_then(|el| el.inline_layout_data.as_ref())
-    else {
-        return Vec::new();
-    };
-    let mut out: Vec<DumpRunMeta> = Vec::new();
+/// One inline root's Parley runs, in [`read_text_runs`]'s order and skip rule.
+fn capture_raw_runs(
+    owner: usize,
+    text_layout: &blitz_dom::node::TextLayout,
+    out: &mut Vec<crate::layout_dump::RawRun>,
+) {
     for (line_index, line) in text_layout.layout.lines().enumerate() {
         let line_metrics = line.metrics();
-        let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
-            std::collections::HashMap::new();
+        let mut consumed_by_run = std::collections::HashMap::new();
         for item in line.items() {
             let parley::PositionedLayoutItem::GlyphRun(glyph_run) = item else {
                 continue;
             };
-            let run = glyph_run.run();
-            let key = {
-                let range = run.text_range();
-                (run.index(), range.start, range.end)
-            };
-            let consumed = consumed_by_run.entry(key).or_insert(0);
-            let glyph_count = glyph_run.glyphs().count();
-            let taken = run
-                .visual_clusters()
-                .flat_map(|cluster| cluster.glyphs())
-                .skip(*consumed)
-                .take(glyph_count)
-                .count();
-            *consumed += glyph_count;
-            if taken == 0 {
+            let glyphs = take_run_glyphs(&glyph_run, &mut consumed_by_run);
+            if glyphs.is_empty() {
                 continue;
             }
+            let run = glyph_run.run();
             let metrics = run.font_metrics();
-            let font = run.font();
-            out.push(DumpRunMeta {
-                box_index,
-                run_index: out.len(),
-                owner_node_id: node_id,
-                brush_node_id: glyph_run.style().brush.id.as_u64() as usize,
+            let start = glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
+            let end = glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
+            out.push(crate::layout_dump::RawRun {
+                owner,
+                brush: raw_id(glyph_run.style().brush.id),
                 line_index,
-                text: String::new(),
+                glyph_count: glyphs.len(),
+                text: text_layout.text.get(start..end).unwrap_or("").to_string(),
                 font_size: run.font_size(),
                 ascent: metrics.ascent,
                 descent: metrics.descent,
                 line_baseline: line_metrics.baseline,
                 line_top: line_metrics.block_min_coord,
                 line_bottom: line_metrics.block_max_coord,
-                face: crate::fonts::bundled_face_name(font.data.as_ref())
+                face: crate::fonts::bundled_face_name(run.font().data.as_ref())
                     .unwrap_or("custom-or-unknown"),
-                glyph_count: taken,
+                offset: glyph_run.offset() as f64,
+                baseline: glyph_run.baseline() as f64,
+                advance: glyphs.iter().map(|g| g.advance as f64).sum(),
             });
         }
     }
-    out
 }

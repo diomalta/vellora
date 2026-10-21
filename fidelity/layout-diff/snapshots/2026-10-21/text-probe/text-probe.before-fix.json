@@ -1,0 +1,3398 @@
+{
+  "schema": "vellora-text-probe/1",
+  "env": {
+    "date_utc": "2026-10-21T07:27:11Z",
+    "os": "darwin 27.0.0 arm64",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "command": "node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2/fidelity/layout-diff/text-probe.mjs --no-build --out /tmp/s1b/tp-before/text-probe.json",
+    "repo": "/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_d8e8c5db-bdc-2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "git_commit": "68586c2640d8ac8ac01c059c01ba3d1c546962b0",
+    "git_dirty": "clean",
+    "crates": {
+      "blitz-dom": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-html": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "blitz-traits": [
+        {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "krilla": [
+        {
+          "version": "0.8.2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "parley": [
+        {
+          "version": "0.12.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "stylo": [
+        {
+          "version": "0.22.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "taffy": [
+        {
+          "version": "0.15.0",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ]
+    },
+    "blitz": "blitz-0.3.0-beta.4",
+    "chrome_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "chrome_version": "Google Chrome 155.0.8059.85",
+    "tools": {
+      "puppeteer-core": "25.15.0"
+    },
+    "fonts_sha256": {
+      "LiberationMono-Bold.ttf": "51024fd54bd726167996a9ed45ceb2ccae93be89a848045dd6b715856cb1561d",
+      "LiberationMono-Regular.ttf": "a9b21391536aec1c8fad37f2d5f24750e7f2d63cd86bccbb2463b6e17005f52e",
+      "LiberationSans-Bold.ttf": "788abee4c806d660e8aee46689dd8540cd4bb98da03dcc9d171ce3efd99a9173",
+      "LiberationSans-Regular.ttf": "76d04c18ea243f426b7de1f3ad208e927008f961dc5945e5aad352d0dfde8ee8",
+      "LiberationSerif-Bold.ttf": "7a68170c1129e294639770c83f79033baaa59e384d561e979bbfc5ce11fc9854",
+      "LiberationSerif-Regular.ttf": "26cd653d3312cee66f1d4f2c1065ba2ad324abd411b298f771bf7057e213d723"
+    },
+    "pdftotext": ""
+  },
+  "input_difference": "Chrome side only: CSS `font-family: sans-serif` rewritten to \"Liberation Sans\" (vellora maps the generic to its bundled Liberation Sans; Chrome would pick a system face). Bundled Liberation faces injected as @font-face in both directions of comparison.",
+  "probes": [
+    {
+      "id": "inline-padding",
+      "file": "crates/vellora-core/tests/fixtures/text-probes/inline-padding.html",
+      "agreement": {
+        "lines_equal": true,
+        "line_diffs": [],
+        "pdftotext_equal": true,
+        "runs_located_in_chrome": 6,
+        "runs": 6,
+        "max_abs_dx": 0.016,
+        "max_abs_dright": 0.022,
+        "run_x": [
+          {
+            "line": 0,
+            "text": "LABEL",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 45.359,
+            "chrome_right": 45.359,
+            "dright": 0
+          },
+          {
+            "line": 0,
+            "text": "VALUE",
+            "vellora_x": 69.359,
+            "chrome_x": 69.359,
+            "dx": 0,
+            "vellora_right": 109.138,
+            "chrome_right": 109.141,
+            "dright": -0.003
+          },
+          {
+            "line": 1,
+            "text": "NUMBER",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 60.002,
+            "chrome_right": 60.016,
+            "dright": -0.014
+          },
+          {
+            "line": 1,
+            "text": "INV-2026-00417",
+            "vellora_x": 84.002,
+            "chrome_x": 84.016,
+            "dx": -0.014,
+            "vellora_right": 171.4,
+            "chrome_right": 171.422,
+            "dright": -0.022
+          },
+          {
+            "line": 2,
+            "text": "Número",
+            "vellora_x": 173.922,
+            "chrome_x": 173.906,
+            "dx": 0.016,
+            "vellora_right": 216.602,
+            "chrome_right": 216.594,
+            "dright": 0.008
+          },
+          {
+            "line": 2,
+            "text": "INV-2026-00417",
+            "vellora_x": 240.602,
+            "chrome_x": 240.594,
+            "dx": 0.008,
+            "vellora_right": 328,
+            "chrome_right": 328,
+            "dright": 0
+          }
+        ]
+      },
+      "chrome": {
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "body_inner_text": "LABELVALUE\nNUMBERINV-2026-00417\nNúmeroINV-2026-00417",
+        "text_nodes": [
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(1)>span:nth-child(1)",
+            "id": null,
+            "data": "LABEL",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "LABEL",
+            "x": 8,
+            "right": 45.359,
+            "baseline": 19,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "L",
+                "x": 8,
+                "w": 6.688
+              },
+              {
+                "i": 1,
+                "ch": "A",
+                "x": 14.672,
+                "w": 8.016
+              },
+              {
+                "i": 2,
+                "ch": "B",
+                "x": 22.672,
+                "w": 8.016
+              },
+              {
+                "i": 3,
+                "ch": "E",
+                "x": 30.672,
+                "w": 8.016
+              },
+              {
+                "i": 4,
+                "ch": "L",
+                "x": 38.672,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(1)>span:nth-child(2)",
+            "id": null,
+            "data": "VALUE",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "VALUE",
+            "x": 69.359,
+            "right": 109.141,
+            "baseline": 19,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "V",
+                "x": 69.359,
+                "w": 7.125
+              },
+              {
+                "i": 1,
+                "ch": "A",
+                "x": 76.469,
+                "w": 8.672
+              },
+              {
+                "i": 2,
+                "ch": "L",
+                "x": 85.125,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "U",
+                "x": 92.469,
+                "w": 8.672
+              },
+              {
+                "i": 4,
+                "ch": "E",
+                "x": 101.125,
+                "w": 8.016
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(2)>span:nth-child(1)",
+            "id": null,
+            "data": "NUMBER",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "NUMBER",
+            "x": 8,
+            "right": 60.016,
+            "baseline": 33,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "N",
+                "x": 8,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "U",
+                "x": 16.656,
+                "w": 8.688
+              },
+              {
+                "i": 2,
+                "ch": "M",
+                "x": 25.328,
+                "w": 10
+              },
+              {
+                "i": 3,
+                "ch": "B",
+                "x": 35.328,
+                "w": 8.016
+              },
+              {
+                "i": 4,
+                "ch": "E",
+                "x": 43.328,
+                "w": 8.016
+              },
+              {
+                "i": 5,
+                "ch": "R",
+                "x": 51.328,
+                "w": 8.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(2)",
+            "id": null,
+            "data": "INV-2026-00417",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "INV-2026-00417",
+            "x": 84.016,
+            "right": 171.422,
+            "baseline": 33,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "I",
+                "x": 84.016,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "N",
+                "x": 87.344,
+                "w": 8.672
+              },
+              {
+                "i": 2,
+                "ch": "V",
+                "x": 96.016,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "-",
+                "x": 103.344,
+                "w": 4.016
+              },
+              {
+                "i": 4,
+                "ch": "2",
+                "x": 107.344,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": "0",
+                "x": 114.016,
+                "w": 6.688
+              },
+              {
+                "i": 6,
+                "ch": "2",
+                "x": 120.688,
+                "w": 6.688
+              },
+              {
+                "i": 7,
+                "ch": "6",
+                "x": 127.375,
+                "w": 6.688
+              },
+              {
+                "i": 8,
+                "ch": "-",
+                "x": 134.047,
+                "w": 4
+              },
+              {
+                "i": 9,
+                "ch": "0",
+                "x": 138.031,
+                "w": 6.688
+              },
+              {
+                "i": 10,
+                "ch": "0",
+                "x": 144.719,
+                "w": 6.688
+              },
+              {
+                "i": 11,
+                "ch": "4",
+                "x": 151.391,
+                "w": 6.688
+              },
+              {
+                "i": 12,
+                "ch": "1",
+                "x": 158.063,
+                "w": 6.688
+              },
+              {
+                "i": 13,
+                "ch": "7",
+                "x": 164.734,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(3)>span:nth-child(1)",
+            "id": null,
+            "data": "Número",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Número",
+            "x": 173.906,
+            "right": 216.594,
+            "baseline": 47,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "N",
+                "x": 173.906,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "ú",
+                "x": 182.563,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "m",
+                "x": 189.234,
+                "w": 10.016
+              },
+              {
+                "i": 3,
+                "ch": "e",
+                "x": 199.234,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "r",
+                "x": 205.906,
+                "w": 4.016
+              },
+              {
+                "i": 5,
+                "ch": "o",
+                "x": 209.906,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(3)",
+            "id": null,
+            "data": "INV-2026-00417",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "INV-2026-00417",
+            "x": 240.594,
+            "right": 328,
+            "baseline": 47,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "I",
+                "x": 240.594,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "N",
+                "x": 243.922,
+                "w": 8.672
+              },
+              {
+                "i": 2,
+                "ch": "V",
+                "x": 252.594,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "-",
+                "x": 259.922,
+                "w": 4.016
+              },
+              {
+                "i": 4,
+                "ch": "2",
+                "x": 263.922,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": "0",
+                "x": 270.594,
+                "w": 6.688
+              },
+              {
+                "i": 6,
+                "ch": "2",
+                "x": 277.266,
+                "w": 6.688
+              },
+              {
+                "i": 7,
+                "ch": "6",
+                "x": 283.953,
+                "w": 6.688
+              },
+              {
+                "i": 8,
+                "ch": "-",
+                "x": 290.625,
+                "w": 4
+              },
+              {
+                "i": 9,
+                "ch": "0",
+                "x": 294.609,
+                "w": 6.688
+              },
+              {
+                "i": 10,
+                "ch": "0",
+                "x": 301.297,
+                "w": 6.688
+              },
+              {
+                "i": 11,
+                "ch": "4",
+                "x": 307.969,
+                "w": 6.688
+              },
+              {
+                "i": 12,
+                "ch": "1",
+                "x": 314.641,
+                "w": 6.688
+              },
+              {
+                "i": 13,
+                "ch": "7",
+                "x": 321.313,
+                "w": 6.688
+              }
+            ]
+          }
+        ],
+        "lines": [
+          {
+            "line": 19,
+            "text": "LABELVALUE"
+          },
+          {
+            "line": 33,
+            "text": "NUMBERINV-2026-00417"
+          },
+          {
+            "line": 47,
+            "text": "NúmeroINV-2026-00417"
+          }
+        ],
+        "pdftotext_raw": "LABEL VALUE\nNUMBER INV-2026-00417\nNúmero INV-2026-00417\f"
+      },
+      "vellora": {
+        "viewport": {
+          "width_px": 657,
+          "height_px": 986
+        },
+        "l0_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "LABEL",
+            "x": 8,
+            "baseline": 19,
+            "advance": 37.359,
+            "right": 45.359,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "VALUE",
+            "x": 69.359,
+            "baseline": 19,
+            "advance": 39.779,
+            "right": 109.139,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "NUMBER",
+            "x": 8,
+            "baseline": 33,
+            "advance": 52.002,
+            "right": 60.002,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "INV-2026-00417",
+            "x": 84.002,
+            "baseline": 33,
+            "advance": 87.398,
+            "right": 171.4,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Número",
+            "x": 173.922,
+            "baseline": 47,
+            "advance": 42.68,
+            "right": 216.602,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "INV-2026-00417",
+            "x": 240.602,
+            "baseline": 47,
+            "advance": 87.398,
+            "right": 328,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "final_layer": "collapsed_table_medium_border_insets_x",
+        "final_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "LABEL",
+            "x": 8,
+            "baseline": 19,
+            "advance": 37.359,
+            "right": 45.359,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "VALUE",
+            "x": 69.359,
+            "baseline": 19,
+            "advance": 39.779,
+            "right": 109.139,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "NUMBER",
+            "x": 8,
+            "baseline": 33,
+            "advance": 52.002,
+            "right": 60.002,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "INV-2026-00417",
+            "x": 84.002,
+            "baseline": 33,
+            "advance": 87.398,
+            "right": 171.4,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Número",
+            "x": 173.922,
+            "baseline": 47,
+            "advance": 42.68,
+            "right": 216.602,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "INV-2026-00417",
+            "x": 240.602,
+            "baseline": 47,
+            "advance": 87.398,
+            "right": 328,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "blitz_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "LABEL",
+            "x": 8,
+            "baseline": 19,
+            "advance": 37.359
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "VALUE",
+            "x": 45.359,
+            "baseline": 19,
+            "advance": 39.779
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "NUMBER",
+            "x": 8,
+            "baseline": 33,
+            "advance": 52.002
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "INV-2026-00417",
+            "x": 60.002,
+            "baseline": 33,
+            "advance": 87.398
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Número",
+            "x": 197.922,
+            "baseline": 47,
+            "advance": 42.68
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "INV-2026-00417",
+            "x": 240.602,
+            "baseline": 47,
+            "advance": 87.398
+          }
+        ],
+        "lines": [
+          {
+            "line": 19,
+            "text": "LABELVALUE"
+          },
+          {
+            "line": 33,
+            "text": "NUMBERINV-2026-00417"
+          },
+          {
+            "line": 47,
+            "text": "NúmeroINV-2026-00417"
+          }
+        ],
+        "pdftotext_raw": "LABEL VALUE\nNUMBER INV-2026-00417\nNúmero INV-2026-00417\f"
+      }
+    },
+    {
+      "id": "mixed-weight",
+      "file": "crates/vellora-core/tests/fixtures/text-probes/mixed-weight.html",
+      "agreement": {
+        "lines_equal": true,
+        "line_diffs": [],
+        "pdftotext_equal": true,
+        "runs_located_in_chrome": 2,
+        "runs": 2,
+        "max_abs_dx": 0.01,
+        "max_abs_dright": 0.021,
+        "run_x": [
+          {
+            "line": 0,
+            "text": "Acme Widgets Comércio LTDA",
+            "vellora_x": 12,
+            "chrome_x": 12,
+            "dx": 0,
+            "vellora_right": 187.693,
+            "chrome_right": 187.703,
+            "dright": -0.01
+          },
+          {
+            "line": 0,
+            "text": " — CNPJ 12.345.678/0001-90",
+            "vellora_x": 187.693,
+            "chrome_x": 187.703,
+            "dx": -0.01,
+            "vellora_right": 348.463,
+            "chrome_right": 348.484,
+            "dright": -0.021
+          }
+        ]
+      },
+      "chrome": {
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "body_inner_text": "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90",
+        "text_nodes": [
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>span:nth-child(1)",
+            "id": null,
+            "data": "Acme Widgets Comércio LTDA",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "Acme Widgets Comércio LTDA",
+            "x": 12,
+            "right": 187.703,
+            "baseline": 23,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 12,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "c",
+                "x": 20.656,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "m",
+                "x": 27.328,
+                "w": 10.688
+              },
+              {
+                "i": 3,
+                "ch": "e",
+                "x": 38,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": " ",
+                "x": 44.672,
+                "w": 3.359
+              },
+              {
+                "i": 5,
+                "ch": "W",
+                "x": 48.016,
+                "w": 11.234
+              },
+              {
+                "i": 6,
+                "ch": "i",
+                "x": 59.234,
+                "w": 3.344
+              },
+              {
+                "i": 7,
+                "ch": "d",
+                "x": 62.563,
+                "w": 7.344
+              },
+              {
+                "i": 8,
+                "ch": "g",
+                "x": 69.891,
+                "w": 7.344
+              },
+              {
+                "i": 9,
+                "ch": "e",
+                "x": 77.219,
+                "w": 6.688
+              },
+              {
+                "i": 10,
+                "ch": "t",
+                "x": 83.906,
+                "w": 4
+              },
+              {
+                "i": 11,
+                "ch": "s",
+                "x": 87.891,
+                "w": 6.688
+              },
+              {
+                "i": 12,
+                "ch": " ",
+                "x": 94.563,
+                "w": 3.359
+              },
+              {
+                "i": 13,
+                "ch": "C",
+                "x": 97.906,
+                "w": 8.672
+              },
+              {
+                "i": 14,
+                "ch": "o",
+                "x": 106.563,
+                "w": 7.344
+              },
+              {
+                "i": 15,
+                "ch": "m",
+                "x": 113.906,
+                "w": 10.672
+              },
+              {
+                "i": 16,
+                "ch": "é",
+                "x": 124.563,
+                "w": 6.688
+              },
+              {
+                "i": 17,
+                "ch": "r",
+                "x": 131.25,
+                "w": 4.672
+              },
+              {
+                "i": 18,
+                "ch": "c",
+                "x": 135.906,
+                "w": 6.688
+              },
+              {
+                "i": 19,
+                "ch": "i",
+                "x": 142.594,
+                "w": 3.344
+              },
+              {
+                "i": 20,
+                "ch": "o",
+                "x": 145.922,
+                "w": 7.344
+              },
+              {
+                "i": 21,
+                "ch": " ",
+                "x": 153.25,
+                "w": 3.344
+              },
+              {
+                "i": 22,
+                "ch": "L",
+                "x": 156.578,
+                "w": 6.453
+              },
+              {
+                "i": 23,
+                "ch": "T",
+                "x": 163.031,
+                "w": 7.344
+              },
+              {
+                "i": 24,
+                "ch": "D",
+                "x": 170.359,
+                "w": 8.672
+              },
+              {
+                "i": 25,
+                "ch": "A",
+                "x": 179.016,
+                "w": 8.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>span:nth-child(2)",
+            "id": null,
+            "data": " — CNPJ 12.345.678/0001-90",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " — CNPJ 12.345.678/0001-90",
+            "x": 187.703,
+            "right": 348.484,
+            "baseline": 23,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 187.703,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "—",
+                "x": 191.031,
+                "w": 12.016
+              },
+              {
+                "i": 2,
+                "ch": " ",
+                "x": 203.031,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "C",
+                "x": 206.359,
+                "w": 8.688
+              },
+              {
+                "i": 4,
+                "ch": "N",
+                "x": 215.031,
+                "w": 8.672
+              },
+              {
+                "i": 5,
+                "ch": "P",
+                "x": 223.703,
+                "w": 8.016
+              },
+              {
+                "i": 6,
+                "ch": "J",
+                "x": 231.703,
+                "w": 6.016
+              },
+              {
+                "i": 7,
+                "ch": " ",
+                "x": 237.703,
+                "w": 3.344
+              },
+              {
+                "i": 8,
+                "ch": "1",
+                "x": 241.031,
+                "w": 6.688
+              },
+              {
+                "i": 9,
+                "ch": "2",
+                "x": 247.703,
+                "w": 6.688
+              },
+              {
+                "i": 10,
+                "ch": ".",
+                "x": 254.375,
+                "w": 3.359
+              },
+              {
+                "i": 11,
+                "ch": "3",
+                "x": 257.719,
+                "w": 6.688
+              },
+              {
+                "i": 12,
+                "ch": "4",
+                "x": 264.391,
+                "w": 6.688
+              },
+              {
+                "i": 13,
+                "ch": "5",
+                "x": 271.063,
+                "w": 6.688
+              },
+              {
+                "i": 14,
+                "ch": ".",
+                "x": 277.734,
+                "w": 3.344
+              },
+              {
+                "i": 15,
+                "ch": "6",
+                "x": 281.078,
+                "w": 6.688
+              },
+              {
+                "i": 16,
+                "ch": "7",
+                "x": 287.75,
+                "w": 6.688
+              },
+              {
+                "i": 17,
+                "ch": "8",
+                "x": 294.422,
+                "w": 6.688
+              },
+              {
+                "i": 18,
+                "ch": "/",
+                "x": 301.094,
+                "w": 3.344
+              },
+              {
+                "i": 19,
+                "ch": "0",
+                "x": 304.422,
+                "w": 6.688
+              },
+              {
+                "i": 20,
+                "ch": "0",
+                "x": 311.094,
+                "w": 6.688
+              },
+              {
+                "i": 21,
+                "ch": "0",
+                "x": 317.781,
+                "w": 6.688
+              },
+              {
+                "i": 22,
+                "ch": "1",
+                "x": 324.453,
+                "w": 6.688
+              },
+              {
+                "i": 23,
+                "ch": "-",
+                "x": 331.125,
+                "w": 4
+              },
+              {
+                "i": 24,
+                "ch": "9",
+                "x": 335.125,
+                "w": 6.688
+              },
+              {
+                "i": 25,
+                "ch": "0",
+                "x": 341.797,
+                "w": 6.688
+              }
+            ]
+          }
+        ],
+        "lines": [
+          {
+            "line": 23,
+            "text": "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90"
+          }
+        ],
+        "pdftotext_raw": "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90\f"
+      },
+      "vellora": {
+        "viewport": {
+          "width_px": 672,
+          "height_px": 1001
+        },
+        "l0_runs": [
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Acme Widgets Comércio LTDA",
+            "x": 12,
+            "baseline": 23,
+            "advance": 175.693,
+            "right": 187.693,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": " — CNPJ 12.345.678/0001-90",
+            "x": 187.693,
+            "baseline": 23,
+            "advance": 160.77,
+            "right": 348.463,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "final_layer": "collapsed_table_medium_border_insets_x",
+        "final_runs": [
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Acme Widgets Comércio LTDA",
+            "x": 12,
+            "baseline": 23,
+            "advance": 175.693,
+            "right": 187.693,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": " — CNPJ 12.345.678/0001-90",
+            "x": 187.693,
+            "baseline": 23,
+            "advance": 160.77,
+            "right": 348.463,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "blitz_runs": [
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Acme Widgets Comércio LTDA",
+            "x": 12,
+            "baseline": 23,
+            "advance": 175.693
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": " — CNPJ 12.345.678/0001-90",
+            "x": 187.693,
+            "baseline": 23,
+            "advance": 160.77
+          }
+        ],
+        "lines": [
+          {
+            "line": 23,
+            "text": "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90"
+          }
+        ],
+        "pdftotext_raw": "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90\f"
+      }
+    },
+    {
+      "id": "whitespace",
+      "file": "crates/vellora-core/tests/fixtures/text-probes/whitespace.html",
+      "agreement": {
+        "lines_equal": true,
+        "line_diffs": [],
+        "pdftotext_equal": true,
+        "runs_located_in_chrome": 23,
+        "runs": 23,
+        "max_abs_dx": 9.99,
+        "max_abs_dright": 3.988,
+        "run_x": [
+          {
+            "line": 0,
+            "text": "Alpha",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 41.334,
+            "chrome_right": 41.344,
+            "dright": -0.01
+          },
+          {
+            "line": 0,
+            "text": " Beta",
+            "vellora_x": 41.334,
+            "chrome_x": 41.344,
+            "dx": -0.01,
+            "vellora_right": 69.354,
+            "chrome_right": 69.375,
+            "dright": -0.021
+          },
+          {
+            "line": 1,
+            "text": "Alpha ",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": null,
+            "chrome_right": 41.344,
+            "dright": null
+          },
+          {
+            "line": 1,
+            "text": "Beta",
+            "vellora_x": 44.668,
+            "chrome_x": 44.672,
+            "dx": -0.004,
+            "vellora_right": 69.354,
+            "chrome_right": 69.359,
+            "dright": -0.005
+          },
+          {
+            "line": 2,
+            "text": "Alpha",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 41.334,
+            "chrome_right": 41.344,
+            "dright": -0.01
+          },
+          {
+            "line": 2,
+            "text": "Beta",
+            "vellora_x": 44.668,
+            "chrome_x": 44.688,
+            "dx": -0.02,
+            "vellora_right": 69.354,
+            "chrome_right": 69.375,
+            "dright": -0.021
+          },
+          {
+            "line": 3,
+            "text": "Alpha ",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": null,
+            "chrome_right": 38.703,
+            "dright": null
+          },
+          {
+            "line": 3,
+            "text": "Beta",
+            "vellora_x": 42.025,
+            "chrome_x": 42.031,
+            "dx": -0.006,
+            "vellora_right": 66.711,
+            "chrome_right": 66.719,
+            "dright": -0.008
+          },
+          {
+            "line": 4,
+            "text": "Alpha",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 38.691,
+            "chrome_right": 38.703,
+            "dright": -0.012
+          },
+          {
+            "line": 4,
+            "text": "Beta",
+            "vellora_x": 42.025,
+            "chrome_x": 42.047,
+            "dx": -0.022,
+            "vellora_right": 66.711,
+            "chrome_right": 66.734,
+            "dright": -0.023
+          },
+          {
+            "line": 5,
+            "text": "Alpha",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 38.691,
+            "chrome_right": 38.703,
+            "dright": -0.012
+          },
+          {
+            "line": 5,
+            "text": "Beta",
+            "vellora_x": 42.025,
+            "chrome_x": 42.047,
+            "dx": -0.022,
+            "vellora_right": 66.711,
+            "chrome_right": 66.734,
+            "dright": -0.023
+          },
+          {
+            "line": 6,
+            "text": "LTDA",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 39.102,
+            "chrome_right": 39.109,
+            "dright": -0.007
+          },
+          {
+            "line": 6,
+            "text": " — CNPJ",
+            "vellora_x": 39.102,
+            "chrome_x": 39.109,
+            "dx": -0.007,
+            "vellora_right": 89.106,
+            "chrome_right": 89.125,
+            "dright": -0.019
+          },
+          {
+            "line": 6,
+            "text": " 12.345",
+            "vellora_x": 89.106,
+            "chrome_x": 89.125,
+            "dx": -0.019,
+            "vellora_right": 129.143,
+            "chrome_right": 129.172,
+            "dright": -0.029
+          },
+          {
+            "line": 7,
+            "text": "Alpha ",
+            "vellora_x": 12,
+            "chrome_x": 12,
+            "dx": 0,
+            "vellora_right": null,
+            "chrome_right": 42.703,
+            "dright": null
+          },
+          {
+            "line": 7,
+            "text": "Beta",
+            "vellora_x": 50.025,
+            "chrome_x": 46.031,
+            "dx": 3.994,
+            "vellora_right": 76.035,
+            "chrome_right": 72.047,
+            "dright": 3.988
+          },
+          {
+            "line": 8,
+            "text": "Total ",
+            "vellora_x": 155.963,
+            "chrome_x": 159.953,
+            "dx": -3.99,
+            "vellora_right": null,
+            "chrome_right": 185.313,
+            "dright": null
+          },
+          {
+            "line": 8,
+            "text": "9,00",
+            "vellora_x": 188.645,
+            "chrome_x": 188.641,
+            "dx": 0.004,
+            "vellora_right": 212.001,
+            "chrome_right": 212,
+            "dright": 0.001
+          },
+          {
+            "line": 9,
+            "text": "Total ",
+            "vellora_x": 155.963,
+            "chrome_x": 165.953,
+            "dx": -9.99,
+            "vellora_right": null,
+            "chrome_right": 191.313,
+            "dright": null
+          },
+          {
+            "line": 9,
+            "text": "9,00",
+            "vellora_x": 194.645,
+            "chrome_x": 194.641,
+            "dx": 0.004,
+            "vellora_right": 218.001,
+            "chrome_right": 218,
+            "dright": 0.001
+          },
+          {
+            "line": 10,
+            "text": "alpha beta ",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": null,
+            "chrome_right": 64.063,
+            "dright": null
+          },
+          {
+            "line": 11,
+            "text": "gamma delta",
+            "vellora_x": 8,
+            "chrome_x": 8,
+            "dx": 0,
+            "vellora_right": 77.369,
+            "chrome_right": 77.375,
+            "dright": -0.006
+          }
+        ]
+      },
+      "chrome": {
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+        "body_inner_text": "Alpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nLTDA — CNPJ 12.345\nAlpha Beta\nTotal 9,00\nTotal 9,00\nalpha beta gamma delta",
+        "text_nodes": [
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(1)>b:nth-child(1)",
+            "id": "space-in-second-span",
+            "data": "Alpha",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "Alpha",
+            "x": 8,
+            "right": 41.344,
+            "baseline": 19,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16.656,
+                "w": 3.344
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 20,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 27.328,
+                "w": 7.344
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 34.656,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(1)>span:nth-child(2)",
+            "id": "space-in-second-span",
+            "data": " Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " Beta",
+            "x": 41.344,
+            "right": 69.375,
+            "baseline": 19,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 41.344,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "B",
+                "x": 44.672,
+                "w": 8.016
+              },
+              {
+                "i": 2,
+                "ch": "e",
+                "x": 52.672,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "t",
+                "x": 59.344,
+                "w": 3.359
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 62.688,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(2)>b:nth-child(1)",
+            "id": "space-in-first-span",
+            "data": "Alpha ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "Alpha ",
+            "x": 8,
+            "right": 44.672,
+            "baseline": 37,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16.656,
+                "w": 3.344
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 20,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 27.328,
+                "w": 7.344
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 34.656,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": " ",
+                "x": 41.328,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(2)>span:nth-child(2)",
+            "id": "space-in-first-span",
+            "data": "Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 44.672,
+            "right": 69.359,
+            "baseline": 37,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "B",
+                "x": 44.672,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "e",
+                "x": 52.672,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 59.344,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 62.672,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(3)>b:nth-child(1)",
+            "id": "space-between-elements",
+            "data": "Alpha",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "Alpha",
+            "x": 8,
+            "right": 41.344,
+            "baseline": 55,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16.656,
+                "w": 3.344
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 20,
+                "w": 7.344
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 27.328,
+                "w": 7.344
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 34.656,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(3)",
+            "id": "space-between-elements",
+            "data": " ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " ",
+            "x": 41.344,
+            "right": 44.688,
+            "baseline": 55,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 41.344,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(3)>i:nth-child(2)",
+            "id": "space-between-elements",
+            "data": "Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 44.688,
+            "right": 69.375,
+            "baseline": 55,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "B",
+                "x": 44.688,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "e",
+                "x": 52.688,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 59.359,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 62.688,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(4)>span:nth-child(1)",
+            "id": "double-space-collapses",
+            "data": "Alpha ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Alpha ",
+            "x": 8,
+            "right": 42.031,
+            "baseline": 73,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16,
+                "w": 2.672
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 18.656,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 25.344,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 32.016,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": " ",
+                "x": 38.688,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(4)>span:nth-child(2)",
+            "id": "double-space-collapses",
+            "data": " Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 42.031,
+            "right": 66.719,
+            "baseline": 73,
+            "chars": [
+              {
+                "i": 1,
+                "ch": "B",
+                "x": 42.031,
+                "w": 8.016
+              },
+              {
+                "i": 2,
+                "ch": "e",
+                "x": 50.031,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "t",
+                "x": 56.703,
+                "w": 3.344
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 60.031,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(5)>span:nth-child(1)",
+            "id": "newline-between-spans",
+            "data": "Alpha",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Alpha",
+            "x": 8,
+            "right": 38.703,
+            "baseline": 91,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16,
+                "w": 2.672
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 18.656,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 25.344,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 32.016,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(5)",
+            "id": "newline-between-spans",
+            "data": "\n            ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " ",
+            "x": 38.703,
+            "right": 42.047,
+            "baseline": 91,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "\n",
+                "x": 38.703,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(5)>span:nth-child(2)",
+            "id": "newline-between-spans",
+            "data": "Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 42.047,
+            "right": 66.734,
+            "baseline": 91,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "B",
+                "x": 42.047,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "e",
+                "x": 50.047,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 56.719,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 60.047,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(6)>span:nth-child(1)",
+            "id": "nbsp",
+            "data": "Alpha",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Alpha",
+            "x": 8,
+            "right": 38.703,
+            "baseline": 109,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "A",
+                "x": 8,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 16,
+                "w": 2.672
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 18.656,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 25.344,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 32.016,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(6)",
+            "id": "nbsp",
+            "data": " ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " ",
+            "x": 38.703,
+            "right": 42.047,
+            "baseline": 109,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 38.703,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(6)>span:nth-child(2)",
+            "id": "nbsp",
+            "data": "Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 42.047,
+            "right": 66.734,
+            "baseline": 109,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "B",
+                "x": 42.047,
+                "w": 8.016
+              },
+              {
+                "i": 1,
+                "ch": "e",
+                "x": 50.047,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 56.719,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 60.047,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(7)>b:nth-child(1)",
+            "id": "dash-after-bold",
+            "data": "LTDA",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "LTDA",
+            "x": 8,
+            "right": 39.109,
+            "baseline": 127,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "L",
+                "x": 8,
+                "w": 6.453
+              },
+              {
+                "i": 1,
+                "ch": "T",
+                "x": 14.438,
+                "w": 7.344
+              },
+              {
+                "i": 2,
+                "ch": "D",
+                "x": 21.766,
+                "w": 8.672
+              },
+              {
+                "i": 3,
+                "ch": "A",
+                "x": 30.422,
+                "w": 8.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(7)>span:nth-child(2)",
+            "id": "dash-after-bold",
+            "data": " — CNPJ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " — CNPJ",
+            "x": 39.109,
+            "right": 89.125,
+            "baseline": 127,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 39.109,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "—",
+                "x": 42.438,
+                "w": 12.016
+              },
+              {
+                "i": 2,
+                "ch": " ",
+                "x": 54.438,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "C",
+                "x": 57.766,
+                "w": 8.688
+              },
+              {
+                "i": 4,
+                "ch": "N",
+                "x": 66.438,
+                "w": 8.672
+              },
+              {
+                "i": 5,
+                "ch": "P",
+                "x": 75.109,
+                "w": 8.016
+              },
+              {
+                "i": 6,
+                "ch": "J",
+                "x": 83.109,
+                "w": 6.016
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(7)",
+            "id": "dash-after-bold",
+            "data": " 12.345",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": " 12.345",
+            "x": 89.125,
+            "right": 129.172,
+            "baseline": 127,
+            "chars": [
+              {
+                "i": 0,
+                "ch": " ",
+                "x": 89.125,
+                "w": 3.344
+              },
+              {
+                "i": 1,
+                "ch": "1",
+                "x": 92.453,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "2",
+                "x": 99.125,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": ".",
+                "x": 105.797,
+                "w": 3.344
+              },
+              {
+                "i": 4,
+                "ch": "3",
+                "x": 109.141,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": "4",
+                "x": 115.813,
+                "w": 6.688
+              },
+              {
+                "i": 6,
+                "ch": "5",
+                "x": 122.484,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "id": "td-leading-trailing",
+            "data": "   Alpha  ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Alpha ",
+            "x": 12,
+            "right": 46.031,
+            "baseline": 149,
+            "chars": [
+              {
+                "i": 3,
+                "ch": "A",
+                "x": 12,
+                "w": 8.016
+              },
+              {
+                "i": 4,
+                "ch": "l",
+                "x": 20,
+                "w": 2.672
+              },
+              {
+                "i": 5,
+                "ch": "p",
+                "x": 22.656,
+                "w": 6.688
+              },
+              {
+                "i": 6,
+                "ch": "h",
+                "x": 29.344,
+                "w": 6.688
+              },
+              {
+                "i": 7,
+                "ch": "a",
+                "x": 36.016,
+                "w": 6.688
+              },
+              {
+                "i": 8,
+                "ch": " ",
+                "x": 42.688,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>b:nth-child(1)",
+            "id": "td-leading-trailing",
+            "data": "Beta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "Beta",
+            "x": 46.031,
+            "right": 72.047,
+            "baseline": 149,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "B",
+                "x": 46.031,
+                "w": 8.672
+              },
+              {
+                "i": 1,
+                "ch": "e",
+                "x": 54.688,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 61.359,
+                "w": 4.016
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 65.359,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "id": "td-right-aligned",
+            "data": "Total ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Total ",
+            "x": 159.953,
+            "right": 188.641,
+            "baseline": 171,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "T",
+                "x": 159.953,
+                "w": 6
+              },
+              {
+                "i": 1,
+                "ch": "o",
+                "x": 165.953,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 172.625,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 175.953,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "l",
+                "x": 182.625,
+                "w": 2.688
+              },
+              {
+                "i": 5,
+                "ch": " ",
+                "x": 185.297,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>b:nth-child(1)",
+            "id": "td-right-aligned",
+            "data": "9,00",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "9,00",
+            "x": 188.641,
+            "right": 212,
+            "baseline": 171,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "9",
+                "x": 188.641,
+                "w": 6.688
+              },
+              {
+                "i": 1,
+                "ch": ",",
+                "x": 195.313,
+                "w": 3.344
+              },
+              {
+                "i": 2,
+                "ch": "0",
+                "x": 198.641,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "0",
+                "x": 205.313,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(10)",
+            "id": "div-padding-right-aligned",
+            "data": "Total ",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "Total ",
+            "x": 165.953,
+            "right": 194.641,
+            "baseline": 189,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "T",
+                "x": 165.953,
+                "w": 6
+              },
+              {
+                "i": 1,
+                "ch": "o",
+                "x": 171.953,
+                "w": 6.688
+              },
+              {
+                "i": 2,
+                "ch": "t",
+                "x": 178.625,
+                "w": 3.344
+              },
+              {
+                "i": 3,
+                "ch": "a",
+                "x": 181.953,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "l",
+                "x": 188.625,
+                "w": 2.688
+              },
+              {
+                "i": 5,
+                "ch": " ",
+                "x": 191.297,
+                "w": 3.344
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(10)>b:nth-child(1)",
+            "id": "div-padding-right-aligned",
+            "data": "9,00",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 700,
+              "size": 12
+            },
+            "rendered": "9,00",
+            "x": 194.641,
+            "right": 218,
+            "baseline": 189,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "9",
+                "x": 194.641,
+                "w": 6.688
+              },
+              {
+                "i": 1,
+                "ch": ",",
+                "x": 201.313,
+                "w": 3.344
+              },
+              {
+                "i": 2,
+                "ch": "0",
+                "x": 204.641,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "0",
+                "x": 211.313,
+                "w": 6.688
+              }
+            ]
+          },
+          {
+            "parent": "html>body:nth-child(2)>div:nth-child(11)",
+            "id": "wrap",
+            "data": "alpha beta gamma delta",
+            "font": {
+              "family": "Liberation Sans",
+              "weight": 400,
+              "size": 12
+            },
+            "rendered": "alpha betagamma delta",
+            "x": 8,
+            "right": 77.375,
+            "baseline": 207,
+            "chars": [
+              {
+                "i": 0,
+                "ch": "a",
+                "x": 8,
+                "w": 6.688
+              },
+              {
+                "i": 1,
+                "ch": "l",
+                "x": 14.672,
+                "w": 2.672
+              },
+              {
+                "i": 2,
+                "ch": "p",
+                "x": 17.328,
+                "w": 6.688
+              },
+              {
+                "i": 3,
+                "ch": "h",
+                "x": 24,
+                "w": 6.688
+              },
+              {
+                "i": 4,
+                "ch": "a",
+                "x": 30.688,
+                "w": 6.688
+              },
+              {
+                "i": 5,
+                "ch": " ",
+                "x": 37.359,
+                "w": 3.344
+              },
+              {
+                "i": 6,
+                "ch": "b",
+                "x": 40.688,
+                "w": 6.688
+              },
+              {
+                "i": 7,
+                "ch": "e",
+                "x": 47.359,
+                "w": 6.688
+              },
+              {
+                "i": 8,
+                "ch": "t",
+                "x": 54.031,
+                "w": 3.359
+              },
+              {
+                "i": 9,
+                "ch": "a",
+                "x": 57.375,
+                "w": 6.688
+              },
+              {
+                "i": 11,
+                "ch": "g",
+                "x": 8,
+                "w": 6.688
+              },
+              {
+                "i": 12,
+                "ch": "a",
+                "x": 14.672,
+                "w": 6.688
+              },
+              {
+                "i": 13,
+                "ch": "m",
+                "x": 21.344,
+                "w": 10
+              },
+              {
+                "i": 14,
+                "ch": "m",
+                "x": 31.344,
+                "w": 10
+              },
+              {
+                "i": 15,
+                "ch": "a",
+                "x": 41.328,
+                "w": 6.688
+              },
+              {
+                "i": 16,
+                "ch": " ",
+                "x": 48,
+                "w": 3.359
+              },
+              {
+                "i": 17,
+                "ch": "d",
+                "x": 51.344,
+                "w": 6.688
+              },
+              {
+                "i": 18,
+                "ch": "e",
+                "x": 58.016,
+                "w": 6.688
+              },
+              {
+                "i": 19,
+                "ch": "l",
+                "x": 64.688,
+                "w": 2.688
+              },
+              {
+                "i": 20,
+                "ch": "t",
+                "x": 67.359,
+                "w": 3.344
+              },
+              {
+                "i": 21,
+                "ch": "a",
+                "x": 70.688,
+                "w": 6.688
+              }
+            ]
+          }
+        ],
+        "lines": [
+          {
+            "line": 19,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 37,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 55,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 73,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 91,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 109,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 127,
+            "text": "LTDA — CNPJ 12.345"
+          },
+          {
+            "line": 149,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 171,
+            "text": "Total 9,00"
+          },
+          {
+            "line": 189,
+            "text": "Total 9,00"
+          },
+          {
+            "line": 207,
+            "text": "alpha beta"
+          },
+          {
+            "line": 221,
+            "text": "gamma delta"
+          }
+        ],
+        "pdftotext_raw": "Alpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nLTDA — CNPJ 12.345\nAlpha Beta\nTotal 9,00\nTotal 9,00\nalpha beta\ngamma delta\f"
+      },
+      "vellora": {
+        "viewport": {
+          "width_px": 672,
+          "height_px": 1001
+        },
+        "l0_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 19,
+            "advance": 33.334,
+            "right": 41.334,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": " Beta",
+            "x": 41.334,
+            "baseline": 19,
+            "advance": 28.02,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 37,
+            "advance": 36.668,
+            "right": 44.668,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 37,
+            "advance": 24.686,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 55,
+            "advance": 33.334,
+            "right": 41.334,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": " ",
+            "x": 41.334,
+            "baseline": 55,
+            "advance": 3.334,
+            "right": 44.668,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 55,
+            "advance": 24.686,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 73,
+            "advance": 34.025,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 73,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 91,
+            "advance": 30.691,
+            "right": 38.691,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 91,
+            "advance": 3.334,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 91,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 109,
+            "advance": 30.691,
+            "right": 38.691,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 109,
+            "advance": 3.334,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 109,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": "LTDA",
+            "x": 8,
+            "baseline": 127,
+            "advance": 31.102,
+            "right": 39.102,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " — CNPJ",
+            "x": 39.102,
+            "baseline": 127,
+            "advance": 50.004,
+            "right": 89.106,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " 12.345",
+            "x": 89.106,
+            "baseline": 127,
+            "advance": 40.037,
+            "right": 129.143,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Alpha ",
+            "x": 12,
+            "baseline": 149,
+            "advance": 34.025,
+            "right": 46.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Beta",
+            "x": 50.025,
+            "baseline": 149,
+            "advance": 26.01,
+            "right": 76.035,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Total ",
+            "x": 155.963,
+            "baseline": 171,
+            "advance": 28.682,
+            "right": 184.645,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "9,00",
+            "x": 188.645,
+            "baseline": 171,
+            "advance": 23.356,
+            "right": 212,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "Total ",
+            "x": 155.963,
+            "baseline": 189,
+            "advance": 28.682,
+            "right": 184.645,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "9,00",
+            "x": 194.645,
+            "baseline": 189,
+            "advance": 23.356,
+            "right": 218,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "alpha beta ",
+            "x": 8,
+            "baseline": 207,
+            "advance": 59.385,
+            "right": 67.385,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "gamma delta",
+            "x": 8,
+            "baseline": 221,
+            "advance": 69.369,
+            "right": 77.369,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "final_layer": "collapsed_table_medium_border_insets_x",
+        "final_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 19,
+            "advance": 33.334,
+            "right": 41.334,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": " Beta",
+            "x": 41.334,
+            "baseline": 19,
+            "advance": 28.02,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 37,
+            "advance": 36.668,
+            "right": 44.668,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 37,
+            "advance": 24.686,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 55,
+            "advance": 33.334,
+            "right": 41.334,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": " ",
+            "x": 41.334,
+            "baseline": 55,
+            "advance": 3.334,
+            "right": 44.668,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 55,
+            "advance": 24.686,
+            "right": 69.354,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 73,
+            "advance": 34.025,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 73,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 91,
+            "advance": 30.691,
+            "right": 38.691,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 91,
+            "advance": 3.334,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 91,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 109,
+            "advance": 30.691,
+            "right": 38.691,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 109,
+            "advance": 3.334,
+            "right": 42.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 109,
+            "advance": 24.686,
+            "right": 66.711,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": "LTDA",
+            "x": 8,
+            "baseline": 127,
+            "advance": 31.102,
+            "right": 39.102,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " — CNPJ",
+            "x": 39.102,
+            "baseline": 127,
+            "advance": 50.004,
+            "right": 89.106,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " 12.345",
+            "x": 89.106,
+            "baseline": 127,
+            "advance": 40.037,
+            "right": 129.143,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Alpha ",
+            "x": 12,
+            "baseline": 149,
+            "advance": 34.025,
+            "right": 46.025,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Beta",
+            "x": 50.025,
+            "baseline": 149,
+            "advance": 26.01,
+            "right": 76.035,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Total ",
+            "x": 155.963,
+            "baseline": 171,
+            "advance": 28.682,
+            "right": 184.645,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "9,00",
+            "x": 188.645,
+            "baseline": 171,
+            "advance": 23.356,
+            "right": 212,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "Total ",
+            "x": 155.963,
+            "baseline": 189,
+            "advance": 28.682,
+            "right": 184.645,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "9,00",
+            "x": 194.645,
+            "baseline": 189,
+            "advance": 23.356,
+            "right": 218,
+            "face": "LiberationSans-Bold.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "alpha beta ",
+            "x": 8,
+            "baseline": 207,
+            "advance": 59.385,
+            "right": 67.385,
+            "face": "LiberationSans-Regular.ttf"
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "gamma delta",
+            "x": 8,
+            "baseline": 221,
+            "advance": 69.369,
+            "right": 77.369,
+            "face": "LiberationSans-Regular.ttf"
+          }
+        ],
+        "blitz_runs": [
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 19,
+            "advance": 33.334
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(1)",
+            "text": " Beta",
+            "x": 41.334,
+            "baseline": 19,
+            "advance": 28.02
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 37,
+            "advance": 36.668
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(2)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 37,
+            "advance": 24.686
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 55,
+            "advance": 33.334
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": " ",
+            "x": 41.334,
+            "baseline": 55,
+            "advance": 3.334
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(3)",
+            "text": "Beta",
+            "x": 44.668,
+            "baseline": 55,
+            "advance": 24.686
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Alpha ",
+            "x": 8,
+            "baseline": 73,
+            "advance": 34.025
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(4)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 73,
+            "advance": 24.686
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 91,
+            "advance": 30.691
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 91,
+            "advance": 3.334
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(5)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 91,
+            "advance": 24.686
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Alpha",
+            "x": 8,
+            "baseline": 109,
+            "advance": 30.691
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": " ",
+            "x": 38.691,
+            "baseline": 109,
+            "advance": 3.334
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(6)",
+            "text": "Beta",
+            "x": 42.025,
+            "baseline": 109,
+            "advance": 24.686
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": "LTDA",
+            "x": 8,
+            "baseline": 127,
+            "advance": 31.102
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " — CNPJ",
+            "x": 39.102,
+            "baseline": 127,
+            "advance": 50.004
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(7)",
+            "text": " 12.345",
+            "x": 89.106,
+            "baseline": 127,
+            "advance": 40.037
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Alpha ",
+            "x": 12,
+            "baseline": 149,
+            "advance": 34.025
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(8)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Beta",
+            "x": 46.025,
+            "baseline": 149,
+            "advance": 26.01
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "Total ",
+            "x": 159.963,
+            "baseline": 171,
+            "advance": 28.682
+          },
+          {
+            "owner": "html>body:nth-child(2)>table:nth-child(9)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+            "text": "9,00",
+            "x": 188.645,
+            "baseline": 171,
+            "advance": 23.356
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "Total ",
+            "x": 165.963,
+            "baseline": 189,
+            "advance": 28.682
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(10)",
+            "text": "9,00",
+            "x": 194.645,
+            "baseline": 189,
+            "advance": 23.356
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "alpha beta ",
+            "x": 8,
+            "baseline": 207,
+            "advance": 59.385
+          },
+          {
+            "owner": "html>body:nth-child(2)>div:nth-child(11)",
+            "text": "gamma delta",
+            "x": 8,
+            "baseline": 221,
+            "advance": 69.369
+          }
+        ],
+        "lines": [
+          {
+            "line": 19,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 37,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 55,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 73,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 91,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 109,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 127,
+            "text": "LTDA — CNPJ 12.345"
+          },
+          {
+            "line": 149,
+            "text": "Alpha Beta"
+          },
+          {
+            "line": 171,
+            "text": "Total 9,00"
+          },
+          {
+            "line": 189,
+            "text": "Total 9,00"
+          },
+          {
+            "line": 207,
+            "text": "alpha beta "
+          },
+          {
+            "line": 221,
+            "text": "gamma delta"
+          }
+        ],
+        "pdftotext_raw": "Alpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nAlpha Beta\nLTDA — CNPJ 12.345\nAlpha Beta\nTotal 9,00\nTotal 9,00\nalpha beta\ngamma delta\f"
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head><style>
+        body { font-family: sans-serif; font-size: 12px; margin: 8px; }
+        div, td { margin: 0 0 4px 0; }
+        table { border-collapse: collapse; }
+        td { padding: 4px; }
+        .narrow { width: 70px; }
+    </style></head><body>
+        <div id="space-in-second-span"><b>Alpha</b><span> Beta</span></div>
+        <div id="space-in-first-span"><b>Alpha </b><span>Beta</span></div>
+        <div id="space-between-elements"><b>Alpha</b> <i>Beta</i></div>
+        <div id="double-space-collapses"><span>Alpha </span><span> Beta</span></div>
+        <div id="newline-between-spans"><span>Alpha</span>
+            <span>Beta</span></div>
+        <div id="nbsp"><span>Alpha</span>&nbsp;<span>Beta</span></div>
+        <div id="dash-after-bold"><b>LTDA</b><span> — CNPJ</span> 12.345</div>
+        <table><tr><td id="td-leading-trailing">   Alpha  <b>Beta</b>   </td></tr></table>
+        <table><tr><td id="td-right-aligned" style="text-align: right; width: 200px">Total <b>9,00</b></td></tr></table>
+        <div id="div-padding-right-aligned" style="text-align: right; width: 200px; padding: 0 10px">Total <b>9,00</b></div>
+        <div id="wrap" class="narrow">alpha beta gamma delta</div>
+    </body></html>

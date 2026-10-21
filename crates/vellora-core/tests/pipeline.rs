@@ -555,31 +555,30 @@ fn inline_sibling_runs_advance_in_document_order() {
     );
 }
 
+/// REWRITTEN 2026-10-21 (Phase B, Blitz 0.3.0-beta.4) with Chrome evidence. The HTML is
+/// `tests/fixtures/text-probes/mixed-weight.html`, byte-for-byte what this test used to build
+/// with `format!`. Its second `<span>` OPENS WITH A SPACE (`<span> — CNPJ …</span>`), and Chrome
+/// 155.0.8059.85 renders it: "Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90", the bold run
+/// at x 12, a 3.344 px space at x 187.703, the dash at x 191.031 (print media, bundled Liberation
+/// Sans; `fidelity/layout-diff/text-probe.mjs`, evidence in
+/// `fidelity/layout-diff/snapshots/2026-10-21/text-probe/`). The pin's Blitz dropped that space and
+/// the old assertion encoded it (`source = "{first}{second}"`, "LTDA— CNPJ"); Blitz 0.3.0-beta.4
+/// keeps it, exactly like Chrome. The space belongs to the second run.
 #[test]
 fn mixed_weight_inline_siblings_advance_by_the_first_run_width() {
+    const HTML: &str = include_str!("fixtures/text-probes/mixed-weight.html");
     let first = "Acme Widgets Comércio LTDA";
     let second = "— CNPJ 12.345.678/0001-90";
-    let source = format!("{first}{second}");
-    let html = format!(
-        r#"<!DOCTYPE html><html><head><style>
-            body {{ font-family: sans-serif; font-size: 12px; }}
-            table {{ border-collapse: collapse; width: 100%; }}
-            td {{ padding: 4px; }}
-            .strong {{ font-weight: bold; }}
-        </style></head><body>
-            <table><tr><td>
-                <span class="strong">{first}</span><span> {second}</span>
-            </td></tr></table>
-        </body></html>"#
-    );
+    let source = format!("{first} {second}");
 
-    let laid = blitz_engine::lay_out(&html);
+    let laid = blitz_engine::lay_out(HTML);
     let first_range = (0, first.len());
     let second_range = (first.len(), source.len());
     assert_eq!(
         text_run_ranges(&laid, &source),
         vec![first_range, second_range],
-        "mixed-weight inline siblings should split into non-overlapping ranges\n{}",
+        "mixed-weight inline siblings should split into non-overlapping ranges, the space \
+         opening the second span kept (as Chrome renders it)\n{}",
         dump_layout(&laid)
     );
 
@@ -593,6 +592,18 @@ fn mixed_weight_inline_siblings_advance_by_the_first_run_width() {
         second_run.origin_x,
         dump_layout(&laid)
     );
+    // Chrome positions (CSS px, ±0.5): bold run 12 → 187.703, space 187.703, dash 191.031.
+    let near = |v: f64, chrome: f64| (v - chrome).abs() <= 0.5;
+    assert!(near(first_run.origin_x, 12.0), "{}", first_run.origin_x);
+    assert!(near(first_end_x, 187.703), "{first_end_x}");
+    assert!(
+        near(second_run.origin_x, 187.703),
+        "{}",
+        second_run.origin_x
+    );
+    let space = &second_run.glyphs[0];
+    assert_eq!(&source[space.text_start..space.text_end], " ");
+    assert!(near(second_run.origin_x + space.advance as f64, 191.031));
 }
 
 #[test]

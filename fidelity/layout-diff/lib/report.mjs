@@ -1,18 +1,31 @@
 // Markdown + standalone HTML reports for one layout diff (and the cross-fixture summary).
+import { layerHasText } from "./vellora-model.mjs";
 
 export const SCOPE_NOTE =
   "Continuous-flow comparison: Chromium lays the document out as ONE flow (no fragmentation) at " +
-  "the same viewport width vellora hands Blitz. It is comparable ONLY to vellora's PRE-pagination " +
-  "layers (N0, B0, L0, layout_normalize passes) and says nothing about pagination (page breaks, " +
-  "repeated thead, page-local offsets, margin boxes).";
+  "the same viewport width vellora hands Blitz. It is comparable to vellora's PRE-pagination " +
+  "layers (N0, B0, L0, layout_normalize passes); the headline and `final_layer` are the last of " +
+  "those. Layer P (schema-2 dumps) adds pagination's IN-PAGE drift on top of the final layer " +
+  "(page 1 vs the flow origin, later pages vs their first fragment); page breaks, repeated " +
+  "thead copies and margin boxes are not compared (pdf-probe.mjs covers the PDF).";
 
 export const LAYER_DOCS = {
   N0: "Blitz's own layout tree of the SOURCE HTML (`layout_dump --no-html-normalize`: html_normalize skipped), keyed by the source DOM. **Raw Blitz.**",
   N0u: "Same N0 tree from `unrounded_layout` (Taffy before `round_layout`). Diagnostic only, not in the attribution chain.",
   B0: "Blitz's own layout tree of html_normalize's OUTPUT (what the render path lays out): `layout_children` walk (incl. anonymous blocks), absolute border boxes from rounded `final_layout`. With N0 present, the N0 → B0 step is html_normalize's; without N0 it is NOT raw Blitz whenever html_normalize altered the DOM.",
   B0u: "Same B0 tree from `unrounded_layout` (Taffy before `round_layout`). Diagnostic only, not in the attribution chain.",
-  L0: "vellora's box walk (`blitz_engine::walk`, DOM `children`, accumulating `final_layout`) before any pass; text = Parley glyph runs as read by `read_text_runs`.",
+  L0: "vellora's box walk (`blitz_engine::walk`, DOM `children`, accumulating `final_layout`) before any pass; text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` dropped). With raw Blitz text in B0, the B0 → L0 text step is vellora's reader.",
+  P: "Pagination: the final layer with each placed fragment moved by `paginate`'s in-page drift (placement offset `placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages). Boxes pagination never places paint nothing: n/a, not lost. See `Pagination (layer P)`.",
 };
+
+/** LAYER_DOCS entry for a layer, saying whether a Blitz layer carries raw text in this run. */
+function layerDoc(l) {
+  const base = LAYER_DOCS[l.name] ?? "after this `layout_normalize` pass";
+  if (l.kind !== "blitz" && l.kind !== "blitz-source") return base;
+  return layerHasText(l)
+    ? `${base} Text: RAW Parley runs (\`blitz_runs\`) placed as Blitz's painter places them (content box + \`block_offset\` + run offset/baseline), before vellora's reader.`
+    : `${base} No text (schema-1 dump without \`blitz_runs\`).`;
+}
 
 const P = "html>body:nth-child(2)";
 
@@ -101,7 +114,14 @@ export function attributionText(div, finalName, result) {
       ? `BOX LOST: layer ${layer} has no box for it (present in ${present.join(", ")})`
       : "BOX MISSING: Chromium lays it out, no vellora layer has a box for it";
   } else if (layer === "N0") {
-    text = `RAW BLITZ: Blitz's layout of the SOURCE HTML (N0) already differs from Chromium${rounding}`;
+    text =
+      div.type === "text"
+        ? "RAW BLITZ/PARLEY TEXT: Blitz's own placement of this run in the SOURCE HTML (N0) already differs from Chromium"
+        : `RAW BLITZ: Blitz's layout of the SOURCE HTML (N0) already differs from Chromium${rounding}`;
+  } else if (layer === "B0" && div.type === "text") {
+    text = n0
+      ? `HTML_NORMALIZE (text): raw Blitz text on the source HTML (N0) is ${div.per_layer?.N0?.status ?? "?"}, on html_normalize's output (B0) differs`
+      : "RAW BLITZ/PARLEY TEXT on html_normalize's output (B0) already differs from Chromium (no N0 text in this run)";
   } else if (layer === "B0") {
     if (n0) {
       text = `HTML_NORMALIZE: Blitz on the source HTML (N0) is ${div.per_layer?.N0?.status ?? "?"}, Blitz on html_normalize's output (B0) differs${rounding}`;
@@ -111,10 +131,16 @@ export function attributionText(div, finalName, result) {
       text = `BLITZ ON html_normalize OUTPUT (B0) differs; raw Blitz and html_normalize are NOT separated (no N0 layer in this run)${rounding}`;
     }
   } else if (layer === "L0") {
+    const rawText = div.type === "text" && div.per_layer?.B0 && div.per_layer.B0.status !== "n/a";
     text =
-      div.type === "text"
-        ? "RAW BLITZ/PARLEY TEXT as read by vellora's walk (L0); no normalize pass involved"
-        : `VELLORA WALK: B0 ${div.per_layer?.B0?.status ?? "?"}, but vellora's DOM-children walk (L0) differs`;
+      div.type !== "text"
+        ? `VELLORA WALK: B0 ${div.per_layer?.B0?.status ?? "?"}, but vellora's DOM-children walk (L0) differs`
+        : rawText
+          ? `VELLORA TEXT READER: raw Blitz text (B0) is ${div.per_layer.B0.status}, vellora's read_text_runs (L0) differs (padding compensation / dropped block_offset / walk accumulation)`
+          : "RAW BLITZ/PARLEY TEXT as read by vellora's walk (L0); no normalize pass involved (raw Blitz text not separated in this run)";
+  } else if (layer === "P") {
+    text =
+      "PAGINATION: every pre-pagination layer is within tolerance; pagination's placement moved it";
   } else if (layer) {
     text = `NORMALIZE PASS \`${layer}\`: every earlier layer is within tolerance`;
   } else {
@@ -257,11 +283,11 @@ function regressionSection(result) {
       const lb = x.largest_box;
       const lt = x.largest_text;
       const own = (item) => regressedText(item.regressed_by.filter((w) => w.layer === l.name));
-      const blitz = l.kind === "blitz" || l.kind === "blitz-source";
+      const noText = !layerHasText(l);
       return [
         l.name,
         `${x.box_events} (${k.worsened ?? 0}/${k.overshoot ?? 0}/${k.missing ?? 0})`,
-        blitz ? "n/a" : x.text_events,
+        noText ? "n/a" : x.text_events,
         x.first_box ? `${eventLabel(x.first_box)} (${own(x.first_box)})` : "—",
         lb ? `${eventLabel(lb)} ${lb.kind} ${lb.coord} ${num(lb.from)}→${num(lb.to)}` : "—",
         x.first_text ? `${eventLabel(x.first_text)} (${own(x.first_text)})` : "—",
@@ -366,6 +392,84 @@ function regressedNames(e, kind) {
     .join("; ")}`;
 }
 
+const PAGINATION_ROWS = 60;
+
+/** Layer P: one row per fragment placement of `paginate` (schema-2 dumps). */
+function paginationSection(result) {
+  const pg = result.pagination;
+  if (!pg) return "";
+  let md = "## Pagination (layer P)\n\n";
+  md +=
+    "Every fragment `paginate` placed, in placement order (CSS px; flow = Blitz's continuous flow of the final layer, page-local = content-box origin before the @page margin). `flow gap` = this fragment's flow top − the previous fragment's flow bottom on the same page (what the continuous flow has between them); `gap used` = the previous fragment's trailing gap pagination applied, with its source (`margin-bottom` = Blitz margin of the fragment root, `margin-bottom+wrapper` / `wrapper-margin-bottom` = plus / only a flattened wrapper's margin, `flow-gap` = next top − bottom when the gap was 0, `group-gap`, `none`) and why it differs (`page-start`, `dropped-to-fit`). `offset` = placed top − flow top; `drift` = offset relative to the page's start (page 1: the flow origin), i.e. what layer P adds to the final layer.\n\n";
+  const rows = pg.placements;
+  const bad = rows.filter(
+    (r) => r.flow_gap !== null && Math.abs(r.gap_applied - r.flow_gap) > result.config.tolerance,
+  );
+  const maxDrift = rows.reduce((m, r) => (Math.abs(r.drift) > Math.abs(m) ? r.drift : m), 0);
+  md += `- pages: ${pg.page_count}; placements: ${rows.length}; keep-together groups split: ${pg.groups_split}; final-layer boxes pagination never places (n/a in P): ${pg.final_boxes_not_placed}\n`;
+  md += `- placements whose gap used differs from the flow gap by > ${result.config.tolerance} px: ${bad.length} (Σ gap used − flow gap ${num(bad.reduce((s, r) => s + r.gap_applied - r.flow_gap, 0))} px); largest |drift|: ${num(maxDrift)} px\n\n`;
+  md += table(
+    [
+      "#",
+      "page",
+      "kind",
+      "fragment root",
+      "flow top–bottom",
+      "flow gap",
+      "gap used (source)",
+      "note",
+      "placed top",
+      "offset",
+      "drift",
+    ],
+    rows
+      .slice(0, PAGINATION_ROWS)
+      .map((r) => [
+        r.index,
+        r.page + 1,
+        r.kind,
+        shortPath(r.path),
+        `${num(r.top)}–${num(r.bottom)}`,
+        r.flow_gap === null ? "" : num(r.flow_gap),
+        `${num(r.gap_applied)} (${r.pending_gap_source}${r.pending_gap !== r.gap_applied ? `, pending ${num(r.pending_gap)}` : ""})`,
+        [
+          r.gap_note,
+          r.new_page ? `new page: ${r.new_page}` : "",
+          r.header ? `+thead ${num(r.header.height)}` : "",
+        ]
+          .filter(Boolean)
+          .join("; "),
+        num(r.placed_top),
+        num(r.offset_vs_flow),
+        num(r.drift),
+      ]),
+  );
+  if (rows.length > PAGINATION_ROWS) {
+    md += `\n(first ${PAGINATION_ROWS} of ${rows.length} placements; all in diff.json \`pagination.placements\`)\n`;
+  }
+  return `${md}\n`;
+}
+
+/** Raw Blitz text no L0 run pairs with (text Blitz laid out that vellora's walk never reads). */
+function unreadTextSection(result) {
+  const u = result.blitz_text_unread_by_walk;
+  if (!u || !Object.keys(u).length) return "";
+  let md = "## Raw Blitz text vellora's walk never reads\n\n";
+  md +=
+    "Runs of the raw Blitz text (`blitz_runs`) that no L0 run pairs with (same owner, same text, same occurrence): typically an anonymous block's text when html_normalize inserted no wrapper, or a pseudo-element's generated text. Such text never reaches the PDF.\n\n";
+  for (const [layer, x] of Object.entries(u)) {
+    md += `- ${layer}: ${x.count}${
+      x.count
+        ? ` — ${x.sample
+            .slice(0, 6)
+            .map((r) => `"${esc(r.text.trim().slice(0, 30))}" in ${shortPath(r.inline_root)}`)
+            .join("; ")}`
+        : ""
+    }\n`;
+  }
+  return `${md}\n`;
+}
+
 export function renderMarkdown({ fixture, label, env, parity, result }) {
   let md = `# Layout diff — ${fixture} (${label})\n\n> ${SCOPE_NOTE}\n\n`;
   md += checksBanner(result);
@@ -389,11 +493,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
   md += table(
     ["layer", "kind", "meaning"],
     [
-      ...result.layers.map((l) => [
-        l.name,
-        l.kind,
-        LAYER_DOCS[l.name] ?? "after this `layout_normalize` pass",
-      ]),
+      ...result.layers.map((l) => [l.name, l.kind, layerDoc(l)]),
       ...(result.unrounded_layers ?? ["B0u"]).map((n) => [n, "blitz-unrounded", LAYER_DOCS[n]]),
     ],
   );
@@ -430,6 +530,15 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
     result,
     "None: L0 never worsened, overshot or lost a box event vs B0 by more than tolerance.",
   );
+  const b0 = result.layers.find((l) => l.name === "B0");
+  if (b0 && layerHasText(b0)) {
+    md += divergenceSection(
+      "First text run vellora's reader (L0) regressed vs raw Blitz text (B0)",
+      result.headline.first_walk_regression?.text,
+      result,
+      "None: L0 never worsened or overshot a text run vs raw Blitz text by more than tolerance.",
+    );
+  }
   if (result.headline.first_html_normalize_regression) {
     md += divergenceSection(
       "First box event html_normalize regressed (B0 vs N0)",
@@ -437,7 +546,31 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
       result,
       "None: B0 never worsened, overshot or lost a box event vs N0 by more than tolerance.",
     );
+    if (b0 && layerHasText(b0)) {
+      md += divergenceSection(
+        "First text run html_normalize regressed (B0 vs N0)",
+        result.headline.first_html_normalize_regression.text,
+        result,
+        "None: B0 text never worsened or overshot vs N0 text by more than tolerance.",
+      );
+    }
   }
+  if (result.headline.first_pagination_regression) {
+    md += divergenceSection(
+      `First box event pagination (P) regressed vs ${result.final_layer}`,
+      result.headline.first_pagination_regression.box,
+      result,
+      "None: pagination never moved a placed box further from Chromium by more than tolerance.",
+    );
+    md += divergenceSection(
+      `First text run pagination (P) regressed vs ${result.final_layer}`,
+      result.headline.first_pagination_regression.text,
+      result,
+      "None: pagination never moved or lost a text run beyond tolerance.",
+    );
+  }
+  md += paginationSection(result);
+  md += unreadTextSection(result);
   md += missingSection(result);
   md += regressionSection(result);
   md += "## First divergence per layer\n\n";
@@ -451,7 +584,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
       const t = f.text;
       const bv = b?.per_layer[l.name];
       const tv = t?.per_layer[l.name];
-      const blitz = l.kind === "blitz" || l.kind === "blitz-source";
+      const noText = !layerHasText(l);
       return [
         l.name,
         b ? eventLabel(b) : "—",
@@ -463,7 +596,7 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
                 .map(num)
                 .join(", ")
             : "",
-        t ? eventLabel(t) : blitz ? "n/a (no text in Blitz trees)" : "—",
+        t ? eventLabel(t) : noText ? "n/a (no text in this Blitz tree)" : "—",
         tv ? `${num(tv.dx)}, ${num(tv.dy)}` : "",
       ];
     }),
@@ -484,11 +617,11 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
     ],
     result.layer_stats.map((s) => {
       const e = s.effect_vs_previous;
-      const blitz = s.kind === "blitz" || s.kind === "blitz-source";
+      const layer = result.layers.find((l) => l.name === s.layer) ?? s;
       return [
         s.layer,
         s.box_events_diverged,
-        blitz ? "n/a" : s.text_events_diverged,
+        layerHasText(layer) ? s.text_events_diverged : "n/a",
         num(s.mean_abs_box_error),
         effectText(e, "box"),
         regressedNames(e, "box"),
@@ -632,8 +765,9 @@ export function renderMarkdown({ fixture, label, env, parity, result }) {
     "- Local macOS Chrome results are INDICATIVE; the authoritative run is the pinned Chrome for Testing on Linux CI (see fidelity/layout-diff/README.md).\n";
   md +=
     "- Text dy compares BASELINES when Chromium's ascent for the face/size was measured (probe page, zero-size inline-block on the baseline); otherwise vellora's text top (baseline − Parley ascent) vs Chromium's text-box top (`dy basis` column).\n";
-  md +=
-    "- L0 text positions already include `read_text_runs`' inline padding-right compensation, so 'raw Parley' text is not separated from vellora's reader.\n";
+  md += result.layers.some((l) => l.name === "B0" && layerHasText(l))
+    ? "- Raw Blitz text (N0/B0) is placed as Blitz's painter places it, accumulating `final_layout` down Blitz's LAYOUT tree (`layout_children`), not its paint tree: out-of-flow boxes are positioned under their layout parent, the same B0 limitation as boxes.\n"
+    : "- L0 text positions already include `read_text_runs`' inline padding-right compensation, and this dump has no raw Blitz text (schema 1), so 'raw Parley' text is not separated from vellora's reader.\n";
   md +=
     "- A layer that moves a box TOWARDS Chromium is an improvement here, whatever its cause; for 'what did this code change do', compare two builds with compare.mjs.\n";
   return md;
@@ -724,6 +858,7 @@ export function renderSummaryMarkdown({ label, env, rows }) {
       "text runs regressed, by layer",
       "first box a pass regressed",
       "first text run a pass regressed",
+      "first box / text pagination (P) regressed",
     ],
     rows.map((r) => {
       const reg = r.result.regressions_by_layer ?? {};
@@ -742,7 +877,19 @@ export function renderSummaryMarkdown({ label, env, rows }) {
         e
           ? `${eventLabel(e)} (${regressedText(e.regressed_by.filter((w) => passes.includes(w.layer)))})`
           : "none";
-      return [r.fixture, fmt("box"), fmt("text"), labelOf(pr.box), labelOf(pr.text)];
+      const pg = r.result.headline.first_pagination_regression;
+      const pLabel = (e) =>
+        e
+          ? `${eventLabel(e)} (${regressedText(e.regressed_by.filter((w) => w.layer === "P"))})`
+          : "none";
+      return [
+        r.fixture,
+        fmt("box"),
+        fmt("text"),
+        labelOf(pr.box),
+        labelOf(pr.text),
+        pg ? `${pLabel(pg.box)} / ${pLabel(pg.text)}` : "n/a (no pagination trace)",
+      ];
     }),
   );
   return md;

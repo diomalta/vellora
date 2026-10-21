@@ -2,13 +2,17 @@
 
 Aligns Chromium's layout of a document with **every stage of vellora's layout** by source-DOM path
 and reports where vellora diverges and **which layer made each item worse**: raw Blitz (on the
-source HTML), vellora's `html_normalize` pre-pass, vellora's box walk, or one named
-`layout_normalize` pass. Phase A instrumentation only: it measures, it does not change rendering.
+source HTML), vellora's `html_normalize` pre-pass, vellora's box walk and text reader, one named
+`layout_normalize` pass, or pagination. Instrumentation only: it measures, it does not change
+rendering.
 
 > **Scope (read first).** Chromium is laid out as ONE continuous flow (no fragmentation) at the
-> same viewport width vellora hands Blitz. That is comparable **only to vellora's pre-pagination
-> layers**. Pagination (page breaks, repeated `<thead>`, page-local offsets, margin boxes) is out
-> of scope of `run.mjs`; `pdf-probe.mjs` is the separate paginated probe.
+> same viewport width vellora hands Blitz. That is comparable to vellora's pre-pagination layers;
+> the headline and `final_layer` are the last of those. Layer `P` (schema-2 dumps) adds
+> pagination's **in-page drift** on top of the final layer (page 1 relative to the flow origin,
+> later pages relative to their first fragment), so a gap pagination gets wrong is judged against
+> Chromium's continuous flow. Page breaks themselves, repeated `<thead>` copies and margin boxes
+> are not compared; `pdf-probe.mjs` is the separate PDF-level probe.
 
 ## How vellora lays out (CONFIRMED from source, 2026-10-21, pin `2003ba5`)
 
@@ -38,9 +42,10 @@ source HTML), vellora's `html_normalize` pre-pass, vellora's box walk, or one na
   1. `vertical_margin_collapse` 2. `collapsed_table_medium_border_insets`
   3. `painted_table_cell_text_baselines` 4. `fixed_table_widths` 5. `table_percent_widths`
   6. `auto_table_compact_columns` 7. `collapsed_table_medium_border_insets_x` (runs LAST).
-- Pagination re-stacks fragments instead of keeping flow y: `cursor += page_gap`
-  (`pagination.rs:234`) where the gap is the top-level box's Blitz `margin_bottom`
-  (`:419`) or, when that is 0, `next.top − bottom` (`:490`).
+- Pagination re-stacks fragments instead of keeping flow y: `cursor += page_gap` where the gap is
+  the previous fragment's trailing gap — its root's Blitz `margin_bottom`, plus a flattened
+  wrapper's own `margin_bottom` on its last child, or, when that is 0, `next.top − bottom`
+  (`apply_inter_fragment_gaps`). The `P` layer records which rule fired for every placement.
 
 ## Layers (attribution chain)
 
@@ -50,11 +55,28 @@ source HTML), vellora's `html_normalize` pre-pass, vellora's box walk, or one na
 | `N0u` | Same N0 tree from `unrounded_layout`. Diagnostic only (flags "rounding" when N0 diverges but N0u does not). |
 | `B0` | Blitz's own layout tree of **html_normalize's output** (what the render path lays out). With N0 present, **N0 → B0 is html_normalize's step**. Without N0, B0 is raw Blitz only if html_normalize changed nothing. |
 | `B0u` | Same B0 tree from `unrounded_layout`. Diagnostic only. |
-| `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation). |
-| 7 pass layers | `LaidOutBox` list after each pass above, named after it. The last one is the final pre-pagination layer. |
+| `L0` | vellora's walk output before any pass. Text = Parley glyph runs as read by `read_text_runs` (incl. its inline padding-right compensation; Blitz's `block_offset` dropped). |
+| 7 pass layers | `LaidOutBox` list after each pass above, named after it. The last one is the final pre-pagination layer (`final_layer`, the headline's layer). |
+| `P` | Pagination (schema-2 dumps): the final layer with every box `paginate` placed moved by its fragment's in-page drift (`placed_top − top`, relative to the flow origin on page 1 and to the page's first fragment on later pages; a repeated `<thead>` takes its first injection). Boxes pagination never places (html/body/table/tbody, flattened wrappers, fragments with nothing to paint) paint nothing: **n/a** in P, not lost; text runs on them would be lost. |
+
+**Text in N0/B0 (schema-2 dumps).** The dump also carries `blitz_runs`: every Parley glyph run of
+every inline root of the Blitz tree (anonymous blocks and `::before`/`::after` included), placed the
+way Blitz's own painter places it — content box of the layout-tree box (`final_layout` border +
+padding) + the root's `block_offset` + the run's raw `offset()`/`baseline()` (blitz-paint 0.3.0-beta.4
+`render_element` → `draw_inline_layout` → `stroke_text`, read 2026-10-21) — i.e. BEFORE any vellora
+reader compensation. So N0 and B0 carry text too, the N0 → B0 text step is html_normalize's and the
+**B0 → L0 text step is vellora's reader** (inline padding-right compensation, dropped
+`block_offset`, DOM-parent vs layout-parent accumulation). L0 runs are paired with raw runs by
+(owner, normalized text, occurrence); owners fold html_normalize wrappers AND Blitz anonymous
+blocks into their parent element, so N0's anonymous-block text pairs with L0's wrapper text. An
+L0 run with no raw counterpart is **n/a** in that layer (not lost); raw runs no L0 run pairs with
+are listed as "Raw Blitz text vellora's walk never reads" (e.g. pseudo-element generated text).
+Limit: the accumulation follows Blitz's LAYOUT tree, not its paint tree, so out-of-flow text sits
+under its layout parent (the same limitation as B0 boxes).
 
 N0 is optional: a `--dump-repo` whose `layout_dump` predates `--no-html-normalize` runs without it,
-which is reported as the not-run check `source_html_layer` (never silently).
+which is reported as the not-run check `source_html_layer` (never silently). A schema-1 dump (no
+`blitz_runs`, no `pagination`) loads unchanged: N0/B0 box-only, no P layer.
 
 ## Attribution: which layer made it worse (and which layer is merely first)
 
@@ -124,10 +146,22 @@ prefix every attribution with "INVALID — input parity failed").
 
 ## The Rust hook (crates/vellora-core)
 
+- Footprint (2026-10-21, `phaseb/text-hook`): `blitz_engine.rs` keeps only the Blitz-touching
+  capture point — the `LayoutObserver` trait (no Blitz type crosses it), `BlitzSnapshot::capture`
+  (one read of the laid-out tree into the owned, Blitz-free `layout_dump::RawTree`: nodes, layout,
+  raw Parley runs via the same `take_run_glyphs` helper `read_text_runs` uses): the file is +340
+  lines over its pre-hook size (1181 → 1521) instead of +729 (→ 1910); the capture section itself
+  is ~185 lines. Keying, layers, run alignment, the pagination section and the JSON writer
+  (`layout_dump::json`, schema `vellora-layout-dump/2`) live in `src/layout_dump/`, which imports
+  no Blitz type. The pagination trace is `pagination::paginate_traced(doc, page, Some(&mut trace))`;
+  `paginate` is `paginate_traced(.., None)`, so the render path never builds one.
 - `#[doc(hidden)] vellora_core::debug_layout_dump(html, opts)` runs **the same**
   `validate_and_lay_out` as `render` with a `LayoutObserver`; `render` passes `NoObserver`
-  (no-op default methods, monomorphized away). The observer snapshots B0/B0u, L0 and every pass
-  layer, plus per-run metadata (owner + brush node, Parley run/line metrics, bundled face file).
+  (no-op default methods, monomorphized away). The observer snapshots B0/B0u and its raw text
+  runs, L0 and every pass layer, plus per-run metadata (owner + brush node, Parley run/line
+  metrics, bundled face file); then `paginate_traced` records every fragment placement (`P`:
+  fragment boxes, flow top/bottom, trailing gap and the rule that set it, page, cursor, gap
+  applied and why, injected `<thead>`, placed top).
 - `#[doc(hidden)] vellora_core::debug_layout_dump_source_html(html, opts)` is the same with
   `LayoutObserver::skip_html_normalize` → `true` (`DumpCapture::source_html`); the default, and
   `NoObserver`, return `false`, so the render path always normalizes. Its `blitz_tree` is N0.
@@ -141,6 +175,11 @@ prefix every attribution with "INVALID — input parity failed").
   [--no-html-normalize]` writes the dump as JSON (hand-rolled writer: no serde added to the
   shipped crate). `run.mjs` calls it twice per fixture (`vellora-dump.json`,
   `vellora-dump-source.json`).
+- **Determinism of the schema-2 refactor (CONFIRMED 2026-10-21):** all 20 fixture/variant PDFs
+  (`fidelity/baselines/beta4/determinism/render-sha-ab.mjs`, production `renderPdf` → addon, plain +
+  PDF/A-2b) are byte-identical to `feat/blitz-beta4-port` (dd2c22f), and every schema-1 field of the
+  dumps of all 9 fixtures (normal + source) is identical, i.e. the refactor moved code without
+  changing what it captures.
 - **Determinism (CONFIRMED):** sha256 of the four fixture PDFs rendered through the real addon
   (`pdf-sha.mjs`, production `renderPdf` path) are identical before the hook, after the hook and
   after the N0 change: invoice `b9df68f2…`, receipt `a1a1787c…`, boleto `a46be81b…`, notification
@@ -175,6 +214,45 @@ report.html}` and `summary-<label>.{md,json}`; `compare-<a>-vs-<b>.{md,json}`; `
 per fixture/label. Every file records date (`date -u`), OS/CPU, node, rustc, Chrome, crate versions
 (from Cargo.lock), puppeteer-core, git commit/dirty and the exact command. A dated copy of the
 2026-10-21 run is committed under `snapshots/2026-10-21/`.
+
+## Text probe (`text-probe.mjs`): what text, with which spaces, at which x
+
+```sh
+node fidelity/layout-diff/text-probe.mjs [--probes crates/vellora-core/tests/fixtures/text-probes] \
+  [--out fidelity/results/text-probe/text-probe.json] [--no-build]
+```
+
+For each probe page (the exact bytes the Rust tests `tests/text_probes.rs` and
+`pipeline.rs::mixed_weight_inline_siblings_advance_by_the_first_run_width` render) it records what
+CHROME renders — every rendered character with x/width (Range rects; collapsed whitespace has a
+zero-width rect and is excluded; a rendered whitespace character counts as one space), the
+measured baseline, the visual lines, `pdftotext -raw` of `page.pdf()` — and what vellora lays out
+and emits for the same bytes (L0/final runs, raw Blitz runs, visual lines, `pdftotext -raw` of the
+production render), plus `agreement`: lines equal, pdftotext equal, and per vellora run the x of
+the same characters in Chrome (`dx`, `dright`). Input difference, recorded in the output: Chrome
+gets `font-family: sans-serif` rewritten to "Liberation Sans" (vellora maps the generic to its
+bundled face) and the bundled `@font-face` block; the viewport is vellora's Blitz viewport.
+
+**2026-10-21 result (Chrome 155.0.8059.85, local macOS, INDICATIVE;
+`snapshots/2026-10-21/text-probe/`).** The Phase A contradiction "beta.4 preserves a
+browser-correct space" vs "beta.4 LOSES spaces" is settled by Chrome: on all 3 probes (mixed-weight
+spans, inline padding, 11 whitespace cases: a space opening or closing a span, between elements,
+collapsed doubles and newlines, `&nbsp;`, a padded cell, right-aligned lines, a wrapped line)
+vellora's visual lines equal Chrome's and both PDFs extract to the same `pdftotext` text. Chrome
+renders "Acme Widgets Comércio LTDA — CNPJ …" with the space (x 187.703, dash at 191.031); vellora
+at beta.4 has it at 187.70 / 191.03; the pin dropped it and the old cargo test encoded that. The
+probe found one READER defect instead (`text-probe.before-fix.json`): text styled by the padded
+inline root itself (`<td style="padding:4px">Alpha <b>Beta</b>`) made `read_text_runs` add the
+ROOT's padding-right after it — "Beta" +3.994 px, and on right-aligned lines the preceding run
+−3.99 / −9.99 px. Raw Blitz text (B0) is at Chrome's x there: the step is vellora's. Fixed in
+`blitz_engine::run_padding_right_px` (only an inline element's padding advances the next run);
+after the fix every run of every probe is within 0.022 px (x) / 0.029 px (right edge) of Chrome
+(`text-probe.json`), and no corpus fixture changes (20/20 PDFs and all dumps identical,
+`snapshots/2026-10-21/determinism/s1b-reader-fix-vs-base.json`). Gate (`run-all.mjs --gate`,
+run `20261021T073259Z` at `1d13bd7`, `snapshots/2026-10-21/gate-s1b/`): 193/193 verdict rows
+with no status or value change vs the beta.4 baseline run `20261021T054809Z`; WPT 0 regressions,
+13 improvements (pass 2729 → 2742, clean 2213 → 2217: `css-text/shaping/*` — e.g.
+`ع<span>ع</span>ع` in a 10 px-padded block — and `word-break-break-all-inline-00{2,3,5,6}`).
 
 ## Chromium side and input parity
 
@@ -217,7 +295,7 @@ per fixture/label. Every file records date (`date -u`), OS/CPU, node, rustc, Chr
 
 ## Self-tests (`node --test`, not picked up by the root vitest include)
 
-42 tests (`npm --prefix fidelity run test:layout-diff`). Per fidelity/README.md's trust rule, every
+56 tests (`npm --prefix fidelity run test:layout-diff`). Per fidelity/README.md's trust rule, every
 attribution path is shown to catch a planted defect:
 
 - synthetic trees: pass-only shift → that pass; raw Blitz shift → B0/N0; walk-only shift → L0;
@@ -237,11 +315,29 @@ attribution path is shown to catch a planted defect:
   text captured, N0 `::blitz-anon(j)` keys;
 - checks: viewport mismatch and font-injection loss invalidate attribution;
 - path keys vs CDP snapshot structure, `FONT_ALIASES` drift guard, pdftotext parsing, word
-  alignment and build-to-build attribution.
+  alignment, PDF word → pagination placement (`fragmentAt`) and build-to-build attribution;
+- schema 2 (`test/schema2.test.mjs`, synthetic): raw Blitz text shift → B0 (not the reader);
+  reader-only text shift → L0 vs raw B0 (`first_walk_regression.text`); pagination gap error →
+  `P` with the pre-pagination headline untouched; later pages re-anchored at their first fragment
+  and a `<thead>` placed by its first injection; unaligned raw run → n/a (not lost); unplaced
+  structural boxes → n/a in P (not lost); anonymous-block raw text folds into its parent's owner;
+  raw text the walk never reads is listed; N0 text is the first text layer; schema-1 dumps
+  unchanged;
+- schema 2, real (`test/real-schema2.test.mjs`, notification and the probe at beta.4, 2026-10-21):
+  P reproduces the Phase A signature mechanism from the committed tool (gap used 14.667 px
+  `margin-bottom` vs flow gap 43 px → drift −34.667 px, "Atenciosamente," regressed by P), the
+  headline keeps its pre-pagination meaning, every L0 run has a raw counterpart; the probe's
+  `::before` generated text is raw Blitz text the walk never reads.
 
-Rust (`cargo test -p vellora-core --test layout_dump`, 6 tests): final layer == render's boxes,
+Rust (`cargo test -p vellora-core --test layout_dump`, 13 tests): final layer == render's boxes,
 layer names/order, both dump variants leave PDF bytes unchanged, keys through wrappers, source
-dump keys `::blitz-anon(j)`, hoisted-wrapper detection.
+dump keys `::blitz-anon(j)`, hoisted-wrapper detection; raw Blitz runs cover every L0 run and
+equal it where no compensation applies; L0 = raw + 24 px after a padded span, raw − 24 px on a
+right-aligned line, raw − `block_offset` in a `vertical-align: middle` cell; anonymous-block text
+only in the source dump's raw runs; the pagination trace's arithmetic and every placed (and
+`<thead>`-injected) text run match `paginate()`'s pages; gap-source characterization (a flattened
+wrapper's padding-top is dropped: −40 px); `paginate_traced` emits the same PDF as `paginate`;
+JSON schema 2 fields.
 
 ## CI design (DESIGN TARGET; not run in CI yet)
 
@@ -314,6 +410,25 @@ re-run with this tool version (`compare-pin-vs-beta4.md`):
   `body>div:nth-child(5)` changes 14.67 px → 0 at beta.4, and pagination re-stacks fragments from
   top-level margins (HYPOTHESIS for the mechanism; next measurement: dump pagination fragments
   `top/bottom/trailing_gap/cursor` at pin vs beta.4).
+  **Measured with the committed P layer (2026-10-21, `phaseb/text-hook`, beta.4, run
+  `run.mjs --label s1b`; CONFIRMED):** the signature's first line (`body>div:nth-child(6)>p:nth-child(1)`)
+  gets gap 14.667 px (`margin-bottom` of the previous paragraph) where the flow has 43 px, drift
+  −34.667 px; "Atenciosamente," is +6.5 px in the final pre-pagination layer and −28.17 px in P,
+  regressed by P — the scratch probe's table reproduced from the tool
+  (`test/real-schema2.test.mjs`).
+
+**Pagination and raw-text findings of the P / raw-text layers (2026-10-21, beta.4, same run;
+CONFIRMED in the dumps, handed to the pagination / walk owners):**
+- boleto-febraban: the recibo wrapper `body>div:nth-child(1)` has a fixed height (175 mm); pagination
+  flattens it into its children and drops the box's own height (flow gap 311 px, gap used 9.33 px),
+  so the corte line and the whole ficha are lifted 304.89 px (BOL-G6's ficha position).
+- Its right-aligned values ("1234 / 246813-1", nosso número, vencimento, valor) are raw Blitz
+  dx +5.3 px and move to +62.3 px at `fixed_table_widths` (L0 = raw Blitz text): past the page
+  edge, so poppler's pdftotext drops their last glyphs (BOL-X1 13 → 11; pypdf/pdfminer 16/16).
+- Text vellora's reader moves away from raw Blitz (B0 → L0): dropped `block_offset` of vertically
+  aligned cells (boleto-febraban "BANCO EXEMPLO" −21.52 px, linha digitável −10.77, "104-0" −1.43;
+  danfe product headers −4.03 px), and DOM-parent accumulation of inline-block text (danfe
+  duplicatas: L0 dx −4 / dy −11 px vs raw Blitz).
 
 **Injected-defect re-check (2026-10-21, `snapshots/2026-10-21/injected-defects-recheck.json`):**
 the validator's in-pipeline injections re-created as a temporary env-gated patch in a scratch
@@ -324,6 +439,10 @@ font loss also via system glyphs on sans-serif receipt); the `::before` probe bo
 and its generated text is captured.
 
 ## Beta.4 port of the hook
+
+SUPERSEDED: the hook now lives on `phaseb/text-hook` at Blitz 0.3.0-beta.4 natively (schema 2);
+the patch below applies only to the pre-refactor `blitz_engine.rs` and is kept as the record of the
+Phase A port.
 
 `patches/blitz-0.3.0-beta.4-dump-hook-port.patch` (generated by
 `patches/port-dump-hook-to-blitz-beta4.py`, 16 exact-match edits, blitz_engine.rs only) applies on
@@ -350,13 +469,18 @@ accessors (they panic for text/comment nodes, so the B0 walk skips nodes without
   `footer:nth-child(7)` LOST from B0 on), so the footer and its text are compared only in N0. No
   re-keying of B0 is attempted: guessing which re-parsed node "is" the source footer would hide
   the defect the check exists to expose.
-- N0 is a Blitz tree only (boxes, no text): text attribution starts at L0, so html_normalize's
-  effect on TEXT is not separated from the walk (L0 runs come from html_normalize's output).
+- With a schema-1 dump only: N0/B0 are box-only and text attribution starts at L0 (schema-2 dumps
+  carry raw Blitz text; see Layers).
 - A layer that moves an item towards Chromium is never reported as a regression (by definition);
   use `compare.mjs` for build-vs-build questions.
-- Pre-pagination only; the paginated probe aligns PDF words by text occurrence, not by box.
+- P compares pagination's in-page drift only: where pages break, repeated `<thead>` copies and margin
+  boxes are not judged, and a later page is anchored at its first fragment, so an error in THAT
+  fragment's own placement (e.g. a margin a forced break should keep) is not measured; pdf-probe
+  aligns PDF words by text occurrence (and, with a schema-2 dump, maps each word to its placement
+  and splits its dy into pagination drift + the rest).
 - No Linux / Chrome for Testing baseline yet (see CI design). macOS numbers are indicative.
-- L0 text includes vellora's inline padding-right compensation (not separable from raw Parley).
+- Schema-1 dumps only: L0 text includes vellora's inline padding-right compensation, not separable
+  from raw Parley (schema 2 separates it: B0 → L0).
 - Text alignment is text-based; identical repeated strings in one owner rely on order.
 - Media type differs by design (Blitz screen vs Chromium print); inert for these fixtures only.
 - vellora's walk drops pseudo-element boxes and their generated text (CONFIRMED on a probe, no
