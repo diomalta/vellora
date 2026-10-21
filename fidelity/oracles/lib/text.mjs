@@ -70,9 +70,11 @@ function summarizeComparison(comparison) {
     missingCount: comparison.missing.length,
     extraCount: comparison.extra.length,
     reorderedCount: comparison.reordered.length,
+    scatteredSplitCount: comparison.scatteredSplits.length,
     missing: head(comparison.missing),
     extra: head(comparison.extra),
     reordered: head(comparison.reordered),
+    scatteredSplits: head(comparison.scatteredSplits),
   };
 }
 
@@ -80,8 +82,10 @@ function summarizeComparison(comparison) {
  * @param pdfPath subject PDF; @param controlPdfPath Chrome's PDF of the same HTML (optional but
  * strongly recommended); @param expectedText Chrome innerText (print media).
  * Verdict per extractor: "fail" when the subject loses content the control keeps (subject-only
- * missing tokens) or fails the copy-paste round trip where the control passes; "warn" for
- * subject-only extra/reordered tokens; "pass" otherwise.
+ * missing tokens, attributed on unaligned candidates BEFORE pairing; see tokens.mjs
+ * againstControl) or fails the copy-paste round trip where the control passes; "warn" for
+ * subject-only extra / reordered / scattered-split tokens and for control-generated content
+ * (e.g. @page margin boxes) absent from the subject; "pass" otherwise.
  */
 export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
   const expectedTokens = tokenize(expectedText);
@@ -128,16 +132,15 @@ export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
       copyPasteSubjectOnly.ligatureWords.length > 0;
     // Tokens Chrome's PDF has beyond innerText (paginator-generated content such as @page
     // margin boxes) that the subject does not produce: invisible to the innerText comparison,
-    // so reported separately.
-    const generatedAbsent = controlComparison
-      ? multisetSplit(controlComparison.extra, subjectComparison.extra).onlyA
-      : [];
+    // so reported separately (see againstControl).
+    const generatedAbsent = attribution.generatedAbsent;
     let status = "pass";
     if (attribution.missing.subjectOnly.length > 0 || copyPasteFail) {
       status = "fail";
     } else if (
       attribution.extra.subjectOnly.length > 0 ||
       attribution.reordered.subjectOnly.length > 0 ||
+      attribution.scatteredSplits.subjectOnly.length > 0 ||
       generatedAbsent.length > 0
     ) {
       status = "warn";
@@ -155,6 +158,8 @@ export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
         extraCount: attribution.extra.subjectOnly.length,
         reordered: head(attribution.reordered.subjectOnly),
         reorderedCount: attribution.reordered.subjectOnly.length,
+        scatteredSplits: head(attribution.scatteredSplits.subjectOnly),
+        scatteredSplitCount: attribution.scatteredSplits.subjectOnly.length,
       },
       controlGeneratedAbsentFromSubject: {
         count: generatedAbsent.length,
