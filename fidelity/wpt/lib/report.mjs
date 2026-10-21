@@ -427,16 +427,20 @@ export function summaryMarkdown(
  * depend on (a ratchet refuses different ones), and for every `pass` with suspect flags the
  * comma-joined flags, so a later run can tell a regression of a clean pass from one of a pass that
  * was never verified. `inkCheck` records whether Chrome-derived flags are included.
+ * `unsupportedFeatures` names the strict-gate feature of every `unsupported` test (its
+ * `cause.feature`), so the fidelity gate can match a new rejection with a declaredRejections entry.
  */
 export function buildExpectations({ results, env, suites, command, config, inkCheck }) {
   const out = {};
   const suspect = {};
+  const unsupported = {};
   for (const r of [...results].sort((a, b) => (a.test < b.test ? -1 : 1))) {
     out[r.test] = r.outcome;
     if (r.outcome === "pass") {
       const flags = suspectFlags(r);
       if (flags.length) suspect[r.test] = flags.join(",");
     }
+    if (r.outcome === "unsupported") unsupported[r.test] = unsupportedFeature(r);
   }
   return {
     schema: 2,
@@ -452,7 +456,13 @@ export function buildExpectations({ results, env, suites, command, config, inkCh
     inkCheck,
     results: out,
     suspectPasses: suspect,
+    unsupportedFeatures: unsupported,
   };
+}
+
+/** The strict-gate feature id of an unsupported result (`cause.feature`), or "unknown". */
+export function unsupportedFeature(r) {
+  return r.cause?.feature ?? r.feature ?? "unknown";
 }
 
 /**

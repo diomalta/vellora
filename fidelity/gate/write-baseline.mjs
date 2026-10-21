@@ -18,8 +18,9 @@
 //     [--accept <accepted.json>] [--root fidelity/baselines] [--note <text>] [--force]
 //     [--attach <file>[=<name>]]...   extra evidence copied to attachments/ (hashed in files)
 //
-// --accept: the acceptedRegressions the run's gate used; copied verbatim into the manifest (each
-// entry: key|keyPrefix, reason, evidence). Refuses to overwrite an existing directory without
+// --accept: the acceptedRegressions and declaredRejections the run's gate used; copied verbatim
+// into the manifest (acceptance: key|keyPrefix, reason, evidence; declaration: feature, reason,
+// evidence, tests|keys|keyPrefix). Refuses to overwrite an existing directory without
 // --force, and refuses a run whose gate verdict is FAIL/REFUSED unless --force (and says so in
 // the manifest).
 import { spawnSync } from "node:child_process";
@@ -36,7 +37,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portable } from "../combine/env.mjs";
 import { verdictIndex } from "./metrics.mjs";
-import { readAcceptances } from "./run.mjs";
+import { readAcceptances, readDeclarations } from "./run.mjs";
 import { BASELINE_SCHEMA, loadRunDir } from "./snapshot.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -237,6 +238,7 @@ export function writeBaseline({
     totals: s.totals ?? null,
     gate: gate && { ...gate, writtenDespiteVerdict: forced && gate.verdict !== "PASS" },
     acceptedRegressions: readAcceptances(acceptFile),
+    declaredRejections: readDeclarations(acceptFile),
     extraction: { command, date: new Date().toISOString() },
     files,
   };

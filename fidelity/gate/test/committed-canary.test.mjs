@@ -313,7 +313,24 @@ test("port/05-walk-rewrite passes vs port/04-block-offset only with its accepted
   }
 });
 
-test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions (v1 pdf-probe)", () => {
+// The 10 WPT tests step 06 moved fail -> unsupported with its new strict-gate rejection
+// css:page-varying-width (cause.feature in the step-06 run's wpt/results.json, run copy
+// run-all-06-page-rules-20261021T153752Z; listed in baselines/port/README.md). The rule of its
+// time compared them as non-gating "changed"; since D5 they gate unless declared.
+const STEP06_REJECTED = [
+  "css/css-page/layers-003-print.html",
+  "css/css-page/layers-004-print.html",
+  "css/css-page/page-margin-007-print.html",
+  "css/css-page/page-size-004-print.html",
+  "css/css-page/page-size-005-print.html",
+  "css/css-page/page-size-009-print.html",
+  "css/css-page/pseudo-first-margin-001-print.html",
+  "css/css-page/pseudo-first-margin-002-print.html",
+  "css/css-page/pseudo-first-margin-003-print.html",
+  "css/css-page/pseudo-first-margin-004-print.html",
+];
+
+test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions (v1 pdf-probe) and, since D5, a declaration of its 10 new rejections", () => {
   const prev = v1("port", "05-walk-rewrite");
   const step = v1("port", "06-page-rules");
   assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
@@ -333,7 +350,9 @@ test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRe
   const labels = {};
   for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
   assert.deepEqual(labels, { "pdf-probe-pairing-artefact": 12, "wpt-false-pass": 1 });
-  // Without the acceptances the same comparison gates exactly the 13 accepted items...
+  const rejected = STEP06_REJECTED.map((t) => `wpt|${t}`);
+  // Without the acceptances the same comparison gates exactly the 13 accepted items and, since
+  // D5, the 10 new strict-gate rejections (fail -> unsupported, "changed" under the old rule)...
   const raw = compareSnapshots(prev, step);
   assert.equal(raw.verdict, "FAIL");
   assert.deepEqual(
@@ -341,12 +360,35 @@ test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRe
       .filter((x) => x.gating)
       .map((x) => x.key)
       .sort(),
-    accept.map((e) => e.key).sort(),
+    [...accept.map((e) => e.key), ...rejected].sort(),
   );
-  // ...and with them it passes.
-  const r = compareSnapshots(prev, step, { accept });
+  // ...with the acceptances only the 10 rejections gate (06's manifest predates
+  // declaredRejections; committed expectations carry no feature, so the tests are listed)...
+  const withAccept = compareSnapshots(prev, step, { accept });
+  assert.equal(withAccept.verdict, "FAIL");
+  const gatingNow = withAccept.items.filter((x) => x.gating);
+  assert.deepEqual(gatingNow.map((x) => x.key).sort(), rejected);
+  assert.ok(gatingNow.every((x) => x.class === "rejection" && x.before === "fail"));
+  // ...and with the declaration the step would have needed, it passes.
+  const declared = [
+    {
+      feature: "css:page-varying-width",
+      reason: "step 06 rejects :first/:left/:right rules that give pages different content widths",
+      evidence: "wpt/results.json cause.feature of the step-06 run; baselines/port/README.md",
+      tests: STEP06_REJECTED,
+    },
+  ];
+  const r = compareSnapshots(prev, step, { accept, declared });
   assert.equal(r.verdict, "PASS");
   assert.equal(r.items.filter((x) => x.gating).length, 0);
+  assert.equal(r.items.filter((x) => x.class === "declared").length, 10);
+  // A declaration of another feature covers nothing.
+  const wrong = compareSnapshots(prev, step, {
+    accept,
+    declared: [{ ...declared[0], feature: "css:grid", tests: undefined }],
+  });
+  assert.equal(wrong.items.filter((x) => x.gating).length, 10);
+  assert.equal(wrong.unusedDeclarations.length, 1);
   // The step's targets: the notification footer is drawn (EXT-2 per extractor), the footers
   // sit where Chrome prints them (boleto REF-W max was its footer "1"), page-size-006 (:first).
   for (const [key, before, after] of [
@@ -483,7 +525,13 @@ test("v2 re-judges the chain: gating pdf-probe items per link vs the previous li
       accept: step.manifest.acceptedRegressions,
     });
     assert.equal(r.items.filter((x) => x.gating && x.check === "pdf-probe").length, n, link);
-    assert.equal(r.items.filter((x) => x.gating && x.check !== "pdf-probe").length, 0, link);
+    // Outside pdf-probe only step 06's 10 undeclared rejections gate (D5).
+    const other = r.items.filter((x) => x.gating && x.check !== "pdf-probe");
+    assert.equal(other.length, link === "port/06-page-rules" ? 10 : 0, link);
+    assert.ok(
+      other.every((x) => x.class === "rejection"),
+      link,
+    );
   }
 });
 

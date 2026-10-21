@@ -108,12 +108,19 @@ test("synthetic regression: REF-W max beyond the 0.1 mm tolerance FAILS the gate
   assert.equal(item.tol, 0.1);
 });
 
-test("within tolerance is unchanged; the other way is an improvement; neither gates", () => {
+test("worse within tolerance is a listed, counted within-tolerance item (never unchanged); better is an improvement; neither gates", () => {
   const before = snapshot([fixture("notification", [refw(3.6, 3.48)])]);
-  assert.equal(
-    compareSnapshots(before, snapshot([fixture("notification", [refw(3.69, 3.5)])])).verdict,
-    "PASS",
+  const w = compareSnapshots(before, snapshot([fixture("notification", [refw(3.69, 3.47)])]));
+  assert.equal(w.verdict, "PASS");
+  const item = byKey(w, `${KEY}|maxMm`);
+  assert.deepEqual(
+    [item.class, item.gating, item.before, item.after],
+    ["within-tolerance", false, 3.6, 3.69],
   );
+  assert.equal(w.counts.withinTolerance, 1);
+  // 3.48 -> 3.47 (better, within tolerance): counted separately, not an item, not "unchanged".
+  assert.equal(byKey(w, `${KEY}|p95Mm`), undefined);
+  assert.equal(w.counts.withinToleranceBetter, 1);
   const r = compareSnapshots(before, snapshot([fixture("notification", [refw(1.2, 1.1)])]));
   assert.equal(r.verdict, "PASS");
   assert.equal(byKey(r, `${KEY}|maxMm`).class, "improvement");
@@ -325,7 +332,14 @@ test("pdf-probe: a word moving > 1 pt further from Chrome, or to another page, g
   };
   const r = compareSnapshots(snapshot([], { pdfProbe: before }), snapshot([], { pdfProbe: after }));
   assert.equal(byKey(r, "pdf-probe|invoice|32,50#1|dx").class, "regression");
-  assert.equal(byKey(r, "pdf-probe|invoice|Total#1|dx"), undefined);
+  // 0 -> 0.5 pt (v1 history path too): worse within tolerance, listed, never "unchanged".
+  assert.deepEqual(
+    [
+      byKey(r, "pdf-probe|invoice|Total#1|dx").class,
+      byKey(r, "pdf-probe|invoice|Total#1|dx").gating,
+    ],
+    ["within-tolerance", false],
+  );
   assert.equal(byKey(r, "pdf-probe|invoice|Data#1").class, "regression");
   assert.equal(r.verdict, "FAIL");
 });

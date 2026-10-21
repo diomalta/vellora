@@ -8,8 +8,11 @@
 //     [--accept <accepted.json>] [--out <dir>]
 //
 // --accept  JSON { "acceptedRegressions": [{ "key" | "keyPrefix", "after"?, "reason",
-//           "evidence", "label"? }] }: regressions PROVEN to be corrections of a wrong old value
-//           (false pass, oracle artefact), with Chrome+WeasyPrint consensus or WPT ref analysis.
+//           "evidence", "label"?, "class"?: "a" }], "declaredRejections": [{ "feature",
+//           "reason", "evidence", "tests"? | "keys"? | "keyPrefix"? }] } (a baseline's
+//           manifest.json has the same fields): regressions PROVEN to be corrections of a wrong
+//           old value (class a: false pass, oracle artefact) and new strict-gate rejections the
+//           step makes on purpose (fidelity/ACCEPTANCE.md GATE-A1).
 // Exit: 0 PASS; 3 FAIL (regression beyond tolerance, or an absolute failure of the run: red code
 // check, uncaught canary, unexpected layout-diff check failure, expired allowlist entry, crashed
 // step); 2 REFUSED (not comparable: WPT commit / settings / ink data differ, baseline integrity);
@@ -102,6 +105,32 @@ export function readAcceptances(file) {
         `acceptance entry needs key|keyPrefix, reason and evidence: ${JSON.stringify(e)}`,
       );
     }
+    // GATE-A1: compensating drift (class b) is entered in DEBT.json, never accepted.
+    if (e.class !== undefined && e.class !== "a") {
+      throw new Error(
+        `acceptance entry of class "${e.class}": only class "a" (artefact: the OLD value is proven wrong) is accepted; compensating drift (class b) goes into fidelity/baselines/port/DEBT.json: ${JSON.stringify(e.key ?? e.keyPrefix)}`,
+      );
+    }
+  }
+  return list;
+}
+
+/**
+ * declaredRejections of the same file (an accepted.json, or a baseline's manifest.json): new
+ * strict-gate rejections the step makes on purpose (GATE-A1, D5). Each: feature (the core gate's
+ * `feature` id, e.g. "css:page-varying-width"), reason, evidence, and optionally tests (WPT),
+ * keys / keyPrefix (verdict rows, metrics).
+ */
+export function readDeclarations(file) {
+  if (!file) return [];
+  const doc = JSON.parse(readFileSync(file, "utf8"));
+  const list = Array.isArray(doc) ? [] : (doc.declaredRejections ?? []);
+  for (const d of list) {
+    if (!d.feature || !d.reason || !d.evidence) {
+      throw new Error(
+        `declaredRejections entry needs feature, reason and evidence: ${JSON.stringify(d)}`,
+      );
+    }
   }
   return list;
 }
@@ -111,7 +140,8 @@ export function runGate({ baselineDir, runDir, acceptFile = null, outDir, comman
   const before = loadSnapshot(baselineDir);
   const after = loadSnapshot(runDir);
   const accept = readAcceptances(acceptFile);
-  const report = compareSnapshots(before, after, { accept });
+  const declared = readDeclarations(acceptFile);
+  const report = compareSnapshots(before, after, { accept, declared });
   const meta = {
     date: date ?? new Date().toISOString(),
     command,

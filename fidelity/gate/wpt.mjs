@@ -9,6 +9,10 @@
 // - A test that rendered (pass, pass-blank, fail, unsupported) and now errors or times out GATES
 //   (robustness: a new panic/crash is never a fidelity trade-off).
 // - A test of the baseline missing from the run GATES (never silently absent).
+// - A test that rendered and is now "unsupported" (a NEW strict-gate rejection) is a "rejection":
+//   it GATES unless the step declares it (declaredRejections: feature, reason, evidence; matched
+//   in compare.mjs). The run's `unsupportedFeatures` map, when present, names the feature (D5:
+//   before, fail -> unsupported was a non-gating "changed" and hid 10 failing tests at step 06).
 // - Comparison is refused unless the WPT commit, the comparison settings and the ink data
 //   (`inkCheck`, i.e. which Chrome produced the flags) are identical: otherwise "clean" means
 //   different things on the two sides.
@@ -78,6 +82,16 @@ export function compareWpt(before, after) {
     const detail = `${describe(was, fb)} -> ${describe(now, fa)}`;
     if (was === undefined) {
       items.push({ ...base, class: "added", gating: false, detail });
+    } else if (now === "unsupported" && was !== "unsupported" && was !== "skip") {
+      const feature = after.unsupportedFeatures?.[test] ?? null;
+      items.push({
+        ...base,
+        class: "rejection",
+        gating: true,
+        feature,
+        cleanPassLost: was === "pass" && !fb.length,
+        detail: `${detail} (new strict-gate rejection${feature ? `: ${feature}` : ", feature not recorded"}${was === "pass" ? (fb.length ? "; was a flagged pass" : "; was a CLEAN pass") : ""})`,
+      });
     } else if (now === undefined) {
       items.push({
         ...base,

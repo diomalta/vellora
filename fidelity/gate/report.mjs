@@ -13,7 +13,7 @@ function table(items, { limit = Number.POSITIVE_INFINITY } = {}) {
   ];
   for (const i of items.slice(0, limit)) {
     lines.push(
-      `| ${esc(i.group)} | \`${esc(i.key)}\` | ${fmt(i.before)} | ${fmt(i.after)} | ${i.tol === undefined ? "" : `${i.tol} ${esc(i.tolClass ?? "")}`} | ${esc(i.detail)}${i.acceptedAs ? ` — ACCEPTED: ${esc(i.acceptedAs.reason)} (evidence: ${esc(i.acceptedAs.evidence)})` : ""} |`,
+      `| ${esc(i.group)} | \`${esc(i.key)}\` | ${fmt(i.before)} | ${fmt(i.after)} | ${i.tol === undefined ? "" : `${i.tol} ${esc(i.tolClass ?? "")}`} | ${esc(i.detail)}${i.acceptedAs ? ` — ACCEPTED: ${esc(i.acceptedAs.reason)} (evidence: ${esc(i.acceptedAs.evidence)})` : ""}${i.declaredAs ? ` — DECLARED ${esc(i.declaredAs.feature)}: ${esc(i.declaredAs.reason)} (evidence: ${esc(i.declaredAs.evidence)})` : ""}${i.debt ? ` — DEBT ${esc(i.debt)}` : ""} |`,
     );
   }
   if (items.length > limit)
@@ -28,7 +28,7 @@ export function renderGateMarkdown(report, { baseline, run, command, date, envir
   const lines = [
     "# Fidelity gate report",
     "",
-    `**Verdict: ${report.verdict}** (${report.counts.gating} gating item(s)). Local macOS runs are INDICATIVE.`,
+    `**Verdict: ${report.verdict}** (${report.counts.gating} gating item(s); ${report.counts.flaggedPassLost ?? 0} flagged WPT pass(es) lost, reported, not gating; ${report.counts.withinTolerance ?? 0} value(s) worse within tolerance, listed, not gating). Local macOS runs are INDICATIVE.`,
     "",
     "| field | value |",
     "|---|---|",
@@ -89,6 +89,17 @@ export function renderGateMarkdown(report, { baseline, run, command, date, envir
       "",
     );
   }
+  const declared = by("declared");
+  lines.push(`## Declared strict-gate rejections (declaredRejections, ${declared.length})`, "");
+  lines.push(...(declared.length ? table(declared, { limit: 120 }) : ["none"]), "");
+  if (report.unusedDeclarations?.length) {
+    lines.push(
+      "declaredRejections entries that matched nothing (stale or mistyped):",
+      "",
+      ...report.unusedDeclarations.map((d) => `- \`${esc(d.feature)}\`: ${esc(d.reason)}`),
+      "",
+    );
+  }
   const reported = by("reported");
   lines.push(`## Reported, not gating (${reported.length})`, "");
   lines.push(...(reported.length ? table(reported, { limit: 60 }) : ["none"]), "");
@@ -106,6 +117,12 @@ export function renderGateMarkdown(report, { baseline, run, command, date, envir
       "",
     );
   }
+  const within = by("within-tolerance");
+  lines.push(
+    `## Worse within tolerance (${within.length}; not gating, counted; the head ratchet sums them)`,
+    "",
+  );
+  lines.push(...(within.length ? table(within, { limit: 120 }) : ["none"]), "");
   for (const cls of ["newly-measured", "added", "removed", "changed", "not-comparable"]) {
     const list = by(cls);
     if (!list.length) continue;

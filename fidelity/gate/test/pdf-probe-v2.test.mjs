@@ -33,7 +33,7 @@ test("v2 vs v2, nothing moved: PASS, every axis unchanged", () => {
   assert.equal(r.counts.unchanged, 5 * 2 + 2);
 });
 
-test("v2: |dy| growing by more than 1 pt gates; by less counts as withinTolerance, not silently", () => {
+test("v2: |dy| growing by more than 1 pt gates; by less is a within-tolerance item, never unchanged", () => {
   const moved = BASE.map((x) =>
     x.text === "Assinatura" ? { ...x, y: x.y + 1.5 } : x.text === "Total" ? { ...x, y: 100.9 } : x,
   );
@@ -43,8 +43,14 @@ test("v2: |dy| growing by more than 1 pt gates; by less counts as withinToleranc
     [item.class, item.gating, item.before, item.after],
     ["regression", true, 2, 3.5],
   );
-  assert.equal(byKey(r, "pdf-probe|inv|p1|Total#1|dy"), undefined);
+  // 0.2 -> 0.9 pt: worse, within the 1 pt tolerance: listed and counted (D4), not gating.
+  const within = byKey(r, "pdf-probe|inv|p1|Total#1|dy");
+  assert.deepEqual(
+    [within.class, within.gating, within.before, within.after],
+    ["within-tolerance", false, 0.2, 0.9],
+  );
   assert.equal(r.counts.withinTolerance, 1);
+  assert.equal(r.counts["within-tolerance"], 1);
   assert.equal(r.verdict, "FAIL");
 });
 
