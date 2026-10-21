@@ -305,7 +305,11 @@ export function evaluateGate({
     const pr = compareSnapshots(pin.snapshot, after, { accept: classA, declared });
     report.pin = { baseline: pin.dir, ...pinView(pr, doc), main };
     if (main) {
-      for (const i of report.pin.items.filter((x) => x.pinClass === "c")) {
+      // When --baseline is the pin itself the same items already gate: do not count them twice.
+      const gatingKeys = new Set(report.items.filter((i) => i.gating).map((i) => i.key));
+      for (const i of report.pin.items.filter(
+        (x) => x.pinClass === "c" && !gatingKeys.has(x.key),
+      )) {
         report.items.push({
           ...i,
           key: `pin|${i.key}`,
