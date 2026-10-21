@@ -127,3 +127,63 @@ pdftotext after `fixed_table_widths`, and an emitter cell narrowed by `fixed_tab
   wraps a `<div>` inside `<p>`; oss-postmark-receipt ×2: XHTML doctype parsed as XML), each with
   its expiry condition in `fidelity/layout-diff/expected-check-failures.json`.
 - `acceptedRegressions: []`.
+
+## `01-pagination-gaps`: flow gaps, CSS Fragmentation page starts, anonymous-block walk offset
+
+Branch `phaseb/01-pagination-gaps` (from `phaseb/stage1` `659db88`), code commit `8290b06`:
+`crates/vellora-core/src/pagination.rs` places every fragment of a page at its Blitz flow position
+(one flow→page translation per page) instead of re-stacking fragments with the previous one's Blitz
+`margin_bottom`; page starts follow css-break-3 §5.2 (page 1 keeps the leading offset, unforced
+break → page top, forced break → the fragment's leading margin kept); repeated `<thead>` bands
+include the border-spacing down to the first row; rows of a `border-collapse: collapse` table abut
+(CSS 2.2 §17.6.2; Blitz leaves 1 px); a fragment out of flow order (a `<tfoot>` written first)
+follows the previous one; an overflow of ≤ 12 px (capped by the bottom page margin) of the box
+containing a fragment does not count in the fit tests (DESIGN TARGET, absorbs Blitz's taller
+layout); the `dropped-to-fit` rule is gone. `blitz_engine.rs` adds the offset of the Blitz
+anonymous block between a DOM parent and an in-flow child. New Chrome-verified tests:
+`crates/vellora-core/tests/pagination_gaps.rs` (13; Chrome numbers in
+`attachments/chrome-probes-pagination-gaps.txt`, HTML in `chrome-probes-pagination-gaps-html.json`).
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T093020Z` (2026-10-21 09:30:20Z), 20/20 steps ok, run-all exit 3 (gate FAIL before acceptances), git `8290b06` 0 dirty |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/00-start --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/01-pagination-gaps`, then `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/00-start --run fidelity/results/run-all/01-pagination-gaps --accept fidelity/results/run-all/01-pagination-gaps/accepted.json --out fidelity/results/run-all/01-pagination-gaps/gate` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz-dom 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-01-pagination-gaps-20261021T093020Z` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/00-start` (previous link; `gate-report.{json,md}`) | **PASS** with 150 `acceptedRegressions` | improvement 1438, accepted 150, reported 3, changed 1, gating 0, unchanged 13887 |
+| `port/00-start` without acceptances (`attachments/gate-report-without-acceptances.*`) | FAIL | the same 150 items gating |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 110 gating (the accepted families; beta4 has no corpus pdf-probe) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 100 gating, improvement 712 |
+
+Values that moved (before → after, CONFIRMED, gate report):
+
+| oracle | before → after |
+|---|---|
+| notification LET-1 worstMm (the step's target) | 8.54 → **0.75** (FAIL → PASS; pin 3.60) |
+| notification REF-W max / p95 mm | 8.54 / 8.42 → **1.63 / 1.07** (better than the pin's 3.60 / 3.48) |
+| text-stress-ptbr TXT-R1 worstMm | 11.86 → **0.94** (FAIL → PASS) |
+| receipt REF-W p95 mm | 4.06 → 2.03 (max 101.15 unchanged) |
+| boleto-febraban REF-W max / p95 mm | 120.78 / 83.01 → 86.19 / 36.73 (the ficha now sits where the 175 mm recibo ends) |
+| DANFE-L1a…d posErrMm | 1.56 / 3.15 / 4.71 / 5.96 → 1.03 / 2.62 / 4.18 / 5.43 (L1b FAIL → PASS) |
+| pdf-probe words improved | boleto-febraban 188, danfe 431, notification 120, receipt 111, text-stress-ptbr 165, oss-sparksuite 28 |
+| WPT pass / clean (8047 reftests) | 2742 / 2217 (34.07 % / 27.55 %) → **3073 / 2503 (38.19 % / 31.10 %)**: +303 clean, +62 flagged, −31 clean (accepted), −3 flagged (reported); css/CSS2/pagination 19/17 → 33/31, css-break 101/73 → 104/75, css-page 63/47 → 64/49, margin-padding-clear 409/396 → 511/496, positioning 175/173 → 298/272, borders 332/302 → 377/348 |
+| unchanged | every REF-P/page count (invoice 3, receipt 2, boleto 1, notification 1, boleto-febraban 1, danfe 2 vs 1, text-stress 8 vs 7, sparksuite 1, postmark 1 vs 2), TXT-B1, LET-2, BOL-*, invoice/boleto REF-W, crashtests 239/239 ok, canaries 30/30 caught, DET-1/DET-2 PASS, layout-diff checks (only the 5 allowlisted failures) |
+
+Verdict totals: all PASS 128 → 131, FAIL 55 → 52 (WARN 4, NOT-RUN 3); excluding diagnostic variants
+109 → 112, 47 → 44. PDF bytes change on purpose (layout moves); DET-1/DET-2 keep passing.
+
+### `acceptedRegressions` (150; reasons and evidence verbatim in `manifest.json`, data in `attachments/accepted-evidence.json`)
+
+- **30 WPT clean passes, `wpt-false-pass-rect-merge`** (`css/CSS2/linebox/line-height-0{06,07,17,18,28,29,39,40,50,51,58,61,62,83,84}`, `-105/106/112`; `css/CSS2/normal-flow/{,max-,min-}height-0{61,62,72,73}`): false passes. The old paginator stacked the two side-by-side stripes of the test AND the two inline `<img>`s of the reference (a flattened wrapper) one under the other, so both rendered the same wrong picture (maxDifference 0; ink bbox bottom 225–321 px vs Chrome's 145–337 px, or half of Chrome's ink). Now the test matches Chrome's geometry; the only differing pixels are one solid 2–4 px × stripe-height rectangle (192 = 2×96, 1152 = 4×288, …) — the real gap between the stripes that `merge_adjacent_rects` (`RECT_MERGE_TOLERANCE_PX` 4) fills in the test's two background rects, while the reference's stripes are images. Two flagged tests of the family (`line-height-072/073`) are reported, not gated.
+- **1 WPT clean pass, `wpt-two-errors-cancelling`** (`css/CSS2/floats/zero-width-floats.html`): raw Blitz places the BFC box beside zero-width floats 200 px too low (y 250; Chrome 42) and the old paginator ignored both that position and the second box's `top: -100px`, which happened to draw the square. Not a false pass of the same kind: judge it as two cancelling errors (follow-up: Blitz float/BFC placement).
+- **117 pdf-probe words, `pdf-probe-compensating-drift`** (notification 77, oss-sparksuite-invoice 18, danfe 22): each word was near Chrome only because the old paginator's drift cancelled a pre-pagination error. layout-diff proves it per layer: the new layer P adds 0 px on page 1 (P == final layer for every run and box), the old P moved the notification's tail by −6.67 px (signature −28.2 px), dropped sparksuite's 8 px UA body margin (Chrome and WeasyPrint keep it: title baseline 93.75 / 95.43 pt vs old 86.02 pt) and pushed the DANFE below table 3 down 2 px (Chrome's table 4 at y 232.73, now 233.0, old 235.0; old P regressed 345 boxes). The residuals are raw-Blitz heights (notification deadline table +6.5 px at N0, sparksuite rows +8…+18 px, DANFE cell text). danfe `0,00#k` dx/dy items are a pdf-probe occurrence-pairing artefact (pdftotext reorders identical tokens; by position each is 1.5 pt closer to Chrome).
+- **2 values, `value-compensating-drift`**: DANFE-M1 excessB 24.724 → 25.232 mm (page 1's bottom margin grows by the removed 2 px; the excess is the shared 2-page split), INV-R1 (sparksuite) 2.74 → 3.09 mm (worst anchor moves from the title, fixed by +2.12 mm, to "Total: $385.00", which the old −8 px had hidden).
+- Reported, not gating: `css/css-page/page-name-orthogonal-writing-002-print.html` (flagged pass → fail: the test renders 1 page, the reference now 2; the old paginator's `dropped-to-fit` rule kept the reference's second block on page 1 by dropping a 95 904 px flow gap; the test needs named-page breaks vellora does not implement) and `css/css-break/overflowed-abs-pos-with-percentage-height-print.html` (pass-blank → fail: test 2 pages vs reference 1 since `dropped-to-fit` is gone; Chrome's own outcome is pass-blank).
+
+The `committed-canary` self-test now also asserts that `01-pagination-gaps` FAILs against `00-start`
+without acceptances (exactly the 150 accepted keys gate) and PASSes with them.

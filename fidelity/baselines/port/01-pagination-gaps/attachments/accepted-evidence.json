@@ -1,0 +1,1933 @@
+{
+  "wpt": {
+    "css/CSS2/floats/zero-width-floats.html": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 355, 233],
+        "inkPx": 41575
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 60000,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 355, 349],
+        "inkPx": 21617,
+        "diffRegion": {
+          "diffPx": 60000,
+          "x": [8, 207],
+          "y": [50, 349],
+          "w": 200,
+          "h": 300,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 355, 249],
+        "inkPx": 41553
+      }
+    },
+    "css/CSS2/linebox/line-height-006.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-007.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-017.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-018.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-028.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-029.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-039.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-040.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-050.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-051.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-058.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-061.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 435, 321],
+        "inkPx": 7762
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 576,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 435, 337],
+        "inkPx": 14156,
+        "diffRegion": {
+          "diffPx": 576,
+          "x": [28, 29],
+          "y": [50, 337],
+          "w": 2,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 435, 337],
+        "inkPx": 13519
+      }
+    },
+    "css/CSS2/linebox/line-height-062.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 435, 321],
+        "inkPx": 7762
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 576,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 435, 337],
+        "inkPx": 14156,
+        "diffRegion": {
+          "diffPx": 576,
+          "x": [28, 29],
+          "y": [50, 337],
+          "w": 2,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 435, 337],
+        "inkPx": 13519
+      }
+    },
+    "css/CSS2/linebox/line-height-083.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-084.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/linebox/line-height-105.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 233],
+        "inkPx": 5880
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 200,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 149],
+        "inkPx": 6132,
+        "diffRegion": {
+          "diffPx": 200,
+          "x": [28, 29],
+          "y": [50, 149],
+          "w": 2,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 149],
+        "inkPx": 5873
+      }
+    },
+    "css/CSS2/linebox/line-height-106.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 233],
+        "inkPx": 5880
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 200,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 149],
+        "inkPx": 6132,
+        "diffRegion": {
+          "diffPx": 200,
+          "x": [28, 29],
+          "y": [50, 149],
+          "w": 2,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 149],
+        "inkPx": 5873
+      }
+    },
+    "css/CSS2/linebox/line-height-112.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 410, 225],
+        "inkPx": 5720
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 192,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 410, 145],
+        "inkPx": 5964,
+        "diffRegion": {
+          "diffPx": 192,
+          "x": [28, 29],
+          "y": [50, 145],
+          "w": 2,
+          "h": 96,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 411, 145],
+        "inkPx": 5713
+      }
+    },
+    "css/CSS2/normal-flow/height-061.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/height-062.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/height-072.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    },
+    "css/CSS2/normal-flow/height-073.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    },
+    "css/CSS2/normal-flow/max-height-061.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/max-height-062.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/max-height-072.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    },
+    "css/CSS2/normal-flow/max-height-073.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    },
+    "css/CSS2/normal-flow/min-height-061.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/min-height-062.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 353, 321],
+        "inkPx": 29225
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 1152,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 353, 337],
+        "inkPx": 58070,
+        "diffRegion": {
+          "diffPx": 1152,
+          "x": [104, 107],
+          "y": [50, 337],
+          "w": 4,
+          "h": 288,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 354, 337],
+        "inkPx": 56840
+      }
+    },
+    "css/CSS2/normal-flow/min-height-072.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    },
+    "css/CSS2/normal-flow/min-height-073.xht": {
+      "old": {
+        "outcome": "pass",
+        "comparison": {
+          "maxDifference": 0,
+          "totalPixels": 0
+        },
+        "inkBbox": [8, 0, 336, 233],
+        "inkPx": 21482
+      },
+      "new": {
+        "outcome": "fail",
+        "comparison": {
+          "maxDifference": 255,
+          "totalPixels": 400,
+          "pageCounts": [1, 1]
+        },
+        "inkBbox": [8, 14, 336, 149],
+        "inkPx": 21925,
+        "diffRegion": {
+          "diffPx": 400,
+          "x": [108, 111],
+          "y": [50, 149],
+          "w": 4,
+          "h": 100,
+          "solidRect": true
+        }
+      },
+      "chrome": {
+        "outcome": "pass",
+        "inkBbox": [8, 19, 337, 149],
+        "inkPx": 21441
+      }
+    }
+  },
+  "pdfProbe": {
+    "notification": {
+      "regressedWords": [
+        {
+          "key": "pdf-probe|notification|Permanecendo#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|a#4|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|situação#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|sem#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|a#5|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|devida#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|regularização#3|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|após#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|o#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|prazo#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|acima#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|indicado,#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|informamos#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|que#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|serão#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|adotadas#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|as#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|providências#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|cabíveis#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|previstas#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|em#5|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|contrato#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|e#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|na#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|legislação#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|aplicável,#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|sem#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|prejuízo#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|de#7|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|quaisquer#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|outras#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|medidas.#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|Em#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|caso#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|de#8|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|pagamento#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|já#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|efetuado,#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|favor#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|desconsiderar#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|esta#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|comunicação#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|e#3|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|encaminhar#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|o#3|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|respectivo#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|comprovante#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|para#2|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|cobranca@exemplo-acme.test.#1|dy",
+          "before": -0.98,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|Segue,#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|em#6|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|anexo,#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|demonstrativo#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|detalhado#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|do#2|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|débito#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|para#3|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|sua#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|conferência.#1|dy",
+          "before": -0.48,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|Sendo#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|o#4|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|que#2|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|se#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|apresenta#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|para#4|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|o#5|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|momento,#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|colocamo-nos#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|à#2|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|disposição#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|para#5|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|os#2|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|esclarecimentos#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|que#3|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|se#2|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|fizerem#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        },
+        {
+          "key": "pdf-probe|notification|necessários.#1|dy",
+          "before": -0.73,
+          "after": 4.02
+        }
+      ],
+      "improvedWords": 120,
+      "textDyPerLayerPx": {
+        "Permanecendo a situação sem a devida reg": {
+          "old": {
+            "N0": 6.469,
+            "final": 6.469,
+            "P": -0.198
+          },
+          "new": {
+            "N0": 6.469,
+            "final": 6.469,
+            "P": 6.469
+          }
+        },
+        "Segue, em anexo, demonstrativo detalhado": {
+          "old": {
+            "N0": 5.813,
+            "final": 5.813,
+            "P": -0.187
+          },
+          "new": {
+            "N0": 5.813,
+            "final": 5.813,
+            "P": 5.813
+          }
+        },
+        "Sendo o que se apresenta para o momento,": {
+          "old": {
+            "N0": 6.156,
+            "final": 6.156,
+            "P": -0.177
+          },
+          "new": {
+            "N0": 6.156,
+            "final": 6.156,
+            "P": 6.156
+          }
+        },
+        "Atenciosamente,": {
+          "old": {
+            "N0": 6.5,
+            "final": 6.5,
+            "P": -28.167
+          },
+          "new": {
+            "N0": 6.5,
+            "final": 6.5,
+            "P": 6.5
+          }
+        }
+      },
+      "paginationLayerEffect": {
+        "old": {
+          "boxes_moved": 23,
+          "boxes_regressed": 13,
+          "runs_moved": 29,
+          "runs_regressed": 17
+        },
+        "new": {
+          "boxes_moved": 0,
+          "boxes_regressed": 0,
+          "runs_moved": 0,
+          "runs_regressed": 0
+        }
+      }
+    },
+    "oss-sparksuite-invoice": {
+      "regressedWords": [
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Check#2|dy",
+          "before": -1.1,
+          "after": 4.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|1000#1|dy",
+          "before": -1.1,
+          "after": 4.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Item#1|dy",
+          "before": -1.1,
+          "after": 4.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Price#1|dy",
+          "before": -1.1,
+          "after": 4.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Website#1|dy",
+          "before": 0.4,
+          "after": 6.4
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|design#1|dy",
+          "before": 0.4,
+          "after": 6.4
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|$300.00#1|dy",
+          "before": 0.4,
+          "after": 6.4
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Hosting#1|dy",
+          "before": 1.9,
+          "after": 7.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|(3#1|dy",
+          "before": 1.9,
+          "after": 7.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|months)#1|dy",
+          "before": 1.9,
+          "after": 7.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|$75.00#1|dy",
+          "before": 1.9,
+          "after": 7.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Domain#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|name#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|(1#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|year)#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|$10.00#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|Total:#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        },
+        {
+          "key": "pdf-probe|oss-sparksuite-invoice|$385.00#1|dy",
+          "before": 4.9,
+          "after": 10.9
+        }
+      ],
+      "improvedWords": 28,
+      "textDyPerLayerPx": {
+        "Invoice #: 123": {
+          "old": {
+            "N0": 2,
+            "final": 2,
+            "P": -6
+          },
+          "new": {
+            "N0": 2,
+            "final": 2,
+            "P": 2
+          }
+        },
+        "Check #": {
+          "old": {
+            "N0": 6,
+            "final": 4,
+            "P": -4
+          },
+          "new": {
+            "N0": 6,
+            "final": 4,
+            "P": 4
+          }
+        },
+        "Domain name (1 year)": {
+          "old": {
+            "N0": 16,
+            "final": 16,
+            "P": 8
+          },
+          "new": {
+            "N0": 16,
+            "final": 16,
+            "P": 16
+          }
+        },
+        "Total: $385.00": {
+          "old": {
+            "N0": 18,
+            "final": 16,
+            "P": 8
+          },
+          "new": {
+            "N0": 18,
+            "final": 16,
+            "P": 16
+          }
+        }
+      },
+      "paginationLayerEffect": {
+        "old": {
+          "boxes_moved": 25,
+          "boxes_regressed": 11,
+          "runs_moved": 22,
+          "runs_regressed": 11
+        },
+        "new": {
+          "boxes_moved": 0,
+          "boxes_regressed": 0,
+          "runs_moved": 0,
+          "runs_regressed": 0
+        }
+      }
+    },
+    "danfe": {
+      "regressedWords": [
+        {
+          "key": "pdf-probe|danfe|NATUREZA#1|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|DA#3|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|OPERAÇÃO#1|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|PROTOCOLO#1|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|DE#5|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|AUTORIZAÇÃO#1|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|DE#6|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|USO#1|dy",
+          "before": -0.23,
+          "after": -1.73
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#1|dx",
+          "before": -0.35,
+          "after": 253.69
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#1|dy",
+          "before": 6.03,
+          "after": -20.97
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#2|dx",
+          "before": 3.08,
+          "after": -93.8
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#3|dx",
+          "before": 2.25,
+          "after": -154.92
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#3|dy",
+          "before": 5.26,
+          "after": 29.26
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#4|dx",
+          "before": 3.54,
+          "after": -173
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#4|dy",
+          "before": 5.26,
+          "after": 29.26
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#5|dx",
+          "before": 6.51,
+          "after": 183.05
+        },
+        {
+          "key": "pdf-probe|danfe|0,00#5|dy",
+          "before": 6.03,
+          "after": -20.97
+        },
+        {
+          "key": "pdf-probe|danfe|4#1|dy",
+          "before": -36.7,
+          "after": -38.2
+        },
+        {
+          "key": "pdf-probe|danfe|4#2|dy",
+          "before": -57.46,
+          "after": -58.96
+        },
+        {
+          "key": "pdf-probe|danfe|000#11|dy",
+          "before": -77.67,
+          "after": -79.17
+        },
+        {
+          "key": "pdf-probe|danfe|VALOR#14|dy",
+          "before": -35.51,
+          "after": -37.01
+        },
+        {
+          "key": "pdf-probe|danfe|DO#15|dy",
+          "before": -35.51,
+          "after": -37.01
+        }
+      ],
+      "improvedWords": 431,
+      "textDyPerLayerPx": {
+        "NATUREZA DA OPERAÇÃO": {
+          "old": {
+            "N0": 1.766,
+            "final": -0.234,
+            "P": 1.766
+          },
+          "new": {
+            "N0": 1.766,
+            "final": -0.234,
+            "P": -0.234
+          }
+        },
+        "PROTOCOLO DE AUTORIZAÇÃO DE USO": {
+          "old": {
+            "N0": 1.766,
+            "final": -0.234,
+            "P": 1.766
+          },
+          "new": {
+            "N0": 1.766,
+            "final": -0.234,
+            "P": -0.234
+          }
+        }
+      },
+      "paginationLayerEffect": {
+        "old": {
+          "boxes_moved": 348,
+          "boxes_regressed": 345,
+          "runs_moved": 286,
+          "runs_regressed": 283
+        },
+        "new": {
+          "boxes_moved": 0,
+          "boxes_regressed": 0,
+          "runs_moved": 0,
+          "runs_regressed": 0
+        }
+      }
+    }
+  },
+  "values": {
+    "danfeBoxes": {
+      "html>body:nth-child(2)>table:nth-child(3)": {
+        "chromeY": 81.109375,
+        "old": {
+          "finalDy": 1.891,
+          "PDy": 1.891
+        },
+        "new": {
+          "finalDy": 1.891,
+          "PDy": 1.891
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(4)": {
+        "chromeY": 232.734375,
+        "old": {
+          "finalDy": 0.266,
+          "PDy": 2.266
+        },
+        "new": {
+          "finalDy": 0.266,
+          "PDy": 0.266
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(5)": {
+        "chromeY": 265.859375,
+        "old": {
+          "finalDy": 1.141,
+          "PDy": 3.141
+        },
+        "new": {
+          "finalDy": 1.141,
+          "PDy": 1.141
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(7)": {
+        "chromeY": 314.84375,
+        "old": {
+          "finalDy": 2.156,
+          "PDy": 4.156
+        },
+        "new": {
+          "finalDy": 2.156,
+          "PDy": 2.156
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(9)": {
+        "chromeY": 428.078125,
+        "old": {
+          "finalDy": 5.922,
+          "PDy": 7.922
+        },
+        "new": {
+          "finalDy": 5.922,
+          "PDy": 5.922
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(11)": {
+        "chromeY": 477.0625,
+        "old": {
+          "finalDy": 6.938,
+          "PDy": 8.938
+        },
+        "new": {
+          "finalDy": 6.938,
+          "PDy": 6.938
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(14)": {
+        "chromeY": 559.171875,
+        "old": {
+          "finalDy": 8.828,
+          "PDy": 10.828
+        },
+        "new": {
+          "finalDy": 8.828,
+          "PDy": 8.828
+        }
+      },
+      "html>body:nth-child(2)>table:nth-child(18)": {
+        "chromeY": 929.015625,
+        "old": {
+          "finalDy": 11.984,
+          "PDy": 13.984
+        },
+        "new": {
+          "finalDy": 11.984,
+          "PDy": 11.984
+        }
+      }
+    },
+    "ossSparksuiteTitle": {
+      "note": "baseline pt of the first matching word in the 00-start oracles' word lists (words-subject = 00-start vellora)",
+      "Invoice": {
+        "chrome": 93.75,
+        "weasyprint": 95.43,
+        "vellora00start": 86.02
+      },
+      "Total:": {
+        "chrome": 457.5,
+        "weasyprint": 452.43,
+        "vellora00start": 460.27
+      }
+    }
+  }
+}

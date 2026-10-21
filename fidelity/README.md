@@ -95,7 +95,8 @@ Self-tests: `gate/test/` (synthetic regression, synthetic accepted regression, e
 real canary on committed data: `baselines/beta4` against `baselines/pin` must flag notification
 REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT clean-pass regressions; and the head of
 the port chain, `baselines/port/00-start`, must pass its sha256 integrity check and PASS against
-`baselines/beta4-gated`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
+`baselines/beta4-gated`; `baselines/port/01-pagination-gaps` must FAIL against `00-start` on
+exactly its 150 `acceptedRegressions` and PASS with them). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).
 
 ## Canaries

@@ -1,0 +1,509 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "danfe",
+  "fixture": "danfe",
+  "variant": "data.json",
+  "class": "danfe",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "DANFE-P1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "2 (expected 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-X1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "22/26 missing DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA, @chave.formatada, @imposto.vNF (2/3×), DESCRIÇÃO DO PRODUTO/SERVIÇO",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-X2",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "pdftotext 22/26; pypdf 22/26; pdfminer 25/26",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "FAIL"
+      }
+    },
+    {
+      "criterion": "DANFE-B1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "decodes false, validates false",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-B2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "67.4793 (min 60)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-B3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "10.0753 (in [8, 14.8])",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-B4",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "2.921 (min 2.65)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-B5",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "0.0423 (min 2.65)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-M1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "L 2.498 T 3.429 R 0 B 33.232 (each in [2, 8])",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F0",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "RBBBAF+LiberationSerif, SWPJVR+LiberationSerif-Bold",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "7/7 segments; min 6pt \"Fatura/Duplicatas\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "14/14 segments; min 5.5pt \"Descrição do produto/serviço\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F3",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "55/55 segments; min 6pt \"Recebemos de Distribuidora Exemplo de Componentes Ltda. os p\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F4a",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1/1 segments; min 13.99pt \"DANFE\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F4b",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "4/4 segments; min 10pt \"Nº 000.012.345\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F4c",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "2/3 segments; min 8pt \"0 - ENTRADA\"; missing \"DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔ\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F5",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1/1 segments; min 8.5pt \"3526 1012 3456 7800 0195 5500 1000 0123 4517 0524 3180\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F6a",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "1/1 segments; min 12pt \"Distribuidora Exemplo de Componentes Ltda.\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F6b",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "3/3 segments; min 8pt \"Distrito Industrial — Campinas / SP — CEP 13069-000\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F7",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "168/168 segments; min 6.5pt \"Gabinete mid-tower com painel lateral de vidro temperado\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F8",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "3/3 segments; min 7pt \"SEM VALOR FISCAL — NF-e emitida em ambiente de homologação (\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F9",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "49/49 segments; min 10pt \"Consulta de autenticidade no portal nacional da NF-e www.nfe\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F10",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "min 5.5pt (\"C\" p1; floor 5pt)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-F11",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "3472/3511 glyphs attributed; sample \"DOCUMENTOAUXILIARDANOTAFISCALELETRÔNICA\"",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-L1a",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 1.03) mm",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-L1b",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 2.62) mm",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-L1c",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 4.18) mm",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "DANFE-L1d",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "6pt SWPJVR+LiberationSerif-Bold; pos Δ(0, 5.43) mm",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "FAIL"
+      }
+    },
+    {
+      "criterion": "DANFE-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "DANFE-A4: anchor text not found in vellora",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 2 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "FAIL",
+      "value": "pdftotext fail (missing 15, extra 10); pdfminer.six warn (missing 0, extra 0); pymupdf fail (missing 5, extra 5)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "DANFE-B1",
+      "oracle": "oracles:barcode",
+      "status": "FAIL",
+      "value": "zxing-cpp: no Code 128 symbol decoded (expected 35261012345678000195550010000123451705243180); zbar: no Code 128 symbol decoded (expected 35261012345678000195550010000123451705243180)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "second decoder pair: zxing-cpp and zbar, plus the BCB mod-11/mod-10 DVs"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "2 pages vs Chrome 1 (WeasyPrint 1)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 45.66 mm, p95 33.22 mm over 368 consensus words (Chrome and WeasyPrint within 2 pt; coverage 0.636)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 0.636,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (dc5d60d01a415043ab66b5d66f8afeff80cd0105bda8dcbf8cf27e4ece2f1c3b)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>table:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "N0",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0,
+        "dy": 0,
+        "dw": -0.781
+      }
+    },
+    "firstText": {
+      "text": "NF-e",
+      "owner": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(2)>tr:nth-child(1)>td:nth-child(2)>span:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "fixed_table_widths",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": -88.556,
+        "dy": -0.5,
+        "dy_basis": "baseline",
+        "dw": -0.008,
+        "dright": -88.564
+      }
+    },
+    "firstPassRegression": {
+      "path": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(2)>tr:nth-child(1)>td:nth-child(1)",
+      "type": "enter",
+      "by": [
+        "fixed_table_widths worsened dw 1.297->-88.036"
+      ]
+    },
+    "regressionEventsByLayer": {
+      "painted_table_cell_text_baselines": {
+        "box": 0,
+        "text": 1
+      },
+      "fixed_table_widths": {
+        "box": 465,
+        "text": 248
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": false,
+      "wrappers_recorded": 0,
+      "wrappers_located": 0
+    }
+  }
+}

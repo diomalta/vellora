@@ -98,3 +98,37 @@ test("port/00-start (head of the port chain, baselines/port/README.md) passes vs
   assert.equal(improved.length, 13);
   assert.ok(improved.every((x) => x.key.startsWith("wpt|css/css-text/")));
 });
+
+test("port/01-pagination-gaps passes vs port/00-start only with its acceptedRegressions", () => {
+  const start = loadBaselineDir(join(baselines, "port", "00-start"));
+  const step = loadBaselineDir(join(baselines, "port", "01-pagination-gaps"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/00-start");
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  const accept = step.manifest.acceptedRegressions;
+  assert.equal(accept.length, 150);
+  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
+  // Without the acceptances the same comparison gates exactly the 150 accepted items...
+  const raw = compareSnapshots(start, step);
+  assert.equal(raw.verdict, "FAIL");
+  assert.deepEqual(
+    raw.items
+      .filter((x) => x.gating)
+      .map((x) => x.key)
+      .sort(),
+    accept.map((e) => e.key).sort(),
+  );
+  // ...and with them it passes.
+  const r = compareSnapshots(start, step, { accept });
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.items.filter((x) => x.gating).length, 0);
+  // The step's target: the notification's bottom text (Phase A: -8.54 mm).
+  const let1 = item(r, "notification|LET-1|oracles:layout|plain|criterion#1|worstMm");
+  assert.deepEqual([let1.class, let1.before, let1.after], ["improvement", 8.54, 0.75]);
+  const refw = item(r, "notification|REF-W|oracles:layout|plain|criterion#1|maxMm");
+  assert.deepEqual([refw.class, refw.before, refw.after], ["improvement", 8.54, 1.63]);
+});
