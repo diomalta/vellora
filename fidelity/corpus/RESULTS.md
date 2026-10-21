@@ -5,7 +5,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 | Field | Value |
 |---|---|
-| date | 2026-10-21T01:20:07Z |
+| date | 2026-10-21T01:29:32Z |
 | os | darwin 27.0.0 arm64 (macOS 27.0.1) |
 | cpu | Apple M5 Pro |
 | node | v22.23.2 |
@@ -14,7 +14,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 | poppler | pdftoppm version 26.06.0 |
 | python | 3.12.13 |
 | pythonPackages | zxing-cpp 3.1.1, pillow 13.0.0, pypdf 6.21.1, pdfminer.six 20260107 |
-| gitHead | 20970ca4926dda408c7a8cc7ba6f2e2df79e63c2 |
+| gitHead | 0086dae9bba0b4b8fd247703ad0a5bf776f3f2fa |
 | command | node fidelity/corpus/render-corpus.mjs --snapshot fidelity/corpus/RESULTS.md |
 | authority | INDICATIVE (local macOS run; the pinned Linux CI run is authoritative) |
 
@@ -29,7 +29,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
 - vellora PDF sha256 `c2988b5a3715d432cc027f032e0c75b0bd23b04233e63f76aa290ed6f565551c` (35707 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `74ce8ce2b5e84ca357bd5e0294fa8b803ba71faa942a4c070142152871cc3760` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `1656ce867e376ecbf25387e14f777a63c6ccab34eec4d486718fcfb96409401c` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -56,7 +56,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
 - vellora PDF sha256 `f8605d6b5835c5f1a829264ef98c16a53321114aaab5e903675ad9cc34205762` (35788 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `51f35fda0f7a317c03572f3da12552faf056c3d984769f0fc237f3998a56ea46` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `fa63eb6931fd8c148307c1ee9d26dfda778ef49012012e9182a44d15cd6b2681` (1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -83,7 +83,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 
 - Ground truth (bars drawn from data.json at 1200 dpi (no renderer), decoded by zxing-cpp): decodes true, validates true, negative control rejected true.
 - vellora PDF sha256 `4faecace832a7b20f10b56bbb2d0892d6b66cdc79e4e56c1ede5bf1337f3731e` (47201 bytes, 2 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
-- Chrome PDF sha256 `f92d2787dbc3f22309ac15aecfdac36529454f6e42040762dc0ad086e7f616d5` (1 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
+- Chrome PDF sha256 `95f3cd1e69ada2a43dfbae7cfe58222e2500fca6bcc6b6de072765540ec7863f` (1 pages, images 0, fonts LiberationSerif, LiberationSerif-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -121,7 +121,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## text-stress-ptbr — self-authored text stress
 
 - vellora PDF sha256 `7b7da6ec0a1ce5ff91a10177b34ff428a29abee6fb3d304ce4f571d7fbc8d94c` (86726 bytes, 8 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
-- Chrome PDF sha256 `c7cb29919ff61233cce8f5cdbeb3d3966e4d337c3b5219575f58823a461b0c94` (7 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
+- Chrome PDF sha256 `e7c7e03aba4521a39c895d333ffe8796352e7326fa3c4049d2178cc3a17a7053` (7 pages, images 0, fonts LiberationMono, LiberationMono-Bold, LiberationSans, LiberationSans-Bold, LiberationSerif, LiberationSerif-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -137,7 +137,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## oss-sparksuite-invoice — sparksuite simple-html-invoice-template (MIT)
 
 - vellora PDF sha256 `0ab1373776b259a77a2cb964dbfea0b679bdb67412bb00ba132ffce2a219b613` (24164 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `fa0ff1b4e4e0d88fe48dea88d8215be7ec3db01b7cb3c98c269578af12d84f41` (1 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `8cc84c30e36ac236cc142864147ddbfcd7001f79ea0577d48800b63b43cf8c14` (1 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|
@@ -154,7 +154,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 ## oss-postmark-receipt — Postmark receipt (MIT)
 
 - vellora PDF sha256 `9e7452fe3547424552acb343a1ff436559cf7272d8560471e63b083fb30db7da` (31042 bytes, 1 pages, images 0, fonts LiberationSans, LiberationSans-Bold).
-- Chrome PDF sha256 `985b99fc6760de607aafecd23b75c810d513ead0a9547c19e9ea052f5fb671fd` (2 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
+- Chrome PDF sha256 `0d7e8a56a93ea0d9310a38059e35c36da89a26c0861f15f65b999e158e56e039` (2 pages, images 2, fonts LiberationSans, LiberationSans-Bold).
 
 | Criterion | vellora (strict) | Chrome reference |
 |---|---|---|

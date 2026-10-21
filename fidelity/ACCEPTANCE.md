@@ -65,7 +65,7 @@ criteria on the PDF by `render-corpus.mjs`.
 | BOL-G4 | Symbol centre 12 mm above the ficha's bottom edge (ficha bottom = first row under the dashed cut line + the declared 105 mm) | ± 0.5 mm (DESIGN TARGET; BANPARA words it as a minimum) | SPEC BCB-2926 V; CAIXA 4.2.10.1 | corpus |
 | BOL-G5 | Every bar edge within tolerance of the ideal position from `data.json` (bar count must match first) | ≤ 0.05 mm (DESIGN TARGET ≈ 20 % of X = 0.2543 mm; ISO/IEC 16390 print tolerances not accessed — UNVERIFIED ASSUMPTION) | DESIGN TARGET | corpus |
 | BOL-G6 | Ficha de Compensação 95–108 × 170–216 mm (fixture: 105 × 200) positioned at the page bottom: measured ficha top 186 mm | ± 0.5 mm (DESIGN TARGET) | SPEC BCB-2926 03.a, 05.b; CAIXA 2.3 | corpus |
-| BOL-T1 | Bank code characters 5 mm high, bold → font size ≥ 20.55 pt for Liberation Sans Bold (digit height 0.688 em, measured from the bundled TTF with fontTools 4.67.0) | − 0.05 pt | SPEC BCB-2926 I "caractere com 5 mm"; CAIXA 4.2.1.2 | corpus (pdfminer sizes) |
+| BOL-T1 | Bank code characters 5 mm high, bold → font size ≥ 20.55 pt for Liberation Sans Bold (digit height 0.688 em, measured from the bundled TTF by `corpus/font_metrics.py`, fontTools 4.67.0) | − 0.05 pt | SPEC BCB-2926 I "caractere com 5 mm"; CAIXA 4.2.1.2 | corpus (pdfminer sizes) |
 | BOL-T2 | Linha digitável characters 3.5–4 mm high → 14.42–16.48 pt (Liberation Sans) | ± 0.05 pt | SPEC BCB-2926 II; CAIXA 4.2.1.3 | corpus |
 | BOL-T3 | "Ficha de Compensação" identification ≤ 2 mm high → ≤ 8.0 pt | + 0.05 pt | SPEC BCB-2926 V "dimensão máxima de 2 mm" | corpus |
 | BOL-R1 | REF-R on the bank code, linha digitável and identification anchors | 1.0 mm | DESIGN TARGET | corpus |
@@ -152,9 +152,10 @@ render: the corpus only reads fixtures and calls the public `renderPdf` with fix
 
 ## Per-fixture map
 
-Status column = the INDICATIVE run in `corpus/RESULTS.md` (2026-10-21, macOS 27.0.1 arm64, Node
-v22.23.2, rustc 1.96.0, Chrome 155.0.8059.85, gitHead 20970ca + uncommitted corpus files). "FAIL"
-lists failing criteria for vellora; Chrome's failures are listed separately.
+Status column = the INDICATIVE run in `corpus/RESULTS.md` (2026-10-21, macOS 27.0.1 arm64, Apple
+M5 Pro, Node v22.23.2, rustc 1.96.0, Chrome 155.0.8059.85, poppler 26.06.0, gitHead `0086dae` — the
+commit that contains the runner, manifest and fixtures that produced it). "FAIL" lists failing
+criteria for vellora; Chrome's failures are listed separately.
 
 | Fixture | Class | Criteria | Oracles (run here) | vellora FAILs at this pin | Chrome FAILs |
 |---|---|---|---|---|---|

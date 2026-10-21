@@ -60,6 +60,7 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
 | `decode_barcodes.py` | zxing-cpp decode of page rasters; ideal-raster ground truth + negative control |
 | `measure_bars.py` | Bar geometry from the raster vs `data.json` (length, height, placement, edge error, quiet zones, cut line) |
 | `font_sizes.py`, `pdf_probe.py` | pdfminer font sizes / positions; pypdf + pdfminer text; strict parse; ink box; money columns |
+| `font_metrics.py` | Re-derives the Liberation digit/cap heights and advances (fontTools) used to convert mm ↔ pt |
 | `make_placeholder_logo.py` | Neutral CC0 logo used instead of an upstream brand logo |
 | `fetch-sources.mjs`, `sources.json` | Reproducible download + sha256 check of the primary documents |
 
@@ -70,8 +71,9 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
   only scales px → pt by 0.75 without rounding (grep: no geometry rounding in `pdf.rs`,
   `layout_normalize.rs`, `pagination.rs`, `blitz_engine.rs`). The pinned Blitz rev `2003ba5` calls
   `taffy::round_layout` unconditionally in `blitz-dom/src/resolve.rs::resolve_layout`, and the
-  `v0.3.0-beta.4` tag does the same (`round_layout` / `physicalise_and_round_layout`, read via the
-  GitHub contents API). So this geometry loss is introduced by raw Blitz layout, not by vellora's
+  `v0.3.0-beta.4` tag (commit `92b11f1bd8ab7975411328b0406a95a09445b4e7`) does the same
+  (`taffy::round_layout`, or `physicalise_and_round_layout` with the `writing-mode` feature; read via
+  the GitHub contents API). So this geometry loss is introduced by raw Blitz layout, not by vellora's
   post-layout passes. Chromium 155 shows the same class of snapping for backgrounds: neither engine
   decodes the spec-geometry ITF (X = 0.2543 mm: vellora 108 / Chrome 107 of 114 bars), both decode
   the px-grid variant (bar-edge error 0.021 mm vellora, 0.032 mm Chrome).
@@ -85,7 +87,8 @@ Testing build with `@puppeteer/browsers` and pass its path in `VELLORA_CHROME`.
   attributed here (→ layout-diff area); HYPOTHESIS for the column widths and the recibo height:
   vellora's own table/pagination handling, since a minimal `height: 100mm` probe is honored.
 - **CONFIRMED — what already works:** strict acceptance of all five documents, determinism (DET-1 and
-  DET-2 under another TZ/LANG), all font-size minimums of the DANFE that could be located, money
+  DET-2 under another TZ/LANG; the vellora sha256 values were also identical across two separate runs
+  of the whole corpus, while the Chrome reference PDFs differ run to run), all font-size minimums of the DANFE that could be located, money
   column right edges aligned to 0 mm spread, required text extraction for the text-stress, invoice
   and receipt documents in all three extractors.
 - **Observed, cause unknown:** in a probe with 114 absolutely positioned bars, vellora painted one
