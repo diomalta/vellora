@@ -236,21 +236,64 @@ export function compareTokens(expected, actual, { examples = 25 } = {}) {
   };
 }
 
+const LIGATURES = /[\uFB00-\uFB06]/gu;
+
 /**
- * Split a subject's missing/extra/reordered tokens into "explained" (the same extractor shows
- * the same token in the same bucket on the CONTROL pdf, i.e. Chrome's own print of the same
- * HTML) and "subjectOnly" (attributable to the subject renderer).
+ * Comparison key that expands the Unicode ligature presentation forms (U+FB00-FB06) to their
+ * letters ("\uFB01" -> "fi"). Used ONLY to compare a subject with the control, so Chrome's text
+ * layer reporting "\uFB01nanceira" and a subject reporting "financeira" count as the same word.
+ * The raw text still goes through copyPasteCheck, which fails on every presentation-form code
+ * point; folding never hides one.
  */
-export function againstControl(subject, control) {
-  const out = {};
-  for (const bucket of ["missing", "extra", "reordered"]) {
-    const split = multisetSplit(subject[bucket], control?.[bucket] ?? []);
-    out[bucket] = { explained: split.common, subjectOnly: split.onlyA };
-  }
-  return out;
+export function foldLigatures(token) {
+  return String(token).replace(LIGATURES, (c) => c.normalize("NFKC"));
 }
 
-const LIGATURES = /[\uFB00-\uFB06]/gu;
+/** Non-overlapping occurrences of `needle` in `haystack`. */
+export function countOccurrences(haystack, needle) {
+  if (!needle) {
+    return 0;
+  }
+  let count = 0;
+  let at = haystack.indexOf(needle);
+  while (at !== -1) {
+    count += 1;
+    at = haystack.indexOf(needle, at + needle.length);
+  }
+  return count;
+}
+
+/**
+ * Words the copy-paste check follows: expected (innerText) words with a non-ASCII letter, and
+ * words containing an f-ligature letter pair (ff, fi, fl).
+ */
+export function copyPasteWords(expectedTokens) {
+  const unique = [...new Set(expectedTokens)];
+  return {
+    diacritic: unique.filter(
+      (token) => [...token].some((c) => c.codePointAt(0) > 0x7f) && /\p{L}/u.test(token),
+    ),
+    ligature: unique.filter((token) => /ff|fi|fl/.test(token)),
+  };
+}
+
+/**
+ * Occurrence deficits of `words`: a word occurring fewer times in `subjectText` than in
+ * `referenceText` lost occurrences in the subject. Counting (not "found anywhere") is what makes
+ * one dropped diacritic among four repeated "ação" visible.
+ */
+export function occurrenceDeficits(words, subjectText, referenceText) {
+  const deficits = [];
+  for (const word of words) {
+    const reference = countOccurrences(referenceText, word);
+    const subject = countOccurrences(subjectText, word);
+    if (subject < reference) {
+      deficits.push({ word, reference, subject });
+    }
+  }
+  return deficits;
+}
+
 // Nonspacing combining marks (U+0300-036F and the rest of Mn): their presence means NFD text.
 const COMBINING = /\p{Mn}/gu;
 const REPLACEMENT = /\uFFFD/gu;
@@ -273,52 +316,68 @@ function contexts(raw, regex, limit = 10) {
   return { count: [...raw.matchAll(regex)].length, examples: found };
 }
 
+/** " a b c " form of a token list, so substring counts never glue two tokens together. */
+export function spacedText(tokens) {
+  return ` ${tokens.join(" ")} `;
+}
+
 /**
  * Copy-paste round trip: would a user copying text out of the PDF get the characters the
- * document shows? Fails on ligature presentation forms (U+FB00-FB06 instead of "fi"/"fl"/...),
- * decomposed (NFD) accents, U+FFFD, private-use code points, C0 controls, and on expected words
- * with diacritics or f-ligature letter pairs that cannot be found verbatim in the extraction.
+ * document shows?
+ * - Code-point defects in the RAW extraction, never attributed to the control: ligature
+ *   presentation forms (U+FB00-FB06 instead of "fi"/"fl"/...), decomposed (NFD) accents, U+FFFD,
+ *   private-use code points, C0 controls.
+ * - Word occurrences, by COUNT: every followed word (copyPasteWords) must occur in the subject's
+ *   body text at least as often as in the reference body text. The subject side is
+ *   ligature-folded, so a presentation form is reported once, as a code-point defect, and the
+ *   word check measures letters that are really gone (a dropped "i" of "fi", a dropped cedilla).
+ *   The reference is the control's body text (folded: a "\uFB01" in Chrome's text layer is the
+ *   control's representation, not a lost letter) or, without a control, innerText.
+ * @param raw subject extraction exactly as the extractor returned it.
+ * @param opts.expectedTokens innerText tokens (the followed words come from here).
+ * @param opts.subjectBodyTokens subject tokens with margin-box runs removed.
+ * @param opts.referenceBodyTokens control tokens with margin-box runs removed, or innerText.
  */
-export function copyPasteCheck(raw, expectedTokens) {
+export function copyPasteCheck(raw, { expectedTokens, subjectBodyTokens, referenceBodyTokens }) {
   const text = String(raw);
-  const normalizedActual = ` ${normalizeText(text)} `;
   const ligatures = contexts(text, LIGATURES);
   const combining = contexts(text, COMBINING);
   const replacement = contexts(text, REPLACEMENT);
   const privateUse = contexts(text, PRIVATE_USE);
   const control = contexts(text, CONTROL);
-  const unique = [...new Set(expectedTokens)];
-  const diacriticWords = unique.filter(
-    (token) => [...token].some((c) => c.codePointAt(0) > 0x7f) && /\p{L}/u.test(token),
-  );
-  const ligatureWords = unique.filter((token) => /ff|fi|fl/.test(token));
-  const missingDiacriticWords = diacriticWords.filter((word) => !normalizedActual.includes(word));
-  const missingLigatureWords = ligatureWords.filter((word) => !normalizedActual.includes(word));
+  const words = copyPasteWords(expectedTokens);
+  const subjectText = spacedText(subjectBodyTokens.map(foldLigatures));
+  const referenceText = spacedText(referenceBodyTokens.map(foldLigatures));
+  const diacriticDeficits = occurrenceDeficits(words.diacritic, subjectText, referenceText);
+  const ligatureDeficits = occurrenceDeficits(words.ligature, subjectText, referenceText);
   const failures = [];
   if (ligatures.count) failures.push(`${ligatures.count} ligature presentation-form code point(s)`);
   if (combining.count) failures.push(`${combining.count} combining mark(s) (NFD text on copy)`);
   if (replacement.count) failures.push(`${replacement.count} U+FFFD`);
   if (privateUse.count) failures.push(`${privateUse.count} private-use code point(s)`);
   if (control.count) failures.push(`${control.count} control character(s)`);
-  if (missingDiacriticWords.length) {
+  const lost = (deficits) => deficits.reduce((sum, d) => sum + d.reference - d.subject, 0);
+  if (diacriticDeficits.length) {
     failures.push(
-      `${missingDiacriticWords.length}/${diacriticWords.length} diacritic word(s) not found verbatim`,
+      `${lost(diacriticDeficits)} occurrence(s) of ${diacriticDeficits.length}/${words.diacritic.length} diacritic word(s) missing`,
     );
   }
-  if (missingLigatureWords.length) {
+  if (ligatureDeficits.length) {
     failures.push(
-      `${missingLigatureWords.length}/${ligatureWords.length} ff/fi/fl word(s) not found verbatim`,
+      `${lost(ligatureDeficits)} occurrence(s) of ${ligatureDeficits.length}/${words.ligature.length} ff/fi/fl word(s) missing`,
     );
   }
   return {
     pass: failures.length === 0,
     failures,
+    codepointDefects:
+      ligatures.count + combining.count + replacement.count + privateUse.count + control.count,
     ligatureCodepoints: ligatures,
     combiningMarks: combining,
     replacementChars: replacement,
     privateUse,
     controlChars: control,
-    diacriticWords: { checked: diacriticWords.length, missing: missingDiacriticWords },
-    ligatureWords: { checked: ligatureWords.length, missing: missingLigatureWords },
+    diacriticWords: { checked: words.diacritic.length, deficits: diacriticDeficits },
+    ligatureWords: { checked: words.ligature.length, deficits: ligatureDeficits },
   };
 }

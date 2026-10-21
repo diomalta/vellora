@@ -6,7 +6,8 @@ Prints {"extractors": [{"name", "version", "text"|"error"}, ...]}.
 - pdfminer.six: pure-Python, its own content-stream interpreter and layout analysis (LAParams
   defaults), no shared code with poppler or MuPDF.
 - PyMuPDF: MuPDF's text device, page.get_text("text") with default flags (ligatures and
-  whitespace preserved as MuPDF reports them; no dehyphenation).
+  whitespace preserved as MuPDF reports them; no dehyphenation). Every page is followed by a
+  form feed, as pdftotext and pdfminer.six do, so lib/margin-boxes.mjs splits all three alike.
 The raw strings are returned unnormalized so the copy-paste check can see ligature code points,
 combining marks and U+FFFD exactly as a user would get them on copy.
 """
@@ -26,7 +27,7 @@ def with_pymupdf(path):
     import pymupdf
 
     with pymupdf.open(path) as document:
-        return "\f".join(page.get_text("text") for page in document)
+        return "".join(page.get_text("text") + "\f" for page in document)
 
 
 def main(path):

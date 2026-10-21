@@ -49,11 +49,19 @@ function summarizeResult(results) {
     status: e.status,
     orderedRecall: e.subject?.orderedRecall,
     bagRecall: e.subject?.bagRecall,
+    reference: e.reference,
     subjectOnlyMissing: e.subjectOnly?.missingCount,
+    subjectOnlyMissingTokens: e.subjectOnly?.missing?.slice(0, 10),
     subjectOnlyExtra: e.subjectOnly?.extraCount,
     subjectOnlyReordered: e.subjectOnly?.reorderedCount,
-    referenceGeneratedAbsent: e.controlGeneratedAbsentFromSubject?.tokens,
+    marginBoxRuns: e.marginBoxes?.perTemplate?.map((t) => ({
+      template: t.template,
+      control: t.controlRuns,
+      subject: t.subjectRuns,
+    })),
+    marginBoxTextAbsent: e.marginBoxes?.absent,
     copyPaste: e.copyPaste?.pass,
+    copyPasteFailures: e.copyPaste?.subject?.failures,
   }));
   const layout = results.layout;
   return {

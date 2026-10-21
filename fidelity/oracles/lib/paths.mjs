@@ -8,14 +8,23 @@ export const REPO_ROOT = resolve(FIDELITY_DIR, "..");
 export const PY_DIR = join(ORACLES_DIR, "py");
 export const DEFAULT_RESULTS_DIR = join(FIDELITY_DIR, "results", "oracles");
 
-/** Python interpreter of fidelity/.venv (override: VELLORA_FIDELITY_PYTHON). */
+export const VENV_PYTHON = join(FIDELITY_DIR, ".venv", "bin", "python");
+
+/**
+ * Python interpreter of fidelity/.venv (override: VELLORA_FIDELITY_PYTHON), or null when the
+ * chosen path does not exist. Callers turn null into a "not-run" verdict with
+ * pythonUnavailableReason(); an override that points nowhere is never spawned.
+ */
 export function venvPython() {
-  const override = process.env.VELLORA_FIDELITY_PYTHON;
-  if (override) {
-    return override;
-  }
-  const candidate = join(FIDELITY_DIR, ".venv", "bin", "python");
+  const candidate = process.env.VELLORA_FIDELITY_PYTHON || VENV_PYTHON;
   return existsSync(candidate) ? candidate : null;
+}
+
+export function pythonUnavailableReason() {
+  const override = process.env.VELLORA_FIDELITY_PYTHON;
+  return override
+    ? `VELLORA_FIDELITY_PYTHON=${override} does not exist`
+    : "fidelity/.venv missing (see fidelity/oracles/README.md)";
 }
 
 export const DEFAULT_CHROME_PATH =

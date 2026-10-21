@@ -1,17 +1,22 @@
 // Text oracle: three independent extractors (poppler pdftotext, pdfminer.six, PyMuPDF) read the
-// subject PDF; each token sequence is compared with Chrome's print-media innerText of the same
-// HTML. Every extractor ALSO reads Chrome's own PDF of that HTML (the control), so tokens that an
-// extractor loses or invents for both producers (e.g. @page margin-box text that innerText never
-// contains, letter-spaced digits split into single characters) are reported as explained rather
-// than blamed on the subject.
+// subject PDF and Chrome's own PDF of the same HTML (the control).
+//
+// Verdict basis (since 2026-10-21): the subject is compared with the control DIRECTLY, by the
+// same extractor, by token COUNT (LCS alignment + order-free pairing of the rest), after
+// removing @page margin-box runs from both by position (lib/margin-boxes.mjs). A token the
+// subject has fewer copies of than the control is lost content. Chrome's innerText (print
+// media) is the expected text for the recall metrics, and the comparison target only when there
+// is no control. The earlier design compared each PDF with innerText and cancelled the
+// subject's buckets against the control's by token identity; a deleted body "de" then paired
+// with the footer "de" of "Página 1 de 3" and was hidden (validator finding, CONFIRMED).
 import { join } from "node:path";
 import { findExecutable, run, versionLine } from "./exec.mjs";
-import { PY_DIR, venvPython } from "./paths.mjs";
+import { compareMarginBoxes, marginBoxTemplates, stripMarginBoxes } from "./margin-boxes.mjs";
+import { PY_DIR, pythonUnavailableReason, venvPython } from "./paths.mjs";
 import {
-  againstControl,
   compareTokens,
   copyPasteCheck,
-  multisetSplit,
+  foldLigatures,
   normalizeText,
   tokenize,
 } from "./tokens.mjs";
@@ -23,7 +28,12 @@ async function popplerText(pdfPath) {
   if (!pdftotext) {
     return { name: "pdftotext", error: "pdftotext not found (install poppler or PDFTOTEXT_BIN)" };
   }
-  const result = await run(pdftotext, ["-enc", "UTF-8", pdfPath, "-"]);
+  let result;
+  try {
+    result = await run(pdftotext, ["-enc", "UTF-8", pdfPath, "-"]);
+  } catch (error) {
+    return { name: "pdftotext", error: `cannot run ${pdftotext}: ${error.message}` };
+  }
   return {
     name: "pdftotext",
     version: await versionLine(pdftotext, ["-v"]),
@@ -35,12 +45,21 @@ async function popplerText(pdfPath) {
 async function pythonTexts(pdfPath) {
   const python = venvPython();
   if (!python) {
+    const reason = pythonUnavailableReason();
     return [
-      { name: "pdfminer.six", error: "fidelity/.venv missing" },
-      { name: "pymupdf", error: "fidelity/.venv missing" },
+      { name: "pdfminer.six", error: reason },
+      { name: "pymupdf", error: reason },
     ];
   }
-  const result = await run(python, ["-I", join(PY_DIR, "extract_text.py"), pdfPath]);
+  let result;
+  try {
+    result = await run(python, ["-I", join(PY_DIR, "extract_text.py"), pdfPath]);
+  } catch (error) {
+    result = {
+      code: error.code ?? "spawn-error",
+      stderr: `cannot run ${python}: ${error.message}`,
+    };
+  }
   if (result.code !== 0) {
     return [
       { name: "pdfminer.six", error: result.stderr.trim() },
@@ -76,15 +95,98 @@ function summarizeComparison(comparison) {
   };
 }
 
+/** Worst-first verdict of a list of per-extractor statuses (not-run entries ignored). */
+export function aggregateStatus(statuses) {
+  const ran = statuses.filter((s) => s !== "not-run");
+  if (ran.length === 0) {
+    return "not-run";
+  }
+  if (ran.includes("fail")) return "fail";
+  if (ran.includes("warn")) return "warn";
+  return "pass";
+}
+
+/**
+ * Score one extractor's reading of the subject (and of the control, when it has one).
+ * Pure: exported so test/text-verdict.test.mjs proves each verdict on crafted extractions.
+ * - fail: the subject has fewer copies of a token than the reference (control body, else
+ *   innerText), after boundary absorption; or a copy-paste defect (code points in the raw text,
+ *   or fewer occurrences of a diacritic / ff-fi-fl word than the reference).
+ * - warn: extra or reordered tokens against the reference, or fewer margin-box runs than the
+ *   control (generated @page text the subject did not produce).
+ */
+export function scoreExtraction({ subjectText, controlText, expectedTokens, templates }) {
+  const subjectBody = stripMarginBoxes(subjectText, templates);
+  const controlBody = controlText === null ? null : stripMarginBoxes(controlText, templates);
+  const referenceTokens = controlBody ? controlBody.bodyTokens : expectedTokens;
+  const verdict = compareTokens(
+    referenceTokens.map(foldLigatures),
+    subjectBody.bodyTokens.map(foldLigatures),
+  );
+  const subjectVsExpected = compareTokens(expectedTokens, subjectBody.bodyTokens);
+  const controlVsExpected = controlBody
+    ? compareTokens(expectedTokens, controlBody.bodyTokens)
+    : null;
+  const marginBoxes = compareMarginBoxes(templates, controlBody, subjectBody);
+  const copyPaste = copyPasteCheck(subjectText, {
+    expectedTokens,
+    subjectBodyTokens: subjectBody.bodyTokens,
+    referenceBodyTokens: referenceTokens,
+  });
+  const controlCopyPaste =
+    controlBody === null
+      ? null
+      : copyPasteCheck(controlText, {
+          expectedTokens,
+          subjectBodyTokens: controlBody.bodyTokens,
+          referenceBodyTokens: expectedTokens,
+        });
+  let status = "pass";
+  if (verdict.missing.length > 0 || !copyPaste.pass) {
+    status = "fail";
+  } else if (
+    verdict.extra.length > 0 ||
+    verdict.reordered.length > 0 ||
+    marginBoxes.absent.length > 0
+  ) {
+    status = "warn";
+  }
+  return {
+    status,
+    reference: controlBody ? "control" : "innerText",
+    subjectOnly: {
+      missing: head(verdict.missing),
+      missingCount: verdict.missing.length,
+      extra: head(verdict.extra),
+      extraCount: verdict.extra.length,
+      reordered: head(verdict.reordered),
+      reorderedCount: verdict.reordered.length,
+      boundaryOnlyGroups: verdict.boundaryOnlyGroups ?? 0,
+      boundaryOnlyExamples: (verdict.boundaryOnlyAll ?? []).slice(0, EXAMPLES),
+    },
+    marginBoxes: {
+      pages: { subject: subjectBody.pages, control: controlBody?.pages ?? null },
+      perTemplate: marginBoxes.perTemplate,
+      absent: marginBoxes.absent,
+    },
+    subject: summarizeComparison(subjectVsExpected),
+    control: controlVsExpected ? summarizeComparison(controlVsExpected) : null,
+    copyPaste: {
+      pass: copyPaste.pass,
+      subject: copyPaste,
+      control: controlCopyPaste,
+    },
+  };
+}
+
 /**
  * @param pdfPath subject PDF; @param controlPdfPath Chrome's PDF of the same HTML (optional but
- * strongly recommended); @param expectedText Chrome innerText (print media).
- * Verdict per extractor: "fail" when the subject loses content the control keeps (subject-only
- * missing tokens) or fails the copy-paste round trip where the control passes; "warn" for
- * subject-only extra/reordered tokens; "pass" otherwise.
+ * strongly recommended); @param expectedText Chrome innerText (print media); @param html the
+ * HTML both PDFs were printed from (its @page margin-box templates; optional).
  */
-export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
+export async function textOracle({ pdfPath, controlPdfPath, expectedText, html }) {
   const expectedTokens = tokenize(expectedText);
+  const templates = html ? marginBoxTemplates(html) : [];
   const subjectExtractions = await extractAll(pdfPath);
   const controlExtractions = controlPdfPath ? await extractAll(controlPdfPath) : [];
   const extractors = [];
@@ -98,97 +200,29 @@ export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
       });
       continue;
     }
-    const control = controlExtractions.find((c) => c.name === extraction.name && !c.error);
-    const subjectComparison = compareTokens(expectedTokens, tokenize(extraction.text));
-    const controlComparison = control
-      ? compareTokens(expectedTokens, tokenize(control.text))
-      : null;
-    const attribution = againstControl(subjectComparison, controlComparison);
-    const copyPaste = copyPasteCheck(extraction.text, expectedTokens);
-    const controlCopyPaste = control ? copyPasteCheck(control.text, expectedTokens) : null;
-    const copyPasteSubjectOnly = {
-      diacriticWords: multisetSplit(
-        copyPaste.diacriticWords.missing,
-        controlCopyPaste?.diacriticWords.missing ?? [],
-      ).onlyA,
-      ligatureWords: multisetSplit(
-        copyPaste.ligatureWords.missing,
-        controlCopyPaste?.ligatureWords.missing ?? [],
-      ).onlyA,
-      codepointDefects:
-        copyPaste.ligatureCodepoints.count +
-        copyPaste.combiningMarks.count +
-        copyPaste.replacementChars.count +
-        copyPaste.privateUse.count +
-        copyPaste.controlChars.count,
-    };
-    const copyPasteFail =
-      copyPasteSubjectOnly.codepointDefects > 0 ||
-      copyPasteSubjectOnly.diacriticWords.length > 0 ||
-      copyPasteSubjectOnly.ligatureWords.length > 0;
-    // Tokens Chrome's PDF has beyond innerText (paginator-generated content such as @page
-    // margin boxes) that the subject does not produce: invisible to the innerText comparison,
-    // so reported separately.
-    const generatedAbsent = controlComparison
-      ? multisetSplit(controlComparison.extra, subjectComparison.extra).onlyA
-      : [];
-    let status = "pass";
-    if (attribution.missing.subjectOnly.length > 0 || copyPasteFail) {
-      status = "fail";
-    } else if (
-      attribution.extra.subjectOnly.length > 0 ||
-      attribution.reordered.subjectOnly.length > 0 ||
-      generatedAbsent.length > 0
-    ) {
-      status = "warn";
+    const control = controlExtractions.find((c) => c.name === extraction.name);
+    const scored = scoreExtraction({
+      subjectText: extraction.text,
+      controlText: control && !control.error ? control.text : null,
+      expectedTokens,
+      templates,
+    });
+    let referenceNote = "Chrome's PDF of the same HTML, read by the same extractor";
+    if (!controlPdfPath) {
+      referenceNote = "innerText (no control PDF)";
+    } else if (!control || control.error) {
+      referenceNote = `innerText (control extraction failed: ${control?.error ?? "missing"})`;
     }
     extractors.push({
       name: extraction.name,
       version: extraction.version,
-      status,
-      subject: summarizeComparison(subjectComparison),
-      control: controlComparison ? summarizeComparison(controlComparison) : null,
-      subjectOnly: {
-        missing: head(attribution.missing.subjectOnly),
-        missingCount: attribution.missing.subjectOnly.length,
-        extra: head(attribution.extra.subjectOnly),
-        extraCount: attribution.extra.subjectOnly.length,
-        reordered: head(attribution.reordered.subjectOnly),
-        reorderedCount: attribution.reordered.subjectOnly.length,
-      },
-      controlGeneratedAbsentFromSubject: {
-        count: generatedAbsent.length,
-        tokens: head(generatedAbsent),
-      },
-      subjectOnlyBoundaryGroups: multisetSplit(
-        subjectComparison.boundaryOnlyAll.map((g) => `${g.expected} => ${g.actual}`),
-        (controlComparison?.boundaryOnlyAll ?? []).map((g) => `${g.expected} => ${g.actual}`),
-      ).onlyA.slice(0, EXAMPLES),
-      explainedByControl: {
-        missingCount: attribution.missing.explained.length,
-        extraCount: attribution.extra.explained.length,
-        reorderedCount: attribution.reordered.explained.length,
-      },
-      copyPaste: {
-        pass: !copyPasteFail,
-        subject: copyPaste,
-        control: controlCopyPaste,
-        subjectOnly: copyPasteSubjectOnly,
-      },
+      referenceNote,
+      ...scored,
     });
-  }
-  const ran = extractors.filter((e) => e.status !== "not-run");
-  let status = "not-run";
-  if (ran.length > 0) {
-    status = ran.some((e) => e.status === "fail")
-      ? "fail"
-      : ran.some((e) => e.status === "warn")
-        ? "warn"
-        : "pass";
   }
   return {
     oracle: "text",
-    status,
+    status: aggregateStatus(extractors.map((e) => e.status)),
     expected: {
       source:
         "Chrome document.body.innerText under emulated print media, NFC + whitespace collapse",
@@ -196,8 +230,11 @@ export async function textOracle({ pdfPath, controlPdfPath, expectedText }) {
       normalizedPreview: normalizeText(expectedText).slice(0, 400),
     },
     control: controlPdfPath
-      ? "Chrome print-to-PDF of the same HTML"
-      : "none (attribution disabled)",
+      ? "Chrome print-to-PDF of the same HTML (verdict reference)"
+      : "none (innerText is the verdict reference)",
+    marginBoxTemplates: html
+      ? templates.map(({ parts: _parts, ...rest }) => rest)
+      : "not provided (no html): margin-box runs are not removed",
     extractors,
   };
 }

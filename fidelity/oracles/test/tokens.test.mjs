@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   absorbSplits,
-  againstControl,
   compareTokens,
   copyPasteCheck,
+  countOccurrences,
+  foldLigatures,
   normalizeText,
   tokenize,
 } from "../lib/tokens.mjs";
@@ -49,27 +50,41 @@ test("absorbSplits finds merges in both directions", () => {
   assert.deepEqual(out.restActual, []);
 });
 
-test("againstControl separates subject-only defects from extractor artifacts", () => {
-  const expected = tokenize("one two three four");
-  const control = compareTokens(expected, tokenize("one two three four Página 1"));
-  const subject = compareTokens(expected, tokenize("one three four Página 1"));
-  const split = againstControl(subject, control);
-  assert.deepEqual(split.missing.subjectOnly, ["two"]);
-  assert.deepEqual(split.extra.explained.sort(), ["1", "Página"]);
+test("foldLigatures expands presentation forms only; countOccurrences is non-overlapping", () => {
+  const fi = String.fromCodePoint(0xfb01);
+  const ffl = String.fromCodePoint(0xfb04);
+  assert.equal(foldLigatures(`${fi}nanceira a${ffl}uent`), "financeira affluent");
+  assert.equal(foldLigatures("ação"), "ação");
+  assert.equal(countOccurrences(" aaa ", "aa"), 1);
+  assert.equal(countOccurrences(" ação, ação ", "ação"), 2);
+  assert.equal(countOccurrences("x", ""), 0);
 });
 
 test("copy-paste check passes clean text and fails each defect class", () => {
-  const expected = tokenize("Ficha financeira: conclusão da ação");
-  assert.equal(copyPasteCheck("Ficha financeira: conclusão da ação", expected).pass, true);
-  const ligature = copyPasteCheck("Ficha \uFB01nanceira: conclusão da ação", expected);
+  const expectedTokens = tokenize("Ficha financeira: conclusão da ação");
+  const check = (raw) =>
+    copyPasteCheck(raw, {
+      expectedTokens,
+      subjectBodyTokens: tokenize(raw),
+      referenceBodyTokens: expectedTokens,
+    });
+  assert.equal(check("Ficha financeira: conclusão da ação").pass, true);
+  const ligature = check(`Ficha ${String.fromCodePoint(0xfb01)}nanceira: conclusão da ação`);
   assert.equal(ligature.pass, false);
   assert.equal(ligature.ligatureCodepoints.count, 1);
-  assert.deepEqual(ligature.ligatureWords.missing, ["financeira:"]);
-  const nfd = copyPasteCheck("Ficha financeira: conclusa\u0303o da ac\u0327a\u0303o", expected);
+  assert.deepEqual(ligature.ligatureWords.deficits, [], "folded: reported once, as a code point");
+  const nfd = check("Ficha financeira: conclusa\u0303o da ac\u0327a\u0303o");
   assert.equal(nfd.pass, false);
   assert.equal(nfd.combiningMarks.count, 3);
-  const dropped = copyPasteCheck("Ficha financeira: conclusao da acao", expected);
+  const dropped = check("Ficha financeira: conclusao da acao");
   assert.equal(dropped.pass, false);
-  assert.deepEqual(dropped.diacriticWords.missing.sort(), ["ação", "conclusão"]);
-  assert.equal(copyPasteCheck("Ficha \uFFFD", expected).replacementChars.count, 1);
+  assert.deepEqual(dropped.diacriticWords.deficits.map((d) => d.word).sort(), [
+    "ação",
+    "conclusão",
+  ]);
+  const letter = check("Ficha fnanceira: conclusão da ação");
+  assert.deepEqual(letter.ligatureWords.deficits, [
+    { word: "financeira:", reference: 1, subject: 0 },
+  ]);
+  assert.equal(check("Ficha \uFFFD").replacementChars.count, 1);
 });

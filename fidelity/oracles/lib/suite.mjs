@@ -107,6 +107,7 @@ export async function runOracles({ pdfPath, refs, pdfa, docClass, expect = {}, o
       pdfPath,
       controlPdfPath: refs.chromePdfPath,
       expectedText: refs.expectedText,
+      html: refs.referenceHtml,
     });
   }
 

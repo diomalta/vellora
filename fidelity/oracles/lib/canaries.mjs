@@ -125,6 +125,7 @@ export async function runCanaries({ outDir, chrome, textFixture, layoutFixture }
       pdfPath,
       controlPdfPath: textFixture.refs.chromePdfPath,
       expectedText: textFixture.refs.expectedText,
+      html: textFixture.refs.referenceHtml,
     });
     for (const extractor of result.extractors) {
       const missing = extractor.subjectOnly?.missing ?? [];
@@ -156,7 +157,12 @@ export async function runCanaries({ outDir, chrome, textFixture, layoutFixture }
         join(outDir, `copypaste-${kind}.pdf`),
         await renderNative(copyPasteCanaryHtml(kind)),
       );
-      const result = await textOracle({ pdfPath, controlPdfPath: referencePdf, expectedText });
+      const result = await textOracle({
+        pdfPath,
+        controlPdfPath: referencePdf,
+        expectedText,
+        html: LIGATURE_REFERENCE,
+      });
       const label =
         kind === "ligature"
           ? "U+FB01 written into the subject text"
@@ -184,6 +190,7 @@ export async function runCanaries({ outDir, chrome, textFixture, layoutFixture }
         pdfPath: chromeSubject,
         controlPdfPath: referencePdf,
         expectedText,
+        html: LIGATURE_REFERENCE,
       });
       for (const extractor of chromeResult.extractors) {
         const cp = extractor.copyPaste;
