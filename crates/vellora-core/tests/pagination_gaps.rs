@@ -270,6 +270,104 @@ fn margins_kept_after_a_forced_break_collapse_with_their_signs() {
 }
 
 #[test]
+fn a_margin_after_a_forced_break_is_truncated_to_the_room_its_fragment_leaves() {
+    // Port step 09. The margin after a forced break is kept as far as the fragment still fits
+    // under it, then truncated, so a fragment that fits an empty page never runs past the
+    // content box into the bottom margin band. Step 08 placed it under the whole margin.
+    // Chrome 155 (probes f5_*) does not truncate: it moves monolithic content (a line, an image)
+    // to the next page and leaves the forced page blank, and it fragments a box between its
+    // rows; vellora emits no blank page and moves whole fragments, so truncation is its nearest
+    // placement that keeps everything inside the page box.
+    let content_bottom = 260.0;
+    // A 20 px line under a 250 px margin: Chrome prints Two at the top of page 3. Step 08: Two
+    // 250 px down page 2 (its line box 250-270 px). Now 240 px down, ending at the content
+    // bottom.
+    let p = paginate(&doc(
+        &format!("{SMALL_PAGE} {BASE} .x {{ margin-top: 250px; break-before: page }}"),
+        "<p>One</p><p class=\"x\">Two</p><p>Three</p>",
+    ));
+    let (one, two, three) = (at(&p, "One"), at(&p, "Two"), at(&p, "Three"));
+    assert_eq!((two.0, three.0), (1, 2));
+    assert_px(two.1 - one.1, 240.0, "Two, margin 250 truncated to 240");
+    assert_px(three.1, one.1, "Three at the page-3 top");
+
+    // A 240 px monolithic image under a 40 px margin: Chrome puts it at the top of page 3.
+    // Step 08: page 2, 40-280 px of the content box (20 px into the bottom band). Now 20-260.
+    let p = paginate(&doc(
+        &format!(
+            "{SMALL_PAGE} {BASE} .x {{ margin-top: 40px; break-before: page }} \
+             img {{ display: block; width: 100px; height: 240px }}"
+        ),
+        "<p>One</p><div class=\"x\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQ\
+         AAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\">\
+         </div><p>After</p>",
+    ));
+    let image = &p.pages[1].images[0];
+    // Page-local px include the 20 px top page margin.
+    assert_px(image.y - 20.0, 20.0, "image top, margin 40 truncated to 20");
+    assert_px(
+        image.y - 20.0 + image.height,
+        content_bottom,
+        "image bottom",
+    );
+    assert_eq!(at(&p, "After").0, 2);
+
+    // A 160 px table (one block fragment: no <thead>) under a 120 px margin: Chrome keeps the
+    // 120 px and moves T08 to page 3 (T01 at 116.25 pt). Step 08: T08 at 260-280 px, past the
+    // content box. Now the margin is 100 px and T08 ends at the content bottom.
+    let rows: String = (1..=8)
+        .map(|i| format!("<tr><td>T{i:02}</td></tr>"))
+        .collect();
+    let p = paginate(&doc(
+        &format!(
+            "{SMALL_PAGE} {BASE} table {{ margin-top: 120px; break-before: page; \
+             border-collapse: collapse }} td {{ padding: 0 }}"
+        ),
+        &format!("<p>One</p><table><tbody>{rows}</tbody></table>"),
+    ));
+    let (t01, t08) = (at(&p, "T01"), at(&p, "T08"));
+    assert_eq!((t01.0, t08.0), (1, 1));
+    assert_px(t01.1 - one.1, 100.0, "T01, margin 120 truncated to 100");
+    assert_px(t08.1 - one.1, 240.0, "T08 in the content box");
+}
+
+#[test]
+fn the_overflow_allowance_never_reaches_a_drawn_footer() {
+    // Port step 09. The DESIGN TARGET allowance of `a_small_overflow_of_a_fixed_height_box_
+    // stays_on_its_page` (a child overflowing its fixed-height box by up to 12 px is fitted
+    // against the box) is capped by the free space above a drawn `@bottom-center` line, so the
+    // overflow cannot be painted over the footer. Here a 16 px footer line sits centred in the
+    // 20 px bottom margin: 2 px of room, less than the 11 px overflow, so the tail moves to
+    // page 2 (step 08 kept it on page 1, its box running 6 px into the footer line). Chrome 155
+    // (probe f5_allowance_footer) keeps "Tail" on page 1 and carries the empty 6 px rest of
+    // the tail box onto a second page: 2 pages, as now.
+    let body = format!(
+        "<div class=\"box\">{}<div class=\"tail\">Tail</div></div>",
+        lines(12)
+    );
+    let css = |page: &str| {
+        format!(
+            "{page} {BASE} .box {{ height: 255px; }} .tail {{ height: 26px; }} \
+             @page {{ @bottom-center {{ content: \"Foot\"; font-size: 16px; line-height: 16px }} }}"
+        )
+    };
+    let p = paginate(&doc(&css(SMALL_PAGE), &body));
+    assert_eq!(p.report.page_count, 2);
+    let (l01, tail) = (at(&p, "L01"), at(&p, "Tail"));
+    assert_eq!(tail.0, 1);
+    assert_px(tail.1, l01.1, "Tail at the page-2 top");
+    assert_eq!(p.report.footers, vec!["Foot", "Foot"]);
+    // DESIGN TARGET: with a 60 px bottom margin the line leaves 22 px, more than the 12 px
+    // allowance, and the tail stays on page 1 as without a footer (same 260 px content box).
+    let p = paginate(&doc(
+        &css("@page { size: 300px 340px; margin: 20px 20px 60px; }"),
+        &body,
+    ));
+    assert_eq!(p.report.page_count, 1);
+    assert_eq!(at(&p, "Tail").0, 0);
+}
+
+#[test]
 fn margins_adjoining_an_unforced_break_truncate() {
     // Twelve 20 px lines (240 px), then a line with margin-top 40 px: it does
     // not fit the 260 px page, moves to page 2 and loses its margin. Chrome:

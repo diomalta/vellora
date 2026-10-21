@@ -50,8 +50,9 @@ pub struct PaginationReport {
 /// table-row-only so it absorbs metric drift without pulling another full row.
 ///
 /// The same amount (capped by the bottom page margin, so nothing is painted
-/// past the physical page) bounds how far a block may overflow the box that
-/// contains it and still be fitted against that box (`fit_height`).
+/// past the physical page, and by the free space above a drawn `@bottom-center`
+/// line, so nothing is painted over it) bounds how far a block may overflow the
+/// box that contains it and still be fitted against that box (`fit_height`).
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
 const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
 
@@ -160,7 +161,8 @@ struct Fragment {
     /// root's border box, or, for a child of a flattened wrapper, no lower than
     /// the wrapper's border box. Content below it is overflow, which does not
     /// push the flow. When the overflow is small (at most
-    /// `TABLE_ROW_BREAK_TOLERANCE_PX`, capped by the bottom page margin) the fit
+    /// `TABLE_ROW_BREAK_TOLERANCE_PX`, capped by the bottom page margin and by
+    /// the room above a drawn `@bottom-center` line, port step 09) the fit
     /// tests use this edge instead of `bottom` (`fit_height`): Blitz
     /// 0.3.0-beta.4 lays some content out taller than Chrome (the
     /// boleto-febraban ficha's table is +9.45 px in the raw Blitz layer), so a
@@ -291,9 +293,11 @@ pub fn paginate_traced(
         let mut fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         // How far content may overflow the box that contains it and still be
         // fitted against that box: the row drift allowance, but never past the
-        // physical page (the bottom page margin).
+        // physical page (the bottom page margin) and never onto a drawn
+        // `@bottom-center` line (port step 09).
         let overflow_allowance = TABLE_ROW_BREAK_TOLERANCE_PX
-            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0));
+            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0))
+            .min(geometry.bottom_box_clearance(page_slices.len(), doc));
         // The height the fit tests use: a small overflow of the box that
         // contains the fragment does not count (see `Fragment::contained_bottom`).
         let fit_h = fit_height(&frag, overflow_allowance);
@@ -453,7 +457,19 @@ pub fn paginate_traced(
                     (frag.top.max(header_h), "page-origin")
                 }
                 PageStart::Origin => (header_h, "page-start"),
-                PageStart::Forced => (frag.break_margin.value() + header_h, "forced-break-margin"),
+                // The margin after a forced break is kept (CSS Fragmentation 3 §5.2) as far as
+                // the fragment still fits under it; past that it is truncated to the room left,
+                // so a fragment that fits an empty page never runs into the bottom margin band
+                // (port step 09; before, it was placed under the whole margin). Chrome instead
+                // fragments the box, or moves monolithic content to the next page (leaving a
+                // blank one); vellora splits neither (`tests/pagination_gaps.rs`).
+                PageStart::Forced => {
+                    let room = (fit_limit - header_h - fit_h).max(0.0);
+                    (
+                        frag.break_margin.value().min(room) + header_h,
+                        "forced-break-margin",
+                    )
+                }
                 PageStart::Unforced => (header_h, "page-start"),
             },
         };
@@ -1321,6 +1337,8 @@ struct PageGeometry<'a> {
     base: &'a PageBox,
     rtl: bool,
     pages: Vec<PageBox>,
+    /// [`PageGeometry::bottom_box_clearance`] of pages 1 to 3, once computed.
+    clearances: [Option<f64>; 3],
 }
 
 impl<'a> PageGeometry<'a> {
@@ -1329,7 +1347,51 @@ impl<'a> PageGeometry<'a> {
             base,
             rtl,
             pages: Vec::new(),
+            clearances: [None; 3],
         }
+    }
+
+    /// The free height between the bottom of page `index`'s content box and the top of the
+    /// `@bottom-center` line drawn below it (that line is centred in the bottom margin band,
+    /// [`build_margin_texts`]); unbounded when the page draws none. The line is laid out with
+    /// provisional counters (page `index + 1` of `index + 1`): a margin box is one line that
+    /// does not wrap, so its height does not depend on the digits. Like the box itself, it
+    /// depends only on whether the page is the first and on its side (page n ≥ 3 is page n − 2).
+    fn bottom_box_clearance(&mut self, index: usize, doc: &LaidOutDoc) -> f64 {
+        let key = if index >= 3 {
+            1 + (index - 1) % 2
+        } else {
+            index
+        };
+        if let Some(clearance) = self.clearances[key] {
+            return clearance;
+        }
+        let page = self.page(key).clone();
+        let clearance = page
+            .margins_content
+            .iter()
+            .find(|mc| mc.which == MarginBox::BottomCenter)
+            .filter(|_| has_body_text(doc))
+            .and_then(|mc| {
+                let text = resolve_content(&mc.parts, key + 1, key + 1);
+                if text.trim().is_empty() {
+                    return None;
+                }
+                let request = crate::blitz_engine::MarginRequest {
+                    text: &text,
+                    page_style: &mc.page_style,
+                    box_style: &mc.box_style,
+                };
+                crate::blitz_engine::lay_out_margin_texts(&doc.page_context, &[request])
+                    .into_iter()
+                    .next()
+                    .flatten()
+            })
+            .map_or(f64::INFINITY, |line| {
+                ((page.margin_bottom - line.height) / 2.0).max(0.0)
+            });
+        self.clearances[key] = Some(clearance);
+        clearance
     }
 
     /// The box of page `index` (0-based).
@@ -1377,12 +1439,7 @@ impl<'a> PageGeometry<'a> {
 /// once (`tests/pipeline.rs::each_face_is_embedded_exactly_once_across_pages`).
 fn build_margin_texts(doc: &LaidOutDoc, pages: &[PageBox]) -> Vec<Vec<(MarginBox, MarginText)>> {
     let mut out: Vec<Vec<(MarginBox, MarginText)>> = (0..pages.len()).map(|_| Vec::new()).collect();
-    let has_body_text = doc
-        .boxes
-        .iter()
-        .flat_map(|b| b.text_runs.iter())
-        .any(|r| !r.glyphs.is_empty());
-    if !has_body_text {
+    if !has_body_text(doc) {
         return out;
     }
     let total = pages.len();
@@ -1438,6 +1495,15 @@ fn build_margin_texts(doc: &LaidOutDoc, pages: &[PageBox]) -> Vec<Vec<(MarginBox
         out[index].push((mc.which, MarginText { text, runs }));
     }
     out
+}
+
+/// Whether the document shapes any body text: without it no margin box is drawn (Chrome prints
+/// no footer for an empty body).
+fn has_body_text(doc: &LaidOutDoc) -> bool {
+    doc.boxes
+        .iter()
+        .flat_map(|b| b.text_runs.iter())
+        .any(|r| !r.glyphs.is_empty())
 }
 
 /// The body's `Arc` of the same face bytes (or the first margin run's), so the PDF embeds each
