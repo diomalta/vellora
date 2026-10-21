@@ -1,0 +1,86 @@
+{
+  "_comment": "Synthetic inputs for fixtures/boleto-febraban. Every check digit, the barcode, the linha digitavel and the bar geometry are DERIVED by fidelity/corpus/build-fixtures.mjs; never edit fixtures/boleto-febraban/data*.json by hand.",
+  "banco": {
+    "codigo": "104",
+    "dvCompensacao": "0",
+    "identificacao": "BANCO EXEMPLO",
+    "identificacaoNota": "Codigo 104 because the campo livre follows the Caixa SIGCB layout (67.119 v014), the only bank spec in SOURCES.md with complete worked examples. The bank brand is deliberately NOT reproduced."
+  },
+  "beneficiario": {
+    "nome": "Oficina Exemplo de Testes Ltda.",
+    "cnpjBase": "112223330001",
+    "endereco": {
+      "logradouro": "Rua das Acácias",
+      "numero": "1500",
+      "complemento": "Sala 42",
+      "bairro": "Jardim Sintético",
+      "cidade": "São José dos Exemplos",
+      "uf": "SP",
+      "cep": "01310-930"
+    },
+    "agencia": "1234",
+    "codigo": "246813"
+  },
+  "pagador": {
+    "nome": "Maria da Conceição Exemplo",
+    "cpfBase": "123456789",
+    "endereco": {
+      "logradouro": "Avenida Paulista",
+      "numero": "1000",
+      "complemento": "Apto 101",
+      "bairro": "Bela Vista",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "cep": "01310-100"
+    }
+  },
+  "titulo": {
+    "nossoNumeroLivre": "000000000417001",
+    "tipoCobranca": "1",
+    "emissao": "4",
+    "numeroDocumento": "NF-2026/00417",
+    "especie": "DM",
+    "aceite": "N",
+    "dataDocumento": "2026-10-15",
+    "dataProcessamento": "2026-10-15",
+    "vencimento": "2026-11-30",
+    "valorCentavos": 184250,
+    "carteira": "RG",
+    "moeda": "R$"
+  },
+  "localPagamento": "EM TODA A REDE BANCÁRIA E SEUS CORRESPONDENTES ATÉ O VALOR LIMITE",
+  "instrucoes": [
+    "Após o vencimento, cobrar multa de 2,00% e juros de mora de 1,00% ao mês.",
+    "Desconto de R$ 92,13 para pagamento até 20/11/2026.",
+    "Não receber após 60 dias do vencimento.",
+    "DOCUMENTO DE TESTE — SEM VALOR. Fixture sintética do vellora (fidelity/corpus)."
+  ],
+  "demonstrativo": [
+    {
+      "referencia": "10/2026",
+      "descricao": "Revisão programada — mão de obra",
+      "valorCentavos": 98000
+    },
+    {
+      "referencia": "10/2026",
+      "descricao": "Peças de reposição (filtros, óleo sintético)",
+      "valorCentavos": 71250
+    },
+    { "referencia": "10/2026", "descricao": "Alinhamento e balanceamento", "valorCentavos": 15000 }
+  ],
+  "barcodeGeometry": {
+    "spec": {
+      "label": "Spec geometry: 103 mm x 13 mm, narrow X = 103/405 mm, wide = 3X (BCB Carta-Circular 2.926 V; ratio choice documented in fidelity/ACCEPTANCE.md)",
+      "lengthMm": 103,
+      "ratio": 3,
+      "unit": "mm",
+      "decimals": 4
+    },
+    "pxGrid": {
+      "label": "DIAGNOSTIC ONLY - narrow 1 CSS px, wide 3 CSS px, length 405 px = 107.16 mm (+4.16 mm vs the mandated 103 mm). Isolates px-snapping from encoding errors.",
+      "narrowPx": 1,
+      "widePx": 3,
+      "unit": "px"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "_comment": "Reproduces the hard-coded sample content of upstream invoice.html (sparksuite/simple-html-invoice-template@7d74fe34c862b7712f1a23a3f12147a4a8bd53e1).",
+  "meta": { "title": "A simple, clean, and responsive HTML invoice template" },
+  "invoice": { "number": "123", "created": "January 1, 2023", "due": "February 1, 2023" },
+  "seller": { "name": "Sparksuite, Inc.", "street": "12345 Sunny Road", "city": "Sunnyville, CA 12345" },
+  "buyer": { "company": "Acme Corp.", "contact": "John Doe", "email": "john@example.com" },
+  "payment": { "label": "Check #", "method": "Check", "reference": "1000" },
+  "items": [
+    { "name": "Website design", "price": 300, "rowClass": "item" },
+    { "name": "Hosting (3 months)", "price": 75, "rowClass": "item" },
+    { "name": "Domain name (1 year)", "price": 10, "rowClass": "item last" }
+  ],
+  "total": 385
+}

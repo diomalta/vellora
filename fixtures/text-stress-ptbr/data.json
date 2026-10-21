@@ -1,0 +1,1147 @@
+{
+  "_generated": "DERIVED by fidelity/corpus/build-fixtures.mjs from fidelity/corpus/inputs/text-stress-ptbr.json. Do not edit.",
+  "titular": "Conceição Araújo Gonçalves Ibañez",
+  "conta": "Agência 0042 · Conta 001234-5",
+  "periodo": "01/01/2026 a 31/12/2026",
+  "saldoInicial": "150.000,00",
+  "meses": [
+    {
+      "nome": "janeiro",
+      "saldoMes": "162.974,61",
+      "lancamentos": [
+        {
+          "data": "02/01/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "997895",
+          "debito": "",
+          "credito": "2.768,32",
+          "saldo": "152.768,32"
+        },
+        {
+          "data": "04/01/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "121820",
+          "debito": "−14,35",
+          "credito": "",
+          "saldo": "152.753,97"
+        },
+        {
+          "data": "06/01/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "805212",
+          "debito": "−9,46",
+          "credito": "",
+          "saldo": "152.744,51"
+        },
+        {
+          "data": "10/01/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "175299",
+          "debito": "−61,20",
+          "credito": "",
+          "saldo": "152.683,31"
+        },
+        {
+          "data": "11/01/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "708022",
+          "debito": "−2,41",
+          "credito": "",
+          "saldo": "152.680,90"
+        },
+        {
+          "data": "15/01/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "179997",
+          "debito": "−38,80",
+          "credito": "",
+          "saldo": "152.642,10"
+        },
+        {
+          "data": "17/01/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "125370",
+          "debito": "",
+          "credito": "8,78",
+          "saldo": "152.650,88"
+        },
+        {
+          "data": "21/01/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "250668",
+          "debito": "",
+          "credito": "10.331,50",
+          "saldo": "162.982,38"
+        },
+        {
+          "data": "22/01/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "510789",
+          "debito": "",
+          "credito": "3,57",
+          "saldo": "162.985,95"
+        },
+        {
+          "data": "24/01/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "799249",
+          "debito": "−47,41",
+          "credito": "",
+          "saldo": "162.938,54"
+        },
+        {
+          "data": "28/01/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "455810",
+          "debito": "",
+          "credito": "36,07",
+          "saldo": "162.974,61"
+        }
+      ]
+    },
+    {
+      "nome": "fevereiro",
+      "saldoMes": "143.441,44",
+      "lancamentos": [
+        {
+          "data": "02/02/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "044620",
+          "debito": "−2.132,85",
+          "credito": "",
+          "saldo": "160.841,76"
+        },
+        {
+          "data": "05/02/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "105981",
+          "debito": "−149,21",
+          "credito": "",
+          "saldo": "160.692,55"
+        },
+        {
+          "data": "06/02/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "834876",
+          "debito": "",
+          "credito": "1,63",
+          "saldo": "160.694,18"
+        },
+        {
+          "data": "08/02/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "889382",
+          "debito": "−724,73",
+          "credito": "",
+          "saldo": "159.969,45"
+        },
+        {
+          "data": "11/02/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "782086",
+          "debito": "",
+          "credito": "90,54",
+          "saldo": "160.059,99"
+        },
+        {
+          "data": "14/02/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "557639",
+          "debito": "",
+          "credito": "283,34",
+          "saldo": "160.343,33"
+        },
+        {
+          "data": "17/02/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "709562",
+          "debito": "−2.799,57",
+          "credito": "",
+          "saldo": "157.543,76"
+        },
+        {
+          "data": "19/02/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "539442",
+          "debito": "−7,30",
+          "credito": "",
+          "saldo": "157.536,46"
+        },
+        {
+          "data": "21/02/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "411627",
+          "debito": "",
+          "credito": "1,81",
+          "saldo": "157.538,27"
+        },
+        {
+          "data": "24/02/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "606561",
+          "debito": "−13.922,75",
+          "credito": "",
+          "saldo": "143.615,52"
+        },
+        {
+          "data": "27/02/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "725874",
+          "debito": "−174,08",
+          "credito": "",
+          "saldo": "143.441,44"
+        }
+      ]
+    },
+    {
+      "nome": "março",
+      "saldoMes": "120.466,81",
+      "lancamentos": [
+        {
+          "data": "03/03/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "852357",
+          "debito": "−321,66",
+          "credito": "",
+          "saldo": "143.119,78"
+        },
+        {
+          "data": "05/03/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "917939",
+          "debito": "−1.931,80",
+          "credito": "",
+          "saldo": "141.187,98"
+        },
+        {
+          "data": "08/03/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "982804",
+          "debito": "−13,05",
+          "credito": "",
+          "saldo": "141.174,93"
+        },
+        {
+          "data": "08/03/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "378761",
+          "debito": "−6.819,17",
+          "credito": "",
+          "saldo": "134.355,76"
+        },
+        {
+          "data": "12/03/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "920000",
+          "debito": "−672,45",
+          "credito": "",
+          "saldo": "133.683,31"
+        },
+        {
+          "data": "15/03/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "634351",
+          "debito": "−143,72",
+          "credito": "",
+          "saldo": "133.539,59"
+        },
+        {
+          "data": "16/03/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "718183",
+          "debito": "−51,35",
+          "credito": "",
+          "saldo": "133.488,24"
+        },
+        {
+          "data": "19/03/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "668055",
+          "debito": "−4,04",
+          "credito": "",
+          "saldo": "133.484,20"
+        },
+        {
+          "data": "23/03/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "792251",
+          "debito": "−13.006,96",
+          "credito": "",
+          "saldo": "120.477,24"
+        },
+        {
+          "data": "25/03/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "555323",
+          "debito": "",
+          "credito": "40,52",
+          "saldo": "120.517,76"
+        },
+        {
+          "data": "27/03/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "458771",
+          "debito": "−50,95",
+          "credito": "",
+          "saldo": "120.466,81"
+        }
+      ]
+    },
+    {
+      "nome": "abril",
+      "saldoMes": "117.693,29",
+      "lancamentos": [
+        {
+          "data": "02/04/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "410972",
+          "debito": "−69,13",
+          "credito": "",
+          "saldo": "120.397,68"
+        },
+        {
+          "data": "04/04/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "789499",
+          "debito": "",
+          "credito": "29,88",
+          "saldo": "120.427,56"
+        },
+        {
+          "data": "07/04/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "648950",
+          "debito": "−22,71",
+          "credito": "",
+          "saldo": "120.404,85"
+        },
+        {
+          "data": "10/04/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "777397",
+          "debito": "−3.047,32",
+          "credito": "",
+          "saldo": "117.357,53"
+        },
+        {
+          "data": "12/04/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "554608",
+          "debito": "",
+          "credito": "303,70",
+          "saldo": "117.661,23"
+        },
+        {
+          "data": "14/04/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "815142",
+          "debito": "",
+          "credito": "100,08",
+          "saldo": "117.761,31"
+        },
+        {
+          "data": "17/04/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "169458",
+          "debito": "",
+          "credito": "466,56",
+          "saldo": "118.227,87"
+        },
+        {
+          "data": "20/04/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "486149",
+          "debito": "−38,14",
+          "credito": "",
+          "saldo": "118.189,73"
+        },
+        {
+          "data": "22/04/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "488444",
+          "debito": "−203,84",
+          "credito": "",
+          "saldo": "117.985,89"
+        },
+        {
+          "data": "25/04/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "668083",
+          "debito": "−83,44",
+          "credito": "",
+          "saldo": "117.902,45"
+        },
+        {
+          "data": "28/04/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "969706",
+          "debito": "−209,16",
+          "credito": "",
+          "saldo": "117.693,29"
+        }
+      ]
+    },
+    {
+      "nome": "maio",
+      "saldoMes": "106.593,22",
+      "lancamentos": [
+        {
+          "data": "01/05/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "948874",
+          "debito": "",
+          "credito": "73,15",
+          "saldo": "117.766,44"
+        },
+        {
+          "data": "04/05/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "356845",
+          "debito": "−12.167,26",
+          "credito": "",
+          "saldo": "105.599,18"
+        },
+        {
+          "data": "07/05/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "355235",
+          "debito": "−37,71",
+          "credito": "",
+          "saldo": "105.561,47"
+        },
+        {
+          "data": "10/05/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "813687",
+          "debito": "−2.274,83",
+          "credito": "",
+          "saldo": "103.286,64"
+        },
+        {
+          "data": "13/05/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "393675",
+          "debito": "−765,83",
+          "credito": "",
+          "saldo": "102.520,81"
+        },
+        {
+          "data": "14/05/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "371555",
+          "debito": "",
+          "credito": "2.126,86",
+          "saldo": "104.647,67"
+        },
+        {
+          "data": "18/05/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "404017",
+          "debito": "",
+          "credito": "3.728,43",
+          "saldo": "108.376,10"
+        },
+        {
+          "data": "19/05/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "689027",
+          "debito": "",
+          "credito": "4,55",
+          "saldo": "108.380,65"
+        },
+        {
+          "data": "23/05/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "225413",
+          "debito": "−276,88",
+          "credito": "",
+          "saldo": "108.103,77"
+        },
+        {
+          "data": "26/05/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "124205",
+          "debito": "−1.860,07",
+          "credito": "",
+          "saldo": "106.243,70"
+        },
+        {
+          "data": "28/05/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "174858",
+          "debito": "",
+          "credito": "349,52",
+          "saldo": "106.593,22"
+        }
+      ]
+    },
+    {
+      "nome": "junho",
+      "saldoMes": "78.452,35",
+      "lancamentos": [
+        {
+          "data": "03/06/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "119482",
+          "debito": "−1,26",
+          "credito": "",
+          "saldo": "106.591,96"
+        },
+        {
+          "data": "04/06/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "338207",
+          "debito": "−14.180,95",
+          "credito": "",
+          "saldo": "92.411,01"
+        },
+        {
+          "data": "07/06/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "898805",
+          "debito": "−2,63",
+          "credito": "",
+          "saldo": "92.408,38"
+        },
+        {
+          "data": "10/06/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "173693",
+          "debito": "",
+          "credito": "1,32",
+          "saldo": "92.409,70"
+        },
+        {
+          "data": "12/06/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "477444",
+          "debito": "−13.101,29",
+          "credito": "",
+          "saldo": "79.308,41"
+        },
+        {
+          "data": "15/06/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "427936",
+          "debito": "",
+          "credito": "999,55",
+          "saldo": "80.307,96"
+        },
+        {
+          "data": "17/06/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "984251",
+          "debito": "−5.388,57",
+          "credito": "",
+          "saldo": "74.919,39"
+        },
+        {
+          "data": "19/06/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "364465",
+          "debito": "",
+          "credito": "1.239,40",
+          "saldo": "76.158,79"
+        },
+        {
+          "data": "22/06/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "296436",
+          "debito": "",
+          "credito": "29,27",
+          "saldo": "76.188,06"
+        },
+        {
+          "data": "25/06/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "304733",
+          "debito": "",
+          "credito": "2,05",
+          "saldo": "76.190,11"
+        },
+        {
+          "data": "26/06/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "986821",
+          "debito": "",
+          "credito": "2.262,24",
+          "saldo": "78.452,35"
+        }
+      ]
+    },
+    {
+      "nome": "julho",
+      "saldoMes": "57.856,89",
+      "lancamentos": [
+        {
+          "data": "03/07/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "481627",
+          "debito": "",
+          "credito": "3,63",
+          "saldo": "78.455,98"
+        },
+        {
+          "data": "03/07/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "583614",
+          "debito": "−1.538,94",
+          "credito": "",
+          "saldo": "76.917,04"
+        },
+        {
+          "data": "08/07/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "205491",
+          "debito": "−81,08",
+          "credito": "",
+          "saldo": "76.835,96"
+        },
+        {
+          "data": "10/07/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "142673",
+          "debito": "−255,67",
+          "credito": "",
+          "saldo": "76.580,29"
+        },
+        {
+          "data": "12/07/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "342637",
+          "debito": "−12.823,46",
+          "credito": "",
+          "saldo": "63.756,83"
+        },
+        {
+          "data": "14/07/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "132269",
+          "debito": "−924,43",
+          "credito": "",
+          "saldo": "62.832,40"
+        },
+        {
+          "data": "18/07/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "106361",
+          "debito": "",
+          "credito": "4.779,21",
+          "saldo": "67.611,61"
+        },
+        {
+          "data": "20/07/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "630352",
+          "debito": "−343,70",
+          "credito": "",
+          "saldo": "67.267,91"
+        },
+        {
+          "data": "22/07/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "160461",
+          "debito": "−9.199,17",
+          "credito": "",
+          "saldo": "58.068,74"
+        },
+        {
+          "data": "26/07/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "834321",
+          "debito": "",
+          "credito": "3,14",
+          "saldo": "58.071,88"
+        },
+        {
+          "data": "27/07/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "035251",
+          "debito": "−214,99",
+          "credito": "",
+          "saldo": "57.856,89"
+        }
+      ]
+    },
+    {
+      "nome": "agosto",
+      "saldoMes": "58.025,53",
+      "lancamentos": [
+        {
+          "data": "02/08/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "883284",
+          "debito": "−118,96",
+          "credito": "",
+          "saldo": "57.737,93"
+        },
+        {
+          "data": "03/08/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "856076",
+          "debito": "",
+          "credito": "5,77",
+          "saldo": "57.743,70"
+        },
+        {
+          "data": "07/08/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "992826",
+          "debito": "",
+          "credito": "7.048,81",
+          "saldo": "64.792,51"
+        },
+        {
+          "data": "11/08/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "384328",
+          "debito": "",
+          "credito": "92,27",
+          "saldo": "64.884,78"
+        },
+        {
+          "data": "11/08/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "902276",
+          "debito": "−410,40",
+          "credito": "",
+          "saldo": "64.474,38"
+        },
+        {
+          "data": "15/08/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "370963",
+          "debito": "−5.019,27",
+          "credito": "",
+          "saldo": "59.455,11"
+        },
+        {
+          "data": "17/08/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "634471",
+          "debito": "",
+          "credito": "261,88",
+          "saldo": "59.716,99"
+        },
+        {
+          "data": "19/08/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "222514",
+          "debito": "−6.664,53",
+          "credito": "",
+          "saldo": "53.052,46"
+        },
+        {
+          "data": "21/08/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "568021",
+          "debito": "",
+          "credito": "896,48",
+          "saldo": "53.948,94"
+        },
+        {
+          "data": "23/08/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "979612",
+          "debito": "",
+          "credito": "3.275,42",
+          "saldo": "57.224,36"
+        },
+        {
+          "data": "28/08/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "822077",
+          "debito": "",
+          "credito": "801,17",
+          "saldo": "58.025,53"
+        }
+      ]
+    },
+    {
+      "nome": "setembro",
+      "saldoMes": "57.856,96",
+      "lancamentos": [
+        {
+          "data": "03/09/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "607993",
+          "debito": "−1,85",
+          "credito": "",
+          "saldo": "58.023,68"
+        },
+        {
+          "data": "03/09/2026",
+          "historico": "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+          "documento": "953594",
+          "debito": "−29,77",
+          "credito": "",
+          "saldo": "57.993,91"
+        },
+        {
+          "data": "06/09/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "602022",
+          "debito": "",
+          "credito": "1,07",
+          "saldo": "57.994,98"
+        },
+        {
+          "data": "11/09/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "967097",
+          "debito": "−182,04",
+          "credito": "",
+          "saldo": "57.812,94"
+        },
+        {
+          "data": "13/09/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "900704",
+          "debito": "−212,35",
+          "credito": "",
+          "saldo": "57.600,59"
+        },
+        {
+          "data": "15/09/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "636950",
+          "debito": "",
+          "credito": "498,45",
+          "saldo": "58.099,04"
+        },
+        {
+          "data": "17/09/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "116199",
+          "debito": "",
+          "credito": "2,12",
+          "saldo": "58.101,16"
+        },
+        {
+          "data": "19/09/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "142117",
+          "debito": "",
+          "credito": "461,19",
+          "saldo": "58.562,35"
+        },
+        {
+          "data": "22/09/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "074843",
+          "debito": "−1,19",
+          "credito": "",
+          "saldo": "58.561,16"
+        },
+        {
+          "data": "26/09/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "013430",
+          "debito": "−702,94",
+          "credito": "",
+          "saldo": "57.858,22"
+        },
+        {
+          "data": "27/09/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "670657",
+          "debito": "−1,26",
+          "credito": "",
+          "saldo": "57.856,96"
+        }
+      ]
+    },
+    {
+      "nome": "outubro",
+      "saldoMes": "59.590,02",
+      "lancamentos": [
+        {
+          "data": "03/10/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "393355",
+          "debito": "−18,84",
+          "credito": "",
+          "saldo": "57.838,12"
+        },
+        {
+          "data": "04/10/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "031366",
+          "debito": "",
+          "credito": "598,33",
+          "saldo": "58.436,45"
+        },
+        {
+          "data": "06/10/2026",
+          "historico": "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+          "documento": "608257",
+          "debito": "",
+          "credito": "4,07",
+          "saldo": "58.440,52"
+        },
+        {
+          "data": "10/10/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "996916",
+          "debito": "−686,34",
+          "credito": "",
+          "saldo": "57.754,18"
+        },
+        {
+          "data": "12/10/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "053164",
+          "debito": "",
+          "credito": "10,01",
+          "saldo": "57.764,19"
+        },
+        {
+          "data": "14/10/2026",
+          "historico": "Compra no débito — Padaria Pão de Açúcar & Cia.",
+          "documento": "910487",
+          "debito": "−2.928,92",
+          "credito": "",
+          "saldo": "54.835,27"
+        },
+        {
+          "data": "16/10/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "389036",
+          "debito": "",
+          "credito": "5.033,61",
+          "saldo": "59.868,88"
+        },
+        {
+          "data": "20/10/2026",
+          "historico": "Tarifa de manutenção de conta",
+          "documento": "722008",
+          "debito": "−14,27",
+          "credito": "",
+          "saldo": "59.854,61"
+        },
+        {
+          "data": "21/10/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "052528",
+          "debito": "",
+          "credito": "1,80",
+          "saldo": "59.856,41"
+        },
+        {
+          "data": "25/10/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "404175",
+          "debito": "−198,96",
+          "credito": "",
+          "saldo": "59.657,45"
+        },
+        {
+          "data": "27/10/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "078257",
+          "debito": "−67,43",
+          "credito": "",
+          "saldo": "59.590,02"
+        }
+      ]
+    },
+    {
+      "nome": "novembro",
+      "saldoMes": "65.048,76",
+      "lancamentos": [
+        {
+          "data": "01/11/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "680968",
+          "debito": "−1,53",
+          "credito": "",
+          "saldo": "59.588,49"
+        },
+        {
+          "data": "04/11/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "233565",
+          "debito": "",
+          "credito": "5.316,80",
+          "saldo": "64.905,29"
+        },
+        {
+          "data": "06/11/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "068661",
+          "debito": "−3,28",
+          "credito": "",
+          "saldo": "64.902,01"
+        },
+        {
+          "data": "10/11/2026",
+          "historico": "Depósito em cheque compensado",
+          "documento": "465789",
+          "debito": "",
+          "credito": "445,47",
+          "saldo": "65.347,48"
+        },
+        {
+          "data": "11/11/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "229342",
+          "debito": "",
+          "credito": "1.320,57",
+          "saldo": "66.668,05"
+        },
+        {
+          "data": "15/11/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "662024",
+          "debito": "−5.403,33",
+          "credito": "",
+          "saldo": "61.264,72"
+        },
+        {
+          "data": "18/11/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "636929",
+          "debito": "",
+          "credito": "643,36",
+          "saldo": "61.908,08"
+        },
+        {
+          "data": "19/11/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "721387",
+          "debito": "−3,43",
+          "credito": "",
+          "saldo": "61.904,65"
+        },
+        {
+          "data": "21/11/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "555683",
+          "debito": "−9,84",
+          "credito": "",
+          "saldo": "61.894,81"
+        },
+        {
+          "data": "24/11/2026",
+          "historico": "PIX recebido — João Ninguém da Silva",
+          "documento": "939788",
+          "debito": "",
+          "credito": "3.915,13",
+          "saldo": "65.809,94"
+        },
+        {
+          "data": "27/11/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "331225",
+          "debito": "−761,18",
+          "credito": "",
+          "saldo": "65.048,76"
+        }
+      ]
+    },
+    {
+      "nome": "dezembro",
+      "saldoMes": "39.803,79",
+      "lancamentos": [
+        {
+          "data": "03/12/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "707189",
+          "debito": "−13.754,48",
+          "credito": "",
+          "saldo": "51.294,28"
+        },
+        {
+          "data": "03/12/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "994051",
+          "debito": "−1,66",
+          "credito": "",
+          "saldo": "51.292,62"
+        },
+        {
+          "data": "08/12/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "517373",
+          "debito": "−1.518,39",
+          "credito": "",
+          "saldo": "49.774,23"
+        },
+        {
+          "data": "10/12/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "175550",
+          "debito": "−409,81",
+          "credito": "",
+          "saldo": "49.364,42"
+        },
+        {
+          "data": "11/12/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "290212",
+          "debito": "−8,91",
+          "credito": "",
+          "saldo": "49.355,51"
+        },
+        {
+          "data": "15/12/2026",
+          "historico": "Saque em terminal de autoatendimento",
+          "documento": "336515",
+          "debito": "−9.583,53",
+          "credito": "",
+          "saldo": "39.771,98"
+        },
+        {
+          "data": "16/12/2026",
+          "historico": "Débito automático — energia elétrica",
+          "documento": "006428",
+          "debito": "−19,74",
+          "credito": "",
+          "saldo": "39.752,24"
+        },
+        {
+          "data": "19/12/2026",
+          "historico": "Pagamento de fatura do cartão de crédito",
+          "documento": "308164",
+          "debito": "−65,58",
+          "credito": "",
+          "saldo": "39.686,66"
+        },
+        {
+          "data": "21/12/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "654861",
+          "debito": "",
+          "credito": "45,93",
+          "saldo": "39.732,59"
+        },
+        {
+          "data": "24/12/2026",
+          "historico": "Pagamento de boleto — Companhia de Saneamento Básico",
+          "documento": "145652",
+          "debito": "−92,93",
+          "credito": "",
+          "saldo": "39.639,66"
+        },
+        {
+          "data": "28/12/2026",
+          "historico": "Rendimento de aplicação automática",
+          "documento": "492235",
+          "debito": "",
+          "credito": "164,13",
+          "saldo": "39.803,79"
+        }
+      ]
+    }
+  ],
+  "totais": {
+    "debitos": "−171.108,67",
+    "creditos": "60.912,46",
+    "saldoFinal": "39.803,79"
+  },
+  "expected": {
+    "rows": 132,
+    "saldoFinalCentavos": 3980379,
+    "saldoFinal": "39.803,79"
+  }
+}
