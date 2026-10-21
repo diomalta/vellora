@@ -6,7 +6,14 @@ reftests rendered **test and reference both** through vellora's real public pipe
 rasterized with poppler and compared with WPT's own pixel rules. An optional Chrome print oracle runs
 the same tests through Chrome with the same geometry, rasterizer and comparator, so "Chrome fails
 too" is distinguishable from vellora-only failures. Phase A scope: measurement only; nothing here
-changes vellora's output (the runner only calls the public API).
+changes vellora's output (the runner calls the public API; since port step 08 the nodes WPT serves
+as XML go through the same `renderPdf` call with its internal `_bridge` option set to a
+fidelity-only XML parse, pipeline step 3).
+
+Re-measuring a checkout from before port step 08 (`--vellora <its dist/index.js>`): it has no
+`xhtml_render` example, so `run.mjs` stops. Pass `--xhtml-render <bin>` (a step-08+ binary, which
+renders those nodes with that binary's code, not the old checkout's) or `--xhtml-parser html` (the
+product path of that checkout, which before step 08 sniffed XHTML input itself).
 
 Labels follow the repo rules: **CONFIRMED** (checked in this work, with the command/source),
 **UNVERIFIED ASSUMPTION**, **HYPOTHESIS**, **DESIGN TARGET**.

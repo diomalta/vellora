@@ -310,7 +310,9 @@ if (opts.xhtmlParser === "xml") {
   try {
     xhtmlRender = opts.xhtmlRender ?? buildXhtmlRender(repoRoot);
   } catch (e) {
-    fatal(`cannot build the xhtml_render example in ${repoRoot}: ${e.message ?? e}`);
+    fatal(
+      `cannot build the xhtml_render example in ${repoRoot} (checkouts before port step 08 have none; pass --xhtml-render <bin> or --xhtml-parser html): ${e.message ?? e}`,
+    );
   }
 }
 const config = {
