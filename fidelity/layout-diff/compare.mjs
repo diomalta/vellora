@@ -28,6 +28,39 @@ function table(headers, rows) {
   return `${[`| ${headers.join(" | ")} |`, `| ${headers.map(() => "---").join(" | ")} |`, ...rows.map((r) => `| ${r.map(esc).join(" | ")} |`)].join("\n")}\n`;
 }
 
+/**
+ * Exact decomposition of the build-to-build change of one coordinate over the text layers:
+ * L0 contributes (b.L0 − a.L0) — raw Blitz/Parley as read by the walk — and each pass contributes
+ * (b.pass − b.prev) − (a.pass − a.prev), i.e. how much MORE (or less) that pass moved the run in
+ * build b than in build a. The parts sum to the change in the final layer. Only |part| > 0.01.
+ */
+function contributions(chain, aPer, bPer, key) {
+  const layers = chain.filter((n) => n !== "B0");
+  const out = {};
+  let prevA = null;
+  let prevB = null;
+  for (const name of layers) {
+    const va = aPer[name]?.[key];
+    const vb = bPer[name]?.[key];
+    if (!Number.isFinite(va) || !Number.isFinite(vb)) return null;
+    const part = prevA === null ? vb - va : vb - prevB - (va - prevA);
+    if (Math.abs(part) > 0.01) out[name] = r2(part);
+    prevA = va;
+    prevB = vb;
+  }
+  return out;
+}
+
+function sumParts(items, key) {
+  const out = {};
+  for (const item of items) {
+    for (const [layer, part] of Object.entries(item[key] ?? {})) {
+      out[layer] = r2((out[layer] ?? 0) + Math.abs(part));
+    }
+  }
+  return out;
+}
+
 /** First layer (chain order) where b's delta differs from a's by more than tol. */
 function firstChange(chain, aLayers, bLayers, keys, tol) {
   for (const layer of chain) {
@@ -139,6 +172,8 @@ export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
       b_final: { dx: fb.dx, dy: fb.dy },
       a_trajectory: chain.filter((n) => n !== "B0").map((n) => ta.per_layer[n]?.dx),
       b_trajectory: chain.filter((n) => n !== "B0").map((n) => t.per_layer[n]?.dx),
+      x_contributions: contributions(chain, ta.per_layer, t.per_layer, "dx"),
+      y_contributions: contributions(chain, ta.per_layer, t.per_layer, "dy"),
     });
   }
   const tally = (items, key = "first_changed_layer", filter = () => true) => {
@@ -165,6 +200,13 @@ export function compareRuns(a, b, { tolerance = 0.5 } = {}) {
       (t) => Math.abs(t.change_in_final.dy) > tolerance,
     ),
     top_text_x_changes: byDx.slice(0, 15),
+    // Σ|part| per layer over the runs whose final x (resp. y) changed: which layer carries the
+    // build-to-build change.
+    x_change_abs_px_by_layer: sumParts(byDx, "x_contributions"),
+    y_change_abs_px_by_layer: sumParts(
+      textChanges.filter((t) => Math.abs(t.change_in_final.dy) > tolerance),
+      "y_contributions",
+    ),
     top_box_changes: boxChanges.sort((x, y) => y.magnitude - x.magnitude).slice(0, 15),
     top_text_changes: textChanges.sort((x, y) => y.magnitude - x.magnitude).slice(0, 15),
   };
@@ -285,7 +327,8 @@ function main() {
     );
     md += `\n- boxes whose final pre-pagination geometry changed: ${cmp.boxes_changed_in_final}; by first changed layer: ${JSON.stringify(cmp.boxes_by_first_changed_layer)}\n`;
     md += `- text runs whose final position changed: ${cmp.text_runs_changed_in_final}; by first changed layer: ${JSON.stringify(cmp.text_by_first_changed_layer)}\n`;
-    md += `  - of those, x changed: ${cmp.text_x_changed_in_final}, first x-changing layer: ${JSON.stringify(cmp.text_x_by_first_changed_layer)}; y changed, first y-changing layer: ${JSON.stringify(cmp.text_y_by_first_changed_layer)}\n\n`;
+    md += `  - of those, x changed: ${cmp.text_x_changed_in_final}, first x-changing layer: ${JSON.stringify(cmp.text_x_by_first_changed_layer)}; y changed, first y-changing layer: ${JSON.stringify(cmp.text_y_by_first_changed_layer)}\n`;
+    md += `  - where the x change comes from (Σ|part| px over those runs): ${JSON.stringify(cmp.x_change_abs_px_by_layer)}; y: ${JSON.stringify(cmp.y_change_abs_px_by_layer)}\n\n`;
     md +=
       "Largest text-run X changes (px), with the x trajectory per layer (vellora − Chromium dx, L0 → final):\n\n";
     md += table(
@@ -295,20 +338,22 @@ function main() {
         "Δ final dx",
         "Δ L0 dx",
         "first x-changing layer",
+        "Δ dx by layer (sums to Δ final)",
         `${la} dx trajectory`,
         `${lb} dx trajectory`,
       ],
-      cmp.top_text_x_changes
-        .slice(0, 10)
-        .map((t) => [
-          shortPath(t.owner),
-          t.text.slice(0, 24),
-          t.change_in_final.dx,
-          t.change_in_L0.dx,
-          t.first_changed_layer_x ?? "",
-          t.a_trajectory.map(r2).join(" → "),
-          t.b_trajectory.map(r2).join(" → "),
-        ]),
+      cmp.top_text_x_changes.slice(0, 10).map((t) => [
+        shortPath(t.owner),
+        t.text.slice(0, 24),
+        t.change_in_final.dx,
+        t.change_in_L0.dx,
+        t.first_changed_layer_x ?? "",
+        Object.entries(t.x_contributions ?? {})
+          .map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`)
+          .join("; "),
+        t.a_trajectory.map(r2).join(" → "),
+        t.b_trajectory.map(r2).join(" → "),
+      ]),
     );
     md += `\nLayer order of the trajectories: ${a.layers
       .filter((l) => l.name !== "B0")
