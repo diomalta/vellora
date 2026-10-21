@@ -603,7 +603,7 @@ if (ratchet?.status === "ok") {
 }
 if (inkCheck?.status === "ok") {
   console.log(
-    `run: ink check of passes vs Chrome: ${inkCheck.flagged} of ${inkCheck.passesChecked} flagged ink-missing-vs-chrome`,
+    `run: ink check of passes vs Chrome: ${inkCheck.flagged} ink-missing, ${inkCheck.flaggedDisplaced} ink-displaced of ${inkCheck.passesChecked}`,
   );
 }
 if (upstream) {

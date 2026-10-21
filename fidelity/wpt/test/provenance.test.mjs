@@ -241,5 +241,12 @@ test("expectations: schema 2 stores comparison settings and suspect passes as st
   assert.deepEqual(suspectFlags({ prepare: {}, inkCheck: { missingFrac: 0.5 } }), [
     "ink-missing-vs-chrome",
   ]);
-  assert.deepEqual(suspectFlags({ prepare: {}, inkCheck: { missingFrac: 0.49 } }), []);
+  assert.deepEqual(
+    suspectFlags({ prepare: {}, inkCheck: { missingFrac: 0.49, bboxShift: 8 } }),
+    [],
+  );
+  // val-i2/val-i3 shape: right colours, 300 px away in both test and reference.
+  assert.deepEqual(suspectFlags({ prepare: {}, inkCheck: { missingFrac: 0, bboxShift: 300 } }), [
+    "ink-displaced-vs-chrome",
+  ]);
 });

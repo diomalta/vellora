@@ -13,6 +13,13 @@ export const OUTCOMES = ["pass", "pass-blank", "fail", "unsupported", "error", "
 const isPassLike = (o) => o === "pass" || o === "pass-blank";
 /** missingFrac at or above which a pass is flagged `ink-missing-vs-chrome` (validator's 0.5). */
 export const INK_MISSING_SUSPECT = 0.5;
+/**
+ * Ink bounding-box shift (px) above which a pass is flagged `ink-displaced-vs-chrome`: content
+ * drawn in the right colours but in the wrong place in BOTH test and reference (validator fixtures
+ * val-i2/val-i3: 300 px). Far above the 8 px body-margin offset every page-1 box shows against
+ * Chrome (README observation 3), so that systematic offset does not trip it.
+ */
+export const INK_DISPLACED_SUSPECT_PX = 100;
 
 /**
  * Reasons a `pass` may not show what the test asserts, from the test's own preparation record
@@ -29,6 +36,8 @@ export function suspectFlags(r) {
   if ((p.missingResources ?? []).length) out.push("missing-resource");
   if (r.inkCheck && r.inkCheck.missingFrac >= INK_MISSING_SUSPECT) {
     out.push("ink-missing-vs-chrome");
+  } else if (r.inkCheck && (r.inkCheck.bboxShift ?? 0) > INK_DISPLACED_SUSPECT_PX) {
+    out.push("ink-displaced-vs-chrome");
   }
   return out;
 }
@@ -163,6 +172,11 @@ export function inkCheckSummary(results, status) {
     passesWithoutData: results.filter((r) => r.outcome === "pass" && !r.inkCheck).length,
     missingFrac: missing,
     flagged: passes.filter((r) => r.inkCheck.missingFrac >= INK_MISSING_SUSPECT).length,
+    flaggedDisplaced: passes.filter(
+      (r) =>
+        r.inkCheck.missingFrac < INK_MISSING_SUSPECT &&
+        (r.inkCheck.bboxShift ?? 0) > INK_DISPLACED_SUSPECT_PX,
+    ).length,
     bboxShift: shift,
     passBlank: {
       checked: blanks.length,
@@ -342,7 +356,7 @@ export function summaryMarkdown(
       lines.push(
         `- passes checked: ${inkCheck.passesChecked} (without data: ${inkCheck.passesWithoutData})`,
         `- share of Chrome's significant ink missing in vellora: ${JSON.stringify(inkCheck.missingFrac)}`,
-        `- flagged ink-missing-vs-chrome (>= 0.5): ${inkCheck.flagged}`,
+        `- flagged ink-missing-vs-chrome (>= 0.5): ${inkCheck.flagged}; ink-displaced-vs-chrome (bbox shift > 100 px): ${inkCheck.flaggedDisplaced}`,
         `- ink bounding-box shift (px): ${JSON.stringify(inkCheck.bboxShift)}`,
         `- pass-blank: ${JSON.stringify(inkCheck.passBlank)}`,
         "",
