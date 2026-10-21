@@ -1,0 +1,2040 @@
+{
+  "schemaVersion": 1,
+  "suite": "vellora-fidelity-oracles/fixtures",
+  "command": "~/.nvm/versions/node/v22.23.2/bin/node <repo>/fidelity/oracles/run-fixtures.mjs --out fidelity/results/oracles/final-current-pin",
+  "environment": {
+    "date": "Wed Oct 21 01:04:16 UTC 2026",
+    "dateIso": "2026-10-21T01:04:16.932Z",
+    "os": {
+      "type": "Darwin",
+      "release": "27.0.0",
+      "uname": "Darwin 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64",
+      "arch": "arm64"
+    },
+    "cpu": {
+      "model": "Apple M5 Pro",
+      "cores": 18
+    },
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "vellora": {
+      "version": "0.1.0-alpha.0",
+      "git": {
+        "commit": "582aec20661f1115e392be4c10cdd98b89c3d06c",
+        "branch": "fidelity/oracles",
+        "dirty": false
+      },
+      "subject": {
+        "source": "this checkout",
+        "module": "vellora (workspace build)"
+      }
+    },
+    "chrome": {
+      "version": "Chrome/155.0.8059.85",
+      "executablePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "indicative": true
+    },
+    "docker": "Docker version 29.8.2, build 7fc2dff",
+    "poppler": "pdftotext version 26.06.0",
+    "python": {
+      "python": "3.12.13",
+      "pdfminer.six": "20260107",
+      "pymupdf": "1.28.2",
+      "zxing-cpp": "3.1.1",
+      "pillow": "12.3.0"
+    },
+    "images": {
+      "tools": {
+        "ref": "vellora-fidelity-tools:local",
+        "recipeSha256": "f136dd235c524cf15462abcb3f2d4ffe7a74e7847f9532522a5b008131875b14",
+        "available": true,
+        "id": "sha256:4af7620ab899e43fcd9a7b8a4a252683a5e6f105c2d44febacca1394388e9e2c",
+        "architecture": "arm64"
+      },
+      "verapdf": {
+        "ref": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+        "available": true,
+        "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+        "architecture": "amd64"
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "fixture": "invoice",
+      "mode": "plain",
+      "pdfSha256": "8f915a8f03a5b60e558cfb4896ca3722b5986986102a817c4808d55d288e7f5f",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": false,
+      "verapdfFailedRules": ["6.2.4.3-2", "6.2.10-2", "6.6.4-1"],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 0.6298449612403101,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 11,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "pass",
+          "orderedRecall": 0.6976744186046512,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 3,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 2,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 3,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 3,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 541,
+        "pageMismatch": 5,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.151,
+          "consensus": 81,
+          "disputed": 455,
+          "subjectWithinTol": 0.099,
+          "medianDx": 0.438,
+          "medianDy": -1.422,
+          "p95Distance": 5.046,
+          "maxDistance": 5.159,
+          "xAxis": {
+            "coverage": 0.978,
+            "withinTol": 0.697,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.151,
+            "withinTol": 0.136,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.334,
+          "consensus": 179,
+          "disputed": 357,
+          "subjectWithinTol": 0.307,
+          "medianDx": 0.002,
+          "medianDy": -1.476,
+          "p95Distance": 5.11,
+          "maxDistance": 6.925,
+          "xAxis": {
+            "coverage": 0.983,
+            "withinTol": 0.833,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.351,
+            "withinTol": 0.319,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.429,
+          "consensus": 230,
+          "disputed": 306,
+          "subjectWithinTol": 0.543,
+          "medianDx": 0.002,
+          "medianDy": -1.576,
+          "p95Distance": 5.045,
+          "maxDistance": 6.925,
+          "xAxis": {
+            "coverage": 0.983,
+            "withinTol": 0.994,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.446,
+            "withinTol": 0.523,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.688,
+          "consensus": 369,
+          "disputed": 167,
+          "subjectWithinTol": 0.797,
+          "medianDx": 0,
+          "medianDy": -2.24,
+          "p95Distance": 5.045,
+          "maxDistance": 11.053,
+          "xAxis": {
+            "coverage": 0.989,
+            "withinTol": 0.989,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.7,
+            "withinTol": 0.816,
+            "p95AbsDy": 5.031
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "1",
+          "page": 1,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "2",
+          "page": 2,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "3",
+          "page": 3,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "LON",
+          "page": 1,
+          "dx": 0.226,
+          "dy": -5.174,
+          "referenceDisagreement": 0.556
+        },
+        {
+          "text": "Widgets",
+          "page": 1,
+          "dx": 0.189,
+          "dy": -5.174,
+          "referenceDisagreement": 0.556
+        }
+      ]
+    },
+    {
+      "fixture": "invoice",
+      "mode": "pdfa",
+      "pdfSha256": "5f1d89427bbe4964a9d739e8d2928e82da08cc021b0d65e10e27a68e2baa765b",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": true,
+      "verapdfFailedRules": [],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 0.6298449612403101,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 11,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "pass",
+          "orderedRecall": 0.6976744186046512,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 0.9941860465116279,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 3,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 2,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 3,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 3,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 541,
+        "pageMismatch": 5,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.151,
+          "consensus": 81,
+          "disputed": 455,
+          "subjectWithinTol": 0.099,
+          "medianDx": 0.438,
+          "medianDy": -1.422,
+          "p95Distance": 5.046,
+          "maxDistance": 5.159,
+          "xAxis": {
+            "coverage": 0.978,
+            "withinTol": 0.697,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.151,
+            "withinTol": 0.136,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.334,
+          "consensus": 179,
+          "disputed": 357,
+          "subjectWithinTol": 0.307,
+          "medianDx": 0.002,
+          "medianDy": -1.476,
+          "p95Distance": 5.11,
+          "maxDistance": 6.925,
+          "xAxis": {
+            "coverage": 0.983,
+            "withinTol": 0.833,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.351,
+            "withinTol": 0.319,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.429,
+          "consensus": 230,
+          "disputed": 306,
+          "subjectWithinTol": 0.543,
+          "medianDx": 0.002,
+          "medianDy": -1.576,
+          "p95Distance": 5.045,
+          "maxDistance": 6.925,
+          "xAxis": {
+            "coverage": 0.983,
+            "withinTol": 0.994,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.446,
+            "withinTol": 0.523,
+            "p95AbsDy": 5.045
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.688,
+          "consensus": 369,
+          "disputed": 167,
+          "subjectWithinTol": 0.797,
+          "medianDx": 0,
+          "medianDy": -2.24,
+          "p95Distance": 5.045,
+          "maxDistance": 11.053,
+          "xAxis": {
+            "coverage": 0.989,
+            "withinTol": 0.989,
+            "p95AbsDx": 1.181
+          },
+          "yAxis": {
+            "coverage": 0.7,
+            "withinTol": 0.816,
+            "p95AbsDy": 5.031
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "1",
+          "page": 1,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "2",
+          "page": 2,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "3",
+          "page": 3,
+          "dx": -5.778,
+          "dy": -3.815,
+          "referenceDisagreement": 0.627
+        },
+        {
+          "text": "LON",
+          "page": 1,
+          "dx": 0.226,
+          "dy": -5.174,
+          "referenceDisagreement": 0.556
+        },
+        {
+          "text": "Widgets",
+          "page": 1,
+          "dx": 0.189,
+          "dy": -5.174,
+          "referenceDisagreement": 0.556
+        }
+      ]
+    },
+    {
+      "fixture": "receipt",
+      "mode": "plain",
+      "pdfSha256": "0229e99111b4095b876999fe8022d096f43752ef6aac28467822ee1ad49ecf74",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": false,
+      "verapdfFailedRules": ["6.6.4-1", "6.2.10-2", "6.2.4.3-2"],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 0.8531468531468531,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 1,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.8041958041958042,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 6,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 2,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 151,
+        "pageMismatch": 18,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.165,
+          "consensus": 22,
+          "disputed": 111,
+          "subjectWithinTol": 0,
+          "medianDx": -0.27,
+          "medianDy": 156.716,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.947,
+            "withinTol": 0.548,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 0.165,
+            "withinTol": 0,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.639,
+          "consensus": 85,
+          "disputed": 48,
+          "subjectWithinTol": 0,
+          "medianDx": -0.249,
+          "medianDy": 14.217,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.962,
+            "withinTol": 0.555,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 0.677,
+            "withinTol": 0.044,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.962,
+          "consensus": 128,
+          "disputed": 5,
+          "subjectWithinTol": 0.086,
+          "medianDx": -0.247,
+          "medianDy": 13.411,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.962,
+            "withinTol": 0.563,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.135,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.97,
+          "consensus": 129,
+          "disputed": 4,
+          "subjectWithinTol": 0.116,
+          "medianDx": -0.247,
+          "medianDy": 13.411,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.97,
+            "withinTol": 0.612,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.286,
+            "p95AbsDy": 156.716
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "por",
+          "page": 2,
+          "dx": -286.185,
+          "dy": 170.277,
+          "referenceDisagreement": 0.341
+        },
+        {
+          "text": "você.",
+          "page": 2,
+          "dx": -125.241,
+          "dy": 155.902,
+          "referenceDisagreement": 0.591
+        },
+        {
+          "text": "de",
+          "page": 1,
+          "dx": 122.821,
+          "dy": 97.845,
+          "referenceDisagreement": 1.296
+        },
+        {
+          "text": "Este",
+          "page": 2,
+          "dx": -0.29,
+          "dy": 156.716,
+          "referenceDisagreement": 0.462
+        },
+        {
+          "text": "recibo",
+          "page": 2,
+          "dx": -0.283,
+          "dy": 156.716,
+          "referenceDisagreement": 0.462
+        }
+      ]
+    },
+    {
+      "fixture": "receipt",
+      "mode": "pdfa",
+      "pdfSha256": "250691c2585c7c58562b21a8b4ad6cdcecb89f8e86aebd22fcb2471382f9e6f2",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": true,
+      "verapdfFailedRules": [],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 0.8531468531468531,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 1,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.8041958041958042,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 6,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          },
+          {
+            "page": 2,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          },
+          {
+            "page": 2,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 151,
+        "pageMismatch": 18,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.165,
+          "consensus": 22,
+          "disputed": 111,
+          "subjectWithinTol": 0,
+          "medianDx": -0.27,
+          "medianDy": 156.716,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.947,
+            "withinTol": 0.548,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 0.165,
+            "withinTol": 0,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.639,
+          "consensus": 85,
+          "disputed": 48,
+          "subjectWithinTol": 0,
+          "medianDx": -0.249,
+          "medianDy": 14.217,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.962,
+            "withinTol": 0.555,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 0.677,
+            "withinTol": 0.044,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.962,
+          "consensus": 128,
+          "disputed": 5,
+          "subjectWithinTol": 0.086,
+          "medianDx": -0.247,
+          "medianDy": 13.411,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.962,
+            "withinTol": 0.563,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.135,
+            "p95AbsDy": 156.716
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.97,
+          "consensus": 129,
+          "disputed": 4,
+          "subjectWithinTol": 0.116,
+          "medianDx": -0.247,
+          "medianDy": 13.411,
+          "p95Distance": 156.716,
+          "maxDistance": 333.011,
+          "xAxis": {
+            "coverage": 0.97,
+            "withinTol": 0.612,
+            "p95AbsDx": 38.456
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.286,
+            "p95AbsDy": 156.716
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "por",
+          "page": 2,
+          "dx": -286.185,
+          "dy": 170.277,
+          "referenceDisagreement": 0.341
+        },
+        {
+          "text": "você.",
+          "page": 2,
+          "dx": -125.241,
+          "dy": 155.902,
+          "referenceDisagreement": 0.591
+        },
+        {
+          "text": "de",
+          "page": 1,
+          "dx": 122.821,
+          "dy": 97.845,
+          "referenceDisagreement": 1.296
+        },
+        {
+          "text": "Este",
+          "page": 2,
+          "dx": -0.29,
+          "dy": 156.716,
+          "referenceDisagreement": 0.462
+        },
+        {
+          "text": "recibo",
+          "page": 2,
+          "dx": -0.283,
+          "dy": 156.716,
+          "referenceDisagreement": 0.462
+        }
+      ]
+    },
+    {
+      "fixture": "boleto",
+      "mode": "plain",
+      "pdfSha256": "1b5f9c4ec822d70472cad2146d4e75bbb78c82db4af3765864b5764295995068",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": false,
+      "verapdfFailedRules": ["6.2.10-2", "6.2.4.3-2", "6.6.4-1"],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "pass",
+          "orderedRecall": 0.8755020080321285,
+          "bagRecall": 0.9959839357429718,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.8714859437751004,
+          "bagRecall": 0.9919678714859438,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 11,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 0.9919678714859438,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "fail",
+      "barcodeProblems": [
+        "zxing-cpp: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200)",
+        "zbar: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200)"
+      ],
+      "barcodeDocumentData": {
+        "expectedBarcodeValid": false,
+        "expectedBarcodeErrors": ["position 5 DV is 1, mod-11 gives 5"],
+        "expectedLinhaValid": false,
+        "expectedLinhaErrors": [
+          "field 1 DV is 1, mod-10 gives 4",
+          "field 2 DV is 1, mod-10 gives 6",
+          "field 3 DV is 0, mod-10 gives 2",
+          "encoded barcode: position 5 DV is 1, mod-11 gives 7"
+        ],
+        "linhaMatchesBarcode": false,
+        "linhasFoundInPdfText": 2
+      },
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 297,
+        "pageMismatch": 0,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.118,
+          "consensus": 35,
+          "disputed": 262,
+          "subjectWithinTol": 0,
+          "medianDx": 0.635,
+          "medianDy": -2.158,
+          "p95Distance": 39.861,
+          "maxDistance": 39.875,
+          "xAxis": {
+            "coverage": 0.96,
+            "withinTol": 0.302,
+            "p95AbsDx": 42.528
+          },
+          "yAxis": {
+            "coverage": 0.118,
+            "withinTol": 0.114,
+            "p95AbsDy": 4.171
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.172,
+          "consensus": 51,
+          "disputed": 246,
+          "subjectWithinTol": 0.02,
+          "medianDx": 0.635,
+          "medianDy": -2.531,
+          "p95Distance": 39.861,
+          "maxDistance": 42.571,
+          "xAxis": {
+            "coverage": 0.99,
+            "withinTol": 0.837,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.182,
+            "withinTol": 0.111,
+            "p95AbsDy": 4.745
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.357,
+          "consensus": 106,
+          "disputed": 191,
+          "subjectWithinTol": 0.217,
+          "medianDx": 0.695,
+          "medianDy": -2.533,
+          "p95Distance": 42.618,
+          "maxDistance": 42.953,
+          "xAxis": {
+            "coverage": 0.99,
+            "withinTol": 0.837,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.367,
+            "withinTol": 0.266,
+            "p95AbsDy": 5.53
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.653,
+          "consensus": 194,
+          "disputed": 103,
+          "subjectWithinTol": 0.588,
+          "medianDx": 0.7,
+          "medianDy": -1.238,
+          "p95Distance": 42.637,
+          "maxDistance": 42.953,
+          "xAxis": {
+            "coverage": 0.993,
+            "withinTol": 0.875,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.66,
+            "withinTol": 0.745,
+            "p95AbsDy": 5.889
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "BENEFICIÁRIO",
+          "page": 1,
+          "dx": 42.558,
+          "dy": -5.813,
+          "referenceDisagreement": 1.307
+        },
+        {
+          "text": "NÚMERO",
+          "page": 1,
+          "dx": 42.569,
+          "dy": -4.174,
+          "referenceDisagreement": 1.586
+        },
+        {
+          "text": "NOSSO",
+          "page": 1,
+          "dx": 42.547,
+          "dy": -4.174,
+          "referenceDisagreement": 1.586
+        },
+        {
+          "text": "DOCUMENTO",
+          "page": 1,
+          "dx": 42.575,
+          "dy": -2.534,
+          "referenceDisagreement": 1.865
+        },
+        {
+          "text": "DO",
+          "page": 1,
+          "dx": 42.561,
+          "dy": -2.534,
+          "referenceDisagreement": 1.865
+        }
+      ]
+    },
+    {
+      "fixture": "boleto",
+      "mode": "pdfa",
+      "pdfSha256": "39e7cc670c01a14b830f9b96bb07646d950d0743d1bd02a104f4683549b19c5d",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": true,
+      "verapdfFailedRules": [],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "pass",
+          "orderedRecall": 0.8755020080321285,
+          "bagRecall": 0.9959839357429718,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.8714859437751004,
+          "bagRecall": 0.9919678714859438,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 11,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "pass",
+          "orderedRecall": 1,
+          "bagRecall": 0.9919678714859438,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": [],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "fail",
+      "barcodeProblems": [
+        "zxing-cpp: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200)",
+        "zbar: no ITF symbol decoded (expected 99991999900000123459990000012345670000004200)"
+      ],
+      "barcodeDocumentData": {
+        "expectedBarcodeValid": false,
+        "expectedBarcodeErrors": ["position 5 DV is 1, mod-11 gives 5"],
+        "expectedLinhaValid": false,
+        "expectedLinhaErrors": [
+          "field 1 DV is 1, mod-10 gives 4",
+          "field 2 DV is 1, mod-10 gives 6",
+          "field 3 DV is 0, mod-10 gives 2",
+          "encoded barcode: position 5 DV is 1, mod-11 gives 7"
+        ],
+        "linhaMatchesBarcode": false,
+        "linhasFoundInPdfText": 2
+      },
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 297,
+        "pageMismatch": 0,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 0,
+        "subjectCountMismatchExamples": []
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.118,
+          "consensus": 35,
+          "disputed": 262,
+          "subjectWithinTol": 0,
+          "medianDx": 0.635,
+          "medianDy": -2.158,
+          "p95Distance": 39.861,
+          "maxDistance": 39.875,
+          "xAxis": {
+            "coverage": 0.96,
+            "withinTol": 0.302,
+            "p95AbsDx": 42.528
+          },
+          "yAxis": {
+            "coverage": 0.118,
+            "withinTol": 0.114,
+            "p95AbsDy": 4.171
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.172,
+          "consensus": 51,
+          "disputed": 246,
+          "subjectWithinTol": 0.02,
+          "medianDx": 0.635,
+          "medianDy": -2.531,
+          "p95Distance": 39.861,
+          "maxDistance": 42.571,
+          "xAxis": {
+            "coverage": 0.99,
+            "withinTol": 0.837,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.182,
+            "withinTol": 0.111,
+            "p95AbsDy": 4.745
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 0.357,
+          "consensus": 106,
+          "disputed": 191,
+          "subjectWithinTol": 0.217,
+          "medianDx": 0.695,
+          "medianDy": -2.533,
+          "p95Distance": 42.618,
+          "maxDistance": 42.953,
+          "xAxis": {
+            "coverage": 0.99,
+            "withinTol": 0.837,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.367,
+            "withinTol": 0.266,
+            "p95AbsDy": 5.53
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 0.653,
+          "consensus": 194,
+          "disputed": 103,
+          "subjectWithinTol": 0.588,
+          "medianDx": 0.7,
+          "medianDy": -1.238,
+          "p95Distance": 42.637,
+          "maxDistance": 42.953,
+          "xAxis": {
+            "coverage": 0.993,
+            "withinTol": 0.875,
+            "p95AbsDx": 42.546
+          },
+          "yAxis": {
+            "coverage": 0.66,
+            "withinTol": 0.745,
+            "p95AbsDy": 5.889
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "BENEFICIÁRIO",
+          "page": 1,
+          "dx": 42.558,
+          "dy": -5.813,
+          "referenceDisagreement": 1.307
+        },
+        {
+          "text": "NÚMERO",
+          "page": 1,
+          "dx": 42.569,
+          "dy": -4.174,
+          "referenceDisagreement": 1.586
+        },
+        {
+          "text": "NOSSO",
+          "page": 1,
+          "dx": 42.547,
+          "dy": -4.174,
+          "referenceDisagreement": 1.586
+        },
+        {
+          "text": "DOCUMENTO",
+          "page": 1,
+          "dx": 42.575,
+          "dy": -2.534,
+          "referenceDisagreement": 1.865
+        },
+        {
+          "text": "DO",
+          "page": 1,
+          "dx": 42.561,
+          "dy": -2.534,
+          "referenceDisagreement": 1.865
+        }
+      ]
+    },
+    {
+      "fixture": "notification",
+      "mode": "plain",
+      "pdfSha256": "7c73290fa4188956d9728689317c9ae87c4313cd0573c9d3c92a4ee67ee06f17",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": false,
+      "verapdfFailedRules": ["6.6.4-1", "6.2.4.3-2"],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.9795081967213115,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "warn",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 235,
+        "pageMismatch": 0,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 3,
+        "subjectCountMismatchExamples": [
+          {
+            "text": "1",
+            "chrome": 2,
+            "weasyprint": 2,
+            "subject": 0
+          },
+          {
+            "text": "Página",
+            "chrome": 1,
+            "weasyprint": 1,
+            "subject": 0
+          },
+          {
+            "text": "de",
+            "chrome": 10,
+            "weasyprint": 10,
+            "subject": 9
+          }
+        ]
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.43,
+          "consensus": 101,
+          "disputed": 134,
+          "subjectWithinTol": 0.743,
+          "medianDx": 0.018,
+          "medianDy": -0.203,
+          "p95Distance": 1.725,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 0.906,
+            "withinTol": 1,
+            "p95AbsDx": 0.429
+          },
+          "yAxis": {
+            "coverage": 0.519,
+            "withinTol": 0.615,
+            "p95AbsDy": 1.704
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.97,
+          "consensus": 228,
+          "disputed": 7,
+          "subjectWithinTol": 0.452,
+          "medianDx": 0.133,
+          "medianDy": -1.454,
+          "p95Distance": 6.3,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 0.97,
+            "withinTol": 0.452,
+            "p95AbsDy": 6.285
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 1,
+          "consensus": 235,
+          "disputed": 0,
+          "subjectWithinTol": 0.8,
+          "medianDx": 0.144,
+          "medianDy": -1.454,
+          "p95Distance": 9.868,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.8,
+            "p95AbsDy": 9.866
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 1,
+          "consensus": 235,
+          "disputed": 0,
+          "subjectWithinTol": 0.915,
+          "medianDx": 0.144,
+          "medianDy": -1.454,
+          "p95Distance": 9.868,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.915,
+            "p95AbsDy": 9.866
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "Atenciosamente,",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -10.203,
+          "referenceDisagreement": 0.354
+        },
+        {
+          "text": "Mariana",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Oliveira",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Souza",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Acme",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.866,
+          "referenceDisagreement": 0.941
+        }
+      ]
+    },
+    {
+      "fixture": "notification",
+      "mode": "pdfa",
+      "pdfSha256": "d3da3c4648c8e9067a22b6fa5312f58210d30d0f21795b3ca394997979352f6e",
+      "deterministic": true,
+      "qpdf": "pass",
+      "verapdf": "pass",
+      "verapdfCompliant": true,
+      "verapdfFailedRules": [],
+      "text": "warn",
+      "textPerExtractor": [
+        {
+          "extractor": "pdftotext",
+          "status": "warn",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pdfminer.six",
+          "status": "warn",
+          "orderedRecall": 0.9795081967213115,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        },
+        {
+          "extractor": "pymupdf",
+          "status": "warn",
+          "orderedRecall": 1,
+          "bagRecall": 1,
+          "subjectOnlyMissing": 0,
+          "subjectOnlyExtra": 0,
+          "subjectOnlyReordered": 0,
+          "referenceGeneratedAbsent": ["Página", "1", "1", "de"],
+          "copyPaste": true
+        }
+      ],
+      "barcode": "skipped",
+      "barcodeProblems": [],
+      "barcodeDocumentData": null,
+      "layout": "info",
+      "layoutPages": {
+        "chrome": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ],
+        "weasyprint": [
+          {
+            "page": 1,
+            "width": 595.276,
+            "height": 841.89
+          }
+        ],
+        "subject": [
+          {
+            "page": 1,
+            "width": 594.96,
+            "height": 841.92
+          }
+        ]
+      },
+      "layoutBuckets": {
+        "matchedTriples": 235,
+        "pageMismatch": 0,
+        "referenceCountMismatch": 0,
+        "subjectCountMismatch": 3,
+        "subjectCountMismatchExamples": [
+          {
+            "text": "1",
+            "chrome": 2,
+            "weasyprint": 2,
+            "subject": 0
+          },
+          {
+            "text": "Página",
+            "chrome": 1,
+            "weasyprint": 1,
+            "subject": 0
+          },
+          {
+            "text": "de",
+            "chrome": 10,
+            "weasyprint": 10,
+            "subject": 9
+          }
+        ]
+      },
+      "layoutByTolerance": [
+        {
+          "tol": 0.5,
+          "coverage": 0.43,
+          "consensus": 101,
+          "disputed": 134,
+          "subjectWithinTol": 0.743,
+          "medianDx": 0.018,
+          "medianDy": -0.203,
+          "p95Distance": 1.725,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 0.906,
+            "withinTol": 1,
+            "p95AbsDx": 0.429
+          },
+          "yAxis": {
+            "coverage": 0.519,
+            "withinTol": 0.615,
+            "p95AbsDy": 1.704
+          }
+        },
+        {
+          "tol": 1,
+          "coverage": 0.97,
+          "consensus": 228,
+          "disputed": 7,
+          "subjectWithinTol": 0.452,
+          "medianDx": 0.133,
+          "medianDy": -1.454,
+          "p95Distance": 6.3,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 0.97,
+            "withinTol": 0.452,
+            "p95AbsDy": 6.285
+          }
+        },
+        {
+          "tol": 2,
+          "coverage": 1,
+          "consensus": 235,
+          "disputed": 0,
+          "subjectWithinTol": 0.8,
+          "medianDx": 0.144,
+          "medianDy": -1.454,
+          "p95Distance": 9.868,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.8,
+            "p95AbsDy": 9.866
+          }
+        },
+        {
+          "tol": 4,
+          "coverage": 1,
+          "consensus": 235,
+          "disputed": 0,
+          "subjectWithinTol": 0.915,
+          "medianDx": 0.144,
+          "medianDy": -1.454,
+          "p95Distance": 9.868,
+          "maxDistance": 10.205,
+          "xAxis": {
+            "coverage": 1,
+            "withinTol": 1,
+            "p95AbsDx": 0.436
+          },
+          "yAxis": {
+            "coverage": 1,
+            "withinTol": 0.915,
+            "p95AbsDy": 9.866
+          }
+        }
+      ],
+      "layoutWorst": [
+        {
+          "text": "Atenciosamente,",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -10.203,
+          "referenceDisagreement": 0.354
+        },
+        {
+          "text": "Mariana",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Oliveira",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Souza",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.932,
+          "referenceDisagreement": 1.072
+        },
+        {
+          "text": "Acme",
+          "page": 1,
+          "dx": 0.177,
+          "dy": -9.866,
+          "referenceDisagreement": 0.941
+        }
+      ]
+    }
+  ],
+  "canaries": [
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: startxref offset shifted by 17 bytes",
+      "mustReport": "status != pass",
+      "observed": "status=warn exit=3 warnings=4",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: file truncated to 60%",
+      "mustReport": "status != pass",
+      "observed": "status=fail exit=2 warnings=8",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "text/pdftotext",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "mustReport": "subject-only missing contains the word and extra contains the marker",
+      "observed": "status=fail missing=[\"RECIBO\"] extra=[\"VELLORACANARY\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "text/pdfminer.six",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "mustReport": "subject-only missing contains the word and extra contains the marker",
+      "observed": "status=fail missing=[\"RECIBO\"] extra=[\"VELLORACANARY\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "text/pymupdf",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "mustReport": "subject-only missing contains the word and extra contains the marker",
+      "observed": "status=fail missing=[\"RECIBO\"] extra=[\"VELLORACANARY\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"2 ligature presentation-form code point(s)\",\"2/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"2 ligature presentation-form code point(s)\",\"2/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"2 ligature presentation-form code point(s)\",\"2/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"2 ligature presentation-form code point(s)\",\"2/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"3 ligature presentation-form code point(s)\",\"3/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"2 ligature presentation-form code point(s)\",\"2/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"2/3 diacritic word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"3/3 diacritic word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "mustReport": "copyPaste.pass === false",
+      "observed": "pass=false failures=[\"2/3 diacritic word(s) not found verbatim\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"3 combining mark(s) (NFD text on copy)\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"3 ligature presentation-form code point(s)\",\"3/3 ff/fi/fl word(s) not found verbatim\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "mustReport": "measurement only",
+      "observed": "pass=false failures=[\"3 combining mark(s) (NFD text on copy)\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-px rendered by vellora",
+      "mustReport": "status=pass",
+      "observed": "status=pass decoded=[\"03398204600000273719028203356661245780020101\"] problems=[]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-px rendered by chrome",
+      "mustReport": "status=pass",
+      "observed": "status=pass decoded=[\"03398204600000273719028203356661245780020101\"] problems=[]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-bad-dv-px rendered by vellora",
+      "mustReport": "status=fail with the digits decoded and the DV rejected",
+      "observed": "status=fail decoded=[\"03399204600000273719028203356661245780020101\"] problems=[\"decoded 03399204600000273719028203356661245780020101 fails BCB/FEBRABAN check: position 5 DV is 9, mod-11 gives 8\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-bad-dv-px rendered by chrome",
+      "mustReport": "status=fail with the digits decoded and the DV rejected",
+      "observed": "status=fail decoded=[\"03399204600000273719028203356661245780020101\"] problems=[\"decoded 03399204600000273719028203356661245780020101 fails BCB/FEBRABAN check: position 5 DV is 9, mod-11 gives 8\"]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-0.254mm rendered by vellora",
+      "mustReport": "measurement only (sub-CSS-px modules)",
+      "observed": "status=fail decoded=[] problems=[\"zxing-cpp: no ITF symbol decoded (expected 03398204600000273719028203356661245780020101)\",\"zbar: no ITF symbol decoded (expected 03398204600000273719028203356661245780020101)\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-0.254mm rendered by chrome",
+      "mustReport": "measurement only (sub-CSS-px modules)",
+      "observed": "status=fail decoded=[] problems=[\"zxing-cpp: no ITF symbol decoded (expected 03398204600000273719028203356661245780020101)\",\"zbar: no ITF symbol decoded (expected 03398204600000273719028203356661245780020101)\"]",
+      "caught": null,
+      "ran": true
+    },
+    {
+      "oracle": "layout-consensus",
+      "canary": "notification: body translated by +6pt in the subject only",
+      "mustReport": "median signed dx shifts by 6 +/- 1 pt",
+      "observed": "medianDx 0.144 -> 6.144 (shift 6.000pt); consensus words 235 -> 235",
+      "caught": true,
+      "ran": true
+    }
+  ]
+}
