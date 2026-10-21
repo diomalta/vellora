@@ -11,6 +11,9 @@
       "openspec",
       "fixtures",
       "benchmarks/results/visual-fidelity",
+      "fidelity/.venv",
+      "fidelity/.cache",
+      "fidelity/results",
       ".remember",
       ".codex",
       ".claude"
