@@ -54,10 +54,14 @@ export function isoToDate(iso) {
 
 /**
  * Encode one render request (`examples/xhtml_render.rs` protocol): `VXR1`, then records
- * `tag u8, len u32 LE, bytes`.
+ * `tag u8, len u32 LE, bytes`. `mode` selects the raw-Blitz render (`{ raw: true }`, record `R`)
+ * and its parser (`parser: "html" | "xml"`, record `S`; the binary defaults to `xml`); without
+ * `raw` the binary runs `debug_render_xhtml`, which only parses XML.
  */
-export function encodeRequest(html, options = {}) {
+export function encodeRequest(html, options = {}, mode = {}) {
   const parts = [Buffer.from("VXR1"), ...rec("H", html)];
+  if (mode.raw) parts.push(...rec("R", "1"));
+  if (mode.parser !== undefined) parts.push(...rec("S", mode.parser));
   if (options.baseUrl !== undefined) parts.push(...rec("B", options.baseUrl));
   if (options.metadata?.title !== undefined) parts.push(...rec("T", options.metadata.title));
   if (options.metadata?.creationDate !== undefined) {
@@ -101,10 +105,12 @@ export function decodeRejection(buf) {
  * A vellora `NativeBridge` rendering with the XML parse, one `xhtml_render` process per render.
  * A render process killed by a signal (an abort, a stack overflow) re-raises that signal in this
  * worker, so the pool records the test as a crash exactly as it does when the in-process napi
- * render aborts the worker.
+ * render aborts the worker. `mode` is passed to every request ([`encodeRequest`]): `{ raw: true,
+ * parser }` makes it the raw-Blitz bridge of `run.mjs --raw`.
  */
 export function makeXhtmlBridge({
   bin,
+  mode = {},
   spawnImpl = spawn,
   raise = (s) => process.kill(process.pid, s),
 }) {
@@ -133,7 +139,7 @@ export function makeXhtmlBridge({
           }
         });
         child.stdin.on("error", () => {});
-        child.stdin.end(encodeRequest(html, options));
+        child.stdin.end(encodeRequest(html, options, mode));
       });
     },
   };

@@ -22,6 +22,11 @@
 //                             checkout, built here). html: the product path (renderPdf parses HTML);
 //                             measurement only, recorded in the results
 //   --xhtml-render <bin>      use this xhtml_render binary instead of building the checkout's
+//   --raw                     also render every reftest with raw Blitz layout (vellora_core::
+//                             debug_render_raw_blitz: no reader compensations, no layout_normalize
+//                             passes, flat pagination; via the xhtml_render binary) and record
+//                             `rawOutcome` per test (same vocabulary and harness as `outcome`);
+//                             attribution evidence for WPT items, see README "Raw-Blitz mode"
 //   --expectations auto|none|<file>   ratchet against fidelity/baselines/wpt/<engine>.json
 //   --update-expectations     write fidelity/baselines/wpt/<engine>.json from this run (refused
 //                             unless the default suites ran unfiltered on the exact WPT pin)
@@ -55,6 +60,14 @@ import {
   partialRunReason,
   wptPinProblems,
 } from "./lib/provenance.mjs";
+import {
+  RAW_MODE_INFO,
+  attachRawOutcomes,
+  rawCrossTab,
+  rawRenderProblem,
+  rawSummaryMarkdown,
+  withRawOutcomes,
+} from "./lib/raw.mjs";
 import {
   attributeFailures,
   buildExpectations,
@@ -91,6 +104,7 @@ function parseArgs(argv) {
     vellora: null,
     xhtmlParser: "xml",
     xhtmlRender: null,
+    raw: false,
     expectations: "auto",
     updateExpectations: false,
     upstream: "auto",
@@ -156,6 +170,9 @@ function parseArgs(argv) {
         break;
       case "--xhtml-render":
         opts.xhtmlRender = resolve(val());
+        break;
+      case "--raw":
+        opts.raw = true;
         break;
       case "--expectations":
         opts.expectations = val();
@@ -306,7 +323,7 @@ mkdirSync(outDir, { recursive: true });
 // Nodes WPT serves as XML go through vellora-core's XML parse (lib/xhtml-bridge.mjs), unless the
 // run measures the product's HTML parse of them (--xhtml-parser html).
 let xhtmlRender = null;
-if (opts.xhtmlParser === "xml") {
+if (opts.xhtmlParser === "xml" || opts.raw) {
   try {
     xhtmlRender = opts.xhtmlRender ?? buildXhtmlRender(repoRoot);
   } catch (e) {
@@ -315,6 +332,13 @@ if (opts.xhtmlParser === "xml") {
     );
   }
 }
+// `--raw`: the raw-Blitz render is in the same binary (request record `R`); a binary from before
+// it answers a malformed request (exit 2) and is refused here rather than per test.
+if (opts.raw) {
+  const why = rawRenderProblem(xhtmlRender);
+  if (why) fatal(`--raw: ${why}`);
+}
+const xhtmlParserForXmlNodes = opts.xhtmlParser;
 const config = {
   suites: opts.suites,
   jobs: opts.jobs,
@@ -339,8 +363,11 @@ const config = {
       opts.xhtmlParser === "xml"
         ? "renderPdf(..., { _bridge: xhtml_render }) = vellora_core::debug_render_xhtml (xml5ever)"
         : "renderPdf (product path: HTML parse)",
-    xhtmlRender,
+    xhtmlRender: opts.xhtmlParser === "xml" ? xhtmlRender : null,
   },
+  // Not part of comparisonConfig either: a second rendering of the same tests, recorded beside
+  // `outcome` as `rawOutcome`; `outcome` is exactly what a run without --raw records.
+  raw: opts.raw ? RAW_MODE_INFO({ xhtmlRender, xmlParse: xhtmlParserForXmlNodes === "xml" }) : null,
   label: opts.label ?? null,
   semantics: HARNESS_SEMANTICS,
   chainReferences: opts.chainReferences,
@@ -404,6 +431,53 @@ await runPool({
 clearInterval(tick);
 const velloraSeconds = (Date.now() - vStart) / 1000;
 results.sort((a, b) => (a.test < b.test ? -1 : 1));
+
+// 3b. `--raw`: the same reftests again, every node through the raw-Blitz render, in fresh workers
+// (their node caches hold raw renderings only). Harness, budgets and outcome rules are identical.
+let rawInfo = null;
+if (opts.raw) {
+  const rawResults = new Map();
+  const rStart = Date.now();
+  let rawDone = 0;
+  const rawTick = setInterval(() => {
+    console.log(
+      `run: raw ${rawDone}/${tasks.length} (${Math.round((Date.now() - rStart) / 1000)}s)`,
+    );
+  }, 15000);
+  await runPool({
+    script: join(here, "lib", "vellora-worker.mjs"),
+    size: opts.jobs,
+    tasks,
+    timeoutMs: (t) => opts.timeoutMs * (t.timeoutClass === "long" ? 6 : 1),
+    env: {
+      VELLORA_WPT_WORKER_CONFIG: JSON.stringify({
+        wptRoot: opts.wpt,
+        inlineCss: opts.inlineCss,
+        antialias: opts.antialias,
+        rasterizer: opts.rasterizer,
+        artifactsDir: opts.artifacts === "none" ? null : join(outDir, "raw-artifacts"),
+        artifacts: opts.artifacts,
+        keepPdf: opts.keepPdf,
+        velloraModule: opts.vellora,
+        chainReferences: opts.chainReferences,
+        bundledFontsDir: config.bundledFontsDir,
+        xhtmlRender: null,
+        raw: { bin: xhtmlRender, xmlParse: xhtmlParserForXmlNodes === "xml" },
+      }),
+    },
+    onResult: (result) => {
+      rawResults.set(result.test, result);
+      rawDone++;
+    },
+  });
+  clearInterval(rawTick);
+  attachRawOutcomes(results, rawResults);
+  rawInfo = {
+    ...config.raw,
+    seconds: (Date.now() - rStart) / 1000,
+    ...rawCrossTab(results),
+  };
+}
 
 // 4. Optional Chrome oracle.
 let chromeInfo = null;
@@ -548,6 +622,7 @@ const runInfo = {
   },
   discovered: kindCounts,
   chrome: chromeInfo,
+  raw: rawInfo,
 };
 writeJson(join(outDir, "results.json"), { schema: 1, ...runInfo, tests: results });
 // Stable summary: no timings or dates, so two runs of the same engine diff cleanly.
@@ -588,6 +663,7 @@ writeJson(join(outDir, "summary.json"), {
   },
   prepareFlags: flags,
   attribution: attribution && { totals: attribution.totals, bySuite: attribution.bySuite },
+  raw: rawInfo && { counts: rawInfo.counts, matrix: rawInfo.matrix },
 });
 writeJson(join(outDir, "run-info.json"), runInfo);
 if (upstream) writeJson(join(outDir, "upstream.json"), upstream);
@@ -630,14 +706,18 @@ const inkLabel = inkCheckLabel(inkCheck, chromeInfo?.browserVersion);
 // (fidelity/gate/) compares them with the expectations of a committed baseline directory.
 writeJson(
   join(outDir, "outcomes.json"),
-  buildExpectations({
+  withRawOutcomes(
+    buildExpectations({
+      results,
+      env,
+      suites: opts.suites,
+      command: runCommand,
+      config,
+      inkCheck: inkLabel,
+    }),
     results,
-    env,
-    suites: opts.suites,
-    command: runCommand,
-    config,
-    inkCheck: inkLabel,
-  }),
+    config.raw,
+  ),
 );
 if (opts.updateExpectations) {
   if (!pin.ok) fatal(`--update-expectations refused: ${pinProblems.join("; ")}`);
@@ -674,7 +754,7 @@ writeFileSync(
     raster: config.raster,
     inkCheck,
     pin,
-  }),
+  }) + (rawInfo ? rawSummaryMarkdown(rawInfo) : ""),
 );
 
 // 7. Console report.
@@ -692,6 +772,7 @@ for (const [s, r] of [...Object.entries(summary.bySuite), ["TOTAL", summary.tota
   );
 }
 if (chromeCross) console.log(`run: vellora x chrome: ${JSON.stringify(chromeCross.totals)}`);
+if (rawInfo) console.log(`run: outcome x rawOutcome: ${JSON.stringify(rawInfo.matrix)}`);
 if (attribution)
   console.log(`run: vellora failures attributed: ${JSON.stringify(attribution.totals)}`);
 if (ratchet?.status === "ok") {

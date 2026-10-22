@@ -56,6 +56,11 @@ export function classifyVelloraError(err) {
  * given (lib/xhtml-bridge.mjs), renders the nodes WPT serves as XML (`.xht`/`.xhtml`/`.xml`) with
  * vellora-core's XML parse, as Chrome parses them; every other node goes through the product
  * bridge (the napi addon), which parses HTML.
+ *
+ * `rawBridges` (`run.mjs --raw`), when given, `{ html, xml }`, replaces both: EVERY node goes
+ * through `renderPdf` with the raw-Blitz bridge of its parser (`xml` for an XML-served node when
+ * that bridge exists, else `html`), i.e. `vellora_core::debug_render_raw_blitz`. Preparation,
+ * templating, the strict orchestration and the error mapping stay the product's.
  */
 export function makeVelloraRender({
   vellora,
@@ -63,6 +68,7 @@ export function makeVelloraRender({
   inlineCss = true,
   bundledFontsDir = null,
   xhtmlBridge = null,
+  rawBridges = null,
 }) {
   const baseCoverage = bundledCoverage(bundledFontsDir);
   return async function render({ url, rel, content, mode }) {
@@ -77,6 +83,8 @@ export function makeVelloraRender({
       baseCoverage,
     });
     const xml = xhtmlBridge !== null && isXmlServed(rel);
+    let bridge = xml ? xhtmlBridge : null;
+    if (rawBridges) bridge = (isXmlServed(rel) && rawBridges.xml) || rawBridges.html;
     let pdf;
     try {
       pdf = await vellora.renderPdf(prepared.html, undefined, {
@@ -84,7 +92,7 @@ export function makeVelloraRender({
         fonts: prepared.fonts,
         images: prepared.images,
         baseUrl: prepared.baseUrl,
-        ...(xml ? { _bridge: xhtmlBridge } : {}),
+        ...(bridge ? { _bridge: bridge } : {}),
       });
     } catch (err) {
       throw classifyVelloraError(err);

@@ -639,6 +639,181 @@ pub fn paginate_traced(
     }
 }
 
+/// Fidelity tooling ONLY ([`crate::debug_render_raw_blitz`]), never the render path: Blitz's one
+/// continuous flow cut into page-tall bands with no fragmentation logic, the "raw" counterpart of
+/// [`paginate`]. Blitz has no paginator, so the raw render cannot drop pagination; it replaces it
+/// with the plainest one. Page `i` shows the flow band `[start_i, start_i + content_height_i)` of
+/// page `i`'s own `@page` box (`start_0 = 0`, so page 1 is the flow verbatim, exactly what a
+/// viewport screenshot shows), translated to the page's content box. Nothing is moved, repeated
+/// or kept together: no break rules (`break-*`), no `<thead>` repeat, no fit tolerance, no margin
+/// boxes, and no display-list rect merge (`merge_adjacent_rects`). A background or border rect is
+/// clipped into every band it crosses; a text run goes to the band of its baseline, an image or
+/// rounded border to the band of its top. Content above the flow origin stays on page 1.
+#[doc(hidden)]
+pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
+    let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
+    let mut bands: Vec<(f64, f64)> = Vec::new();
+    // The band index of flow y, growing the page list as far as `y` reaches.
+    // Past `FLAT_MAX_PAGES` bands, content stays on the last page, below its edge (a document
+    // millions of px tall must not allocate a page per band).
+    const FLAT_MAX_PAGES: usize = 200;
+    let band_of = |y: f64, geometry: &mut PageGeometry, bands: &mut Vec<(f64, f64)>| {
+        if bands.is_empty() {
+            bands.push((0.0, geometry.page(0).content_height().max(1.0)));
+        }
+        if !y.is_finite() || y < 0.0 {
+            return 0;
+        }
+        loop {
+            if let Some(i) = bands
+                .iter()
+                .position(|&(top, bottom)| y >= top && y < bottom)
+            {
+                return i;
+            }
+            if bands.len() >= FLAT_MAX_PAGES {
+                return bands.len() - 1;
+            }
+            let top = bands.last().map_or(0.0, |&(_, bottom)| bottom);
+            let height = geometry.page(bands.len()).content_height().max(1.0);
+            bands.push((top, top + height));
+        }
+    };
+    struct Lists {
+        rects: Vec<FilledRect>,
+        strokes: Vec<RoundedStroke>,
+        images: Vec<ImageRun>,
+        runs: Vec<crate::blitz_engine::TextRun>,
+    }
+    let mut lists: Vec<Lists> = Vec::new();
+    fn list(lists: &mut Vec<Lists>, i: usize) -> &mut Lists {
+        while lists.len() <= i {
+            lists.push(Lists {
+                rects: Vec::new(),
+                strokes: Vec::new(),
+                images: Vec::new(),
+                runs: Vec::new(),
+            });
+        }
+        &mut lists[i]
+    }
+    for b in &doc.boxes {
+        for rect in &b.visual_rects {
+            let first = band_of(rect.y, &mut geometry, &mut bands);
+            let last = band_of(
+                (rect.y + rect.height).max(rect.y) - 1e-6,
+                &mut geometry,
+                &mut bands,
+            )
+            .max(first);
+            for (i, &(top, bottom)) in bands.iter().enumerate().take(last + 1).skip(first) {
+                let y0 = if i == first { rect.y } else { top };
+                let y1 = if i == last {
+                    rect.y + rect.height
+                } else {
+                    bottom
+                };
+                list(&mut lists, i).rects.push(FilledRect {
+                    x: rect.x,
+                    y: y0 - top,
+                    width: rect.width,
+                    height: (y1 - y0).max(0.0),
+                    color: rect.color,
+                });
+            }
+        }
+        for border in &b.rounded_borders {
+            let i = band_of(border.y, &mut geometry, &mut bands);
+            let top = bands[i].0;
+            list(&mut lists, i).strokes.push(RoundedStroke {
+                x: border.x,
+                y: border.y - top,
+                width: border.width,
+                height: border.height,
+                radius_x: border.radius_x,
+                radius_y: border.radius_y,
+                stroke_width: border.stroke_width,
+                color: border.color,
+            });
+        }
+        for image in &b.image_runs {
+            let i = band_of(image.y, &mut geometry, &mut bands);
+            let mut image = image.clone();
+            image.y -= bands[i].0;
+            list(&mut lists, i).images.push(image);
+        }
+        for run in &b.text_runs {
+            let i = band_of(run.origin_y, &mut geometry, &mut bands);
+            let mut run = run.clone();
+            run.origin_y -= bands[i].0;
+            list(&mut lists, i).runs.push(run);
+        }
+    }
+    let total = lists.len().max(1);
+    list(&mut lists, total - 1);
+    let mut pages = Vec::with_capacity(total);
+    for (i, l) in lists.into_iter().enumerate() {
+        let page = geometry.page(i).clone();
+        let (ml, mt) = (page.margin_left, page.margin_top);
+        let rects = l
+            .rects
+            .into_iter()
+            .map(|r| FilledRect {
+                x: r.x + ml,
+                y: r.y + mt,
+                ..r
+            })
+            .collect();
+        let rounded_strokes = l
+            .strokes
+            .into_iter()
+            .map(|s| RoundedStroke {
+                x: s.x + ml,
+                y: s.y + mt,
+                ..s
+            })
+            .collect();
+        let images = l
+            .images
+            .into_iter()
+            .map(|mut im| {
+                im.x += ml;
+                im.y += mt;
+                im
+            })
+            .collect();
+        let text_runs = l
+            .runs
+            .into_iter()
+            .map(|mut r| {
+                r.origin_x += ml;
+                r.origin_y += mt;
+                r
+            })
+            .collect();
+        pages.push(PdfPage {
+            width_px: page.width,
+            height_px: page.height,
+            // Not `merge_adjacent_rects`: its 4 px gap tolerance is a vellora display-list
+            // correction (it joins two same-colour boxes up to 4 px apart into one rect).
+            rects,
+            rounded_strokes,
+            images,
+            text_runs,
+            margin_texts: Vec::new(),
+        });
+    }
+    Paginated {
+        report: PaginationReport {
+            page_count: total,
+            footers: vec![String::new(); total],
+            thead_repeated: vec![false; total],
+            oversize_hit: false,
+        },
+        pages,
+    }
+}
+
 /// The placement-time facts of one [`FragmentPlacement`] (trace only).
 struct PlacementState {
     oversize: bool,

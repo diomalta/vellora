@@ -41,6 +41,8 @@ mod layout_normalize;
 pub mod page_css;
 pub mod pagination;
 pub mod pdf;
+#[cfg(test)]
+mod raw_blitz_tests;
 pub mod validation;
 
 pub use pdf::{DocMeta, PdfAProfile};
@@ -100,6 +102,40 @@ pub fn debug_render_xhtml(
     render_as(html_bytes, opts, blitz_engine::DocumentSyntax::Xml)
 }
 
+/// Fidelity tooling ONLY (`fidelity/wpt/run.mjs --raw`, through `examples/xhtml_render.rs`),
+/// never the render path: a PDF of Blitz's own layout WITHOUT vellora's layout corrections, the
+/// render-level analogue of the layout-diff `B0` layer. It is [`render`]'s pipeline with:
+///
+/// - the box walk's reader compensations off (the inline padding-right advance Blitz's painter
+///   does not make) and none of the `layout_normalize` passes;
+/// - no display-list rect merge (`merge_adjacent_rects` joins same-colour rects up to 4 px
+///   apart);
+/// - [`pagination::paginate_flat`] instead of [`pagination::paginate`]: Blitz has no paginator,
+///   so the flow is cut into page-tall bands with no break decisions, no `<thead>` repeat and no
+///   margin boxes (page 1 is the flow verbatim, what a viewport screenshot shows).
+///
+/// Kept, because they are Blitz's input or the reading of its layout rather than corrections of
+/// it: the same validation gates (a rejected document is rejected here too), the `@page` box
+/// (page size and margins; Blitz's viewport is its content box), print media, the parser
+/// (`xml` selects the XML parse of [`debug_render_xhtml`]), fonts, images, the box walk's
+/// placement of boxes and runs (Blitz's painter's: containing-block origins, `block_offset`) and
+/// the PDF emit. Not a stable API.
+#[doc(hidden)]
+pub fn debug_render_raw_blitz(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+    xml: bool,
+) -> Result<Vec<u8>, VelloraError> {
+    let syntax = if xml {
+        blitz_engine::DocumentSyntax::Xml
+    } else {
+        blitz_engine::DocumentSyntax::Html
+    };
+    let (laid_out, page_box) =
+        validate_and_lay_out(html_bytes, opts, syntax, &mut blitz_engine::RawBlitz)?;
+    emit(&pagination::paginate_flat(&laid_out, &page_box), opts)
+}
+
 /// [`render`] with the parser chosen by `syntax` ([`blitz_engine::DocumentSyntax::Html`] for
 /// every product render).
 fn render_as(
@@ -114,6 +150,11 @@ fn render_as(
     let paginated = pagination::paginate(&laid_out, &page_box);
 
     // 5) krilla: emit the paginated display list to PDF bytes.
+    emit(&paginated, opts)
+}
+
+/// Step 5 of [`render`]: the paginated display list to PDF bytes (krilla).
+fn emit(paginated: &pagination::Paginated, opts: &RenderOptions) -> Result<Vec<u8>, VelloraError> {
     let meta = DocMeta {
         title: opts.title.clone(),
         creation_date: opts.creation_date,
