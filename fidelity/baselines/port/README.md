@@ -1687,3 +1687,30 @@ committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-f
 <gate-report.json>`). It must satisfy the relaxed (b) rule (GATE-D7). Then
 `node fidelity/gate/debt.mjs check --base <ledger at merge base> --step <NN-name>` must be
 clean.
+
+## Gate fixes (2026-10-22, branch `phaseb/10-gate`)
+
+Gate gaps found by the Phase B reviews (I1–I5 and the step-08 verifier). One commit per fix; every
+rule change has a GATE-K2 canary (`gate/canaries.mjs`) and a self-test that shows it uncaught when
+the rule is broken (`gate/test/canaries.test.mjs`). Numbers: committed baselines, local macOS,
+INDICATIVE.
+
+- **I1, a word that crosses Chrome.** `comparePdfProbeV2` judged dx/dy by \|after\| − \|before\|
+  only, so 0.35 → −1.15 pt passed. A sign flip that ends more than 1 pt from Chrome now
+  regresses; one that ends within 1 pt is within-tolerance, never "better". The task's
+  sign-agnostic formula also gated same-side improvements (−20.49 → −1.19 pt: 557 of 979 such
+  items of 09 vs 00-start, 283 of 322 vs pin), so only crossings gate (GATE-P1). The head views
+  grow by the crossings: 07 985 → 1407, 09 974 → 1396; pin (c) 07 213 → 252, 09 206 → 245 (all
+  pdf-probe; asserted in `head-chain.test.mjs`).
+- **I2, rule iii without `--debt-base`.** The ledger base now defaults to `DEBT.json` at
+  `git merge-base HEAD main` (absent = first population); a base that cannot be determined
+  REFUSES the gate, and `run-all --gate` refuses before it starts. CONFIRMED on this branch:
+  "DEBT.json absent at merge-base a8b126d8a133 (HEAD, main): first population".
+- **I3, ledger schema `debt/2` and GATE-D7 at entry.** An entry groups keys that share owner,
+  compensators, closesAt and introducedBy; each key carries `{ key, tolClass, headValue,
+  ceiling, measured, layerVectorRef }`. Rules ii and iii apply per key. A new key must be an
+  item of the head comparison; its `measured` must be the run's value, its `ceiling` at most
+  \|measured\| + the metric's resolution (pdf-probe 0.01 pt), and its vector's `run` converted
+  to the gate's unit must equal `measured` (before, a ceiling of 99 passed). `DEBT.json` and the
+  worked example are migrated; debt/1 files are read by migration (`measured: null`, so a key
+  entered from one fails GATE-D7).

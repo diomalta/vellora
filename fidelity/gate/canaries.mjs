@@ -79,21 +79,39 @@ function creep(seed, compare) {
   return { key, d, prevReport: compare(prev, run), headReport: compare(head, run) };
 }
 
-const entryFor = (key, ceiling, extra = {}) => ({
-  id: "CANARY-1",
-  keys: [key],
-  class: "b",
-  headValue: 0,
-  ceiling,
-  closesAt: "99-canary",
-  tolClass: "pdf-probe-pt",
-  owner: { layer: "blitz:canary", component: "canary" },
-  layerVector: { unit: "px", N0: 2, B0: 2, L0: 2, P: 1, run: 1 },
-  compensators: ["P"],
-  introducedBy: "99-canary",
-  evidence: ["gate canary"],
-  ...extra,
-});
+/** A debt/2 entry with one key (`keyExtra` overrides the key record: tolClass, layerVector...). */
+const entryFor = (key, ceiling, extra = {}, keyExtra = {}) => {
+  const layerVectorRef = keyExtra.layerVectorRef ?? {
+    unit: "px",
+    N0: 2,
+    B0: 2,
+    L0: 2,
+    P: 1,
+    run: 1,
+  };
+  return {
+    id: "CANARY-1",
+    class: "b",
+    closesAt: "99-canary",
+    owner: { layer: "blitz:canary", component: "canary" },
+    compensators: ["P"],
+    introducedBy: "99-canary",
+    evidence: ["gate canary"],
+    ...extra,
+    keys: [
+      {
+        key,
+        tolClass: "pdf-probe-pt",
+        headValue: 0,
+        ceiling,
+        measured: ceiling,
+        ...keyExtra,
+        layerVectorRef,
+        layerVector: layerVectorRef,
+      },
+    ],
+  };
+};
 
 function row(canary, mustReport, observed, caught) {
   return { oracle: GATE_CANARY_ORACLE, canary, mustReport, observed, caught, ran: true };
@@ -332,10 +350,10 @@ export function runGateCanaries({
     const key = "pdf-probe|canary|p1|Canary#1|dy";
     const e = entryFor(key, 3);
     const old = { ...emptyLedger(), entries: [e] };
-    const raised = transition(old, { ...emptyLedger(), entries: [{ ...e, ceiling: 4 }] }, {});
+    const raised = transition(old, { ...emptyLedger(), entries: [entryFor(key, 4)] }, {});
     const grown = transition(
       old,
-      { ...emptyLedger(), entries: [e, { ...e, id: "CANARY-2", keys: [`${key}x`] }] },
+      { ...emptyLedger(), entries: [e, entryFor(`${key}x`, 3, { id: "CANARY-2" })] },
       {},
     );
     const dropped = transition(old, emptyLedger(), { step: "98-other" });
@@ -360,7 +378,12 @@ export function runGateCanaries({
     });
     const page = "canary|TXT-P1|corpus||criterion#1|pageDelta";
     const scoped = (id) =>
-      entryFor(page, 1, { id, tolClass: "page-delta", scope: { fixture: "canary", fromPage: 2 } });
+      entryFor(
+        page,
+        1,
+        { id, scope: { fixture: "canary", fromPage: 2 } },
+        { tolClass: "page-delta" },
+      );
     const twice = ledgerCheck({ entries: [scoped("CANARY-P1"), scoped("CANARY-P2")] });
     const perWord = ledgerCheck({
       entries: [
@@ -396,7 +419,7 @@ export function runGateCanaries({
     const k = "pdf-probe|canary|p1|Canary#1|dy";
     const good = relaxed(entryFor(k, 1));
     const worse = relaxed(
-      entryFor(k, 1, { layerVector: { unit: "px", N0: 1, B0: 1, L0: 1, P: 3, run: 3 } }),
+      entryFor(k, 1, {}, { layerVectorRef: { unit: "px", N0: 1, B0: 1, L0: 1, P: 3, run: 3 } }),
     );
     const unnamed = relaxed(entryFor(k, 1, { compensators: [] }));
     const noOwner = relaxed(entryFor(k, 1, { owner: {} }));
@@ -510,6 +533,35 @@ export function runGateCanaries({
           noBase.ledger === undefined &&
           first.ledger === null &&
           !first.refusal,
+      ),
+    );
+  }
+  // 16. I3 / GATE-D7: a NEW ledger key is tied to the run. On the creep scenario (head |dy| d, run
+  // d + 1.2 pt): a ceiling of 99, a vector whose run is not the measured value, and a measured
+  // value that is not the run's each report a problem; the exact entry (control) reports none.
+  {
+    const c = creep(seed, compare);
+    const item = c.headReport.items.find((i) => i.key === c.key);
+    const after = item?.after ?? c.d + 1.2;
+    const runPx = Math.round(((after * 4) / 3) * 1000) / 1000;
+    const vec = (run) => ({ unit: "px", N0: run + 2, B0: run + 2, L0: run + 2, P: run, run });
+    const headItems = new Map(c.headReport.items.map((i) => [i.key, i]));
+    const fresh = (ceiling, keyExtra) => ({
+      ...emptyLedger(),
+      entries: [entryFor(c.key, ceiling, {}, { measured: after, ...keyExtra })],
+    });
+    const check = (l) => transition(emptyLedger(), l, { headItems });
+    const exact = check(fresh(Math.abs(after), { layerVectorRef: vec(runPx) }));
+    const ceiling99 = check(fresh(99, { layerVectorRef: vec(runPx) }));
+    const vector = check(fresh(Math.abs(after), { layerVectorRef: vec(runPx + 2) }));
+    const measured = check(fresh(99, { measured: 99, layerVectorRef: vec(99 * (4 / 3)) }));
+    const d7 = (x) => x.some((m) => /GATE-D7/.test(m));
+    rows.push(
+      row(
+        "GATE-D7: new ledger key tied to the measured value (I3)",
+        `${src}: ceiling 99 -> problem; layerVector.run != measured -> problem; measured != the run's value -> problem; exact entry (control) -> none`,
+        `exact ${exact.length}; ceiling 99 ${ceiling99.length}; vector ${vector.length}; measured ${measured.length}`,
+        exact.length === 0 && d7(ceiling99) && d7(vector) && d7(measured),
       ),
     );
   }

@@ -2,7 +2,8 @@
 // snapshots: one test per rule (i)-(vi), the relaxed (b) rule for new entries, class-a vs legacy
 // acceptances against the head, and the pin view.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -11,8 +12,12 @@ import {
   DEBT_REPO_PATH,
   applyLedger,
   chainHead,
+  d7KeyProblems,
   emptyLedger,
+  entryProblems,
   ledgerProblems,
+  migrateEntryV1,
+  parseDebt,
   pdfProbePage,
   relaxedB,
   resolveLedgerBase,
@@ -24,8 +29,28 @@ import { evaluateGate } from "../run.mjs";
 import { byKey, snapshot } from "./helpers.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const EXAMPLE = JSON.parse(readFileSync(join(here, "data", "debt-example.json"), "utf8"));
+const EXAMPLE_FILE = join(here, "data", "debt-example.json");
+const EXAMPLE = parseDebt(readFileSync(EXAMPLE_FILE, "utf8"), EXAMPLE_FILE);
 const ENTRY = EXAMPLE.entries[0];
+const KREC = ENTRY.keys[0];
+/** ENTRY (or `e`) with its one key record overridden (a new layerVectorRef is resolved inline). */
+const withKey = (e, over = {}) => ({
+  ...e,
+  keys: [
+    {
+      ...e.keys[0],
+      ...over,
+      ...("layerVectorRef" in over ? { layerVector: over.layerVectorRef } : {}),
+    },
+  ],
+});
+/** The head item GATE-D7 ties the example key to (step 07: dy 1.66 pt). */
+const HEAD_ITEMS = new Map([
+  [
+    "pdf-probe|danfe|p1|NOME/RAZÃO#1|dy",
+    { key: "pdf-probe|danfe|p1|NOME/RAZÃO#1|dy", after: 1.66, better: "lower-abs" },
+  ],
+]);
 
 // A one-fixture pdf-probe section (semantics 2) with the given pairs and unpaired counts.
 const section = (pairs, { unpairedChrome = 0, pages = { vellora: 1, chrome: 1 } } = {}) => ({
@@ -48,7 +73,7 @@ test("the example ledger is valid and its entry satisfies the relaxed (b) rule",
   // Real step-07 numbers: raw Blitz +3.656 px, the painted pass -2 px (named compensator), the
   // PDF-level step +0.557 px (within the 1 pt run tolerance); |run| 2.213 <= |N0| 3.656.
   assert.deepEqual(
-    vectorSteps(ENTRY.layerVector)
+    vectorSteps(KREC.layerVector)
       .filter((s) => Math.abs(s.step) > 0.01)
       .map((s) => [s.layer, Math.round(s.step * 1000) / 1000]),
     [
@@ -97,29 +122,42 @@ test("rule ii: beyond the ceiling the entry no longer covers the item (debt-exce
 test("rule iii: count and per-class ceiling sums never grow, ceilings only go down, removals need closesAt or a vanished key", () => {
   const old = { ...emptyLedger(), entries: [ENTRY] };
   // First population (no previous entry): allowed, but every new entry must satisfy relaxed (b).
-  assert.deepEqual(transitionProblems(emptyLedger(), old), []);
-  const bad = { ...ENTRY, id: "N", layerVector: { ...ENTRY.layerVector, run: 13 } };
+  assert.deepEqual(transitionProblems(emptyLedger(), old, { headItems: HEAD_ITEMS }), []);
+  const bad = withKey({ ...ENTRY, id: "N" }, { layerVectorRef: { ...KREC.layerVector, run: 13 } });
   assert.match(
-    transitionProblems(emptyLedger(), { ...emptyLedger(), entries: [bad] }).join(";"),
+    transitionProblems(
+      emptyLedger(),
+      { ...emptyLedger(), entries: [bad] },
+      {
+        headItems: HEAD_ITEMS,
+      },
+    ).join(";"),
     /\|run\| 13 > \|N0\| 3\.656.*relaxed \(b\)/,
   );
   // Afterwards the ledger only shrinks.
-  const added = { ...ENTRY, id: "DEBT-2", keys: ["pdf-probe|danfe|p1|0,00#4|dy"], ceiling: 1 };
+  const added = withKey(
+    { ...ENTRY, id: "DEBT-2" },
+    { key: "pdf-probe|danfe|p1|0,00#4|dy", ceiling: 1 },
+  );
   assert.match(
     transitionProblems(old, { ...emptyLedger(), entries: [ENTRY, added] }).join(";"),
     /entry count 1 -> 2/,
   );
   // A swap that keeps the count but raises the pdf-probe-pt sum is refused.
   assert.match(
-    transitionProblems(old, { ...emptyLedger(), entries: [{ ...added, ceiling: 8 }] }).join(";"),
+    transitionProblems(old, { ...emptyLedger(), entries: [withKey(added, { ceiling: 8 })] }).join(
+      ";",
+    ),
     /sum of pdf-probe-pt ceilings 1.66 -> 8/,
   );
   assert.match(
-    transitionProblems(old, { ...emptyLedger(), entries: [{ ...ENTRY, ceiling: 1.7 }] }).join(";"),
+    transitionProblems(old, { ...emptyLedger(), entries: [withKey(ENTRY, { ceiling: 1.7 })] }).join(
+      ";",
+    ),
     /ceilings only go down/,
   );
   assert.deepEqual(
-    transitionProblems(old, { ...emptyLedger(), entries: [{ ...ENTRY, ceiling: 1.2 }] }),
+    transitionProblems(old, { ...emptyLedger(), entries: [withKey(ENTRY, { ceiling: 1.2 })] }),
     [],
   );
   // Removal: at closesAt, fine; before it only with a stated reason and a key that vanished.
@@ -175,19 +213,14 @@ test("rule v: an entry whose compensator pass is gone from the run is re-gated",
 
 test("rule vi: displaced words collapse into one page-scoped entry per page-count criterion", () => {
   const pageKey = "text-stress-ptbr|TXT-P1|corpus||criterion#1|pageDelta";
-  const scoped = {
-    ...ENTRY,
-    id: "DEBT-PAGES",
-    keys: [pageKey],
-    tolClass: "page-delta",
-    headValue: 1,
-    ceiling: 1,
-    scope: { fixture: "text-stress-ptbr", fromPage: 3 },
-  };
+  const scoped = withKey(
+    { ...ENTRY, id: "DEBT-PAGES", scope: { fixture: "text-stress-ptbr", fromPage: 3 } },
+    { key: pageKey, tolClass: "page-delta", headValue: 1, ceiling: 1, measured: 1 },
+  );
   assert.equal(pdfProbePage("pdf-probe|text-stress-ptbr|p4|de#2|dy"), 4);
   // A per-word entry inside the scope is invalid; one before the scope is fine.
-  const inside = { ...ENTRY, id: "W1", keys: ["pdf-probe|text-stress-ptbr|p4|de#2|dy"] };
-  const before = { ...ENTRY, id: "W2", keys: ["pdf-probe|text-stress-ptbr|p2|de#2|dy"] };
+  const inside = withKey({ ...ENTRY, id: "W1" }, { key: "pdf-probe|text-stress-ptbr|p4|de#2|dy" });
+  const before = withKey({ ...ENTRY, id: "W2" }, { key: "pdf-probe|text-stress-ptbr|p2|de#2|dy" });
   assert.match(
     ledgerProblems({ entries: [scoped, inside] }).join(";"),
     /collapsed into DEBT-PAGES/,
@@ -235,10 +268,10 @@ test("relaxed (b): |run| <= |N0|, every non-zero vellora step named, residual ow
   );
   assert.match(relaxedB({ ...ENTRY, owner: { layer: "blitz:x" } }).join(";"), /owner/);
   assert.match(
-    relaxedB({ ...ENTRY, layerVector: { ...ENTRY.layerVector, N0: 0.5 } }).join(";"),
+    relaxedB(withKey(ENTRY, { layerVectorRef: { ...KREC.layerVector, N0: 0.5 } })).join(";"),
     /\|run\| 2.213 > \|N0\| 0.5/,
   );
-  assert.match(relaxedB({ ...ENTRY, layerVector: undefined }).join(";"), /layerVector/);
+  assert.match(relaxedB(withKey(ENTRY, { layerVectorRef: undefined })).join(";"), /layerVector/);
 });
 
 test("head ratchet: creep under tolerance at every step gates against the head; class-a acceptances of the step cover it, legacy ones do not", () => {
@@ -302,7 +335,8 @@ test("pin view: items worse than the pin are (a) accepted artefact, (b) ledger d
     after: run,
     pin: { dir: "pin", snapshot: pin },
     ledger: EXAMPLE,
-    ledgerBase: null,
+    // The example is already in the base ledger: no new key, nothing for GATE-D7 to tie.
+    ledgerBase: EXAMPLE,
     accept,
     canaries: false,
   };
@@ -337,7 +371,7 @@ test("I2: rule iii always runs; an undetermined ledger base refuses the gate", (
   const r = evaluateGate({ before: run, after: run, canaries: false });
   assert.equal(r.verdict, "REFUSED");
   assert.match(r.refusals.join(";"), /ledger base .* not determined/);
-  const raised = { ...EXAMPLE, entries: [{ ...ENTRY, ceiling: ENTRY.ceiling + 1 }] };
+  const raised = { ...EXAMPLE, entries: [withKey(ENTRY, { ceiling: KREC.ceiling + 1 })] };
   const ok = evaluateGate({ before: run, after: run, ledgerBase: null, canaries: false });
   assert.equal(ok.verdict, "PASS");
   assert.equal(ok.ledger.transitionChecked, true);
@@ -378,4 +412,151 @@ test("I2: resolveLedgerBase reads DEBT.json at the merge base, else first popula
   assert.match(none.refusal, /cannot be determined.*fatal: no main/);
   // An explicit --debt-base wins; a missing file is the first population.
   assert.equal(resolveLedgerBase({ debtBase: "/nonexistent/DEBT.json" }).ledger, null);
+});
+
+test("debt/2: an entry groups keys; rules ii and iii apply per key", () => {
+  const k2 = "pdf-probe|danfe|p1|0,00#4|dy";
+  const two = {
+    ...ENTRY,
+    keys: [KREC, { ...KREC, key: k2, headValue: 0, ceiling: 3, measured: 3 }],
+  };
+  assert.deepEqual(ledgerProblems({ entries: [two] }), []);
+  const hr = compareSnapshots(
+    probe("danfe", [pair("p1|NOME/RAZÃO#1", 0.16), pair("p1|0,00#4", 0)]),
+    probe("danfe", [pair("p1|NOME/RAZÃO#1", 1.66), pair("p1|0,00#4", 3.5)]),
+  );
+  const cls = Object.fromEntries(
+    applyLedger(
+      hr,
+      { entries: [two] },
+      { passes: ["painted_table_cell_text_baselines"] },
+    ).items.map((i) => [i.key, i.class]),
+  );
+  // Key 1 within its own ceiling (1.66), key 2 beyond ITS ceiling (3 < 3.5).
+  assert.deepEqual(cls, { [KEY]: "debt", [k2]: "debt-exceeded" });
+  // Rule iii per key: raising one key's ceiling is a problem even when the other goes down.
+  const moved = {
+    ...two,
+    keys: [
+      { ...KREC, ceiling: 1 },
+      { ...two.keys[1], ceiling: 3.2 },
+    ],
+  };
+  assert.match(
+    transitionProblems({ entries: [two] }, { entries: [moved] }).join(";"),
+    new RegExp(`${k2.replace(/[|]/g, "\\|")}: ceiling 3 -> 3.2: ceilings only go down`),
+  );
+  // Dropping one key early is a removal like an entry's.
+  assert.match(
+    transitionProblems({ entries: [two] }, { entries: [ENTRY] }, { step: "08-x" }).join(";"),
+    /0,00#4\|dy removed before its closesAt/,
+  );
+  // Keys are records now; a debt/1 string key is a shape problem.
+  assert.match(entryProblems({ ...ENTRY, keys: [KEY] }).join(";"), /every key is a record/);
+  assert.match(
+    ledgerProblems({ entries: [ENTRY, { ...ENTRY, id: "OTHER" }] }).join(";"),
+    /already in DEBT-EXAMPLE-1/,
+  );
+});
+
+test("I3 / GATE-D7: a new key's ceiling, measured value and vector run are tied to the run", () => {
+  assert.deepEqual(d7KeyProblems(ENTRY, KREC, HEAD_ITEMS.get(KEY)), []);
+  // A ceiling of 99 (the I3 hole) and any slack above the measured value + 0.01 pt resolution.
+  assert.match(
+    d7KeyProblems(ENTRY, { ...KREC, ceiling: 99 }, HEAD_ITEMS.get(KEY)).join(";"),
+    /ceiling 99 is not the measured value 1.66.*GATE-D7/,
+  );
+  assert.match(
+    d7KeyProblems(ENTRY, { ...KREC, ceiling: 1.68 }, HEAD_ITEMS.get(KEY)).join(";"),
+    /ceiling 1.68/,
+  );
+  assert.deepEqual(d7KeyProblems(ENTRY, { ...KREC, ceiling: 1.67 }, HEAD_ITEMS.get(KEY)), []);
+  // A vector whose run is not the measured value (2.213 px = 1.66 pt; 3 px = 2.25 pt is not).
+  assert.match(
+    d7KeyProblems(
+      ENTRY,
+      { ...KREC, layerVector: { ...KREC.layerVector, run: 3 } },
+      HEAD_ITEMS.get(KEY),
+    ).join(";"),
+    /layerVector.run 3 px = 2.25 pt is not the measured 1.66/,
+  );
+  // measured must be the run's value; a key the head comparison does not have cannot be tied.
+  assert.match(
+    d7KeyProblems(ENTRY, { ...KREC, measured: 2 }, HEAD_ITEMS.get(KEY)).join(";"),
+    /measured 2 is not the run's value 1.66/,
+  );
+  assert.match(d7KeyProblems(ENTRY, KREC, null).join(";"), /must be an item of the head/);
+  // A count key: no slack at all, and a px vector cannot describe a count.
+  const countItem = { key: "x|missing", after: 3, better: "lower" };
+  const count = { ...KREC, key: "x|missing", tolClass: "count", ceiling: 3, measured: 3 };
+  assert.match(d7KeyProblems(ENTRY, count, countItem).join(";"), /cannot be expressed in .* count/);
+  assert.match(
+    d7KeyProblems(
+      ENTRY,
+      { ...count, ceiling: 4, layerVector: { unit: "count", N0: 3, run: 3 } },
+      countItem,
+    ).join(";"),
+    /ceiling 4/,
+  );
+});
+
+test("debt/2 migration and layerVectorRef resolution", () => {
+  const v1 = {
+    id: "OLD",
+    keys: [KEY, "pdf-probe|danfe|p1|0,00#4|dy"],
+    class: "b",
+    headValue: 0.16,
+    ceiling: 1.66,
+    tolClass: "pdf-probe-pt",
+    layerVector: KREC.layerVector,
+    owner: ENTRY.owner,
+    compensators: ENTRY.compensators,
+    closesAt: ENTRY.closesAt,
+    introducedBy: ENTRY.introducedBy,
+    evidence: ENTRY.evidence,
+  };
+  const m = migrateEntryV1(v1);
+  assert.deepEqual(
+    m.keys.map((k) => [k.key, k.ceiling, k.measured, k.tolClass]),
+    [
+      [KEY, 1.66, null, "pdf-probe-pt"],
+      ["pdf-probe|danfe|p1|0,00#4|dy", 1.66, null, "pdf-probe-pt"],
+    ],
+  );
+  const parsed = parseDebt(
+    JSON.stringify({ schema: "vellora-fidelity/debt/1", entries: [v1] }),
+    "v1",
+  );
+  assert.equal(parsed.schema, "vellora-fidelity/debt/2");
+  assert.equal(parsed.migratedFrom, "vellora-fidelity/debt/1");
+  assert.deepEqual(parsed.entries[0].keys[0].layerVector, KREC.layerVector);
+  // A string ref: "<file>#<item key>" into a layer-vector.mjs output (words[].item, <axis>.vector).
+  const dir = mkdtempSync(join(tmpdir(), "debt-ref-"));
+  writeFileSync(
+    join(dir, "vectors.json"),
+    JSON.stringify({ words: [{ item: KEY, axis: "dy", dy: { vector: KREC.layerVector } }] }),
+  );
+  const ref = parseDebt(
+    JSON.stringify({
+      schema: "vellora-fidelity/debt/2",
+      entries: [withKey(ENTRY, { layerVectorRef: `vectors.json#${KEY}` })].map((e) => ({
+        ...e,
+        keys: e.keys.map(({ layerVector, ...k }) => k),
+      })),
+    }),
+    "ref",
+    { root: dir },
+  );
+  assert.deepEqual(ref.entries[0].keys[0].layerVector, KREC.layerVector);
+  const missing = parseDebt(
+    JSON.stringify({
+      schema: "vellora-fidelity/debt/2",
+      entries: [
+        { ...ENTRY, keys: [{ ...KREC, layerVector: undefined, layerVectorRef: "nope.json#x" }] },
+      ],
+    }),
+    "missing",
+    { root: dir },
+  );
+  assert.match(entryProblems(missing.entries[0]).join(";"), /nope.json does not exist/);
 });

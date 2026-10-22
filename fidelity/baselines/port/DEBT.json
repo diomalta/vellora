@@ -1,7 +1,7 @@
 {
-  "schema": "vellora-fidelity/debt/1",
+  "schema": "vellora-fidelity/debt/2",
   "head": "port/00-start",
-  "note": "Compensating-drift debt (class b) of the port chain against its head, gated by fidelity/gate/debt.mjs (ACCEPTANCE.md GATE-D*). Not populated yet (2026-10-21): every item worse than the head gates until an entry with a committed layer vector (fidelity/gate/layer-vector.mjs) covers it. Entry shape: fidelity/gate/debt.mjs header; one worked example: fidelity/gate/test/data/debt-example.json.",
+  "note": "Compensating-drift debt (class b) of the port chain against its head, gated by fidelity/gate/debt.mjs (ACCEPTANCE.md GATE-D*). Not populated yet (2026-10-22): every item worse than the head gates until an entry with a committed layer vector (fidelity/gate/layer-vector.mjs) covers it. Schema debt/2 (2026-10-22, I3): an entry groups keys sharing owner, compensators, closesAt and introducedBy; each key carries { key, tolClass, headValue, ceiling, measured, layerVectorRef }, and a new key is tied to the run by GATE-D7. Entry shape: fidelity/gate/debt.mjs header; one worked example: fidelity/gate/test/data/debt-example.json.",
   "entries": [],
   "closed": []
 }

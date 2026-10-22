@@ -257,6 +257,8 @@ export function evaluateGate({
   // I2: rule iii always runs. `ledgerBase` null = first population (no ledger at the merge base);
   // undefined = not determined, which REFUSES the gate (runGate resolves it with
   // resolveLedgerBase: --debt-base, else DEBT.json at `git merge-base HEAD main`).
+  // The head comparison first: GATE-D7 ties a new ledger key's measured value to its item (I3).
+  const hr = head ? compareSnapshots(head.snapshot, after, { accept: classA, declared }) : null;
   if (ledgerBase === undefined) {
     report.refusals.push(
       ledgerBaseSource ??
@@ -267,11 +269,11 @@ export function evaluateGate({
       ...transitionProblems(ledgerBase ?? emptyLedger(), doc, {
         step,
         presentKeys: snapshotKeys(after),
+        headItems: hr ? new Map(hr.items.map((i) => [i.key, i])) : null,
       }),
     );
   }
   if (head) {
-    const hr = compareSnapshots(head.snapshot, after, { accept: classA, declared });
     const applied = applyLedger(hr, doc, { passes });
     problems.push(...applied.problems);
     const items = [

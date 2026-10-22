@@ -40,9 +40,10 @@ const tally = (items, f) => {
   return out;
 };
 
-test("the committed DEBT.json is the empty vellora-fidelity/debt/1 ledger", () => {
+test("the committed DEBT.json is the empty vellora-fidelity/debt/2 ledger", () => {
   const l = loadDebt(DEBT_FILE);
-  assert.equal(l.schema, "vellora-fidelity/debt/1");
+  assert.equal(l.schema, "vellora-fidelity/debt/2");
+  assert.equal(l.migratedFrom, undefined);
   assert.deepEqual(l.entries, []);
   assert.deepEqual(r.ledger.problems, []);
 });

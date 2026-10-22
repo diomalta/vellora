@@ -24,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 15);
+    assert.equal(rows.length, 16);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -170,6 +170,12 @@ test("a gate that skips rule iii without --debt-base (the I2 hole) leaves its ca
   const skip = () => ({ ledger: undefined, source: null, refusal: null });
   const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, resolveBase: skip }));
   assert.equal(c["DEBT rule iii without --debt-base (I2)"], false);
+});
+
+test("a ledger transition without GATE-D7 (the I3 hole: a ceiling of 99 passed) leaves its canary uncaught", () => {
+  const noD7 = (o, n, x) => transitionProblems(o, n, x).filter((m) => !/GATE-D7/.test(m));
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noD7 }));
+  assert.equal(c["GATE-D7: new ledger key tied to the measured value (I3)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {
