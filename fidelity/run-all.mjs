@@ -24,7 +24,7 @@
 //
 //   node fidelity/run-all.mjs [--out <dir>] [--chrome <path> | --no-chrome]
 //     [--wpt-chrome | --chrome-from <wpt results.json>]
-//     [--only <steps>] [--skip <steps>] [--wpt-arg <arg>]... [--tools-image <ref>]
+//     [--only <steps>] [--skip <steps>] [--wpt-arg <arg>]... [--raw] [--tools-image <ref>]
 //     [--no-canaries] [--gate --baseline <fidelity/baselines/<name>> [--accept <file>]
 //       [--head <dir> | --no-head] [--pin <dir> | --no-pin] [--main] [--debt <file>]
 //       [--debt-base <file>] [--step <NN-name>]]
@@ -40,6 +40,13 @@
 //               then refused (inkCheck mismatch) and --gate refuses to start.
 // --wpt-arg     extra argument passed through to wpt/run.mjs (repeatable), e.g. a subset:
 //               --wpt-arg css/CSS2/tables  or  --wpt-arg --filter --wpt-arg <regex>.
+// --raw         pass --raw to wpt/run.mjs: every reftest is also rendered with raw Blitz layout
+//               (vellora_core::debug_render_raw_blitz via the xhtml_render example) and
+//               wpt/results.json records tests[i].rawOutcome, the field GATE-A3's (b) route and
+//               gate/ledger-candidates.mjs read (fidelity/wpt/README.md "Raw-Blitz mode"). It
+//               runs a second vellora worker pool over the same tests, so the wpt step takes
+//               longer (wall times: fidelity/wpt/README.md "Raw-Blitz mode"); Chrome is not
+//               re-run. It changes no product outcome.
 // --tools-image the oracles' Docker tools image (default $VELLORA_FIDELITY_TOOLS_IMAGE, else
 //               vellora-fidelity-tools:local). Build it from the committed recipe first.
 // --gate        after the run, compare it with --baseline (fidelity/gate/run.mjs: per-metric
@@ -121,7 +128,7 @@ const EXCLUDED_FIXTURES = {
 const VERAPDF_IMAGE_DEFAULT =
   "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c";
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const opts = {
     out: null,
     chrome: process.env.VELLORA_FIDELITY_CHROME ?? DEFAULT_CHROME,
@@ -129,6 +136,7 @@ function parseArgs(argv) {
     only: STEP_IDS,
     skip: [],
     wptArgs: [],
+    raw: false,
     toolsImage: process.env.VELLORA_FIDELITY_TOOLS_IMAGE ?? "vellora-fidelity-tools:local",
     canaries: true,
     gate: false,
@@ -150,6 +158,7 @@ function parseArgs(argv) {
     else if (a === "--only") opts.only = next().split(",").filter(Boolean);
     else if (a === "--skip") opts.skip = next().split(",").filter(Boolean);
     else if (a === "--wpt-arg") opts.wptArgs.push(next());
+    else if (a === "--raw") opts.raw = true;
     else if (a === "--tools-image") opts.toolsImage = next();
     else if (a === "--no-canaries") opts.canaries = false;
     else if (a === "--gate") opts.gate = true;
@@ -224,6 +233,21 @@ function runNode({ id, script, args = [], env = {}, outputs = [], logDir, timeou
 function notRun(id, reason) {
   process.stdout.write(`run-all: [${id}] not-run: ${reason}\n`);
   return { id, status: "not-run", reason };
+}
+
+/**
+ * The arguments of the wpt step (fidelity/wpt/run.mjs): --wpt-arg passthrough, --raw (rawOutcome
+ * per test), the baseline's expectations and the Chrome source.
+ */
+export function wptStepArgs({ opts, out, baselineExpectations = null, chromeOk = false }) {
+  const args = ["--out", out, ...opts.wptArgs];
+  if (opts.raw && !opts.wptArgs.includes("--raw")) args.push("--raw");
+  if (baselineExpectations && !opts.wptArgs.includes("--expectations")) {
+    args.push("--expectations", baselineExpectations);
+  }
+  if (opts.wptChrome && chromeOk) args.push("--chrome", opts.chrome);
+  else if (opts.chromeFrom) args.push("--chrome-from", opts.chromeFrom);
+  return args;
 }
 
 /** The committed WPT expectations file of a baseline directory, or null. */
@@ -340,12 +364,7 @@ async function main() {
   //    expectations (--baseline) or the committed expectations of this engine id.
   {
     const why = gate("wpt");
-    const args = ["--out", dirs.wpt, ...opts.wptArgs];
-    if (baselineExpectations && !opts.wptArgs.includes("--expectations")) {
-      args.push("--expectations", baselineExpectations);
-    }
-    if (opts.wptChrome && chromeOk) args.push("--chrome", opts.chrome);
-    else if (opts.chromeFrom) args.push("--chrome-from", opts.chromeFrom);
+    const args = wptStepArgs({ opts, out: dirs.wpt, baselineExpectations, chromeOk });
     steps.push(
       why
         ? notRun("wpt", why)
@@ -952,7 +971,9 @@ function renderMarkdown(s) {
   return `${lines.join("\n")}\n`;
 }
 
-main().catch((error) => {
-  process.stderr.write(`run-all failed: ${error?.stack ?? error}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    process.stderr.write(`run-all failed: ${error?.stack ?? error}\n`);
+    process.exitCode = 1;
+  });
+}
