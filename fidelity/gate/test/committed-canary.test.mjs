@@ -532,7 +532,7 @@ const CHAIN = [
 ];
 const cur = (link) => loadBaselineDir(join(baselines, ...link.split("/")));
 
-test("every committed link carries a v2 pdf-probe section re-scored from its own run's PDFs", () => {
+test("every committed link carries a v2 pdf-probe section re-scored from its own run's PDFs (or documented stand-ins)", () => {
   for (const link of CHAIN) {
     const b = cur(link);
     assert.equal(b.integrity.ok, true, `${link}: ${b.integrity.problems.join("; ")}`);
@@ -550,19 +550,68 @@ test("every committed link carries a v2 pdf-probe section re-scored from its own
     );
     assert.equal(m.source.matchesManifestSource, link !== "beta4", link);
   }
-  // Missing inputs are recorded, never silently dropped: the pin run kept invoice + notification
-  // only; beta4's A/B PDFs were not kept, so beta4-gated's stand in (evidence in the manifest).
+  // Missing inputs are recorded, never silently dropped. The pin run kept invoice + notification
+  // only; the other 7 pairs come from an --inputs mapping (2026-10-22): vellora re-rendered by the
+  // pdf-probe producer (layout_dump) built from the pin source, which reproduces the run's invoice
+  // and notification PDFs byte for byte, paired with the chain's Chrome PDFs (same reference).
+  // beta4's A/B PDFs were not kept, so beta4-gated's stand in (evidence in the manifest).
+  const pin = cur("pin");
+  const pm = pin.manifest.pdfProbeRescore;
+  assert.deepEqual(pm.missing, []);
+  assert.deepEqual(pm.v2Fixtures, Object.keys(pin.pdfProbe).sort());
+  assert.equal(pm.v2Fixtures.length, 9);
+  const mapped = Object.entries(pm.inputs)
+    .filter(([, x]) => x.source === "inputMap")
+    .map(([f]) => f);
+  assert.deepEqual(mapped, [
+    "boleto",
+    "boleto-febraban",
+    "danfe",
+    "oss-postmark-receipt",
+    "oss-sparksuite-invoice",
+    "receipt",
+    "text-stress-ptbr",
+  ]);
+  assert.deepEqual(Object.keys(pm.inputMap.fixtures), mapped);
+  assert.equal(pm.inputs.invoice.vellora.path, "layout-diff/invoice/run-all/vellora.pdf");
+  for (const fx of ["invoice", "notification"]) {
+    const rep = pm.inputMap.renderer.reproduces[fx];
+    assert.equal(rep.vellora, rep.pinRunCopy, fx);
+    assert.equal(rep.vellora, pm.inputs[fx].vellora.sha256, fx);
+  }
+  for (const fx of mapped) {
+    const e = pm.inputMap.fixtures[fx];
+    assert.equal(e.vellora.sha256, pm.inputs[fx].vellora.sha256, fx);
+    assert.equal(e.chrome.sha256, pm.inputs[fx].chrome.sha256, fx);
+    // The pin's pair keys name the same Chrome words as the chain's (else the view is REFUSED).
+    assert.equal(e.chrome.equalsChainReference, true, fx);
+    assert.equal(
+      pin.pdfProbe[fx].reference.chromeWordsSha256,
+      cur("port/00-start").pdfProbe[fx].reference.chromeWordsSha256,
+      fx,
+    );
+  }
+  // Off-page backfill of the complete pin (2026-10-22): every section carries offPage, from the
+  // same PDFs the re-score measured (the run's pair, or the same --inputs mapping by sha256).
+  const ob = pin.manifest.offPageBackfill;
+  assert.equal(ob.inputMap.sha256, pm.inputMap.sha256);
+  assert.deepEqual(Object.keys(ob.inputs).sort(), pm.v2Fixtures);
+  for (const fx of pm.v2Fixtures) {
+    assert.ok(pin.pdfProbe[fx].offPage, fx);
+    assert.equal(ob.inputs[fx].vellora.sha256, pm.inputs[fx].vellora.sha256, fx);
+    assert.equal(ob.inputs[fx].chrome.sha256, pm.inputs[fx].chrome.sha256, fx);
+    assert.equal(ob.inputs[fx].source === "inputMap", mapped.includes(fx), fx);
+  }
   assert.deepEqual(
-    cur("pin").manifest.pdfProbeRescore.missing.map((x) => x.fixture),
-    [
-      "boleto",
-      "boleto-febraban",
-      "danfe",
-      "oss-postmark-receipt",
-      "oss-sparksuite-invoice",
-      "receipt",
-      "text-stress-ptbr",
-    ],
+    Object.fromEntries(
+      Object.entries(ob.inputs)
+        .filter(([, x]) => x.offPage.vellora || x.offPage.chrome)
+        .map(([fx, x]) => [fx, x.offPage]),
+    ),
+    {
+      "boleto-febraban": { vellora: 6, chrome: 0 },
+      "oss-postmark-receipt": { vellora: 37, chrome: 0 },
+    },
   );
   assert.match(cur("beta4").manifest.pdfProbeRescore.source.substitute, /no run copy kept/);
   assert.deepEqual(Object.keys(cur("beta4").pdfProbe), [

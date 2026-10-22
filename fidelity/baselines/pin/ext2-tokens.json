@@ -2,7 +2,7 @@
   "schema": "vellora-fidelity/ext2-tokens/1",
   "note": "EXT-2 missing-token lists per extractor, backfilled from the run's oracles result.json (fidelity/gate/backfill-ext2-tokens.mjs); read by fidelity/gate/snapshot.mjs withExt2Tokens",
   "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
-  "date": "2026-10-22T22:48:09.502Z",
+  "date": "2026-10-22T23:17:01.806Z",
   "source": {
     "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
     "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9"

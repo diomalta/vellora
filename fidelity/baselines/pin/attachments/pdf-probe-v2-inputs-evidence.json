@@ -1,0 +1,323 @@
+{
+  "schema": "vellora-fidelity/pin-pdf-probe-v2-inputs-evidence/1",
+  "labels": {
+    "authority": "INDICATIVE (local macOS, darwin 27.0.0 arm64, 2026-10-22)"
+  },
+  "question": "Can the pin run copy's own PDFs stand in for the 7 missing pdf-probe pairs, and is the re-render equivalent?",
+  "step1": {
+    "commands": "node <scratch>/step1.mjs (pdfWordsV2 + chromeWordsFingerprint from fidelity/layout-diff/lib over the pin run copy's corpus/ and oracles/ chrome.pdf; sha256 of corpus templated.html and layout-diff native.html/browser.html in the pin, 00-start and 09 run copies)",
+    "reading": "The pin run copy has no layout-diff PDFs for these 7 (its pdf-probe ran --fixtures notification,invoice). Its corpus/oracle Chrome PDFs have the chain's Chrome word fingerprint (all but oracles/corpus/oss-postmark-receipt/plain/reference/chrome.pdf), and corpus templated.html = layout-diff native.html (same sha256) in all three runs; but its corpus/oracle vellora.pdf are NOT the pdf-probe producer's bytes (oracles/fixtures/invoice/plain/vellora.pdf 8f915a8f... != layout-diff 5c406133..., same PyMuPDF words). So the vellora side was re-rendered with the pdf-probe producer at the pin (inputMap in manifest.pdfProbeRescore), and the pin run copy's PDFs serve as a cross-check.",
+    "date": "2026-10-22T22:24:51.313Z",
+    "fixtures": {
+      "boleto": {
+        "chainChromeWordsSha256": "6045d6f5c8cbec9eb48dbffed33a850316892aecd52b73f90b83785cea2b93eb",
+        "templatedHtml": {
+          "pin": null,
+          "00-start": null,
+          "09": null
+        },
+        "nativeHtml": {
+          "pin": "6cc266116374eef1605168eff6243861a6d9eeefcce521176060530f83929b10",
+          "00-start": "6cc266116374eef1605168eff6243861a6d9eeefcce521176060530f83929b10",
+          "09": "6cc266116374eef1605168eff6243861a6d9eeefcce521176060530f83929b10"
+        },
+        "browserHtml": {
+          "pin": "604a43f59ef941db755013531c7c79e0afdd17a9b6e85dd73c9c9955c45b9827",
+          "00-start": "4a7e94633e032f329fa915b2541de63413b4f74ed096422cad34af27ff228d9a",
+          "09": "52282e1d17addca8493f7c4d0f39b3a04e4382814b3fe08f8eb121112839e22a"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/fixtures/boleto/reference/chrome.pdf",
+            "sha256": "4867aae9526318105bd7abbb7997aa166af1a103721644a68792cc7989ce96cd",
+            "chromeWordsSha256": "6045d6f5c8cbec9eb48dbffed33a850316892aecd52b73f90b83785cea2b93eb",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "80f2db7faa1dca593d097ec2b06f7a3bc7ebbeb0c7cde05e205a5c49686a9442",
+          "chromeWordsSha256": "6045d6f5c8cbec9eb48dbffed33a850316892aecd52b73f90b83785cea2b93eb"
+        },
+        "chromePdf_09": {
+          "sha256": "fadb172e36f0e225627acc4802281fbe4c356bfe389becfa73aa715e036521df",
+          "chromeWordsSha256": "6045d6f5c8cbec9eb48dbffed33a850316892aecd52b73f90b83785cea2b93eb"
+        }
+      },
+      "boleto-febraban": {
+        "chainChromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365",
+        "templatedHtml": {
+          "pin": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+          "00-start": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+          "09": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5"
+        },
+        "nativeHtml": {
+          "pin": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+          "00-start": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+          "09": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5"
+        },
+        "browserHtml": {
+          "pin": "98d9f5b7ea3bdafa7b87bcb7b59b2c5b12cf07a6b95970e9349ae8ebfa938a79",
+          "00-start": "3b92b5a17fae518a40e4ccf7e5cd5844274c7ec7b7f5e8f15c39cc5a31ed4a55",
+          "09": "40cddf8a4dc85025fe97044fa996e4599811891ced1edb3c2c116e2e99936fed"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/boleto-febraban/chrome.pdf",
+            "sha256": "60aededc942ab9b37c6156495bdea916787e2e8d33e0bbf9e17153d83b9b213d",
+            "chromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365",
+            "matchesChain": true
+          },
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/corpus/boleto-febraban/plain/reference/chrome.pdf",
+            "sha256": "435fe0629e85bcf5622a5adcab87033b30ab34007075814761a90c37f93fc38b",
+            "chromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "5018ba5f72f14065efb626207eed713cc1e8514ee26d06ed9b7c565656d6ec0c",
+          "chromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365"
+        },
+        "chromePdf_09": {
+          "sha256": "8596717f73c97986bfc930722fd39d51ea95e04dfc9cb5116beb7abc30c3b1b3",
+          "chromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365"
+        }
+      },
+      "danfe": {
+        "chainChromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e",
+        "templatedHtml": {
+          "pin": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+          "00-start": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+          "09": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0"
+        },
+        "nativeHtml": {
+          "pin": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+          "00-start": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+          "09": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0"
+        },
+        "browserHtml": {
+          "pin": "8721e650560ed2de79e0207a57be07c00fd99d751ebc956c357dff4a1d8bf48b",
+          "00-start": "23bcf36f415a98b2c89f2d012db43b32da223adfc79034a339539f8e42136026",
+          "09": "e6e3e2e7164f6019f7aa75ce0f432fdfdb99d05a6ede99b5e347feac1d52d7d2"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/danfe/chrome.pdf",
+            "sha256": "06314f54ed87f39c1c8616e5ed45bd8652b2afd67be4521d69b1264a58246c06",
+            "chromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e",
+            "matchesChain": true
+          },
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/corpus/danfe/plain/reference/chrome.pdf",
+            "sha256": "9bcb541eda6882f870021247186a3ca10f09ffbcdf6ae3241a3223e7cb170ace",
+            "chromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "3412c60abf6e63c54c8d39569533683397e030fceb474a40a1689a605ca03774",
+          "chromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e"
+        },
+        "chromePdf_09": {
+          "sha256": "a025a3760043631d16551a80fca18223ebeb20a38df066394ef8d4b504364121",
+          "chromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e"
+        }
+      },
+      "oss-postmark-receipt": {
+        "chainChromeWordsSha256": "bc48f28d2f0eee9f7a45d75d7558145db0acdf8f2796d3e4692f3524b7fbf94f",
+        "templatedHtml": {
+          "pin": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+          "00-start": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+          "09": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed"
+        },
+        "nativeHtml": {
+          "pin": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+          "00-start": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+          "09": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed"
+        },
+        "browserHtml": {
+          "pin": "09d405e23303c299f010f77d2481be6eae0996acab3327c812ed5d7e6472eaac",
+          "00-start": "3bb3bea9a1b55f477b64992934dea1c3b5d6b3409da17b45b062b152035cf6b7",
+          "09": "e5df0f339241bbca99ff2f98431ed8a8e2bf3a0e7ab459c7c0a6ed83331c0cf3"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/oss-postmark-receipt/chrome.pdf",
+            "sha256": "fb0f08b0afafbd7c1c2417f6edd17cf632b777aa34cf88904803b767001faf55",
+            "chromeWordsSha256": "bc48f28d2f0eee9f7a45d75d7558145db0acdf8f2796d3e4692f3524b7fbf94f",
+            "matchesChain": true
+          },
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/corpus/oss-postmark-receipt/plain/reference/chrome.pdf",
+            "sha256": "9e4f00748f3ad37150769394d48be223f21c0a130eb488df9f371a254de4c66e",
+            "chromeWordsSha256": "78ca708e5d6017960b2384d710a9d642dc02eb498f80e55e51956c6fe220c55f",
+            "matchesChain": false
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "08e27b606ba311899cabe5dde166f4ec721a5bf30a09410fbdc1090203f80063",
+          "chromeWordsSha256": "bc48f28d2f0eee9f7a45d75d7558145db0acdf8f2796d3e4692f3524b7fbf94f"
+        },
+        "chromePdf_09": {
+          "sha256": "6ea547a99680aaf90d58ec5023add39d4780d5717073d2134867d263d9a24d8c",
+          "chromeWordsSha256": "bc48f28d2f0eee9f7a45d75d7558145db0acdf8f2796d3e4692f3524b7fbf94f"
+        }
+      },
+      "oss-sparksuite-invoice": {
+        "chainChromeWordsSha256": "2e3c404a60287f03a2d3ed671e8d217667a3985ad43e8251dbc8ddeffd30181f",
+        "templatedHtml": {
+          "pin": "e3ef264f9ce7cd9109259d2fd678764acab3b1375d6bfce058857bf6adcb73f7",
+          "00-start": "e3ef264f9ce7cd9109259d2fd678764acab3b1375d6bfce058857bf6adcb73f7",
+          "09": "e3ef264f9ce7cd9109259d2fd678764acab3b1375d6bfce058857bf6adcb73f7"
+        },
+        "nativeHtml": {
+          "pin": "65b49111fd915bc67eb9f9bc7f73f0ca61464bcc823067853bfb74b19e57c4b0",
+          "00-start": "65b49111fd915bc67eb9f9bc7f73f0ca61464bcc823067853bfb74b19e57c4b0",
+          "09": "65b49111fd915bc67eb9f9bc7f73f0ca61464bcc823067853bfb74b19e57c4b0"
+        },
+        "browserHtml": {
+          "pin": "0c8aee4459b347047038256b5970ece3224ac272a5cb6c96e47e7c4dd6fde183",
+          "00-start": "9a10d79fc6f0aa0af0aa5a86b857aaee5182731f13614df133b8ffd718f3c1f5",
+          "09": "f033ac16d4f7ed70610879495b50f072190e08a3f1cfe8e5ec969fdb28627557"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/oss-sparksuite-invoice/chrome.pdf",
+            "sha256": "7161a016bbc4a8c79651c4fce80fe71373b672342c6db6fd6acd75623ae8b35d",
+            "chromeWordsSha256": "2e3c404a60287f03a2d3ed671e8d217667a3985ad43e8251dbc8ddeffd30181f",
+            "matchesChain": true
+          },
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/corpus/oss-sparksuite-invoice/plain/reference/chrome.pdf",
+            "sha256": "2b6f4338ea17e811d3166b315ca0709d76be6006ffaa14f3c341c7880fa4723b",
+            "chromeWordsSha256": "2e3c404a60287f03a2d3ed671e8d217667a3985ad43e8251dbc8ddeffd30181f",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "953b305bce8feadb7782b19a7f086b9a431ac136f8527134ede4a436834ecaf7",
+          "chromeWordsSha256": "2e3c404a60287f03a2d3ed671e8d217667a3985ad43e8251dbc8ddeffd30181f"
+        },
+        "chromePdf_09": {
+          "sha256": "19a1d8713a143435609958d6a2acd78889e2173245b05d059215f94f9d281076",
+          "chromeWordsSha256": "2e3c404a60287f03a2d3ed671e8d217667a3985ad43e8251dbc8ddeffd30181f"
+        }
+      },
+      "receipt": {
+        "chainChromeWordsSha256": "739b630999f5c4031f05f5065dc4e462c4532b500fe970784680d3a86a57b8c7",
+        "templatedHtml": {
+          "pin": null,
+          "00-start": null,
+          "09": null
+        },
+        "nativeHtml": {
+          "pin": "8a9d9e7bc3c09124f0459cf0553c9227e3e6a76ddc1d4286837d5af03dcb490c",
+          "00-start": "8a9d9e7bc3c09124f0459cf0553c9227e3e6a76ddc1d4286837d5af03dcb490c",
+          "09": "8a9d9e7bc3c09124f0459cf0553c9227e3e6a76ddc1d4286837d5af03dcb490c"
+        },
+        "browserHtml": {
+          "pin": "e2d06e3654bbfe800221b0bfa60b629a1cdb38d40d4eccdbeb6894ec533016be",
+          "00-start": "7d242daae9ccd7059e11a27d68f004421929abb01915ad59f68e192ea0bf1ca7",
+          "09": "bc57bf5fa0d9a039060b2956b044cdcaa020f984f5ae64e4a7e40bf49364ac72"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/fixtures/receipt/reference/chrome.pdf",
+            "sha256": "3b68fda1524a8b195be907f9b5b607d0de68e0846dbb7486d0bdb4471be54b68",
+            "chromeWordsSha256": "739b630999f5c4031f05f5065dc4e462c4532b500fe970784680d3a86a57b8c7",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "2408db6f0e52be2617a00b0cc058ce058049e72237efe63cde8b40fdab570fa4",
+          "chromeWordsSha256": "739b630999f5c4031f05f5065dc4e462c4532b500fe970784680d3a86a57b8c7"
+        },
+        "chromePdf_09": {
+          "sha256": "2bd731d2dad8b74bd893346177bf455af0c5e1a841705e4f9b89e840d2bc830f",
+          "chromeWordsSha256": "739b630999f5c4031f05f5065dc4e462c4532b500fe970784680d3a86a57b8c7"
+        }
+      },
+      "text-stress-ptbr": {
+        "chainChromeWordsSha256": "a098ef68002aadebd716bd323664226262490c834404c69b244d466e8d4f3aae",
+        "templatedHtml": {
+          "pin": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+          "00-start": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+          "09": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e"
+        },
+        "nativeHtml": {
+          "pin": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+          "00-start": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+          "09": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e"
+        },
+        "browserHtml": {
+          "pin": "6f8bbcef555dbe4bf97b1ee52ec6e384a6072f7dbb45736a14c5018db1d6da66",
+          "00-start": "6d6e39141f5c6e41d21d06da0ec9748623b06fc792badc6a7f82dedda5e64f46",
+          "09": "e6c8e0d5657379dfae24cf14114e6805ee84daa4e568f09d6c80ad7243b81d22"
+        },
+        "pinChromePdfs": [
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/text-stress-ptbr/chrome.pdf",
+            "sha256": "0f9d9354d0ea541deb8ec2a0500e66863406fc86ca9010404a824772cb19ee70",
+            "chromeWordsSha256": "a098ef68002aadebd716bd323664226262490c834404c69b244d466e8d4f3aae",
+            "matchesChain": true
+          },
+          {
+            "path": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/corpus/text-stress-ptbr/plain/reference/chrome.pdf",
+            "sha256": "cfa8342344b3858ddf8dcfc6bb354ca9871e2e0483dc07fbd198eb46ab5ec2a6",
+            "chromeWordsSha256": "a098ef68002aadebd716bd323664226262490c834404c69b244d466e8d4f3aae",
+            "matchesChain": true
+          }
+        ],
+        "chromePdf_00-start": {
+          "sha256": "446c92ea27824015d05c3c67f766f8051d6f5188be0a0ca083a9b613b589afd0",
+          "chromeWordsSha256": "a098ef68002aadebd716bd323664226262490c834404c69b244d466e8d4f3aae"
+        },
+        "chromePdf_09": {
+          "sha256": "ba730f496fe5517d2731d530b446ad4f9ceb3fa62a319bf981f8777aaa5d7110",
+          "chromeWordsSha256": "a098ef68002aadebd716bd323664226262490c834404c69b244d466e8d4f3aae"
+        }
+      }
+    }
+  },
+  "wordsCrossCheck": {
+    "command": "node <scratch>/wordscmp.mjs <rerendered vellora.pdf> <pin run copy vellora.pdf> ... (sha256 of the JSON of pdfWordsV2 words)",
+    "rows": [
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/boleto/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/fixtures/boleto/plain/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/receipt/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/oracles/fixtures/receipt/plain/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/boleto-febraban/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/boleto-febraban/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/danfe/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/danfe/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/oss-postmark-receipt/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/oss-sparksuite-invoice/vellora.pdf"
+      },
+      {
+        "verdict": "SAME-WORDS",
+        "rerendered": "~/.cache/vellora-fidelity/pin-v2-render-20261022/layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+        "pinRunCopy": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/corpus/text-stress-ptbr/vellora.pdf"
+      }
+    ]
+  },
+  "inputMapSha256": "78043f7255e9f3d924338fe19fb5922fb0e5aebe303589b9afde11a33dfd99e9"
+}

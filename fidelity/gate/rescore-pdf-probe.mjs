@@ -19,8 +19,19 @@
 // the ones the baseline measured). Biome must run (preflight before anything is touched, and every
 // format call must succeed): a re-score never hashes unformatted files (I5, 2026-10-22).
 //
+// Input mapping (--inputs <mapping.json>, schema vellora-fidelity/pdf-probe-inputs/1): supplies
+// the vellora/Chrome PDF pair for fixtures the run did NOT keep (the pin run probed invoice +
+// notification only). It can only fill a gap: a fixture the run has PDFs for, or one the baseline
+// carries a v1 section for, is refused (nothing to prove identity against). Each entry names both
+// PDFs (paths relative to the mapping file, or absolute/~) and their sha256, which must match;
+// the mapping's own sha256, its `why`, its `renderer` and the per-fixture provenance are copied
+// into manifest.pdfProbeRescore.inputMap, so the record stands without the scratch files.
+//
+//   { "schema": "vellora-fidelity/pdf-probe-inputs/1", "why": "...", "renderer": { ... },
+//     "fixtures": { "<fx>": { "vellora": { "path", "sha256", ... }, "chrome": { "path", "sha256", ... } } } }
+//
 //   node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/<name> --run <run-all dir>
-//     [--fixtures a,b] [--substitute <evidence>] [--dry-run]
+//     [--fixtures a,b] [--substitute <evidence>] [--inputs <mapping.json>] [--dry-run]
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -33,8 +44,8 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { arch, platform, release } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { arch, homedir, platform, release } from "node:os";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   PDF_PROBE_SEMANTICS,
@@ -54,6 +65,68 @@ import {
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const GATE_SCHEMA = "vellora-fidelity/baseline/2";
+export const INPUT_MAP_SCHEMA = "vellora-fidelity/pdf-probe-inputs/1";
+
+/** `~/...` for a path under the home directory (portable records), else the path itself. */
+export function portablePath(p) {
+  const home = homedir();
+  return p === home || p.startsWith(`${home}/`) ? `~${p.slice(home.length)}` : p;
+}
+
+/**
+ * Read and validate an --inputs mapping file. Returns { file, sha256, data, dir } (dir: the base
+ * of relative entry paths).
+ */
+export function loadInputMap(file) {
+  const abs = resolve(file);
+  const bytes = readFileSync(abs);
+  const data = JSON.parse(bytes.toString("utf8"));
+  if (data.schema !== INPUT_MAP_SCHEMA)
+    throw new Error(`${file}: schema ${data.schema} != ${INPUT_MAP_SCHEMA}`);
+  if (typeof data.why !== "string" || !data.why.trim())
+    throw new Error(`${file}: a mapping must say why its PDFs stand in ("why")`);
+  if (!data.fixtures || !Object.keys(data.fixtures).length) throw new Error(`${file}: no fixtures`);
+  return { file: abs, sha256: sha256(bytes), data, dir: dirname(abs) };
+}
+
+/**
+ * The vellora/Chrome PDFs to score for one fixture: the run's own layout-diff pair, or the
+ * mapping's entry when (and only when) the run lacks that pair and the baseline has no v1 section
+ * for it. Returns { vPdf, cPdf, mapped } or { absent: [paths] }. Throws on any misuse.
+ */
+export function pdfInputsFor({ fixture, ld, inputMap = null, hasV1 = false }) {
+  const vPdf = join(ld, fixture, "run-all", "vellora.pdf");
+  const cPdf = join(ld, fixture, "run-all", "chrome.pdf");
+  const absent = [vPdf, cPdf].filter((p) => !existsSync(p));
+  const entry = inputMap?.data.fixtures[fixture];
+  if (!entry) return absent.length ? { absent } : { vPdf, cPdf, mapped: false };
+  if (!absent.length)
+    throw new Error(
+      `${fixture}: the run has its own pdf-probe PDFs; an --inputs mapping may only fill a missing pair`,
+    );
+  if (hasV1)
+    throw new Error(
+      `${fixture}: the baseline has a v1 section; mapped PDFs cannot be proven to be the ones it measured`,
+    );
+  const at = (side) => {
+    const e = entry[side];
+    if (!e?.path || !e?.sha256)
+      throw new Error(`${fixture}: mapping entry ${side} needs path + sha256`);
+    const p = e.path.startsWith("~/")
+      ? join(homedir(), e.path.slice(2))
+      : isAbsolute(e.path)
+        ? e.path
+        : resolve(inputMap.dir, e.path);
+    if (!existsSync(p)) throw new Error(`${fixture}: mapped ${side} PDF ${e.path} does not exist`);
+    const got = sha256(readFileSync(p));
+    if (got !== e.sha256)
+      throw new Error(
+        `${fixture}: mapped ${side} PDF sha256 ${got.slice(0, 12)} != ${e.sha256.slice(0, 12)}`,
+      );
+    return p;
+  };
+  return { vPdf: at("vellora"), cPdf: at("chrome"), mapped: true };
+}
 
 /** The v1 section as committed (raw files) and where it lives, or null. */
 function committedV1(dir) {
@@ -72,6 +145,7 @@ export function rescoreBaseline({
   runDir,
   fixtures = null,
   substitute = null,
+  inputMap = null,
   dryRun = false,
   command,
   format = biomeFormat,
@@ -102,20 +176,28 @@ export function rescoreBaseline({
   const v1 = committedV1(dir);
   const ld = join(runDir, "layout-diff");
   const candidates =
-    fixtures ?? [...new Set([...(v1 ? Object.keys(v1.sections) : []), ...listFixtures(ld)])].sort();
+    fixtures ??
+    [
+      ...new Set([
+        ...(v1 ? Object.keys(v1.sections) : []),
+        ...listFixtures(ld),
+        ...Object.keys(inputMap?.data.fixtures ?? {}),
+      ]),
+    ].sort();
+  const unused = Object.keys(inputMap?.data.fixtures ?? {}).filter((f) => !candidates.includes(f));
+  if (unused.length) throw new Error(`--inputs names fixtures not re-scored: ${unused.join(", ")}`);
   const python = requirePython();
   const inputs = {};
   const missing = [];
   const v1Identity = {};
   const sections = {};
   for (const fx of candidates) {
-    const vPdf = join(ld, fx, "run-all", "vellora.pdf");
-    const cPdf = join(ld, fx, "run-all", "chrome.pdf");
-    const absent = [vPdf, cPdf].filter((p) => !existsSync(p));
-    if (absent.length) {
-      missing.push({ fixture: fx, absent: absent.map((p) => relative(runDir, p)) });
+    const got = pdfInputsFor({ fixture: fx, ld, inputMap, hasV1: Boolean(v1?.sections[fx]) });
+    if (got.absent) {
+      missing.push({ fixture: fx, absent: got.absent.map((p) => relative(runDir, p)) });
       continue;
     }
+    const { vPdf, cPdf, mapped } = got;
     // The run's own v1 probe, re-compacted, must be the committed v1 section.
     const runV1 = join(ld, fx, "run-all", "pdf-probe.json");
     if (v1?.sections[fx] && existsSync(runV1)) {
@@ -140,6 +222,7 @@ export function rescoreBaseline({
       chrome: { path: cPdf, sha256: sha256(readFileSync(cPdf)) },
       extractor: v.tool,
       words: probe.words,
+      mapped,
     };
   }
   const differs = Object.entries(v1Identity).filter(([, s]) => s === "DIFFERS");
@@ -162,7 +245,7 @@ export function rescoreBaseline({
       extractor: Object.values(inputs)[0]?.extractor ?? null,
     },
     source: {
-      run: runDir,
+      run: portablePath(runDir),
       summarySha256: got,
       matchesManifestSource: want === got,
       ...(substitute ? { substitute } : {}),
@@ -176,15 +259,33 @@ export function rescoreBaseline({
       : { location: null, note: "this baseline had no pdf-probe section before the re-score" },
     v1Identity,
     inputs: Object.fromEntries(
-      Object.entries(inputs).map(([fx, x]) => [
-        fx,
-        {
-          vellora: { path: relative(runDir, x.vellora.path), sha256: x.vellora.sha256 },
-          chrome: { path: relative(runDir, x.chrome.path), sha256: x.chrome.sha256 },
-          words: x.words,
-        },
-      ]),
+      Object.entries(inputs).map(([fx, x]) => {
+        // Run-relative for the run's own PDFs; portable absolute for mapped ones (outside the run).
+        const where = (p) => (x.mapped ? portablePath(p) : relative(runDir, p));
+        return [
+          fx,
+          {
+            vellora: { path: where(x.vellora.path), sha256: x.vellora.sha256 },
+            chrome: { path: where(x.chrome.path), sha256: x.chrome.sha256 },
+            words: x.words,
+            ...(x.mapped ? { source: "inputMap" } : {}),
+          },
+        ];
+      }),
     ),
+    ...(inputMap
+      ? {
+          inputMap: {
+            file: portablePath(inputMap.file),
+            sha256: inputMap.sha256,
+            schema: inputMap.data.schema,
+            why: inputMap.data.why,
+            ...(inputMap.data.renderer ? { renderer: inputMap.data.renderer } : {}),
+            ...(inputMap.data.evidence ? { evidence: inputMap.data.evidence } : {}),
+            fixtures: inputMap.data.fixtures,
+          },
+        }
+      : {}),
     missing,
     v2Fixtures: Object.keys(sections).sort(),
   };
@@ -245,7 +346,7 @@ async function main() {
   const runDir = val("--run") && resolve(val("--run"));
   if (!dir || !runDir) {
     process.stderr.write(
-      "usage: rescore-pdf-probe.mjs --baseline <dir> --run <run-all dir> [--fixtures a,b] [--substitute <evidence>] [--dry-run]\n",
+      "usage: rescore-pdf-probe.mjs --baseline <dir> --run <run-all dir> [--fixtures a,b] [--substitute <evidence>] [--inputs <mapping.json>] [--dry-run]\n",
     );
     process.exitCode = 2;
     return;
@@ -255,8 +356,9 @@ async function main() {
     runDir,
     fixtures: val("--fixtures")?.split(",").filter(Boolean) ?? null,
     substitute: val("--substitute") ?? null,
+    inputMap: val("--inputs") ? loadInputMap(val("--inputs")) : null,
     dryRun: argv.includes("--dry-run"),
-    command: `node fidelity/gate/rescore-pdf-probe.mjs ${argv.join(" ")}`,
+    command: `node fidelity/gate/rescore-pdf-probe.mjs ${argv.map(portablePath).join(" ")}`,
   });
   process.stdout.write(
     `${relative(repoRoot, dir)}: v2 ${record.v2Fixtures.join(",")}; missing ${record.missing.map((m) => m.fixture).join(",") || "none"}; v1 identity ${JSON.stringify(record.v1Identity)}\n`,

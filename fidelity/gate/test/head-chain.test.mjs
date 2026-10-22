@@ -98,13 +98,38 @@ test("07 vs 06 is unchanged link to link, but 1409 items are worse than the head
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 07: 254 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 254, declared: 10 });
+// The pin's pdf-probe covers all 9 fixtures since 2026-10-22 (fidelity/baselines/pin manifest
+// pdfProbeRescore.inputMap; before, invoice + notification only). Under the merged 10-gate rules
+// (I1 sign-crossing, off-page, I4 declarations; phaseb/10-integrate) the pin view is 1150 (c) at
+// 07 and 1140 at 09; on the 2-fixture pin it was 254 / 241, under the old rules on the complete
+// pin 816 / 809. Postmark: 152 at 07, 155 at 09 (the 3 "Download as PDF" words newly off-page
+// since 08, gated by compareOffPage against the pin's off-page backfill).
+const PIN_PDF_PROBE_BY_FIXTURE_07 = {
+  boleto: 212,
+  "boleto-febraban": 64,
+  danfe: 248,
+  invoice: 77,
+  notification: 102,
+  "oss-postmark-receipt": 152,
+  "oss-sparksuite-invoice": 92,
+  receipt: 8,
+  "text-stress-ptbr": 120,
+};
+const PIN_PDF_PROBE_BY_FIXTURE_09 = { ...PIN_PDF_PROBE_BY_FIXTURE_07, "oss-postmark-receipt": 155 };
+const pdfProbeByFixture = (items) =>
+  tally(
+    items.filter((i) => i.check === "pdf-probe"),
+    (i) => i.key.split("|")[1],
+  );
+
+test("pin view of 07: 1150 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 1150, declared: 10 });
   assert.equal(r.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r.pin.items, (i) => i.check),
-    { "pdf-probe": 179, wpt: 56, value: 27, status: 2 },
+    { "pdf-probe": 1075, wpt: 56, value: 27, status: 2 },
   );
+  assert.deepEqual(pdfProbeByFixture(r.pin.items), PIN_PDF_PROBE_BY_FIXTURE_07);
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
     evaluateGate({
@@ -116,7 +141,7 @@ test("pin view of 07: 254 items worse than the shipped main, all (c) while the l
       ledgerBase: null,
       canaries: false,
     }).counts.gating,
-    254,
+    1150,
   );
 });
 
@@ -159,11 +184,13 @@ test("09 vs 08 (both v2) is unchanged link to link; 1386 items are worse than th
   assert.ok(r09.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 09: 241 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 241, declared: 10 });
+test("pin view of 09: 1140 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 1140, declared: 10 });
   assert.equal(r09.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r09.pin.items, (i) => i.check),
-    { "pdf-probe": 179, wpt: 56, value: 16 },
+    { "pdf-probe": 1078, wpt: 56, value: 16 },
   );
+  // As at 07 except postmark: +3 newly off-page words ("Download as PDF", off the page since 08).
+  assert.deepEqual(pdfProbeByFixture(r09.pin.items), PIN_PDF_PROBE_BY_FIXTURE_09);
 });
