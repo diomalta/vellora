@@ -174,9 +174,16 @@ fn top_level_rules(css: &str, media: &mut Vec<MediaBlock>) -> Vec<(String, Strin
                         continue;
                     }
                 }
-                let end = block_end(bytes, i + 1);
+                let (end, closed) = block_end(bytes, i + 1);
                 if !prelude.is_empty() && !prelude.starts_with('@') {
-                    let body_end = end.saturating_sub(1).max(i + 1);
+                    // The body runs to the `}` that closes it, or to the end of the sheet when the
+                    // rule is never closed: CSS Syntax 3 closes every open block at EOF and keeps
+                    // its declarations (Chrome 155 breaks before `p.b { break-before: page` with
+                    // no `}`). Before port step 10 the body always stopped one byte short of
+                    // `end`, which dropped the last byte of an unclosed rule (`page` read as
+                    // `pag`) and panicked when that byte was inside a multibyte character
+                    // (`p{é`: "end byte index N is not a char boundary").
+                    let body_end = if closed { end - 1 } else { end };
                     out.push((
                         prelude.to_string(),
                         css[i + 1..body_end].to_string(),
@@ -210,9 +217,10 @@ fn top_level_rules(css: &str, media: &mut Vec<MediaBlock>) -> Vec<(String, Strin
     out
 }
 
-/// Index just past the `}` closing the block whose body starts at `start`
-/// (or the end of input when the block is unterminated).
-fn block_end(bytes: &[u8], start: usize) -> usize {
+/// Index just past the `}` closing the block whose body starts at `start` and `true`, or the end
+/// of input and `false` when the block is never closed. Either index is a char boundary of the
+/// text `bytes` comes from (`}` is ASCII).
+fn block_end(bytes: &[u8], start: usize) -> (usize, bool) {
     let mut depth = 1i32;
     let mut i = start;
     while i < bytes.len() {
@@ -221,7 +229,7 @@ fn block_end(bytes: &[u8], start: usize) -> usize {
             b'}' => {
                 depth -= 1;
                 if depth == 0 {
-                    return i + 1;
+                    return (i + 1, true);
                 }
             }
             b'"' | b'\'' => {
@@ -232,7 +240,7 @@ fn block_end(bytes: &[u8], start: usize) -> usize {
         }
         i += 1;
     }
-    bytes.len()
+    (bytes.len(), false)
 }
 
 /// Index just past a quoted string starting at `start`, honouring `\` escapes.
@@ -441,6 +449,44 @@ mod tests {
     fn an_unterminated_media_block_keeps_its_rules() {
         let rules = parse_break_rules(&page("@media print { .p { break-before: page }"));
         assert_eq!(by_type(&rules).1, vec![".p"]);
+    }
+
+    #[test]
+    fn an_unclosed_last_rule_keeps_its_last_byte() {
+        // Port step 10: the body stopped one byte short of the end of the sheet, so `page`
+        // was read as `pag` (Chrome 155 breaks before `.b`, probe x_unclosed_last_rule).
+        let rules = parse_break_rules(&page("p { margin: 0 } p.b { break-before: page"));
+        assert_eq!(by_type(&rules).1, vec!["p.b"]);
+        let rules = parse_break_rules(&page(".a { break-inside: avoid"));
+        assert_eq!(by_type(&rules).0, vec![".a"]);
+        let rules = parse_break_rules(&page("@media print { .m { break-before: page"));
+        assert_eq!(by_type(&rules).1, vec![".m"]);
+        // A rule closed at the end of the sheet keeps reading its body without the `}`.
+        let rules = parse_break_rules(&page(".c { break-before: page }"));
+        assert_eq!(by_type(&rules).1, vec![".c"]);
+        let rules = parse_break_rules(&page(".e {"));
+        assert!(rules.page_before.is_empty() && rules.avoid_inside.is_empty());
+    }
+
+    #[test]
+    fn an_unclosed_rule_ending_in_a_multibyte_character_does_not_panic() {
+        // Port step 10: `css[i + 1..end - 1]` cut inside the last character ("end byte index
+        // N is not a char boundary"), which reached the napi caller as an unlocated
+        // "render panicked" error (the 09 verifier's hostile-input run).
+        for css in [
+            "p{\u{e9}",
+            "p{\u{1f600}",
+            "p { color: red; font-family: Caf\u{e9}",
+            "@media print { p { content: \"\u{e9}",
+            "p.b { break-before: page; font-family: Caf\u{e9}",
+        ] {
+            let rules = parse_break_rules(&page(css));
+            assert_eq!(
+                by_type(&rules).1.contains(&"p.b"),
+                css.starts_with("p.b"),
+                "{css:?}"
+            );
+        }
     }
 
     #[test]

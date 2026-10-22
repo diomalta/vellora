@@ -356,3 +356,50 @@ fn page_rules_inside_a_feature_query_are_not_evaluated_known_gap() {
         "First (Chrome 124.50 pt)",
     );
 }
+
+/// The 09 verifier's probes `x_unclosed_last_rule` and `x_unclosed_last_rule_nonascii`: a
+/// stylesheet that ends inside its last rule (no `}` before `</style>`).
+fn unclosed_last_rule(last: &str) -> String {
+    format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: 300px 300px; margin: 20px; }} body {{ \
+         margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; }} p \
+         {{ margin: 0; }} p.b {{ {last}</style></head><body><p>One</p><p class=\"b\">Two</p>\
+         </body></html>"
+    )
+}
+
+#[test]
+fn an_unclosed_last_rule_keeps_its_forced_break() {
+    // CSS Syntax 3 closes the open block at the end of the sheet. Chrome 155 (2026-10-22, the
+    // shared reference path): 2 pages, "One" at (15.00, 26.25) on page 1 and "Two" at
+    // (15.00, 26.25) on page 2. Steps 08 and 09 read `page` as `pag` (the body stopped one
+    // byte short) and printed "Two" on page 1 at 41.25 pt; the non-ASCII variant panicked in
+    // `break_css` ("end byte index 192 is not a char boundary").
+    for last in [
+        "break-before: page",
+        "break-before: page; font-family: Caf\u{e9}",
+    ] {
+        let html = unclosed_last_rule(last);
+        let p = paginate(&html);
+        assert_eq!(p.pages.len(), 2, "{last}: Chrome prints 2 pages");
+        assert_at(body_origin(&p, 0, "One"), (15.00, 26.25), "One");
+        assert_at(body_origin(&p, 1, "Two"), (15.00, 26.25), "Two");
+        let pdf = vellora_core::render(html.as_bytes(), &Default::default())
+            .unwrap_or_else(|e| panic!("{last}: {e:?}"));
+        assert!(pdf.starts_with(b"%PDF-"));
+    }
+}
+
+#[test]
+fn a_stylesheet_ending_inside_a_multibyte_character_renders() {
+    // The 09 verifier's smallest panic inputs (unlocated "render panicked" through the addon).
+    for html in [
+        "<style>p{\u{e9}</style>".to_string(),
+        "<style>p{\u{1f600}</style".to_string(),
+        "<style>p { color: red; font-family: Caf\u{e9}</style><p>x</p>".to_string(),
+    ] {
+        let pdf = vellora_core::render(html.as_bytes(), &Default::default())
+            .unwrap_or_else(|e| panic!("{html:?}: {e:?}"));
+        assert!(pdf.starts_with(b"%PDF-"), "{html:?}");
+    }
+}
