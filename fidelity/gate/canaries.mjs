@@ -7,7 +7,15 @@ import { join } from "node:path";
 // mustReport, observed, caught, ran }). Self-tests: gate/test/canaries.test.mjs, which also shows
 // that a broken comparator or ledger makes the canaries uncaught.
 import { compareSnapshots } from "./compare.mjs";
-import { applyLedger, emptyLedger, ledgerProblems, relaxedB, transitionProblems } from "./debt.mjs";
+import {
+  DEBT_REPO_PATH,
+  applyLedger,
+  emptyLedger,
+  ledgerProblems,
+  relaxedB,
+  resolveLedgerBase,
+  transitionProblems,
+} from "./debt.mjs";
 import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
 
 /** The committed layer-vector input the tool canaries plant into (notification, step 07 run). */
@@ -162,6 +170,7 @@ export function runGateCanaries({
   relaxed = relaxedB,
   vectors = packWordVectors,
   pack = LAYER_VECTOR_CANARY_PACK,
+  resolveBase = resolveLedgerBase,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -462,6 +471,45 @@ export function runGateCanaries({
           flip.item.gating === false &&
           flip.counts.withinToleranceBetter === 0 &&
           control.item?.class === "improvement",
+      ),
+    );
+  }
+  // 15. I2: rule iii without --debt-base. The base defaults to DEBT.json at `git merge-base HEAD
+  // main` (a planted repository: merge-base abc1234 holds the entry at ceiling 3); the ledger
+  // raises it to 4 -> a rule iii problem. Controls: no merge-base -> a refusal; no DEBT.json at
+  // the merge base -> first population.
+  {
+    const key = "pdf-probe|canary|p1|Canary#1|dy";
+    const baseDoc = { ...emptyLedger(), entries: [entryFor(key, 3)] };
+    const repo =
+      ({ mergeBase = true, ledger = true } = {}) =>
+      (args) => {
+        if (args[0] === "merge-base") {
+          return mergeBase
+            ? { status: 0, stdout: "abc1234\n", stderr: "" }
+            : { status: 128, stdout: "", stderr: "fatal: Not a valid object name main" };
+        }
+        if (args[0] === "cat-file") return { status: ledger ? 0 : 128, stdout: "", stderr: "" };
+        if (args[0] === "show" && args[1] === `abc1234:${DEBT_REPO_PATH}`) {
+          return { status: 0, stdout: JSON.stringify(baseDoc), stderr: "" };
+        }
+        return { status: 128, stdout: "", stderr: "unexpected" };
+      };
+    const raised = { ...emptyLedger(), entries: [entryFor(key, 4)] };
+    const b = resolveBase({ git: repo() });
+    const problems = b.ledger ? transition(b.ledger, raised, {}) : [];
+    const noBase = resolveBase({ git: repo({ mergeBase: false }) });
+    const first = resolveBase({ git: repo({ ledger: false }) });
+    rows.push(
+      row(
+        "DEBT rule iii without --debt-base (I2)",
+        "base = DEBT.json at the merge base; a raised ceiling -> problem; no merge-base -> refusal; no ledger there -> first population",
+        `problems ${problems.length}; no merge-base ${noBase.refusal ? "refused" : "not refused"}; absent ${first.ledger === null ? "first population" : String(first.ledger)}`,
+        problems.some((p) => /ceiling/.test(p)) &&
+          Boolean(noBase.refusal) &&
+          noBase.ledger === undefined &&
+          first.ledger === null &&
+          !first.refusal,
       ),
     );
   }

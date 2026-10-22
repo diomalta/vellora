@@ -24,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 14);
+    assert.equal(rows.length, 15);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -163,6 +163,13 @@ test("a comparator that scores pdf-probe words by |after| - |before| only (the I
   };
   const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: signAgnostic }));
   assert.equal(c2["pdf-probe: a word crosses Chrome (I1)"], false);
+});
+
+test("a gate that skips rule iii without --debt-base (the I2 hole) leaves its canary uncaught", () => {
+  // The pre-I2 behaviour: no --debt-base, no base ledger, rule iii never runs.
+  const skip = () => ({ ledger: undefined, source: null, refusal: null });
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, resolveBase: skip }));
+  assert.equal(c["DEBT rule iii without --debt-base (I2)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

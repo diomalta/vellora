@@ -33,7 +33,9 @@
 // Rules (each with a self-test in gate/test/debt.test.mjs and a canary in gate/canaries.mjs):
 //   (i)   every head-gating item matches an entry, else it gates
 //   (ii)  the current value is within the entry's ceiling, else it gates (debt-exceeded)
-//   (iii) across a merge (old ledger -> new ledger): the entry count and the sum of ceilings per
+//   (iii) across a merge (old ledger -> new ledger; the old ledger defaults to DEBT.json at
+//         `git merge-base HEAD main`, resolveLedgerBase, and an undeterminable base REFUSES the
+//         gate, I2): the entry count and the sum of ceilings per
 //         tolClass never increase, no ceiling goes up, an entry is removed only at its closesAt
 //         step or with a stated reason when its key vanished from the run; the first population
 //         (no previous entry at all) is exempt from the count and sum rule (DESIGN TARGET)
@@ -48,6 +50,7 @@
 //
 //   node fidelity/gate/debt.mjs check [--ledger <DEBT.json>] [--base <previous DEBT.json>]
 //     [--step <NN-name>]      validate a ledger (and its transition from --base); exit 0 ok, 3 not
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -84,11 +87,77 @@ export function emptyLedger() {
 
 export function loadDebt(file = DEBT_FILE) {
   if (!file || !existsSync(file)) return null;
-  const doc = JSON.parse(readFileSync(file, "utf8"));
+  return parseDebt(readFileSync(file, "utf8"), file);
+}
+
+/** A ledger document from its JSON text (`where` names it in errors). */
+export function parseDebt(text, where = "DEBT.json") {
+  const doc = JSON.parse(text);
   if (doc.schema !== DEBT_SCHEMA) {
-    throw new Error(`${file}: schema ${doc.schema} (expected ${DEBT_SCHEMA})`);
+    throw new Error(`${where}: schema ${doc.schema} (expected ${DEBT_SCHEMA})`);
   }
   return { ...doc, entries: doc.entries ?? [], closed: doc.closed ?? [] };
+}
+
+/** The ledger's path inside the repository (what `git show <rev>:<path>` reads). */
+export const DEBT_REPO_PATH = "fidelity/baselines/port/DEBT.json";
+const REPO_ROOT = resolve(here, "..", "..");
+
+/** `git <args>` in the repository: { status, stdout, stderr } (injectable for the self-tests). */
+export function runGit(args, cwd = REPO_ROOT) {
+  const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+  return {
+    status: r.error ? -1 : r.status,
+    stdout: r.stdout ?? "",
+    stderr: r.error ? r.error.message : (r.stderr ?? ""),
+  };
+}
+
+/**
+ * The ledger rule iii compares against (I2, 2026-10-22): `debtBase` when given (a file that does
+ * not exist is the ledger's first population), else DEBT.json at `git merge-base HEAD <ref>`
+ * (absent there = first population). Rule iii used to run only with an explicit --debt-base, so
+ * a raised ceiling passed silently. Returns { ledger (null = first population), source, refusal }:
+ * a non-null refusal means the base cannot be determined and a gated run is REFUSED.
+ */
+export function resolveLedgerBase({ debtBase = undefined, git = runGit, ref = "main" } = {}) {
+  if (debtBase !== undefined && debtBase !== null) {
+    return { ledger: loadDebt(debtBase), source: `--debt-base ${debtBase}`, refusal: null };
+  }
+  const mb = git(["merge-base", "HEAD", ref]);
+  const sha = String(mb.stdout ?? "").trim();
+  if (mb.status !== 0 || !/^[0-9a-f]{7,64}$/.test(sha)) {
+    return {
+      ledger: undefined,
+      source: null,
+      refusal: `the ledger base (DEBT rule iii) cannot be determined: git merge-base HEAD ${ref} failed (${
+        String(mb.stderr ?? "")
+          .trim()
+          .slice(0, 200) || `exit ${mb.status}`
+      }); pass --debt-base <DEBT.json at the merge base> (a missing file = first population)`,
+    };
+  }
+  const has = git(["cat-file", "-e", `${sha}:${DEBT_REPO_PATH}`]);
+  if (has.status !== 0) {
+    return {
+      ledger: null,
+      source: `${DEBT_REPO_PATH} absent at merge-base ${sha.slice(0, 12)} (HEAD, ${ref}): first population`,
+      refusal: null,
+    };
+  }
+  const show = git(["show", `${sha}:${DEBT_REPO_PATH}`]);
+  if (show.status !== 0) {
+    return {
+      ledger: undefined,
+      source: null,
+      refusal: `the ledger base cannot be read: git show ${sha.slice(0, 12)}:${DEBT_REPO_PATH} exit ${show.status}`,
+    };
+  }
+  return {
+    ledger: parseDebt(show.stdout, `${sha.slice(0, 12)}:${DEBT_REPO_PATH}`),
+    source: `${DEBT_REPO_PATH} at merge-base ${sha.slice(0, 12)} (HEAD, ${ref})`,
+    refusal: null,
+  };
 }
 
 const isPassLayer = (name) => !RAW_LAYERS.has(name) && !FIXED_VELLORA_LAYERS.has(name);

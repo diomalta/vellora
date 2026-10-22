@@ -364,8 +364,23 @@ test("run-all --gate refuses before running anything without baseline or Chrome 
     wptChrome: false,
     chromeFrom: null,
     accept: null,
+    resolveBase: () => ({ ledger: null, source: "planted", refusal: null }),
   };
   assert.match(gateRefusal({ ...base, baseline: null }, ["wpt"], exists), /needs --baseline/);
+  // I2: without --debt-base the ledger base must be determinable before anything runs.
+  const noBase = () => ({ ledger: undefined, source: null, refusal: "ledger base: no merge-base" });
+  assert.match(
+    gateRefusal({ ...base, chromeFrom: "/r.json", resolveBase: noBase }, ["wpt"], exists),
+    /no merge-base/,
+  );
+  assert.equal(
+    gateRefusal(
+      { ...base, chromeFrom: "/r.json", resolveBase: noBase, gateArgs: ["--debt-base", "/d.json"] },
+      ["wpt"],
+      exists,
+    ),
+    null,
+  );
   assert.match(gateRefusal({ ...base, baseline: "/missing" }, ["wpt"], exists), /no manifest/);
   assert.match(gateRefusal(base, ["wpt"], exists), /Chrome ink data/);
   assert.equal(gateRefusal({ ...base, wptChrome: true }, ["wpt"], exists), null);
@@ -418,6 +433,7 @@ test("a gated run cannot skip a step, the canaries or part of the WPT suites", (
     chromeFrom: "/r.json",
     allSteps: all,
     canaries: true,
+    resolveBase: () => ({ ledger: null, source: "planted", refusal: null }),
   };
   assert.equal(gateRefusal(base, all, exists), null);
   const skipped = all.filter((s) => s !== "code-checks");

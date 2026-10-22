@@ -31,6 +31,7 @@ const r = evaluateGate({
   accept: s07.manifest.acceptedRegressions,
   declared: s07.manifest.declaredRejections ?? [],
   ledger: loadDebt(DEBT_FILE),
+  ledgerBase: null,
   passes: PASSES,
 });
 const tally = (items, f) => {
@@ -81,7 +82,8 @@ test("pin view of 07: 252 items worse than the shipped main, all (c) while the l
   );
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
-    evaluateGate({ before: s06, after: s07, pin, main: true, canaries: false }).counts.gating,
+    evaluateGate({ before: s06, after: s07, pin, main: true, ledgerBase: null, canaries: false })
+      .counts.gating,
     252,
   );
 });
@@ -100,6 +102,7 @@ const r09 = evaluateGate({
   accept: s09.manifest.acceptedRegressions,
   declared: s09.manifest.declaredRejections ?? [],
   ledger: loadDebt(DEBT_FILE),
+  ledgerBase: null,
   passes: PASSES,
 });
 

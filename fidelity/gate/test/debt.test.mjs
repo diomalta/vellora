@@ -8,12 +8,14 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { compareSnapshots } from "../compare.mjs";
 import {
+  DEBT_REPO_PATH,
   applyLedger,
   chainHead,
   emptyLedger,
   ledgerProblems,
   pdfProbePage,
   relaxedB,
+  resolveLedgerBase,
   transitionProblems,
   vectorSteps,
   withinCeiling,
@@ -243,7 +245,13 @@ test("head ratchet: creep under tolerance at every step gates against the head; 
   const h = probe("danfe", [pair("p1|NOME/RAZÃO#1", 0.2)]);
   const prev = probe("danfe", [pair("p1|NOME/RAZÃO#1", 0.8)]);
   const run = probe("danfe", [pair("p1|NOME/RAZÃO#1", 1.4)]);
-  const opts = { before: prev, after: run, head: { dir: "head", snapshot: h }, canaries: false };
+  const opts = {
+    before: prev,
+    after: run,
+    head: { dir: "head", snapshot: h },
+    ledgerBase: null,
+    canaries: false,
+  };
   const r = evaluateGate(opts);
   assert.equal(byKey(r, KEY).class, "within-tolerance");
   assert.equal(r.counts.gating, 0);
@@ -270,6 +278,7 @@ test("a refused head comparison refuses the gate", () => {
     before: probe("danfe", [pair("p1|NOME/RAZÃO#1", 0)]),
     after: probe("danfe", [pair("p1|NOME/RAZÃO#1", 0)]),
     head: { dir: "head", snapshot: h },
+    ledgerBase: null,
     canaries: false,
   });
   assert.equal(r.verdict, "REFUSED");
@@ -293,6 +302,7 @@ test("pin view: items worse than the pin are (a) accepted artefact, (b) ledger d
     after: run,
     pin: { dir: "pin", snapshot: pin },
     ledger: EXAMPLE,
+    ledgerBase: null,
     accept,
     canaries: false,
   };
@@ -311,7 +321,61 @@ test("pin view: items worse than the pin are (a) accepted artefact, (b) ledger d
 test("ledger problems are absolute failures of the gate", () => {
   const broken = { ...EXAMPLE, entries: [{ ...ENTRY, class: "a" }] };
   const run = probe("danfe", [pair("p1|NOME/RAZÃO#1", 0)]);
-  const r = evaluateGate({ before: run, after: run, ledger: broken, canaries: false });
+  const r = evaluateGate({
+    before: run,
+    after: run,
+    ledger: broken,
+    ledgerBase: null,
+    canaries: false,
+  });
   assert.equal(r.verdict, "FAIL");
   assert.match(byKey(r, "debt|ledger#1").detail, /class must be "b"/);
+});
+
+test("I2: rule iii always runs; an undetermined ledger base refuses the gate", () => {
+  const run = probe("danfe", [pair("p1|NOME/RAZÃO#1", 0)]);
+  const r = evaluateGate({ before: run, after: run, canaries: false });
+  assert.equal(r.verdict, "REFUSED");
+  assert.match(r.refusals.join(";"), /ledger base .* not determined/);
+  const raised = { ...EXAMPLE, entries: [{ ...ENTRY, ceiling: ENTRY.ceiling + 1 }] };
+  const ok = evaluateGate({ before: run, after: run, ledgerBase: null, canaries: false });
+  assert.equal(ok.verdict, "PASS");
+  assert.equal(ok.ledger.transitionChecked, true);
+  const up = evaluateGate({
+    before: run,
+    after: run,
+    ledger: raised,
+    ledgerBase: EXAMPLE,
+    canaries: false,
+  });
+  assert.equal(up.verdict, "FAIL");
+  assert.match(up.ledger.problems.join(";"), /ceilings only go down/);
+});
+
+test("I2: resolveLedgerBase reads DEBT.json at the merge base, else first population, else refuses", () => {
+  const calls = [];
+  const repo = (files) => (args) => {
+    calls.push(args.join(" "));
+    if (args[0] === "merge-base") return { status: 0, stdout: "0123abcd\n", stderr: "" };
+    const f = files[args[2] ?? args[1]];
+    if (args[0] === "cat-file") return { status: f ? 0 : 128, stdout: "", stderr: "" };
+    if (args[0] === "show") return { status: 0, stdout: f, stderr: "" };
+    return { status: 1, stdout: "", stderr: "" };
+  };
+  const path = `0123abcd:${DEBT_REPO_PATH}`;
+  const b = resolveLedgerBase({ git: repo({ [path]: JSON.stringify(EXAMPLE) }) });
+  assert.equal(b.refusal, null);
+  assert.equal(b.ledger.entries.length, 1);
+  assert.match(b.source, /merge-base 0123abcd/);
+  assert.deepEqual(calls.slice(0, 1), ["merge-base HEAD main"]);
+  const first = resolveLedgerBase({ git: repo({}) });
+  assert.equal(first.ledger, null);
+  assert.match(first.source, /first population/);
+  const none = resolveLedgerBase({
+    git: () => ({ status: 128, stdout: "", stderr: "fatal: no main" }),
+  });
+  assert.equal(none.ledger, undefined);
+  assert.match(none.refusal, /cannot be determined.*fatal: no main/);
+  // An explicit --debt-base wins; a missing file is the first population.
+  assert.equal(resolveLedgerBase({ debtBase: "/nonexistent/DEBT.json" }).ledger, null);
 });

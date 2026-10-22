@@ -19,8 +19,9 @@
 //            worse than it (a) artefact / (b) ledger debt / (c) neither; --main makes (c) gate
 //            (a merge to main, GATE-H3). --no-pin skips it.
 // --debt     the ledger (default fidelity/baselines/port/DEBT.json); --debt-base the ledger at
-//            the merge base (e.g. `git show main:fidelity/baselines/port/DEBT.json`): checks rule
-//            iii (count, ceilings, removals) and that new entries satisfy the relaxed (b) rule.
+//            the merge base (default: DEBT.json at `git merge-base HEAD main`, absent there = the
+//            first population; a base that cannot be determined REFUSES the gate, I2): checks
+//            rule iii (count, ceilings, removals) and that new entries satisfy the relaxed (b) rule.
 // --step     the step id (NN-name) the run measures: an entry may close at its closesAt step.
 // --layout-from  a run-all dir whose layout-diff dumps give the run's layout_normalize passes
 //            (rule v) when the snapshot does not record them (baselines written before
@@ -50,6 +51,8 @@ import {
   ledgerProblems,
   loadDebt,
   pinView,
+  resolveLedgerBase,
+  runGit,
   transitionProblems,
 } from "./debt.mjs";
 import { verdictIndex } from "./metrics.mjs";
@@ -119,7 +122,13 @@ export function gateRefusal(opts, selected, exists = existsSync) {
       return e.message;
     }
   }
-  // A --debt-base file that does not exist is the ledger's first population (loadDebt -> null).
+  // A --debt-base file that does not exist is the ledger's first population (loadDebt -> null);
+  // without --debt-base the base is DEBT.json at `git merge-base HEAD main` (I2), which must be
+  // determinable before the 10+ minute run starts.
+  if (g.debtBase === undefined) {
+    const why = (opts.resolveBase ?? resolveLedgerBase)({}).refusal;
+    if (why) return why;
+  }
   if ((opts.wptArgs ?? []).includes("--update-expectations")) {
     return "a gated run never rewrites committed expectations (drop --wpt-arg --update-expectations)";
   }
@@ -235,6 +244,7 @@ export function evaluateGate({
   declared = [],
   ledger = null,
   ledgerBase = undefined,
+  ledgerBaseSource = null,
   step = null,
   passes = null,
   main = false,
@@ -244,7 +254,15 @@ export function evaluateGate({
   const classA = accept.filter((e) => e.class === "a");
   const doc = ledger ?? emptyLedger();
   const problems = ledgerProblems(doc, { pageMetricKeys: pageMetricKeys(after) });
-  if (ledgerBase !== undefined) {
+  // I2: rule iii always runs. `ledgerBase` null = first population (no ledger at the merge base);
+  // undefined = not determined, which REFUSES the gate (runGate resolves it with
+  // resolveLedgerBase: --debt-base, else DEBT.json at `git merge-base HEAD main`).
+  if (ledgerBase === undefined) {
+    report.refusals.push(
+      ledgerBaseSource ??
+        "the ledger base (DEBT rule iii) is not determined: pass ledgerBase (null = first population)",
+    );
+  } else {
     problems.push(
       ...transitionProblems(ledgerBase ?? emptyLedger(), doc, {
         step,
@@ -283,6 +301,7 @@ export function evaluateGate({
     entries: doc.entries.length,
     problems,
     transitionChecked: ledgerBase !== undefined,
+    base: ledgerBaseSource,
     passes,
   };
   for (const [n, p] of problems.entries()) {
@@ -367,6 +386,7 @@ export function runGate({
   step = null,
   layoutFrom = null,
   main = false,
+  git = runGit,
 }) {
   const before = loadSnapshot(baselineDir);
   const after = loadSnapshot(runDir);
@@ -375,7 +395,8 @@ export function runGate({
   const head = loadOptional(headDir === undefined ? chainHead() : headDir);
   const pin = loadOptional(pinDir === undefined ? join(BASELINES_DIR, "pin") : pinDir);
   const ledger = loadDebt(debtFile);
-  const ledgerBase = debtBase === undefined ? undefined : loadDebt(debtBase);
+  const base = resolveLedgerBase({ debtBase, git });
+  const ledgerBase = base.refusal ? undefined : base.ledger;
   const passes = snapshotPasses(after, layoutFrom ?? (after.source.kind === "run" ? runDir : null));
   const report = evaluateGate({
     before,
@@ -386,6 +407,7 @@ export function runGate({
     declared,
     ledger,
     ledgerBase,
+    ledgerBaseSource: base.refusal ?? base.source,
     step,
     passes,
     main,
@@ -403,6 +425,7 @@ export function runGate({
     acceptFile: acceptFile ? rel(acceptFile) : null,
     debtFile: debtFile ? rel(debtFile) : null,
     debtBase: debtBase ? rel(debtBase) : null,
+    ledgerBase: base.refusal ?? base.source,
     step,
     layoutFrom: layoutFrom ? rel(layoutFrom) : null,
   };
