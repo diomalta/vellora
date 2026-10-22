@@ -1647,6 +1647,40 @@ covered only once a class-`a` acceptance or a DEBT entry is committed.
   equals Chrome's), DANFE-M1 `excessB` 8.552 → 24.173, DANFE-L1a…d, invoice REF-W p95 1.78 →
   2.51 mm, invoice EXT-2 pdfminer status, postmark INV-R1, and 2 invoice words.
 
+**The same views at 09-review-fixes (2026-10-22, branch `phaseb/10-base`).** After 08 and 09 were
+re-scored to v2 (above), 09 was gated post-hoc against 08 (reports, commands and the 09 run-level
+layer summary in `fidelity/gate/snapshots/2026-10-22/ledger-09/`; darwin 27.0.0 arm64, Node
+v22.23.2, INDICATIVE). As for 07, `--run` is the committed baseline: the raw run copy still
+carries its v1 `pdf-probe.json`, so `--run <run copy>` is REFUSED (baseline 2, run 1; CONFIRMED).
+Before the re-score, 08 and 09 were v1 while 00-start was v2, so the head comparison was refused
+too. Counts are asserted in `head-chain.test.mjs`.
+
+| view | 07 | 09 | by check at 09 |
+|---|---|---|---|
+| vs previous link | 0 | 0 (no item changed) | – |
+| vs head 00-start | 985 | **974** (FAIL) | pdf-probe 920, WPT regression 38, WPT rejection 10, value 6, status 0 |
+| vs pin, pin view (c) | 213 | **206**, merge to main BLOCKED | pdf-probe 140, WPT 56, value 10, status 0 |
+
+| candidate | head 07 | head 09 | pin 07 | pin 09 |
+|---|---|---|---|---|
+| (b) layer vector | 616 | 752 | 133 | 133 |
+| (b) page-scoped | 122 | 122 | 0 | 0 |
+| (a) | 37 | 37 | 19 | 19 |
+| declare | 10 | 10 | 10 | 10 |
+| (c) | 15 | 0 | 14 | 7 |
+| none | 185 | 53 | 37 | 37 |
+
+- Head: the 15 postmark (c) items left with the HTML-only parse. The 4 Chrome words "The
+  [Product Name] team" pair again, at dy 35.1 pt against the head's 32.1 pt, so they come back
+  as 4 `dy` items (b). The 134 postmark words that had no layer vector at 07 now align to
+  layout-diff runs and are (b) candidates (postmark: b 136, none 3).
+- Pin (c): 5 invoice page-3 words (unchanged) and 2 postmark EXT-2 rows, `missing.pdftotext`
+  35 → 38 and `missing.pymupdf` 37 → 40. The 3 extra missing tokens are "Download as PDF".
+  CONFIRMED from the run copies' oracle `result.json`: the only tokens missing at 09 and not at
+  pin are "Download" and "as". Those words lie below the page edge of vellora's single page
+  (section 08). ledger-candidates still labels these 2 rows with the step-05 XML-parse reason.
+  That label is now stale; the cause is the off-page tail.
+
 **How a step uses this**: the chain convention above (`--head`, `--debt-base`, `--step`). Add
 the step's head and pin counts to `head-chain.test.mjs`. A DEBT entry is written from a
 committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from

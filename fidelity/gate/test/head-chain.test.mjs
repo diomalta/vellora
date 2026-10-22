@@ -82,3 +82,47 @@ test("pin view of 07: 213 items worse than the shipped main, all (c) while the l
     213,
   );
 });
+
+// 09-review-fixes, gated post-hoc against 08 once both were re-scored to pdf-probe v2 (2026-10-22,
+// fidelity/gate/snapshots/2026-10-22/ledger-09/). Versus 07: the HTML-only parse (08) retires the
+// 9 postmark INV-X/EXT-2 head items (7 value + 2 status) and the 6 lost-pairing/unpaired items,
+// and adds 4 dy items (postmark "The [Product Name] team" pairs again, dy 35.1 pt vs 32.1 pt).
+const s08 = load("port", "08-html-parse");
+const s09 = load("port", "09-review-fixes");
+const r09 = evaluateGate({
+  before: s08,
+  after: s09,
+  head,
+  pin,
+  accept: s09.manifest.acceptedRegressions,
+  declared: s09.manifest.declaredRejections ?? [],
+  ledger: loadDebt(DEBT_FILE),
+  passes: PASSES,
+});
+
+test("09 vs 08 (both v2) is unchanged link to link; 974 items are worse than the head", () => {
+  assert.deepEqual(r09.refusals, []);
+  assert.equal(r09.counts.gating, 0);
+  assert.equal(r09.head.counts.gating, 974);
+  assert.equal(r09.verdict, "FAIL");
+  assert.deepEqual(
+    tally(r09.head.items, (i) => `${i.check} ${i.headClass}`),
+    {
+      "pdf-probe regression": 920,
+      "wpt regression": 38,
+      "wpt rejection": 10,
+      "value regression": 6,
+    },
+  );
+  assert.equal(r09.head.acceptancesCounted, 0);
+  assert.ok(r09.gateCanaries.every((c) => c.caught === true));
+});
+
+test("pin view of 09: 206 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 206, declared: 0 });
+  assert.equal(r09.pin.mainMerge, "BLOCKED");
+  assert.deepEqual(
+    tally(r09.pin.items, (i) => i.check),
+    { "pdf-probe": 140, wpt: 56, value: 10 },
+  );
+});
