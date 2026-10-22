@@ -8,6 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { DEBT_FILE, loadDebt } from "../debt.mjs";
+import { chainDeclarations } from "../declarations.mjs";
 import { evaluateGate } from "../run.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
 
@@ -22,6 +23,16 @@ const PASSES = [
 const s06 = load("port", "06-page-rules");
 const s07 = load("port", "07-media-print");
 const head = { dir: "fidelity/baselines/port/00-start", snapshot: load("port", "00-start") };
+// I4: the head and pin views merge the declarations carried along the chain (step 06's 10
+// css:page-varying-width rejections live in baselines/port/declared-rejections.json).
+const carried = (prev, step, current) =>
+  chainDeclarations({
+    headDir: join(baselines, "port", "00-start"),
+    baselineDir: join(baselines, "port", prev),
+    current,
+    step,
+  });
+const c07 = carried("06-page-rules", "07-media-print", s07.manifest.declaredRejections ?? []);
 const pin = { dir: "fidelity/baselines/pin", snapshot: load("pin") };
 const r = evaluateGate({
   before: s06,
@@ -30,6 +41,8 @@ const r = evaluateGate({
   pin,
   accept: s07.manifest.acceptedRegressions,
   declared: s07.manifest.declaredRejections ?? [],
+  headDeclared: c07.head,
+  pinDeclared: c07.pin,
   ledger: loadDebt(DEBT_FILE),
   ledgerBase: null,
   passes: PASSES,
@@ -50,32 +63,38 @@ test("the committed DEBT.json is the empty vellora-fidelity/debt/2 ledger", () =
 
 // I1 (2026-10-22): a pdf-probe word that crosses Chrome to more than 1 pt on the other side of it
 // gates, so the head views grow by the crossings (07: 985 -> 1407, 09: 974 -> 1396; pin view 07:
-// 213 -> 252, 09: 206 -> 245; all pdf-probe items).
-test("07 vs 06 is unchanged link to link, but 1407 items are worse than the head (00-start) and none is covered", () => {
+// 213 -> 252, 09: 206 -> 245; all pdf-probe items). I4 (2026-10-22): step 06's 10 declared
+// css:page-varying-width rejections are carried to the head and the pin (07: 1407 -> 1397,
+// 09: 1396 -> 1386; pin (c) 07: 252 -> 242, 09: 245 -> 235, declared 10).
+test("07 vs 06 is unchanged link to link, but 1397 items are worse than the head (00-start) and none is covered", () => {
   assert.equal(r.counts.gating, 0);
-  assert.equal(r.head.counts.gating, 1407);
+  assert.equal(r.head.counts.gating, 1397);
   assert.equal(r.verdict, "FAIL");
   assert.deepEqual(
     tally(r.head.items, (i) => `${i.check} ${i.headClass}`),
     {
       "pdf-probe regression": 1344,
       "wpt regression": 38,
-      "wpt rejection": 10,
+      "wpt undefined": 10,
       "value regression": 13,
       "status regression": 2,
     },
   );
-  assert.ok(r.head.items.every((i) => i.class === "head-regression" && i.gating));
-  // The 10 step-06 rejections (css:page-varying-width) gate against the head too: undeclared.
-  assert.equal(r.head.items.filter((i) => i.headClass === "rejection").length, 10);
+  const gating = r.head.items.filter((i) => i.gating);
+  assert.ok(gating.every((i) => i.class === "head-regression"));
+  // The 10 step-06 rejections (css:page-varying-width) are declared, carried from 06 (I4).
+  const declared = r.head.items.filter((i) => i.class === "declared");
+  assert.equal(declared.length, 10);
+  assert.ok(declared.every((i) => i.declaredAs.feature === "css:page-varying-width"));
+  assert.equal(r.head.declarationsCarried, 1);
   // 07's manifest has no class-a acceptance: every legacy acceptance is ignored by the head.
   assert.equal(r.head.acceptancesCounted, 0);
-  // All 13 gate canaries are caught on this run.
+  // Every gate canary is caught on this run.
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 07: 252 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 252, declared: 0 });
+test("pin view of 07: 242 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 242, declared: 10 });
   assert.equal(r.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r.pin.items, (i) => i.check),
@@ -83,9 +102,16 @@ test("pin view of 07: 252 items worse than the shipped main, all (c) while the l
   );
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
-    evaluateGate({ before: s06, after: s07, pin, main: true, ledgerBase: null, canaries: false })
-      .counts.gating,
-    252,
+    evaluateGate({
+      before: s06,
+      after: s07,
+      pin,
+      pinDeclared: c07.pin,
+      main: true,
+      ledgerBase: null,
+      canaries: false,
+    }).counts.gating,
+    242,
   );
 });
 
@@ -95,6 +121,7 @@ test("pin view of 07: 252 items worse than the shipped main, all (c) while the l
 // and adds 4 dy items (postmark "The [Product Name] team" pairs again, dy 35.1 pt vs 32.1 pt).
 const s08 = load("port", "08-html-parse");
 const s09 = load("port", "09-review-fixes");
+const c09 = carried("08-html-parse", "09-review-fixes", s09.manifest.declaredRejections ?? []);
 const r09 = evaluateGate({
   before: s08,
   after: s09,
@@ -102,22 +129,24 @@ const r09 = evaluateGate({
   pin,
   accept: s09.manifest.acceptedRegressions,
   declared: s09.manifest.declaredRejections ?? [],
+  headDeclared: c09.head,
+  pinDeclared: c09.pin,
   ledger: loadDebt(DEBT_FILE),
   ledgerBase: null,
   passes: PASSES,
 });
 
-test("09 vs 08 (both v2) is unchanged link to link; 1396 items are worse than the head", () => {
+test("09 vs 08 (both v2) is unchanged link to link; 1386 items are worse than the head", () => {
   assert.deepEqual(r09.refusals, []);
   assert.equal(r09.counts.gating, 0);
-  assert.equal(r09.head.counts.gating, 1396);
+  assert.equal(r09.head.counts.gating, 1386);
   assert.equal(r09.verdict, "FAIL");
   assert.deepEqual(
     tally(r09.head.items, (i) => `${i.check} ${i.headClass}`),
     {
       "pdf-probe regression": 1342,
       "wpt regression": 38,
-      "wpt rejection": 10,
+      "wpt undefined": 10,
       "value regression": 6,
     },
   );
@@ -125,8 +154,8 @@ test("09 vs 08 (both v2) is unchanged link to link; 1396 items are worse than th
   assert.ok(r09.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 09: 245 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 245, declared: 0 });
+test("pin view of 09: 235 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 235, declared: 10 });
   assert.equal(r09.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r09.pin.items, (i) => i.check),

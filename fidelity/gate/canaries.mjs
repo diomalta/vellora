@@ -16,6 +16,7 @@ import {
   resolveLedgerBase,
   transitionProblems,
 } from "./debt.mjs";
+import { mergeChainDeclarations } from "./declarations.mjs";
 import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
 
 /** The committed layer-vector input the tool canaries plant into (notification, step 07 run). */
@@ -189,6 +190,7 @@ export function runGateCanaries({
   vectors = packWordVectors,
   pack = LAYER_VECTOR_CANARY_PACK,
   resolveBase = resolveLedgerBase,
+  carry = mergeChainDeclarations,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -562,6 +564,39 @@ export function runGateCanaries({
         `${src}: ceiling 99 -> problem; layerVector.run != measured -> problem; measured != the run's value -> problem; exact entry (control) -> none`,
         `exact ${exact.length}; ceiling 99 ${ceiling99.length}; vector ${vector.length}; measured ${measured.length}`,
         exact.length === 0 && d7(ceiling99) && d7(vector) && d7(measured),
+      ),
+    );
+  }
+  // 17. I4: a rejection declared by an earlier link (step 01 of a planted chain, head 00) is not
+  // a head regression at step 02, whose own accept file declares nothing; vs the previous link
+  // (no change) nothing gates either. Control: a link outside (head, current] does not count.
+  {
+    const w = wptSeed(run, "fail");
+    const rejected = clone(w.doc);
+    rejected.results[w.test] = "unsupported";
+    rejected.unsupportedFeatures = { ...(rejected.unsupportedFeatures ?? {}), [w.test]: FEATURE };
+    const decl = { feature: FEATURE, reason: "canary", evidence: "canary", tests: [w.test] };
+    const links = [
+      { step: "00-canary-head", declaredRejections: [] },
+      { step: "01-canary-reject", declaredRejections: [decl] },
+    ];
+    const merged = carry({ links, from: 0, to: 2, current: [], currentStep: "02-canary-now" });
+    const outside = carry({ links, from: 1, to: 2, current: [], currentStep: "02-canary-now" });
+    const head = snap({ wpt: { expectations: w.doc } });
+    const now = snap({ wpt: { expectations: rejected } });
+    const cls = (declared) =>
+      compare(head, now, { declared }).items.find((i) => i.key === `wpt|${w.test}`);
+    const carried = cls(merged);
+    const notCarried = cls(outside);
+    rows.push(
+      row(
+        "declared rejection carried to the head comparison (I4)",
+        `${w.real ? "real" : "synthetic"} test ${w.test} rejected and declared at link 01: vs head 00 at link 02 -> declared; a declaration outside (head, current] (control) -> rejection`,
+        `carried ${carried?.class}/${carried?.gating}; control ${notCarried?.class}/${notCarried?.gating}`,
+        carried?.class === "declared" &&
+          carried.gating === false &&
+          notCarried?.class === "rejection" &&
+          notCarried.gating === true,
       ),
     );
   }

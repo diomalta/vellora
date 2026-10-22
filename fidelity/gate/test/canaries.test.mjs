@@ -24,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 16);
+    assert.equal(rows.length, 17);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -176,6 +176,12 @@ test("a ledger transition without GATE-D7 (the I3 hole: a ceiling of 99 passed) 
   const noD7 = (o, n, x) => transitionProblems(o, n, x).filter((m) => !/GATE-D7/.test(m));
   const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noD7 }));
   assert.equal(c["GATE-D7: new ledger key tied to the measured value (I3)"], false);
+});
+
+test("a head comparison that sees only the current step's declarations (the I4 hole) leaves its canary uncaught", () => {
+  const currentOnly = ({ current = [] }) => current;
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, carry: currentOnly }));
+  assert.equal(c["declared rejection carried to the head comparison (I4)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

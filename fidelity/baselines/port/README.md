@@ -1714,3 +1714,14 @@ INDICATIVE.
   to the gate's unit must equal `measured` (before, a ceiling of 99 passed). `DEBT.json` and the
   worked example are migrated; debt/1 files are read by migration (`measured: null`, so a key
   entered from one fails GATE-D7).
+- **I4, declarations carry forward.** The head comparison merges the `declaredRejections` of
+  every link from the head (exclusive) to the current step (inclusive); the pin view those of
+  every link up to the current step (`gate/declarations.mjs`). Step 06's manifest predates the
+  field and is history, so its declaration of the 10 `css:page-varying-width` WPT rejections is
+  in `declared-rejections.json` (`step: "06-page-rules"`; the test list is the rejection set of
+  06 vs 05 and of the 09 head view; CONFIRMED that the step-07 run copy's `wpt/results.json`
+  records `cause.feature` `css:page-varying-width` for exactly these 10). Result: head 07
+  1407 → 1397, 09 1396 → 1386; pin (c) 07 252 → 242, 09 245 → 235, declared 10 (post-hoc
+  `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run
+  fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json
+  --step 09-review-fixes --layout-from <09 run copy>`, 2026-10-22).

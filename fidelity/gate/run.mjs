@@ -23,6 +23,9 @@
 //            first population; a base that cannot be determined REFUSES the gate, I2): checks
 //            rule iii (count, ceilings, removals) and that new entries satisfy the relaxed (b) rule.
 // --step     the step id (NN-name) the run measures: an entry may close at its closesAt step.
+//            The head comparison merges the declaredRejections of every port link from the head
+//            (exclusive) to this step (inclusive), the pin view those of every link up to it
+//            (manifests + baselines/port/declared-rejections.json; I4, gate/declarations.mjs).
 // --layout-from  a run-all dir whose layout-diff dumps give the run's layout_normalize passes
 //            (rule v) when the snapshot does not record them (baselines written before
 //            2026-10-21, or a committed baseline used as --run).
@@ -55,6 +58,7 @@ import {
   runGit,
   transitionProblems,
 } from "./debt.mjs";
+import { chainDeclarations } from "./declarations.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { renderGateMarkdown } from "./report.mjs";
 import { loadSnapshot } from "./snapshot.mjs";
@@ -242,6 +246,8 @@ export function evaluateGate({
   pin = null,
   accept = [],
   declared = [],
+  headDeclared = declared,
+  pinDeclared = declared,
   ledger = null,
   ledgerBase = undefined,
   ledgerBaseSource = null,
@@ -258,7 +264,10 @@ export function evaluateGate({
   // undefined = not determined, which REFUSES the gate (runGate resolves it with
   // resolveLedgerBase: --debt-base, else DEBT.json at `git merge-base HEAD main`).
   // The head comparison first: GATE-D7 ties a new ledger key's measured value to its item (I3).
-  const hr = head ? compareSnapshots(head.snapshot, after, { accept: classA, declared }) : null;
+  // I4: the head and the pin see the declarations carried along the chain (declarations.mjs).
+  const hr = head
+    ? compareSnapshots(head.snapshot, after, { accept: classA, declared: headDeclared })
+    : null;
   if (ledgerBase === undefined) {
     report.refusals.push(
       ledgerBaseSource ??
@@ -295,6 +304,7 @@ export function evaluateGate({
       unusedEntries: applied.unused,
       acceptancesCounted: classA.length,
       acceptancesIgnored: accept.length - classA.length,
+      declarationsCarried: headDeclared.length - declared.length,
     };
     report.refusals.push(...hr.refusals.map((r) => `head ${head.dir}: ${r}`));
   }
@@ -323,7 +333,7 @@ export function evaluateGate({
     report.items.push(...gateCanaryItems(report.gateCanaries));
   }
   if (pin) {
-    const pr = compareSnapshots(pin.snapshot, after, { accept: classA, declared });
+    const pr = compareSnapshots(pin.snapshot, after, { accept: classA, declared: pinDeclared });
     report.pin = { baseline: pin.dir, ...pinView(pr, doc), main };
     if (main) {
       // When --baseline is the pin itself the same items already gate: do not count them twice.
@@ -394,7 +404,14 @@ export function runGate({
   const after = loadSnapshot(runDir);
   const accept = readAcceptances(acceptFile);
   const declared = readDeclarations(acceptFile);
-  const head = loadOptional(headDir === undefined ? chainHead() : headDir);
+  const resolvedHead = headDir === undefined ? chainHead() : headDir;
+  const head = loadOptional(resolvedHead);
+  const carried = chainDeclarations({
+    headDir: resolvedHead,
+    baselineDir,
+    current: declared,
+    step,
+  });
   const pin = loadOptional(pinDir === undefined ? join(BASELINES_DIR, "pin") : pinDir);
   const ledger = loadDebt(debtFile);
   const base = resolveLedgerBase({ debtBase, git });
@@ -407,6 +424,8 @@ export function runGate({
     pin,
     accept,
     declared,
+    headDeclared: carried.head,
+    pinDeclared: carried.pin,
     ledger,
     ledgerBase,
     ledgerBaseSource: base.refusal ?? base.source,
