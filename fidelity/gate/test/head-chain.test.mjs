@@ -1,4 +1,4 @@
-// The head ratchet and the pin view on the committed chain (no render): the head of the chain,
+// The head ratchet and the pin view on the committed chain (no render): the latest link,
 // 07-media-print, gated post-hoc against 06 with --head 00-start and the (empty) DEBT.json, and
 // classed against the shipped main (pin). Numbers are asserted so a change of the rules or of
 // the committed data is visible here; their reading is in fidelity/baselines/port/README.md

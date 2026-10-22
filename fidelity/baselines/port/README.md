@@ -20,23 +20,49 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 
   ```sh
   export PATH="$HOME/.nvm/versions/node/v22.23.2/bin:$PATH"
+  # The ledger at the merge base (the commit the step branches from); a missing file is the
+  # ledger's first population (rule iii exempts it from the count and sum rule).
+  git show <merge base>:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json
   node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/<previous step> \
+    --step <NN-name> --debt-base /tmp/debt-base.json \
     --chrome-from <wpt results.json> --tools-image vellora-fidelity-tools:baseline-beta4 \
     --out fidelity/results/run-all/<NN-name> [--accept accepted.json]
-  # exit 0 = PASS. Then commit the run as the next link (--name takes no "/", so --root carries port/):
+  # Defaults: --head = the Chain head above (port/00-start), --debt = baselines/port/DEBT.json,
+  # --pin = baselines/pin (pin view, reported). A merge to main adds --main ((c) items gate).
+  # exit 0 = PASS (previous link AND head). The same evaluation over an existing run, no re-run:
+  #   node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous step> \
+  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> --debt-base /tmp/debt-base.json \
+  #     [--accept accepted.json]
+  # Then commit the run as the next link (--name takes no "/", so --root carries port/):
   node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/<NN-name> \
     --root fidelity/baselines/port --name <NN-name> [--accept accepted.json] \
     [--attach <report>=<name>]...
   ```
 
-- **Merge rule.** The step merges only when its gate is PASS. A chain step is never written with
-  `--force`: `manifest.json gate.writtenDespiteVerdict` must be `false` and
-  `gate.baseline` must name the previous step. A value that gets worse beyond its tolerance passes
-  only as an `acceptedRegressions` entry (`--accept`: key, `after`, reason, evidence) that PROVES
-  the old value was wrong (false pass, oracle artefact) with Chrome + WeasyPrint consensus or WPT
-  reference analysis (GATE-A1); the writer copies the list into `manifest.json`, and the same list
-  goes into the step's commit message. The run's code-checks step must be green (GATE-C1:
-  `cargo test --workspace`, `npm run test:ts`, `npm run lint`, `npm --prefix fidelity test`).
+  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii);
+  `--debt-base` turns on the ledger's transition check (rule iii). Without it the report says
+  "transition not checked (no --debt-base)". The relaxed (b) rule (GATE-D7) is checked on every
+  entry on every run, with or without `--debt-base`.
+- **Merge rule.** The step merges only when its gate is PASS against the previous link AND the
+  chain head. A chain step is never written with `--force`: `manifest.json
+  gate.writtenDespiteVerdict` must be `false` and `gate.baseline` must name the previous step. A
+  value worse beyond its tolerance (against the previous link or the head) passes only as one of:
+  - an `acceptedRegressions` entry of the step with `class: "a"` (`--accept`: key, `after`, class,
+    reason, evidence) that PROVES the OLD value was wrong: a WPT false pass, or an oracle artefact
+    shown on the same PDFs by an independent measurement (GATE-A1 (a));
+  - a `DEBT.json` entry (class b, compensating drift with a committed layer vector, within its
+    ceiling; GATE-A1 (b), GATE-D1…D7), never an acceptance (`readAcceptances` refuses any class
+    other than `a`);
+  - a `declaredRejections` entry for a new strict-gate rejection: WPT tests moving to
+    `unsupported`, verdict rows becoming `strict gate rejected: <feature>`, measured rows becoming
+    NOT-RUN (GATE-A2).
+
+  An OLD value that was correct (for example lost text) blocks the merge. The writer copies
+  `acceptedRegressions` and `declaredRejections` into `manifest.json`, and the step's commit
+  message lists them. Entries without `class`, from steps 01–06, still reproduce the
+  link-to-link verdicts they were written for. They do not cover anything against the head.
+  The run's code-checks step must be green (GATE-C1: `cargo test --workspace`,
+  `npm run test:ts`, `npm run lint`, `npm --prefix fidelity test`).
 - **Older baselines.** Comparisons of the same run against older links (`beta4`, `pin`, …) are
   post-hoc: `node fidelity/gate/run.mjs --baseline fidelity/baselines/<old> --run <run dir> --out
   <run dir>/gate-vs-<old>`, then `--attach` the reports (`attachments/gate-report-vs-<old>.*`).
@@ -51,7 +77,10 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   `~/.cache/vellora-fidelity/run-all-<NN-name>-<runId>` so later steps can re-gate or reuse it.
 - **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
   (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
-  against its predecessor.
+  against its predecessor. `fidelity/gate/test/head-chain.test.mjs` re-checks the head ratchet
+  and the pin view on the committed links: the ledger is the empty `vellora-fidelity/debt/1`
+  ledger, and `07` against `06` with `--head port/00-start` gives the counts in "Head ratchet
+  and debt ledger" below. A new link should add its own head and pin counts there.
 - **pdf-probe semantics.** Since 2026-10-21 every link's gated pdf-probe section
   (`pdf-probe/<fixture>.json`) is semantics 2 ("pdf-probe v2 re-score" below); the gate refuses
   to compare it with a semantics-1 section, so a new link is gated with v2 only. The v1 sections
@@ -525,8 +554,36 @@ Each variant was a full `run-all --gate` against `03-table-passes` (same environ
 - **Why it stays.** Removing it gains 7 WPT passes (margin-collapse-106/155,
   white-space-normal-001/002, white-space-collapsing-bidi-003, ws-break-spaces-applies-to-012/013).
   It costs the REF-W values above and 175 more gating items. Retire it together with the drift fix.
-- **Layer proof.** In this run, every layout-diff text run's final-layer y equals raw Blitz's B0
-  placement, or B0 − 2 px (the kept pass). No other vellora layer moves text y.
+- **Layer proof (corrected 2026-10-22).** This bullet used to end "No other vellora layer moves
+  text y". That is wrong. The first half holds: every layout-diff text run's last
+  layout_normalize layer (`auto_table_compact_columns`) has y equal to B0, or to B0 − 2 px (the
+  kept pass), on all 9 fixtures. But pagination's P layer, measured after that last pass, moves
+  y too. CONFIRMED by re-measuring the step-04 run copy
+  `~/.cache/vellora-fidelity/run-all-04-block-offset-20261021T125346Z` with
+  `node fidelity/gate/layer-vector.mjs --run <run copy> --summary --anchor "notification:Gerente do Departamento"`
+  (darwin 27.0.0 arm64, Node v22.23.2; written 2026-10-21, reproduced byte for byte 2026-10-22;
+  committed as `fidelity/gate/snapshots/2026-10-21/ledger/step04-run-level-summary.json`).
+  Text runs where P's y differs from the last pass's y, out of all runs in the fixture:
+
+  | fixture | P ≠ last pass (y) | last pass = B0 / B0 − 2 px | N0 = B0 = L0 |
+  |---|---|---|---|
+  | boleto | **13 / 78** | 5 / 73 | 78 / 78 |
+  | boleto-febraban | **60 / 98** | 5 / 93 | 98 / 98 |
+  | receipt | **36 / 56** | 29 / 27 | 56 / 56 |
+  | text-stress-ptbr | **364 / 779** | 59 / 720 | 779 / 779 |
+  | danfe, invoice, notification, oss-sparksuite-invoice | 0 (318, 210, 35, 22 runs) | 7/311, 20/190, 29/6, 13/9 | all |
+  | oss-postmark-receipt | 0 / 44 | 44 / 0 | N0 n/a on all 44 (no aligned raw run while `html_normalize` existed) |
+
+  Every P move is larger than layout-diff's 0.5 px tolerance (`pMovesBeyondTolY` = the same
+  counts). At step 07 (`step07-run-level-summary.json`, run copy `…-07-media-print-20261021T162148Z`)
+  the counts are the same, except that receipt is 36 / 60 and postmark has no aligned runs. The
+  earlier "60/98 boleto-febraban, 13/78 boleto, 36/60 receipt" figures came from step 07; at step
+  04 receipt is 36 / 56. The step's own target is unaffected: LET-1's anchor "Gerente do
+  Departamento de Cobrança" (notification) has dy +6.516 px in every layer: N0 = B0 = L0 = each
+  pass = P. The same command on the step-03 run copy (`…-03-table-passes-20261021T114420Z`,
+  2026-10-22) gives the identical vector. So the LET-1 change at this step (0.75 → 1.81 mm) moved
+  no layout layer of that anchor (CONFIRMED). That it comes from removing the constant 4 px PDF
+  text raise, the step's only PDF-stage change, is a HYPOTHESIS that was not measured separately.
 
 ### `acceptedRegressions` (2587; per-item numbers in `attachments/accepted-evidence.json`)
 
@@ -1111,10 +1168,10 @@ Reading it (CONFIRMED from the numbers above; the per-fixture split is in the re
   improved or unpaired (a v1 pair across rows or pages), with one word worse against 00-start.
 - **The remaining debt is real and gated now**: step 03's 24 coincidental matches, step 04's 660
   compensating-drift words and 640 misplaced words are worse beyond 1 pt under v2.
-- **Against 00-start the tail of the chain is worse on 922 v2 items** (the accumulated drift of D4
+- **Against 00-start the latest link (07) is worse on 922 v2 items** (the accumulated drift of D4
   is visible this way, not by link-to-link tolerance).
 
-**Head of the chain (07) per fixture, v1 → v2** (pairs; unpaired vellora / Chrome; worst / median
+**Latest link (07) per fixture, v1 → v2** (pairs; unpaired vellora / Chrome; worst / median
 |dx| and |dy| in pt; v1 counts same-page pairs, its "unpaired" = words − pairs):
 
 | fixture | v1 | v2 |
@@ -1132,3 +1189,71 @@ Reading it (CONFIRMED from the numbers above; the per-fixture split is in the re
 v1's worst values of hundreds of pt were pairs of different instances; text-stress-ptbr (8 pages
 vs 7) leaves 1082 of Chrome's 1833 words without a partner within 36 pt on the same page, which
 v1 hid as cross-page or mis-paired pairs.
+
+## Head ratchet and debt ledger (2026-10-21/22, branch `phaseb/oracle-v2-ledger`)
+
+Gating only against the previous link let sub-tolerance worsening pile up (critic finding D4).
+Since this branch every gate run also compares against the **Chain head** (`port/00-start`,
+GATE-H1). An item worse than the head beyond its tolerance passes only as a class-`a`
+acceptance of the current step, a declaration (GATE-A2), or an entry in `DEBT.json` that stays
+within its ceiling (GATE-D1…D7). `DEBT.json` is the empty `vellora-fidelity/debt/1` ledger. The
+only worked entry is a test fixture (`fidelity/gate/test/data/debt-example.json`, DANFE
+"NOME/RAZÃO" at step 07: raw Blitz +3.656 px, painted pass −2 px, run 2.213 px). Real entries
+have not been written yet.
+
+**Post-hoc evaluation of step 07 (no re-render).** CONFIRMED, asserted in
+`fidelity/gate/test/head-chain.test.mjs`. Reports are in
+`fidelity/gate/snapshots/2026-10-21/ledger/`. Local macOS, INDICATIVE. Commands as recorded in
+the reports:
+`node fidelity/gate/run.mjs --baseline fidelity/baselines/port/06-page-rules --run fidelity/baselines/port/07-media-print --accept fidelity/baselines/port/07-media-print/manifest.json --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z --step 07-media-print`,
+then `node fidelity/gate/ledger-candidates.mjs …` (command in `ledger-candidates.md`).
+
+| view | gating | by check |
+|---|---|---|
+| 07 vs 06 (previous link) | 0 | – |
+| 07 vs head 00-start | **985** (FAIL) | pdf-probe 922, WPT regression 38, WPT rejection 10 (step 06's undeclared `css:page-varying-width`), value 13, status 2 |
+| 07 vs pin (shipped main), pin view | 213 (c), merge to main BLOCKED | pdf-probe 140, WPT 56, value 15, status 2 |
+
+None of the 985 head items is covered: the ledger is empty, and 07's manifest has no class-`a`
+acceptance. Legacy acceptances from steps 01–06, which carry no `class`, do not count against
+the head. All 13 gate canaries (GATE-K2) are caught on this evaluation.
+
+**Candidate classes** (`ledger-candidates.mjs`). These are candidates, not verdicts: an item is
+covered only once a class-`a` acceptance or a DEBT entry is committed.
+
+| candidate | head view (985) | pin view (213) |
+|---|---|---|
+| (b) layer vector on which the relaxed rule can hold | 616 | 133 |
+| (b) one page-scoped entry (rule vi; text-stress-ptbr) | 122 | 0 |
+| (a) artefact label or WPT page-count difference | 37 | 19 |
+| declare (strict-gate rejection) | 10 | 10 |
+| (c) lost text, or vellora worse than raw Blitz | 15 | 14 |
+| none: no evidence for (a) or (b) yet | 185 | 37 |
+
+**No possible (a)/(b) classification yet**: 200 head items, 51 pin items.
+
+- **(c), head**: all 15 are oss-postmark-receipt text lost at step 05 (the XHTML doctype is
+  parsed as XML, which drops the text after each `<br>`). That covers INV-X1/X2 PASS → FAIL,
+  their `found` counts 6 → 5, the EXT-2 `missing` counts, 4 lost Chrome words ("The [Product
+  Name] team"), and unpaired-chrome 42 → 46 and unpaired-vellora 0 → 3. The OLD value was
+  right, so these block the merge until the text is restored.
+- **(c), pin**: the 9 postmark corpus and EXT-2 rows above (not its words), plus 5 invoice
+  words on page 3 ("Total a pagar R$ 50.724,90"). For those words |run| 3.533 px > |N0| 1.984 px: vellora's layers made them worse
+  than raw Blitz.
+- **none, head**:
+  - 134 postmark words: layout-diff aligned no text run, so there is no layer vector.
+  - 44 boleto words: they map to no layout-diff run.
+  - 6 aggregate metrics with no per-item vector yet: DANFE-L1a…d `posErrMm`, and INV-R1
+    `worstMm` for postmark and sparksuite.
+  - WPT `css/CSS2/floats/zero-width-floats.html` (pass → fail, step 01 "two errors
+    cancelling"). WPT tests have no layer vector.
+- **none, pin**: 27 WPT pass → fail with no artefact evidence (the old render's page count
+  equals Chrome's), DANFE-M1 `excessB` 8.552 → 24.173, DANFE-L1a…d, invoice REF-W p95 1.78 →
+  2.51 mm, invoice EXT-2 pdfminer status, postmark INV-R1, and 2 invoice words.
+
+**How a step uses this**: the chain convention above (`--head`, `--debt-base`, `--step`). Add
+the step's head and pin counts to `head-chain.test.mjs`. A DEBT entry is written from a
+committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from
+<gate-report.json>`). It must satisfy the relaxed (b) rule (GATE-D7). Then
+`node fidelity/gate/debt.mjs check --base <ledger at merge base> --step <NN-name>` must be
+clean.
