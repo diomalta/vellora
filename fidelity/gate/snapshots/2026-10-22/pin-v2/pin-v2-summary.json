@@ -1,0 +1,142 @@
+{
+  "schema": "vellora-fidelity/pin-v2-view-summary/1",
+  "labels": {
+    "authority": "INDICATIVE (local macOS, darwin 27.0.0 arm64, Node v22.23.2, Python 3.12.13, PyMuPDF 1.28.2)",
+    "date": "2026-10-22"
+  },
+  "what": "Pin view (GATE-H3) of port/09-review-fixes once fidelity/baselines/pin carries pdf-probe v2 for all 9 fixtures (before: invoice + notification only; base: fidelity/gate/snapshots/2026-10-22/ledger-09/).",
+  "commands": {
+    "gate": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --step 09-review-fixes --out <scratch>/09-vs-08-head-00-start",
+    "pinMain": "node fidelity/gate/run.mjs --baseline fidelity/baselines/pin --run fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json --no-head --pin fidelity/baselines/pin --main --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --step 09-review-fixes --out <scratch>/09-vs-pin-main",
+    "candidates": "node fidelity/gate/ledger-candidates.mjs --report <scratch>/09-vs-08-head-00-start/gate-report.json --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --head-wpt ~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z/wpt/results.json --pin-wpt ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/wpt/results.json --out <scratch>/candidates",
+    "literalRefused": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from <same> --step 09-review-fixes: REFUSED (the run copy's pdf-probe.json is v1; gate-report-09-run-copy-REFUSED.md)"
+  },
+  "verdicts": {
+    "gate": "FAIL",
+    "linkGating": 0,
+    "headGating": 974,
+    "pin": {
+      "a": 0,
+      "b": 0,
+      "c": 809,
+      "declared": 0
+    },
+    "mainMerge": "BLOCKED"
+  },
+  "pinItemsByFixtureAndCheck": {
+    "danfe": {
+      "value": 5,
+      "pdf-probe": 126
+    },
+    "invoice": {
+      "value": 2,
+      "pdf-probe": 63
+    },
+    "oss-postmark-receipt": {
+      "value": 3,
+      "pdf-probe": 152
+    },
+    "(wpt)": {
+      "wpt": 56
+    },
+    "boleto-febraban": {
+      "pdf-probe": 39
+    },
+    "boleto": {
+      "pdf-probe": 188
+    },
+    "notification": {
+      "pdf-probe": 77
+    },
+    "oss-sparksuite-invoice": {
+      "pdf-probe": 38
+    },
+    "text-stress-ptbr": {
+      "pdf-probe": 60
+    }
+  },
+  "candidates": {
+    "pinBefore": {
+      "total": 206,
+      "byCandidate": {
+        "none": 37,
+        "c": 7,
+        "a": 19,
+        "declare": 10,
+        "b": 133
+      },
+      "byFixture": {
+        "(wpt)": {
+          "none": 27,
+          "a": 19,
+          "declare": 10
+        },
+        "danfe": {
+          "none": 5
+        },
+        "invoice": {
+          "none": 4,
+          "b": 56,
+          "c": 5
+        },
+        "notification": {
+          "b": 77
+        },
+        "oss-postmark-receipt": {
+          "none": 1,
+          "c": 2
+        }
+      }
+    },
+    "pinAfter": {
+      "total": 809,
+      "byCandidate": {
+        "none": 81,
+        "c": 34,
+        "a": 19,
+        "declare": 10,
+        "b": 605,
+        "b-page": 60
+      },
+      "byFixture": {
+        "(wpt)": {
+          "none": 27,
+          "a": 19,
+          "declare": 10
+        },
+        "boleto": {
+          "b": 144,
+          "none": 44
+        },
+        "boleto-febraban": {
+          "b": 39
+        },
+        "danfe": {
+          "none": 5,
+          "b": 126
+        },
+        "invoice": {
+          "none": 4,
+          "b": 56,
+          "c": 5
+        },
+        "notification": {
+          "b": 77
+        },
+        "oss-postmark-receipt": {
+          "none": 1,
+          "c": 4,
+          "b": 150
+        },
+        "oss-sparksuite-invoice": {
+          "c": 25,
+          "b": 13
+        },
+        "text-stress-ptbr": {
+          "b-page": 60
+        }
+      }
+    },
+    "headUnchanged": true
+  }
+}
