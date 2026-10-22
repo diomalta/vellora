@@ -432,3 +432,30 @@ test("port/08-html-parse passes vs port/07-media-print with no acceptedRegressio
     [],
   );
 });
+
+test("port/09-review-fixes passes vs port/08-html-parse with no acceptedRegressions and no change", () => {
+  const prev = loadBaselineDir(join(baselines, "port", "08-html-parse"));
+  const step = loadBaselineDir(join(baselines, "port", "09-review-fixes"));
+  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
+  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(step.manifest.gate.verdict, "PASS");
+  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/08-html-parse");
+  assert.deepEqual(step.manifest.acceptedRegressions, []);
+  assert.equal(step.provenance.git.dirtyEntries, 0);
+  assert.equal(Object.keys(step.crashtests.results).length, 239);
+  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
+  // The six review fixes (no recursion before the depth gate, signed margins after a forced
+  // break, Stylo-evaluated break-* media queries, RTL inline padding, forced-break fit, test
+  // accuracy) change no corpus document or WPT reftest: every compared value is unchanged and
+  // the 47 vellora PDFs are byte-identical to step 08's
+  // (attachments/pdf-identity-vs-08-html-parse.json). The behaviour is covered by Chrome 155
+  // probes in crates/vellora-core/tests (attachments/chrome-probes-review-fixes.json).
+  const r = compareSnapshots(prev, step);
+  assert.equal(r.verdict, "PASS");
+  assert.equal(r.counts.gating, 0);
+  assert.deepEqual(
+    r.items.filter((x) => x.class !== "unchanged").map((x) => `${x.class} ${x.key}`),
+    [],
+  );
+});

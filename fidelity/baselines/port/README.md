@@ -1203,3 +1203,164 @@ The `committed-canary` self-test asserts that `08-html-parse` PASSes against `07
 with no acceptances, and that its only non-unchanged items are the 9 postmark improvements
 (values above) and the pdf-probe pairing change. It also asserts that no WPT item moves and that
 no postmark item differs from `04-block-offset`.
+
+## `09-review-fixes`: the Phase B review findings on steps 07-08
+
+Branch `phaseb/09-review-fixes` (from `phaseb/08-html-parse` `f9476ea`). Six fixes, one commit
+each, then the baseline (`a3f7c90`); the gated run was taken at the last fix commit `6176d39`.
+
+| commit | fix |
+|---|---|
+| `5d1f4af` | 1. No recursion or quadratic scan on user input before the depth gate (review BLOCKER) |
+| `7e3eaff` | 2. Margins kept after a forced break collapse with their signs (CSS 2.2 §8.3.1) |
+| `01c4e86` | 3. `break-*` rules inside `@media` follow Stylo's media evaluation |
+| `717d17d` | 4. Inline padding compensation on the physical side (`text_align_right` deleted) |
+| `ad3a08e` | 5. Forced-break fragments and the fit allowance stay off the bottom band |
+| `6176d39` | 6. Tests assert visibility where text is visible; two off-page gaps pinned |
+
+| field | value (CONFIRMED, `manifest.json`) |
+|---|---|
+| run | `20261021T205223Z` (2026-10-21 20:52:23Z), 20/20 steps ok, run-all exit 0 (gate PASS), git `6176d39` 0 dirty, addon sha256 `33ac35a7…` |
+| command | `node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/08-html-parse --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/09-review-fixes` |
+| env | darwin 27.0.0 arm64 (macOS 27.0.1) / Apple M5 Pro; node v22.23.2; rustc 1.96.0; Chrome 155.0.8059.85 (local, INDICATIVE); blitz 0.3.0-beta.4; tools image `vellora-fidelity-tools:baseline-beta4` `sha256:6b648b83…`; WPT `9d8aceec…` |
+| run copy | `~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z`. Probe HTML, Chrome and vellora PDFs, the per-commit addons and the scratch drivers (`probe-deep.mjs`, `probe_words.py`): `~/.cache/vellora-fidelity/step09-review-fixes-evidence-20261021` |
+
+### Gate results
+
+| gated against | verdict | counts |
+|---|---|---|
+| `port/08-html-parse` (previous link; `gate-report.{json,md}`) | **PASS**, `acceptedRegressions: []` | gating 0, unchanged 15521, no improvement, no change |
+| `beta4` (post-hoc, `attachments/gate-report-vs-beta4.*`) | FAIL | 524 gating, the same items as step 08's report (the two reports differ only in their header) |
+| `pin` (post-hoc, `attachments/gate-report-vs-pin.*`) | FAIL (known beta.4 losses) | 56 gating, the same items as step 08's report |
+
+- **PDF bytes** (`attachments/pdf-identity-vs-08-html-parse.json`): all 47 vellora PDFs (corpus,
+  oracles including canaries, layout-diff) are byte-identical to step 08's.
+- WPT pass / clean 3664 / 3107 (45.53 % / 38.61 %), no transition; crashtests 239/239 ok;
+  canaries 30/30 caught; verdicts PASS 142, FAIL 38, WARN 7, NOT-RUN 3 (as step 08); code checks
+  (cargo test, vitest, lint, fidelity test) green.
+- Why nothing moved (inferred from the byte identity, not checked input by input): no corpus document or WPT reftest has a negative margin collapsing across a
+  forced break, a `break-*` rule inside a feature media query, an RTL line with a padded inline,
+  a fragment that does not fit under its kept forced-break margin, or nesting deep enough to
+  reach the old recursion. The corpus footers sit in 16-18 mm bottom margins, so fix 5's
+  allowance cap does not bind there (HYPOTHESIS from the margin sizes, consistent with the PDF
+  identity). The fixes are covered by the Chrome-probed tests below.
+
+### Chrome probes (`attachments/chrome-probes-review-fixes.json`)
+
+Chrome 155.0.8059.85, local macOS, INDICATIVE, 2026-10-21, through the shared reference print path
+(`fidelity/lib/chrome-reference.mjs`); words read with PyMuPDF (pen x and baseline in PDF pt,
+top-left origin; PyMuPDF does not report text whose origin is outside the page). vellora through
+the napi addon built at f9476ea (step 08) and at the commit of each fix. 37 probes.
+
+**Fix 1** (`attachments/deep-input-timings.json`; one child process per render, release addons,
+same env). The sheet walk of `page_css` (it runs in `validate_css`, before the SEC-1 depth gate)
+recursed into each matching `@media` and each `@layer` block and re-scanned it. It is now one pass
+with an explicit frame stack. The audit of the other pre-gate scanners fixed
+`strip_css_comments_and_strings` (escaped quotes), `split_block`, `break_css::top_level_rules`,
+and the depth gate's own parse. That parse stops once an element is inserted deeper than 512,
+Blink's `kMaximumHTMLParserDOMTreeDepth`: html5ever's scope checks are O(depth) per start tag.
+
+| input | step 08 | step 09 |
+|---|---|---|
+| nested `@media all {` x5 000 / x10 000 | 499 / 1680 ms | 11 / 10 ms |
+| nested `@media all {` x20 000 / x200 000 | **SIGILL** (Node process killed) | 16 / 160 ms, PDF |
+| nested `@layer a {` x20 000 / x200 000 | **SIGILL** | 15 / 130 ms, PDF |
+| nested anonymous `@layer {` x200 000 | **SIGILL** | 99 ms, PDF |
+| `@supports` / `@container` / `@document` / CSS nesting x200 000 | 112 / 129 / 58 / 59 ms | 113 / 125 / 55 / 59 ms |
+| `@page` nested x200 000 | 23 ms | 24 ms |
+| unterminated `"` + `\"` x25 000 / x50 000 in `style=` | 445 / 1483 ms | 2 / 2 ms (x200 000: 5 ms) |
+| nested `<div>` x25 000 / x50 000 | 1589 / 7070 ms, `max-nesting-depth` | 3 / 2 ms, `max-nesting-depth` (x200 000: 3 ms) |
+| nested `<span>` x200 000 | 55 ms, `max-nesting-depth` | 2 ms, `max-nesting-depth` |
+| 20 000 / 40 000 flat `@layer` blocks | 349 / 1953 ms | 17 / 46 ms |
+| 20 000 / 40 000 margin-box names in `@page` | 827 / 4127 ms | 16 / 31 ms |
+| 50 000 / 100 000-space prelude + `;` (break_css) | 1612 / 5061 ms | 3 / 3 ms |
+
+Tests: `tests/deep_input.rs` (each at-rule kind and five element nests at depth 200 000 on a
+256 KiB stack, linear growth 50k vs 200k, the full render on the 8 MiB napi stack);
+`packages/native/test/deep-input.test.ts` (real addon in a child process: a PDF or a located
+`VelloraUnsupportedError`, never a signal). Differential tests keep the old walk and the old
+string stripper under `#[cfg(test)]` and check identical output on generated inputs.
+`CLAUDE.md` now says what `validate_css` and the depth gate run, plus an invariant bullet.
+
+**Fix 2.** 300 x 300 px page; baseline of "Two" on page 2 in pt (Chrome / step 08 / now):
+
+| probe | margins in the chain | Chrome | step 08 | now |
+|---|---|---|---|---|
+| `m_posneg` (the review's probe) | section 25 px, p -10 px | 37.50 | 45.00 | 37.50 |
+| `m_pospos` | 25, 10 | 45.00 | 45.00 | 45.00 |
+| `m_allneg` | -10, -5 | 18.75 | 26.25 | 18.75 |
+| `m_chain` | 30, -20, 15, -4 | 33.75 | 48.75 | 33.75 |
+| `m_negroot_pos_child` | -12, 40 | 47.25 | 56.25 | 47.25 |
+| `m_dropped` | empty 40 / -15, next 5 | 45.00 | 56.25 | 45.00 |
+| `m_dropped_neg` | empty -6 / 30, next -20 | 33.75 | 48.75 | 33.75 |
+| `m_wrapper` | flattened wrapper 30, child -18 | 35.25 | 48.75 | 35.25 |
+
+Every probe matches Chrome to 0.00 pt. `tests/pagination_gaps.rs`.
+
+**Fix 3.** A4, 10 mm. `break_css` returns each rule with its chain of `@media` preludes, and
+`blitz_engine::media_query_matches` evaluates them with Stylo's `MediaList::parse`/`evaluate` on
+the device that styled the document.
+
+- `print and (min-width: 1px)`, nested `print { (min-width: 10px) }`, `(orientation: portrait)`,
+  `(min-width: 600px)`: Chrome 2 pages, step 08 1 page, now 2 pages; "SecondPage" at (28.35,
+  39.60) on page 2 vs Chrome (28.50, 39.75).
+- `(max-width: 1px)`, nested `(max-width: 10px)`, `not print and (min-width: 1px)`, a feature
+  query around `break-inside: avoid`: 1 page in Chrome, step 08 and now.
+- Residuals, pinned in `tests/media_print.rs`:
+  - `f3_width_750`: Chrome 2 pages, vellora 1 page. Stylo's viewport is the 718 px content box,
+    so the style rule is off too (pre-existing, now consistent between styles and breaks).
+  - `f3_page_in_feature`: KNOWN GAP. `@page { margin-top: 40mm }` inside `@media print and
+    (min-width: 1px)`: Chrome "First" at 124.50 pt, vellora 39.60 pt. `page_css` keeps the
+    media-type-only reader for `@page`, because Stylo measures features against the viewport
+    the `@page` box decides (circular).
+
+**Fix 4.** "Aaa <span>Bbb</span> Ccc" in a 400 px div, span padding-right 20 px and padding-left
+7 px; word x in pt (Chrome / step 08 / now):
+
+| probe | Chrome | step 08 | now |
+|---|---|---|---|
+| `r_rtl_start` | 244.27 271.84 309.84 | 264.37 286.69 324.69 | 249.37 271.69 309.69 |
+| `r_rtl_end` | 28.50 56.07 94.08 | 13.35 35.66 73.67 | 28.35 50.66 88.67 |
+| `r_rtl_root_start` | 487.79 510.12 548.12 | 502.12 524.44 562.44 | 487.12 509.44 547.44 |
+
+`r_rtl_right`, `r_rtl_left`, `r_ltr_end`, `r_ltr_start`: unchanged (keyword path). The
+remaining 5.1-5.4 pt on "Aaa" of `r_rtl_start` and on "Bbb"/"Ccc" of `r_rtl_end` is a
+pre-existing gap that the ltr rows share: a span's padding-left does not move the runs (pinned in
+`tests/text_probes.rs`).
+
+**Fix 5.** 300 x 300 px page, 20 px margins. On a page opened by a forced break the kept margin
+is truncated to the room the fragment leaves (`min(margin, fit_limit - header_h - fit_h)`). The
+DESIGN TARGET overflow allowance (up to 12 px) is also capped by the free space above a drawn
+`@bottom-center` line. These are intended divergences from Chrome, which instead leaves a blank
+page and moves monolithic content on, or fragments the box:
+
+| probe | Chrome | step 08 | now |
+|---|---|---|---|
+| `f5_line_big_margin` (line under a 250 px margin) | 3 pages, "Two" top of page 3 | page 2, baseline 213.75 pt (line box 10 px into the bottom band) | page 2, baseline 206.25 pt (inside the content box) |
+| `f5_img_partial` (240 px image under 40 px) | 3 pages, image on page 3 | image 40-280 px on page 2 | image 20-260 px on page 2 |
+| `f5_table_partial` (table, margin 120 px) | 3 pages, margin 120 kept, rows split to page 3 | 2 pages, T01 at 116.25 pt, last row 260-280 px | 2 pages, margin 100 px, T01 at 101.25 pt, last row 240-260 px |
+| `f5_allowance_footer` (11 px overflow, 16 px footer in a 20 px band) | 2 pages | 1 page, box 6 px into the footer line | 2 pages, "Tail" on page 2 |
+| `f5_allowance_nofooter` (same, no footer) | 2 pages | 1 page | 1 page (allowance kept, DESIGN TARGET) |
+
+`f5_ref`, `f5_box_partial`, `f5_lines_partial`: unchanged. `tests/pagination_gaps.rs`.
+
+**Fix 6.** `lib.rs` `…_html_parse_emits_it` and `tests/html_parse.rs`
+`postmark_receipt_emits_the_text_after_each_br` were named "draws" but only checked that the runs
+exist. They now assert that "The [Product Name] team" and all three "[Product Name]" runs have
+their origin inside the page box (and, in `lib.rs`, that the two tail lines do not). Two KNOWN
+GAPS are pinned, so a future fragmentation fix must update them:
+
+- `g_postmark_raw`, `html_parse.rs::postmark_receipt_draws_its_layout_table_tail_off_page_known_gap`:
+  the raw template's oversize layout table is placed whole on page 1. "1234 Street Rd." and
+  "Suite 1234" are emitted at baselines 1038.60 / 1054.35 pt, below the 841.92 pt page edge.
+  Chrome: 2 pages (161 words, 124 + 37), the two lines on page 2 at 225.75 / 241.50 pt. vellora:
+  1 page, 121 words visible.
+- `g_inline_body`, `pagination_gaps.rs::an_inline_only_body_draws_its_lines_past_page_1_off_page_known_gap`:
+  120 `<br>`-separated lines in an inline-only body are one fragment. All 120 runs are emitted on
+  1 page, and Line055-Line120 (66) sit below the page edge. Chrome: 3 pages, lines 1-52 / 53-104 /
+  105-120. With `<p>`s (`g_p_body`) vellora prints Chrome's 3 pages (asserted).
+
+Follow-ups (not changed here): fragment an oversize block or layout table and an inline-only
+line box across pages (the two pinned gaps); evaluate `@page` inside feature media queries
+(needs the page box before Stylo's viewport); a span's `padding-left` on its runs; Chrome's
+blank-page placement of monolithic content under a forced-break margin.
