@@ -245,9 +245,11 @@ function main() {
           velloraWords: wordsOf(run, fx, "vellora"),
           chromeWords: wordsOf(run, fx, "chrome"),
         });
-        // The recomputed section must be the committed one (same code, same PDFs).
-        const same =
-          JSON.stringify(compactPdfProbe(probe)) === JSON.stringify(snaps[link].pdfProbe[fx]);
+        // The recomputed section must be the committed one (same code, same PDFs). The
+        // committed `offPage` record (backfill-off-page.mjs, 2026-10-22) is not part of the
+        // re-judge and is left out of the identity check, as that backfill does.
+        const { offPage: _offPage, ...committed } = snaps[link].pdfProbe[fx];
+        const same = JSON.stringify(compactPdfProbe(probe)) === JSON.stringify(committed);
         if (!same) throw new Error(`${link} ${fx}: recomputed v2 section differs from committed`);
         probes.set(fx, probe);
       }

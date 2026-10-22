@@ -1535,6 +1535,18 @@ improvement, but postmark's 3 "Download as PDF" words are not gone; they now lie
 edge of vellora's single page, where the v2 word list does not see them. An off-page word is
 not gated yet (INTEGRATION-TODO item 2).
 
+**Regenerated under the 10-gate rules (2026-10-22, branch `phaseb/10-integrate`).** The same
+command now writes the 2026-10-22 report with the merged rules (I1 sign-crossing, the off-page
+rule) and the complete pin (9 v2 fixtures, `--inputs` mapping; see "Integration" below), so the
+table above is the record of the pre-10-gate rules. Gating per link vs the previous link: beta4
+vs pin 619 → 964 (the pin's 7 added fixtures: boleto and receipt measured, 5 `removed fixture`
+items because beta4 has 4 fixtures), 01 55 → 168, 03 84 → 230, 04 1403 → 1632, 05 6, 08 0 → 7
+(the 7 newly off-page postmark words, see "Gate fixes"), the others 0; vs 00-start: 01/02 168,
+03 392, 04 1368, 05…07 1344, 08/09 1342. 168 / 230 / 1632 are the I1 re-judge that
+`committed-canary.test.mjs` asserts. The `accepted` section is unchanged. The generator's
+section identity check now leaves out the committed `offPage` record (as backfill-off-page.mjs
+does); before, it refused every backfilled link.
+
 **The v1-accepted pdf-probe words under v2.** Each v1 key is mapped to the vellora word it named
 (the run copy's v1 `pdf-probe.json`), then to the PyMuPDF word with the same page, text and x
 whose baseline is within 1.2 em below the pdftotext box top, then to its v2 pair; that pair's |d|

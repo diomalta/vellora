@@ -1,7 +1,7 @@
 {
   "what": "pdf-probe v1 vs v2 over the committed chain; v2 gate per link; v1-accepted pdf-probe items re-judged under v2",
   "command": "node <repo>/fidelity/gate/pdf-probe-rescore-report.mjs --out fidelity/layout-diff/snapshots/2026-10-22/pdf-probe-v2/rescore-report.json",
-  "date": "2026-10-22T22:13:10.499Z",
+  "date": "2026-10-22T23:26:47.136Z",
   "tolerancePt": 1,
   "classes": {
     "worse>1pt": "|d| grew by more than 1 pt under v2 (the v2 gate fails on it)",
@@ -17,60 +17,46 @@
     "pin": {
       "rescore": {
         "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
-        "missing": [
-          {
-            "fixture": "boleto",
-            "absent": [
-              "layout-diff/boleto/run-all/vellora.pdf",
-              "layout-diff/boleto/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "boleto-febraban",
-            "absent": [
-              "layout-diff/boleto-febraban/run-all/vellora.pdf",
-              "layout-diff/boleto-febraban/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "danfe",
-            "absent": [
-              "layout-diff/danfe/run-all/vellora.pdf",
-              "layout-diff/danfe/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "oss-postmark-receipt",
-            "absent": [
-              "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
-              "layout-diff/oss-postmark-receipt/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "oss-sparksuite-invoice",
-            "absent": [
-              "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
-              "layout-diff/oss-sparksuite-invoice/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "receipt",
-            "absent": [
-              "layout-diff/receipt/run-all/vellora.pdf",
-              "layout-diff/receipt/run-all/chrome.pdf"
-            ]
-          },
-          {
-            "fixture": "text-stress-ptbr",
-            "absent": [
-              "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
-              "layout-diff/text-stress-ptbr/run-all/chrome.pdf"
-            ]
-          }
-        ],
+        "missing": [],
         "substitute": false
       },
       "fixtures": {
+        "boleto-febraban": {
+          "v1": null,
+          "v2": {
+            "pairs": 80,
+            "worstAbsDx": 32.65,
+            "medianAbsDx": 0.1,
+            "worstAbsDy": 33.76,
+            "medianAbsDy": 0.99,
+            "unpairedVellora": 229,
+            "unpairedChrome": 235
+          }
+        },
+        "boleto": {
+          "v1": null,
+          "v2": {
+            "pairs": 267,
+            "worstAbsDx": 21.34,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 11.37,
+            "medianAbsDy": 4.03,
+            "unpairedVellora": 30,
+            "unpairedChrome": 30
+          }
+        },
+        "danfe": {
+          "v1": null,
+          "v2": {
+            "pairs": 290,
+            "worstAbsDx": 34.18,
+            "medianAbsDx": 3.31,
+            "worstAbsDy": 31.24,
+            "medianAbsDy": 3.94,
+            "unpairedVellora": 340,
+            "unpairedChrome": 340
+          }
+        },
         "invoice": {
           "v1": null,
           "v2": {
@@ -93,6 +79,54 @@
             "medianAbsDy": 1.15,
             "unpairedVellora": 0,
             "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": null,
+          "v2": {
+            "pairs": 128,
+            "worstAbsDx": 0.97,
+            "medianAbsDx": 0.53,
+            "worstAbsDy": 18.6,
+            "medianAbsDy": 1.35,
+            "unpairedVellora": 13,
+            "unpairedChrome": 52
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": null,
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 1.74,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 32.48,
+            "medianAbsDy": 27.98,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": null,
+          "v2": {
+            "pairs": 92,
+            "worstAbsDx": 11.23,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 16.13,
+            "medianAbsDy": 8.65,
+            "unpairedVellora": 59,
+            "unpairedChrome": 59
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": null,
+          "v2": {
+            "pairs": 354,
+            "worstAbsDx": 35.87,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 34.85,
+            "medianAbsDy": 10.13,
+            "unpairedVellora": 1492,
+            "unpairedChrome": 1479
           }
         }
       }
@@ -2891,26 +2925,34 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "not-comparable": 2,
-          "within-tolerance": 208,
-          "regression": 619,
-          "improvement": 38,
-          "gating": 619,
+          "within-tolerance": 323,
+          "improvement": 63,
+          "regression": 959,
+          "newly-measured": 87,
+          "removed": 5,
+          "gating": 964,
           "flaggedPassLost": 0,
-          "unchanged": 514,
-          "withinTolerance": 208,
-          "withinToleranceBetter": 195
+          "unchanged": 750,
+          "withinTolerance": 323,
+          "withinToleranceBetter": 205,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto": {
-            "not-comparable fixture": 1
+            "within-tolerance dx": 86,
+            "improvement dx": 15,
+            "regression dy": 226,
+            "newly-measured pairing": 30,
+            "within-tolerance dy": 34,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "within-tolerance dx": 63,
-            "regression dy": 191,
-            "improvement dy": 31,
+            "within-tolerance dx": 65,
+            "regression dy": 241,
+            "improvement dy": 7,
             "regression dx": 203,
-            "within-tolerance dy": 44,
+            "within-tolerance dy": 18,
             "improvement dx": 7
           },
           "notification": {
@@ -2918,10 +2960,30 @@
             "regression dy": 225
           },
           "receipt": {
-            "not-comparable fixture": 1
+            "within-tolerance dx": 19,
+            "regression dy": 64,
+            "newly-measured pairing": 57,
+            "improvement dx": 30,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto-febraban": {
+            "removed fixture": 1
+          },
+          "danfe": {
+            "removed fixture": 1
+          },
+          "oss-postmark-receipt": {
+            "removed fixture": 1
+          },
+          "oss-sparksuite-invoice": {
+            "removed fixture": 1
+          },
+          "text-stress-ptbr": {
+            "removed fixture": 1
           }
         },
-        "gating": 619
+        "gating": 964
       }
     },
     "beta4-gated": {
@@ -2930,28 +2992,29 @@
         "verdict": "PASS",
         "refusals": [],
         "counts": {
-          "not-comparable": 5,
+          "newly-measured": 5,
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 2470,
+          "unchanged": 2474,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "not-comparable fixture": 1
+            "newly-measured fixture": 1
           },
           "danfe": {
-            "not-comparable fixture": 1
+            "newly-measured fixture": 1
           },
           "oss-postmark-receipt": {
-            "not-comparable fixture": 1
+            "newly-measured fixture": 1
           },
           "oss-sparksuite-invoice": {
-            "not-comparable fixture": 1
+            "newly-measured fixture": 1
           },
           "text-stress-ptbr": {
-            "not-comparable fixture": 1
+            "newly-measured fixture": 1
           }
         },
         "gating": 0
@@ -2965,9 +3028,10 @@
         "counts": {
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 4580,
+          "unchanged": 4589,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {},
         "gating": 0
@@ -2979,9 +3043,10 @@
         "counts": {
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 4580,
+          "unchanged": 4589,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {},
         "gating": 0
@@ -2993,22 +3058,23 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "within-tolerance": 224,
+          "within-tolerance": 248,
           "newly-measured": 153,
-          "improvement": 749,
-          "regression": 55,
-          "gating": 55,
+          "improvement": 650,
+          "regression": 168,
+          "gating": 168,
           "flaggedPassLost": 0,
-          "unchanged": 3125,
-          "withinTolerance": 224,
-          "withinToleranceBetter": 427
+          "unchanged": 3134,
+          "withinTolerance": 248,
+          "withinToleranceBetter": 389,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
             "within-tolerance dy": 21,
             "newly-measured pairing": 153,
             "improvement dx": 1,
-            "improvement dy": 1,
+            "regression dy": 1,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
@@ -3017,17 +3083,18 @@
           },
           "danfe": {
             "regression dy": 41,
-            "improvement dy": 249,
-            "within-tolerance dx": 12,
-            "within-tolerance dy": 1
+            "within-tolerance dy": 37,
+            "improvement dy": 231,
+            "regression dx": 18
           },
           "notification": {
             "within-tolerance dy": 20,
-            "improvement dy": 187
+            "improvement dy": 107,
+            "regression dy": 90
           },
           "oss-sparksuite-invoice": {
             "improvement dy": 28,
-            "regression dy": 14
+            "regression dy": 18
           },
           "receipt": {
             "improvement dy": 111
@@ -3037,29 +3104,30 @@
             "improvement dy": 170
           }
         },
-        "gating": 55
+        "gating": 168
       },
       "vs00Start": {
         "baseline": "port/00-start",
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "within-tolerance": 224,
+          "within-tolerance": 248,
           "newly-measured": 153,
-          "improvement": 749,
-          "regression": 55,
-          "gating": 55,
+          "improvement": 650,
+          "regression": 168,
+          "gating": 168,
           "flaggedPassLost": 0,
-          "unchanged": 3125,
-          "withinTolerance": 224,
-          "withinToleranceBetter": 427
+          "unchanged": 3134,
+          "withinTolerance": 248,
+          "withinToleranceBetter": 389,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
             "within-tolerance dy": 21,
             "newly-measured pairing": 153,
             "improvement dx": 1,
-            "improvement dy": 1,
+            "regression dy": 1,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
@@ -3068,17 +3136,18 @@
           },
           "danfe": {
             "regression dy": 41,
-            "improvement dy": 249,
-            "within-tolerance dx": 12,
-            "within-tolerance dy": 1
+            "within-tolerance dy": 37,
+            "improvement dy": 231,
+            "regression dx": 18
           },
           "notification": {
             "within-tolerance dy": 20,
-            "improvement dy": 187
+            "improvement dy": 107,
+            "regression dy": 90
           },
           "oss-sparksuite-invoice": {
             "improvement dy": 28,
-            "regression dy": 14
+            "regression dy": 18
           },
           "receipt": {
             "improvement dy": 111
@@ -3088,7 +3157,7 @@
             "improvement dy": 170
           }
         },
-        "gating": 55
+        "gating": 168
       }
     },
     "port/02-delete-noop-passes": {
@@ -3099,9 +3168,10 @@
         "counts": {
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 4886,
+          "unchanged": 4895,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {},
         "gating": 0
@@ -3111,22 +3181,23 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "within-tolerance": 224,
+          "within-tolerance": 248,
           "newly-measured": 153,
-          "improvement": 749,
-          "regression": 55,
-          "gating": 55,
+          "improvement": 650,
+          "regression": 168,
+          "gating": 168,
           "flaggedPassLost": 0,
-          "unchanged": 3125,
-          "withinTolerance": 224,
-          "withinToleranceBetter": 427
+          "unchanged": 3134,
+          "withinTolerance": 248,
+          "withinToleranceBetter": 389,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
             "within-tolerance dy": 21,
             "newly-measured pairing": 153,
             "improvement dx": 1,
-            "improvement dy": 1,
+            "regression dy": 1,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
@@ -3135,17 +3206,18 @@
           },
           "danfe": {
             "regression dy": 41,
-            "improvement dy": 249,
-            "within-tolerance dx": 12,
-            "within-tolerance dy": 1
+            "within-tolerance dy": 37,
+            "improvement dy": 231,
+            "regression dx": 18
           },
           "notification": {
             "within-tolerance dy": 20,
-            "improvement dy": 187
+            "improvement dy": 107,
+            "regression dy": 90
           },
           "oss-sparksuite-invoice": {
             "improvement dy": 28,
-            "regression dy": 14
+            "regression dy": 18
           },
           "receipt": {
             "improvement dy": 111
@@ -3155,7 +3227,7 @@
             "improvement dy": 170
           }
         },
-        "gating": 55
+        "gating": 168
       }
     },
     "port/03-table-passes": {
@@ -3165,20 +3237,22 @@
         "refusals": [],
         "counts": {
           "newly-measured": 653,
-          "within-tolerance": 408,
-          "improvement": 512,
-          "regression": 84,
-          "gating": 84,
+          "within-tolerance": 501,
+          "improvement": 275,
+          "regression": 230,
+          "gating": 230,
           "flaggedPassLost": 0,
-          "unchanged": 3828,
-          "withinTolerance": 408,
-          "withinToleranceBetter": 38
+          "unchanged": 3837,
+          "withinTolerance": 501,
+          "withinToleranceBetter": 36,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
             "newly-measured pairing": 83,
-            "within-tolerance dx": 161,
-            "improvement dx": 41,
+            "within-tolerance dx": 162,
+            "improvement dx": 38,
+            "regression dx": 2,
             "improvement dy": 3,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
@@ -3189,30 +3263,31 @@
           "danfe": {
             "within-tolerance dx": 118,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
+            "improvement dx": 49,
+            "regression dx": 148,
             "improvement dy": 2,
-            "regression dx": 25,
             "regression dy": 11,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dx": 182
+            "improvement dx": 111,
+            "within-tolerance dx": 71
           },
           "text-stress-ptbr": {
             "newly-measured pairing": 362,
-            "improvement dx": 90,
-            "improvement dy": 16,
-            "regression dy": 12,
-            "regression dx": 20,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "within-tolerance dx": 20,
+            "improvement dx": 58,
+            "improvement dy": 8,
+            "within-tolerance dy": 3,
+            "regression dy": 20,
+            "regression dx": 33,
             "regression pairing": 16,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 84
+        "gating": 230
       },
       "vs00Start": {
         "baseline": "port/00-start",
@@ -3220,22 +3295,25 @@
         "refusals": [],
         "counts": {
           "newly-measured": 806,
-          "within-tolerance": 508,
-          "improvement": 1235,
-          "regression": 134,
-          "gating": 134,
+          "within-tolerance": 625,
+          "improvement": 900,
+          "regression": 392,
+          "gating": 392,
           "flaggedPassLost": 0,
-          "unchanged": 2223,
-          "withinTolerance": 508,
-          "withinToleranceBetter": 464
+          "unchanged": 2232,
+          "withinTolerance": 625,
+          "withinToleranceBetter": 424,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "improvement dy": 3,
+            "within-tolerance dx": 40,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "improvement dy": 2,
             "within-tolerance dy": 20,
+            "regression dy": 1,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
@@ -3244,43 +3322,46 @@
             "within-tolerance dy": 154
           },
           "danfe": {
-            "within-tolerance dx": 130,
+            "within-tolerance dx": 118,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "improvement dy": 245,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "improvement dy": 227,
             "regression dy": 47,
-            "regression dx": 25,
+            "within-tolerance dy": 36,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dx": 182
+            "improvement dx": 111,
+            "within-tolerance dx": 71
           },
           "notification": {
             "within-tolerance dy": 20,
-            "improvement dy": 187
+            "improvement dy": 107,
+            "regression dy": 90
           },
           "oss-sparksuite-invoice": {
             "improvement dy": 28,
-            "regression dy": 14
+            "regression dy": 18
           },
           "receipt": {
             "improvement dy": 111
           },
           "text-stress-ptbr": {
-            "within-tolerance dy": 17,
-            "improvement dy": 186,
+            "within-tolerance dy": 19,
+            "improvement dy": 178,
             "newly-measured pairing": 362,
-            "improvement dx": 90,
-            "regression dy": 12,
-            "regression dx": 20,
-            "within-tolerance dx": 1,
+            "within-tolerance dx": 20,
+            "improvement dx": 58,
+            "regression dy": 20,
+            "regression dx": 33,
             "regression pairing": 16,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 134
+        "gating": 392
       }
     },
     "port/04-block-offset": {
@@ -3289,137 +3370,148 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1401,
-          "regression": 1403,
-          "within-tolerance": 46,
+          "improvement": 784,
+          "within-tolerance": 613,
+          "regression": 1632,
           "newly-measured": 7,
-          "gating": 1403,
+          "gating": 1632,
           "flaggedPassLost": 0,
-          "unchanged": 3124,
-          "withinTolerance": 46,
-          "withinToleranceBetter": 179
+          "unchanged": 3133,
+          "withinTolerance": 613,
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 182,
-            "regression dy": 109
+            "improvement dy": 161,
+            "within-tolerance dy": 21,
+            "regression dy": 133
           },
           "boleto": {
-            "improvement dy": 33,
-            "within-tolerance dy": 9,
-            "regression dy": 231
+            "within-tolerance dy": 3,
+            "improvement dy": 29,
+            "regression dy": 261
           },
           "danfe": {
-            "improvement dy": 122,
-            "within-tolerance dy": 23,
-            "regression dy": 442
+            "improvement dy": 32,
+            "within-tolerance dy": 90,
+            "regression dy": 468
           },
           "invoice": {
-            "improvement dy": 462
+            "within-tolerance dy": 126,
+            "improvement dy": 336,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 142,
-            "within-tolerance dy": 8,
-            "regression dy": 90
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5
           },
           "oss-postmark-receipt": {
             "regression dy": 138
           },
           "oss-sparksuite-invoice": {
-            "regression dy": 35
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 84,
-            "within-tolerance dy": 4,
-            "regression dy": 44
+            "within-tolerance dy": 42,
+            "regression dy": 57,
+            "improvement dy": 42
           },
           "text-stress-ptbr": {
-            "improvement dy": 375,
-            "regression dy": 305,
+            "within-tolerance dy": 193,
+            "regression dy": 351,
+            "improvement dy": 179,
             "regression dx": 2,
-            "improvement dx": 1,
-            "within-tolerance dy": 2,
+            "within-tolerance dx": 1,
             "newly-measured pairing": 7,
             "regression pairing": 7
           }
         },
-        "gating": 1403
+        "gating": 1632
       },
       "vs00Start": {
         "baseline": "port/00-start",
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1671,
+          "improvement": 763,
           "newly-measured": 805,
-          "within-tolerance": 317,
-          "regression": 946,
-          "gating": 946,
+          "within-tolerance": 929,
+          "regression": 1368,
+          "gating": 1368,
           "flaggedPassLost": 0,
-          "unchanged": 1469,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 162
+          "unchanged": 1478,
+          "withinTolerance": 929,
+          "withinToleranceBetter": 36,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 33,
+            "within-tolerance dy": 3,
+            "improvement dy": 29,
             "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231
+            "regression dy": 261
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 462,
-            "improvement dx": 182
+            "within-tolerance dy": 126,
+            "improvement dy": 336,
+            "improvement dx": 111,
+            "within-tolerance dx": 71,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5
           },
           "oss-postmark-receipt": {
             "regression dy": 138
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 115,
-            "regression dy": 26
+            "within-tolerance dy": 42,
+            "regression dy": 57,
+            "improvement dy": 42
           },
           "text-stress-ptbr": {
-            "improvement dy": 280,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "improvement dy": 76,
             "newly-measured pairing": 361,
-            "improvement dx": 90,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "within-tolerance dx": 20,
+            "improvement dx": 57,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 946
+        "gating": 1368
       }
     },
     "port/05-walk-rewrite": {
@@ -3429,13 +3521,15 @@
         "refusals": [],
         "counts": {
           "regression": 6,
-          "improvement": 38,
+          "improvement": 33,
+          "within-tolerance": 5,
           "newly-measured": 2,
           "gating": 6,
           "flaggedPassLost": 0,
-          "unchanged": 6112,
-          "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "unchanged": 6121,
+          "withinTolerance": 5,
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "oss-postmark-receipt": {
@@ -3444,8 +3538,9 @@
             "regression unpaired-vellora": 1
           },
           "receipt": {
-            "improvement dx": 10,
+            "improvement dx": 5,
             "improvement dy": 26,
+            "within-tolerance dx": 5,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
@@ -3458,50 +3553,57 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1709,
+          "improvement": 796,
           "newly-measured": 807,
-          "within-tolerance": 317,
-          "regression": 922,
-          "gating": 922,
+          "within-tolerance": 934,
+          "regression": 1344,
+          "gating": 1344,
           "flaggedPassLost": 0,
-          "unchanged": 1451,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 162
+          "unchanged": 1460,
+          "withinTolerance": 934,
+          "withinToleranceBetter": 36,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 33,
+            "within-tolerance dy": 3,
+            "improvement dy": 29,
             "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231
+            "regression dy": 261
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 462,
-            "improvement dx": 182
+            "within-tolerance dy": 126,
+            "improvement dy": 336,
+            "improvement dx": 111,
+            "within-tolerance dx": 71,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5
           },
           "oss-postmark-receipt": {
             "regression dy": 134,
@@ -3510,30 +3612,32 @@
             "regression unpaired-vellora": 1
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 141,
-            "improvement dx": 10,
+            "within-tolerance dy": 42,
+            "regression dy": 31,
+            "improvement dy": 68,
+            "improvement dx": 5,
+            "within-tolerance dx": 5,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "text-stress-ptbr": {
-            "improvement dy": 280,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "improvement dy": 76,
             "newly-measured pairing": 361,
-            "improvement dx": 90,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "within-tolerance dx": 20,
+            "improvement dx": 57,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 922
+        "gating": 1344
       }
     },
     "port/06-page-rules": {
@@ -3542,34 +3646,40 @@
         "verdict": "PASS",
         "refusals": [],
         "counts": {
-          "improvement": 81,
+          "within-tolerance": 37,
+          "improvement": 45,
           "newly-measured": 4,
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 6065,
-          "withinTolerance": 0,
-          "withinToleranceBetter": 10
+          "unchanged": 6074,
+          "withinTolerance": 37,
+          "withinToleranceBetter": 9,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto": {
-            "improvement dy": 4,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 4,
             "improvement dx": 3
           },
           "invoice": {
-            "improvement dx": 12,
-            "improvement dy": 12
+            "within-tolerance dx": 3,
+            "within-tolerance dy": 12,
+            "improvement dx": 9
           },
           "notification": {
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1
           },
           "receipt": {
-            "improvement dx": 6,
-            "improvement dy": 8
+            "within-tolerance dx": 2,
+            "within-tolerance dy": 8,
+            "improvement dx": 4
           },
           "text-stress-ptbr": {
-            "improvement dx": 14,
-            "improvement dy": 21
+            "within-tolerance dx": 7,
+            "improvement dy": 21,
+            "improvement dx": 7
           }
         },
         "gating": 0
@@ -3579,51 +3689,58 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1790,
+          "improvement": 841,
           "newly-measured": 811,
-          "within-tolerance": 317,
-          "regression": 922,
-          "gating": 922,
+          "within-tolerance": 971,
+          "regression": 1344,
+          "gating": 1344,
           "flaggedPassLost": 0,
-          "unchanged": 1360,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 172
+          "unchanged": 1369,
+          "withinTolerance": 971,
+          "withinToleranceBetter": 45,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 37,
-            "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231,
+            "within-tolerance dy": 7,
+            "improvement dy": 29,
+            "within-tolerance dx": 128,
+            "regression dy": 261,
             "improvement dx": 3
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 474,
-            "improvement dx": 194
+            "within-tolerance dy": 138,
+            "improvement dy": 336,
+            "improvement dx": 120,
+            "within-tolerance dx": 74,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77,
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5,
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1
           },
@@ -3634,30 +3751,32 @@
             "regression unpaired-vellora": 1
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 149,
-            "improvement dx": 16,
+            "within-tolerance dy": 50,
+            "regression dy": 31,
+            "improvement dy": 68,
+            "within-tolerance dx": 7,
+            "improvement dx": 9,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "text-stress-ptbr": {
-            "improvement dy": 301,
-            "improvement dx": 104,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "within-tolerance dx": 27,
+            "improvement dy": 97,
+            "improvement dx": 64,
             "newly-measured pairing": 361,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 922
+        "gating": 1344
       }
     },
     "port/07-media-print": {
@@ -3668,9 +3787,10 @@
         "counts": {
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 6164,
+          "unchanged": 6173,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {},
         "gating": 0
@@ -3680,51 +3800,58 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1790,
+          "improvement": 841,
           "newly-measured": 811,
-          "within-tolerance": 317,
-          "regression": 922,
-          "gating": 922,
+          "within-tolerance": 971,
+          "regression": 1344,
+          "gating": 1344,
           "flaggedPassLost": 0,
-          "unchanged": 1360,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 172
+          "unchanged": 1369,
+          "withinTolerance": 971,
+          "withinToleranceBetter": 45,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 37,
-            "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231,
+            "within-tolerance dy": 7,
+            "improvement dy": 29,
+            "within-tolerance dx": 128,
+            "regression dy": 261,
             "improvement dx": 3
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 474,
-            "improvement dx": 194
+            "within-tolerance dy": 138,
+            "improvement dy": 336,
+            "improvement dx": 120,
+            "within-tolerance dx": 74,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77,
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5,
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1
           },
@@ -3735,105 +3862,117 @@
             "regression unpaired-vellora": 1
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 149,
-            "improvement dx": 16,
+            "within-tolerance dy": 50,
+            "regression dy": 31,
+            "improvement dy": 68,
+            "within-tolerance dx": 7,
+            "improvement dx": 9,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "text-stress-ptbr": {
-            "improvement dy": 301,
-            "improvement dx": 104,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "within-tolerance dx": 27,
+            "improvement dy": 97,
+            "improvement dx": 64,
             "newly-measured pairing": 361,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 922
+        "gating": 1344
       }
     },
     "port/08-html-parse": {
       "vsPrevious": {
         "baseline": "port/07-media-print",
-        "verdict": "PASS",
+        "verdict": "FAIL",
         "refusals": [],
         "counts": {
           "newly-measured": 4,
           "improvement": 2,
-          "gating": 0,
+          "regression": 7,
+          "gating": 7,
           "flaggedPassLost": 0,
-          "unchanged": 6162,
+          "unchanged": 6170,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "oss-postmark-receipt": {
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1,
-            "improvement unpaired-vellora": 1
+            "improvement unpaired-vellora": 1,
+            "regression off-page": 7
           }
         },
-        "gating": 0
+        "gating": 7
       },
       "vs00Start": {
         "baseline": "port/00-start",
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1790,
+          "improvement": 841,
           "newly-measured": 811,
-          "within-tolerance": 317,
-          "regression": 920,
-          "gating": 920,
+          "within-tolerance": 971,
+          "regression": 1342,
+          "gating": 1342,
           "flaggedPassLost": 0,
-          "unchanged": 1366,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 172
+          "unchanged": 1375,
+          "withinTolerance": 971,
+          "withinToleranceBetter": 45,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 37,
-            "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231,
+            "within-tolerance dy": 7,
+            "improvement dy": 29,
+            "within-tolerance dx": 128,
+            "regression dy": 261,
             "improvement dx": 3
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 474,
-            "improvement dx": 194
+            "within-tolerance dy": 138,
+            "improvement dy": 336,
+            "improvement dx": 120,
+            "within-tolerance dx": 74,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77,
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5,
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1
           },
@@ -3841,30 +3980,32 @@
             "regression dy": 138
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 149,
-            "improvement dx": 16,
+            "within-tolerance dy": 50,
+            "regression dy": 31,
+            "improvement dy": 68,
+            "within-tolerance dx": 7,
+            "improvement dx": 9,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "text-stress-ptbr": {
-            "improvement dy": 301,
-            "improvement dx": 104,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "within-tolerance dx": 27,
+            "improvement dy": 97,
+            "improvement dx": 64,
             "newly-measured pairing": 361,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 920
+        "gating": 1342
       }
     },
     "port/09-review-fixes": {
@@ -3875,9 +4016,10 @@
         "counts": {
           "gating": 0,
           "flaggedPassLost": 0,
-          "unchanged": 6172,
+          "unchanged": 6181,
           "withinTolerance": 0,
-          "withinToleranceBetter": 0
+          "withinToleranceBetter": 0,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {},
         "gating": 0
@@ -3887,51 +4029,58 @@
         "verdict": "FAIL",
         "refusals": [],
         "counts": {
-          "improvement": 1790,
+          "improvement": 841,
           "newly-measured": 811,
-          "within-tolerance": 317,
-          "regression": 920,
-          "gating": 920,
+          "within-tolerance": 971,
+          "regression": 1342,
+          "gating": 1342,
           "flaggedPassLost": 0,
-          "unchanged": 1366,
-          "withinTolerance": 317,
-          "withinToleranceBetter": 172
+          "unchanged": 1375,
+          "withinTolerance": 971,
+          "withinToleranceBetter": 45,
+          "missingTokensNotComparable": 0
         },
         "perFixture": {
           "boleto-febraban": {
-            "improvement dy": 18,
+            "improvement dy": 6,
             "newly-measured pairing": 236,
-            "within-tolerance dx": 39,
-            "improvement dx": 25,
-            "regression dy": 39,
+            "within-tolerance dx": 40,
+            "within-tolerance dy": 11,
+            "improvement dx": 23,
+            "regression dx": 1,
+            "regression dy": 62,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "boleto": {
-            "improvement dy": 37,
-            "within-tolerance dx": 127,
-            "within-tolerance dy": 4,
-            "regression dy": 231,
+            "within-tolerance dy": 7,
+            "improvement dy": 29,
+            "within-tolerance dx": 128,
+            "regression dy": 261,
             "improvement dx": 3
           },
           "danfe": {
-            "within-tolerance dx": 130,
-            "improvement dy": 97,
+            "within-tolerance dx": 118,
+            "improvement dy": 23,
             "newly-measured pairing": 208,
-            "improvement dx": 172,
-            "within-tolerance dy": 15,
-            "regression dx": 25,
-            "regression dy": 270,
+            "within-tolerance dy": 66,
+            "improvement dx": 49,
+            "regression dx": 166,
+            "regression dy": 293,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "invoice": {
-            "improvement dy": 474,
-            "improvement dx": 194
+            "within-tolerance dy": 138,
+            "improvement dy": 336,
+            "improvement dx": 120,
+            "within-tolerance dx": 74,
+            "regression dy": 67
           },
           "notification": {
-            "improvement dy": 163,
-            "regression dy": 77,
+            "regression dy": 102,
+            "within-tolerance dy": 137,
+            "improvement dy": 5,
             "newly-measured pairing": 4,
             "improvement unpaired-chrome": 1
           },
@@ -3939,30 +4088,32 @@
             "regression dy": 138
           },
           "oss-sparksuite-invoice": {
-            "improvement dy": 28,
-            "regression dy": 18
+            "regression dy": 46
           },
           "receipt": {
-            "improvement dy": 149,
-            "improvement dx": 16,
+            "within-tolerance dy": 50,
+            "regression dy": 31,
+            "improvement dy": 68,
+            "within-tolerance dx": 7,
+            "improvement dx": 9,
             "newly-measured pairing": 2,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           },
           "text-stress-ptbr": {
-            "improvement dy": 301,
-            "improvement dx": 104,
+            "within-tolerance dy": 168,
+            "regression dy": 125,
+            "within-tolerance dx": 27,
+            "improvement dy": 97,
+            "improvement dx": 64,
             "newly-measured pairing": 361,
-            "regression dy": 86,
-            "regression dx": 21,
-            "within-tolerance dx": 1,
-            "within-tolerance dy": 1,
+            "regression dx": 35,
             "regression pairing": 15,
             "improvement unpaired-chrome": 1,
             "improvement unpaired-vellora": 1
           }
         },
-        "gating": 920
+        "gating": 1342
       }
     }
   },
