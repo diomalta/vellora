@@ -69,17 +69,37 @@ test("07 vs 06 is unchanged link to link, but 985 items are worse than the head 
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 07: 213 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 213, declared: 0 });
+// The pin's pdf-probe covers all 9 fixtures since 2026-10-22 (fidelity/baselines/pin manifest
+// pdfProbeRescore.inputMap; before, invoice + notification only: 213 at 07, 206 at 09). The 7
+// added fixtures bring 603 pdf-probe items worse than the shipped main (receipt: none).
+const PIN_PDF_PROBE_BY_FIXTURE = {
+  boleto: 188,
+  "boleto-febraban": 39,
+  danfe: 126,
+  invoice: 63,
+  notification: 77,
+  "oss-postmark-receipt": 152,
+  "oss-sparksuite-invoice": 38,
+  "text-stress-ptbr": 60,
+};
+const pdfProbeByFixture = (items) =>
+  tally(
+    items.filter((i) => i.check === "pdf-probe"),
+    (i) => i.key.split("|")[1],
+  );
+
+test("pin view of 07: 816 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 816, declared: 0 });
   assert.equal(r.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r.pin.items, (i) => i.check),
-    { "pdf-probe": 140, wpt: 56, value: 15, status: 2 },
+    { "pdf-probe": 743, wpt: 56, value: 15, status: 2 },
   );
+  assert.deepEqual(pdfProbeByFixture(r.pin.items), PIN_PDF_PROBE_BY_FIXTURE);
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
     evaluateGate({ before: s06, after: s07, pin, main: true, canaries: false }).counts.gating,
-    213,
+    816,
   );
 });
 
@@ -118,11 +138,13 @@ test("09 vs 08 (both v2) is unchanged link to link; 974 items are worse than the
   assert.ok(r09.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 09: 206 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 206, declared: 0 });
+test("pin view of 09: 809 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 809, declared: 0 });
   assert.equal(r09.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r09.pin.items, (i) => i.check),
-    { "pdf-probe": 140, wpt: 56, value: 10 },
+    { "pdf-probe": 743, wpt: 56, value: 10 },
   );
+  // Same pdf-probe count per fixture as at 07 (08 changed postmark's words, not this count).
+  assert.deepEqual(pdfProbeByFixture(r09.pin.items), PIN_PDF_PROBE_BY_FIXTURE);
 });
