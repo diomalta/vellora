@@ -600,6 +600,53 @@ export function runGateCanaries({
       ),
     );
   }
+  // 18. EXT-2 missing-token SET (step 08: 3 tokens left the page while 4 came back, equal count).
+  // One extractor's list: before [A, B], after [A, C] (count 2 both) -> C gates; control: the
+  // same list again -> nothing.
+  {
+    const f = (run?.fixtures ?? []).find((x) =>
+      (x.verdicts ?? []).some((v) => v.criterion === "EXT-2" && v.oracle === "oracles:text"),
+    );
+    const v0 = f?.verdicts.find((v) => v.criterion === "EXT-2" && v.oracle === "oracles:text");
+    const fixture = f
+      ? { ...f, verdicts: [v0] }
+      : {
+          key: "canary",
+          fixture: "canary",
+          verdicts: [
+            {
+              criterion: "EXT-2",
+              oracle: "oracles:text",
+              status: "FAIL",
+              value: "pdftotext fail (missing 2, extra 0)",
+              mode: "plain",
+              kind: "criterion",
+            },
+          ],
+        };
+    const v = fixture.verdicts[0];
+    const ex = Object.keys(v.missingTokens ?? {})[0] ?? "pdftotext";
+    const withTokens = (tokens) => ({
+      ...fixture,
+      verdicts: [
+        { ...v, missingTokens: { [ex]: { tokens, count: tokens.length, complete: true } } },
+      ],
+    });
+    const b = snap({ fixtures: [withTokens(["CanaryA", "CanaryB"])] });
+    const a = snap({ fixtures: [withTokens(["CanaryA", "CanaryC"])] });
+    const swapped = gatingOf(compare(b, a)).filter((i) => i.key.includes("|missingTokens."));
+    const same = gatingOf(compare(b, b)).filter((i) => i.key.includes("|missingTokens."));
+    rows.push(
+      row(
+        "EXT-2 missing-token set: one token swapped for another",
+        `${f ? "real" : "synthetic"} row ${fixture.key} EXT-2 ${ex}: [CanaryA, CanaryB] -> [CanaryA, CanaryC] (same count) -> CanaryC gates; unchanged list (control) -> nothing`,
+        `swapped [${swapped.map((i) => i.key.split("|").pop()).join(", ")}]; control ${same.length}`,
+        swapped.length === 1 &&
+          swapped[0].key.endsWith(`|missingTokens.${ex}|CanaryC`) &&
+          same.length === 0,
+      ),
+    );
+  }
   return rows;
 }
 

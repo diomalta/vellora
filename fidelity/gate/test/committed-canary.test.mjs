@@ -20,7 +20,10 @@ const pin = loadBaselineDir(join(baselines, "pin"));
 const beta4 = loadBaselineDir(join(baselines, "beta4"));
 const item = (r, key) => r.items.find((i) => i.key === key);
 /** A baseline with the pdf-probe section it was gated with (semantics 1, history). */
-const v1 = (...parts) => loadBaselineDir(join(baselines, ...parts), { pdfProbe: "v1" });
+// History: the sections each link was gated with when it was written (pdf-probe v1, no backfilled
+// EXT-2 token lists).
+const v1 = (...parts) =>
+  loadBaselineDir(join(baselines, ...parts), { pdfProbe: "v1", ext2Tokens: false });
 
 test("committed baselines pass their manifest sha256 integrity check", () => {
   assert.equal(pin.integrity.ok, true, pin.integrity.problems.join("; "));
@@ -614,11 +617,14 @@ test("v2 re-judges the chain: gating pdf-probe items per link vs the previous li
       accept: step.manifest.acceptedRegressions,
     });
     assert.equal(r.items.filter((x) => x.gating && x.check === "pdf-probe").length, n, link);
-    // Outside pdf-probe only step 06's 10 undeclared rejections gate (D5).
+    // Outside pdf-probe only step 06's 10 undeclared rejections gate (D5) and, with the EXT-2
+    // missing-token set ratchet (2026-10-22), 08's 3 newly missing pdftotext tokens.
     const other = r.items.filter((x) => x.gating && x.check !== "pdf-probe");
-    assert.equal(other.length, link === "port/06-page-rules" ? 10 : 0, link);
+    const tokens = other.filter((x) => x.key.includes("|missingTokens."));
+    assert.equal(other.length - tokens.length, link === "port/06-page-rules" ? 10 : 0, link);
+    assert.equal(tokens.length, link === "port/08-html-parse" ? 3 : 0, link);
     assert.ok(
-      other.every((x) => x.class === "rejection"),
+      other.every((x) => x.class === "rejection" || tokens.includes(x)),
       link,
     );
   }
@@ -648,7 +654,39 @@ test("v2 gates the step-05 text loss v1 only reported (D3): postmark's 'The [Pro
   assert.deepEqual([u.class, u.gating], ["changed", false]);
 });
 
-test("v2 of 08 vs 07: postmark's 'The [Product Name] team' pairs again; nothing gates", () => {
+test("EXT-2 missing-token set (2026-10-22): 08 vs 07 gates the 3 tokens that left the page, which the count ratchet missed", () => {
+  // pdftotext missing 39 -> 38 read as an improvement, but "Download", "as" and a second "PDF"
+  // are newly missing while 4 others came back (INTEGRATION-TODO item 2). PyMuPDF's 07 list is
+  // the report's first 40 of 41, so it falls back to the count ratchet (not comparable).
+  const r = compareSnapshots(cur("port/07-media-print"), cur("port/08-html-parse"));
+  const row = "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1";
+  assert.deepEqual(
+    r.items
+      .filter((x) => x.key.includes("|missingTokens."))
+      .map((x) => [x.key.slice(row.length + 1), x.before, x.after, x.class, x.gating]),
+    [
+      ["missingTokens.pdftotext|Download", 0, 1, "regression", true],
+      ["missingTokens.pdftotext|as", 0, 1, "regression", true],
+      ["missingTokens.pdftotext|PDF", 1, 2, "regression", true],
+    ],
+  );
+  assert.equal(r.counts.missingTokensNotComparable, 1);
+  assert.deepEqual(
+    [item(r, `${row}|missing.pdftotext`).class, item(r, `${row}|missing.pdftotext`).after],
+    ["improvement", 38],
+  );
+  // The same comparison without the backfilled lists (history) passes: the hole.
+  assert.equal(
+    compareSnapshots(v1("port", "07-media-print"), v1("port", "08-html-parse")).verdict,
+    "PASS",
+  );
+  // 09 vs 08: identical lists, nothing.
+  const r09 = compareSnapshots(cur("port/08-html-parse"), cur("port/09-review-fixes"));
+  assert.equal(r09.items.filter((x) => x.key.includes("|missingTokens.")).length, 0);
+  assert.equal(r09.counts.missingTokensNotComparable, 0);
+});
+
+test("v2 of 08 vs 07: postmark's 'The [Product Name] team' pairs again; nothing gates in pdf-probe", () => {
   // The step-05 loss v2 gates (above) is undone by the HTML-only parse. unpaired-vellora 3 -> 0
   // reads as an improvement, but its 3 words ("Download as PDF") are not gone: they now lie
   // below the page edge of vellora's single page (README 08-html-parse), where the v2 word list
@@ -657,8 +695,9 @@ test("v2 of 08 vs 07: postmark's 'The [Product Name] team' pairs again; nothing 
   const r = compareSnapshots(cur("port/07-media-print"), step, {
     accept: step.manifest.acceptedRegressions,
   });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.counts.gating, 0);
+  // Only the 3 EXT-2 tokens above gate; no pdf-probe item does.
+  assert.equal(r.counts.gating, 3);
+  assert.ok(r.items.filter((x) => x.gating).every((x) => x.key.includes("|missingTokens.")));
   const pm = "pdf-probe|oss-postmark-receipt";
   assert.deepEqual(
     r.items

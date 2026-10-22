@@ -102,7 +102,24 @@ export function fromBoletoAudit(audit) {
   ];
 }
 
-function textValue(text) {
+/**
+ * EXT-2 missing tokens per extractor (2026-10-22): { <extractor>: { tokens, count, complete } }.
+ * `tokens` is the full list when the record has `missingAll`, else the report's first 40
+ * (`complete` false when that list is shorter than the count). The gate ratchets this SET
+ * (fidelity/gate/compare.mjs): a token newly missing gates even when another came back.
+ */
+export function missingTokensOf(text) {
+  const out = {};
+  for (const e of text?.extractors ?? []) {
+    if (!e.subjectOnly) continue;
+    const tokens = e.subjectOnly.missingAll ?? e.subjectOnly.missing ?? [];
+    const count = e.subjectOnly.missingCount ?? tokens.length;
+    out[e.name] = { tokens, count, complete: tokens.length === count };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+export function textValue(text) {
   const parts = (text.extractors ?? []).map(
     (e) =>
       `${e.name} ${e.status}${e.subjectOnly ? ` (missing ${e.subjectOnly.missingCount ?? 0}, extra ${e.subjectOnly.extraCount ?? 0})` : ""}`,
@@ -241,6 +258,7 @@ export function fromOracleRecord(record, { mode, docClass } = {}) {
     out.push(
       verdict("EXT-2", "oracles:text", oracleStatus(r.text.status), textValue(r.text), {
         ...tag,
+        ...(missingTokensOf(r.text) ? { missingTokens: missingTokensOf(r.text) } : {}),
         basis:
           "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list",
       }),

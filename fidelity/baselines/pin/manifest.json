@@ -831,7 +831,8 @@
     "wpt/by-directory.json": "4b2fb04959c2f1c2caed33ffbe3fc94610b21ffcd9f2d801a8f3212b12c65317",
     "wpt/expectations-blitz-2003ba5fc2d8.json": "2c24ed8f2f87a5eac3e4a065b77bfd53541a52d3a711b39d87048ed0d0f6c90c",
     "pdf-probe/invoice.json": "78060a6b0b04ba1101e50352de1ea32445f1dc25d8d0b3b73afc3f62a7d9c035",
-    "pdf-probe/notification.json": "60a2fc6f93d044be4c7a7eed810d5bc85737edb4818a025a57fdc72ec2cc5dc4"
+    "pdf-probe/notification.json": "60a2fc6f93d044be4c7a7eed810d5bc85737edb4818a025a57fdc72ec2cc5dc4",
+    "ext2-tokens.json": "0028cb179eb62d8112ee7c4a297d5b16b069da8570410036d315411e910dab7f"
   },
   "pdfProbeRescore": {
     "semantics": 2,
@@ -952,5 +953,16 @@
     ],
     "v2Fixtures": ["invoice", "notification"],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "ext2TokensBackfill": {
+    "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+    "date": "2026-10-22T22:48:09.502Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+      "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9"
+    },
+    "rows": 10,
+    "incomplete": ["text-stress-ptbr|plain pdftotext 40/78"],
+    "missingRecords": []
   }
 }

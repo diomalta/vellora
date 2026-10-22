@@ -342,6 +342,7 @@
     "attachments/xht-parse-measurement.json": "be4b56e69889e7a0ab49a4b4620ef25a7f88d49aed0ef79783a616c23ec9aa84",
     "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
     "code-checks.json": "20f00f460370c4d6b663cd4a69dc7c651680a75e0aeb0192aff6dd9e0a1c7379",
+    "ext2-tokens.json": "844245300c47e0412a48fceecaed4675ba24446d58de9df6d4fb3af14bcd3d59",
     "fixtures/boleto-febraban.json": "78171ad229a2125993f3ee8e9c46bbdd2a95c0726158997e6fe6f5e615e189d7",
     "fixtures/boleto-febraban.px-grid.json": "7df20863f276d6bebf01c66ef5dae346e681c1adab5859f39181730006266bd6",
     "fixtures/boleto.json": "fe33b652ce92ac0e37ae3ed00a408d2528d43fb7f94c066ec7382ff0b07b7522",
@@ -588,5 +589,16 @@
       "text-stress-ptbr"
     ],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "ext2TokensBackfill": {
+    "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/port/08-html-parse --run ~/.cache/vellora-fidelity/run-all-08-html-parse-20261021T191737Z",
+    "date": "2026-10-22T22:48:09.619Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-08-html-parse-20261021T191737Z",
+      "summarySha256": "cb7b5374c00e3cf443b61ed6a00fa13e972a6f60c04abaa8564617d637955641"
+    },
+    "rows": 10,
+    "incomplete": [],
+    "missingRecords": []
   }
 }

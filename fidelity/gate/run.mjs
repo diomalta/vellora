@@ -363,6 +363,7 @@ export function evaluateGate({
     unchanged: report.counts.unchanged,
     withinTolerance: report.counts.withinTolerance,
     withinToleranceBetter: report.counts.withinToleranceBetter,
+    missingTokensNotComparable: report.counts.missingTokensNotComparable,
     ...(report.pin
       ? { pinA: report.pin.counts.a, pinB: report.pin.counts.b, pinC: report.pin.counts.c }
       : {}),

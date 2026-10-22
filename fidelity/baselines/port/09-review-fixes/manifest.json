@@ -338,6 +338,7 @@
     "attachments/pdf-probe-v1/text-stress-ptbr.json": "9c0194f46ae3a645995a7fbe8aed1979c9074d891382588bc4f3fe83f325c308",
     "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
     "code-checks.json": "065176950e072e3941716fbf7776f717560aceca8b40c535a27278cac9bd9c2f",
+    "ext2-tokens.json": "b6598bc01f378ad831c9198ade2c1938e57817a30db2eccb43fcc240a39b5701",
     "fixtures/boleto-febraban.json": "78171ad229a2125993f3ee8e9c46bbdd2a95c0726158997e6fe6f5e615e189d7",
     "fixtures/boleto-febraban.px-grid.json": "7df20863f276d6bebf01c66ef5dae346e681c1adab5859f39181730006266bd6",
     "fixtures/boleto.json": "fe33b652ce92ac0e37ae3ed00a408d2528d43fb7f94c066ec7382ff0b07b7522",
@@ -584,5 +585,16 @@
       "text-stress-ptbr"
     ],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "ext2TokensBackfill": {
+    "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/port/09-review-fixes --run ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z",
+    "date": "2026-10-22T22:48:09.263Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z",
+      "summarySha256": "a93323b6641a49daa59186746baefbee2a87f789280ef76db2df9418154d97d4"
+    },
+    "rows": 10,
+    "incomplete": [],
+    "missingRecords": []
   }
 }

@@ -107,6 +107,8 @@ test("(a) body 'de' deleted, footer present in both: fail with exactly 'de' miss
   });
   assert.equal(r.status, "fail");
   assert.deepEqual(r.subjectOnly.missing, ["de"]);
+  // The full list for the gate's missing-token set ratchet (2026-10-22).
+  assert.deepEqual(r.subjectOnly.missingAll, ["de"]);
   assert.deepEqual(r.marginBoxes.absent, []);
 });
 

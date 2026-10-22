@@ -212,6 +212,62 @@ function compareMetrics(before, after, items, counts) {
   }
 }
 
+/** Multiset of tokens: Map(token -> occurrences). */
+function tokenCounts(tokens) {
+  const m = new Map();
+  for (const t of tokens ?? []) m.set(t, (m.get(t) ?? 0) + 1);
+  return m;
+}
+
+/**
+ * EXT-2 missing-token SET ratchet (2026-10-22). The value ratchet compares the COUNT of missing
+ * tokens per extractor, so at step 08 three tokens that left the page ("Download as PDF") and
+ * four that came back passed as one count. Here, per row and extractor whose missing list is
+ * complete on both sides (row.missingTokens, combine/verdicts.mjs), every token missing more
+ * often than before is a regression of its own (key `<row>|missingTokens.<extractor>|<token>`,
+ * count class), whatever the total did. Rows where a side has no list, or an incomplete one
+ * (a report truncated at 40), are counted in counts.missingTokensNotComparable and fall back to
+ * the count ratchet.
+ */
+export function compareMissingTokens(before, after, items, counts) {
+  for (const [key, b] of before.rows) {
+    const a = after.rows.get(key);
+    if (!b.missingTokens || !a) continue;
+    if (!a.missingTokens) {
+      counts.missingTokensNotComparable++;
+      continue;
+    }
+    for (const [ex, bt] of Object.entries(b.missingTokens)) {
+      const at = a.missingTokens[ex];
+      if (!at) continue;
+      if (!bt.complete || !at.complete) {
+        counts.missingTokensNotComparable++;
+        continue;
+      }
+      const was = tokenCounts(bt.tokens);
+      const now = tokenCounts(at.tokens);
+      for (const [token, n] of now) {
+        const before0 = was.get(token) ?? 0;
+        if (n <= before0) continue;
+        items.push({
+          key: `${key}|missingTokens.${ex}|${token}`,
+          group: groupOf(b),
+          check: "value",
+          tolClass: "count",
+          tol: 0,
+          better: "lower",
+          before: before0,
+          after: n,
+          delta: n - before0,
+          class: "regression",
+          gating: true,
+          detail: `"${token}" newly missing in ${ex} (${before0} -> ${n} occurrence(s); missing ${bt.count} -> ${at.count})`,
+        });
+      }
+    }
+  }
+}
+
 /** Canary ratchet + absolute rule: every detection canary of the run must be caught. */
 function compareCanaries(before, after, items, counts) {
   const key = (c) => `canary|${c.oracle}|${c.canary}`;
@@ -703,6 +759,11 @@ export function snapshotKeys(s) {
   const { rows, metrics } = verdictIndex(s.fixtures ?? []);
   for (const k of rows.keys()) out.add(k);
   for (const k of metrics.keys()) out.add(k);
+  for (const [k, r] of rows) {
+    for (const [ex, t] of Object.entries(r.missingTokens ?? {})) {
+      for (const token of t.tokens ?? []) out.add(`${k}|missingTokens.${ex}|${token}`);
+    }
+  }
   for (const t of Object.keys(s.wpt?.expectations?.results ?? {})) out.add(`wpt|${t}`);
   for (const t of Object.keys(s.crashtests?.results ?? {})) out.add(`wpt-crash|${t}`);
   for (const [fx, p] of Object.entries(s.pdfProbe ?? {})) {
@@ -745,12 +806,18 @@ function matchesAcceptance(item, entry) {
  */
 export function compareSnapshots(before, after, { accept = [], declared = [] } = {}) {
   const items = [];
-  const counts = { unchanged: 0, withinTolerance: 0, withinToleranceBetter: 0 };
+  const counts = {
+    unchanged: 0,
+    withinTolerance: 0,
+    withinToleranceBetter: 0,
+    missingTokensNotComparable: 0,
+  };
   const refusals = [];
   const bi = verdictIndex(before.fixtures ?? []);
   const ai = verdictIndex(after.fixtures ?? []);
   compareRows(bi, ai, items, counts);
   compareMetrics(bi, ai, items, counts);
+  compareMissingTokens(bi, ai, items, counts);
 
   let wpt = null;
   if (before.wpt?.expectations && after.wpt?.expectations) {
@@ -873,6 +940,7 @@ export function compareSnapshots(before, after, { accept = [], declared = [] } =
       unchanged: counts.unchanged,
       withinTolerance: counts.withinTolerance,
       withinToleranceBetter: counts.withinToleranceBetter,
+      missingTokensNotComparable: counts.missingTokensNotComparable,
     },
     byGroup,
     wptPerSuite: wpt?.perSuite ?? null,

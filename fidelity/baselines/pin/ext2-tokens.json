@@ -1,0 +1,335 @@
+{
+  "schema": "vellora-fidelity/ext2-tokens/1",
+  "note": "EXT-2 missing-token lists per extractor, backfilled from the run's oracles result.json (fidelity/gate/backfill-ext2-tokens.mjs); read by fidelity/gate/snapshot.mjs withExt2Tokens",
+  "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+  "date": "2026-10-22T22:48:09.502Z",
+  "source": {
+    "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+    "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9"
+  },
+  "rows": {
+    "boleto-febraban|plain": {
+      "pdftotext": {
+        "tokens": [
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "246813-1",
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "14/000000000417001-1"
+        ],
+        "count": 8,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "246813-1",
+          "14/000000000417001-1",
+          "00041.700139",
+          "7",
+          "16460000184250"
+        ],
+        "count": 8,
+        "complete": true
+      }
+    },
+    "boleto-febraban.px-grid|plain": {
+      "pdftotext": {
+        "tokens": [
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "246813-1",
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "14/000000000417001-1"
+        ],
+        "count": 8,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [
+          "00041.700139",
+          "7",
+          "16460000184250",
+          "246813-1",
+          "14/000000000417001-1",
+          "00041.700139",
+          "7",
+          "16460000184250"
+        ],
+        "count": 8,
+        "complete": true
+      }
+    },
+    "boleto|plain": {
+      "pdftotext": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    },
+    "danfe|plain": {
+      "pdftotext": {
+        "tokens": ["3180", "—", "—", "R$", "80", "painel", "com", "84145990", "000", "000"],
+        "count": 10,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": ["3180"],
+        "count": 1,
+        "complete": true
+      }
+    },
+    "invoice|plain": {
+      "pdftotext": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    },
+    "notification|plain": {
+      "pdftotext": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    },
+    "oss-postmark-receipt|plain": {
+      "pdftotext": {
+        "tokens": [
+          "Need",
+          "a",
+          "printable",
+          "copy",
+          "for",
+          "your",
+          "records?",
+          "You",
+          "can",
+          "download",
+          "a",
+          "PDF",
+          "version.",
+          "Moved",
+          "recently?",
+          "Have",
+          "a",
+          "new",
+          "credit",
+          "card?",
+          "You",
+          "can",
+          "easily",
+          "update",
+          "your",
+          "billing",
+          "information.",
+          "[Company",
+          "Name,",
+          "LLC]",
+          "1234",
+          "Street",
+          "Rd.",
+          "Suite",
+          "1234"
+        ],
+        "count": 35,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": ["[Product", "Name]"],
+        "count": 2,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [
+          "[Product",
+          "Name]",
+          "Need",
+          "a",
+          "printable",
+          "copy",
+          "for",
+          "your",
+          "records?",
+          "You",
+          "can",
+          "download",
+          "a",
+          "PDF",
+          "version.",
+          "Moved",
+          "recently?",
+          "Have",
+          "a",
+          "new",
+          "credit",
+          "card?",
+          "You",
+          "can",
+          "easily",
+          "update",
+          "your",
+          "billing",
+          "information.",
+          "[Company",
+          "Name,",
+          "LLC]",
+          "1234",
+          "Street",
+          "Rd.",
+          "Suite",
+          "1234"
+        ],
+        "count": 37,
+        "complete": true
+      }
+    },
+    "oss-sparksuite-invoice|plain": {
+      "pdftotext": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    },
+    "receipt|plain": {
+      "pdftotext": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    },
+    "text-stress-ptbr|plain": {
+      "pdftotext": {
+        "tokens": [
+          "Pão",
+          "121820",
+          "−14,35",
+          "elétrica",
+          "805212",
+          "Pão",
+          "044620",
+          "(reclamação",
+          "782086",
+          "Pão",
+          "709562",
+          "Pão",
+          "606561",
+          "Pão",
+          "852357",
+          "−1.931,80",
+          "Pão",
+          "634351",
+          "Pão",
+          "410972",
+          "Pão",
+          "777397",
+          "Pão",
+          "486149",
+          "−38,14",
+          "−69,13",
+          "elétrica",
+          "355235",
+          "(reclamação",
+          "371555",
+          "(reclamação",
+          "404017",
+          "Pão",
+          "225413",
+          "Pão",
+          "119482",
+          "(reclamação",
+          "173693",
+          "Pão",
+          "984251"
+        ],
+        "count": 78,
+        "complete": false
+      },
+      "pdfminer.six": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      },
+      "pymupdf": {
+        "tokens": [],
+        "count": 0,
+        "complete": true
+      }
+    }
+  },
+  "incomplete": ["text-stress-ptbr|plain pdftotext 40/78"],
+  "missingRecords": []
+}

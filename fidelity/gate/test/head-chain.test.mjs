@@ -65,10 +65,15 @@ test("the committed DEBT.json is the empty vellora-fidelity/debt/2 ledger", () =
 // gates, so the head views grow by the crossings (07: 985 -> 1407, 09: 974 -> 1396; pin view 07:
 // 213 -> 252, 09: 206 -> 245; all pdf-probe items). I4 (2026-10-22): step 06's 10 declared
 // css:page-varying-width rejections are carried to the head and the pin (07: 1407 -> 1397,
-// 09: 1396 -> 1386; pin (c) 07: 252 -> 242, 09: 245 -> 235, declared 10).
-test("07 vs 06 is unchanged link to link, but 1397 items are worse than the head (00-start) and none is covered", () => {
+// 09: 1396 -> 1386; pin (c) 07: 252 -> 242, 09: 245 -> 235, declared 10). The EXT-2
+// missing-token SET ratchet (2026-10-22) adds, per newly missing token, the postmark text the
+// XML parse lost at 07 (12 tokens vs head and pin: "The [Product Name] team" in pdftotext and
+// pdfminer.six, "1234 Street Rd. Suite 1234" in pdfminer.six) and at 09 the off-page "Download
+// as PDF" vs pin (6: pdftotext and pymupdf): 07 head 1397 -> 1409, pin (c) 07 242 -> 254, 09
+// 235 -> 241.
+test("07 vs 06 is unchanged link to link, but 1409 items are worse than the head (00-start) and none is covered", () => {
   assert.equal(r.counts.gating, 0);
-  assert.equal(r.head.counts.gating, 1397);
+  assert.equal(r.head.counts.gating, 1409);
   assert.equal(r.verdict, "FAIL");
   assert.deepEqual(
     tally(r.head.items, (i) => `${i.check} ${i.headClass}`),
@@ -76,7 +81,7 @@ test("07 vs 06 is unchanged link to link, but 1397 items are worse than the head
       "pdf-probe regression": 1344,
       "wpt regression": 38,
       "wpt undefined": 10,
-      "value regression": 13,
+      "value regression": 25,
       "status regression": 2,
     },
   );
@@ -93,12 +98,12 @@ test("07 vs 06 is unchanged link to link, but 1397 items are worse than the head
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 07: 242 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 242, declared: 10 });
+test("pin view of 07: 254 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 254, declared: 10 });
   assert.equal(r.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r.pin.items, (i) => i.check),
-    { "pdf-probe": 179, wpt: 56, value: 15, status: 2 },
+    { "pdf-probe": 179, wpt: 56, value: 27, status: 2 },
   );
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
@@ -111,7 +116,7 @@ test("pin view of 07: 242 items worse than the shipped main, all (c) while the l
       ledgerBase: null,
       canaries: false,
     }).counts.gating,
-    242,
+    254,
   );
 });
 
@@ -154,11 +159,11 @@ test("09 vs 08 (both v2) is unchanged link to link; 1386 items are worse than th
   assert.ok(r09.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 09: 235 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 235, declared: 10 });
+test("pin view of 09: 241 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 241, declared: 10 });
   assert.equal(r09.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r09.pin.items, (i) => i.check),
-    { "pdf-probe": 179, wpt: 56, value: 10 },
+    { "pdf-probe": 179, wpt: 56, value: 16 },
   );
 });

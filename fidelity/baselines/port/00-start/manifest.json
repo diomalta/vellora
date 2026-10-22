@@ -338,6 +338,7 @@
     "attachments/pdf-probe-v1/text-stress-ptbr.json": "c6e493bfd555e430c18d8c8349434a98aab56d7a753977007d55072a3558d872",
     "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
     "code-checks.json": "1c405969d58d7b76a222eb7d01a4e8b0c8b13ccac5e0fdfce0c7e9cbde6004e3",
+    "ext2-tokens.json": "76ee0d5f09916db412633f5c96b54b54224fbf6c84e704f5a203586ed5cdda57",
     "fixtures/boleto-febraban.json": "2ca567d7c25bf5e27dc10489cfe2c9f70883099078bdd3094ccc2682792e620a",
     "fixtures/boleto-febraban.px-grid.json": "9452030f5d6909bb7f8be4ebcd3f66f4d26cfffd3a2b633f3ae441dadb6d1edb",
     "fixtures/boleto.json": "6017cf61c5673f65fac84230665b9cf8d8e7a0049dbc6e519c979b9d070cae86",
@@ -584,5 +585,16 @@
       "text-stress-ptbr"
     ],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "ext2TokensBackfill": {
+    "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/port/00-start --run ~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z",
+    "date": "2026-10-22T22:48:09.384Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z",
+      "summarySha256": "29664fc2dbf6c5935a35f72c77fa18374496f189572f33a9f08687e66b2a438c"
+    },
+    "rows": 10,
+    "incomplete": ["text-stress-ptbr|plain pdftotext 40/82"],
+    "missingRecords": []
   }
 }

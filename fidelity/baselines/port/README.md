@@ -1725,3 +1725,18 @@ INDICATIVE.
   `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run
   fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json
   --step 09-review-fixes --layout-from <09 run copy>`, 2026-10-22).
+- **EXT-2 missing-token SET.** The value ratchet compared the COUNT of missing tokens per
+  extractor, so at step 08 three tokens that left the page and four that came back passed
+  (`missing.pdftotext` 39 → 38, an "improvement"). Now every token missing more often than in
+  the baseline gates on its own key. The verdicts carry `missingTokens` (the text oracle now
+  records the full `missingAll` list); the committed baselines 00-start, 07, 08, 09 and pin gained
+  `ext2-tokens.json`, backfilled from their run copies' `oracles/*/<fixture>/plain/result.json`
+  (`node fidelity/gate/backfill-ext2-tokens.mjs --baseline <dir> --run <run copy>`; refused
+  unless the run's `summary.json` is the manifest's source and every EXT-2 value string equals the
+  one derived from the record). Lists truncated at 40 are not comparable and fall back to the
+  count: 00-start and pin text-stress-ptbr pdftotext (82 and 78 tokens), 07 postmark pymupdf (41).
+  CONFIRMED on the committed data: 08 vs 07 now gates exactly "Download", "as" and a second "PDF"
+  in pdftotext (the history loader, `ext2Tokens: false`, still passes it); 09 vs 08 and 09 vs
+  00-start have no token item; 09 vs pin adds the same 3 tokens in pdftotext and pymupdf. Head
+  07 1397 → 1409 and pin (c) 07 242 → 254 (the 12 postmark tokens the XML parse lost), 09 235 →
+  241.
