@@ -10,6 +10,7 @@ import { compareSnapshots } from "../compare.mjs";
 import { applyLedger, ledgerProblems, relaxedB, transitionProblems } from "../debt.mjs";
 import { loadPack, packWordVectors } from "../layer-vector.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
+import { wptRoute } from "../wpt-route.mjs";
 
 const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
 const step07 = loadBaselineDir(join(baselines, "port", "07-media-print"));
@@ -24,7 +25,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 13);
+    assert.equal(rows.length, 20);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -123,6 +124,96 @@ test("a layer-vector tool that ignores the mapping or the pass layers leaves its
   };
   const c2 = caughtBy(runGateCanaries({ vectors: passBlind }));
   assert.equal(c2["layer-vector: planted +3 px pass step"], false);
+});
+
+test("a comparator that scores pdf-probe words by |after| - |before| only (the I1 hole) leaves the crossing canary uncaught", () => {
+  // The pre-I1 rule: a move through Chrome is judged by the magnitude change alone.
+  const magnitudeOnly = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    const items = r.items.map((i) => {
+      if (i.check !== "pdf-probe" || typeof i.before !== "number" || typeof i.after !== "number") {
+        return i;
+      }
+      const d = Math.abs(i.after) - Math.abs(i.before);
+      if (d > i.tol) return { ...i, class: "regression", gating: true };
+      if (d < -i.tol) return { ...i, class: "improvement", gating: false };
+      return null;
+    });
+    return {
+      ...r,
+      items: items.filter(Boolean),
+      counts: { ...r.counts, withinToleranceBetter: 1 },
+    };
+  };
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: magnitudeOnly }));
+  assert.equal(c["pdf-probe: a word crosses Chrome (I1)"], false);
+  // The sign-agnostic formula (|moved| > tol and |after| > tol) gates the same-side control.
+  const signAgnostic = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    return {
+      ...r,
+      items: r.items.map((i) =>
+        i.check === "pdf-probe" &&
+        typeof i.moved === "number" &&
+        Math.abs(i.moved) > i.tol &&
+        Math.abs(i.after) > i.tol
+          ? { ...i, class: "regression", gating: true }
+          : i,
+      ),
+    };
+  };
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: signAgnostic }));
+  assert.equal(c2["pdf-probe: a word crosses Chrome (I1)"], false);
+});
+
+test("a gate that skips rule iii without --debt-base (the I2 hole) leaves its canary uncaught", () => {
+  // The pre-I2 behaviour: no --debt-base, no base ledger, rule iii never runs.
+  const skip = () => ({ ledger: undefined, source: null, refusal: null });
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, resolveBase: skip }));
+  assert.equal(c["DEBT rule iii without --debt-base (I2)"], false);
+});
+
+test("a ledger transition without GATE-D7 (the I3 hole: a ceiling of 99 passed) leaves its canary uncaught", () => {
+  const noD7 = (o, n, x) => transitionProblems(o, n, x).filter((m) => !/GATE-D7/.test(m));
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noD7 }));
+  assert.equal(c["GATE-D7: new ledger key tied to the measured value (I3)"], false);
+});
+
+test("a head comparison that sees only the current step's declarations (the I4 hole) leaves its canary uncaught", () => {
+  const currentOnly = ({ current = [] }) => current;
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, carry: currentOnly }));
+  assert.equal(c["declared rejection carried to the head comparison (I4)"], false);
+});
+
+test("a comparator that ratchets only the COUNT of missing tokens (the step-08 hole) leaves the set canary uncaught", () => {
+  const countOnly = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    return { ...r, items: r.items.filter((i) => !i.key.includes("|missingTokens.")) };
+  };
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: countOnly }));
+  assert.equal(c["EXT-2 missing-token set: one token swapped for another"], false);
+});
+
+test("a comparator blind to off-page words (the step-08 hole) leaves the off-page canary uncaught", () => {
+  const blind = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    return { ...r, items: r.items.filter((i) => !/\|off-page/.test(i.key)) };
+  };
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: blind }));
+  assert.equal(c["pdf-probe: a word moved below the page (off-page)"], false);
+});
+
+test("a WPT route that ignores the raw-Blitz outcome, or trusts a missing one, leaves the GATE-A3 canary uncaught", () => {
+  const ignoreRaw = (item, o) => {
+    const r = wptRoute({ ...item, rawOutcome: null }, o);
+    return r?.route === "c" ? { ...r, route: "c" } : r;
+  };
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: ignoreRaw }));
+  assert.equal(c1["WPT pass -> fail route (GATE-A3)"], false);
+  const trustMissing = (item, o) =>
+    wptRoute({ ...item, rawOutcome: item.rawOutcome ?? item.after }, o);
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: trustMissing }));
+  assert.equal(c2["WPT pass -> fail route (GATE-A3)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

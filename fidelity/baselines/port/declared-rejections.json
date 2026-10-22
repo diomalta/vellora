@@ -1,0 +1,24 @@
+{
+  "schema": "vellora-fidelity/declared-rejections/1",
+  "note": "Chain supplement of declaredRejections (fidelity/gate/declarations.mjs, I4, 2026-10-22) for port links whose manifest.json predates the field. A gated run merges, for its HEAD comparison, the declarations of every link from the head (exclusive) to the current step (inclusive) and, for the pin view, of every link up to the current step; the previous-link comparison uses only the current step's own. 06-page-rules's manifest is history (integrity-hashed) and is not rewritten, so its declaration lives here.",
+  "declarations": [
+    {
+      "step": "06-page-rules",
+      "feature": "css:page-varying-width",
+      "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+      "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules",
+      "tests": [
+        "css/css-page/layers-003-print.html",
+        "css/css-page/layers-004-print.html",
+        "css/css-page/page-margin-007-print.html",
+        "css/css-page/page-size-004-print.html",
+        "css/css-page/page-size-005-print.html",
+        "css/css-page/page-size-009-print.html",
+        "css/css-page/pseudo-first-margin-001-print.html",
+        "css/css-page/pseudo-first-margin-002-print.html",
+        "css/css-page/pseudo-first-margin-003-print.html",
+        "css/css-page/pseudo-first-margin-004-print.html"
+      ]
+    }
+  ]
+}

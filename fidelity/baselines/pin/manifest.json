@@ -830,8 +830,9 @@
     "fixtures/text-stress-ptbr.json": "4cb9026e47de54373a7e679f8920f5bfe7146b9b83dadc3ee07363680133727b",
     "wpt/by-directory.json": "4b2fb04959c2f1c2caed33ffbe3fc94610b21ffcd9f2d801a8f3212b12c65317",
     "wpt/expectations-blitz-2003ba5fc2d8.json": "2c24ed8f2f87a5eac3e4a065b77bfd53541a52d3a711b39d87048ed0d0f6c90c",
-    "pdf-probe/invoice.json": "78060a6b0b04ba1101e50352de1ea32445f1dc25d8d0b3b73afc3f62a7d9c035",
-    "pdf-probe/notification.json": "60a2fc6f93d044be4c7a7eed810d5bc85737edb4818a025a57fdc72ec2cc5dc4"
+    "pdf-probe/invoice.json": "1b1afc63bfc4b272d688445277ed4454269577a28d2544ef3fbd1af367cdea4d",
+    "pdf-probe/notification.json": "ddf19575f7b1d2a724953c8f73788d42a19ed4996a1c029836d5a23b1cacd812",
+    "ext2-tokens.json": "0028cb179eb62d8112ee7c4a297d5b16b069da8570410036d315411e910dab7f"
   },
   "pdfProbeRescore": {
     "semantics": 2,
@@ -952,5 +953,56 @@
     ],
     "v2Fixtures": ["invoice", "notification"],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "ext2TokensBackfill": {
+    "command": "node fidelity/gate/backfill-ext2-tokens.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+    "date": "2026-10-22T22:48:09.502Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+      "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9"
+    },
+    "rows": 10,
+    "incomplete": ["text-stress-ptbr|plain pdftotext 40/78"],
+    "missingRecords": []
+  },
+  "offPageBackfill": {
+    "command": "node fidelity/gate/backfill-off-page.mjs --baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+    "date": "2026-10-22T22:53:59.502Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+      "summarySha256": "13a001d517c981175d940e043d97b1f19452a2d8d02d30ce7aa154ff3516d5d9",
+      "matchesManifestSource": true
+    },
+    "extractor": "fidelity/oracles/py/words.py offPage (PyMuPDF rawdict, clip INFINITE_RECT, first-glyph origin outside the page rectangle)",
+    "inputs": {
+      "invoice": {
+        "vellora": {
+          "path": "layout-diff/invoice/run-all/vellora.pdf",
+          "sha256": "5c4061330d65dd5b9b95c77f5b8a04cdd11e05a795a62cfbb6ee01f58a1b51a8"
+        },
+        "chrome": {
+          "path": "layout-diff/invoice/run-all/chrome.pdf",
+          "sha256": "36ccfe168fca42ca697ebd006c71fd8bdf01263c4732cb34fc2f4178ac73a54a"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "notification": {
+        "vellora": {
+          "path": "layout-diff/notification/run-all/vellora.pdf",
+          "sha256": "051616a4996a5395cd7d143bb3ad99d16f2ca60daf4081058a1002bc897b2c1d"
+        },
+        "chrome": {
+          "path": "layout-diff/notification/run-all/chrome.pdf",
+          "sha256": "d9a0a005c0a1678900060df6b2231047a7f80086c6dda36ce911fbf5dbb2d325"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      }
+    }
   }
 }

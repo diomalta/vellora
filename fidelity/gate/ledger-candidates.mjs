@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 import { probeResultV2 } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { requirePython } from "../layout-diff/lib/pdf-words.mjs";
 import { parseProbeKey, readDiff, wordVectors } from "./layer-vector.mjs";
+import { wptRoute } from "./wpt-route.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const A_LABELS = new Set([
@@ -97,6 +98,11 @@ export function classify(item, ctx) {
         why: `old test render ${pc.vellora} page(s) vs Chrome ${pc.chrome}: a false pass by page count`,
       };
     }
+    // GATE-A3 (gate/wpt-route.mjs): a pass -> fail the raw-Blitz render fails the same way is
+    // upstream debt (b); one raw Blitz passes is (c); without a raw outcome there is no evidence.
+    const route = wptRoute(item);
+    if (route?.route === "b") return { candidate: "b", why: route.why };
+    if (route?.route === "c" && item.rawOutcome) return { candidate: "c", why: route.why };
     return {
       candidate: "none",
       why: hist.length

@@ -1,7 +1,8 @@
 """Word anchors for the layout-consensus oracle, from PyMuPDF character ORIGINS.
 
 Usage: python -I words.py FILE.pdf
-Prints {"tool": "pymupdf", "version", "pages": [{"page", "width", "height", "words": [...]}]}.
+Prints {"tool": "pymupdf", "version", "pages": [{"page", "width", "height", "words": [...],
+"offPage": [...]}]}.
 
 Each word is {"text", "x" (pen origin of its first glyph), "baseline" (origin y), "x1" (right
 edge of its last glyph box), "size", "font"}; coordinates are PDF points, origin top-left of the
@@ -14,6 +15,12 @@ The origin (pen position on the baseline) is where the glyph is actually placed.
 
 Words are split on whitespace characters and at span/line boundaries, mirroring
 page.get_text("words").
+
+`words` are the words MuPDF reports inside the page (its text device clips to the page: a glyph
+drawn outside the MediaBox is not reported; CONFIRMED 2026-10-22 on the step-09 postmark PDF,
+whose tail at 855-1111 pt on an 841.92 pt page is absent). `offPage` lists, in the same shape,
+the words of an unclipped extraction (clip = INFINITE_RECT) whose first-glyph origin lies outside
+the page rectangle: text a reader never sees, which the pdf-probe gate ratchets (2026-10-22).
 """
 
 import json
@@ -23,9 +30,10 @@ from importlib.metadata import version
 import pymupdf
 
 
-def words_of_page(page):
+def words_of_page(page, clip=None):
     words = []
-    raw = page.get_text("rawdict", flags=pymupdf.TEXT_PRESERVE_LIGATURES | pymupdf.TEXT_PRESERVE_WHITESPACE)
+    flags = pymupdf.TEXT_PRESERVE_LIGATURES | pymupdf.TEXT_PRESERVE_WHITESPACE
+    raw = page.get_text("rawdict", flags=flags, clip=clip) if clip is not None else page.get_text("rawdict", flags=flags)
     for block in raw["blocks"]:
         if block.get("type") != 0:
             continue
@@ -60,6 +68,16 @@ def words_of_page(page):
     return words
 
 
+def off_page_words(page):
+    """Words whose first-glyph origin lies outside the page rectangle (unclipped extraction)."""
+    w, h = page.rect.width, page.rect.height
+    return [
+        word
+        for word in words_of_page(page, clip=pymupdf.INFINITE_RECT())
+        if not (0 <= word["x"] <= w and 0 <= word["baseline"] <= h)
+    ]
+
+
 def main(path):
     pages = []
     with pymupdf.open(path) as document:
@@ -70,6 +88,7 @@ def main(path):
                     "width": round(page.rect.width, 3),
                     "height": round(page.rect.height, 3),
                     "words": words_of_page(page),
+                    "offPage": off_page_words(page),
                 }
             )
     print(json.dumps({"tool": "pymupdf", "version": version("pymupdf"), "pages": pages}, ensure_ascii=False))

@@ -20,29 +20,29 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 
   ```sh
   export PATH="$HOME/.nvm/versions/node/v22.23.2/bin:$PATH"
-  # The ledger at the merge base (the commit the step branches from); a missing file is the
-  # ledger's first population (rule iii exempts it from the count and sum rule).
-  git show <merge base>:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json
+  # The ledger base (rule iii) defaults to DEBT.json at `git merge-base HEAD main` since
+  # 2026-10-22 (I2; absent there = first population, exempt from the count and sum rule); pass
+  # --debt-base <file> only where that merge base cannot be determined (e.g. a clone without main).
   node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/<previous step> \
-    --step <NN-name> --debt-base /tmp/debt-base.json \
+    --step <NN-name> \
     --chrome-from <wpt results.json> --tools-image vellora-fidelity-tools:baseline-beta4 \
     --out fidelity/results/run-all/<NN-name> [--accept accepted.json]
   # Defaults: --head = the Chain head above (port/00-start), --debt = baselines/port/DEBT.json,
   # --pin = baselines/pin (pin view, reported). A merge to main adds --main ((c) items gate).
   # exit 0 = PASS (previous link AND head). The same evaluation over an existing run, no re-run:
   #   node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous step> \
-  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> --debt-base /tmp/debt-base.json \
-  #     [--accept accepted.json]
+  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> [--accept accepted.json]
   # Then commit the run as the next link (--name takes no "/", so --root carries port/):
   node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/<NN-name> \
     --root fidelity/baselines/port --name <NN-name> [--accept accepted.json] \
     [--attach <report>=<name>]...
   ```
 
-  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii);
-  `--debt-base` turns on the ledger's transition check (rule iii). Without it the report says
-  "transition not checked (no --debt-base)". The relaxed (b) rule (GATE-D7) is checked on every
-  entry on every run, with or without `--debt-base`.
+  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii;
+  the head comparison merges the declarations of the links up to it, I4). Rule iii runs on every
+  gated run (I2, 2026-10-22): the base is `--debt-base` or DEBT.json at `git merge-base HEAD main`,
+  and a base that cannot be determined REFUSES the gate. A NEW ledger key must satisfy the relaxed
+  (b) rule and GATE-D7 (tied to the run's head item, I3).
 - **Merge rule.** The step merges only when its gate is PASS against the previous link AND the
   chain head. A chain step is never written with `--force`: `manifest.json
   gate.writtenDespiteVerdict` must be `false` and `gate.baseline` must name the previous step. A
@@ -1681,9 +1681,111 @@ too (CONFIRMED: v1 09 vs v2 00-start is REFUSED). Counts are asserted in `head-c
   (section 08). ledger-candidates still labels these 2 rows with the step-05 XML-parse reason.
   That label is now stale; the cause is the off-page tail.
 
-**How a step uses this**: the chain convention above (`--head`, `--debt-base`, `--step`). Add
-the step's head and pin counts to `head-chain.test.mjs`. A DEBT entry is written from a
-committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from
-<gate-report.json>`). It must satisfy the relaxed (b) rule (GATE-D7). Then
-`node fidelity/gate/debt.mjs check --base <ledger at merge base> --step <NN-name>` must be
-clean.
+**How a step uses this**: the chain convention above (`--head`, `--step`; `--debt-base` only
+where the merge base with main cannot be determined). Add the step's head and pin counts to
+`head-chain.test.mjs`. A DEBT entry (schema debt/2 since 2026-10-22) is written from a committed
+vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from <gate-report.json> --out
+<committed file>`), one key record per item: `measured` = the head item's signed `after`,
+`ceiling` at most |measured| + the metric's resolution (pdf-probe 0.01 pt; counts 0),
+`layerVectorRef` = `"<repo-relative --out file>#<item key>"`. It must satisfy the relaxed (b)
+rule and GATE-D7. Then `node fidelity/gate/debt.mjs check --base <ledger at merge base> --step
+<NN-name> --report <gate-report.json>` must be clean (without `--report` every new key fails
+GATE-D7: it has no head item to be tied to).
+
+## Gate fixes (2026-10-22, branch `phaseb/10-gate`)
+
+Gate gaps found by the Phase B reviews (I1–I5 and the step-08 verifier). One commit per fix; every
+rule change has a GATE-K2 canary (`gate/canaries.mjs`) and a self-test that shows it uncaught when
+the rule is broken (`gate/test/canaries.test.mjs`). Numbers: committed baselines, local macOS,
+INDICATIVE.
+
+- **I1, a word that crosses Chrome.** `comparePdfProbeV2` judged dx/dy by \|after\| − \|before\|
+  only, so 0.35 → −1.15 pt passed. A sign flip that ends more than 1 pt from Chrome now
+  regresses; one that ends within 1 pt is within-tolerance, never "better". The task's
+  sign-agnostic formula also gated same-side improvements (−20.49 → −1.19 pt: 557 of 979 such
+  items of 09 vs 00-start, 283 of 322 vs pin), so only crossings gate (GATE-P1). The head views
+  grow by the crossings: 07 985 → 1407, 09 974 → 1396; pin (c) 07 213 → 252, 09 206 → 245 (all
+  pdf-probe; asserted in `head-chain.test.mjs`).
+- **I2, rule iii without `--debt-base`.** The ledger base now defaults to `DEBT.json` at
+  `git merge-base HEAD main` (absent = first population); a base that cannot be determined
+  REFUSES the gate, and `run-all --gate` refuses before it starts. CONFIRMED on this branch:
+  "DEBT.json absent at merge-base a8b126d8a133 (HEAD, main): first population".
+- **I3, ledger schema `debt/2` and GATE-D7 at entry.** An entry groups keys that share owner,
+  compensators, closesAt and introducedBy; each key carries `{ key, tolClass, headValue,
+  ceiling, measured, layerVectorRef }`. Rules ii and iii apply per key. A new key must be an
+  item of the head comparison; its `measured` must be the run's value, its `ceiling` at most
+  \|measured\| + the metric's resolution (pdf-probe 0.01 pt), and its vector's `run` converted
+  to the gate's unit must equal `measured` (before, a ceiling of 99 passed). `DEBT.json` and the
+  worked example are migrated; debt/1 files are read by migration (`measured: null`, so a key
+  entered from one fails GATE-D7).
+- **I4, declarations carry forward.** The head comparison merges the `declaredRejections` of
+  every link from the head (exclusive) to the current step (inclusive); the pin view those of
+  every link up to the current step (`gate/declarations.mjs`). Step 06's manifest predates the
+  field and is history, so its declaration of the 10 `css:page-varying-width` WPT rejections is
+  in `declared-rejections.json` (`step: "06-page-rules"`; the test list is the rejection set of
+  06 vs 05 and of the 09 head view; CONFIRMED that the step-07 run copy's `wpt/results.json`
+  records `cause.feature` `css:page-varying-width` for exactly these 10). Result: head 07
+  1407 → 1397, 09 1396 → 1386; pin (c) 07 252 → 242, 09 245 → 235, declared 10 (post-hoc
+  `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run
+  fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json
+  --step 09-review-fixes --layout-from <09 run copy>`, 2026-10-22).
+- **EXT-2 missing-token SET.** The value ratchet compared the COUNT of missing tokens per
+  extractor, so at step 08 three tokens that left the page and four that came back passed
+  (`missing.pdftotext` 39 → 38, an "improvement"). Now every token missing more often than in
+  the baseline gates on its own key. The verdicts carry `missingTokens` (the text oracle now
+  records the full `missingAll` list); the committed baselines 00-start, 07, 08, 09 and pin gained
+  `ext2-tokens.json`, backfilled from their run copies' `oracles/*/<fixture>/plain/result.json`
+  (`node fidelity/gate/backfill-ext2-tokens.mjs --baseline <dir> --run <run copy>`; refused
+  unless the run's `summary.json` is the manifest's source and every EXT-2 value string equals the
+  one derived from the record). Lists truncated at 40 are not comparable and fall back to the
+  count: 00-start and pin text-stress-ptbr pdftotext (82 and 78 tokens), 07 postmark pymupdf (41).
+  CONFIRMED on the committed data: 08 vs 07 now gates exactly "Download", "as" and a second "PDF"
+  in pdftotext (the history loader, `ext2Tokens: false`, still passes it); 09 vs 08 and 09 vs
+  00-start have no token item; 09 vs pin adds the same 3 tokens in pdftotext and pymupdf. Head
+  07 1397 → 1409 and pin (c) 07 242 → 254 (the 12 postmark tokens the XML parse lost), 09 235 →
+  241.
+- **Off-page text.** Which oracle sees text drawn outside the MediaBox (CONFIRMED 2026-10-22 on
+  the step-09 postmark `vellora.pdf` of the run copy: "Download as PDF" at 855.6 pt and the tail
+  down to 1111.3 pt, page height 841.92 pt): PyMuPDF's page words (pdf-probe v2, REF-W) and
+  `get_text("text")` (EXT-2 pymupdf) do NOT (MuPDF clips to the page; 138 words inside, 40 off),
+  poppler `pdftotext` 26.06.0 does NOT, pdfminer.six 20260107 DOES. So EXT-2 pdfminer.six passes
+  with the text off the page, and pdf-probe read the step-08 move as unpaired-vellora 3 → 0, an
+  improvement. `words.py` now also lists `offPage` words (unclipped, origin outside the page;
+  `words` unchanged, byte-identical on that PDF), pdf-probe v2 sections carry `offPage`, and the
+  gate ratchets vellora's per text (a newly off-page word gates; ACCEPTANCE GATE-P1). Every
+  committed link (00-start … 09, beta4-gated, beta4) and pin was backfilled with
+  `node fidelity/gate/backfill-off-page.mjs --baseline <dir> --run <run copy>` (refused unless
+  the run's PDFs reproduce the committed section exactly; all did). Off-page vellora words:
+  postmark 40 at 00-start…04, 32 at 05–07, 40 at 08–09; boleto-febraban 4 at beta4-gated…02, 0
+  from 03. 08 vs 07 now gates 7 off-page words ("Download", "as", a second "PDF", "1234" ×2,
+  "Street", "Rd.", "Suite"); 09 vs 08 and 09 vs 00-start none (the head already drew the same 40
+  off the page: postmark printed 1 page vs Chrome's 2 before the chain, Phase C priority zero).
+  Canaries: GATE-K2 (an unpaired vellora word moved into the off-page record) and a pdf-probe
+  detection canary on the committed notification PDFs (one krilla glyph run moved 804 pt down:
+  4 page words gone, 4 new off-page words, the off-page item gates).
+- **WPT (b) route (GATE-A3).** WPT items have no layer vector. A pass → fail item is (a) when the
+  old pass was false (old test render = reference ≠ Chrome by ink or page count), (b) when a
+  raw-Blitz render of the same test fails the same way (owner upstream; a DEBT key carrying
+  `rawOutcome`, owner `blitz:*`, tied to the run by GATE-D7), else (c). The field is
+  `wpt/results.json` `tests[i].rawOutcome` (`outcomes.json` `rawOutcomes`), written by the
+  raw-Blitz WPT mode built on `phaseb/10-wptraw`; until it lands no run records it, so every
+  WPT pass → fail item stays (c) (`gate/wpt-route.mjs`; synthetic tests in
+  `gate/test/wpt-route.test.mjs`; DESIGN TARGET).
+- **Probe fixtures.** Step 09's 37 Chrome probes are a pdf-probe v2 suite run by `run-all`
+  (step `pdf-probe-suite`, `fidelity/layout-diff/probe-suite.mjs`, data
+  `fidelity/layout-diff/probes/review-fixes-09.json`; fixtures `probe-<id>`, Chrome references
+  printed at run time through `fidelity/lib/chrome-reference.mjs`). They are new rows: a gate of
+  the next run against 09 reads them as newly measured, and they ratchet from the next committed
+  baseline on. CONFIRMED that the suite catches what the gate missed at step 09: gating the f5
+  probes of the step-09 evidence PDFs from the step-08 build to the fix-5 build fails on
+  f5_table_partial (dy 0 → −15 pt on 7 rows) and f5_allowance_footer ("Tail" unpaired) and passes
+  the other six (details: `fidelity/layout-diff/README.md`, "Probe fixtures"). The head and pin
+  views cannot see the probes until someone renders them with those builds' addons.
+- **The views at 09 under all of the above** (post-hoc, no re-render; report in
+  `fidelity/gate/snapshots/2026-10-22/gate-fixes/`; darwin 27.0.0 arm64, Node v22.23.2,
+  INDICATIVE): `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run
+  fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json
+  --step 09-review-fixes --layout-from <09 run copy>`. Previous link: 0 gating. Head 00-start:
+  1386 gating (pdf-probe 1342, WPT regression 38, value 6) plus 10 declared. Pin view: (c) 241
+  (pdf-probe 179, WPT 46, value 16), declared 10; merge to main BLOCKED. 20/20 gate canaries
+  caught; ledger base "DEBT.json absent at merge-base a8b126d8a133: first population".

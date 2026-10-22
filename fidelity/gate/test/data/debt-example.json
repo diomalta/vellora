@@ -1,37 +1,42 @@
 {
-  "schema": "vellora-fidelity/debt/1",
+  "schema": "vellora-fidelity/debt/2",
   "head": "port/00-start",
-  "note": "EXAMPLE ledger for the self-tests (gate/test/debt.test.mjs), built from real step-07 numbers (layer vector, head and current value of one DANFE header word) to show the shape. It is NOT an entry of the real ledger: fidelity/baselines/port/DEBT.json stays empty until the orchestrator populates it.",
+  "note": "EXAMPLE ledger for the self-tests (gate/test/debt.test.mjs), built from real step-07 numbers (layer vector, head and current value of one DANFE header word) to show the shape. It is NOT an entry of the real ledger: fidelity/baselines/port/DEBT.json stays empty until the orchestrator populates it. Migrated from debt/1 on 2026-10-22 (I3): the entry's headValue / ceiling / tolClass / layerVector moved into its one key record, with measured = the step-07 run value (1.66 pt, = layerVector.run 2.213 px x 0.75 within the 0.01 pt resolution).",
   "entries": [
     {
       "id": "DEBT-EXAMPLE-1",
-      "keys": ["pdf-probe|danfe|p1|NOME/RAZÃO#1|dy"],
       "class": "b",
-      "headValue": 0.16,
-      "ceiling": 1.66,
       "closesAt": "09-row-drift",
-      "tolClass": "pdf-probe-pt",
       "owner": {
         "layer": "blitz:table-cell-text-y",
         "component": "blitz-dom table cell content placement: the word's run is +3.656 px below Chrome already in N0 (raw Blitz on the source HTML)",
         "upstream": null
-      },
-      "layerVector": {
-        "unit": "px",
-        "N0": 3.656,
-        "B0": 3.656,
-        "L0": 3.656,
-        "painted_table_cell_text_baselines": 1.656,
-        "table_percent_widths": 1.656,
-        "auto_table_compact_columns": 1.656,
-        "P": 1.656,
-        "run": 2.213
       },
       "compensators": ["painted_table_cell_text_baselines"],
       "introducedBy": "04-block-offset",
       "evidence": [
         "node fidelity/gate/layer-vector.mjs --run ~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z --key 'pdf-probe|danfe|p1|NOME/RAZÃO#1|dy' (2026-10-21, darwin 27.0.0 arm64, Node v22.23.2, PyMuPDF 1.28.2; INDICATIVE)",
         "head value 0.16 pt (port/00-start: the old 4 px PDF text raise cancelled the raw Blitz offset), 1.66 pt from step 04 on (gate-report head section, 07 vs 00-start)"
+      ],
+      "keys": [
+        {
+          "key": "pdf-probe|danfe|p1|NOME/RAZÃO#1|dy",
+          "tolClass": "pdf-probe-pt",
+          "headValue": 0.16,
+          "ceiling": 1.66,
+          "measured": 1.66,
+          "layerVectorRef": {
+            "unit": "px",
+            "N0": 3.656,
+            "B0": 3.656,
+            "L0": 3.656,
+            "painted_table_cell_text_baselines": 1.656,
+            "table_percent_widths": 1.656,
+            "auto_table_compact_columns": 1.656,
+            "P": 1.656,
+            "run": 2.213
+          }
+        }
       ]
     }
   ],

@@ -115,6 +115,28 @@ export function compactPdfProbe(probe) {
   return { pages: probe.pages, words: probe.words, pairs };
 }
 
+/**
+ * EXT-2 missing-token lists backfilled into a committed baseline (gate/backfill-ext2-tokens.mjs,
+ * 2026-10-22): `ext2-tokens.json` { schema, rows: { "<fixture key>|<mode>": { <extractor>:
+ * { tokens, count, complete } } } }. Baselines written from runs after that date carry the
+ * lists in their verdicts (`missingTokens`, combine/verdicts.mjs) and need no backfill.
+ */
+export const EXT2_TOKENS_FILE = "ext2-tokens.json";
+export const EXT2_TOKENS_SCHEMA = "vellora-fidelity/ext2-tokens/1";
+
+/** Attach backfilled EXT-2 token lists to the fixtures' EXT-2 verdicts (verdicts that lack them). */
+export function withExt2Tokens(fixtures, doc) {
+  if (!doc?.rows) return fixtures;
+  return fixtures.map((f) => ({
+    ...f,
+    verdicts: (f.verdicts ?? []).map((v) => {
+      if (v.criterion !== "EXT-2" || v.oracle !== "oracles:text" || v.missingTokens) return v;
+      const t = doc.rows[`${f.key}|${v.mode ?? ""}`];
+      return t ? { ...v, missingTokens: t, missingTokensFrom: EXT2_TOKENS_FILE } : v;
+    }),
+  }));
+}
+
 /** Directory where re-scored baselines keep their pdf-probe v1 section (history, not gated). */
 export const PDF_PROBE_V1_DIR = join("attachments", "pdf-probe-v1");
 
@@ -135,7 +157,7 @@ function readProbeDir(path) {
  * after a v2 re-score, else `pdf-probe/` or `layout-diff-ab/` when those are still v1), so the
  * committed-data tests can reproduce a historical verdict exactly.
  */
-export function loadBaselineDir(dir, { pdfProbe: which = "current" } = {}) {
+export function loadBaselineDir(dir, { pdfProbe: which = "current", ext2Tokens = true } = {}) {
   const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   const fixtures = readdirSync(join(dir, "fixtures"))
     .filter((f) => f.endsWith(".json"))
@@ -180,7 +202,11 @@ export function loadBaselineDir(dir, { pdfProbe: which = "current" } = {}) {
     provenance: manifest.provenance ?? null,
     manifest,
     integrity: verifyIntegrity(dir, manifest),
-    fixtures: withCheckAllowlist(fixtures),
+    // ext2Tokens false: the verdicts as gated when the baseline was written (history tests).
+    fixtures: withExt2Tokens(
+      withCheckAllowlist(fixtures),
+      ext2Tokens ? readJsonMaybeGz(join(dir, EXT2_TOKENS_FILE)) : null,
+    ),
     wpt: expectations
       ? { expectations, file: join("wpt", expFile) }
       : { expectations: null, reason: "baseline has no wpt/expectations-*.json" },
@@ -197,6 +223,7 @@ export function expectationsFromResults(results) {
   const out = {};
   const suspect = {};
   const unsupported = {};
+  const raw = {};
   let ink = false;
   for (const r of [...results.tests].sort((a, b) => (a.test < b.test ? -1 : 1))) {
     out[r.test] = r.outcome;
@@ -206,6 +233,8 @@ export function expectationsFromResults(results) {
       if (flags.length) suspect[r.test] = flags.join(",");
     }
     if (r.outcome === "unsupported") unsupported[r.test] = unsupportedFeature(r);
+    // The raw-Blitz WPT mode's outcome of the same test (gate/wpt-route.mjs, GATE-A3).
+    if (typeof r.rawOutcome === "string") raw[r.test] = r.rawOutcome;
   }
   return {
     schema: 2,
@@ -220,6 +249,7 @@ export function expectationsFromResults(results) {
     results: out,
     suspectPasses: suspect,
     unsupportedFeatures: unsupported,
+    ...(Object.keys(raw).length ? { rawOutcomes: raw } : {}),
     derivedFrom: "results.json (gate/snapshot.mjs expectationsFromResults)",
   };
 }
@@ -238,6 +268,14 @@ export function loadRunDir(dir) {
         JSON.parse(readFileSync(results, "utf8")),
       ).unsupportedFeatures;
       wpt.unsupportedFeaturesFrom = "wpt/results.json";
+    }
+    // Raw-Blitz outcomes (GATE-A3) recorded only in results.json: take them from there.
+    if (!wpt.expectations.rawOutcomes && existsSync(results)) {
+      const derived = expectationsFromResults(JSON.parse(readFileSync(results, "utf8")));
+      if (derived.rawOutcomes) {
+        wpt.expectations.rawOutcomes = derived.rawOutcomes;
+        wpt.rawOutcomesFrom = "wpt/results.json";
+      }
     }
   } else if (existsSync(results)) {
     wpt = {

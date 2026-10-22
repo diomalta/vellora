@@ -7,8 +7,18 @@ import { join } from "node:path";
 // mustReport, observed, caught, ran }). Self-tests: gate/test/canaries.test.mjs, which also shows
 // that a broken comparator or ledger makes the canaries uncaught.
 import { compareSnapshots } from "./compare.mjs";
-import { applyLedger, emptyLedger, ledgerProblems, relaxedB, transitionProblems } from "./debt.mjs";
+import {
+  DEBT_REPO_PATH,
+  applyLedger,
+  emptyLedger,
+  ledgerProblems,
+  relaxedB,
+  resolveLedgerBase,
+  transitionProblems,
+} from "./debt.mjs";
+import { mergeChainDeclarations } from "./declarations.mjs";
 import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
+import { wptRoute } from "./wpt-route.mjs";
 
 /** The committed layer-vector input the tool canaries plant into (notification, step 07 run). */
 export const LAYER_VECTOR_CANARY_PACK = join(PACK_DIR, "notification-07.layer-vector-pack.json.gz");
@@ -71,21 +81,39 @@ function creep(seed, compare) {
   return { key, d, prevReport: compare(prev, run), headReport: compare(head, run) };
 }
 
-const entryFor = (key, ceiling, extra = {}) => ({
-  id: "CANARY-1",
-  keys: [key],
-  class: "b",
-  headValue: 0,
-  ceiling,
-  closesAt: "99-canary",
-  tolClass: "pdf-probe-pt",
-  owner: { layer: "blitz:canary", component: "canary" },
-  layerVector: { unit: "px", N0: 2, B0: 2, L0: 2, P: 1, run: 1 },
-  compensators: ["P"],
-  introducedBy: "99-canary",
-  evidence: ["gate canary"],
-  ...extra,
-});
+/** A debt/2 entry with one key (`keyExtra` overrides the key record: tolClass, layerVector...). */
+const entryFor = (key, ceiling, extra = {}, keyExtra = {}) => {
+  const layerVectorRef = keyExtra.layerVectorRef ?? {
+    unit: "px",
+    N0: 2,
+    B0: 2,
+    L0: 2,
+    P: 1,
+    run: 1,
+  };
+  return {
+    id: "CANARY-1",
+    class: "b",
+    closesAt: "99-canary",
+    owner: { layer: "blitz:canary", component: "canary" },
+    compensators: ["P"],
+    introducedBy: "99-canary",
+    evidence: ["gate canary"],
+    ...extra,
+    keys: [
+      {
+        key,
+        tolClass: "pdf-probe-pt",
+        headValue: 0,
+        ceiling,
+        measured: ceiling,
+        ...keyExtra,
+        layerVectorRef,
+        layerVector: layerVectorRef,
+      },
+    ],
+  };
+};
 
 function row(canary, mustReport, observed, caught) {
   return { oracle: GATE_CANARY_ORACLE, canary, mustReport, observed, caught, ran: true };
@@ -162,6 +190,9 @@ export function runGateCanaries({
   relaxed = relaxedB,
   vectors = packWordVectors,
   pack = LAYER_VECTOR_CANARY_PACK,
+  resolveBase = resolveLedgerBase,
+  carry = mergeChainDeclarations,
+  route = wptRoute,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -323,10 +354,10 @@ export function runGateCanaries({
     const key = "pdf-probe|canary|p1|Canary#1|dy";
     const e = entryFor(key, 3);
     const old = { ...emptyLedger(), entries: [e] };
-    const raised = transition(old, { ...emptyLedger(), entries: [{ ...e, ceiling: 4 }] }, {});
+    const raised = transition(old, { ...emptyLedger(), entries: [entryFor(key, 4)] }, {});
     const grown = transition(
       old,
-      { ...emptyLedger(), entries: [e, { ...e, id: "CANARY-2", keys: [`${key}x`] }] },
+      { ...emptyLedger(), entries: [e, entryFor(`${key}x`, 3, { id: "CANARY-2" })] },
       {},
     );
     const dropped = transition(old, emptyLedger(), { step: "98-other" });
@@ -351,7 +382,12 @@ export function runGateCanaries({
     });
     const page = "canary|TXT-P1|corpus||criterion#1|pageDelta";
     const scoped = (id) =>
-      entryFor(page, 1, { id, tolClass: "page-delta", scope: { fixture: "canary", fromPage: 2 } });
+      entryFor(
+        page,
+        1,
+        { id, scope: { fixture: "canary", fromPage: 2 } },
+        { tolClass: "page-delta" },
+      );
     const twice = ledgerCheck({ entries: [scoped("CANARY-P1"), scoped("CANARY-P2")] });
     const perWord = ledgerCheck({
       entries: [
@@ -387,7 +423,7 @@ export function runGateCanaries({
     const k = "pdf-probe|canary|p1|Canary#1|dy";
     const good = relaxed(entryFor(k, 1));
     const worse = relaxed(
-      entryFor(k, 1, { layerVector: { unit: "px", N0: 1, B0: 1, L0: 1, P: 3, run: 3 } }),
+      entryFor(k, 1, {}, { layerVectorRef: { unit: "px", N0: 1, B0: 1, L0: 1, P: 3, run: 3 } }),
     );
     const unnamed = relaxed(entryFor(k, 1, { compensators: [] }));
     const noOwner = relaxed(entryFor(k, 1, { owner: {} }));
@@ -434,6 +470,283 @@ export function runGateCanaries({
         "the planted pass (table_percent_widths) appears as a non-zero vellora step of the word; the unplanted word (control) has none",
         `planted [${named(rec).join(", ")}], control [${named(control).join(", ")}]`,
         named(rec).includes("table_percent_widths") && named(control).length === 0,
+      ),
+    );
+  }
+  // 14. I1: a word that moves THROUGH Chrome. 0.35 -> -1.15 pt gates; 0.9 -> -0.9 is a
+  // within-tolerance item (never "better"); control: a same-side move 3 -> 1.5 is an improvement.
+  {
+    const key = `pdf-probe|${seed.fixture}|${seed.pair.k}|dy`;
+    const one = (from, to) => {
+      const r = compare(
+        snap({ pdfProbe: withDy(seed, from) }),
+        snap({ pdfProbe: withDy(seed, to) }),
+      );
+      return { item: r.items.find((i) => i.key === key), counts: r.counts };
+    };
+    const through = one(0.35, -1.15);
+    const flip = one(0.9, -0.9);
+    const control = one(3, 1.5);
+    rows.push(
+      row(
+        "pdf-probe: a word crosses Chrome (I1)",
+        `${src}: dy 0.35 -> -1.15 pt regression (gates); 0.9 -> -0.9 within-tolerance, withinToleranceBetter 0; control 3 -> 1.5 improvement`,
+        `through ${through.item?.class}/${through.item?.gating}; flip ${flip.item?.class}, better ${flip.counts.withinToleranceBetter}; control ${control.item?.class}`,
+        through.item?.class === "regression" &&
+          through.item.gating === true &&
+          flip.item?.class === "within-tolerance" &&
+          flip.item.gating === false &&
+          flip.counts.withinToleranceBetter === 0 &&
+          control.item?.class === "improvement",
+      ),
+    );
+  }
+  // 15. I2: rule iii without --debt-base. The base defaults to DEBT.json at `git merge-base HEAD
+  // main` (a planted repository: merge-base abc1234 holds the entry at ceiling 3); the ledger
+  // raises it to 4 -> a rule iii problem. Controls: no merge-base -> a refusal; no DEBT.json at
+  // the merge base -> first population.
+  {
+    const key = "pdf-probe|canary|p1|Canary#1|dy";
+    const baseDoc = { ...emptyLedger(), entries: [entryFor(key, 3)] };
+    const repo =
+      ({ mergeBase = true, ledger = true } = {}) =>
+      (args) => {
+        if (args[0] === "merge-base") {
+          return mergeBase
+            ? { status: 0, stdout: "abc1234\n", stderr: "" }
+            : { status: 128, stdout: "", stderr: "fatal: Not a valid object name main" };
+        }
+        if (args[0] === "cat-file") return { status: ledger ? 0 : 128, stdout: "", stderr: "" };
+        if (args[0] === "show" && args[1] === `abc1234:${DEBT_REPO_PATH}`) {
+          return { status: 0, stdout: JSON.stringify(baseDoc), stderr: "" };
+        }
+        return { status: 128, stdout: "", stderr: "unexpected" };
+      };
+    const raised = { ...emptyLedger(), entries: [entryFor(key, 4)] };
+    const b = resolveBase({ git: repo() });
+    const problems = b.ledger ? transition(b.ledger, raised, {}) : [];
+    const noBase = resolveBase({ git: repo({ mergeBase: false }) });
+    const first = resolveBase({ git: repo({ ledger: false }) });
+    rows.push(
+      row(
+        "DEBT rule iii without --debt-base (I2)",
+        "base = DEBT.json at the merge base; a raised ceiling -> problem; no merge-base -> refusal; no ledger there -> first population",
+        `problems ${problems.length}; no merge-base ${noBase.refusal ? "refused" : "not refused"}; absent ${first.ledger === null ? "first population" : String(first.ledger)}`,
+        problems.some((p) => /ceiling/.test(p)) &&
+          Boolean(noBase.refusal) &&
+          noBase.ledger === undefined &&
+          first.ledger === null &&
+          !first.refusal,
+      ),
+    );
+  }
+  // 16. I3 / GATE-D7: a NEW ledger key is tied to the run. On the creep scenario (head |dy| d, run
+  // d + 1.2 pt): a ceiling of 99, a vector whose run is not the measured value, and a measured
+  // value that is not the run's each report a problem; the exact entry (control) reports none.
+  {
+    const c = creep(seed, compare);
+    const item = c.headReport.items.find((i) => i.key === c.key);
+    const after = item?.after ?? c.d + 1.2;
+    const runPx = Math.round(((after * 4) / 3) * 1000) / 1000;
+    const vec = (run) => ({ unit: "px", N0: run + 2, B0: run + 2, L0: run + 2, P: run, run });
+    const headItems = new Map(c.headReport.items.map((i) => [i.key, i]));
+    const fresh = (ceiling, keyExtra) => ({
+      ...emptyLedger(),
+      entries: [entryFor(c.key, ceiling, {}, { measured: after, ...keyExtra })],
+    });
+    const check = (l) => transition(emptyLedger(), l, { headItems });
+    const exact = check(fresh(Math.abs(after), { layerVectorRef: vec(runPx) }));
+    const ceiling99 = check(fresh(99, { layerVectorRef: vec(runPx) }));
+    const vector = check(fresh(Math.abs(after), { layerVectorRef: vec(runPx + 2) }));
+    const measured = check(fresh(99, { measured: 99, layerVectorRef: vec(99 * (4 / 3)) }));
+    const d7 = (x) => x.some((m) => /GATE-D7/.test(m));
+    rows.push(
+      row(
+        "GATE-D7: new ledger key tied to the measured value (I3)",
+        `${src}: ceiling 99 -> problem; layerVector.run != measured -> problem; measured != the run's value -> problem; exact entry (control) -> none`,
+        `exact ${exact.length}; ceiling 99 ${ceiling99.length}; vector ${vector.length}; measured ${measured.length}`,
+        exact.length === 0 && d7(ceiling99) && d7(vector) && d7(measured),
+      ),
+    );
+  }
+  // 17. I4: a rejection declared by an earlier link (step 01 of a planted chain, head 00) is not
+  // a head regression at step 02, whose own accept file declares nothing; vs the previous link
+  // (no change) nothing gates either. Control: a link outside (head, current] does not count.
+  {
+    const w = wptSeed(run, "fail");
+    const rejected = clone(w.doc);
+    rejected.results[w.test] = "unsupported";
+    rejected.unsupportedFeatures = { ...(rejected.unsupportedFeatures ?? {}), [w.test]: FEATURE };
+    const decl = { feature: FEATURE, reason: "canary", evidence: "canary", tests: [w.test] };
+    const links = [
+      { step: "00-canary-head", declaredRejections: [] },
+      { step: "01-canary-reject", declaredRejections: [decl] },
+    ];
+    const merged = carry({ links, from: 0, to: 2, current: [], currentStep: "02-canary-now" });
+    const outside = carry({ links, from: 1, to: 2, current: [], currentStep: "02-canary-now" });
+    const head = snap({ wpt: { expectations: w.doc } });
+    const now = snap({ wpt: { expectations: rejected } });
+    const cls = (declared) =>
+      compare(head, now, { declared }).items.find((i) => i.key === `wpt|${w.test}`);
+    const carried = cls(merged);
+    const notCarried = cls(outside);
+    rows.push(
+      row(
+        "declared rejection carried to the head comparison (I4)",
+        `${w.real ? "real" : "synthetic"} test ${w.test} rejected and declared at link 01: vs head 00 at link 02 -> declared; a declaration outside (head, current] (control) -> rejection`,
+        `carried ${carried?.class}/${carried?.gating}; control ${notCarried?.class}/${notCarried?.gating}`,
+        carried?.class === "declared" &&
+          carried.gating === false &&
+          notCarried?.class === "rejection" &&
+          notCarried.gating === true,
+      ),
+    );
+  }
+  // 18. EXT-2 missing-token SET (step 08: 3 tokens left the page while 4 came back, equal count).
+  // One extractor's list: before [A, B], after [A, C] (count 2 both) -> C gates; control: the
+  // same list again -> nothing.
+  {
+    const f = (run?.fixtures ?? []).find((x) =>
+      (x.verdicts ?? []).some((v) => v.criterion === "EXT-2" && v.oracle === "oracles:text"),
+    );
+    const v0 = f?.verdicts.find((v) => v.criterion === "EXT-2" && v.oracle === "oracles:text");
+    const fixture = f
+      ? { ...f, verdicts: [v0] }
+      : {
+          key: "canary",
+          fixture: "canary",
+          verdicts: [
+            {
+              criterion: "EXT-2",
+              oracle: "oracles:text",
+              status: "FAIL",
+              value: "pdftotext fail (missing 2, extra 0)",
+              mode: "plain",
+              kind: "criterion",
+            },
+          ],
+        };
+    const v = fixture.verdicts[0];
+    const ex = Object.keys(v.missingTokens ?? {})[0] ?? "pdftotext";
+    const withTokens = (tokens) => ({
+      ...fixture,
+      verdicts: [
+        { ...v, missingTokens: { [ex]: { tokens, count: tokens.length, complete: true } } },
+      ],
+    });
+    const b = snap({ fixtures: [withTokens(["CanaryA", "CanaryB"])] });
+    const a = snap({ fixtures: [withTokens(["CanaryA", "CanaryC"])] });
+    const swapped = gatingOf(compare(b, a)).filter((i) => i.key.includes("|missingTokens."));
+    const same = gatingOf(compare(b, b)).filter((i) => i.key.includes("|missingTokens."));
+    rows.push(
+      row(
+        "EXT-2 missing-token set: one token swapped for another",
+        `${f ? "real" : "synthetic"} row ${fixture.key} EXT-2 ${ex}: [CanaryA, CanaryB] -> [CanaryA, CanaryC] (same count) -> CanaryC gates; unchanged list (control) -> nothing`,
+        `swapped [${swapped.map((i) => i.key.split("|").pop()).join(", ")}]; control ${same.length}`,
+        swapped.length === 1 &&
+          swapped[0].key.endsWith(`|missingTokens.${ex}|CanaryC`) &&
+          same.length === 0,
+      ),
+    );
+  }
+  // 19. Off-page text (step 08: "Download as PDF" moved below vellora's page; PyMuPDF's page
+  // words lost it, so unpaired-vellora 3 -> 0 read as an improvement). An unpaired vellora word
+  // moves into the section's off-page record -> the off-page item gates; control: the same
+  // off-page word on both sides -> nothing.
+  {
+    const s0 = clone(seed.section);
+    const w = { text: "CanaryOff", page: 1, x: 10, y: 20 };
+    const before = {
+      ...s0,
+      words: { ...s0.words, unpairedVellora: (s0.unpairedVellora ?? []).length + 1 },
+      unpairedVellora: [...(s0.unpairedVellora ?? []), w],
+      offPage: { vellora: [...(s0.offPage?.vellora ?? [])], chrome: s0.offPage?.chrome ?? [] },
+    };
+    const after = {
+      ...before,
+      words: { ...before.words, unpairedVellora: before.unpairedVellora.length - 1 },
+      unpairedVellora: before.unpairedVellora.filter((x) => x !== w),
+      offPage: { ...before.offPage, vellora: [...before.offPage.vellora, { ...w, y: 900 }] },
+    };
+    const b = snap({ pdfProbe: { [seed.fixture]: before } });
+    const a = snap({ pdfProbe: { [seed.fixture]: after } });
+    const key = `pdf-probe|${seed.fixture}|off-page|CanaryOff`;
+    const moved = gatingOf(compare(b, a)).filter((i) => i.key === key);
+    const same = gatingOf(compare(a, a)).filter((i) => /\|off-page/.test(i.key));
+    rows.push(
+      row(
+        "pdf-probe: a word moved below the page (off-page)",
+        `${src} section: an unpaired vellora word drawn at y 900 pt (outside the page) -> ${key} gates; the same off-page word on both sides (control) -> nothing`,
+        `moved ${moved.map((i) => `${i.class}/${i.gating}`).join(",") || "nothing gated"}; control ${same.length}`,
+        moved.length === 1 && moved[0].class === "regression" && same.length === 0,
+      ),
+    );
+  }
+  // 20. GATE-A3, the WPT pass -> fail route: a real clean pass of the run's expectations fails;
+  // raw Blitz fails the same way -> (b), and a DEBT key with that rawOutcome passes GATE-D7 while
+  // one whose rawOutcome is not the run's fails; raw Blitz passes -> (c); no raw outcome -> (c);
+  // the old render's page count differs from Chrome's -> (a).
+  {
+    const w = wptSeed(run, "pass");
+    const after = clone(w.doc);
+    after.results[w.test] = "fail";
+    delete after.suspectPasses?.[w.test];
+    const before = clone(w.doc);
+    delete before.suspectPasses?.[w.test];
+    const itemWith = (raw) => {
+      const a = clone(after);
+      a.rawOutcomes = raw === undefined ? undefined : { [w.test]: raw };
+      return compare(
+        snap({ wpt: { expectations: before } }),
+        snap({ wpt: { expectations: a } }),
+      ).items.find((i) => i.key === `wpt|${w.test}`);
+    };
+    const same = itemWith("fail");
+    const rawPass = itemWith("pass");
+    const none = itemWith(undefined);
+    const oldRecord = {
+      comparisons: [{ pageCounts: [2, 2] }],
+      chrome: { comparisons: [{ pageCounts: [1, 1] }] },
+    };
+    const routes = {
+      b: route(same ?? {})?.route,
+      c1: route(rawPass ?? {})?.route,
+      c2: route(none ?? {})?.route,
+      a: route(none ?? {}, { oldRecord })?.route,
+    };
+    const key = (raw) => ({
+      key: `wpt|${w.test}`,
+      tolClass: "count",
+      headValue: "pass",
+      ceiling: "fail",
+      measured: "fail",
+      rawOutcome: raw,
+    });
+    const entry = (raw) => ({
+      ...emptyLedger(),
+      entries: [
+        {
+          ...entryFor(`wpt|${w.test}`, "fail", {
+            owner: { layer: "blitz:canary", component: "canary" },
+          }),
+          keys: [key(raw)],
+        },
+      ],
+    });
+    const headItems = new Map([[`wpt|${w.test}`, same]]);
+    const okD7 = transition(emptyLedger(), entry("fail"), { headItems });
+    const badD7 = transition(emptyLedger(), entry("pass"), { headItems });
+    rows.push(
+      row(
+        "WPT pass -> fail route (GATE-A3)",
+        `${w.real ? "real" : "synthetic"} clean pass ${w.test} -> fail: raw Blitz fails the same way -> b; raw passes -> c; no raw outcome -> c; old page count != Chrome's -> a; a DEBT key with the run's rawOutcome passes GATE-D7, one with another does not`,
+        `routes ${JSON.stringify(routes)}; D7 ok ${okD7.length}, D7 wrong rawOutcome ${badD7.length}`,
+        routes.b === "b" &&
+          routes.c1 === "c" &&
+          routes.c2 === "c" &&
+          routes.a === "a" &&
+          okD7.length === 0 &&
+          badD7.some((m) => /rawOutcome/.test(m)),
       ),
     );
   }

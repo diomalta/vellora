@@ -298,6 +298,8 @@ export function verdictIndex(fixtures) {
         status: v.status,
         value: v.value,
         caveat: v.caveat ?? null,
+        // EXT-2: { <extractor>: { tokens, count, complete } } (combine/verdicts.mjs), or null.
+        missingTokens: v.missingTokens ?? null,
       };
       rows.set(rowKey, row);
       for (const m of verdictMetrics(v)) {

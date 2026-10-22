@@ -18,7 +18,11 @@
 //                   is listed and counted (counts.withinTolerance), never "unchanged" (D4). A
 //                   sub-tolerance move the good way is counted in counts.withinToleranceBetter
 //   improvement | newly-measured | added | changed | not-comparable   never gate
-import { pdfProbeComparability, sectionSemantics } from "../layout-diff/lib/pdf-probe-v2.mjs";
+import {
+  pdfProbeComparability,
+  sectionSemantics,
+  textKey,
+} from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { CRASH_BAD, STATUS_RANK, TOLERANCES, UNMEASURED } from "./tolerances.mjs";
 import { compareCrashtests, compareWpt } from "./wpt.mjs";
@@ -212,6 +216,62 @@ function compareMetrics(before, after, items, counts) {
   }
 }
 
+/** Multiset of tokens: Map(token -> occurrences). */
+function tokenCounts(tokens) {
+  const m = new Map();
+  for (const t of tokens ?? []) m.set(t, (m.get(t) ?? 0) + 1);
+  return m;
+}
+
+/**
+ * EXT-2 missing-token SET ratchet (2026-10-22). The value ratchet compares the COUNT of missing
+ * tokens per extractor, so at step 08 three tokens that left the page ("Download as PDF") and
+ * four that came back passed as one count. Here, per row and extractor whose missing list is
+ * complete on both sides (row.missingTokens, combine/verdicts.mjs), every token missing more
+ * often than before is a regression of its own (key `<row>|missingTokens.<extractor>|<token>`,
+ * count class), whatever the total did. Rows where a side has no list, or an incomplete one
+ * (a report truncated at 40), are counted in counts.missingTokensNotComparable and fall back to
+ * the count ratchet.
+ */
+export function compareMissingTokens(before, after, items, counts) {
+  for (const [key, b] of before.rows) {
+    const a = after.rows.get(key);
+    if (!b.missingTokens || !a) continue;
+    if (!a.missingTokens) {
+      counts.missingTokensNotComparable++;
+      continue;
+    }
+    for (const [ex, bt] of Object.entries(b.missingTokens)) {
+      const at = a.missingTokens[ex];
+      if (!at) continue;
+      if (!bt.complete || !at.complete) {
+        counts.missingTokensNotComparable++;
+        continue;
+      }
+      const was = tokenCounts(bt.tokens);
+      const now = tokenCounts(at.tokens);
+      for (const [token, n] of now) {
+        const before0 = was.get(token) ?? 0;
+        if (n <= before0) continue;
+        items.push({
+          key: `${key}|missingTokens.${ex}|${token}`,
+          group: groupOf(b),
+          check: "value",
+          tolClass: "count",
+          tol: 0,
+          better: "lower",
+          before: before0,
+          after: n,
+          delta: n - before0,
+          class: "regression",
+          gating: true,
+          detail: `"${token}" newly missing in ${ex} (${before0} -> ${n} occurrence(s); missing ${bt.count} -> ${at.count})`,
+        });
+      }
+    }
+  }
+}
+
 /** Canary ratchet + absolute rule: every detection canary of the run must be caught. */
 function compareCanaries(before, after, items, counts) {
   const key = (c) => `canary|${c.oracle}|${c.canary}`;
@@ -296,6 +356,15 @@ export function comparePdfProbe(before, after, items, counts) {
  *   unpaired-chrome /      per-fixture counts (Chrome words vellora lacks / vellora words Chrome
  *   unpaired-vellora       lacks), count class: any increase gates
  *   fixture missing        removed (gates)
+ *   off-page (vellora)     words vellora drew outside the page (section.offPage.vellora, words.py
+ *                          unclipped; 2026-10-22): per text, more off-page occurrences than in the
+ *                          baseline gate (`pdf-probe|<fx>|off-page|<text>`, count class), also when
+ *                          the baseline section has no off-page record (text off the page is never
+ *                          acceptable unless the baseline shows it was already there); a run section
+ *                          without the record against a baseline with one regresses. PyMuPDF's
+ *                          page words do not include such text, so before this rule a word that
+ *                          moved from the page to below it read as an unpaired-vellora improvement
+ *                          (step 08, "Download as PDF").
  */
 function comparePdfProbeV2(before, after, items, counts) {
   const tol = TOLERANCES["pdf-probe-pt"].tol;
@@ -304,14 +373,16 @@ function comparePdfProbeV2(before, after, items, counts) {
   for (const [fixture, a] of Object.entries(after ?? {})) {
     const b = before?.[fixture];
     if (!b) {
+      // A fixture the baseline never measured (e.g. the probe suite, layout-diff/probes/, from
+      // 2026-10-22 on): newly measured, nothing to ratchet yet.
       items.push({
         ...base,
         key: `pdf-probe|${fixture}`,
-        class: "not-comparable",
+        class: "newly-measured",
         gating: false,
         before: "absent",
         after: `${a.pairs.length} pairs`,
-        detail: "baseline has no pdf-probe for this fixture",
+        detail: "baseline has no pdf-probe for this fixture: newly measured",
       });
       continue;
     }
@@ -335,6 +406,18 @@ function comparePdfProbeV2(before, after, items, counts) {
       }
       for (const axis of ["dx", "dy"]) {
         const d = Math.abs(p[axis]) - Math.abs(q[axis]);
+        const moved = p[axis] - q[axis];
+        // I1 (2026-10-22): a move THROUGH Chrome is not "better" by |d| alone. 0.35 -> -1.15 pt
+        // (the word moved 1.5 pt and now sits 1.15 pt on the other side of Chrome) used to pass as
+        // within-tolerance; 0.9 -> -0.9 counted as withinToleranceBetter. Crossing Chrome to more
+        // than the tolerance on the other side gates (then |moved| = |before| + |after| > tol too);
+        // a crossing that ends within the tolerance is within-tolerance, never better. A same-side
+        // move toward Chrome keeps the |d| rule: the task's sign-agnostic formula (|moved| > tol
+        // and |after| > tol) also gated same-side improvements such as -20.49 -> -1.19 pt, 557 of
+        // the 979 such items of 09 vs 00-start and 283 of 322 vs pin (committed baselines,
+        // 2026-10-22, INDICATIVE), which is not "worse" (fidelity/ACCEPTANCE.md GATE-P1).
+        const flipped = Math.sign(p[axis]) * Math.sign(q[axis]) < 0;
+        const crossed = flipped && Math.abs(p[axis]) > tol + eps;
         const item = {
           ...base,
           key: `${key}|${axis}`,
@@ -344,14 +427,27 @@ function comparePdfProbeV2(before, after, items, counts) {
           before: q[axis],
           after: p[axis],
           delta: d,
+          moved,
         };
-        if (d > tol + eps) {
+        if (d > tol + eps || crossed) {
           items.push({
             ...item,
             class: "regression",
             gating: true,
-            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`,
+            detail:
+              d > tol + eps
+                ? `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`
+                : `"${p.text}" ${axis} ${fmt(q[axis])} -> ${fmt(p[axis])} pt: moved ${fmt(moved)} pt (> ${tol}) and ends ${fmt(Math.abs(p[axis]))} pt from Chrome (> ${tol}) (I1)`,
           });
+        } else if (flipped && Math.abs(p[axis]) > eps) {
+          // A sign flip within tolerance: moved, never "better" (I1).
+          items.push({
+            ...item,
+            class: "within-tolerance",
+            gating: false,
+            detail: `"${p.text}" ${axis} ${fmt(q[axis])} -> ${fmt(p[axis])} pt (crossed Chrome, within ${tol} pt)`,
+          });
+          counts.withinTolerance++;
         } else if (d < -(tol + eps)) {
           items.push({
             ...item,
@@ -436,6 +532,10 @@ function comparePdfProbeV2(before, after, items, counts) {
       } else counts.unchanged++;
     }
   }
+  for (const [fixture, a] of Object.entries(after ?? {})) {
+    const b = before?.[fixture];
+    if (b) compareOffPage(fixture, b, a, items, counts);
+  }
   for (const [fixture, b] of Object.entries(before ?? {})) {
     if (after?.[fixture]) continue;
     items.push({
@@ -448,6 +548,60 @@ function comparePdfProbeV2(before, after, items, counts) {
       detail: "fixture measured by the baseline's pdf-probe is missing from the run",
     });
   }
+}
+
+/** Vellora's off-page words of a v2 section per text key: Map(text -> occurrences), or null. */
+export function offPageCounts(section) {
+  const list = section?.offPage?.vellora;
+  if (!Array.isArray(list)) return null;
+  const m = new Map();
+  for (const w of list) m.set(textKey(w.text), (m.get(textKey(w.text)) ?? 0) + 1);
+  return m;
+}
+
+/** The off-page rule of comparePdfProbeV2 for one fixture present on both sides. */
+function compareOffPage(fixture, b, a, items, counts) {
+  const was = offPageCounts(b);
+  const now = offPageCounts(a);
+  const base = {
+    group: "pdf-probe",
+    check: "pdf-probe",
+    tolClass: "count",
+    tol: 0,
+    better: "lower",
+  };
+  if (!was && !now) return;
+  if (!now) {
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}|off-page`,
+      class: "regression",
+      gating: true,
+      before: `${b.offPage.vellora.length} word(s)`,
+      after: "not recorded",
+      detail:
+        "the baseline records vellora's off-page words, the run does not (never silently absent)",
+    });
+    return;
+  }
+  let same = true;
+  for (const [text, n] of now) {
+    const n0 = was?.get(text) ?? 0;
+    if (n <= n0) continue;
+    same = false;
+    const w = a.offPage.vellora.find((x) => textKey(x.text) === text);
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}|off-page|${text}`,
+      class: "regression",
+      gating: true,
+      before: was ? n0 : "not recorded",
+      after: n,
+      delta: n - n0,
+      detail: `vellora draws "${w.text}" outside the page (p${w.page} at ${w.x}, ${w.y} pt) ${n} time(s), ${was ? `${n0} in the baseline` : "and the baseline section records no off-page words (backfill it: fidelity/gate/backfill-off-page.mjs)"}: text no reader sees is never acceptable`,
+    });
+  }
+  if (same) counts.unchanged++;
 }
 
 /** pdf-probe v1 (semantics 1, history): |dx|, |dy| of same-page k-th occurrence pairs, page moves. */
@@ -678,6 +832,11 @@ export function snapshotKeys(s) {
   const { rows, metrics } = verdictIndex(s.fixtures ?? []);
   for (const k of rows.keys()) out.add(k);
   for (const k of metrics.keys()) out.add(k);
+  for (const [k, r] of rows) {
+    for (const [ex, t] of Object.entries(r.missingTokens ?? {})) {
+      for (const token of t.tokens ?? []) out.add(`${k}|missingTokens.${ex}|${token}`);
+    }
+  }
   for (const t of Object.keys(s.wpt?.expectations?.results ?? {})) out.add(`wpt|${t}`);
   for (const t of Object.keys(s.crashtests?.results ?? {})) out.add(`wpt-crash|${t}`);
   for (const [fx, p] of Object.entries(s.pdfProbe ?? {})) {
@@ -689,6 +848,7 @@ export function snapshotKeys(s) {
     for (const w of p.unpairedChrome ?? []) if (w.k) out.add(`pdf-probe|${fx}|${w.k}|pairing`);
     out.add(`pdf-probe|${fx}|unpaired-chrome`);
     out.add(`pdf-probe|${fx}|unpaired-vellora`);
+    for (const text of offPageCounts(p)?.keys() ?? []) out.add(`pdf-probe|${fx}|off-page|${text}`);
   }
   return out;
 }
@@ -720,12 +880,18 @@ function matchesAcceptance(item, entry) {
  */
 export function compareSnapshots(before, after, { accept = [], declared = [] } = {}) {
   const items = [];
-  const counts = { unchanged: 0, withinTolerance: 0, withinToleranceBetter: 0 };
+  const counts = {
+    unchanged: 0,
+    withinTolerance: 0,
+    withinToleranceBetter: 0,
+    missingTokensNotComparable: 0,
+  };
   const refusals = [];
   const bi = verdictIndex(before.fixtures ?? []);
   const ai = verdictIndex(after.fixtures ?? []);
   compareRows(bi, ai, items, counts);
   compareMetrics(bi, ai, items, counts);
+  compareMissingTokens(bi, ai, items, counts);
 
   let wpt = null;
   if (before.wpt?.expectations && after.wpt?.expectations) {
@@ -848,6 +1014,7 @@ export function compareSnapshots(before, after, { accept = [], declared = [] } =
       unchanged: counts.unchanged,
       withinTolerance: counts.withinTolerance,
       withinToleranceBetter: counts.withinToleranceBetter,
+      missingTokensNotComparable: counts.missingTokensNotComparable,
     },
     byGroup,
     wptPerSuite: wpt?.perSuite ?? null,

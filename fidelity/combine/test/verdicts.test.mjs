@@ -19,6 +19,7 @@ import {
   fromLayoutDiffRow,
   fromOracleRecord,
   fromWpt,
+  missingTokensOf,
   oracleStatus,
   pdfaDeterminism,
   refP,
@@ -357,4 +358,28 @@ test("requirements pins: a version conflict is detected; the shared venv files a
 test("portable() strips the repo root and the home directory from recorded paths", () => {
   const out = portable({ a: `${repoRoot}/x`, b: [`${process.env.HOME}/y`], c: 1 }, repoRoot);
   assert.deepEqual(out, { a: "<repo>/x", b: ["~/y"], c: 1 });
+});
+
+test("EXT-2 carries the missing tokens per extractor (the gate ratchets the SET, 2026-10-22)", () => {
+  const text = {
+    status: "fail",
+    extractors: [
+      {
+        name: "pdftotext",
+        status: "fail",
+        subjectOnly: { missing: ["a", "b"], missingAll: ["a", "b", "a"], missingCount: 3 },
+      },
+      { name: "pymupdf", status: "fail", subjectOnly: { missing: ["x"], missingCount: 41 } },
+      { name: "pdfminer.six", status: "pass", subjectOnly: { missing: [], missingCount: 0 } },
+    ],
+  };
+  assert.deepEqual(missingTokensOf(text), {
+    pdftotext: { tokens: ["a", "b", "a"], count: 3, complete: true },
+    // A record that kept only the report's first 40: incomplete, the gate falls back to counts.
+    pymupdf: { tokens: ["x"], count: 41, complete: false },
+    "pdfminer.six": { tokens: [], count: 0, complete: true },
+  });
+  const v = fromOracleRecord({ results: { text } }, { mode: "plain" });
+  assert.deepEqual(find(v, "EXT-2").missingTokens, missingTokensOf(text));
+  assert.equal(missingTokensOf({ extractors: [] }), null);
 });

@@ -4,7 +4,7 @@
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { PY_DIR, pythonUnavailableReason, venvPython } from "../../oracles/lib/paths.mjs";
-import { flattenWordsPayload } from "./pdf-probe-v2.mjs";
+import { flattenOffPagePayload, flattenWordsPayload } from "./pdf-probe-v2.mjs";
 
 export const WORDS_PY = join(PY_DIR, "words.py");
 export const MUTATE_PY = join(PY_DIR, "pdf_mutate.py");
@@ -23,8 +23,15 @@ export function wordsPayload(pdfPath, python = requirePython()) {
   );
 }
 
-/** Flat v2 words of one PDF ({ page, text, key, x, y = baseline, size, font }) + tool version. */
+/**
+ * Flat v2 words of one PDF ({ page, text, key, x, y = baseline, size, font }), the words drawn
+ * outside the page (`offPage`, same shape) and the tool version.
+ */
 export function pdfWordsV2(pdfPath, python = requirePython()) {
   const payload = wordsPayload(pdfPath, python);
-  return { words: flattenWordsPayload(payload), tool: `${payload.tool} ${payload.version}` };
+  return {
+    words: flattenWordsPayload(payload),
+    offPage: flattenOffPagePayload(payload),
+    tool: `${payload.tool} ${payload.version}`,
+  };
 }

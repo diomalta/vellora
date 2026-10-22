@@ -76,7 +76,15 @@ export function compareWpt(before, after) {
     if (now === "pass") bump(suite, "passAfter");
     if (was === "pass" && !fb.length) bump(suite, "cleanBefore");
     if (now === "pass" && !fa.length) bump(suite, "cleanAfter");
-    const base = { key: `wpt|${test}`, test, suite, before: was, after: now };
+    // rawOutcome: the raw-Blitz render's outcome of the run (gate/wpt-route.mjs, GATE-A3), or null.
+    const base = {
+      key: `wpt|${test}`,
+      test,
+      suite,
+      before: was,
+      after: now,
+      rawOutcome: after.rawOutcomes?.[test] ?? null,
+    };
     const describe = (o, f) =>
       o === "pass" && f.length ? `pass[${f.join(",")}]` : (o ?? "absent");
     const detail = `${describe(was, fb)} -> ${describe(now, fa)}`;

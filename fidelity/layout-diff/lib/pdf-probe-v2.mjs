@@ -84,6 +84,25 @@ export function flattenWordsPayload(payload) {
 }
 
 /**
+ * words.py `offPage` words (origin outside the page rectangle; absent in payloads written before
+ * 2026-10-22 -> null) as v2 words.
+ */
+export function flattenOffPagePayload(payload) {
+  if (!payload.pages.every((p) => Array.isArray(p.offPage))) return null;
+  return payload.pages.flatMap((p) =>
+    p.offPage.map((w) => ({
+      page: p.page,
+      text: w.text,
+      key: textKey(w.text),
+      x: w.x,
+      y: w.baseline,
+      size: w.size,
+      font: w.font,
+    })),
+  );
+}
+
+/**
  * Minimum-cost assignment of every row to a distinct column (rows <= columns), Hungarian method
  * with potentials, O(n^2 m). `cost[i][j]` finite. Returns `assign[i] = j`.
  */
@@ -260,8 +279,21 @@ export function chromeWordsFingerprint(chromeWords) {
  * The body of a v2 pdf-probe.json (fidelity/layout-diff/pdf-probe.mjs adds fixture, label, env and
  * the pagination mapping): counts, every pair with both words, both unpaired lists.
  */
-export function probeResultV2({ velloraWords, chromeWords, maxDistancePt = MAX_PAIR_DISTANCE_PT }) {
+export function probeResultV2({
+  velloraWords,
+  chromeWords,
+  maxDistancePt = MAX_PAIR_DISTANCE_PT,
+  velloraOffPage = null,
+  chromeOffPage = null,
+}) {
   const r = pairWords(velloraWords, chromeWords, { maxDistancePt });
+  // Words drawn outside the page (words.py `offPage`, 2026-10-22): not part of the pairing (no
+  // reader sees them) and not part of `settings` (a section without them stays comparable); the
+  // gate ratchets vellora's per text (fidelity/gate/compare.mjs, off-page).
+  const offPage =
+    velloraOffPage && chromeOffPage
+      ? { vellora: velloraOffPage.map(spot), chrome: chromeOffPage.map(spot) }
+      : null;
   return {
     schema: PDF_PROBE_SCHEMA,
     semantics: PDF_PROBE_SEMANTICS,
@@ -287,6 +319,7 @@ export function probeResultV2({ velloraWords, chromeWords, maxDistancePt = MAX_P
     })),
     unpairedChrome: r.unpairedChrome.map((w) => ({ k: w.k, ...spot(w) })),
     unpairedVellora: r.unpairedVellora.map(spot),
+    ...(offPage ? { offPage } : {}),
   };
 }
 
@@ -312,6 +345,7 @@ export function compactProbeV2(probe) {
     })),
     unpairedChrome: probe.unpairedChrome,
     unpairedVellora: probe.unpairedVellora,
+    ...(probe.offPage ? { offPage: probe.offPage } : {}),
   };
 }
 

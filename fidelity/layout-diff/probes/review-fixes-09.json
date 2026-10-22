@@ -1,0 +1,231 @@
+{
+  "schema": "vellora-fidelity/probe-suite/1",
+  "name": "review-fixes-09",
+  "note": "Pagination / @page / RTL probes written for the step-09 review fixes (fidelity/baselines/port/README.md 09-review-fixes, 'Chrome probes'): page breaks, margins after forced breaks, @media-scoped break rules, RTL inline alignment and the step-09 fix-5 placements the corpus never exercises. Run by fidelity/layout-diff/probe-suite.mjs as pdf-probe v2 fixtures `probe-<id>` (run-all step pdf-probe-suite); the Chrome reference of each is printed at run time through fidelity/lib/chrome-reference.mjs like every other fixture. The HTML is copied verbatim from the attachment (asserted by fidelity/layout-diff/test/probe-suite.test.mjs).",
+  "source": "fidelity/baselines/port/09-review-fixes/attachments/chrome-probes-review-fixes.json",
+  "sourceDate": "2026-10-21",
+  "probes": [
+    {
+      "id": "m_ref",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; }</style></head><body><p>One</p><p style=\"break-before: page\">Two</p></body></html>"
+    },
+    {
+      "id": "m_posneg",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } section { margin-top: 25px; break-before: page } section p { margin-top: -10px }</style></head><body><p>One</p><section><p>Two</p></section></body></html>"
+    },
+    {
+      "id": "m_pospos",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } section { margin-top: 25px; break-before: page } section p { margin-top: 10px }</style></head><body><p>One</p><section><p>Two</p></section></body></html>"
+    },
+    {
+      "id": "m_allneg",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } section { margin-top: -10px; break-before: page } section p { margin-top: -5px }</style></head><body><p>One</p><section><p>Two</p></section></body></html>"
+    },
+    {
+      "id": "m_chain",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .a { margin-top: 30px; break-before: page } .b { margin-top: -20px } .c { margin-top: 15px } .d { margin-top: -4px }</style></head><body><p>One</p><div class=\"a\"><div class=\"b\"><div class=\"c\"><p class=\"d\">Two</p></div></div></div></body></html>"
+    },
+    {
+      "id": "m_negroot_pos_child",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } section { margin-top: -12px; break-before: page } section p { margin-top: 40px }</style></head><body><p>One</p><section><p>Two</p></section></body></html>"
+    },
+    {
+      "id": "m_dropped",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .empty { margin-top: 40px; margin-bottom: -15px; break-before: page } .next { margin-top: 5px }</style></head><body><p>One</p><div class=\"empty\"></div><p class=\"next\">Two</p></body></html>"
+    },
+    {
+      "id": "m_dropped_neg",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .empty { margin-top: -6px; margin-bottom: 30px; page-break-before: always } .next { margin-top: -20px }</style></head><body><p>One</p><div class=\"empty\"></div><p class=\"next\">Two</p></body></html>"
+    },
+    {
+      "id": "m_wrapper",
+      "targets": "fix2",
+      "introducedAt": "7e3eaff",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .w { margin-top: 30px; break-before: page } .w p:first-child { margin-top: -18px }</style></head><body><p>One</p><div class=\"w\"><p>Two</p><p>Three</p></div></body></html>"
+    },
+    {
+      "id": "f3_feature_match",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media print and (min-width: 1px) { .gone { display: none } .brk { break-before: page } }</style></head><body><p>First</p><p class=\"gone\">GoneText</p><p class=\"brk\">SecondPage</p></body></html>"
+    },
+    {
+      "id": "f3_feature_nomatch",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media print and (max-width: 1px) { .gone { display: none } .brk { break-before: page } }</style></head><body><p>First</p><p class=\"gone\">ShownText</p><p class=\"brk\">SamePage</p></body></html>"
+    },
+    {
+      "id": "f3_nested",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media print { @media (min-width: 10px) { .brk { break-before: page; color: rgb(200, 0, 0) } } }</style></head><body><p>First</p><p class=\"brk\">SecondPage</p></body></html>"
+    },
+    {
+      "id": "f3_nested_nomatch",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media print { @media (max-width: 10px) { .brk { break-before: page } } }</style></head><body><p>First</p><p class=\"brk\">SamePage</p></body></html>"
+    },
+    {
+      "id": "f3_orientation",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media (orientation: portrait) { .brk { page-break-before: always } }</style></head><body><p>First</p><p class=\"brk\">SecondPage</p></body></html>"
+    },
+    {
+      "id": "f3_not_feature",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media not print and (min-width: 1px) { .brk { break-before: page } }</style></head><body><p>First</p><p class=\"brk\">SamePage</p></body></html>"
+    },
+    {
+      "id": "f3_avoid_feature",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media print and (min-width: 1px) { .keep { break-inside: avoid } }</style></head><body><p>L01</p><p>L02</p><p>L03</p><p>L04</p><p>L05</p><p>L06</p><p>L07</p><p>L08</p><p>L09</p><p>L10</p><p>L11</p><div class=\"keep\"><p>K1</p><p>K2</p></div></body></html>"
+    },
+    {
+      "id": "f3_width_600",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media (min-width: 600px) { .brk { break-before: page; color: rgb(200, 0, 0) } }</style></head><body><p>First</p><p class=\"brk\">Width600</p></body></html>"
+    },
+    {
+      "id": "f3_width_750",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @media (min-width: 750px) { .brk { break-before: page; color: rgb(200, 0, 0) } }</style></head><body><p>First</p><p class=\"brk\">Width750</p></body></html>"
+    },
+    {
+      "id": "f3_page_in_feature",
+      "targets": "fix3",
+      "introducedAt": "01c4e86",
+      "html": "<!DOCTYPE html><html><head><style>body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } @page { size: A4; margin: 10mm } @media print and (min-width: 1px) { @page { margin-top: 40mm } }</style></head><body><p>First</p></body></html>"
+    },
+    {
+      "id": "r_rtl_start",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: start; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div dir=\"rtl\">Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_rtl_end",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: end; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div dir=\"rtl\">Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_rtl_right",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: right; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div dir=\"rtl\">Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_rtl_left",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: left; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div dir=\"rtl\">Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_ltr_end",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: end; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div>Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_ltr_start",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { text-align: start; width: 400px } span { padding-right: 20px; padding-left: 7px }</style></head><body><div>Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "r_rtl_root_start",
+      "targets": "fix4",
+      "introducedAt": "717d17d",
+      "html": "<!DOCTYPE html><html dir=\"rtl\"><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } div { width: 400px } span { padding-right: 20px }</style></head><body><div>Aaa <span>Bbb</span> Ccc</div></body></html>"
+    },
+    {
+      "id": "f5_ref",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; }</style></head><body><p>One</p><p>Ref</p></body></html>"
+    },
+    {
+      "id": "f5_line_big_margin",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .x { margin-top: 250px; break-before: page }</style></head><body><p>One</p><p class=\"x\">Two</p><p>Three</p></body></html>"
+    },
+    {
+      "id": "f5_box_partial",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .x { margin-top: 100px; break-before: page; height: 200px }</style></head><body><p>One</p><div class=\"x\"><p>TopLine</p></div><p>After</p></body></html>"
+    },
+    {
+      "id": "f5_lines_partial",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .x { margin-top: 100px; break-before: page }</style></head><body><p>One</p><div class=\"x\"><p>X01</p><p>X02</p><p>X03</p><p>X04</p><p>X05</p><p>X06</p><p>X07</p><p>X08</p><p>X09</p><p>X10</p></div><p>After</p></body></html>"
+    },
+    {
+      "id": "f5_table_partial",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } table { margin-top: 120px; break-before: page; border-collapse: collapse } td { padding: 0 } tr { break-inside: avoid }</style></head><body><p>One</p><table><tbody><tr><td>T01</td></tr><tr><td>T02</td></tr><tr><td>T03</td></tr><tr><td>T04</td></tr><tr><td>T05</td></tr><tr><td>T06</td></tr><tr><td>T07</td></tr><tr><td>T08</td></tr></tbody></table></body></html>"
+    },
+    {
+      "id": "f5_img_partial",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .x { margin-top: 40px; break-before: page } img { display: block; width: 100px; height: 240px }</style></head><body><p>One</p><div class=\"x\"><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAG0lEQVR4nGM4w8BANiJf56jmUc2jmkc1U0UzAPWMPtBewCaJAAAAAElFTkSuQmCC\"></div><p>After</p></body></html>"
+    },
+    {
+      "id": "f5_allowance_footer",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px; @bottom-center { content: \"Foot\"; font-size: 16px; line-height: 16px } } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .box { height: 255px } .tail { height: 26px }</style></head><body><div class=\"box\"><p>L01</p><p>L02</p><p>L03</p><p>L04</p><p>L05</p><p>L06</p><p>L07</p><p>L08</p><p>L09</p><p>L10</p><p>L11</p><p>L12</p><div class=\"tail\">Tail</div></div></body></html>"
+    },
+    {
+      "id": "f5_allowance_nofooter",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: 300px 300px; margin: 20px } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; } .box { height: 255px } .tail { height: 26px }</style></head><body><div class=\"box\"><p>L01</p><p>L02</p><p>L03</p><p>L04</p><p>L05</p><p>L06</p><p>L07</p><p>L08</p><p>L09</p><p>L10</p><p>L11</p><p>L12</p><div class=\"tail\">Tail</div></div></body></html>"
+    },
+    {
+      "id": "g_inline_body",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; }</style></head><body>Line001<br>Line002<br>Line003<br>Line004<br>Line005<br>Line006<br>Line007<br>Line008<br>Line009<br>Line010<br>Line011<br>Line012<br>Line013<br>Line014<br>Line015<br>Line016<br>Line017<br>Line018<br>Line019<br>Line020<br>Line021<br>Line022<br>Line023<br>Line024<br>Line025<br>Line026<br>Line027<br>Line028<br>Line029<br>Line030<br>Line031<br>Line032<br>Line033<br>Line034<br>Line035<br>Line036<br>Line037<br>Line038<br>Line039<br>Line040<br>Line041<br>Line042<br>Line043<br>Line044<br>Line045<br>Line046<br>Line047<br>Line048<br>Line049<br>Line050<br>Line051<br>Line052<br>Line053<br>Line054<br>Line055<br>Line056<br>Line057<br>Line058<br>Line059<br>Line060<br>Line061<br>Line062<br>Line063<br>Line064<br>Line065<br>Line066<br>Line067<br>Line068<br>Line069<br>Line070<br>Line071<br>Line072<br>Line073<br>Line074<br>Line075<br>Line076<br>Line077<br>Line078<br>Line079<br>Line080<br>Line081<br>Line082<br>Line083<br>Line084<br>Line085<br>Line086<br>Line087<br>Line088<br>Line089<br>Line090<br>Line091<br>Line092<br>Line093<br>Line094<br>Line095<br>Line096<br>Line097<br>Line098<br>Line099<br>Line100<br>Line101<br>Line102<br>Line103<br>Line104<br>Line105<br>Line106<br>Line107<br>Line108<br>Line109<br>Line110<br>Line111<br>Line112<br>Line113<br>Line114<br>Line115<br>Line116<br>Line117<br>Line118<br>Line119<br>Line120</body></html>"
+    },
+    {
+      "id": "g_p_body",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm } body { margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; } p { margin: 0; }</style></head><body><p>Line001</p><p>Line002</p><p>Line003</p><p>Line004</p><p>Line005</p><p>Line006</p><p>Line007</p><p>Line008</p><p>Line009</p><p>Line010</p><p>Line011</p><p>Line012</p><p>Line013</p><p>Line014</p><p>Line015</p><p>Line016</p><p>Line017</p><p>Line018</p><p>Line019</p><p>Line020</p><p>Line021</p><p>Line022</p><p>Line023</p><p>Line024</p><p>Line025</p><p>Line026</p><p>Line027</p><p>Line028</p><p>Line029</p><p>Line030</p><p>Line031</p><p>Line032</p><p>Line033</p><p>Line034</p><p>Line035</p><p>Line036</p><p>Line037</p><p>Line038</p><p>Line039</p><p>Line040</p><p>Line041</p><p>Line042</p><p>Line043</p><p>Line044</p><p>Line045</p><p>Line046</p><p>Line047</p><p>Line048</p><p>Line049</p><p>Line050</p><p>Line051</p><p>Line052</p><p>Line053</p><p>Line054</p><p>Line055</p><p>Line056</p><p>Line057</p><p>Line058</p><p>Line059</p><p>Line060</p><p>Line061</p><p>Line062</p><p>Line063</p><p>Line064</p><p>Line065</p><p>Line066</p><p>Line067</p><p>Line068</p><p>Line069</p><p>Line070</p><p>Line071</p><p>Line072</p><p>Line073</p><p>Line074</p><p>Line075</p><p>Line076</p><p>Line077</p><p>Line078</p><p>Line079</p><p>Line080</p><p>Line081</p><p>Line082</p><p>Line083</p><p>Line084</p><p>Line085</p><p>Line086</p><p>Line087</p><p>Line088</p><p>Line089</p><p>Line090</p><p>Line091</p><p>Line092</p><p>Line093</p><p>Line094</p><p>Line095</p><p>Line096</p><p>Line097</p><p>Line098</p><p>Line099</p><p>Line100</p><p>Line101</p><p>Line102</p><p>Line103</p><p>Line104</p><p>Line105</p><p>Line106</p><p>Line107</p><p>Line108</p><p>Line109</p><p>Line110</p><p>Line111</p><p>Line112</p><p>Line113</p><p>Line114</p><p>Line115</p><p>Line116</p><p>Line117</p><p>Line118</p><p>Line119</p><p>Line120</p></body></html>"
+    },
+    {
+      "id": "g_postmark_raw",
+      "targets": "fix5",
+      "introducedAt": "ad3a08e",
+      "html": "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<!--\n  Adapted from ActiveCampaign/postmark-templates (formerly wildbit), templates/basic/receipt/content.html\n  at commit fa73527acb4eb59cf673a54572d213e908f1515c (MIT, Copyright (c) 2015 Wildbit; see LICENSE and\n  NOTICE.md in this directory). Adaptation (diff intent; everything else is verbatim):\n    R1 removed the Google Fonts @import (the renderer never fetches the network); font stack unchanged\n    R2 the Mustachio each-block became a vellora for-block, loop fields prefixed with item.\n    R3 added an @page rule (A4, 10 mm) so vellora and Chromium print the same page box\n-->\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n    <meta name=\"x-apple-disable-message-reformatting\" />\n    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n    <meta name=\"color-scheme\" content=\"light dark\" />\n    <meta name=\"supported-color-schemes\" content=\"light dark\" />\n    <title></title>\n    <style type=\"text/css\" rel=\"stylesheet\" media=\"all\">\n    /* Base ------------------------------ */\n    @page {\n      size: A4;\n      margin: 10mm;\n    }\n    \n    body {\n      width: 100% !important;\n      height: 100%;\n      margin: 0;\n      -webkit-text-size-adjust: none;\n    }\n    \n    a {\n      color: #3869D4;\n    }\n    \n    a img {\n      border: none;\n    }\n    \n    td {\n      word-break: break-word;\n    }\n    \n    .preheader {\n      display: none !important;\n      visibility: hidden;\n      mso-hide: all;\n      font-size: 1px;\n      line-height: 1px;\n      max-height: 0;\n      max-width: 0;\n      opacity: 0;\n      overflow: hidden;\n    }\n    /* Type ------------------------------ */\n    \n    body,\n    td,\n    th {\n      font-family: \"Nunito Sans\", Helvetica, Arial, sans-serif;\n    }\n    \n    h1 {\n      margin-top: 0;\n      color: #333333;\n      font-size: 22px;\n      font-weight: bold;\n      text-align: left;\n    }\n    \n    h2 {\n      margin-top: 0;\n      color: #333333;\n      font-size: 16px;\n      font-weight: bold;\n      text-align: left;\n    }\n    \n    h3 {\n      margin-top: 0;\n      color: #333333;\n      font-size: 14px;\n      font-weight: bold;\n      text-align: left;\n    }\n    \n    td,\n    th {\n      font-size: 16px;\n    }\n    \n    p,\n    ul,\n    ol,\n    blockquote {\n      margin: .4em 0 1.1875em;\n      font-size: 16px;\n      line-height: 1.625;\n    }\n    \n    p.sub {\n      font-size: 13px;\n    }\n    /* Utilities ------------------------------ */\n    \n    .align-right {\n      text-align: right;\n    }\n    \n    .align-left {\n      text-align: left;\n    }\n    \n    .align-center {\n      text-align: center;\n    }\n    \n    .u-margin-bottom-none {\n      margin-bottom: 0;\n    }\n    /* Buttons ------------------------------ */\n    \n    .button {\n      background-color: #3869D4;\n      border-top: 10px solid #3869D4;\n      border-right: 18px solid #3869D4;\n      border-bottom: 10px solid #3869D4;\n      border-left: 18px solid #3869D4;\n      display: inline-block;\n      color: #FFF;\n      text-decoration: none;\n      border-radius: 3px;\n      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);\n      -webkit-text-size-adjust: none;\n      box-sizing: border-box;\n    }\n    \n    .button--green {\n      background-color: #22BC66;\n      border-top: 10px solid #22BC66;\n      border-right: 18px solid #22BC66;\n      border-bottom: 10px solid #22BC66;\n      border-left: 18px solid #22BC66;\n    }\n    \n    .button--red {\n      background-color: #FF6136;\n      border-top: 10px solid #FF6136;\n      border-right: 18px solid #FF6136;\n      border-bottom: 10px solid #FF6136;\n      border-left: 18px solid #FF6136;\n    }\n    \n    @media only screen and (max-width: 500px) {\n      .button {\n        width: 100% !important;\n        text-align: center !important;\n      }\n    }\n    /* Attribute list ------------------------------ */\n    \n    .attributes {\n      margin: 0 0 21px;\n    }\n    \n    .attributes_content {\n      background-color: #F4F4F7;\n      padding: 16px;\n    }\n    \n    .attributes_item {\n      padding: 0;\n    }\n    /* Related Items ------------------------------ */\n    \n    .related {\n      width: 100%;\n      margin: 0;\n      padding: 25px 0 0 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n    }\n    \n    .related_item {\n      padding: 10px 0;\n      color: #CBCCCF;\n      font-size: 15px;\n      line-height: 18px;\n    }\n    \n    .related_item-title {\n      display: block;\n      margin: .5em 0 0;\n    }\n    \n    .related_item-thumb {\n      display: block;\n      padding-bottom: 10px;\n    }\n    \n    .related_heading {\n      border-top: 1px solid #CBCCCF;\n      text-align: center;\n      padding: 25px 0 10px;\n    }\n    /* Discount Code ------------------------------ */\n    \n    .discount {\n      width: 100%;\n      margin: 0;\n      padding: 24px;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n      background-color: #F4F4F7;\n      border: 2px dashed #CBCCCF;\n    }\n    \n    .discount_heading {\n      text-align: center;\n    }\n    \n    .discount_body {\n      text-align: center;\n      font-size: 15px;\n    }\n    /* Social Icons ------------------------------ */\n    \n    .social {\n      width: auto;\n    }\n    \n    .social td {\n      padding: 0;\n      width: auto;\n    }\n    \n    .social_icon {\n      height: 20px;\n      margin: 0 8px 10px 8px;\n      padding: 0;\n    }\n    /* Data table ------------------------------ */\n    \n    .purchase {\n      width: 100%;\n      margin: 0;\n      padding: 35px 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n    }\n    \n    .purchase_content {\n      width: 100%;\n      margin: 0;\n      padding: 25px 0 0 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n    }\n    \n    .purchase_item {\n      padding: 10px 0;\n      color: #51545E;\n      font-size: 15px;\n      line-height: 18px;\n    }\n    \n    .purchase_heading {\n      padding-bottom: 8px;\n      border-bottom: 1px solid #EAEAEC;\n    }\n    \n    .purchase_heading p {\n      margin: 0;\n      color: #85878E;\n      font-size: 12px;\n    }\n    \n    .purchase_footer {\n      padding-top: 15px;\n      border-top: 1px solid #EAEAEC;\n    }\n    \n    .purchase_total {\n      margin: 0;\n      text-align: right;\n      font-weight: bold;\n      color: #333333;\n    }\n    \n    .purchase_total--label {\n      padding: 0 15px 0 0;\n    }\n    \n    body {\n      background-color: #F2F4F6;\n      color: #51545E;\n    }\n    \n    p {\n      color: #51545E;\n    }\n    \n    .email-wrapper {\n      width: 100%;\n      margin: 0;\n      padding: 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n      background-color: #F2F4F6;\n    }\n    \n    .email-content {\n      width: 100%;\n      margin: 0;\n      padding: 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n    }\n    /* Masthead ----------------------- */\n    \n    .email-masthead {\n      padding: 25px 0;\n      text-align: center;\n    }\n    \n    .email-masthead_logo {\n      width: 94px;\n    }\n    \n    .email-masthead_name {\n      font-size: 16px;\n      font-weight: bold;\n      color: #A8AAAF;\n      text-decoration: none;\n      text-shadow: 0 1px 0 white;\n    }\n    /* Body ------------------------------ */\n    \n    .email-body {\n      width: 100%;\n      margin: 0;\n      padding: 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n    }\n    \n    .email-body_inner {\n      width: 570px;\n      margin: 0 auto;\n      padding: 0;\n      -premailer-width: 570px;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n      background-color: #FFFFFF;\n    }\n    \n    .email-footer {\n      width: 570px;\n      margin: 0 auto;\n      padding: 0;\n      -premailer-width: 570px;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n      text-align: center;\n    }\n    \n    .email-footer p {\n      color: #A8AAAF;\n    }\n    \n    .body-action {\n      width: 100%;\n      margin: 30px auto;\n      padding: 0;\n      -premailer-width: 100%;\n      -premailer-cellpadding: 0;\n      -premailer-cellspacing: 0;\n      text-align: center;\n    }\n    \n    .body-sub {\n      margin-top: 25px;\n      padding-top: 25px;\n      border-top: 1px solid #EAEAEC;\n    }\n    \n    .content-cell {\n      padding: 45px;\n    }\n    /*Media Queries ------------------------------ */\n    \n    @media only screen and (max-width: 600px) {\n      .email-body_inner,\n      .email-footer {\n        width: 100% !important;\n      }\n    }\n    \n    @media (prefers-color-scheme: dark) {\n      body,\n      .email-body,\n      .email-body_inner,\n      .email-content,\n      .email-wrapper,\n      .email-masthead,\n      .email-footer {\n        background-color: #333333 !important;\n        color: #FFF !important;\n      }\n      p,\n      ul,\n      ol,\n      blockquote,\n      h1,\n      h2,\n      h3,\n      span,\n      .purchase_item {\n        color: #FFF !important;\n      }\n      .attributes_content,\n      .discount {\n        background-color: #222 !important;\n      }\n      .email-masthead_name {\n        text-shadow: none !important;\n      }\n    }\n    \n    :root {\n      color-scheme: light dark;\n      supported-color-schemes: light dark;\n    }\n    </style>\n    <!--[if mso]>\n    <style type=\"text/css\">\n      .f-fallback  {\n        font-family: Arial, sans-serif;\n      }\n    </style>\n  <![endif]-->\n  </head>\n  <body>\n    <span class=\"preheader\">This is a receipt for your recent purchase on {{ purchase_date }}. No payment is due with this receipt.</span>\n    <table class=\"email-wrapper\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n      <tr>\n        <td align=\"center\">\n          <table class=\"email-content\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n            <tr>\n              <td class=\"email-masthead\">\n                <a href=\"https://example.com\" class=\"f-fallback email-masthead_name\">\n                [Product Name]\n              </a>\n              </td>\n            </tr>\n            <!-- Email Body -->\n            <tr>\n              <td class=\"email-body\" width=\"570\" cellpadding=\"0\" cellspacing=\"0\">\n                <table class=\"email-body_inner\" align=\"center\" width=\"570\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n                  <!-- Body content -->\n                  <tr>\n                    <td class=\"content-cell\">\n                      <div class=\"f-fallback\">\n                        <h1>Hi {{name}},</h1>\n                        <p>Thanks for using [Product Name]. This email is the receipt for your purchase. No payment is due.</p>\n                        <p>This purchase will appear as “[Credit Card Statement Name]” on your credit card statement for your {{credit_card_brand}} ending in {{credit_card_last_four}}. Need to <a href=\"{{billing_url}}\">update your payment information</a>?</p>\n                        <!-- Discount -->\n                        <table class=\"discount\" align=\"center\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n                          <tr>\n                            <td align=\"center\">\n                              <h1 class=\"f-fallback discount_heading\">10% off your next purchase!</h1>\n                              <p class=\"f-fallback discount_body\">Thanks for your support! Here's a coupon for 10% off your next purchase if used by {{expiration_date}}.</p>\n                              <!-- Border based button\n           https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->\n                              <table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" role=\"presentation\">\n                                <tr>\n                                  <td align=\"center\">\n                                    <a href=\"http://example.com\" class=\"f-fallback button button--green\" target=\"_blank\">Use this discount now...</a>\n                                  </td>\n                                </tr>\n                              </table>\n                            </td>\n                          </tr>\n                        </table>\n                        <table class=\"purchase\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n                          <tr>\n                            <td>\n                              <h3>{{receipt_id}}</h3></td>\n                            <td>\n                              <h3 class=\"align-right\">{{date}}</h3></td>\n                          </tr>\n                          <tr>\n                            <td colspan=\"2\">\n                              <table class=\"purchase_content\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n                                <tr>\n                                  <th class=\"purchase_heading\" align=\"left\">\n                                    <p class=\"f-fallback\">Description</p>\n                                  </th>\n                                  <th class=\"purchase_heading\" align=\"right\">\n                                    <p class=\"f-fallback\">Amount</p>\n                                  </th>\n                                </tr>\n                                {% for item in receipt_details %}\n                                <tr>\n                                  <td width=\"80%\" class=\"purchase_item\"><span class=\"f-fallback\">{{item.description}}</span></td>\n                                  <td class=\"align-right\" width=\"20%\" class=\"purchase_item\"><span class=\"f-fallback\">{{item.amount}}</span></td>\n                                </tr>\n                                {% endfor %}\n                                <tr>\n                                  <td width=\"80%\" class=\"purchase_footer\" valign=\"middle\">\n                                    <p class=\"f-fallback purchase_total purchase_total--label\">Total</p>\n                                  </td>\n                                  <td width=\"20%\" class=\"purchase_footer\" valign=\"middle\">\n                                    <p class=\"f-fallback purchase_total\">{{total}}</p>\n                                  </td>\n                                </tr>\n                              </table>\n                            </td>\n                          </tr>\n                        </table>\n                        <p>If you have any questions about this receipt, simply reply to this email or reach out to our <a href=\"{{support_url}}\">support team</a> for help.</p>\n                        <p>Cheers,\n                          <br>The [Product Name] team</p>\n                        <!-- Action -->\n                        <table class=\"body-action\" align=\"center\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n                          <tr>\n                            <td align=\"center\">\n                              <!-- Border based button\n           https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->\n                              <table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" role=\"presentation\">\n                                <tr>\n                                  <td align=\"center\">\n                                    <a href=\"{{action_url}}\" class=\"f-fallback button button--blue\" target=\"_blank\">Download as PDF</a>\n                                  </td>\n                                </tr>\n                              </table>\n                            </td>\n                          </tr>\n                        </table>\n                        <!-- Sub copy -->\n                        <table class=\"body-sub\" role=\"presentation\">\n                          <tr>\n                            <td>\n                              <p class=\"f-fallback sub\"><strong>Need a printable copy for your records?</strong> You can <a href=\"{{action_url}}\">download a PDF version</a>.</p>\n                              <p class=\"f-fallback sub\">Moved recently? Have a new credit card? You can easily <a href=\"{{billing_url}}\">update your billing information</a>.</p>\n                            </td>\n                          </tr>\n                        </table>\n                      </div>\n                    </td>\n                  </tr>\n                </table>\n              </td>\n            </tr>\n            <tr>\n              <td>\n                <table class=\"email-footer\" align=\"center\" width=\"570\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n                  <tr>\n                    <td class=\"content-cell\" align=\"center\">\n                      <p class=\"f-fallback sub align-center\">\n                        [Company Name, LLC]\n                        <br>1234 Street Rd.\n                        <br>Suite 1234\n                      </p>\n                    </td>\n                  </tr>\n                </table>\n              </td>\n            </tr>\n          </table>\n        </td>\n      </tr>\n    </table>\n  </body>\n</html>"
+    }
+  ]
+}

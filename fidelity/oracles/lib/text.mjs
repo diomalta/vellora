@@ -157,6 +157,10 @@ export function scoreExtraction({ subjectText, controlText, expectedTokens, temp
     subjectOnly: {
       missing: head(verdict.missing),
       missingCount: verdict.missing.length,
+      // The full list (additive, 2026-10-22): the gate ratchets the SET of missing tokens per
+      // extractor (fidelity/gate/compare.mjs compareMissingTokens); `missing` stays the first
+      // 40 for the report.
+      missingAll: verdict.missing,
       extra: head(verdict.extra),
       extraCount: verdict.extra.length,
       reordered: head(verdict.reordered),

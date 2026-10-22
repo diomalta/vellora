@@ -13,6 +13,9 @@
 //   layout-diff      fidelity/layout-diff/run.mjs          per-layer attribution, every fixture
 //   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF (v2:
 //                    PyMuPDF baselines, position pairing, unpaired words; needs fidelity/.venv)
+//   pdf-probe-suite  fidelity/layout-diff/probe-suite.mjs  the probe fixtures (layout-diff/probes/:
+//                    pagination / @page / RTL documents the corpus never exercises) as pdf-probe
+//                    v2 fixtures `probe-<id>`, Chrome references printed at run time
 //
 // then writes ONE combined summary: <out>/summary.json (+ summary.md) with the environment, the
 // exact commands, per-step exit codes, per-fixture per-oracle verdicts keyed by the criterion IDs
@@ -92,6 +95,7 @@ import {
 } from "./combine/verdicts.mjs";
 import { gateOptions, gateRefusal, runGate } from "./gate/run.mjs";
 import { loadExpectedFailures } from "./layout-diff/lib/expected-failures.mjs";
+import { loadSuite as loadProbeSuite, probeFixture } from "./layout-diff/probe-suite.mjs";
 import { FIXTURE_IDS as LEGACY_FIXTURE_IDS } from "./oracles/lib/html-prep.mjs";
 import { pythonUnavailableReason, venvPython } from "./oracles/lib/paths.mjs";
 
@@ -106,6 +110,7 @@ const STEP_IDS = [
   "oracles-corpus",
   "layout-diff",
   "pdf-probe",
+  "pdf-probe-suite",
 ];
 /** Fixtures under fixtures/ that are deliberately not measured, with the reason. */
 const EXCLUDED_FIXTURES = {
@@ -576,6 +581,30 @@ async function main() {
             ],
             outputs: layoutSummary.fixtures.map((f) =>
               join(dirs.layoutDiff, f.fixture, "run-all", "pdf-probe.json"),
+            ),
+            logDir,
+          }),
+    );
+  }
+
+  // 5c. Probe fixtures (2026-10-22): the committed probe suite as pdf-probe v2 rows
+  //     layout-diff/probe-<id>/run-all/pdf-probe.json, which the gate loads like any fixture's.
+  {
+    const suite = loadProbeSuite();
+    const why =
+      gate("pdf-probe-suite") ??
+      (chromeOk ? null : "no Chrome (the probes' references are printed at run time)") ??
+      (venvPython() ? null : `PyMuPDF word extractor: ${pythonUnavailableReason()}`);
+    steps.push(
+      why
+        ? notRun("pdf-probe-suite", why)
+        : await runNode({
+            id: "pdf-probe-suite",
+            script: "fidelity/layout-diff/probe-suite.mjs",
+            args: ["--label", "run-all", "--out", dirs.layoutDiff, "--chrome", opts.chrome],
+            // A probe the strict gate now rejects has no pdf-probe.json: the step errors.
+            outputs: suite.probes.map((p) =>
+              join(dirs.layoutDiff, probeFixture(p.id), "run-all", "pdf-probe.json"),
             ),
             logDir,
           }),

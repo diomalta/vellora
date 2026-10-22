@@ -84,6 +84,7 @@ export const CANARY_NAMES = Object.freeze({
   line: "pdf-probe v2: one glyph run of the subject moved 2pt vertically, away from Chrome",
   ascent:
     "pdf-probe v2: same glyphs, every subject FontDescriptor /Ascent rewritten (must NOT be flagged)",
+  offPage: "pdf-probe v2: one glyph run of the subject moved below the MediaBox (off-page text)",
 });
 
 /**
@@ -102,12 +103,26 @@ export function pdfProbeCanaries({
 }) {
   mkdirSync(workDir, { recursive: true });
   const tag = label ? `${label}: ` : "";
-  const v = pdfWordsV2(velloraPdf, python).words;
-  const c = pdfWordsV2(chromePdf, python).words;
-  const baseProbe = probeResultV2({ velloraWords: v, chromeWords: c });
+  const vw = pdfWordsV2(velloraPdf, python);
+  const cw = pdfWordsV2(chromePdf, python);
+  const v = vw.words;
+  const c = cw.words;
+  const baseProbe = probeResultV2({
+    velloraWords: v,
+    chromeWords: c,
+    velloraOffPage: vw.offPage,
+    chromeOffPage: cw.offPage,
+  });
   const base = compactProbeV2(baseProbe);
-  const sectionOf = (words) =>
-    compactProbeV2(probeResultV2({ velloraWords: words, chromeWords: c }));
+  const sectionOf = (words, offPage = vw.offPage) =>
+    compactProbeV2(
+      probeResultV2({
+        velloraWords: words,
+        chromeWords: c,
+        velloraOffPage: offPage,
+        chromeOffPage: cw.offPage,
+      }),
+    );
   const out = [];
 
   // 1. +6 pt body shift (the layout-consensus canary's PDF).
@@ -274,6 +289,59 @@ export function pdfProbeCanaries({
         pdftotext ? {} : { ran: false, reason: "pdftotext not found (the v1 control needs it)" },
       ),
     );
+  }
+  // 5. One glyph run moved below the MediaBox (step 08's "Download as PDF" at 846 pt on an
+  //    841.92 pt page): PyMuPDF's page words drop it, so only the off-page record shows it; the
+  //    off-page item for its text must gate. Control: the run's words leave the page words and
+  //    appear, with the same x, in the off-page words, nothing else moves.
+  {
+    let done = null;
+    for (const p of baseProbe.pairs.slice(0, 80)) {
+      // Far below any page size the fixtures use (A4 841.92 pt, Letter 792 pt).
+      const dy = Math.ceil(5000 - p.vellora.y);
+      const pdf = join(workDir, "pdf-probe-off-page.pdf");
+      const m = mutate(
+        python,
+        "shift-run",
+        velloraPdf,
+        pdf,
+        p.vellora.page,
+        p.vellora.x,
+        p.vellora.y,
+        dy,
+      );
+      if (m.applied) {
+        done = { p, dy, pdf };
+        break;
+      }
+    }
+    if (!done) {
+      out.push(
+        row(tag + CANARY_NAMES.offPage, "n/a", "no krilla glyph run matched a paired word", false),
+      );
+    } else {
+      const moved = pdfWordsV2(done.pdf, python);
+      const d = wordDiff(v, moved.words);
+      const offBefore = new Set((vw.offPage ?? []).map(spotKey));
+      const newOff = (moved.offPage ?? []).filter((w) => !offBefore.has(spotKey(w)));
+      const control =
+        d.gone.length > 0 &&
+        !d.added.length &&
+        newOff.length === d.gone.length &&
+        newOff.every((w) => d.gone.some((g0) => g0.text === w.text && Math.abs(g0.x - w.x) < 0.01));
+      const g = gateItems(base, sectionOf(moved.words, moved.offPage));
+      const item = g.gating.find(
+        (i) => i.key === `pdf-probe|${FX}|off-page|${textKey(done.p.text)}`,
+      );
+      out.push(
+        row(
+          tag + CANARY_NAMES.offPage,
+          `"${done.p.text}" moved ${done.dy} pt below its line, past the page edge: its off-page item gates; control: the run's ${d.gone.length} word(s) left the page words and are exactly the new off-page words`,
+          `run at (${done.p.vellora.x}, ${done.p.vellora.y}) p${done.p.vellora.page} moved ${done.dy} pt: page words gone ${d.gone.length}, added ${d.added.length}; new off-page ${newOff.length}; off-page item ${item ? `${item.before} -> ${item.after}` : "not gating"}; gating total ${g.gating.length}`,
+          Boolean(control && item),
+        ),
+      );
+    }
   }
   return out;
 }
