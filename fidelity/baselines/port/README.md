@@ -1777,3 +1777,11 @@ INDICATIVE.
   f5_table_partial (dy 0 → −15 pt on 7 rows) and f5_allowance_footer ("Tail" unpaired) and passes
   the other six (details: `fidelity/layout-diff/README.md`, "Probe fixtures"). The head and pin
   views cannot see the probes until someone renders them with those builds' addons.
+- **The views at 09 under all of the above** (post-hoc, no re-render; report in
+  `fidelity/gate/snapshots/2026-10-22/gate-fixes/`; darwin 27.0.0 arm64, Node v22.23.2,
+  INDICATIVE): `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run
+  fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json
+  --step 09-review-fixes --layout-from <09 run copy>`. Previous link: 0 gating. Head 00-start:
+  1386 gating (pdf-probe 1342, WPT regression 38, value 6) plus 10 declared. Pin view: (c) 241
+  (pdf-probe 179, WPT 46, value 16), declared 10; merge to main BLOCKED. 20/20 gate canaries
+  caught; ledger base "DEBT.json absent at merge-base a8b126d8a133: first population".
