@@ -16,6 +16,15 @@ const render = makeVelloraRender({
   inlineCss: config.inlineCss,
   bundledFontsDir: config.bundledFontsDir,
   xhtmlBridge: config.xhtmlRender ? makeXhtmlBridge({ bin: config.xhtmlRender }) : null,
+  // `run.mjs --raw`'s second pass: every node through the raw-Blitz render (lib/xhtml-bridge.mjs).
+  rawBridges: config.raw
+    ? {
+        html: makeXhtmlBridge({ bin: config.raw.bin, mode: { raw: true, parser: "html" } }),
+        xml: config.raw.xmlParse
+          ? makeXhtmlBridge({ bin: config.raw.bin, mode: { raw: true, parser: "xml" } })
+          : null,
+      }
+    : null,
 });
 // Rasterized nodes are cached per worker: shared references (e.g. ref-filled-green-100px-square)
 // recur across hundreds of tests.

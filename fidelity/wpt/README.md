@@ -39,7 +39,7 @@ defaults), `--filter <regex>`, `--limit <n>`, `--jobs <n>`, `--vellora <other bu
 `--upstream auto|none|<blitz-sha>`, `--rasterizer pdftocairo|pdftoppm`, `--no-aa`, `--no-inline-css`,
 `--artifacts fail|all|none`, `--keep-pdf`, `--label <provenance note>` (required for a build with no
 git commit), `--allow-unpinned` (measure a WPT tree that is not exactly the pin; no ratchet),
-`--chain-references` (follow a reference's own links — not wptrunner semantics, diagnosis only).
+`--chain-references` (follow a reference's own links — not wptrunner semantics, diagnosis only), `--raw` (also render every test from raw Blitz layout and record `rawOutcome`; see "Raw-Blitz mode").
 
 Requirements: Node >= 22.12, git, poppler (`pdftocairo`, `pdfinfo`; `pdftoppm` only for
 `--rasterizer pdftoppm`; override paths with `PDFTOCAIRO`/`PDFINFO`/`PDFTOPPM`). Chrome only for
@@ -316,6 +316,73 @@ number is an **upper bound**, not a like-for-like oracle:
 * executes scripts (`blitz-vibey-script`), loads resources through a WPT-tree net provider, waits
   for `reftest-wait`; quarantines timeout-prone tests (`timeout-quarantine.txt`: 252 entries, 251
   under `css/`, none in this runner's default suites); a blank (all-zero) test buffer is a failure.
+
+## Raw-Blitz mode (`--raw`, `lib/raw.mjs`): who owns a lost pass
+
+A WPT item has no layer vector (no `N0`/`B0`/`L0`/`P` positions, `fidelity/layout-diff/`), so when a
+pass is lost between two runs the gate cannot tell from the outcome alone whether Blitz or one of
+vellora's layers lost it. `--raw` renders every selected reftest a second time from **raw Blitz
+layout** and records the outcome beside the product one:
+
+```sh
+node fidelity/wpt/run.mjs --raw [suite ...] [--filter <regex>] [--chrome-from <results.json>]
+```
+
+**What "raw" is** (CONFIRMED from source, `crates/vellora-core/src/lib.rs::debug_render_raw_blitz`,
+test-covered in `crates/vellora-core/src/raw_blitz_tests.rs`): the product pipeline with vellora's
+own corrections of Blitz's layout switched off. It is the render-level analogue of the layout-diff
+`B0` layer: its text runs equal the dump's raw `B0` runs and its boxes the walk's `L0` layer
+(asserted on a probe with every compensation and pass active).
+
+| layer | in raw? | why |
+|---|---|---|
+| strict gates (CSS scan, depth, fonts, element gate, unresolved images) | kept | the vocabulary must match: a rejected test is `unsupported` in both renders |
+| `@page` box (size, margins), print media, parser, fonts, images | kept | Blitz's inputs (its viewport is the content box), not corrections; XML-served nodes keep the XML parse unless `--xhtml-parser html` |
+| box walk placement (containing-block origins, `block_offset`) | kept | this is how Blitz's own painter places boxes and runs (`blitz-paint` `draw_inline_layout`); there is no PDF without reading the layout |
+| reader compensation: inline `padding-right` advance (`run_padding_right_px`) | **dropped** | Blitz's painter does not make it |
+| `layout_normalize` passes (`LAYOUT_NORMALIZE_PASSES`) | **dropped** | vellora's post-layout corrections |
+| pagination (`pagination::paginate`): break rules, keep-together, `<thead>` repeat, fit tolerance, oversize handling, margin boxes | **replaced** by `pagination::paginate_flat` | Blitz has no paginator, so pagination cannot be removed, only made trivial: the flow is cut into page-tall bands (page 1 = the flow verbatim, what a viewport screenshot shows; a rect is clipped into each band it crosses, a run goes to the band of its baseline), no margin boxes, at most 200 pages |
+| krilla emit, rasterizer, comparison | kept | same harness semantics as `outcome` |
+
+The raw render runs in the `xhtml_render` example binary (request record `R`, parser record `S`,
+`examples/xhtml_render.rs`), through vellora's own `renderPdf` as its `_bridge`, in a second worker
+pool after the product pass (fresh workers, so no node cache mixes the two). A binary built before
+the raw mode is refused before any test runs. `outcome`, `outcomes.json`'s `results`, the Chrome
+oracle and the ratchet are exactly what a run without `--raw` records; `config.raw` is not part of
+`comparisonConfig`.
+
+**Fields.** `results.json`: per test `rawOutcome` and `raw` (`outcome`, `node`, `cause`,
+`comparisons`, `blank`, `pageCount` of the raw pass); top-level `raw` (the mode record, seconds,
+`counts`, `matrix` = `outcome` x `rawOutcome`). `outcomes.json`: `rawMode` and `rawOutcomes`
+(`{ test: rawOutcome }`), present only on `--raw` runs. `summary.md` gains the matrix.
+**`rawOutcome` uses the `outcome` vocabulary** (`pass`, `pass-blank`, `fail`, `unsupported`, `error`,
+`timeout`, `skip`) with the same meanings; `skip` = a harness-level skip, rendered by neither pass.
+
+**Candidate class of a lost pass** (`rawCandidateClass`, an attribution aid for
+`fidelity/ACCEPTANCE.md` GATE-A1, not a gate verdict):
+
+| evidence | candidate |
+|---|---|
+| Chrome fails the same reftest (`chrome.outcome = fail`) | (a): the old pass was not evidence of correct rendering |
+| `rawOutcome` is not a pass (`fail`, `pass-blank`, `error`, `timeout`) | (b): Blitz's own layout already fails without any vellora correction; upstream-owned candidate |
+| `rawOutcome = pass`, `outcome` not a pass | (c): a vellora layer loses the pass; vellora owns it |
+| `rawOutcome = unsupported` | none: the raw render runs the same gates; judged by the declared-rejection rule |
+
+Limits (read before using a raw outcome as evidence):
+
+- **Print-mode tests**: the flat paginator is a worse paginator than any, so a raw `fail` of a
+  paged test can be the flat paginator's own; a print-mode (b) is weak evidence. A raw `pass` there
+  is strong (c) evidence: the plainest pagination passes and vellora's does not. Screen-mode tests
+  compare page 1 only, where flat pagination is the viewport screenshot.
+- **(b) is relative to vellora's Blitz build**: `blitz-dom` with `default-features = false` (no
+  `floats`, no system fonts) and vellora's bundled fonts. Blitz's own runner (section above) builds
+  with `floats`; a float test that fails raw here may pass upstream. The per-test `upstream`
+  status, when the run has one, is the cross-check.
+- **(b) against the pin** (`fidelity/baselines/pin`, Blitz `2003ba5`): a raw failure at beta.4 says
+  Blitz beta.4 fails it; the pass at the pin may still have come from a vellora layer the chain
+  removed since (e.g. a deleted `layout_normalize` pass). Read it with the pin's own evidence.
+- The walk is kept, so a defect in how vellora *reads* Blitz's layout (rather than corrects it) is
+  in both renders and shows up as (b). The `B0`/`L0` equality test bounds this for the probe only.
 
 ## Expectations ratchet
 
