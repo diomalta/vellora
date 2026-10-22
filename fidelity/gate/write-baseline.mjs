@@ -112,7 +112,14 @@ export function writeBaseline({
   command,
   forced = false,
   attach = [],
+  format = biomeFormat,
+  formatterUnavailable = biomeUnavailable,
 }) {
+  // Like rescore-pdf-probe (I5): a baseline whose files biome did not format must not be written
+  // and hashed with the failure recorded as a note (`npm run lint` would then fail on it, and a
+  // re-format would break the recorded sha256s). Refuse before writing anything.
+  const why = formatterUnavailable();
+  if (why) throw new Error(`biome is not runnable (${why}): a baseline must format before hashing`);
   const snap = loadRunDir(runDir);
   // Extra evidence files (e.g. the same run gated against another baseline), hashed like the rest.
   if (attach.length) mkdirSync(join(outDir, "attachments"), { recursive: true });
@@ -215,7 +222,7 @@ export function writeBaseline({
   }
   // The baseline is committed and `npm run lint` (biome) checks JSON under fidelity/baselines:
   // format with the repo's own biome BEFORE hashing, so the recorded sha256s stay valid.
-  const formatted = biomeFormat(outDir);
+  const formatted = assertFormatted(format(outDir), outDir);
   const files = Object.fromEntries(
     listFiles(outDir)
       .filter((f) => f !== "manifest.json" && f !== "README.md")
@@ -267,7 +274,7 @@ export function writeBaseline({
   };
   manifest.formatting = formatted;
   writeFileSync(join(outDir, "manifest.json"), json(manifest));
-  biomeFormat(join(outDir, "manifest.json"));
+  assertFormatted(format(join(outDir, "manifest.json")), join(outDir, "manifest.json"));
   return manifest;
 }
 
