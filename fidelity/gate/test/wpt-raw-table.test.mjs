@@ -87,3 +87,45 @@ test("sameWay: null when raw passed or did not run", () => {
   assert.equal(sameWay({ rawOutcome: null }, {}), null);
   assert.equal(sameWay({ rawOutcome: "fail" }, null), null);
 });
+
+test("(a) per view: the view's own old run proves its pass false by page count", () => {
+  const pin = doc({ t: "pass" });
+  const head = doc({ t: "pass" });
+  const subject = doc({ t: "fail" });
+  const old = (pages, chromePages) =>
+    new Map([
+      [
+        "t",
+        {
+          comparisons: [{ pageCounts: [pages, pages] }],
+          chrome: { comparisons: [{ pageCounts: [chromePages, chromePages] }] },
+        },
+      ],
+    ]);
+  const rows = buildRows({
+    subject,
+    refs: [
+      ["pin", pin],
+      ["head", head],
+    ],
+    chain: [],
+    tests: [
+      {
+        test: "t",
+        mode: "print",
+        outcome: "fail",
+        rawOutcome: "fail",
+        chrome: { outcome: "fail" },
+      },
+    ],
+    samePdfOf: () => null,
+    oldRuns: new Map([
+      ["pin", old(2, 4)],
+      ["head", old(4, 4)],
+    ]),
+  });
+  // Chrome failing its own reftest does not make the head view (a).
+  assert.deepEqual(rows[0].candidates, { pin: "a", head: "b" });
+  assert.equal(rows[0].candidate, "mixed");
+  assert.equal(rows[0].oldPass.pin.pageMismatch, true);
+});

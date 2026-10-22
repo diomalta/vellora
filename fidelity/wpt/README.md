@@ -364,7 +364,7 @@ oracle and the ratchet are exactly what a run without `--raw` records; `config.r
 
 | evidence | candidate |
 |---|---|
-| Chrome fails the same reftest (`chrome.outcome = fail`) | (a): the old pass was not evidence of correct rendering |
+| the OLD pass is a false pass: test = reference != Chrome by ink (the old run flagged it `ink-missing-vs-chrome` / `ink-displaced-vs-chrome`) or by page count (old test pages != Chrome's), `oldPassProvenFalse` | (a), GATE-A1's criterion. Chrome failing its own reftest is reported beside the class, not used for it |
 | `rawOutcome` is not a pass (`fail`, `pass-blank`, `error`, `timeout`) | (b): Blitz's own layout already fails without any vellora correction; upstream-owned candidate |
 | `rawOutcome = pass`, `outcome` not a pass | (c): a vellora layer loses the pass; vellora owns it |
 | `rawOutcome = unsupported` | none: the raw render runs the same gates; judged by the declared-rejection rule |

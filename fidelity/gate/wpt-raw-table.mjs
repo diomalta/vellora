@@ -13,13 +13,14 @@
 //   node fidelity/gate/wpt-raw-table.mjs --run <raw run dir> --subject <expectations.json>
 //     --ref pin=<expectations.json> --ref head=<expectations.json>
 //     [--chain <name>=<expectations.json> ...] [--upstream-from <results.json>]
+//     [--old-run <ref name>=<results.json> ...]   the ref's own run (old pass vs Chrome, (a))
 //     [--portable <prefix>=<label> ...] --out <dir>
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { rawCandidateClass } from "../wpt/lib/raw.mjs";
+import { oldPassProvenFalse, rawCandidateClass } from "../wpt/lib/raw.mjs";
 
 function parse(argv) {
-  const o = { refs: [], chain: [], portable: [] };
+  const o = { refs: [], chain: [], portable: [], oldRuns: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const v = () => argv[++i];
@@ -32,6 +33,7 @@ function parse(argv) {
     else if (a === "--ref") o.refs.push(pair(v()));
     else if (a === "--chain") o.chain.push(pair(v()));
     else if (a === "--upstream-from") o.upstreamFrom = v();
+    else if (a === "--old-run") o.oldRuns.push(pair(v()));
     else if (a === "--portable") o.portable.push(pair(v()));
     else if (a === "--out") o.out = v();
     else throw new Error(`unknown option ${a}`);
@@ -74,7 +76,15 @@ export function sameWay(row, r) {
 }
 
 /** The table rows (pure apart from `samePdfOf`). */
-export function buildRows({ subject, refs, chain, tests, upstream, samePdfOf }) {
+export function buildRows({
+  subject,
+  refs,
+  chain,
+  tests,
+  upstream,
+  samePdfOf,
+  oldRuns = new Map(),
+}) {
   const byTest = new Map(tests.map((t) => [t.test, t]));
   const rows = [];
   for (const [test, after] of Object.entries(subject.results)) {
@@ -94,6 +104,22 @@ export function buildRows({ subject, refs, chain, tests, upstream, samePdfOf }) 
       if (prev === "pass" && cur !== "pass") lostAt = chain[i][0];
     }
     const chromeOutcome = r?.chrome?.outcome ?? null;
+    // GATE-A1 (a) evidence, per view, from the view's own (old) run: was its pass false?
+    const oldPass = {};
+    for (const [name, doc] of refs) {
+      if (doc.results[test] !== "pass") continue;
+      const old = oldRuns.get(name)?.get(test);
+      oldPass[name] = {
+        ...oldPassProvenFalse({
+          flags: doc.suspectPasses?.[test],
+          pages: old?.comparisons?.[0]?.pageCounts?.[0],
+          chromePages: old?.chrome?.comparisons?.[0]?.pageCounts?.[0],
+        }),
+        pages: old?.comparisons?.[0]?.pageCounts?.[0] ?? null,
+        chromePages: old?.chrome?.comparisons?.[0]?.pageCounts?.[0] ?? null,
+        measured: Boolean(old),
+      };
+    }
     const row = {
       test,
       mode: r?.mode ?? null,
@@ -111,13 +137,21 @@ export function buildRows({ subject, refs, chain, tests, upstream, samePdfOf }) 
       chrome: chromeOutcome,
       chromePageCounts: r?.chrome?.comparisons?.[0]?.pageCounts ?? null,
       upstream: upstream?.get(test) ?? null,
+      oldPass,
     };
     row.rawSameWay = sameWay(row, r);
-    row.candidate = rawCandidateClass({
-      outcome: row.outcome ?? after,
-      rawOutcome: row.rawOutcome ?? undefined,
-      chromeOutcome,
-    });
+    row.candidates = Object.fromEntries(
+      Object.entries(oldPass).map(([name, ev]) => [
+        name,
+        rawCandidateClass({
+          outcome: row.outcome ?? after,
+          rawOutcome: row.rawOutcome ?? undefined,
+          oldPassFalse: ev.falsePass,
+        }),
+      ]),
+    );
+    const classes = [...new Set(Object.values(row.candidates))];
+    row.candidate = classes.length === 1 ? classes[0] : "mixed";
     rows.push(row);
   }
   return rows.sort((a, b) => (a.test < b.test ? -1 : 1));
@@ -125,9 +159,11 @@ export function buildRows({ subject, refs, chain, tests, upstream, samePdfOf }) 
 
 function tally(rows, view) {
   const out = {};
+  const name = view.replace(/-flagged$/, "");
   for (const r of rows) {
     if (!r.views.includes(view)) continue;
-    out[r.candidate] = (out[r.candidate] ?? 0) + 1;
+    const c = r.candidates[name];
+    out[c] = (out[c] ?? 0) + 1;
   }
   return out;
 }
@@ -162,7 +198,7 @@ function markdown(rows, meta) {
   L.push("## Per test");
   L.push("");
   L.push(
-    "`same PDF` = raw and product renderings byte-identical (test / first reference); `raw fails` = `identical-pdf`, `same-diff` (same comparison, pixel count, max difference) or `different`; `lost at` = the chain link where the pass was lost; `upstream` = Blitz's own runner (blitz-paint, `floats` on, dify tolerance; fidelity/wpt/README.md), from the 09 run copy.",
+    "`class`: (a) only when the view's OLD pass is proven false (ink flag or old page count != Chrome's, `oldPass` in the JSON); `chrome` = Chrome's own reftest verdict on the same test (supporting evidence, not the (a) criterion). `same PDF` = raw and product renderings byte-identical (test / first reference); `raw fails` = `identical-pdf`, `same-diff` (same comparison, pixel count, max difference) or `different`; `lost at` = the chain link where the pass was lost; `upstream` = Blitz's own runner (blitz-paint, `floats` on, dify tolerance; fidelity/wpt/README.md), from the 09 run copy.",
   );
   L.push("");
   const chainNames = Object.keys(rows[0]?.chain ?? {});
@@ -179,7 +215,13 @@ function markdown(rows, meta) {
       .map((p) => (p ? p.join(":") : "-"))
       .join(" / ");
     L.push(
-      `| \`${r.test}\` | ${r.mode ?? "-"} | ${r.views.join(", ")} | ${chainNames.map((n) => short(r.chain[n])).join(" | ")} | ${r.lostAt ?? "-"} | ${short(r.outcome)} | ${short(r.rawOutcome)} | ${r.rawSameWay ?? "-"} | ${yn(r.samePdf?.test)}/${yn(r.samePdf?.firstRef)} | ${pages} | ${short(r.chrome)} | ${r.upstream ?? "-"} | ${r.candidate} |`,
+      `| \`${r.test}\` | ${r.mode ?? "-"} | ${r.views.join(", ")} | ${chainNames.map((n) => short(r.chain[n])).join(" | ")} | ${r.lostAt ?? "-"} | ${short(r.outcome)} | ${short(r.rawOutcome)} | ${r.rawSameWay ?? "-"} | ${yn(r.samePdf?.test)}/${yn(r.samePdf?.firstRef)} | ${pages} | ${short(r.chrome)} | ${r.upstream ?? "-"} | ${
+        r.candidate === "mixed"
+          ? Object.entries(r.candidates)
+              .map(([n, c]) => `${n}:${c}`)
+              .join(" ")
+          : r.candidate
+      } |`,
     );
   }
   return `${L.join("\n")}\n`;
@@ -191,7 +233,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const upstream = o.upstreamFrom
     ? new Map(readJson(o.upstreamFrom).tests.map((t) => [t.test, t.upstream ?? null]))
     : null;
+  const oldRuns = new Map(
+    o.oldRuns.map(([name, p]) => [name, new Map(readJson(p).tests.map((t) => [t.test, t]))]),
+  );
   const rows = buildRows({
+    oldRuns,
     subject: readJson(o.subject),
     refs: o.refs.map(([n, p]) => [n, readJson(p)]),
     chain: o.chain.map(([n, p]) => [n, readJson(p)]),

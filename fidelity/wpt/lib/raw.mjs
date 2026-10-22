@@ -141,13 +141,37 @@ export function withRawOutcomes(expectations, results, rawConfig) {
   return { ...expectations, rawMode: rawConfig.render, rawOutcomes };
 }
 
+/** The ink flags that make an old pass a proven false pass (fidelity/gate/tolerances.mjs). */
+export const FALSE_PASS_INK_FLAGS = ["ink-missing-vs-chrome", "ink-displaced-vs-chrome"];
+
+/**
+ * Whether an OLD pass is proven false in the GATE-A1 (a) sense: test = reference != Chrome, by
+ * ink (the old run flagged the pass `ink-missing-vs-chrome` / `ink-displaced-vs-chrome`) or by
+ * page count (the old run's test rendering has a different page count than Chrome's).
+ * `flags`: the old expectations' suspect flags of the test (comma list or array);
+ * `pages`/`chromePages`: page counts of the old test rendering and of Chrome's.
+ */
+export function oldPassProvenFalse({ flags, pages, chromePages }) {
+  const list = Array.isArray(flags)
+    ? flags
+    : String(flags ?? "")
+        .split(",")
+        .filter(Boolean);
+  const ink = list.filter((f) => FALSE_PASS_INK_FLAGS.includes(f));
+  const pageMismatch =
+    Number.isInteger(pages) && Number.isInteger(chromePages) && pages !== chromePages;
+  return { falsePass: ink.length > 0 || pageMismatch, ink, pageMismatch };
+}
+
 /**
  * The evidence class a WPT pass lost between two runs points to, from the run's `outcome` and
- * `rawOutcome` and Chrome's outcome on the same test (`chromeOutcome`, `null` when Chrome did not
- * run). Attribution AID only (a candidate, not a gate verdict; fidelity/ACCEPTANCE.md GATE-A1):
+ * `rawOutcome`, and whether the old pass is proven false (`oldPassFalse`, see
+ * [`oldPassProvenFalse`]). Attribution AID only (a candidate, not a gate verdict;
+ * fidelity/ACCEPTANCE.md GATE-A1):
  *
- * - `a`: Chrome itself fails the reftest (test != reference by the same harness), so the old pass
- *   was not evidence of correct rendering;
+ * - `a`: the old pass was a false pass (test = reference != Chrome by ink or page count, measured
+ *   on the OLD run), so losing it is no regression evidence. Chrome failing its own reftest is NOT
+ *   this criterion (it is reported beside the class as supporting evidence only);
  * - `b`: the raw-Blitz render is not a pass either, i.e. Blitz's own layout (as its painter
  *   places it) already fails without any vellora correction: an upstream-owned candidate;
  * - `c`: the raw-Blitz render passes and vellora's does not: one of vellora's layers (reader
@@ -157,9 +181,9 @@ export function withRawOutcomes(expectations, results, rawConfig) {
  * A print-mode `b` is weaker: the raw render's flat pagination is a worse paginator than any, so
  * a raw failure there may be pagination's (see README); callers should keep `mode` beside it.
  */
-export function rawCandidateClass({ outcome, rawOutcome, chromeOutcome }) {
+export function rawCandidateClass({ outcome, rawOutcome, oldPassFalse = false }) {
   if (outcome === "pass") return "none";
-  if (chromeOutcome === "fail") return "a";
+  if (oldPassFalse) return "a";
   if (rawOutcome === undefined || rawOutcome === "skip") return "none";
   if (rawOutcome === "pass") return "c";
   if (["pass-blank", "fail", "error", "timeout"].includes(rawOutcome)) return "b";

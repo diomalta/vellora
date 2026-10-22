@@ -1,7 +1,7 @@
 {
   "meta": {
     "date": "Thu Oct 22 22:44:56 UTC 2026",
-    "command": "node fidelity/gate/wpt-raw-table.mjs --run ~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022 --subject fidelity/baselines/port/09-review-fixes/wpt/expectations-blitz-0.3.0-beta.4.json --ref pin=fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json --ref head=fidelity/baselines/port/00-start/wpt/expectations-blitz-0.3.0-beta.4.json --chain pin=fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json --chain beta4=fidelity/baselines/beta4/wpt/expectations-blitz-0.3.0-beta.4.json --chain 00=fidelity/baselines/port/00-start/wpt/expectations-blitz-0.3.0-beta.4.json --chain 01=fidelity/baselines/port/01-pagination-gaps/wpt/expectations-blitz-0.3.0-beta.4.json --chain 02=fidelity/baselines/port/02-delete-noop-passes/wpt/expectations-blitz-0.3.0-beta.4.json --chain 03=fidelity/baselines/port/03-table-passes/wpt/expectations-blitz-0.3.0-beta.4.json --chain 04=fidelity/baselines/port/04-block-offset/wpt/expectations-blitz-0.3.0-beta.4.json --chain 05=fidelity/baselines/port/05-walk-rewrite/wpt/expectations-blitz-0.3.0-beta.4.json --chain 06=fidelity/baselines/port/06-page-rules/wpt/expectations-blitz-0.3.0-beta.4.json --chain 07=fidelity/baselines/port/07-media-print/wpt/expectations-blitz-0.3.0-beta.4.json --chain 08=fidelity/baselines/port/08-html-parse/wpt/expectations-blitz-0.3.0-beta.4.json --chain 09=fidelity/baselines/port/09-review-fixes/wpt/expectations-blitz-0.3.0-beta.4.json --upstream-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z/wpt/results.json --out fidelity/gate/snapshots/2026-10-22/wpt-raw",
+    "command": "node fidelity/gate/wpt-raw-table.mjs --run ~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022 --subject fidelity/baselines/port/09-review-fixes/wpt/expectations-blitz-0.3.0-beta.4.json --ref pin=fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json --ref head=fidelity/baselines/port/00-start/wpt/expectations-blitz-0.3.0-beta.4.json --chain pin=fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json --chain beta4=fidelity/baselines/beta4/wpt/expectations-blitz-0.3.0-beta.4.json --chain 00=fidelity/baselines/port/00-start/wpt/expectations-blitz-0.3.0-beta.4.json --chain 01=fidelity/baselines/port/01-pagination-gaps/wpt/expectations-blitz-0.3.0-beta.4.json --chain 02=fidelity/baselines/port/02-delete-noop-passes/wpt/expectations-blitz-0.3.0-beta.4.json --chain 03=fidelity/baselines/port/03-table-passes/wpt/expectations-blitz-0.3.0-beta.4.json --chain 04=fidelity/baselines/port/04-block-offset/wpt/expectations-blitz-0.3.0-beta.4.json --chain 05=fidelity/baselines/port/05-walk-rewrite/wpt/expectations-blitz-0.3.0-beta.4.json --chain 06=fidelity/baselines/port/06-page-rules/wpt/expectations-blitz-0.3.0-beta.4.json --chain 07=fidelity/baselines/port/07-media-print/wpt/expectations-blitz-0.3.0-beta.4.json --chain 08=fidelity/baselines/port/08-html-parse/wpt/expectations-blitz-0.3.0-beta.4.json --chain 09=fidelity/baselines/port/09-review-fixes/wpt/expectations-blitz-0.3.0-beta.4.json --upstream-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z/wpt/results.json --old-run pin=~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/wpt/results.json --old-run head=~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z/wpt/results.json --out fidelity/gate/snapshots/2026-10-22/wpt-raw",
     "rawRun": "~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022",
     "rawRunCommand": "~/.nvm/versions/node/v22.23.2/bin/node fidelity/wpt/run.mjs --raw --filter <8114-char --filter regex: the tests below> --expectations none --upstream none --keep-pdf --artifacts all --chrome-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z/wpt/results.json --out ~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022",
     "velloraCommit": "98368b309db9432fc71be6c5ba071a738bafd15a",
@@ -53,7 +53,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -95,8 +108,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-003.xht",
@@ -137,8 +163,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-090.xht",
@@ -179,8 +218,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-093.xht",
@@ -221,8 +273,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-096.xht",
@@ -263,8 +328,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-104.xht",
@@ -305,8 +383,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-106.xht",
@@ -347,8 +438,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-111.xht",
@@ -389,8 +493,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-114.xht",
@@ -431,8 +548,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-117.xht",
@@ -473,8 +603,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-120.xht",
@@ -515,8 +658,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-128.xht",
@@ -557,8 +713,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-130.xht",
@@ -599,8 +768,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-135.xht",
@@ -641,8 +823,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-138.xht",
@@ -683,8 +878,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-141.xht",
@@ -725,8 +933,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-144.xht",
@@ -767,8 +988,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-152.xht",
@@ -809,8 +1043,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-154.xht",
@@ -851,8 +1098,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-184.xht",
@@ -893,8 +1153,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-188.xht",
@@ -935,8 +1208,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-190.xht",
@@ -977,8 +1263,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-194.xht",
@@ -1019,8 +1318,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-196.xht",
@@ -1061,8 +1373,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/backgrounds/background-attachment-applies-to-007.xht",
@@ -1103,7 +1428,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1145,7 +1483,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1187,7 +1538,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1229,7 +1593,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1271,7 +1648,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1313,8 +1703,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-image-cover-004.xht",
@@ -1355,8 +1758,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-image-cover-attachment-001.xht",
@@ -1397,8 +1813,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-position-002.xht",
@@ -1439,7 +1868,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "head": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "head": "a"
+      },
       "candidate": "a"
     },
     {
@@ -1481,8 +1923,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/backgrounds/background-repeat-002.xht",
@@ -1523,7 +1978,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1565,7 +2033,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1607,7 +2088,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1649,8 +2143,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/floats-clear/clear-applies-to-009.xht",
@@ -1691,7 +2198,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1733,7 +2253,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1775,7 +2308,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b",
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1817,7 +2372,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1859,7 +2427,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -1901,8 +2482,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/floats/floats-placement-vertical-001a.xht",
@@ -1943,8 +2537,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/floats/floats-placement-vertical-003.xht",
@@ -1985,7 +2592,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
+      "candidates": {
+        "pin": "b",
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2027,7 +2656,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
+      "candidates": {
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2069,7 +2711,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b",
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2111,7 +2775,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2153,7 +2830,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2195,7 +2885,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2237,7 +2940,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2279,7 +2995,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b",
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -2321,8 +3059,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "a"
+      "candidates": {
+        "head": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/CSS2/linebox/line-height-006.xht",
@@ -2363,7 +3114,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2405,7 +3169,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2447,7 +3224,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2489,7 +3279,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2531,7 +3334,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2573,7 +3389,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2615,7 +3444,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2657,7 +3499,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2699,7 +3554,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2741,7 +3609,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2783,7 +3664,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2825,7 +3719,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2867,7 +3783,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -2909,8 +3847,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
-      "candidate": "c"
+      "candidates": {
+        "head": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/linebox/line-height-073.xht",
@@ -2951,8 +3902,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
-      "candidate": "c"
+      "candidates": {
+        "head": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/linebox/line-height-083.xht",
@@ -2993,7 +3957,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3035,7 +4012,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3077,7 +4067,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3119,7 +4122,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3161,7 +4177,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3203,7 +4232,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -3245,7 +4287,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3287,7 +4351,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3329,7 +4415,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3371,7 +4479,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3413,8 +4543,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/normal-flow/height-percentage-003.xht",
@@ -3455,8 +4598,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
-      "candidate": "c"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/normal-flow/inline-table-zorder-001.xht",
@@ -3497,7 +4653,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -3539,7 +4708,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3581,7 +4772,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3623,7 +4836,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3665,7 +4900,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3707,7 +4964,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3749,7 +5028,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3791,7 +5092,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3833,7 +5156,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c",
+        "head": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3875,7 +5220,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": null,
+      "candidates": {
+        "pin": "c"
+      },
       "candidate": "c"
     },
     {
@@ -3917,8 +5275,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/CSS2/visudet/line-height-205.html",
@@ -3959,7 +5330,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4001,7 +5385,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4043,7 +5440,29 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
+      "candidates": {
+        "pin": "b",
+        "head": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4085,7 +5504,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4127,7 +5559,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4169,7 +5614,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4211,7 +5669,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -4253,8 +5724,30 @@
       "chrome": "pass",
       "chromePageCounts": [4, 4],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": [],
+          "pageMismatch": true,
+          "pages": 2,
+          "chromePages": 4,
+          "measured": true
+        },
+        "head": {
+          "falsePass": true,
+          "ink": [],
+          "pageMismatch": true,
+          "pages": 2,
+          "chromePages": 4,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a",
+        "head": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-page/page-name-001-print.html",
@@ -4295,8 +5788,30 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        },
+        "head": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a",
+        "head": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-page/page-name-orthogonal-writing-002-print.html",
@@ -4337,8 +5852,30 @@
       "chrome": "pass",
       "chromePageCounts": [2, 2],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": true,
+          "pages": 1,
+          "chromePages": 2,
+          "measured": true
+        },
+        "head": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": true,
+          "pages": 1,
+          "chromePages": 2,
+          "measured": true
+        }
+      },
       "rawSameWay": "different",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a",
+        "head": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
@@ -4379,8 +5916,21 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "a"
+      "candidates": {
+        "pin": "b"
+      },
+      "candidate": "b"
     },
     {
       "test": "css/css-text/letter-spacing/letter-spacing-ligatures-002.html",
@@ -4421,7 +5971,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -4463,8 +6026,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-012.xht",
@@ -4505,8 +6081,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-013.xht",
@@ -4547,8 +6136,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-014.xht",
@@ -4589,8 +6191,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-015.xht",
@@ -4631,8 +6246,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-016a.xht",
@@ -4673,8 +6301,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-016b.xht",
@@ -4715,8 +6356,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-017a.xht",
@@ -4757,8 +6411,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-017b.xht",
@@ -4799,8 +6466,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-loose-018.xht",
@@ -4841,8 +6521,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-011.xht",
@@ -4883,8 +6576,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-012.xht",
@@ -4925,8 +6631,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-013.xht",
@@ -4967,8 +6686,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-014.xht",
@@ -5009,8 +6741,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-015a.xht",
@@ -5051,8 +6796,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-015b.xht",
@@ -5093,8 +6851,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-016a.xht",
@@ -5135,8 +6906,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-016b.xht",
@@ -5177,8 +6961,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-017a.xht",
@@ -5219,8 +7016,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-017b.xht",
@@ -5261,8 +7071,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-normal-018.xht",
@@ -5303,8 +7126,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-shaping-001.html",
@@ -5345,7 +7181,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -5387,8 +7236,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-012.xht",
@@ -5429,8 +7291,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-013.xht",
@@ -5471,8 +7346,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-014.xht",
@@ -5513,8 +7401,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-015a.xht",
@@ -5555,8 +7456,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-015b.xht",
@@ -5597,8 +7511,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-016a.xht",
@@ -5639,8 +7566,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-016b.xht",
@@ -5681,8 +7621,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-017a.xht",
@@ -5723,8 +7676,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-017b.xht",
@@ -5765,8 +7731,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/line-break/line-break-strict-018.xht",
@@ -5807,8 +7786,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/overflow-wrap/overflow-wrap-shaping-001.html",
@@ -5849,7 +7841,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -5891,7 +7896,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -5933,8 +7951,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/tab-size/tab-size-integer-001.html",
@@ -5975,7 +8006,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6017,7 +8061,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6059,7 +8116,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6101,8 +8171,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/tab-size/tab-size-length-002.html",
@@ -6143,8 +8226,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/tab-size/tab-size-percent-001.html",
@@ -6185,8 +8281,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "PASS",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/text-align/text-align-end-006.html",
@@ -6227,7 +8336,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6269,8 +8391,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/text-align/text-align-end-010.html",
@@ -6311,8 +8446,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/text-align/text-align-justify-006.html",
@@ -6353,8 +8501,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/text-align/text-align-start-010.html",
@@ -6395,8 +8556,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/text-justify/text-justify-and-trailing-spaces-003.html",
@@ -6437,7 +8611,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6479,7 +8666,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6521,7 +8721,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6563,7 +8776,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "identical-pdf",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -6605,7 +8831,20 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": false,
+          "ink": [],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "b"
+      },
       "candidate": "b"
     },
     {
@@ -6647,7 +8886,20 @@
       "chrome": "fail",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
+      "candidates": {
+        "pin": "a"
+      },
       "candidate": "a"
     },
     {
@@ -6689,8 +8941,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-003.html",
@@ -6731,8 +8996,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-004.html",
@@ -6773,8 +9051,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-005.html",
@@ -6815,8 +9106,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-displaced-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-overflow-001.html",
@@ -6857,8 +9161,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-001.html",
@@ -6899,8 +9216,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     },
     {
       "test": "css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-002.html",
@@ -6941,8 +9271,21 @@
       "chrome": "pass",
       "chromePageCounts": [1, 1],
       "upstream": "FAIL",
+      "oldPass": {
+        "pin": {
+          "falsePass": true,
+          "ink": ["ink-missing-vs-chrome"],
+          "pageMismatch": false,
+          "pages": 1,
+          "chromePages": 1,
+          "measured": true
+        }
+      },
       "rawSameWay": "same-diff",
-      "candidate": "b"
+      "candidates": {
+        "pin": "a"
+      },
+      "candidate": "a"
     }
   ]
 }

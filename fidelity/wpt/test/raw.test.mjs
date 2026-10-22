@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import {
   RAW_OUTCOMES,
   attachRawOutcomes,
+  oldPassProvenFalse,
   rawCandidateClass,
   rawCrossTab,
   rawRenderProblem,
@@ -144,11 +145,16 @@ test("rawOutcome: attached per test, skip stays skip, a missing raw result is an
   assert.equal(withRaw.schema, 2);
 });
 
-test("candidate class: Chrome fail -> a, raw not pass -> b, raw pass -> c", () => {
-  const cls = (outcome, rawOutcome, chromeOutcome = "pass") =>
-    rawCandidateClass({ outcome, rawOutcome, chromeOutcome });
+test("candidate class: old false pass -> a, raw not pass -> b, raw pass -> c", () => {
+  const cls = (outcome, rawOutcome, oldPassFalse = false) =>
+    rawCandidateClass({ outcome, rawOutcome, oldPassFalse });
   assert.equal(cls("pass", "fail"), "none");
-  assert.equal(cls("fail", "pass", "fail"), "a");
+  assert.equal(cls("fail", "pass", true), "a");
+  // Chrome failing its own reftest is not the (a) criterion: the class ignores it.
+  assert.equal(
+    rawCandidateClass({ outcome: "fail", rawOutcome: "fail", chromeOutcome: "fail" }),
+    "b",
+  );
   assert.equal(cls("fail", "fail"), "b");
   assert.equal(cls("fail", "pass-blank"), "b");
   assert.equal(cls("pass-blank", "fail"), "b");
@@ -156,7 +162,25 @@ test("candidate class: Chrome fail -> a, raw not pass -> b, raw pass -> c", () =
   assert.equal(cls("pass-blank", "pass"), "c");
   assert.equal(cls("unsupported", "unsupported"), "none");
   assert.equal(cls("fail", undefined), "none");
-  assert.equal(cls("fail", "pass", null), "c");
+  assert.equal(cls("fail", "pass", false), "c");
+});
+
+test("old false pass: an ink flag of the old run or an old page count != Chrome's", () => {
+  assert.deepEqual(
+    oldPassProvenFalse({ flags: "ink-missing-vs-chrome", pages: 1, chromePages: 1 }),
+    {
+      falsePass: true,
+      ink: ["ink-missing-vs-chrome"],
+      pageMismatch: false,
+    },
+  );
+  assert.equal(
+    oldPassProvenFalse({ flags: "css-url-resource", pages: 1, chromePages: 1 }).falsePass,
+    false,
+  );
+  assert.equal(oldPassProvenFalse({ flags: null, pages: 2, chromePages: 4 }).falsePass, true);
+  assert.equal(oldPassProvenFalse({ flags: ["ink-displaced-vs-chrome"] }).falsePass, true);
+  assert.equal(oldPassProvenFalse({ flags: null, pages: 1, chromePages: null }).falsePass, false);
 });
 
 test("a binary without the raw render is refused before any test runs", () => {
