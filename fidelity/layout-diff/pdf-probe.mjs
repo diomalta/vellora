@@ -110,6 +110,8 @@ async function main() {
         velloraWords: v.words,
         chromeWords: c.words,
         maxDistancePt,
+        velloraOffPage: v.offPage,
+        chromeOffPage: c.offPage,
       });
       const dump = JSON.parse(readFileSync(join(dir, "vellora-dump.json"), "utf8"));
       const nodeById = new Map(dump.nodes.map((n) => [n.id, n]));

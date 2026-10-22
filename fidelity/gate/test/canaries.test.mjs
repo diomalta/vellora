@@ -24,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 18);
+    assert.equal(rows.length, 19);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -191,6 +191,15 @@ test("a comparator that ratchets only the COUNT of missing tokens (the step-08 h
   };
   const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: countOnly }));
   assert.equal(c["EXT-2 missing-token set: one token swapped for another"], false);
+});
+
+test("a comparator blind to off-page words (the step-08 hole) leaves the off-page canary uncaught", () => {
+  const blind = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    return { ...r, items: r.items.filter((i) => !/\|off-page/.test(i.key)) };
+  };
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: blind }));
+  assert.equal(c["pdf-probe: a word moved below the page (off-page)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

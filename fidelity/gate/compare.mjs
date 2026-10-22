@@ -18,7 +18,11 @@
 //                   is listed and counted (counts.withinTolerance), never "unchanged" (D4). A
 //                   sub-tolerance move the good way is counted in counts.withinToleranceBetter
 //   improvement | newly-measured | added | changed | not-comparable   never gate
-import { pdfProbeComparability, sectionSemantics } from "../layout-diff/lib/pdf-probe-v2.mjs";
+import {
+  pdfProbeComparability,
+  sectionSemantics,
+  textKey,
+} from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { CRASH_BAD, STATUS_RANK, TOLERANCES, UNMEASURED } from "./tolerances.mjs";
 import { compareCrashtests, compareWpt } from "./wpt.mjs";
@@ -352,6 +356,15 @@ export function comparePdfProbe(before, after, items, counts) {
  *   unpaired-chrome /      per-fixture counts (Chrome words vellora lacks / vellora words Chrome
  *   unpaired-vellora       lacks), count class: any increase gates
  *   fixture missing        removed (gates)
+ *   off-page (vellora)     words vellora drew outside the page (section.offPage.vellora, words.py
+ *                          unclipped; 2026-10-22): per text, more off-page occurrences than in the
+ *                          baseline gate (`pdf-probe|<fx>|off-page|<text>`, count class), also when
+ *                          the baseline section has no off-page record (text off the page is never
+ *                          acceptable unless the baseline shows it was already there); a run section
+ *                          without the record against a baseline with one regresses. PyMuPDF's
+ *                          page words do not include such text, so before this rule a word that
+ *                          moved from the page to below it read as an unpaired-vellora improvement
+ *                          (step 08, "Download as PDF").
  */
 function comparePdfProbeV2(before, after, items, counts) {
   const tol = TOLERANCES["pdf-probe-pt"].tol;
@@ -517,6 +530,10 @@ function comparePdfProbeV2(before, after, items, counts) {
       } else counts.unchanged++;
     }
   }
+  for (const [fixture, a] of Object.entries(after ?? {})) {
+    const b = before?.[fixture];
+    if (b) compareOffPage(fixture, b, a, items, counts);
+  }
   for (const [fixture, b] of Object.entries(before ?? {})) {
     if (after?.[fixture]) continue;
     items.push({
@@ -529,6 +546,60 @@ function comparePdfProbeV2(before, after, items, counts) {
       detail: "fixture measured by the baseline's pdf-probe is missing from the run",
     });
   }
+}
+
+/** Vellora's off-page words of a v2 section per text key: Map(text -> occurrences), or null. */
+export function offPageCounts(section) {
+  const list = section?.offPage?.vellora;
+  if (!Array.isArray(list)) return null;
+  const m = new Map();
+  for (const w of list) m.set(textKey(w.text), (m.get(textKey(w.text)) ?? 0) + 1);
+  return m;
+}
+
+/** The off-page rule of comparePdfProbeV2 for one fixture present on both sides. */
+function compareOffPage(fixture, b, a, items, counts) {
+  const was = offPageCounts(b);
+  const now = offPageCounts(a);
+  const base = {
+    group: "pdf-probe",
+    check: "pdf-probe",
+    tolClass: "count",
+    tol: 0,
+    better: "lower",
+  };
+  if (!was && !now) return;
+  if (!now) {
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}|off-page`,
+      class: "regression",
+      gating: true,
+      before: `${b.offPage.vellora.length} word(s)`,
+      after: "not recorded",
+      detail:
+        "the baseline records vellora's off-page words, the run does not (never silently absent)",
+    });
+    return;
+  }
+  let same = true;
+  for (const [text, n] of now) {
+    const n0 = was?.get(text) ?? 0;
+    if (n <= n0) continue;
+    same = false;
+    const w = a.offPage.vellora.find((x) => textKey(x.text) === text);
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}|off-page|${text}`,
+      class: "regression",
+      gating: true,
+      before: was ? n0 : "not recorded",
+      after: n,
+      delta: n - n0,
+      detail: `vellora draws "${w.text}" outside the page (p${w.page} at ${w.x}, ${w.y} pt) ${n} time(s), ${was ? `${n0} in the baseline` : "and the baseline section records no off-page words (backfill it: fidelity/gate/backfill-off-page.mjs)"}: text no reader sees is never acceptable`,
+    });
+  }
+  if (same) counts.unchanged++;
 }
 
 /** pdf-probe v1 (semantics 1, history): |dx|, |dy| of same-page k-th occurrence pairs, page moves. */
@@ -775,6 +846,7 @@ export function snapshotKeys(s) {
     for (const w of p.unpairedChrome ?? []) if (w.k) out.add(`pdf-probe|${fx}|${w.k}|pairing`);
     out.add(`pdf-probe|${fx}|unpaired-chrome`);
     out.add(`pdf-probe|${fx}|unpaired-vellora`);
+    for (const text of offPageCounts(p)?.keys() ?? []) out.add(`pdf-probe|${fx}|off-page|${text}`);
   }
   return out;
 }

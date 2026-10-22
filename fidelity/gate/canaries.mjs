@@ -647,6 +647,39 @@ export function runGateCanaries({
       ),
     );
   }
+  // 19. Off-page text (step 08: "Download as PDF" moved below vellora's page; PyMuPDF's page
+  // words lost it, so unpaired-vellora 3 -> 0 read as an improvement). An unpaired vellora word
+  // moves into the section's off-page record -> the off-page item gates; control: the same
+  // off-page word on both sides -> nothing.
+  {
+    const s0 = clone(seed.section);
+    const w = { text: "CanaryOff", page: 1, x: 10, y: 20 };
+    const before = {
+      ...s0,
+      words: { ...s0.words, unpairedVellora: (s0.unpairedVellora ?? []).length + 1 },
+      unpairedVellora: [...(s0.unpairedVellora ?? []), w],
+      offPage: { vellora: [...(s0.offPage?.vellora ?? [])], chrome: s0.offPage?.chrome ?? [] },
+    };
+    const after = {
+      ...before,
+      words: { ...before.words, unpairedVellora: before.unpairedVellora.length - 1 },
+      unpairedVellora: before.unpairedVellora.filter((x) => x !== w),
+      offPage: { ...before.offPage, vellora: [...before.offPage.vellora, { ...w, y: 900 }] },
+    };
+    const b = snap({ pdfProbe: { [seed.fixture]: before } });
+    const a = snap({ pdfProbe: { [seed.fixture]: after } });
+    const key = `pdf-probe|${seed.fixture}|off-page|CanaryOff`;
+    const moved = gatingOf(compare(b, a)).filter((i) => i.key === key);
+    const same = gatingOf(compare(a, a)).filter((i) => /\|off-page/.test(i.key));
+    rows.push(
+      row(
+        "pdf-probe: a word moved below the page (off-page)",
+        `${src} section: an unpaired vellora word drawn at y 900 pt (outside the page) -> ${key} gates; the same off-page word on both sides (control) -> nothing`,
+        `moved ${moved.map((i) => `${i.class}/${i.gating}`).join(",") || "nothing gated"}; control ${same.length}`,
+        moved.length === 1 && moved[0].class === "regression" && same.length === 0,
+      ),
+    );
+  }
   return rows;
 }
 

@@ -1740,3 +1740,22 @@ INDICATIVE.
   00-start have no token item; 09 vs pin adds the same 3 tokens in pdftotext and pymupdf. Head
   07 1397 → 1409 and pin (c) 07 242 → 254 (the 12 postmark tokens the XML parse lost), 09 235 →
   241.
+- **Off-page text.** Which oracle sees text drawn outside the MediaBox (CONFIRMED 2026-10-22 on
+  the step-09 postmark `vellora.pdf` of the run copy: "Download as PDF" at 855.6 pt and the tail
+  down to 1111.3 pt, page height 841.92 pt): PyMuPDF's page words (pdf-probe v2, REF-W) and
+  `get_text("text")` (EXT-2 pymupdf) do NOT (MuPDF clips to the page; 138 words inside, 40 off),
+  poppler `pdftotext` 26.06.0 does NOT, pdfminer.six 20260107 DOES. So EXT-2 pdfminer.six passes
+  with the text off the page, and pdf-probe read the step-08 move as unpaired-vellora 3 → 0, an
+  improvement. `words.py` now also lists `offPage` words (unclipped, origin outside the page;
+  `words` unchanged, byte-identical on that PDF), pdf-probe v2 sections carry `offPage`, and the
+  gate ratchets vellora's per text (a newly off-page word gates; ACCEPTANCE GATE-P1). Every
+  committed link (00-start … 09, beta4-gated, beta4) and pin was backfilled with
+  `node fidelity/gate/backfill-off-page.mjs --baseline <dir> --run <run copy>` (refused unless
+  the run's PDFs reproduce the committed section exactly; all did). Off-page vellora words:
+  postmark 40 at 00-start…04, 32 at 05–07, 40 at 08–09; boleto-febraban 4 at beta4-gated…02, 0
+  from 03. 08 vs 07 now gates 7 off-page words ("Download", "as", a second "PDF", "1234" ×2,
+  "Street", "Rd.", "Suite"); 09 vs 08 and 09 vs 00-start none (the head already drew the same 40
+  off the page: postmark printed 1 page vs Chrome's 2 before the chain, Phase C priority zero).
+  Canaries: GATE-K2 (an unpaired vellora word moved into the off-page record) and a pdf-probe
+  detection canary on the committed notification PDFs (one krilla glyph run moved 804 pt down:
+  4 page words gone, 4 new off-page words, the off-page item gates).

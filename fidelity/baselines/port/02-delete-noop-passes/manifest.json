@@ -364,15 +364,15 @@
     "gate-report.json": "965dfe6e93297969bf7e90d1ecc902cb37cf450e19ae004c8fac8b0d2227e80b",
     "gate-report.md": "cc68a3f5f1799b7131dbe3f1ad33ab03498f517ee1856e91e174511d58b9172a",
     "metrics.json": "3b458e43125e70d26c38f26a0af4dc2a9abe264d7db1212a3f99b82e8c5fd27e",
-    "pdf-probe/boleto-febraban.json": "66dfda844dcd2d0df327416d235291b05a5b30710317381221cb000abc7a9936",
-    "pdf-probe/boleto.json": "8a9a3ea4b2041a30125beefc181f62456ff19050a73bd0b8d45644a5e1479f79",
-    "pdf-probe/danfe.json": "5e046ac8dbd872ee8ac7f7bf76683a8ff50d2289bef8a305474c2ef28d32cf8e",
-    "pdf-probe/invoice.json": "56c9a55050df43655599600c0e9d511f6bce0294bd750e5b6b3cc73085b1c02b",
-    "pdf-probe/notification.json": "c90c788f90fc3cdcb53c30130747456918f013f206e9875fa138214a70d71284",
-    "pdf-probe/oss-postmark-receipt.json": "9365de27d3a7917e184d3ac546e9e8fecab4a2fb31b6018ba26c8adaebc26050",
-    "pdf-probe/oss-sparksuite-invoice.json": "cb9ad508755a86e745ef23dc70ed95af4d5162b54e479ec2dfcec47be0bba5f6",
-    "pdf-probe/receipt.json": "fa93c69cd2e44ee2a58cce00a188c34dea188611d32266bfd40ea572ac8e5803",
-    "pdf-probe/text-stress-ptbr.json": "c384a82d2372433617804b24e96566260a898f0452fbd3b16e0d6315237542c4",
+    "pdf-probe/boleto-febraban.json": "79a6062f2296ab4b6cb93e4841b1f0c885c21e655097e3b70b9c18ea8b7c0e25",
+    "pdf-probe/boleto.json": "c4420a40518f5235dfcd5633d9a3bafd46bc210730f798b6a86587723641b6de",
+    "pdf-probe/danfe.json": "b4192f567efb02bb1c9d5d4d209e7b6d17f0fc9865f7318cbd546078eda5bd66",
+    "pdf-probe/invoice.json": "577fe53532633fd2b2c1bd1e99833a242ce496010cacbf43be3e346946b94453",
+    "pdf-probe/notification.json": "55cc104549b2d461e237374e941ef608e14c5ee7b9b5175c5c1f30db09260b4c",
+    "pdf-probe/oss-postmark-receipt.json": "3bb93c29915902e7783a1499bd6f43250972d4651eb6cbe713fdaf976133dea6",
+    "pdf-probe/oss-sparksuite-invoice.json": "14f37480ff36af31ad9408a24f5e10c43c7b92d4b17883c24704ef37ed696d44",
+    "pdf-probe/receipt.json": "8dcc197fb862420b13e5ea822edbd5e1809f8819ea47432ed42767c9d2a8fecb",
+    "pdf-probe/text-stress-ptbr.json": "b145f9bf852c12fa04b0cce75cbd5e0f824e80d1503e2aebe3120c28d2e26d77",
     "wpt/by-directory.json": "6ed61bb53aae620806d4ea3cfb0f1f092dce14ad1213a0ea1dbd138b20e2c23a",
     "wpt/crashtests.json": "54a83b19f5a1fc77e3a74f153cecb4547a5e2e1b750763fb8f4d9224f30a719a",
     "wpt/expectations-blitz-0.3.0-beta.4.json": "f31425f0eb4adfb7df1b23b7fea94933670b97a186ecfdbb816bfc343f33d990"
@@ -597,5 +597,143 @@
       "text-stress-ptbr"
     ],
     "formatting": "biome format --write (repo biome.json) before hashing"
+  },
+  "offPageBackfill": {
+    "command": "node fidelity/gate/backfill-off-page.mjs --baseline fidelity/baselines/port/02-delete-noop-passes --run ~/.cache/vellora-fidelity/run-all-02-delete-noop-passes-20261021T102146Z",
+    "date": "2026-10-22T22:54:52.551Z",
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-02-delete-noop-passes-20261021T102146Z",
+      "summarySha256": "bdc5eec0c079d7f58449d92a24b61c42b69535b0a858a55ba89db38966ee979c",
+      "matchesManifestSource": true
+    },
+    "extractor": "fidelity/oracles/py/words.py offPage (PyMuPDF rawdict, clip INFINITE_RECT, first-glyph origin outside the page rectangle)",
+    "inputs": {
+      "boleto-febraban": {
+        "vellora": {
+          "path": "layout-diff/boleto-febraban/run-all/vellora.pdf",
+          "sha256": "c3b9cfbc35ddfaada319052dbd1de8249c6b8b35e873044ec27151e5e6d46668"
+        },
+        "chrome": {
+          "path": "layout-diff/boleto-febraban/run-all/chrome.pdf",
+          "sha256": "34eee6b857ec5d761954bbe328403f0a5498d17722994e1a5e6456b7a0b4e377"
+        },
+        "offPage": {
+          "vellora": 4,
+          "chrome": 0
+        }
+      },
+      "boleto": {
+        "vellora": {
+          "path": "layout-diff/boleto/run-all/vellora.pdf",
+          "sha256": "31a000ae06053318520b7d4a6d9a8f224bd84af5d38a79078c7f216d9dd6a6c9"
+        },
+        "chrome": {
+          "path": "layout-diff/boleto/run-all/chrome.pdf",
+          "sha256": "ea9668135fe995abcac6945154a2357c6a6b9f259dcde805dff982bef2e0a920"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "danfe": {
+        "vellora": {
+          "path": "layout-diff/danfe/run-all/vellora.pdf",
+          "sha256": "8b4f86e2d51fbe17fc7fe5c9f556cfe7d0e499a79aa70db3f22a1eb801914207"
+        },
+        "chrome": {
+          "path": "layout-diff/danfe/run-all/chrome.pdf",
+          "sha256": "1f36eadb9b1cf2f3f32d0c908a21fad8d859c6ae935f6139e499306372205c3f"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "invoice": {
+        "vellora": {
+          "path": "layout-diff/invoice/run-all/vellora.pdf",
+          "sha256": "1519222eacbaffdb9684b75d2fd7ec14d61a5645e9b84639486322fb54155bd8"
+        },
+        "chrome": {
+          "path": "layout-diff/invoice/run-all/chrome.pdf",
+          "sha256": "17819e5bd829f5e1c4a4fcfcf79bc20a45abc6d41a6f5db52ed40809766ffed6"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "notification": {
+        "vellora": {
+          "path": "layout-diff/notification/run-all/vellora.pdf",
+          "sha256": "4926bb885b1e77e1068175bae8c2def12cc4cfa2f28ce1c97b58409ab4b25d04"
+        },
+        "chrome": {
+          "path": "layout-diff/notification/run-all/chrome.pdf",
+          "sha256": "b659829433fb65a29c0024e3223f39f6ca89a6a250660d67183720d8249884ba"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "oss-postmark-receipt": {
+        "vellora": {
+          "path": "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+          "sha256": "08d4eb1fa7c858aa4861f2c3ce15c5324553bc6d33d924b2eb38face953c8647"
+        },
+        "chrome": {
+          "path": "layout-diff/oss-postmark-receipt/run-all/chrome.pdf",
+          "sha256": "642d40dc1209defef42fbf0bc7e95587a0c1e559f0351920c4b6227f2494fba8"
+        },
+        "offPage": {
+          "vellora": 40,
+          "chrome": 0
+        }
+      },
+      "oss-sparksuite-invoice": {
+        "vellora": {
+          "path": "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+          "sha256": "f4eb1ad35d60143db82a1e07dec62e2d5afe25b11e7a80511a3426ba40843dee"
+        },
+        "chrome": {
+          "path": "layout-diff/oss-sparksuite-invoice/run-all/chrome.pdf",
+          "sha256": "2cbc809ef84c76fa3e0f99a2cb8ebe583030e732cd9f7f1052999494171b2e74"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "receipt": {
+        "vellora": {
+          "path": "layout-diff/receipt/run-all/vellora.pdf",
+          "sha256": "d2b515c1a7f30867b0363c71946ad44c8792923f22f7b24cfa542b7cd4c37f4d"
+        },
+        "chrome": {
+          "path": "layout-diff/receipt/run-all/chrome.pdf",
+          "sha256": "5ce70350c6f38ff41c404df8cf00b81cc80285015dd12ad36433e1dd17c6df0c"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      },
+      "text-stress-ptbr": {
+        "vellora": {
+          "path": "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+          "sha256": "7d65c35c1c58d72c42e3eb3f3583bb8853fa26d1544c883f32429481adb8122a"
+        },
+        "chrome": {
+          "path": "layout-diff/text-stress-ptbr/run-all/chrome.pdf",
+          "sha256": "d14636112e533433c2c8e001981f2b553f6466c2096212fa9573df859d315bab"
+        },
+        "offPage": {
+          "vellora": 0,
+          "chrome": 0
+        }
+      }
+    }
   }
 }

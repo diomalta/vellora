@@ -128,7 +128,12 @@ export function rescoreBaseline({
         : "baseline has no v1 section";
     const v = pdfWordsV2(vPdf, python);
     const c = pdfWordsV2(cPdf, python);
-    const probe = probeResultV2({ velloraWords: v.words, chromeWords: c.words });
+    const probe = probeResultV2({
+      velloraWords: v.words,
+      chromeWords: c.words,
+      velloraOffPage: v.offPage,
+      chromeOffPage: c.offPage,
+    });
     sections[fx] = compactPdfProbe(probe);
     inputs[fx] = {
       vellora: { path: vPdf, sha256: sha256(readFileSync(vPdf)) },

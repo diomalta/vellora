@@ -35,7 +35,11 @@ test("the notification pack is the step-07 link: its v2 probe equals the committ
       "utf8",
     ),
   );
-  assert.deepEqual(compactProbeV2(w07.probe), committed);
+  // The pack predates the off-page record (2026-10-22 backfill, gate/backfill-off-page.mjs): the
+  // committed section adds it (notification draws no text off the page) and is otherwise equal.
+  const { offPage, ...rest } = committed;
+  assert.deepEqual(offPage, { vellora: [], chrome: [] });
+  assert.deepEqual(compactProbeV2(w07.probe), rest);
   assert.equal(notification.source.fixture, "notification");
   assert.match(notification.source.run, /run-all-07-media-print-20261021T162148Z$/);
 });

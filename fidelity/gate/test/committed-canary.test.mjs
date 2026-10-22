@@ -608,7 +608,9 @@ test("v2 re-judges the chain: gating pdf-probe items per link vs the previous li
     "port/04-block-offset": 1632,
     "port/05-walk-rewrite": 6,
     "port/06-page-rules": 0,
-    "port/08-html-parse": 0,
+    // The off-page rule (2026-10-22): 08's 7 newly off-page postmark words ("Download as PDF",
+    // "1234 Street Rd. Suite 1234"), which the page-word pairing read as an improvement.
+    "port/08-html-parse": 7,
     "port/09-review-fixes": 0,
   };
   for (const [link, n] of Object.entries(expected)) {
@@ -695,13 +697,28 @@ test("v2 of 08 vs 07: postmark's 'The [Product Name] team' pairs again; nothing 
   const r = compareSnapshots(cur("port/07-media-print"), step, {
     accept: step.manifest.acceptedRegressions,
   });
-  // Only the 3 EXT-2 tokens above gate; no pdf-probe item does.
-  assert.equal(r.counts.gating, 3);
-  assert.ok(r.items.filter((x) => x.gating).every((x) => x.key.includes("|missingTokens.")));
   const pm = "pdf-probe|oss-postmark-receipt";
+  // Only the 3 EXT-2 tokens above and the 7 off-page words gate: "Download as PDF" moved from
+  // the page to below it (unpaired-vellora 3 -> 0 is not an improvement), and "1234 Street Rd.
+  // Suite 1234", lost by the XML parse since step 05, came back below the page edge.
+  assert.equal(r.counts.gating, 10);
   assert.deepEqual(
     r.items
-      .filter((x) => x.check === "pdf-probe")
+      .filter((x) => x.gating && !x.key.includes("|missingTokens."))
+      .map((x) => `${x.key.slice(pm.length + 1)} ${x.before} -> ${x.after}`),
+    [
+      "off-page|Download 0 -> 1",
+      "off-page|as 0 -> 1",
+      "off-page|PDF 1 -> 2",
+      "off-page|1234 0 -> 2",
+      "off-page|Street 0 -> 1",
+      "off-page|Rd. 0 -> 1",
+      "off-page|Suite 0 -> 1",
+    ],
+  );
+  assert.deepEqual(
+    r.items
+      .filter((x) => x.check === "pdf-probe" && !x.key.includes("|off-page"))
       .map((x) => `${x.class} ${x.key} ${x.before} -> ${x.after}`)
       .sort(),
     [
