@@ -15,10 +15,16 @@
 //! node, as its `NativeBridge` (`fidelity/wpt/lib/xhtml-bridge.mjs`), so only the parser
 //! differs. Fidelity tooling only: no product build links or ships it.
 //!
+//! The same binary runs the harness's raw-Blitz mode (`run.mjs --raw`): with the request record
+//! `R` (body `1`) it runs `vellora_core::debug_render_raw_blitz` instead, Blitz's layout without
+//! vellora's layout corrections and with flat pagination, for every node (HTML-served ones too,
+//! with `S` `html`). Fidelity tooling only, like the XML parse.
+//!
 //! One render per process. Request on stdin: the magic `VXR1`, then records `tag: u8, len: u32
 //! LE, bytes`: `H` html (once), `B` base URL, `T` title, `D` creation date (`YYYY-MM-DD`), `P`
 //! PDF/A profile (`PDF/A-2b`), `F` a font face (repeated, in order), `K` an image key followed by
-//! `I` its bytes (repeated). Response:
+//! `I` its bytes (repeated), `S` the parser (`xml`, the default, or `html`), `R` the raw-Blitz
+//! render (`1`; absent: `debug_render_xhtml`, which needs the `xml` parser). Response:
 //!
 //! - exit 0: the PDF bytes on stdout;
 //! - exit 3: the rejection as records on stdout, mirroring the napi binding's error object:
@@ -40,7 +46,14 @@ use vellora_core::{PdfAProfile, RenderOptions, VelloraError};
 
 const RENDER_STACK_BYTES: usize = 8 << 20;
 
-fn parse_request(input: &[u8]) -> Result<(Vec<u8>, RenderOptions), String> {
+/// What to run: the parser (`xml` unless an `S` record says `html`) and whether the render is
+/// the raw-Blitz one (`R`).
+struct Mode {
+    xml: bool,
+    raw: bool,
+}
+
+fn parse_request(input: &[u8]) -> Result<(Vec<u8>, RenderOptions, Mode), String> {
     let mut rest = input
         .strip_prefix(b"VXR1")
         .ok_or("request does not start with VXR1")?;
@@ -48,6 +61,10 @@ fn parse_request(input: &[u8]) -> Result<(Vec<u8>, RenderOptions), String> {
     let mut opts = RenderOptions::default();
     let mut images = HashMap::new();
     let mut pending_key: Option<String> = None;
+    let mut mode = Mode {
+        xml: true,
+        raw: false,
+    };
     while !rest.is_empty() {
         if rest.len() < 5 {
             return Err("truncated record header".into());
@@ -84,11 +101,28 @@ fn parse_request(input: &[u8]) -> Result<(Vec<u8>, RenderOptions), String> {
                 let key = pending_key.take().ok_or("image bytes without a key")?;
                 images.insert(key, body.to_vec());
             }
+            b'S' => {
+                mode.xml = match text()?.as_str() {
+                    "xml" => true,
+                    "html" => false,
+                    other => return Err(format!("unknown parser {other:?}")),
+                }
+            }
+            b'R' => {
+                mode.raw = match text()?.as_str() {
+                    "1" => true,
+                    other => return Err(format!("bad raw flag {other:?}")),
+                }
+            }
             other => return Err(format!("unknown record tag {other}")),
         }
     }
     opts.images = images;
-    Ok((html.ok_or("request has no html record")?, opts))
+    if !mode.xml && !mode.raw {
+        // The product's HTML render is the napi binding's job, not this binary's.
+        return Err("the html parser needs the raw-Blitz render (R)".into());
+    }
+    Ok((html.ok_or("request has no html record")?, opts, mode))
 }
 
 fn record(out: &mut Vec<u8>, tag: u8, body: &[u8]) {
@@ -153,7 +187,7 @@ fn main() -> ExitCode {
         eprintln!("xhtml_render: stdin: {e}");
         return ExitCode::from(2);
     }
-    let (html, opts) = match parse_request(&input) {
+    let (html, opts, mode) = match parse_request(&input) {
         Ok(request) => request,
         Err(message) => {
             eprintln!("xhtml_render: {message}");
@@ -164,7 +198,11 @@ fn main() -> ExitCode {
         .stack_size(RENDER_STACK_BYTES)
         .spawn(move || {
             std::panic::catch_unwind(AssertUnwindSafe(|| {
-                vellora_core::debug_render_xhtml(&html, &opts)
+                if mode.raw {
+                    vellora_core::debug_render_raw_blitz(&html, &opts, mode.xml)
+                } else {
+                    vellora_core::debug_render_xhtml(&html, &opts)
+                }
             }))
         })
         .expect("spawn the render thread")

@@ -346,7 +346,7 @@ pub fn lay_out_margin_texts(
             let id = id?;
             let node = base.get_node(id)?;
             let (x, y) = box_origin(base, id, &mut origins);
-            let mut runs = read_text_runs(base, node, x, y, &mut face_cache);
+            let mut runs = read_text_runs(base, node, x, y, &mut face_cache, true);
             if runs.is_empty() {
                 return None;
             }
@@ -1004,6 +1004,12 @@ pub(crate) const LAYOUT_NORMALIZE_PASSES: &[LayoutPass] = &[
 /// Blitz type crosses this trait: `after_walk` gets a [`BlitzSnapshot`], whose
 /// only operation is an owned, Blitz-free copy of the laid-out tree.
 pub(crate) trait LayoutObserver {
+    /// Whether this layout runs vellora's own corrections on top of Blitz's layout: the reader
+    /// compensations of the box walk ([`run_padding_right_px`]) and the
+    /// [`LAYOUT_NORMALIZE_PASSES`]. `true` for every observer but [`RawBlitz`], the fidelity-only
+    /// raw-Blitz render ([`crate::debug_render_raw_blitz`]). A constant, so the render path
+    /// ([`NoObserver`]) compiles to exactly the code it had before the flag existed.
+    const VELLORA_CORRECTIONS: bool = true;
     /// After the box walk, before any normalize pass (layer `L0`).
     fn after_walk(
         &mut self,
@@ -1020,6 +1026,16 @@ pub(crate) trait LayoutObserver {
 pub(crate) struct NoObserver;
 
 impl LayoutObserver for NoObserver {}
+
+/// Fidelity tooling ONLY ([`crate::debug_render_raw_blitz`], the WPT harness's `--raw` mode):
+/// observes nothing and turns vellora's corrections off ([`LayoutObserver::VELLORA_CORRECTIONS`]),
+/// so the walked boxes are Blitz's layout read the way Blitz's own painter places it (the
+/// `B0`-equivalent of a render). Never on the render path.
+pub(crate) struct RawBlitz;
+
+impl LayoutObserver for RawBlitz {
+    const VELLORA_CORRECTIONS: bool = false;
+}
 
 /// Resolve style+layout on a parsed document and read it into a `LaidOutDoc`.
 ///
@@ -1084,14 +1100,17 @@ fn resolve_and_walk<O: LayoutObserver>(
             img: &mut img_resolve,
             breaks: &break_targets,
             origins: std::collections::HashMap::new(),
+            reader_compensations: O::VELLORA_CORRECTIONS,
         };
         walk_box(base, root_id, 0, &mut sink);
     }
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
-    // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order.
-    for &(name, pass) in LAYOUT_NORMALIZE_PASSES {
-        pass(&mut boxes);
-        observer.after_pass(name, &boxes);
+    // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (none in the raw-Blitz render).
+    if O::VELLORA_CORRECTIONS {
+        for &(name, pass) in LAYOUT_NORMALIZE_PASSES {
+            pass(&mut boxes);
+            observer.after_pass(name, &boxes);
+        }
     }
 
     let content_height = base.root_element().final_layout().size.height as f64;
@@ -1128,6 +1147,9 @@ struct WalkSink<'a, 'img> {
     /// Absolute border-box origin per node, filled by [`box_origin`]. Lookup
     /// only: the walk's output order never depends on iterating this map.
     origins: std::collections::HashMap<NodeId, (f64, f64)>,
+    /// Whether the text reader applies its compensations ([`run_padding_right_px`]); `false`
+    /// only in the raw-Blitz render ([`RawBlitz`]).
+    reader_compensations: bool,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -1406,7 +1428,14 @@ fn push_box(
         - layout.padding.top as f64
         - layout.padding.bottom as f64)
         .max(0.0);
-    let text_runs = read_text_runs(base, node, content_x, content_y, sink.face_cache);
+    let text_runs = read_text_runs(
+        base,
+        node,
+        content_x,
+        content_y,
+        sink.face_cache,
+        sink.reader_compensations,
+    );
     let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y);
     let image_runs = resolve_image_runs(
         node,
@@ -1949,12 +1978,16 @@ fn parse_image_data_url(src: &str) -> Option<(ImageFormat, Vec<u8>)> {
 /// `GlyphRun::baseline()` (blitz-paint 0.3.0-beta.4 `render.rs`
 /// `draw_inline_layout`). Inline boxes (atomic inlines) already carry it in
 /// their `final_layout.location`, so only the glyph runs need it here.
+///
+/// `compensate` applies the inline padding-right compensation ([`run_padding_right_px`]), which
+/// Blitz's painter does not do; it is `false` only in the raw-Blitz render ([`RawBlitz`]).
 fn read_text_runs(
     base: &BaseDocument,
     node: &blitz_dom::Node,
     abs_x: f64,
     abs_y: f64,
     face_cache: &mut std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>>,
+    compensate: bool,
 ) -> Vec<TextRun> {
     if !node.flags.is_inline_root() {
         return Vec::new();
@@ -1980,6 +2013,13 @@ fn read_text_runs(
     // port step 09; before it `end` always counted as right and `start` never did, so rtl text
     // was off by the padding, Chrome 155 `tests/text_probes.rs`).
     let right_aligned = inline_align(node) == InlineAlign::Right;
+    let padding_right = |brush: NodeId| {
+        if compensate {
+            run_padding_right_px(base, node.id, brush)
+        } else {
+            0.0
+        }
+    };
 
     for line in layout.lines() {
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
@@ -1989,7 +2029,7 @@ fn read_text_runs(
                 .items()
                 .filter_map(|item| match item {
                     parley::PositionedLayoutItem::GlyphRun(gr) => {
-                        Some(run_padding_right_px(base, node.id, gr.style().brush.id))
+                        Some(padding_right(gr.style().brush.id))
                     }
                     _ => None,
                 })
@@ -2023,7 +2063,7 @@ fn read_text_runs(
 
             let style = glyph_run.style();
             let color = brush_color(base, style.brush.id);
-            let padding_right_px = run_padding_right_px(base, node.id, style.brush.id);
+            let padding_right_px = padding_right(style.brush.id);
 
             let glyphs = take_run_glyphs(&glyph_run, &mut consumed_by_run);
             if glyphs.is_empty() {
