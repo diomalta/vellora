@@ -373,14 +373,16 @@ function comparePdfProbeV2(before, after, items, counts) {
   for (const [fixture, a] of Object.entries(after ?? {})) {
     const b = before?.[fixture];
     if (!b) {
+      // A fixture the baseline never measured (e.g. the probe suite, layout-diff/probes/, from
+      // 2026-10-22 on): newly measured, nothing to ratchet yet.
       items.push({
         ...base,
         key: `pdf-probe|${fixture}`,
-        class: "not-comparable",
+        class: "newly-measured",
         gating: false,
         before: "absent",
         after: `${a.pairs.length} pairs`,
-        detail: "baseline has no pdf-probe for this fixture",
+        detail: "baseline has no pdf-probe for this fixture: newly measured",
       });
       continue;
     }

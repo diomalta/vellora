@@ -1767,3 +1767,13 @@ INDICATIVE.
   raw-Blitz WPT mode built on `phaseb/10-wptraw`; until it lands no run records it, so every
   WPT pass → fail item stays (c) (`gate/wpt-route.mjs`; synthetic tests in
   `gate/test/wpt-route.test.mjs`; DESIGN TARGET).
+- **Probe fixtures.** Step 09's 37 Chrome probes are a pdf-probe v2 suite run by `run-all`
+  (step `pdf-probe-suite`, `fidelity/layout-diff/probe-suite.mjs`, data
+  `fidelity/layout-diff/probes/review-fixes-09.json`; fixtures `probe-<id>`, Chrome references
+  printed at run time through `fidelity/lib/chrome-reference.mjs`). They are new rows: a gate of
+  the next run against 09 reads them as newly measured, and they ratchet from the next committed
+  baseline on. CONFIRMED that the suite catches what the gate missed at step 09: gating the f5
+  probes of the step-09 evidence PDFs from the step-08 build to the fix-5 build fails on
+  f5_table_partial (dy 0 → −15 pt on 7 rows) and f5_allowance_footer ("Tail" unpaired) and passes
+  the other six (details: `fidelity/layout-diff/README.md`, "Probe fixtures"). The head and pin
+  views cannot see the probes until someone renders them with those builds' addons.

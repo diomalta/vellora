@@ -467,6 +467,41 @@ What v2 does:
   extractor's gate fires on the same pair). Mutations: `oracles/py/pdf_mutate.py`.
 - **Committed baselines** were re-scored offline from their run copies
   (`fidelity/gate/rescore-pdf-probe.mjs`); see `fidelity/baselines/port/README.md`, "pdf-probe v2".
+- **Off-page words** (2026-10-22): `oracles/py/words.py` also lists `offPage` words (an unclipped
+  extraction, first-glyph origin outside the page rectangle; MuPDF's page words drop them, so a
+  word that moved below the page read as an unpaired-vellora improvement). Sections carry
+  `offPage { vellora, chrome }` outside `settings`; the gate ratchets vellora's per text. A word
+  whose origin is just below the page edge but whose glyph boxes still reach into the page is in
+  both lists. Fifth canary: one glyph run moved below the MediaBox must gate.
+
+## Probe fixtures (`probe-suite.mjs`, `probes/`, 2026-10-22)
+
+The corpus never exercises some pagination behaviour that port steps change (forced breaks and
+the margin after them, `@media`-scoped break rules, partial boxes / tables / images at a page end,
+`@page` size features, RTL inline alignment). Step 09's review wrote 37 Chrome probes for exactly
+that and caught a fix-5 regression no gate oracle saw. They are now a suite:
+`probes/review-fixes-09.json` (`vellora-fidelity/probe-suite/1`; ids, targets and HTML copied
+verbatim from `baselines/port/09-review-fixes/attachments/chrome-probes-review-fixes.json`).
+`node fidelity/layout-diff/probe-suite.mjs --out <layout-diff dir> [--label run-all] [--chrome
+<path>]` renders each probe with the native addon (`@vellora/native` `render`, no templating: what
+`renderPdf(html, undefined, { strict: true })` hands the bridge, so a probe's literal `{{...}}`
+text is drawn as Chrome draws it; fixed title and creation date), prints Chrome's PDF of
+`referenceHtml(html)` through `lib/chrome-reference.mjs` at run time, extracts both with
+`words.py` and writes `<out>/probe-<id>/<label>/{vellora.pdf, chrome.pdf, pdf-probe.json}`.
+`run-all.mjs` runs it as the step `pdf-probe-suite` (a gated run requires it, GATE-R1);
+`gate/snapshot.mjs loadRunDir` reads every `probe-<id>` like a fixture, `write-baseline.mjs`
+commits them under `pdf-probe/`, and a gate against a baseline without them reads them as
+newly measured. A probe the strict gate rejects writes `rejected.json`, and the step errors.
+
+Reproduction (2026-10-22, local Chrome 155.0.8059.85, macOS 27 arm64, this branch's build = the
+09 tip; INDICATIVE): Chrome's words equal the attachment's for 36 of 37 probes (g_postmark_raw
+differs only by 0.01 pt rounding of the attachment's reader), vellora's equal the attachment's
+`afterWords` for 35 (g_postmark_raw: 0.01 pt rounding; g_inline_body: the attachment's reader
+split one word at the page edge, "Li" + "055" vs "Line055"). Gating the f5_* probes of the
+step-09 evidence (`~/.cache/vellora-fidelity/step09-review-fixes-evidence-20261021/probes/out/`)
+from the step-08 build to the fix-5 build FAILs exactly where the review found the step back:
+f5_table_partial (7 page-2 rows dy 0 → −15 pt) and f5_allowance_footer ("Tail" loses its
+pairing, unpaired-vellora 0 → 1); the other six f5 probes PASS.
 
 ## Results, 2026-10-21 (local, INDICATIVE; Chrome 155.0.8059.85, macOS 27 arm64)
 

@@ -43,7 +43,9 @@ node fidelity/run-all.mjs                                      # measure only
 `run-all.mjs` runs, each as its own process: the repo's own tests and lint (`code-checks`), the WPT
 default suites, the 239 WPT crashtests, the corpus, the oracles over the legacy fixtures and over
 every corpus PDF (plus a PDF/A-2b render of each), layout-diff and pdf-probe over every measured
-fixture; then writes `results/run-all/<run-id>/summary.json` and `summary.md`: environment, exact
+fixture, and the probe fixture suite (`pdf-probe-suite`: `layout-diff/probes/`, small pagination /
+@page / RTL documents the corpus never exercises, as pdf-probe v2 fixtures `probe-<id>`; since
+2026-10-22); then writes `results/run-all/<run-id>/summary.json` and `summary.md`: environment, exact
 commands and exit codes, per-fixture per-oracle verdicts keyed by `ACCEPTANCE.md` criterion IDs
 (incl. LET-1/2/3 and TXT-B1), per-WPT-directory pass rates, canary counts and code checks. A
 missing prerequisite is reported by the preflight and turns into `not-run` with its reason. Options
@@ -144,7 +146,8 @@ planted self-test (`debt.test.mjs`); layer vectors are checked on committed pack
 splits them: **34 detection canaries** (4 qpdf structural, 2 veraPDF PDF/A rule breakers, 9 text
 extractor, 6 copy-paste, 4 ITF, 4 Code 128, 1 layout-consensus, 4 pdf-probe v2: +6 pt shift, one
 word deleted, one glyph run moved 2 pt, /Ascent rewritten that must NOT be flagged; since
-2026-10-21, 30/38 before), each must be caught, and **8
+2026-10-21, 30/38 before; a 5th pdf-probe canary since 2026-10-22, one glyph run moved below the
+MediaBox, so 35 detection canaries in 43 rows), each must be caught, and **8
 measurement-only rows** (`caught: null`: the 6 Chrome renders of the copy-paste canaries and the 2
 sub-CSS-px ITF renders), which show a behaviour and test no oracle. Phase A manifests said "24
 caught / 8 measurement-only" (24 detection canaries then) while `oracles/README.md` said "two rows
