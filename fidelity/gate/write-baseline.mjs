@@ -70,8 +70,31 @@ export function biomeFormat(path) {
   });
   if (r.error) return `not formatted: ${r.error.message}`;
   return r.status === 0
-    ? "biome format --write (repo biome.json) before hashing"
+    ? BIOME_FORMATTED
     : `biome exit ${r.status}: ${String(r.stderr).slice(0, 200)}`;
+}
+
+/** biomeFormat's success value; anything else is a formatting failure. */
+export const BIOME_FORMATTED = "biome format --write (repo biome.json) before hashing";
+
+/**
+ * Throw unless `result` (a biomeFormat return value) is the success value: a tool that hashes
+ * files must not hash unformatted ones and record the failure as if it were a formatting note
+ * (I5: rescore-pdf-probe recorded "not formatted: ..." and carried on).
+ */
+export function assertFormatted(result, path) {
+  if (result !== BIOME_FORMATTED) {
+    throw new Error(`biome formatting did not run on ${path}: ${result}`);
+  }
+  return result;
+}
+
+/** Preflight: the repo's biome binary runs (null) or why not (string). */
+export function biomeUnavailable() {
+  const bin = join(repoRoot, "node_modules", ".bin", "biome");
+  const r = spawnSync(bin, ["--version"], { cwd: repoRoot, encoding: "utf8" });
+  if (r.error) return `${bin}: ${r.error.message}`;
+  return r.status === 0 ? null : `${bin} --version exit ${r.status}`;
 }
 
 export function listFiles(dir, base = dir) {

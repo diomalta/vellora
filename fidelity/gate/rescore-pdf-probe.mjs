@@ -16,7 +16,8 @@
 // The run is verified first: its summary.json sha256 must equal the manifest's source (unless
 // --substitute <evidence> explains why another run's PDFs stand in), and the run's own v1
 // pdf-probe.json, re-compacted, must equal the committed v1 section (proof that these PDFs are
-// the ones the baseline measured).
+// the ones the baseline measured). Biome must run (preflight before anything is touched, and every
+// format call must succeed): a re-score never hashes unformatted files (I5, 2026-10-22).
 //
 //   node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/<name> --run <run-all dir>
 //     [--fixtures a,b] [--substitute <evidence>] [--dry-run]
@@ -42,7 +43,13 @@ import {
 } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { pdfWordsV2, requirePython } from "../layout-diff/lib/pdf-words.mjs";
 import { PDF_PROBE_V1_DIR, compactPdfProbe, loadBaselineDir } from "./snapshot.mjs";
-import { biomeFormat, json, listFiles } from "./write-baseline.mjs";
+import {
+  assertFormatted,
+  biomeFormat,
+  biomeUnavailable,
+  json,
+  listFiles,
+} from "./write-baseline.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -67,7 +74,11 @@ export function rescoreBaseline({
   substitute = null,
   dryRun = false,
   command,
+  format = biomeFormat,
+  formatterUnavailable = biomeUnavailable,
 }) {
+  const why = formatterUnavailable();
+  if (why) throw new Error(`biome is not runnable (${why}): a re-score must format before hashing`);
   const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   const gateSchema = manifest.schema === GATE_SCHEMA;
   const want = manifest.source?.summarySha256 ?? manifest.provenance?.sourceSummarySha256;
@@ -199,7 +210,7 @@ export function rescoreBaseline({
   for (const [fx, s] of Object.entries(sections)) {
     writeFileSync(join(dir, "pdf-probe", `${fx}.json`), json(s));
   }
-  record.formatting = biomeFormat(join(dir, "pdf-probe"));
+  record.formatting = assertFormatted(format(join(dir, "pdf-probe")), join(dir, "pdf-probe"));
   for (const fx of Object.keys(sections)) {
     const rel = join("pdf-probe", `${fx}.json`);
     files[rel] = sha256(readFileSync(join(dir, rel)));
@@ -209,7 +220,7 @@ export function rescoreBaseline({
   // Phase A manifests hash a chosen subset in their own order: keep it, append the new entries.
   const out = { ...manifest, files: gateSchema ? sorted : files, pdfProbeRescore: record };
   writeFileSync(join(dir, "manifest.json"), json(out));
-  biomeFormat(join(dir, "manifest.json"));
+  assertFormatted(format(join(dir, "manifest.json")), join(dir, "manifest.json"));
   const after = loadBaselineDir(dir);
   if (!after.integrity.ok)
     throw new Error(`${dir}: integrity after re-score: ${after.integrity.problems.join("; ")}`);
