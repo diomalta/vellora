@@ -108,6 +108,8 @@ pub fn debug_render_xhtml(
 ///
 /// - the box walk's reader compensations off (the inline padding-right advance Blitz's painter
 ///   does not make) and none of the `layout_normalize` passes;
+/// - no display-list rect merge (`merge_adjacent_rects` joins same-colour rects up to 4 px
+///   apart);
 /// - [`pagination::paginate_flat`] instead of [`pagination::paginate`]: Blitz has no paginator,
 ///   so the flow is cut into page-tall bands with no break decisions, no `<thead>` repeat and no
 ///   margin boxes (page 1 is the flow verbatim, what a viewport screenshot shows).

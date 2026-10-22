@@ -203,6 +203,34 @@ fn flat_pagination_cuts_the_flow_into_page_bands() {
 }
 
 #[test]
+fn flat_pagination_keeps_same_colour_rects_apart() {
+    // Two black stripes 2 px apart (WPT css/CSS2/linebox/line-height-006.xht): the product
+    // display list merges them into one 42 px rect (`merge_adjacent_rects`, 4 px tolerance);
+    // the raw render keeps Blitz's two boxes.
+    let html = r#"<!DOCTYPE html><html><head><style>@page { size: 800px 600px; margin: 0 }
+        body { margin: 8px } div { position: relative; width: 20px; height: 96px }
+        #a, #b { background: black } #b { position: absolute; left: 22px; top: 0 }</style>
+        </head><body><div><div id="a"></div><div id="b"></div></div></body></html>"#;
+    let (doc, page_box) = raw_layout(html);
+    let black = |pages: &[crate::pdf::PdfPage]| -> Vec<(f64, f64)> {
+        pages[0]
+            .rects
+            .iter()
+            .filter(|r| r.color == [0, 0, 0])
+            .map(|r| (r.x, r.width))
+            .collect()
+    };
+    assert_eq!(
+        black(&pagination::paginate_flat(&doc, &page_box).pages),
+        vec![(8.0, 20.0), (30.0, 20.0)]
+    );
+    assert_eq!(
+        black(&pagination::paginate(&doc, &page_box).pages),
+        vec![(8.0, 42.0)]
+    );
+}
+
+#[test]
 fn flat_pagination_caps_the_page_count() {
     let html = r#"<!DOCTYPE html><html><head><style>@page { size: 200px 100px; margin: 0 }
         body { margin: 0 }</style></head><body><div style="height: 1000000px"></div>

@@ -596,9 +596,9 @@ pub fn paginate_traced(
 /// page `i`'s own `@page` box (`start_0 = 0`, so page 1 is the flow verbatim, exactly what a
 /// viewport screenshot shows), translated to the page's content box. Nothing is moved, repeated
 /// or kept together: no break rules (`break-*`), no `<thead>` repeat, no fit tolerance, no margin
-/// boxes. A background or border rect is clipped into every band it crosses; a text run goes to
-/// the band of its baseline, an image or rounded border to the band of its top. Content above the
-/// flow origin stays on page 1.
+/// boxes, and no display-list rect merge (`merge_adjacent_rects`). A background or border rect is
+/// clipped into every band it crosses; a text run goes to the band of its baseline, an image or
+/// rounded border to the band of its top. Content above the flow origin stays on page 1.
 #[doc(hidden)]
 pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
@@ -744,7 +744,9 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         pages.push(PdfPage {
             width_px: page.width,
             height_px: page.height,
-            rects: merge_adjacent_rects(rects),
+            // Not `merge_adjacent_rects`: its 4 px gap tolerance is a vellora display-list
+            // correction (it joins two same-colour boxes up to 4 px apart into one rect).
+            rects,
             rounded_strokes,
             images,
             text_runs,

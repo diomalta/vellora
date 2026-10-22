@@ -5,7 +5,8 @@
 // The raw render is `vellora_core::debug_render_raw_blitz` (crates/vellora-core/src/lib.rs),
 // reached through the `xhtml_render` example binary with request record `R` (lib/xhtml-bridge.mjs).
 // Relative to the product render it turns off: the box walk's reader compensations (inline
-// padding-right advance), every `layout_normalize` pass, and vellora's paginator (replaced by
+// padding-right advance), every `layout_normalize` pass, the display-list rect merge, and
+// vellora's paginator (replaced by
 // `pagination::paginate_flat`: the flow cut into page-tall bands, no break rules, no <thead>
 // repeat, no margin boxes). It keeps: the strict gates, the `@page` box, print media, the parser
 // (XML for nodes WPT serves as XML, as in the product run), fonts, images, the walk's placement
@@ -48,6 +49,7 @@ export function RAW_MODE_INFO({ xhtmlRender, xmlParse }) {
     drops: [
       "reader compensation: inline padding-right advance (run_padding_right_px)",
       "layout_normalize passes (LAYOUT_NORMALIZE_PASSES)",
+      "display-list rect merge (merge_adjacent_rects, 4 px tolerance)",
       "pagination: break rules, keep-together, <thead> repeat, fit tolerance, margin boxes (flat page bands instead)",
     ],
     xmlParse,
