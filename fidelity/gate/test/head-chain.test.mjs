@@ -4,9 +4,11 @@
 // the committed data is visible here; their reading is in fidelity/baselines/port/README.md
 // ("Head ratchet and debt ledger").
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 import { DEBT_FILE, loadDebt } from "../debt.mjs";
 import { chainDeclarations } from "../declarations.mjs";
 import { evaluateGate } from "../run.mjs";
@@ -193,4 +195,47 @@ test("pin view of 09: 1140 items worse than the shipped main, all (c) while the 
   );
   // As at 07 except postmark: +3 newly off-page words ("Download as PDF", off the page since 08).
   assert.deepEqual(pdfProbeByFixture(r09.pin.items), PIN_PDF_PROBE_BY_FIXTURE_09);
+});
+
+// The committed merged-09 snapshot (phaseb/10-integrate, 2026-10-22,
+// fidelity/gate/snapshots/2026-10-22/merged-09/): the same 09 vs 08 gate as above, written by
+// run.mjs, and its ledger candidates under GATE-A1/A3-exact WPT classes with the raw-Blitz run of
+// the 165 lost passes (--raw-wpt). The report must agree with the in-process evaluation above.
+const merged09 = (f) =>
+  JSON.parse(
+    gunzipSync(
+      readFileSync(resolve(baselines, "..", "gate", "snapshots", "2026-10-22", "merged-09", f)),
+    ).toString("utf8"),
+  );
+
+test("merged-09 snapshot: head 1386 + 10 declared, pin (c) 1140 + 10 declared, as evaluated here", () => {
+  const g = merged09("gate-report-09-vs-08-head-00-start.json.gz");
+  assert.equal(g.counts.gating, 0);
+  assert.equal(g.head.counts.gating, r09.head.counts.gating);
+  assert.deepEqual(g.pin.counts, r09.pin.counts);
+  assert.deepEqual(g.pin.counts, { a: 0, b: 0, c: 1140, declared: 10 });
+  const m = merged09("gate-report-09-vs-pin-main.json.gz");
+  assert.deepEqual(m.pin.counts, { a: 0, b: 0, c: 1140, declared: 10 });
+  assert.equal(m.pin.mainMerge, "BLOCKED");
+});
+
+test("merged-09 candidates: WPT (a) only with old-pass evidence, raw Blitz splits b / c; lost text is c", () => {
+  const c = merged09("ledger-candidates.json.gz");
+  assert.deepEqual(c.sections.head.byCandidate, { none: 57, b: 1154, c: 30, a: 1, "b-page": 144 });
+  assert.deepEqual(c.sections.pin.byCandidate, { none: 59, c: 57, b: 934, a: 1, "b-page": 89 });
+  const wpt = (s) =>
+    tally(
+      s.items.filter((i) => i.check === "wpt"),
+      (i) => i.candidate,
+    );
+  // = fidelity/gate/snapshots/2026-10-22/wpt-raw/wpt-raw-table.md per view.
+  assert.deepEqual(wpt(c.sections.head), { b: 7, c: 30, a: 1 });
+  assert.deepEqual(wpt(c.sections.pin), { b: 31, c: 14, a: 1 });
+  // The 3 newly off-page postmark words and the 6 tokens they take from pdftotext / pymupdf.
+  const pinC = c.sections.pin.items.filter((i) => i.candidate === "c");
+  assert.deepEqual(
+    pinC.filter((i) => i.key.includes("|off-page|")).map((i) => i.key.split("|")[3]),
+    ["Download", "as", "PDF"],
+  );
+  assert.equal(pinC.filter((i) => i.key.includes("|missingTokens.")).length, 6);
 });

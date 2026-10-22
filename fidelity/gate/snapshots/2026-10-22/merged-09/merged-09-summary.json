@@ -1,0 +1,1142 @@
+{
+  "schema": "vellora-fidelity/merged-09-summary/1",
+  "labels": {
+    "authority": "INDICATIVE (local macOS, darwin 27.0.0 arm64, Node v22.23.2, Python 3.12.13, PyMuPDF 1.28.2, Chrome 155.0.8059.85 via the run copies)",
+    "date": "2026-10-22",
+    "branch": "phaseb/10-integrate"
+  },
+  "what": "Post-hoc gate of port/09-review-fixes vs 08 under the merged phaseb/10-gate rules (I1 sign-crossing, I2 ledger base, I3 debt/2 + GATE-D7, I4 declarations carried, EXT-2 token set, off-page, GATE-A3) with the complete pin (pdf-probe v2 for 9 fixtures, off-page + EXT-2 backfilled), and the ledger candidates under GATE-A1/A3-exact WPT classification with raw-Blitz evidence.",
+  "commands": {
+    "gate": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/08-html-parse --run fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --step 09-review-fixes --out <scratch>/09-vs-08-head-00-start",
+    "pinMain": "node fidelity/gate/run.mjs --baseline fidelity/baselines/pin --run fidelity/baselines/port/09-review-fixes --accept fidelity/baselines/port/09-review-fixes/manifest.json --no-head --pin fidelity/baselines/pin --main --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --step 09-review-fixes --out <scratch>/09-vs-pin-main",
+    "candidates": "node fidelity/gate/ledger-candidates.mjs --report <scratch>/09-vs-08-head-00-start/gate-report.json --layout-from ~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z --head-wpt ~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z/wpt/results.json --pin-wpt ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z/wpt/results.json --raw-wpt ~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022/results.json --out <scratch>/candidates"
+  },
+  "verdicts": {
+    "gate": "FAIL",
+    "linkGating": 0,
+    "headGating": 1386,
+    "headDeclared": 10,
+    "pin": {
+      "a": 0,
+      "b": 0,
+      "c": 1140,
+      "declared": 10
+    },
+    "mainMerge": "BLOCKED",
+    "pinMainReport": {
+      "gating": 1150,
+      "pin": {
+        "a": 0,
+        "b": 0,
+        "c": 1140,
+        "declared": 10
+      },
+      "note": "gated against the pin as the previous link: 1150 = the pin view's 1140 (c) + the 10 css:page-varying-width rejections, which the previous-link comparison counts because only the current step's own declarations apply there (09 declares none); the pin view carries them as declared (fixed on this branch, gate/declarations.mjs)"
+    },
+    "gateCanaries": "20/20 caught",
+    "ledgerBase": "fidelity/baselines/port/DEBT.json absent at merge-base a8b126d8a133 (HEAD, main): first population"
+  },
+  "headByKind": {
+    "pdf-probe dx": 202,
+    "pdf-probe dy": 1125,
+    "pdf-probe pairing": 15,
+    "value posErrMm": 4,
+    "value worstMm": 2,
+    "wpt regression": 38
+  },
+  "pinCByKind": {
+    "pdf-probe dx": 283,
+    "pdf-probe dy": 771,
+    "pdf-probe off-page": 3,
+    "pdf-probe pairing": 21,
+    "value excessB": 1,
+    "value missing.pdftotext": 1,
+    "value missing.pymupdf": 1,
+    "value missingTokens": 6,
+    "value p95Mm": 1,
+    "value posErrMm": 4,
+    "value statusRank.pdfminer.six": 1,
+    "value worstMm": 1,
+    "wpt regression": 46
+  },
+  "pinDeclared": 10,
+  "candidates": {
+    "head": {
+      "total": 1386,
+      "byCandidate": {
+        "a": 1,
+        "b": 1154,
+        "b-page": 144,
+        "c": 30,
+        "none": 57
+      },
+      "byKindAndCandidate": {
+        "pdf-probe dx | b": 167,
+        "pdf-probe dx | b-page": 35,
+        "pdf-probe dy | b": 980,
+        "pdf-probe dy | b-page": 94,
+        "pdf-probe dy | none": 51,
+        "pdf-probe pairing | b-page": 15,
+        "value posErrMm | none": 4,
+        "value worstMm | none": 2,
+        "wpt | a": 1,
+        "wpt | b": 7,
+        "wpt | c": 30
+      },
+      "byFixtureAndCandidate": {
+        "boleto | b": 217,
+        "boleto | none": 44,
+        "boleto-febraban | b": 63,
+        "danfe | b": 459,
+        "danfe | none": 4,
+        "invoice | b": 67,
+        "notification | b": 102,
+        "oss-postmark-receipt | b": 136,
+        "oss-postmark-receipt | none": 3,
+        "oss-sparksuite-invoice | b": 46,
+        "oss-sparksuite-invoice | none": 1,
+        "receipt | b": 31,
+        "text-stress-ptbr | b": 26,
+        "text-stress-ptbr | b-page": 144,
+        "text-stress-ptbr | none": 5,
+        "wpt | a": 1,
+        "wpt | b": 7,
+        "wpt | c": 30
+      }
+    },
+    "pin": {
+      "total": 1140,
+      "byCandidate": {
+        "a": 1,
+        "b": 934,
+        "b-page": 89,
+        "c": 57,
+        "none": 59
+      },
+      "byKindAndCandidate": {
+        "pdf-probe dx | b": 230,
+        "pdf-probe dx | b-page": 26,
+        "pdf-probe dx | c": 25,
+        "pdf-probe dx | none": 2,
+        "pdf-probe dy | b": 673,
+        "pdf-probe dy | b-page": 44,
+        "pdf-probe dy | c": 5,
+        "pdf-probe dy | none": 49,
+        "pdf-probe off-page | c": 3,
+        "pdf-probe pairing | b-page": 19,
+        "pdf-probe pairing | c": 2,
+        "value excessB | none": 1,
+        "value missing.pdftotext | c": 1,
+        "value missing.pymupdf | c": 1,
+        "value missingTokens | c": 6,
+        "value p95Mm | none": 1,
+        "value posErrMm | none": 4,
+        "value statusRank.pdfminer.six | none": 1,
+        "value worstMm | none": 1,
+        "wpt | a": 1,
+        "wpt | b": 31,
+        "wpt | c": 14
+      },
+      "byFixtureAndCandidate": {
+        "boleto | b": 168,
+        "boleto | none": 44,
+        "boleto-febraban | b": 64,
+        "danfe | b": 248,
+        "danfe | none": 5,
+        "invoice | b": 70,
+        "invoice | c": 5,
+        "invoice | none": 4,
+        "notification | b": 102,
+        "oss-postmark-receipt | b": 150,
+        "oss-postmark-receipt | c": 13,
+        "oss-postmark-receipt | none": 1,
+        "oss-sparksuite-invoice | b": 67,
+        "oss-sparksuite-invoice | c": 25,
+        "receipt | b": 8,
+        "text-stress-ptbr | b": 26,
+        "text-stress-ptbr | b-page": 89,
+        "text-stress-ptbr | none": 5,
+        "wpt | a": 1,
+        "wpt | b": 31,
+        "wpt | c": 14
+      }
+    },
+    "beforeTheGateA1WptFix": {
+      "note": "same report, ledger-candidates before commit 1cfb047 (a step 01-06 chain label alone made a WPT item (a); no raw evidence)",
+      "head": {
+        "a": 37,
+        "b": 1147,
+        "b-page": 144,
+        "none": 58
+      },
+      "pin": {
+        "a": 19,
+        "b": 903,
+        "b-page": 89,
+        "c": 43,
+        "none": 86
+      }
+    }
+  },
+  "headCOrNone": [
+    {
+      "key": "danfe|DANFE-L1a|corpus||criterion#1|posErrMm",
+      "candidate": "none",
+      "before": 1.56,
+      "after": 2.09,
+      "why": "04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "danfe|DANFE-L1b|corpus||criterion#1|posErrMm",
+      "candidate": "none",
+      "before": 3.15,
+      "after": 3.68,
+      "why": "04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "danfe|DANFE-L1c|corpus||criterion#1|posErrMm",
+      "candidate": "none",
+      "before": 4.71,
+      "after": 5.24,
+      "why": "04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "danfe|DANFE-L1d|corpus||criterion#1|posErrMm",
+      "candidate": "none",
+      "before": 5.96,
+      "after": 6.49,
+      "why": "04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "oss-postmark-receipt|INV-R1|corpus||criterion#1|worstMm",
+      "candidate": "none",
+      "before": 9.2,
+      "after": 10.26,
+      "why": "04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "oss-sparksuite-invoice|INV-R1|corpus||criterion#1|worstMm",
+      "candidate": "none",
+      "before": 2.74,
+      "after": 4.15,
+      "why": "01-pagination-gaps value-compensating-drift; 04-block-offset compensating-drift: needs a per-item layer vector of the anchor behind this aggregate metric"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-006.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-007.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-017.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-018.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-028.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-029.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-039.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-040.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-050.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-051.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-058.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-061.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-062.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-083.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-084.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-105.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-106.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-112.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-061.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-062.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-072.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-073.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-061.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-062.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-072.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-073.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-061.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-062.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-072.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-073.xht",
+      "candidate": "c",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#3|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#4|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|1#4|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#5|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#6|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#7|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#8|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#3|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#4|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#5|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|1#5|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|2#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|3#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|4#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|5#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#9|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#10|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|9#11|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#6|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#7|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#8|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#9|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#10|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|1#6|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|2#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|3#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|4#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|5#2|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|6#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|7#1|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#11|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#12|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#13|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#14|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#15|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#16|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|4#3|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|2#3|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#17|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0#18|dy",
+      "candidate": "none",
+      "before": 17.37,
+      "after": 19.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|dy",
+      "candidate": "none",
+      "before": -0.15,
+      "after": 2.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|dy",
+      "candidate": "none",
+      "before": -0.15,
+      "after": 2.85,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p1|mono#1|dy",
+      "candidate": "none",
+      "before": -16.2,
+      "after": 1.1,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p1|0123456789#1|dy",
+      "candidate": "none",
+      "before": -16.2,
+      "after": 1.1,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p1|mono#2|dy",
+      "candidate": "none",
+      "before": -16.2,
+      "after": 1.1,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p1|negrito#3|dy",
+      "candidate": "none",
+      "before": -16.2,
+      "after": 1.1,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p1|solicitado,#1|dy",
+      "candidate": "none",
+      "before": -16.2,
+      "after": 1.1,
+      "why": "the Chrome word maps to no layout-diff run (no layer vector)"
+    }
+  ],
+  "pinC": [
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missing.pdftotext",
+      "before": 35,
+      "after": 38,
+      "why": "text lost: 3 text(s) of this fixture newly drawn off the page (Download as PDF); the OLD value was right"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missing.pymupdf",
+      "before": 37,
+      "after": 40,
+      "why": "text lost: 3 text(s) of this fixture newly drawn off the page (Download as PDF); the OLD value was right"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pdftotext|Download",
+      "before": 0,
+      "after": 1,
+      "why": "\"Download\" newly missing from pdftotext: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pdftotext|as",
+      "before": 0,
+      "after": 1,
+      "why": "\"as\" newly missing from pdftotext: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pdftotext|PDF",
+      "before": 1,
+      "after": 2,
+      "why": "\"PDF\" newly missing from pdftotext: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pymupdf|Download",
+      "before": 0,
+      "after": 1,
+      "why": "\"Download\" newly missing from pymupdf: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pymupdf|as",
+      "before": 0,
+      "after": 1,
+      "why": "\"as\" newly missing from pymupdf: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pymupdf|PDF",
+      "before": 1,
+      "after": 2,
+      "why": "\"PDF\" newly missing from pymupdf: the same text is newly drawn off the page (lost text, the OLD value was right)"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-061.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/line-height-062.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-061.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-062.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-072.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/height-073.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-061.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-062.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-072.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/max-height-073.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-061.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-062.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-072.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/min-height-073.xht",
+      "before": "pass",
+      "after": "fail",
+      "why": "raw Blitz pass, vellora fail: a vellora layer broke the test [chain: 01-pagination-gaps wpt-false-pass-rect-merge; an artefact label, not evidence by itself (GATE-A1)]"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|Total#1|dy",
+      "before": 1.1,
+      "after": -2.65,
+      "why": "|run| 3.533 > |N0| 1.984: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|a#1|dy",
+      "before": 1.1,
+      "after": -2.65,
+      "why": "|run| 3.533 > |N0| 1.984: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|pagar#1|dy",
+      "before": 1.1,
+      "after": -2.65,
+      "why": "|run| 3.533 > |N0| 1.984: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|R$#14|dy",
+      "before": 1.1,
+      "after": -2.65,
+      "why": "|run| 3.533 > |N0| 1.984: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|50.724,90#1|dy",
+      "before": 1.1,
+      "after": -2.65,
+      "why": "|run| 3.533 > |N0| 1.984: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#1|pairing",
+      "before": "dx -0.9 dy -1.65",
+      "after": "unpaired",
+      "why": "Chrome's \"[Product\" has no vellora partner and is not drawn on another page: text lost (the OLD value was right)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#1|pairing",
+      "before": "dx -0.9 dy -1.65",
+      "after": "unpaired",
+      "why": "Chrome's \"Name]\" has no vellora partner and is not drawn on another page: text lost (the OLD value was right)"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Invoice#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|#:#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|123#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Created:#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|January#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|1,#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|2023#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Due:#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|February#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|1,#2|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|2023#2|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Acme#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Corp.#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|John#1|dx",
+      "before": -0.22,
+      "after": -3.22,
+      "why": "|run| 4.293 > |N0| 1.992: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Doe#1|dx",
+      "before": -0.22,
+      "after": -3.22,
+      "why": "|run| 4.293 > |N0| 1.992: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|john@example.com#1|dx",
+      "before": -0.23,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Check#1|dx",
+      "before": -1.72,
+      "after": -3.22,
+      "why": "|run| 4.293 > |N0| 1.992: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|##1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 1.992: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|1000#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Price#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|$300.00#1|dx",
+      "before": -1.72,
+      "after": -3.22,
+      "why": "|run| 4.293 > |N0| 1.992: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|$75.00#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|$10.00#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Total:#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|$385.00#1|dx",
+      "before": -1.73,
+      "after": -3.23,
+      "why": "|run| 4.307 > |N0| 2: vellora's layers made the word worse than raw Blitz"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|off-page|Download",
+      "before": 0,
+      "after": 1,
+      "why": "\"Download\" is newly drawn off the page (outside the MediaBox; MuPDF and poppler clip it): lost text, never acceptable"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|off-page|as",
+      "before": 0,
+      "after": 1,
+      "why": "\"as\" is newly drawn off the page (outside the MediaBox; MuPDF and poppler clip it): lost text, never acceptable"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|off-page|PDF",
+      "before": 1,
+      "after": 2,
+      "why": "\"PDF\" is newly drawn off the page (outside the MediaBox; MuPDF and poppler clip it): lost text, never acceptable"
+    }
+  ],
+  "mergedTipRenderParity": {
+    "command": "node fidelity/run-all.mjs --only corpus,oracles-fixtures,oracles-corpus,layout-diff,pdf-probe,pdf-probe-suite --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/merged-render-check (build of fba1346)",
+    "vsRunCopy": "~/.cache/vellora-fidelity/run-all-10-crates-20261022T225719Z",
+    "velloraPdfs": "34/34 byte-identical (sha256): corpus 6, layout-diff 9, oracles 19; the 37 probe-suite PDFs have no counterpart in that run (it predates the suite)",
+    "wpt": "default suites, 8047 reftests: product outcome equal to the 10-crates run copy for 8047/8047; the 165 tests of wpt-raw-10base-98368b3-20261022: outcome and rawOutcome equal (~/.cache/vellora-fidelity/wpt-full-10integrate-20261022/)"
+  }
+}

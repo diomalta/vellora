@@ -1492,7 +1492,10 @@ compares like with like.
 
 - `pin`: its run kept the PDFs of invoice and notification only; boleto, boleto-febraban, danfe,
   oss-postmark-receipt, oss-sparksuite-invoice, receipt and text-stress-ptbr are recorded as
-  missing. pin's v2 section covers the 2 fixtures.
+  missing. pin's v2 section covered the 2 fixtures. **Since 2026-10-22 (`phaseb/10-pin`, merged
+  on `phaseb/10-integrate`) it covers all 9**: the 7 missing pairs come from an `--inputs`
+  mapping (vellora re-rendered by the pin source's `layout_dump`, the chain's Chrome PDFs;
+  `manifest.pdfProbeRescore.inputMap`), see "Integration" below.
 - `beta4`: its v1 section came from a Phase A A/B probe whose PDFs no run copy kept
   (`run-all-beta4-20261021T054809Z/layout-diff/*/run-all/` has no PDFs). The PDFs of the
   `beta4-gated` run stand in, for beta4's 4 fixtures only, recorded as `source.substitute` with the
@@ -1616,6 +1619,9 @@ the reports:
 `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/06-page-rules --run fidelity/baselines/port/07-media-print --accept fidelity/baselines/port/07-media-print/manifest.json --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z --step 07-media-print`,
 then `node fidelity/gate/ledger-candidates.mjs …` (command in `ledger-candidates.md`).
 
+Pin view here and in the candidate table below: the 2-fixture pin (invoice, notification) under
+the pre-10-gate rules; the complete pin under the merged rules is in "Integration" below.
+
 | view | gating | by check |
 |---|---|---|
 | 07 vs 06 (previous link) | 0 | – |
@@ -1666,6 +1672,8 @@ v22.23.2, INDICATIVE). As for 07, `--run` is the committed baseline: the raw run
 carries its v1 `pdf-probe.json`, so `--run <run copy>` is REFUSED (baseline 2, run 1; CONFIRMED).
 Before the re-score, 08 and 09 were v1 while 00-start was v2, so the head comparison was refused
 too (CONFIRMED: v1 09 vs v2 00-start is REFUSED). Counts are asserted in `head-chain.test.mjs`.
+
+Pin view in these two tables: the 2-fixture pin under the pre-10-gate rules (see "Integration").
 
 | view | 07 | 09 | by check at 09 |
 |---|---|---|---|
@@ -1801,3 +1809,82 @@ INDICATIVE.
   1386 gating (pdf-probe 1342, WPT regression 38, value 6) plus 10 declared. Pin view: (c) 241
   (pdf-probe 179, WPT 46, value 16), declared 10; merge to main BLOCKED. 20/20 gate canaries
   caught; ledger base "DEBT.json absent at merge-base a8b126d8a133: first population".
+
+## Integration (2026-10-22, branch `phaseb/10-integrate`)
+
+`phaseb/10-base` + `phaseb/10-gate` + `phaseb/10-pin` + `phaseb/10-crates` + `phaseb/10-wptraw`,
+each merged with `--no-ff`. Local macOS (darwin 27.0.0 arm64, Node v22.23.2, Python 3.12.13,
+PyMuPDF 1.28.2); INDICATIVE.
+
+**The complete pin.** `baselines/pin` was taken from `phaseb/10-pin` (pdf-probe v2 for all 9
+fixtures) and backfilled again for the 10-gate records: `node fidelity/gate/backfill-off-page.mjs
+--baseline fidelity/baselines/pin --run ~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z
+--inputs ~/.cache/vellora-fidelity/pin-v2-render-20261022/inputs.json` (`--inputs` added here,
+same rules as `rescore-pdf-probe.mjs --inputs`: sha256-checked, and the mapped PDFs must reproduce
+the committed section exactly) and `node fidelity/gate/backfill-ext2-tokens.mjs` on the same run.
+Off-page vellora words at the pin: boleto-febraban 6, postmark 37, the others 0. Integrity ok.
+
+**Product render = 10-crates (CONFIRMED).** At the merged tip (build of `fba1346`), `node
+fidelity/run-all.mjs --only corpus,oracles-fixtures,oracles-corpus,layout-diff,pdf-probe,pdf-probe-suite`
+wrote 34 vellora PDFs (corpus 6, oracles 19, layout-diff 9) byte-identical (sha256) to the
+`run-all-10-crates-20261022T225719Z` run copy's; the default WPT suites (8047 reftests) give the
+same product outcome for 8047/8047. The raw render follows 10-wptraw's definition: `raw_blitz_tests`
+5/5, and the 165 tests of `wpt-raw-10base-98368b3-20261022` reproduce `outcome` and `rawOutcome`.
+
+**09 vs 08 post-hoc under the merged rules with the complete pin** (reports, candidates and
+`merged-09-summary.json` in `fidelity/gate/snapshots/2026-10-22/merged-09/`; commands in the
+summary; asserted in `head-chain.test.mjs`):
+
+| view | result | by kind |
+|---|---|---|
+| vs 08 (previous link) | 0 gating | – |
+| vs head 00-start | **1386** gating + 10 declared (FAIL) | pdf-probe dy 1125, dx 202, pairing 15; WPT 38; value 6 (DANFE-L1a…d `posErrMm`, INV-R1 `worstMm` postmark and sparksuite) |
+| vs pin, pin view | **(c) 1140** + 10 declared, merge to main BLOCKED | pdf-probe dy 771, dx 283, pairing 21, off-page 3; WPT 46; value 16 (EXT-2 tokens 6, EXT-2 counts 2, DANFE-L1a…d 4, DANFE-M1, REF-W p95, EXT-2 pdfminer status, INV-R1) |
+
+On the 2-fixture pin under the pre-10-gate rules this view was 206; under the old rules on the
+complete pin 809 (`snapshots/2026-10-22/pin-v2/`); on the 2-fixture pin under the 10-gate rules
+241 (`snapshots/2026-10-22/gate-fixes/`). The `--baseline pin --main` report agrees (pin view
+1140 + 10 declared; its 1150 previous-link gating counts the 10 rejections, which only the
+current step's declarations cover there). Before this branch it reported 1150 (c) and 0 declared:
+`chainDeclarations` carried nothing to the pin view when the previous link was not a port step;
+fixed in `gate/declarations.mjs`.
+
+**Candidate classes** (`ledger-candidates.mjs`, now with `--raw-wpt
+~/.cache/vellora-fidelity/wpt-raw-10base-98368b3-20261022/results.json`):
+
+| candidate | head (1386) | pin (1140) |
+|---|---|---|
+| (b) layer vector / raw Blitz fails the same way | 1154 (pdf-probe 1147, WPT 7) | 934 (pdf-probe 903, WPT 31) |
+| (b) page-scoped (text-stress-ptbr) | 144 | 89 |
+| (a) old pass proven false | 1 (WPT) | 1 (WPT) |
+| (c) | **30** (WPT) | **57** |
+| none | 57 | 59 |
+
+The old "declare 10" row is gone because I4 carries step 06's declaration (the items are
+`declared`, not candidates), not because 10 items went away. Two classifier changes move rows:
+
+- **WPT (a) needs GATE-A1 evidence.** Before, a step 01–06 chain label (`wpt-false-pass-rect-merge`
+  …) alone made a WPT item (a): head 37, pin 19. GATE-A1 says legacy acceptances do not count
+  against the head, and GATE-A3's (a) is an old pass shown false by ink or page count. With the
+  old run's records and the raw-Blitz outcomes the classes equal `snapshots/2026-10-22/wpt-raw/`
+  exactly: head a 1 / b 7 / c 30, pin a 1 / b 31 / c 14. The 30 head (c) are the
+  line-height-*/{,max-,min-}height-06x/07x tests whose pass raw Blitz keeps and
+  `pagination::merge_adjacent_rects` breaks (ablation, `phaseb/10-wptraw`).
+- **Lost text is c.** Newly off-page text (`pdf-probe|<fx>|off-page|<text>`) and newly missing
+  tokens (`…|missingTokens.<extractor>|<token>`) are (c); an EXT-2 count row of a fixture with
+  newly off-page text names that cause instead of the stale step-05 XML-parse label.
+
+Pin (c) 57: WPT 14 (the merge_adjacent_rects class); sparksuite p1 dx 25 (−0.23 → −3.23 pt, the
+beta.4 bump, |run| > |N0|); invoice p3 "Total a pagar R$ 50.724,90" dy 5 (+1.10 → −2.65 pt at 09;
+`phaseb/10-crates` moves them to −1.15 pt); postmark "Download as PDF" newly off-page 3, its 6
+EXT-2 tokens (pdftotext, pymupdf) and the 2 EXT-2 count rows (35 → 38, 37 → 40); postmark
+`[Product#1` / `Name]#1` pairing 2 (a key swap per `phaseb/10-pin`, not lost text: an (a) path is
+missing). Head none 57: boleto 44 dy (no layout-diff run for the Chrome word), text-stress-ptbr 5
+and postmark 2 dy (same reason), DANFE-L1a…d and the 2 INV-R1 (no per-anchor vector). No WPT
+item is none any more: `css/CSS2/floats/zero-width-floats.html` (none before, "two errors
+cancelling") is (b), raw Blitz fails it the same way.
+
+**For the next link.** Gate with `node fidelity/run-all.mjs --gate --raw …` so every WPT item
+carries `rawOutcome` (the wpt step takes about twice as long: 52.9 s → 106.8 s for the default
+suites, `fidelity/wpt/README.md` "Raw-Blitz mode"), then run `ledger-candidates.mjs` with
+`--raw-wpt <run>/wpt/results.json` and the old runs' `--head-wpt` / `--pin-wpt`.
