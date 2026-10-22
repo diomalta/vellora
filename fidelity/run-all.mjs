@@ -45,7 +45,9 @@
 //               wpt/results.json records tests[i].rawOutcome, the field GATE-A3's (b) route and
 //               gate/ledger-candidates.mjs read (fidelity/wpt/README.md "Raw-Blitz mode"). It
 //               runs a second vellora worker pool over the same tests, so the wpt step takes
-//               longer (wall times: fidelity/wpt/README.md "Raw-Blitz mode"); Chrome is not
+//               about twice as long (8047 reftests, --chrome-from, local macOS 2026-10-22,
+//               INDICATIVE: 52.9 s without, 106.8 s with; fidelity/wpt/README.md "Raw-Blitz
+//               mode"); Chrome is not
 //               re-run. It changes no product outcome.
 // --tools-image the oracles' Docker tools image (default $VELLORA_FIDELITY_TOOLS_IMAGE, else
 //               vellora-fidelity-tools:local). Build it from the committed recipe first.

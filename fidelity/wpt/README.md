@@ -385,6 +385,20 @@ Limits (read before using a raw outcome as evidence):
 - The walk is kept, so a defect in how vellora *reads* Blitz's layout (rather than corrects it) is
   in both renders and shows up as (b). The `B0`/`L0` equality test bounds this for the probe only.
 
+**Cost, and the full-suite run (2026-10-22, branch `phaseb/10-integrate`; local macOS, darwin
+27.0.0 arm64, Node v22.23.2; INDICATIVE).** The default suites (8047 reftests), back to back on the
+same build, both with `--expectations none --upstream none --chrome-from
+~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z/wpt/results.json`: without
+`--raw` 52.9 s wall, with `--raw` 106.8 s wall (`/usr/bin/time -p`), so `--raw` about doubles the
+wpt step (`node fidelity/run-all.mjs --raw` passes it through). Chrome is not re-run. The product
+`outcome` of the `--raw` run equals the plain run's for 8047/8047 tests, and the plain run equals
+the `run-all-10-crates-20261022T225719Z` run copy's outcomes for 8047/8047; the 165 tests of the
+`wpt-raw-10base-98368b3-20261022` run have the same `outcome` and `rawOutcome` (CONFIRMED). The
+full matrix, `outcome` x `rawOutcome`: pass x pass 3646, pass x fail 18, fail x fail 3381, fail x
+pass 111, fail x pass-blank 1, pass-blank x pass-blank 7, pass-blank x pass 3, pass-blank x fail 2,
+unsupported x unsupported 877, skip x skip 1. Run copy:
+`~/.cache/vellora-fidelity/wpt-full-10integrate-20261022/{plain,raw}`.
+
 ## Expectations ratchet
 
 Committed baselines live in `fidelity/baselines/wpt/<engine-id>.json` (the location
