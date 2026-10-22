@@ -50,9 +50,10 @@ pub struct PaginationReport {
 /// table-row-only so it absorbs metric drift without pulling another full row.
 ///
 /// The same amount (capped by the bottom page margin, so nothing is painted
-/// past the physical page, and by the free space above a drawn `@bottom-center`
-/// line, so nothing is painted over it) bounds how far a block may overflow the
-/// box that contains it and still be fitted against that box (`fit_height`).
+/// past the physical page) bounds how far a block may overflow the box that
+/// contains it and still be fitted against that box (`fit_height`); what the
+/// fragment paints must also stay above a drawn `@bottom-center` line
+/// (`band_fit_height`, port step 10).
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
 const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
 
@@ -97,8 +98,10 @@ pub struct FragmentPlacement {
     /// 0-based page index.
     pub page: usize,
     /// Why this fragment opened a new page: `forced-break`, `overflow`,
-    /// `oversize` (it did not fit an empty page), or `after-oversize` (the
-    /// previous fragment was oversize and closed its page); `None` when it
+    /// `oversize` (it did not fit an empty page), `after-oversize` (the
+    /// previous fragment was oversize and closed its page), or
+    /// `forced-break-blank` (monolithic content that did not fit under the margin
+    /// kept after a forced break left that page blank, port step 10); `None` when it
     /// continued the current page (or was the very first fragment).
     pub new_page: Option<&'static str>,
     /// Used height of the page before this fragment (and before its gap).
@@ -161,8 +164,8 @@ struct Fragment {
     /// root's border box, or, for a child of a flattened wrapper, no lower than
     /// the wrapper's border box. Content below it is overflow, which does not
     /// push the flow. When the overflow is small (at most
-    /// `TABLE_ROW_BREAK_TOLERANCE_PX`, capped by the bottom page margin and by
-    /// the room above a drawn `@bottom-center` line, port step 09) the fit
+    /// `TABLE_ROW_BREAK_TOLERANCE_PX`, capped by the bottom page margin; the
+    /// painted part never reaches a drawn `@bottom-center` line, port step 10) the fit
     /// tests use this edge instead of `bottom` (`fit_height`): Blitz
     /// 0.3.0-beta.4 lays some content out taller than Chrome (the
     /// boleto-febraban ficha's table is +9.45 px in the raw Blitz layer), so a
@@ -293,14 +296,21 @@ pub fn paginate_traced(
         let mut fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         // How far content may overflow the box that contains it and still be
         // fitted against that box: the row drift allowance, but never past the
-        // physical page (the bottom page margin) and never onto a drawn
-        // `@bottom-center` line (port step 09).
+        // physical page (the bottom page margin).
         let overflow_allowance = TABLE_ROW_BREAK_TOLERANCE_PX
-            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0))
-            .min(geometry.bottom_box_clearance(page_slices.len(), doc));
+            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0));
         // The height the fit tests use: a small overflow of the box that
-        // contains the fragment does not count (see `Fragment::contained_bottom`).
-        let fit_h = fit_height(&frag, overflow_allowance);
+        // contains the fragment does not count (see `Fragment::contained_bottom`),
+        // and what the fragment paints never reaches a drawn `@bottom-center` line:
+        // its painted bottom must stay within the free space above that line
+        // (`band_fit_height`). Port step 10: step 09 capped the allowance itself by
+        // that space, which also moved an overflowing box that paints nothing there
+        // (probe f5_allowance_footer: Chrome 155 and step 08 keep "Tail" on page 1).
+        let fit_h = fit_height(&frag, overflow_allowance).max(band_fit_height(
+            &frag,
+            geometry.bottom_box_clearance(page_slices.len(), doc),
+            fit_limit - geometry.page(page_slices.len()).content_height(),
+        ));
 
         // A keep-together group that cannot fit even on an empty page is split
         // back into its parts (the forced break, if any, moves to the first).
@@ -433,6 +443,46 @@ pub fn paginate_traced(
             fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         }
 
+        // A fragment that opens a page after a forced break but does not fit under the
+        // margin kept after that break (CSS Fragmentation 3 §5.2), while it fits the page
+        // without it (port step 10; probes f5_*, Chrome 155):
+        // - a table without a `<thead>` (one block fragment) is split between its rows,
+        //   the first row keeping the break and the margin: Chrome keeps the margin and
+        //   moves the rows that do not fit to the next page;
+        // - monolithic content (one line of text, or one image) moves to the next page,
+        //   leaving the forced page blank, as Chrome does (the margin truncates at that
+        //   unforced break);
+        // - anything else (several lines or boxes, which Chrome fragments between its
+        //   lines and vellora cannot) keeps step 09's placement: the margin is truncated
+        //   to the room the fragment leaves (KNOWN GAP, `tests/pagination_gaps.rs`).
+        if current.is_empty() && page_start == PageStart::Forced && !oversize {
+            let header_h = header_for(&headers_on_current).map_or(0.0, |(_, header)| header.height);
+            let margin = frag.break_margin.value();
+            if margin > 0.0 && header_h + margin + fit_h > fit_limit {
+                if let Some(rows) = table_rows_of(&frag) {
+                    let mut rows = rows;
+                    if let Some(first) = rows.first_mut() {
+                        first.break_before = true;
+                        first.break_margin = frag.break_margin;
+                    }
+                    for row in rows.into_iter().rev() {
+                        queue.push_front(row);
+                    }
+                    if let Some(t) = trace.as_deref_mut() {
+                        t.groups_split += 1;
+                    }
+                    continue;
+                }
+                if is_monolithic(&frag) {
+                    push_page(&mut current, &mut page_slices, &mut thead_repeated, false);
+                    cursor = 0.0;
+                    page_start = PageStart::Unforced;
+                    new_page = Some("forced-break-blank");
+                    fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
+                }
+            }
+        }
+
         let header = header_for(&headers_on_current);
         let header_h = header.map_or(0.0, |(_, header)| header.height);
         let (placed_top, gap_note) = match mid_page {
@@ -457,12 +507,12 @@ pub fn paginate_traced(
                     (frag.top.max(header_h), "page-origin")
                 }
                 PageStart::Origin => (header_h, "page-start"),
-                // The margin after a forced break is kept (CSS Fragmentation 3 §5.2) as far as
-                // the fragment still fits under it; past that it is truncated to the room left,
-                // so a fragment that fits an empty page never runs into the bottom margin band
-                // (port step 09; before, it was placed under the whole margin). Chrome instead
-                // fragments the box, or moves monolithic content to the next page (leaving a
-                // blank one); vellora splits neither (`tests/pagination_gaps.rs`).
+                // The margin after a forced break is kept (CSS Fragmentation 3 §5.2). A table
+                // or monolithic content that does not fit under it was split or moved on above
+                // (port step 10); what is left here is a block with break points inside it,
+                // which Chrome fragments between its lines and vellora cannot: its margin is
+                // truncated to the room it leaves, so it never runs into the bottom margin
+                // band (port step 09's rule, KNOWN GAP, `tests/pagination_gaps.rs`).
                 PageStart::Forced => {
                     let room = (fit_limit - header_h - fit_h).max(0.0);
                     (
@@ -946,6 +996,74 @@ fn fit_height(fragment: &Fragment, allowance: f64) -> f64 {
         fragment.bottom
     };
     (bottom - fragment.top).max(0.0)
+}
+
+/// Descent below the baseline assumed for a text run's ink (UNVERIFIED ASSUMPTION: the bundled
+/// Liberation faces descend 0.212-0.216 em and DejaVu 0.236 em by their `hhea` metrics; the
+/// shaped runs carry no line box, so the band test uses this bound).
+const TEXT_INK_DESCENT_EM: f64 = 0.25;
+
+/// The fit height that keeps what the fragment paints (text, backgrounds, borders, images)
+/// within `clearance` px below the content box, where a drawn `@bottom-center` line starts
+/// (`PageGeometry::bottom_box_clearance`; infinite without one, then 0). `row_tolerance` is how
+/// far the fit limit lies below the content box (the table-row drift tolerance, else 0).
+fn band_fit_height(fragment: &Fragment, clearance: f64, row_tolerance: f64) -> f64 {
+    if !clearance.is_finite() {
+        return 0.0;
+    }
+    let ink_bottom = fragment
+        .boxes
+        .iter()
+        .flat_map(|b| {
+            let text = b
+                .text_runs
+                .iter()
+                .filter(|r| !r.glyphs.is_empty())
+                .map(|r| r.origin_y + TEXT_INK_DESCENT_EM * f64::from(r.font_size));
+            let rects = b.visual_rects.iter().map(|r| r.y + r.height);
+            let borders = b.rounded_borders.iter().map(|r| r.y + r.height);
+            let images = b.image_runs.iter().map(|r| r.y + r.height);
+            text.chain(rects).chain(borders).chain(images)
+        })
+        .fold(f64::NEG_INFINITY, f64::max);
+    if !ink_bottom.is_finite() {
+        return 0.0;
+    }
+    (ink_bottom - fragment.top - clearance + row_tolerance).max(0.0)
+}
+
+/// The rows a table placed as ONE block fragment (no `<thead>`, not `break-inside: avoid`)
+/// splits into, when it has more than one; `None` for anything else.
+fn table_rows_of(fragment: &Fragment) -> Option<Vec<Fragment>> {
+    let root = fragment.boxes.first()?;
+    if root.tag.as_deref() != Some("table")
+        || root.break_inside_avoid
+        || fragment.table_id.is_some()
+        || !fragment.members.is_empty()
+    {
+        return None;
+    }
+    let mut parts = Vec::new();
+    emit_table_fragments(&fragment.boxes, &mut parts);
+    parts.retain(|part| !part.is_thead);
+    finalize_fragments(&mut parts);
+    (parts.len() > 1).then_some(parts)
+}
+
+/// Whether a fragment has no break point inside it: it paints one line of text or one image,
+/// and nothing else that holds content.
+fn is_monolithic(fragment: &Fragment) -> bool {
+    let mut baselines: Vec<f64> = Vec::new();
+    let mut images = 0usize;
+    for b in &fragment.boxes {
+        images += b.image_runs.len();
+        for run in b.text_runs.iter().filter(|r| !r.glyphs.is_empty()) {
+            if !baselines.iter().any(|y| (y - run.origin_y).abs() < 0.5) {
+                baselines.push(run.origin_y);
+            }
+        }
+    }
+    baselines.len() + images == 1
 }
 
 /// Whether a fragment, or any fragment nested in it, starts with a forced break.
