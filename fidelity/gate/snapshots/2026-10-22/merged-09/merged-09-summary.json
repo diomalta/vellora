@@ -1134,7 +1134,7 @@
     }
   ],
   "mergedTipRenderParity": {
-    "command": "node fidelity/run-all.mjs --only corpus,oracles-fixtures,oracles-corpus,layout-diff,pdf-probe,pdf-probe-suite --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/merged-render-check (build of fba1346)",
+    "command": "node fidelity/run-all.mjs --only corpus,oracles-fixtures,oracles-corpus,layout-diff,pdf-probe,pdf-probe-suite --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/merged-render-check (build of fba1346); copy: ~/.cache/vellora-fidelity/run-all-merged-render-check-20261022",
     "vsRunCopy": "~/.cache/vellora-fidelity/run-all-10-crates-20261022T225719Z",
     "velloraPdfs": "34/34 byte-identical (sha256): corpus 6, layout-diff 9, oracles 19; the 37 probe-suite PDFs have no counterpart in that run (it predates the suite)",
     "wpt": "default suites, 8047 reftests: product outcome equal to the 10-crates run copy for 8047/8047; the 165 tests of wpt-raw-10base-98368b3-20261022: outcome and rawOutcome equal (~/.cache/vellora-fidelity/wpt-full-10integrate-20261022/)"

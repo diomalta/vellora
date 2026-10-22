@@ -15,7 +15,8 @@
 //   (c) otherwise (raw Blitz passes, so a vellora layer broke the test; or no raw outcome was
 //       recorded): blocks, like any (c) item.
 //
-// The field the rule reads (DESIGN TARGET, produced by the raw-Blitz WPT mode):
+// The field the rule reads (produced by the raw-Blitz WPT mode: wpt/run.mjs --raw, run-all.mjs
+// --raw; merged on phaseb/10-integrate, 2026-10-22):
 //   wpt/results.json  tests[i].rawOutcome   the raw-Blitz render's outcome with the SAME
 //                                           comparison settings ("pass" | "fail" | "pass-blank"
 //                                           | "error" | "timeout" | "unsupported")

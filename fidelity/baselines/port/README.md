@@ -1788,9 +1788,10 @@ INDICATIVE.
   raw-Blitz render of the same test fails the same way (owner upstream; a DEBT key carrying
   `rawOutcome`, owner `blitz:*`, tied to the run by GATE-D7), else (c). The field is
   `wpt/results.json` `tests[i].rawOutcome` (`outcomes.json` `rawOutcomes`), written by the
-  raw-Blitz WPT mode built on `phaseb/10-wptraw`; until it lands no run records it, so every
-  WPT pass → fail item stays (c) (`gate/wpt-route.mjs`; synthetic tests in
-  `gate/test/wpt-route.test.mjs`; DESIGN TARGET).
+  raw-Blitz WPT mode built on `phaseb/10-wptraw` (`gate/wpt-route.mjs`; synthetic tests in
+  `gate/test/wpt-route.test.mjs`). Merged on `phaseb/10-integrate` (2026-10-22): a run gated with
+  `run-all.mjs --gate --raw` records it for every WPT test; a run without `--raw` does not, and
+  its WPT pass → fail items stay (c) (see "Integration").
 - **Probe fixtures.** Step 09's 37 Chrome probes are a pdf-probe v2 suite run by `run-all`
   (step `pdf-probe-suite`, `fidelity/layout-diff/probe-suite.mjs`, data
   `fidelity/layout-diff/probes/review-fixes-09.json`; fixtures `probe-<id>`, Chrome references
@@ -1830,6 +1831,10 @@ wrote 34 vellora PDFs (corpus 6, oracles 19, layout-diff 9) byte-identical (sha2
 `run-all-10-crates-20261022T225719Z` run copy's; the default WPT suites (8047 reftests) give the
 same product outcome for 8047/8047. The raw render follows 10-wptraw's definition: `raw_blitz_tests`
 5/5, and the 165 tests of `wpt-raw-10base-98368b3-20261022` reproduce `outcome` and `rawOutcome`.
+Run copies: `~/.cache/vellora-fidelity/run-all-merged-render-check-20261022/` and
+`~/.cache/vellora-fidelity/wpt-full-10integrate-20261022/` (the latter also holds a filtered
+`run-all.mjs --only wpt --raw --baseline …/09-review-fixes` check: 10/10 tests carry `rawOutcome`
+in `results.json`, `outcomes.json` has `rawMode` and 10 `rawOutcomes`).
 
 **09 vs 08 post-hoc under the merged rules with the complete pin** (reports, candidates and
 `merged-09-summary.json` in `fidelity/gate/snapshots/2026-10-22/merged-09/`; commands in the
