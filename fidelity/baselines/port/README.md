@@ -1653,7 +1653,7 @@ layer summary in `fidelity/gate/snapshots/2026-10-22/ledger-09/`; darwin 27.0.0 
 v22.23.2, INDICATIVE). As for 07, `--run` is the committed baseline: the raw run copy still
 carries its v1 `pdf-probe.json`, so `--run <run copy>` is REFUSED (baseline 2, run 1; CONFIRMED).
 Before the re-score, 08 and 09 were v1 while 00-start was v2, so the head comparison was refused
-too. Counts are asserted in `head-chain.test.mjs`.
+too (CONFIRMED: v1 09 vs v2 00-start is REFUSED). Counts are asserted in `head-chain.test.mjs`.
 
 | view | 07 | 09 | by check at 09 |
 |---|---|---|---|
