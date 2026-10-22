@@ -20,29 +20,29 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 
   ```sh
   export PATH="$HOME/.nvm/versions/node/v22.23.2/bin:$PATH"
-  # The ledger at the merge base (the commit the step branches from); a missing file is the
-  # ledger's first population (rule iii exempts it from the count and sum rule).
-  git show <merge base>:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json
+  # The ledger base (rule iii) defaults to DEBT.json at `git merge-base HEAD main` since
+  # 2026-10-22 (I2; absent there = first population, exempt from the count and sum rule); pass
+  # --debt-base <file> only where that merge base cannot be determined (e.g. a clone without main).
   node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/<previous step> \
-    --step <NN-name> --debt-base /tmp/debt-base.json \
+    --step <NN-name> \
     --chrome-from <wpt results.json> --tools-image vellora-fidelity-tools:baseline-beta4 \
     --out fidelity/results/run-all/<NN-name> [--accept accepted.json]
   # Defaults: --head = the Chain head above (port/00-start), --debt = baselines/port/DEBT.json,
   # --pin = baselines/pin (pin view, reported). A merge to main adds --main ((c) items gate).
   # exit 0 = PASS (previous link AND head). The same evaluation over an existing run, no re-run:
   #   node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous step> \
-  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> --debt-base /tmp/debt-base.json \
-  #     [--accept accepted.json]
+  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> [--accept accepted.json]
   # Then commit the run as the next link (--name takes no "/", so --root carries port/):
   node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/<NN-name> \
     --root fidelity/baselines/port --name <NN-name> [--accept accepted.json] \
     [--attach <report>=<name>]...
   ```
 
-  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii);
-  `--debt-base` turns on the ledger's transition check (rule iii). Without it the report says
-  "transition not checked (no --debt-base)". The relaxed (b) rule (GATE-D7) is checked on every
-  entry on every run, with or without `--debt-base`.
+  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii;
+  the head comparison merges the declarations of the links up to it, I4). Rule iii runs on every
+  gated run (I2, 2026-10-22): the base is `--debt-base` or DEBT.json at `git merge-base HEAD main`,
+  and a base that cannot be determined REFUSES the gate. A NEW ledger key must satisfy the relaxed
+  (b) rule and GATE-D7 (tied to the run's head item, I3).
 - **Merge rule.** The step merges only when its gate is PASS against the previous link AND the
   chain head. A chain step is never written with `--force`: `manifest.json
   gate.writtenDespiteVerdict` must be `false` and `gate.baseline` must name the previous step. A
@@ -1681,12 +1681,16 @@ too (CONFIRMED: v1 09 vs v2 00-start is REFUSED). Counts are asserted in `head-c
   (section 08). ledger-candidates still labels these 2 rows with the step-05 XML-parse reason.
   That label is now stale; the cause is the off-page tail.
 
-**How a step uses this**: the chain convention above (`--head`, `--debt-base`, `--step`). Add
-the step's head and pin counts to `head-chain.test.mjs`. A DEBT entry is written from a
-committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from
-<gate-report.json>`). It must satisfy the relaxed (b) rule (GATE-D7). Then
-`node fidelity/gate/debt.mjs check --base <ledger at merge base> --step <NN-name>` must be
-clean.
+**How a step uses this**: the chain convention above (`--head`, `--step`; `--debt-base` only
+where the merge base with main cannot be determined). Add the step's head and pin counts to
+`head-chain.test.mjs`. A DEBT entry (schema debt/2 since 2026-10-22) is written from a committed
+vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from <gate-report.json> --out
+<committed file>`), one key record per item: `measured` = the head item's signed `after`,
+`ceiling` at most |measured| + the metric's resolution (pdf-probe 0.01 pt; counts 0),
+`layerVectorRef` = `"<repo-relative --out file>#<item key>"`. It must satisfy the relaxed (b)
+rule and GATE-D7. Then `node fidelity/gate/debt.mjs check --base <ledger at merge base> --step
+<NN-name> --report <gate-report.json>` must be clean (without `--report` every new key fails
+GATE-D7: it has no head item to be tied to).
 
 ## Gate fixes (2026-10-22, branch `phaseb/10-gate`)
 
