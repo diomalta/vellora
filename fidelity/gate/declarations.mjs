@@ -143,6 +143,8 @@ export function chainDeclarations({
       from: headStep ? stepOrdinal(headStep) : null,
       to: headStep && prev ? to : null,
     }),
-    pin: mergeChainDeclarations({ ...common, from: null, to: prev ? to : null }),
+    // The pin view needs only the current step (--step, else the previous link + 1): a run gated
+    // against the pin itself (--baseline pin --main) still carries the chain's declarations.
+    pin: mergeChainDeclarations({ ...common, from: null, to }),
   };
 }

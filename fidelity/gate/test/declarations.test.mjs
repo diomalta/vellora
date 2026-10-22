@@ -80,6 +80,18 @@ test("the committed supplement declares step 06's 10 css:page-varying-width reje
   );
 });
 
+test("gated against the pin itself (--baseline pin --main --step NN): the pin view still carries the chain's declarations", () => {
+  const pinDir = join(port, "..", "pin");
+  const r = chainDeclarations({ headDir: null, baselineDir: pinDir, step: "09-review-fixes" });
+  assert.equal(r.head.length, 0);
+  assert.deepEqual(
+    r.pin.map((x) => x.feature),
+    ["css:page-varying-width"],
+  );
+  // Without --step there is no current step to carry up to.
+  assert.equal(chainDeclarations({ headDir: null, baselineDir: pinDir }).pin.length, 0);
+});
+
 test("a malformed supplement is refused", () => {
   const dir = mkdtempSync(join(tmpdir(), "decl-"));
   const f = join(dir, "declared-rejections.json");
