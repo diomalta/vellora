@@ -437,6 +437,34 @@ export function runGateCanaries({
       ),
     );
   }
+  // 14. I1: a word that moves THROUGH Chrome. 0.35 -> -1.15 pt gates; 0.9 -> -0.9 is a
+  // within-tolerance item (never "better"); control: a same-side move 3 -> 1.5 is an improvement.
+  {
+    const key = `pdf-probe|${seed.fixture}|${seed.pair.k}|dy`;
+    const one = (from, to) => {
+      const r = compare(
+        snap({ pdfProbe: withDy(seed, from) }),
+        snap({ pdfProbe: withDy(seed, to) }),
+      );
+      return { item: r.items.find((i) => i.key === key), counts: r.counts };
+    };
+    const through = one(0.35, -1.15);
+    const flip = one(0.9, -0.9);
+    const control = one(3, 1.5);
+    rows.push(
+      row(
+        "pdf-probe: a word crosses Chrome (I1)",
+        `${src}: dy 0.35 -> -1.15 pt regression (gates); 0.9 -> -0.9 within-tolerance, withinToleranceBetter 0; control 3 -> 1.5 improvement`,
+        `through ${through.item?.class}/${through.item?.gating}; flip ${flip.item?.class}, better ${flip.counts.withinToleranceBetter}; control ${control.item?.class}`,
+        through.item?.class === "regression" &&
+          through.item.gating === true &&
+          flip.item?.class === "within-tolerance" &&
+          flip.item.gating === false &&
+          flip.counts.withinToleranceBetter === 0 &&
+          control.item?.class === "improvement",
+      ),
+    );
+  }
   return rows;
 }
 

@@ -335,6 +335,18 @@ function comparePdfProbeV2(before, after, items, counts) {
       }
       for (const axis of ["dx", "dy"]) {
         const d = Math.abs(p[axis]) - Math.abs(q[axis]);
+        const moved = p[axis] - q[axis];
+        // I1 (2026-10-22): a move THROUGH Chrome is not "better" by |d| alone. 0.35 -> -1.15 pt
+        // (the word moved 1.5 pt and now sits 1.15 pt on the other side of Chrome) used to pass as
+        // within-tolerance; 0.9 -> -0.9 counted as withinToleranceBetter. Crossing Chrome to more
+        // than the tolerance on the other side gates (then |moved| = |before| + |after| > tol too);
+        // a crossing that ends within the tolerance is within-tolerance, never better. A same-side
+        // move toward Chrome keeps the |d| rule: the task's sign-agnostic formula (|moved| > tol
+        // and |after| > tol) also gated same-side improvements such as -20.49 -> -1.19 pt, 557 of
+        // the 979 such items of 09 vs 00-start and 283 of 322 vs pin (committed baselines,
+        // 2026-10-22, INDICATIVE), which is not "worse" (fidelity/ACCEPTANCE.md GATE-P1).
+        const flipped = Math.sign(p[axis]) * Math.sign(q[axis]) < 0;
+        const crossed = flipped && Math.abs(p[axis]) > tol + eps;
         const item = {
           ...base,
           key: `${key}|${axis}`,
@@ -344,14 +356,27 @@ function comparePdfProbeV2(before, after, items, counts) {
           before: q[axis],
           after: p[axis],
           delta: d,
+          moved,
         };
-        if (d > tol + eps) {
+        if (d > tol + eps || crossed) {
           items.push({
             ...item,
             class: "regression",
             gating: true,
-            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`,
+            detail:
+              d > tol + eps
+                ? `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`
+                : `"${p.text}" ${axis} ${fmt(q[axis])} -> ${fmt(p[axis])} pt: moved ${fmt(moved)} pt (> ${tol}) and ends ${fmt(Math.abs(p[axis]))} pt from Chrome (> ${tol}) (I1)`,
           });
+        } else if (flipped && Math.abs(p[axis]) > eps) {
+          // A sign flip within tolerance: moved, never "better" (I1).
+          items.push({
+            ...item,
+            class: "within-tolerance",
+            gating: false,
+            detail: `"${p.text}" ${axis} ${fmt(q[axis])} -> ${fmt(p[axis])} pt (crossed Chrome, within ${tol} pt)`,
+          });
+          counts.withinTolerance++;
         } else if (d < -(tol + eps)) {
           items.push({
             ...item,

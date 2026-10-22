@@ -24,7 +24,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 13);
+    assert.equal(rows.length, 14);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -123,6 +123,46 @@ test("a layer-vector tool that ignores the mapping or the pass layers leaves its
   };
   const c2 = caughtBy(runGateCanaries({ vectors: passBlind }));
   assert.equal(c2["layer-vector: planted +3 px pass step"], false);
+});
+
+test("a comparator that scores pdf-probe words by |after| - |before| only (the I1 hole) leaves the crossing canary uncaught", () => {
+  // The pre-I1 rule: a move through Chrome is judged by the magnitude change alone.
+  const magnitudeOnly = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    const items = r.items.map((i) => {
+      if (i.check !== "pdf-probe" || typeof i.before !== "number" || typeof i.after !== "number") {
+        return i;
+      }
+      const d = Math.abs(i.after) - Math.abs(i.before);
+      if (d > i.tol) return { ...i, class: "regression", gating: true };
+      if (d < -i.tol) return { ...i, class: "improvement", gating: false };
+      return null;
+    });
+    return {
+      ...r,
+      items: items.filter(Boolean),
+      counts: { ...r.counts, withinToleranceBetter: 1 },
+    };
+  };
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: magnitudeOnly }));
+  assert.equal(c["pdf-probe: a word crosses Chrome (I1)"], false);
+  // The sign-agnostic formula (|moved| > tol and |after| > tol) gates the same-side control.
+  const signAgnostic = (b, a, o) => {
+    const r = compareSnapshots(b, a, o);
+    return {
+      ...r,
+      items: r.items.map((i) =>
+        i.check === "pdf-probe" &&
+        typeof i.moved === "number" &&
+        Math.abs(i.moved) > i.tol &&
+        Math.abs(i.after) > i.tol
+          ? { ...i, class: "regression", gating: true }
+          : i,
+      ),
+    };
+  };
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: signAgnostic }));
+  assert.equal(c2["pdf-probe: a word crosses Chrome (I1)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

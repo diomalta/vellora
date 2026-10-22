@@ -46,14 +46,17 @@ test("the committed DEBT.json is the empty vellora-fidelity/debt/1 ledger", () =
   assert.deepEqual(r.ledger.problems, []);
 });
 
-test("07 vs 06 is unchanged link to link, but 985 items are worse than the head (00-start) and none is covered", () => {
+// I1 (2026-10-22): a pdf-probe word that crosses Chrome to more than 1 pt on the other side of it
+// gates, so the head views grow by the crossings (07: 985 -> 1407, 09: 974 -> 1396; pin view 07:
+// 213 -> 252, 09: 206 -> 245; all pdf-probe items).
+test("07 vs 06 is unchanged link to link, but 1407 items are worse than the head (00-start) and none is covered", () => {
   assert.equal(r.counts.gating, 0);
-  assert.equal(r.head.counts.gating, 985);
+  assert.equal(r.head.counts.gating, 1407);
   assert.equal(r.verdict, "FAIL");
   assert.deepEqual(
     tally(r.head.items, (i) => `${i.check} ${i.headClass}`),
     {
-      "pdf-probe regression": 922,
+      "pdf-probe regression": 1344,
       "wpt regression": 38,
       "wpt rejection": 10,
       "value regression": 13,
@@ -69,17 +72,17 @@ test("07 vs 06 is unchanged link to link, but 985 items are worse than the head 
   assert.ok(r.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 07: 213 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 213, declared: 0 });
+test("pin view of 07: 252 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r.pin.counts, { a: 0, b: 0, c: 252, declared: 0 });
   assert.equal(r.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r.pin.items, (i) => i.check),
-    { "pdf-probe": 140, wpt: 56, value: 15, status: 2 },
+    { "pdf-probe": 179, wpt: 56, value: 15, status: 2 },
   );
   // The pin view reports; it gates only for a merge to main (--main).
   assert.equal(
     evaluateGate({ before: s06, after: s07, pin, main: true, canaries: false }).counts.gating,
-    213,
+    252,
   );
 });
 
@@ -100,15 +103,15 @@ const r09 = evaluateGate({
   passes: PASSES,
 });
 
-test("09 vs 08 (both v2) is unchanged link to link; 974 items are worse than the head", () => {
+test("09 vs 08 (both v2) is unchanged link to link; 1396 items are worse than the head", () => {
   assert.deepEqual(r09.refusals, []);
   assert.equal(r09.counts.gating, 0);
-  assert.equal(r09.head.counts.gating, 974);
+  assert.equal(r09.head.counts.gating, 1396);
   assert.equal(r09.verdict, "FAIL");
   assert.deepEqual(
     tally(r09.head.items, (i) => `${i.check} ${i.headClass}`),
     {
-      "pdf-probe regression": 920,
+      "pdf-probe regression": 1342,
       "wpt regression": 38,
       "wpt rejection": 10,
       "value regression": 6,
@@ -118,11 +121,11 @@ test("09 vs 08 (both v2) is unchanged link to link; 974 items are worse than the
   assert.ok(r09.gateCanaries.every((c) => c.caught === true));
 });
 
-test("pin view of 09: 206 items worse than the shipped main, all (c) while the ledger is empty", () => {
-  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 206, declared: 0 });
+test("pin view of 09: 245 items worse than the shipped main, all (c) while the ledger is empty", () => {
+  assert.deepEqual(r09.pin.counts, { a: 0, b: 0, c: 245, declared: 0 });
   assert.equal(r09.pin.mainMerge, "BLOCKED");
   assert.deepEqual(
     tally(r09.pin.items, (i) => i.check),
-    { "pdf-probe": 140, wpt: 56, value: 10 },
+    { "pdf-probe": 179, wpt: 56, value: 10 },
   );
 });

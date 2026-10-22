@@ -597,10 +597,12 @@ test("v2: links whose vellora PDFs equal the previous link's show no pdf-probe i
 test("v2 re-judges the chain: gating pdf-probe items per link vs the previous link", () => {
   // With each link's own (v1-era) acceptedRegressions applied: their pdf-probe keys match no v2
   // key, every other accepted item still matches, so what gates is exactly the v2 pdf-probe debt.
+  // I1 (2026-10-22): a word that crosses Chrome to more than 1 pt on the other side gates, so
+  // 01 / 03 / 04 gate 168 / 230 / 1632 (55 / 84 / 1403 before I1).
   const expected = {
-    "port/01-pagination-gaps": 55,
-    "port/03-table-passes": 84,
-    "port/04-block-offset": 1403,
+    "port/01-pagination-gaps": 168,
+    "port/03-table-passes": 230,
+    "port/04-block-offset": 1632,
     "port/05-walk-rewrite": 6,
     "port/06-page-rules": 0,
     "port/08-html-parse": 0,
