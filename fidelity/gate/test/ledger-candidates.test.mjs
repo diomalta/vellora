@@ -6,7 +6,13 @@ import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
-import { chainLabels, classify, wptPageCounts } from "../ledger-candidates.mjs";
+import {
+  chainLabels,
+  classify,
+  offPageTexts,
+  wptPageCounts,
+  wptRawRecords,
+} from "../ledger-candidates.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const labels = chainLabels(resolve(here, "..", "..", "baselines", "port"));
@@ -56,12 +62,13 @@ test("rejections need a declaration; WPT artefacts need recorded evidence or a p
     classify({ key: "wpt|t", check: "wpt", class: "rejection" }, ctx()).candidate,
     "declare",
   );
-  // A chain acceptance labelled as an artefact (step 01 rect-merge false pass).
+  // A chain acceptance labelled as an artefact (step 01 rect-merge false pass) is history, not
+  // GATE-A1 evidence: without an ink flag or a page-count difference it is no (a).
   const a = classify(
     { key: "wpt|css/CSS2/linebox/line-height-006.xht", check: "wpt", class: "regression" },
     ctx(),
   );
-  assert.deepEqual([a.candidate, /01-pagination-gaps/.test(a.why)], ["a", true]);
+  assert.deepEqual([a.candidate, /01-pagination-gaps/.test(a.why)], ["none", true]);
   assert.equal(
     classify({ key: "wpt|css/x/paged.html", check: "wpt", class: "regression" }, ctx()).candidate,
     "a",
@@ -174,6 +181,99 @@ test("values: text lost under html-normalize-compensation is c; an aggregate met
     ],
     [["t", { vellora: 2, chrome: 4 }]],
   );
+});
+
+test("WPT route (GATE-A1/A3): (a) only by the old record's ink flag or page count; raw Blitz decides (b) / (c)", () => {
+  const t = "css/CSS2/linebox/line-height-006.xht";
+  const item = { key: `wpt|${t}`, test: t, check: "wpt", before: "pass", after: "fail" };
+  const old = (extra = {}) => ({
+    test: t,
+    prepare: {},
+    comparisons: [{ pass: true, pageCounts: [1, 1] }],
+    chrome: { comparisons: [{ pageCounts: [1, 1] }] },
+    ...extra,
+  });
+  const withOld = (rec, raw = null) =>
+    ctx({
+      oldRecords: new Map([[t, rec]]),
+      rawRecords: raw ? new Map([[t, raw]]) : new Map(),
+    });
+  const sameFail = {
+    rawOutcome: "fail",
+    rawComparisons: [{ pageCounts: [1, 1] }],
+    afterComparisons: [{ pageCounts: [1, 1] }],
+  };
+  // Clean, single-page old pass with only the chain label: no evidence.
+  assert.equal(classify(item, withOld(old())).candidate, "none");
+  // Ink flag on the old pass (missingFrac >= 0.5) or a page-count difference: (a).
+  assert.equal(
+    classify(item, withOld(old({ inkCheck: { missingFrac: 0.8, bboxShift: 0 } }))).candidate,
+    "a",
+  );
+  assert.equal(
+    classify(item, withOld(old({ chrome: { comparisons: [{ pageCounts: [3, 3] }] } }))).candidate,
+    "a",
+  );
+  // Raw Blitz fails the same way: (b); raw Blitz passes: (c), a vellora layer broke it.
+  assert.equal(classify(item, withOld(old(), sameFail)).candidate, "b");
+  const c = classify(item, withOld(old(), { ...sameFail, rawOutcome: "pass" }));
+  assert.deepEqual([c.candidate, /vellora layer/.test(c.why)], ["c", true]);
+  // Same outcome but other page counts is not the same failure: (c).
+  assert.equal(
+    classify(item, withOld(old(), { ...sameFail, rawComparisons: [{ pageCounts: [2, 1] }] }))
+      .candidate,
+    "c",
+  );
+  assert.deepEqual(
+    [
+      ...wptRawRecords({
+        tests: [
+          { test: "x", rawOutcome: "pass", raw: { comparisons: [1] }, comparisons: [2] },
+          { test: "y" },
+        ],
+      }),
+    ],
+    [["x", { rawOutcome: "pass", rawComparisons: [1], afterComparisons: [2] }]],
+  );
+});
+
+test("lost text: newly off-page text and newly missing tokens are c; the off-page tail replaces the stale XML-parse reason", () => {
+  const items = [
+    { key: "pdf-probe|oss-postmark-receipt|off-page|Download", check: "pdf-probe" },
+    { key: "pdf-probe|oss-postmark-receipt|off-page|as", check: "pdf-probe" },
+  ];
+  const c = ctx({ offPage: offPageTexts(items) });
+  assert.deepEqual([...c.offPage], [["oss-postmark-receipt", ["Download", "as"]]]);
+  const off = classify(items[0], c);
+  assert.equal(off.candidate, "c");
+  assert.match(off.why, /off the page/);
+  const tok = classify(
+    {
+      key: "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missingTokens.pdftotext|as",
+      check: "value",
+    },
+    c,
+  );
+  assert.deepEqual([tok.candidate, /off the page/.test(tok.why)], ["c", true]);
+  const other = classify(
+    {
+      key: "danfe|EXT-2|oracles:text|plain|criterion#1|missingTokens.pymupdf|CNPJ",
+      check: "value",
+    },
+    c,
+  );
+  assert.deepEqual([other.candidate, /off the page/.test(other.why)], ["c", false]);
+  // A count row of a fixture with off-page text: c for the off-page cause, not step 05's label.
+  const count = classify(
+    {
+      key: "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1|missing.pdftotext",
+      check: "value",
+    },
+    c,
+  );
+  assert.equal(count.candidate, "c");
+  assert.match(count.why, /off the page \(Download as\)/);
+  assert.doesNotMatch(count.why, /XML/);
 });
 
 test("the committed part-7 snapshot: 985 head items and 213 pin items, every one classed", () => {

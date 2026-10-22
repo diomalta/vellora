@@ -6,20 +6,31 @@
 // (a) = a class-a acceptance of the step, (b) = a ledger entry, (c) = the rest.
 //
 //   node fidelity/gate/ledger-candidates.mjs --report <gate-report.json> --layout-from <run-all dir>
-//     [--head-wpt <results.json>] [--pin-wpt <results.json>] [--chain fidelity/baselines/port]
-//     [--out <dir>]
+//     [--head-wpt <results.json>] [--pin-wpt <results.json>] [--raw-wpt <results.json>]
+//     [--chain fidelity/baselines/port] [--out <dir>]
+//
+// --head-wpt / --pin-wpt: the OLD side's wpt/results.json (head, pin run copies): its records give
+// the (a) evidence of GATE-A1/A3 (the old pass's ink flags, its test page count vs Chrome's).
+// --raw-wpt: a wpt/results.json with tests[i].rawOutcome (fidelity/wpt/run.mjs --raw, e.g. a
+// filtered run of the lost passes); it supplies rawOutcome / raw comparisons to WPT items whose
+// gate report carries none, for the GATE-A3 (b)/(c) route.
 //
 // Candidates (per item):
-//   a        recorded artefact evidence: a chain acceptance of an artefact label (wpt-false-pass*,
-//            wpt-subpixel-raster-artefact) on this key, or WPT page counts of vellora's old
-//            test render differing from Chrome's (the false-pass definition of GATE-A1)
+//   a        WPT: the OLD pass proven false (GATE-A1/A3): the old record's ink flag
+//            (ink-missing-vs-chrome / ink-displaced-vs-chrome) or its test page count differing
+//            from Chrome's. A chain acceptance label (wpt-false-pass*, step 01-06 legacy) is NOT
+//            evidence on its own (GATE-A1: legacy acceptances do not count against the head);
+//            it is kept in `why` only. Non-WPT: a chain acceptance of an artefact label
 //   b        a layer vector (gate/layer-vector.mjs) on which the relaxed (b) rule can hold:
 //            |run| <= |N0|; its non-zero vellora steps are the compensators to name
 //   b-page   a word displaced to another page in a fixture whose page count differs from
 //            Chrome's: rule vi, one page-scoped entry per page-count criterion
 //   declare  a new strict-gate rejection: needs a declaredRejections entry, not a/b
 //   c        evidence that the OLD value was right or that vellora made it worse than raw Blitz
-//            (lost text; |run| > |N0|): blocks (GATE-A1)
+//            (lost text; |run| > |N0|): blocks (GATE-A1). Text newly drawn off the page
+//            (`pdf-probe|<fx>|off-page|<text>`, compareOffPage) and a token newly missing from an
+//            extractor (`…|missingTokens.<extractor>|<token>`, compareMissingTokens) are lost
+//            text: always c (the merge rule: lost or newly off-page text is never acceptable)
 //   none     no evidence either way yet (no layer vector for the item, an unlabelled WPT loss
 //            whose old render matched Chrome's page count)
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -28,6 +39,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { probeResultV2 } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { requirePython } from "../layout-diff/lib/pdf-words.mjs";
+import { suspectFlags } from "../wpt/lib/report.mjs";
 import { parseProbeKey, readDiff, wordVectors } from "./layer-vector.mjs";
 import { wptRoute } from "./wpt-route.mjs";
 
@@ -38,6 +50,18 @@ const A_LABELS = new Set([
   "wpt-subpixel-raster-artefact",
 ]);
 const TEXT_LOSS = /\|(INV-X1|INV-X2|BOL-X1|BOL-X2|DANFE-X1|DANFE-X2|TXT-X1|TXT-X2|EXT-2)\|/;
+const OFF_PAGE = /^pdf-probe\|([^|]+)\|off-page\|(.*)$/;
+const MISSING_TOKEN = /\|missingTokens\.([^|]+)\|(.*)$/;
+
+/** Texts newly drawn off the page per fixture, from the uncovered items of one view. */
+export function offPageTexts(items) {
+  const out = new Map();
+  for (const i of items) {
+    const m = OFF_PAGE.exec(i.key);
+    if (m) out.set(m[1], [...(out.get(m[1]) ?? []), m[2]]);
+  }
+  return out;
+}
 
 /** acceptedRegressions of every link manifest under `chainDir`: key -> [{ link, label, reason, evidence }]. */
 export function chainLabels(chainDir) {
@@ -65,6 +89,23 @@ export function wptPageCounts(results) {
   return out;
 }
 
+/**
+ * test -> { rawOutcome, rawComparisons, afterComparisons } of a `wpt/run.mjs --raw` results.json
+ * (tests without a raw outcome are left out).
+ */
+export function wptRawRecords(results) {
+  const out = new Map();
+  for (const t of results?.tests ?? []) {
+    if (t.rawOutcome === undefined || t.rawOutcome === null) continue;
+    out.set(t.test, {
+      rawOutcome: t.rawOutcome,
+      rawComparisons: t.rawComparisons ?? t.raw?.comparisons,
+      afterComparisons: t.comparisons,
+    });
+  }
+  return out;
+}
+
 /** Is an unpaired Chrome word's text drawn by vellora on ANOTHER page (displaced, not lost)? */
 function displaced(section, text, page) {
   return (section?.unpairedVellora ?? []).some((w) => w.text === text && w.page !== page);
@@ -85,29 +126,58 @@ export function classify(item, ctx) {
   const hist = ctx.labels.get(item.key) ?? [];
   const art = hist.find((h) => A_LABELS.has(h.label));
   if (item.check === "wpt") {
-    if (art)
+    const test = item.test ?? item.key.replace(/^wpt\|/, "");
+    // The chain's labels are history, not GATE-A1 evidence: reported beside the class.
+    const label = hist.length
+      ? ` [chain: ${hist.map((h) => `${h.link} ${h.label}`).join("; ")}${art ? "; an artefact label, not evidence by itself (GATE-A1)" : ""}]`
+      : "";
+    const oldRecord = ctx.oldRecords?.get(test) ?? null;
+    const raw = ctx.rawRecords?.get(test) ?? null;
+    // GATE-A3 (gate/wpt-route.mjs): (a) the old pass proven false by ink or page count; (b) a
+    // raw-Blitz render fails the same way; (c) raw Blitz passes (a vellora layer broke it).
+    const route = wptRoute(
+      {
+        ...item,
+        rawOutcome: item.rawOutcome ?? raw?.rawOutcome ?? null,
+        rawComparisons: item.rawComparisons ?? raw?.rawComparisons,
+        afterComparisons: item.afterComparisons ?? raw?.afterComparisons,
+      },
+      { oldFlags: oldRecord ? suspectFlags(oldRecord) : [], oldRecord },
+    );
+    const pc = ctx.pageCounts?.get(test);
+    if (route?.route !== "a" && !oldRecord && pc && pc.vellora !== pc.chrome) {
       return {
         candidate: "a",
-        why: `${art.link} accepted it as ${art.label}`,
-        evidence: art.evidence,
-      };
-    const pc = ctx.pageCounts.get(item.test ?? item.key.replace(/^wpt\|/, ""));
-    if (pc && pc.vellora !== pc.chrome) {
-      return {
-        candidate: "a",
-        why: `old test render ${pc.vellora} page(s) vs Chrome ${pc.chrome}: a false pass by page count`,
+        why: `old test render ${pc.vellora} page(s) vs Chrome ${pc.chrome}: a false pass by page count${label}`,
       };
     }
-    // GATE-A3 (gate/wpt-route.mjs): a pass -> fail the raw-Blitz render fails the same way is
-    // upstream debt (b); one raw Blitz passes is (c); without a raw outcome there is no evidence.
-    const route = wptRoute(item);
-    if (route?.route === "b") return { candidate: "b", why: route.why };
-    if (route?.route === "c" && item.rawOutcome) return { candidate: "c", why: route.why };
+    if (route?.route === "a" || route?.route === "b") {
+      return { candidate: route.route, why: `${route.why}${label}` };
+    }
+    if (route?.route === "c" && (item.rawOutcome ?? raw?.rawOutcome)) {
+      return { candidate: "c", why: `${route.why}${label}` };
+    }
     return {
       candidate: "none",
-      why: hist.length
-        ? `${hist.map((h) => `${h.link} ${h.label}`).join("; ")}: not an artefact label, and WPT tests have no layer vector`
-        : "no artefact evidence (old render's page count equals Chrome's) and no layer vector for WPT tests",
+      why: `no evidence: the old pass is not proven false (no ink flag, page count equals Chrome's) and no raw-Blitz outcome is recorded; WPT tests have no layer vector${label}`,
+    };
+  }
+  const offPage = OFF_PAGE.exec(item.key);
+  if (offPage) {
+    return {
+      candidate: "c",
+      why: `"${offPage[2]}" is newly drawn off the page (outside the MediaBox; MuPDF and poppler clip it): lost text, never acceptable`,
+    };
+  }
+  const token = MISSING_TOKEN.exec(item.key);
+  if (token) {
+    const fx = item.key.split("|")[0];
+    const off = (ctx.offPage?.get(fx) ?? []).includes(token[2]);
+    return {
+      candidate: "c",
+      why: off
+        ? `"${token[2]}" newly missing from ${token[1]}: the same text is newly drawn off the page (lost text, the OLD value was right)`
+        : `"${token[2]}" newly missing from ${token[1]}: text lost (the OLD value was right)`,
     };
   }
   if (item.check === "pdf-probe") {
@@ -152,6 +222,8 @@ export function classify(item, ctx) {
         why: "no layer vector: layout-diff aligned no text run of this fixture",
       };
     }
+    if (!k)
+      return { candidate: "none", why: "pdf-probe item without a word key (no layer vector)" };
     const rec = ctx.vectors.get(fx)?.get(k.k);
     if (!rec?.mapped)
       return {
@@ -177,6 +249,15 @@ export function classify(item, ctx) {
       candidate: "c",
       why: `${f.why}: vellora's layers made the word worse than raw Blitz`,
       vector: v,
+    };
+  }
+  const fxOff = ctx.offPage?.get(item.key.split("|")[0]) ?? [];
+  if (TEXT_LOSS.test(item.key) && fxOff.length) {
+    // The step-05 XML-parse label below is stale once the fixture's text is off the page instead
+    // (postmark since step 08: "Download as PDF" below the MediaBox).
+    return {
+      candidate: "c",
+      why: `text lost: ${fxOff.length} text(s) of this fixture newly drawn off the page (${fxOff.join(" ")}); the OLD value was right`,
     };
   }
   if (TEXT_LOSS.test(item.key) && hist.some((h) => h.label === "html-normalize-compensation")) {
@@ -283,6 +364,7 @@ async function main() {
   const labels = chainLabels(resolve(val("--chain") ?? join(here, "..", "baselines", "port")));
   const readResults = (f) =>
     f && existsSync(f) ? JSON.parse(readFileSync(resolve(f), "utf8")) : null;
+  const rawRecords = wptRawRecords(readResults(val("--raw-wpt")));
   const { loadSnapshot } = await import("./snapshot.mjs");
   const run = loadSnapshot(resolve(join(here, "..", ".."), report.run.dir));
   const sections = run.pdfProbe ?? {};
@@ -323,6 +405,7 @@ async function main() {
     date: new Date().toISOString(),
     report: val("--report").split(homedir()).join("~"),
     layoutFrom: runDir.split(homedir()).join("~"),
+    rawWpt: val("--raw-wpt") ? val("--raw-wpt").split(homedir()).join("~") : null,
     mapping,
     sections: {},
   };
@@ -331,13 +414,17 @@ async function main() {
     ["pin", uncovered.pin, val("--pin-wpt")],
   ]) {
     if (!items.length) continue;
+    const oldResults = readResults(wpt);
     const ctx = {
       labels,
-      pageCounts: wptPageCounts(readResults(wpt)),
+      pageCounts: wptPageCounts(oldResults),
+      oldRecords: new Map((oldResults?.tests ?? []).map((t) => [t.test, t])),
+      rawRecords,
       sections,
       vectors,
       noText,
       lostText: new Map(),
+      offPage: offPageTexts(items),
     };
     // Pairing losses first: a fixture's unpaired counts are classed after its lost words.
     const order = (i) => (/\|unpaired-(chrome|vellora)$/.test(i.key) ? 1 : 0);
