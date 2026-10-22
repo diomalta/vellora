@@ -339,7 +339,12 @@ fn value(dump: &LayoutDump) -> V {
         ),
         ("media_type", V::Str(dump.media_type.into())),
         // Schema 2 fields of the former html_normalize pre-pass (deleted in port
-        // step 05): the source-HTML (`N0`) dump still reads `skipped`, which is what
+        // step 05). Still read, so kept (audited at port step 10): vellora-model.mjs
+        // (`html_normalize` identifies the N0 dump, `normalize` and the nodes'
+        // `synthetic`), layout-diff's match.mjs / report.mjs (`result.html_normalize`)
+        // and checks.mjs (`normalize_wrappers_located`, asserted over committed
+        // Phase A dumps by `fidelity/layout-diff/test/receipt-n0.test.mjs`).
+        // The source-HTML (`N0`) dump still reads `skipped`, which is what
         // `fidelity/layout-diff/lib/vellora-model.mjs` checks; the render-path dump
         // reads `removed`. No wrapper is ever recorded.
         (

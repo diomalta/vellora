@@ -817,7 +817,23 @@ mod tests {
     fn stripping_matches_the_quadratic_version_on_every_generated_input() {
         // Deterministic LCG over an alphabet of the bytes the scan cares about.
         const ALPHABET: &[&str] = &[
-            "\"", "'", "\\", "}", "\n", "\r", "a", " ", "/*", "*/", "\u{e9}", ";", "{", "\u{c}",
+            "\"",
+            "'",
+            "\\",
+            "}",
+            "\n",
+            "\r",
+            "a",
+            " ",
+            "/*",
+            "*/",
+            "\u{e9}",
+            ";",
+            "{",
+            "\u{c}",
+            // 3- and 4-byte UTF-8 (port step 10).
+            "\u{20ac}",
+            "\u{1f600}",
         ];
         let mut state = 7u64;
         let mut next = || {

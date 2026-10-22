@@ -178,3 +178,56 @@ fn pdf_text_baseline_is_the_layout_baseline_like_chrome_print() {
         );
     }
 }
+
+/// A 4-row table on a 300 px page whose row `row` (0-based) has `border-top: W px` (port step
+/// 10, the shape of the invoice "Total a pagar" row).
+fn bordered_row_table(collapse: &str, w: u32, row: usize) -> String {
+    let rows: String = ["Aaa", "Bbb", "Ccc", "Ddd"]
+        .iter()
+        .enumerate()
+        .map(|(i, t)| {
+            let class = if i == row { " class=\"g\"" } else { "" };
+            format!("<tr{class}><td>{t}</td></tr>")
+        })
+        .collect();
+    format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: 300px 300px; margin: 20px; }} body {{ \
+         margin: 0; font-family: \"Liberation Serif\"; font-size: 16px; line-height: 20px; }} \
+         table {{ border-collapse: {collapse}; border-spacing: 0 }} td {{ padding: 0 }} tr.g td \
+         {{ border-top: {w}px solid #000 }}</style></head><body><table>{rows}</table></body></html>"
+    )
+}
+
+#[test]
+fn a_collapsed_interior_top_border_row_is_not_raised_known_gap() {
+    // Chrome 155 (2026-10-22, the shared reference path, PyMuPDF origins): Aaa 26.25, Bbb 41.25,
+    // Ccc 41.25 + 15 + 0.75 W, Ddd Ccc + 15 pt. Blitz 0.3.0-beta.4 counts a collapsed border in
+    // the row height (Ddd is exact) but does not move the bordered cell's text below it, so Ccc
+    // sits W px (0.75 W pt) above Chrome: KNOWN GAP (raw Blitz). Step 09's
+    // `painted_table_cell_text_baselines` raised that row 2 px more (Ccc at 54.75 pt for every
+    // W: 3 / 6 / 10 px above Chrome); since step 10 a row painted only by an interior collapsed
+    // top border is not raised. A fix that moves the text below the border must update this.
+    for (w, chrome_ccc) in [(1u32, 57.0), (4, 59.25), (8, 62.25)] {
+        let pdf = render(bordered_row_table("collapse", w, 2).as_bytes(), &opts()).expect("render");
+        let got = pdf_text_baselines_pt(&pdf);
+        let chrome = [26.25, 41.25, chrome_ccc, chrome_ccc + 15.0];
+        assert_eq!(got.len(), 4, "{got:?}");
+        for (i, (g, c)) in got.iter().zip(chrome).enumerate() {
+            let expected = if i == 2 { c - 0.75 * f64::from(w) } else { c };
+            assert!(
+                (g - expected).abs() <= 0.1,
+                "W {w} row {}: {g} pt, expected {expected} pt (Chrome {c} pt; all {got:?})",
+                i + 1
+            );
+        }
+    }
+    // Unchanged elsewhere: the first row of a collapsed table (Chrome Aaa 29.25 pt: Blitz moves
+    // that text below the border, the raise puts it 1.5 pt above) and a separated table (Chrome
+    // Ccc 59.25 pt) keep the 2 px raise, the corpus compensator's behaviour.
+    let pdf = render(bordered_row_table("collapse", 4, 0).as_bytes(), &opts()).expect("render");
+    let first = pdf_text_baselines_pt(&pdf)[0];
+    assert!((first - 27.75).abs() <= 0.1, "first row {first} pt");
+    let pdf = render(bordered_row_table("separate", 4, 2).as_bytes(), &opts()).expect("render");
+    let separate = pdf_text_baselines_pt(&pdf)[2];
+    assert!((separate - 57.75).abs() <= 0.1, "separate {separate} pt");
+}

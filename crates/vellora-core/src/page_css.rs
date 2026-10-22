@@ -1554,6 +1554,11 @@ mod tests {
                     " @bottom-right { content: \"R\" }",
                     " @top-center{content:'t';}",
                     " { stray } margin-bottom: 3mm;",
+                    // Multibyte text (port step 10): 2-, 3- and 4-byte UTF-8 next to the
+                    // delimiters the walk slices at.
+                    " @top-left { content: \"P\u{e1}gina \u{20ac}\u{1f600}\" counter(page) }",
+                    " font-family: Caf\u{e9};",
+                    " \u{4e2d}: \u{6587};",
                 ]));
             }
             body
@@ -1601,6 +1606,9 @@ mod tests {
                     8 => "p.x { color: red; content: \"}{;\" }".to_string(),
                     9 => "/* @page { margin: 1px } */ <!-- --> @import \"x.css\";".to_string(),
                     10 => "@font-face { font-family: x; src: url(\"a}.ttf\") }".to_string(),
+                    11 if depth > 0 => {
+                        "p.caf\u{e9} { font-family: Caf\u{e9}; content: \"\u{1f600}\" }".to_string()
+                    }
                     _ => "div > p:is(.a, .b) { margin: 0 }".to_string(),
                 };
                 css.push_str(&item);

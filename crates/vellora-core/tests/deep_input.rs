@@ -353,3 +353,100 @@ fn the_render_path_survives_200k_nested_blocks_and_elements() {
         );
     }
 }
+
+/// Seeded generator of short, often malformed stylesheets over an alphabet that mixes the
+/// bytes the CSS scanners branch on with multibyte characters (2-, 3- and 4-byte UTF-8), so
+/// a scanner that slices at a byte offset it did not get from an ASCII delimiter panics here.
+/// Port step 10: `break_css` sliced one byte short of the end of an unclosed last rule, and
+/// `<style>p{é</style>` panicked ("end byte index N is not a char boundary"). The 09 verifier
+/// found it with a fuzzer through the addon; no generator here had a non-ASCII byte.
+fn non_ascii_sheets(seed: u64, count: usize) -> Vec<String> {
+    const ALPHABET: &[&str] = &[
+        "{",
+        "}",
+        ";",
+        ":",
+        "\"",
+        "'",
+        "\\",
+        "/*",
+        "*/",
+        "(",
+        ")",
+        " ",
+        "\n",
+        "@media print ",
+        "@media all and (min-width: 1px) ",
+        "@page ",
+        "@page :first ",
+        "@layer a ",
+        "@supports (display: block) ",
+        "@bottom-center ",
+        "p.b ",
+        "break-before: page",
+        "break-inside: avoid",
+        "margin: 1cm",
+        "content: ",
+        "counter(page)",
+        "font-family: Caf\u{e9}",
+        "\u{e9}",
+        "\u{a0}",
+        "\u{20ac}",
+        "\u{4e2d}\u{6587}",
+        "\u{1f600}",
+        "P\u{e1}gina ",
+    ];
+    let mut state = seed;
+    let mut next = move || {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        (state >> 33) as usize
+    };
+    (0..count)
+        .map(|_| {
+            let len = next() % 24;
+            (0..len)
+                .map(|_| ALPHABET[next() % ALPHABET.len()])
+                .collect()
+        })
+        .collect()
+}
+
+#[test]
+fn css_scanners_never_panic_on_generated_non_ascii_sheets() {
+    for (i, css) in non_ascii_sheets(20_261_022, 20_000).into_iter().enumerate() {
+        // In a `<style>` element of a full document, in a bare one, and in a `style`
+        // attribute (validation scans those regions too).
+        let docs = [
+            css_doc(&css),
+            format!("<style>{css}</style>"),
+            format!("<p style=\"{}\">x</p>", css.replace('"', "'")),
+        ];
+        for html in docs {
+            let outcome = std::panic::catch_unwind(|| pre_gate_scans(&html));
+            assert!(outcome.is_ok(), "case {i}: {html:?}");
+        }
+    }
+}
+
+/// The whole render path over a sample of the same sheets: a PDF or a located diagnostic,
+/// never `VelloraError::Render` (an unlocated failure; a caught panic surfaces through the
+/// napi binding as "render panicked").
+#[test]
+fn the_render_path_renders_or_locates_every_generated_non_ascii_sheet() {
+    for (i, css) in non_ascii_sheets(7, 300).into_iter().enumerate() {
+        let html = css_doc(&css);
+        let outcome = std::panic::catch_unwind(|| {
+            vellora_core::render(html.as_bytes(), &RenderOptions::default())
+        });
+        match outcome {
+            Ok(Ok(pdf)) => assert!(pdf.starts_with(b"%PDF-"), "case {i}: {html:?}"),
+            Ok(Err(VelloraError::Unsupported(d))) => {
+                assert!(d.line.is_some(), "case {i}: {d:?}")
+            }
+            Ok(Err(other)) => panic!("case {i}: {html:?}: {other:?}"),
+            Err(_) => panic!("case {i} panicked: {html:?}"),
+        }
+    }
+}

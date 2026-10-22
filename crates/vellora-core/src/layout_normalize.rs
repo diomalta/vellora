@@ -9,6 +9,7 @@ use crate::blitz_engine::{InlineAlign, LaidOutBox, VisualRect};
 const PAINTED_TABLE_CELL_TEXT_RAISE_PX: f64 = 2.0;
 
 pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBox]) {
+    let first_rows = first_rows_of_their_tables(boxes);
     let mut i = 0;
     while i < boxes.len() {
         if boxes[i].tag.as_deref() == Some("tr") {
@@ -20,9 +21,10 @@ pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBo
                         && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
                 })
                 .collect();
+            let interior_row = !first_rows.contains(&i);
             if cells
                 .iter()
-                .any(|idx| table_cell_has_own_paint(&boxes[*idx]))
+                .any(|idx| table_cell_has_own_paint(&boxes[*idx], interior_row))
             {
                 for idx in cells {
                     let cell_end = subtree_end_by_depth(boxes, idx).min(row_end);
@@ -36,8 +38,57 @@ pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBo
     }
 }
 
-fn table_cell_has_own_paint(cell: &LaidOutBox) -> bool {
-    !cell.visual_rects.is_empty() || !cell.rounded_borders.is_empty()
+/// Whether a cell's paint makes its row's text raised.
+///
+/// Not a cell of an interior row (`interior_row`: not its table's first row) of a
+/// `border-collapse: collapse` table whose only paint is its top border (port step 10). Blitz
+/// 0.3.0-beta.4 already places that cell's text higher than Chrome 155, by the width of the
+/// border: it counts the collapsed border in the row's height but does not move the cell's
+/// content below it. Chrome probes (2026-10-22, the shared reference path; 4-row table, row 3
+/// with `border-top: W px`, `tests/text_baseline.rs`): the row-3 text of the step-09 build sits
+/// 3 / 6 / 10 px above Chrome's for W = 1 / 4 / 8 px (raise 2 px + W), while the row below is
+/// exact; a first row, or the same table with `border-collapse: separate`, is off by the 2 px
+/// raise only. So the raise doubled a raw Blitz error there: the invoice "Total a pagar" row
+/// (`border-top: 0.8pt`) on page 3 was |run| 3.53 px > |N0| 1.98 px, the pin view's (c) item
+/// (`fidelity/gate/layer-vector.mjs` over the 09 run copy). Every other painted cell keeps the
+/// raise (a corpus compensator for raw Blitz flow drift, see the port README).
+fn table_cell_has_own_paint(cell: &LaidOutBox, interior_row: bool) -> bool {
+    if !cell.rounded_borders.is_empty() {
+        return true;
+    }
+    let top_border = |rect: &VisualRect| {
+        cell.height > 0.0 && (rect.y - cell.y).abs() < 0.01 && rect.height < cell.height - 0.01
+    };
+    if interior_row && cell.table_border_collapse && cell.visual_rects.iter().all(top_border) {
+        return false;
+    }
+    !cell.visual_rects.is_empty()
+}
+
+/// Indexes of the `<tr>` boxes that are the first row of their nearest `<table>` ancestor
+/// (document order, across its row groups).
+fn first_rows_of_their_tables(boxes: &[LaidOutBox]) -> std::collections::HashSet<usize> {
+    let mut first = std::collections::HashSet::new();
+    // Open tables: (depth, whether a row of it was seen).
+    let mut tables: Vec<(usize, bool)> = Vec::new();
+    for (i, b) in boxes.iter().enumerate() {
+        while tables.last().is_some_and(|(depth, _)| *depth >= b.depth) {
+            tables.pop();
+        }
+        match b.tag.as_deref() {
+            Some("table") => tables.push((b.depth, false)),
+            Some("tr") => {
+                if let Some((_, seen)) = tables.last_mut() {
+                    if !*seen {
+                        first.insert(i);
+                    }
+                    *seen = true;
+                }
+            }
+            _ => {}
+        }
+    }
+    first
 }
 
 fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
