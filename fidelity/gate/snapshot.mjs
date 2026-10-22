@@ -223,6 +223,7 @@ export function expectationsFromResults(results) {
   const out = {};
   const suspect = {};
   const unsupported = {};
+  const raw = {};
   let ink = false;
   for (const r of [...results.tests].sort((a, b) => (a.test < b.test ? -1 : 1))) {
     out[r.test] = r.outcome;
@@ -232,6 +233,8 @@ export function expectationsFromResults(results) {
       if (flags.length) suspect[r.test] = flags.join(",");
     }
     if (r.outcome === "unsupported") unsupported[r.test] = unsupportedFeature(r);
+    // The raw-Blitz WPT mode's outcome of the same test (gate/wpt-route.mjs, GATE-A3).
+    if (typeof r.rawOutcome === "string") raw[r.test] = r.rawOutcome;
   }
   return {
     schema: 2,
@@ -246,6 +249,7 @@ export function expectationsFromResults(results) {
     results: out,
     suspectPasses: suspect,
     unsupportedFeatures: unsupported,
+    ...(Object.keys(raw).length ? { rawOutcomes: raw } : {}),
     derivedFrom: "results.json (gate/snapshot.mjs expectationsFromResults)",
   };
 }
@@ -264,6 +268,14 @@ export function loadRunDir(dir) {
         JSON.parse(readFileSync(results, "utf8")),
       ).unsupportedFeatures;
       wpt.unsupportedFeaturesFrom = "wpt/results.json";
+    }
+    // Raw-Blitz outcomes (GATE-A3) recorded only in results.json: take them from there.
+    if (!wpt.expectations.rawOutcomes && existsSync(results)) {
+      const derived = expectationsFromResults(JSON.parse(readFileSync(results, "utf8")));
+      if (derived.rawOutcomes) {
+        wpt.expectations.rawOutcomes = derived.rawOutcomes;
+        wpt.rawOutcomesFrom = "wpt/results.json";
+      }
     }
   } else if (existsSync(results)) {
     wpt = {

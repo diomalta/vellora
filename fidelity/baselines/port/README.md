@@ -1759,3 +1759,11 @@ INDICATIVE.
   Canaries: GATE-K2 (an unpaired vellora word moved into the off-page record) and a pdf-probe
   detection canary on the committed notification PDFs (one krilla glyph run moved 804 pt down:
   4 page words gone, 4 new off-page words, the off-page item gates).
+- **WPT (b) route (GATE-A3).** WPT items have no layer vector. A pass → fail item is (a) when the
+  old pass was false (old test render = reference ≠ Chrome by ink or page count), (b) when a
+  raw-Blitz render of the same test fails the same way (owner upstream; a DEBT key carrying
+  `rawOutcome`, owner `blitz:*`, tied to the run by GATE-D7), else (c). The field is
+  `wpt/results.json` `tests[i].rawOutcome` (`outcomes.json` `rawOutcomes`), written by the
+  raw-Blitz WPT mode built on `phaseb/10-wptraw`; until it lands no run records it, so every
+  WPT pass → fail item stays (c) (`gate/wpt-route.mjs`; synthetic tests in
+  `gate/test/wpt-route.test.mjs`; DESIGN TARGET).

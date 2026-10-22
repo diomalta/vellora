@@ -10,6 +10,7 @@ import { compareSnapshots } from "../compare.mjs";
 import { applyLedger, ledgerProblems, relaxedB, transitionProblems } from "../debt.mjs";
 import { loadPack, packWordVectors } from "../layer-vector.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
+import { wptRoute } from "../wpt-route.mjs";
 
 const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
 const step07 = loadBaselineDir(join(baselines, "port", "07-media-print"));
@@ -24,7 +25,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 19);
+    assert.equal(rows.length, 20);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -200,6 +201,19 @@ test("a comparator blind to off-page words (the step-08 hole) leaves the off-pag
   };
   const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: blind }));
   assert.equal(c["pdf-probe: a word moved below the page (off-page)"], false);
+});
+
+test("a WPT route that ignores the raw-Blitz outcome, or trusts a missing one, leaves the GATE-A3 canary uncaught", () => {
+  const ignoreRaw = (item, o) => {
+    const r = wptRoute({ ...item, rawOutcome: null }, o);
+    return r?.route === "c" ? { ...r, route: "c" } : r;
+  };
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: ignoreRaw }));
+  assert.equal(c1["WPT pass -> fail route (GATE-A3)"], false);
+  const trustMissing = (item, o) =>
+    wptRoute({ ...item, rawOutcome: item.rawOutcome ?? item.after }, o);
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: trustMissing }));
+  assert.equal(c2["WPT pass -> fail route (GATE-A3)"], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {

@@ -36,6 +36,10 @@
 //               PDF-level oracle measured. Resolved at load into `layerVector`.
 //   compensators the vellora layers (B0, L0, pass names, P, run) whose non-zero step the entry
 //               relies on; owner: who owns the residual (layer "blitz:*" | "vellora:*" | ...)
+//   WPT keys    (`wpt|<test>`, GATE-A3 route b, gate/wpt-route.mjs) have no layer vector: they carry
+//               `rawOutcome` (the raw-Blitz render's outcome) instead of layerVectorRef, the
+//               entry's owner.layer is "blitz:*", and GATE-D7 requires rawOutcome = measured = the
+//               run's outcome = the run's recorded raw outcome
 // debt/1 ledgers (one headValue / ceiling / layerVector per entry) are read by migrating each key
 // to its own record with the entry's values and measured: null (a new key then fails GATE-D7).
 //
@@ -261,6 +265,8 @@ export function pdfProbePage(key) {
   return m ? Number(m[1]) : null;
 }
 const isPerWordKey = (key) => pdfProbePage(key) !== null;
+/** A WPT key carrying raw-Blitz evidence instead of a layer vector (GATE-A3 route b). */
+const isWptRawKey = (rec) => String(rec?.key ?? "").startsWith("wpt|");
 /** Key records of an entry (debt/2); [] for a malformed one. */
 const keyRecs = (e) =>
   Array.isArray(e?.keys) ? e.keys.filter((k) => k && typeof k === "object") : [];
@@ -285,6 +291,18 @@ export function vectorSteps(vector) {
 function relaxedBKey(entry, rec) {
   const p = [];
   const id = `${entry.id} ${rec.key}`;
+  if (isWptRawKey(rec)) {
+    // GATE-A3 (b): raw Blitz fails the same way; the residual is upstream's.
+    if (typeof rec.rawOutcome !== "string") {
+      p.push(`${id}: a WPT key needs rawOutcome (the raw-Blitz render's outcome, GATE-A3)`);
+    }
+    if (!String(entry.owner?.layer ?? "").startsWith("blitz:")) {
+      p.push(
+        `${id}: a WPT key's residual is upstream's: owner.layer must be "blitz:*" (GATE-A3), not ${entry.owner?.layer}`,
+      );
+    }
+    return p;
+  }
   const v = rec.layerVector;
   if (!v || typeof v.N0 !== "number" || typeof v.run !== "number") {
     return [
@@ -348,6 +366,21 @@ export function d7KeyProblems(entry, rec, item) {
   }
   const p = [];
   const m = rec.measured;
+  if (isWptRawKey(rec)) {
+    // GATE-A3 (b): measured = the run's outcome = the run's raw-Blitz outcome = rawOutcome.
+    if (String(m) !== String(item.after)) {
+      p.push(`${id}: measured ${m} is not the run's outcome ${item.after} (GATE-D7)`);
+    }
+    if (rec.rawOutcome !== item.rawOutcome || rec.rawOutcome !== item.after) {
+      p.push(
+        `${id}: rawOutcome ${rec.rawOutcome} must be the run's raw-Blitz outcome ${item.rawOutcome ?? "(not recorded)"} and its outcome ${item.after} (GATE-D7, GATE-A3)`,
+      );
+    }
+    if (String(rec.ceiling) !== String(m)) {
+      p.push(`${id}: ceiling ${rec.ceiling} is not the measured value ${m} (GATE-D7)`);
+    }
+    return p;
+  }
   if (numeric(m) && numeric(item.after)) {
     if (Math.abs(m - item.after) > res + EPS) {
       p.push(
@@ -404,7 +437,8 @@ export function entryProblems(e) {
     if (!k.tolClass || !TOLERANCES[k.tolClass]) {
       p.push(`${id} ${k.key}: unknown tolClass ${k.tolClass}`);
     }
-    for (const f of ["headValue", "ceiling", "measured", "layerVectorRef"]) {
+    const evidence = k.key.startsWith("wpt|") ? "rawOutcome" : "layerVectorRef";
+    for (const f of ["headValue", "ceiling", "measured", evidence]) {
       if (k[f] === undefined) p.push(`${id} ${k.key}: ${f} is required`);
     }
     if (k.layerVectorError) p.push(`${id} ${k.key}: ${k.layerVectorError}`);

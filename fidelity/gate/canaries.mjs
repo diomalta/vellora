@@ -18,6 +18,7 @@ import {
 } from "./debt.mjs";
 import { mergeChainDeclarations } from "./declarations.mjs";
 import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
+import { wptRoute } from "./wpt-route.mjs";
 
 /** The committed layer-vector input the tool canaries plant into (notification, step 07 run). */
 export const LAYER_VECTOR_CANARY_PACK = join(PACK_DIR, "notification-07.layer-vector-pack.json.gz");
@@ -191,6 +192,7 @@ export function runGateCanaries({
   pack = LAYER_VECTOR_CANARY_PACK,
   resolveBase = resolveLedgerBase,
   carry = mergeChainDeclarations,
+  route = wptRoute,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -677,6 +679,74 @@ export function runGateCanaries({
         `${src} section: an unpaired vellora word drawn at y 900 pt (outside the page) -> ${key} gates; the same off-page word on both sides (control) -> nothing`,
         `moved ${moved.map((i) => `${i.class}/${i.gating}`).join(",") || "nothing gated"}; control ${same.length}`,
         moved.length === 1 && moved[0].class === "regression" && same.length === 0,
+      ),
+    );
+  }
+  // 20. GATE-A3, the WPT pass -> fail route: a real clean pass of the run's expectations fails;
+  // raw Blitz fails the same way -> (b), and a DEBT key with that rawOutcome passes GATE-D7 while
+  // one whose rawOutcome is not the run's fails; raw Blitz passes -> (c); no raw outcome -> (c);
+  // the old render's page count differs from Chrome's -> (a).
+  {
+    const w = wptSeed(run, "pass");
+    const after = clone(w.doc);
+    after.results[w.test] = "fail";
+    delete after.suspectPasses?.[w.test];
+    const before = clone(w.doc);
+    delete before.suspectPasses?.[w.test];
+    const itemWith = (raw) => {
+      const a = clone(after);
+      a.rawOutcomes = raw === undefined ? undefined : { [w.test]: raw };
+      return compare(
+        snap({ wpt: { expectations: before } }),
+        snap({ wpt: { expectations: a } }),
+      ).items.find((i) => i.key === `wpt|${w.test}`);
+    };
+    const same = itemWith("fail");
+    const rawPass = itemWith("pass");
+    const none = itemWith(undefined);
+    const oldRecord = {
+      comparisons: [{ pageCounts: [2, 2] }],
+      chrome: { comparisons: [{ pageCounts: [1, 1] }] },
+    };
+    const routes = {
+      b: route(same ?? {})?.route,
+      c1: route(rawPass ?? {})?.route,
+      c2: route(none ?? {})?.route,
+      a: route(none ?? {}, { oldRecord })?.route,
+    };
+    const key = (raw) => ({
+      key: `wpt|${w.test}`,
+      tolClass: "count",
+      headValue: "pass",
+      ceiling: "fail",
+      measured: "fail",
+      rawOutcome: raw,
+    });
+    const entry = (raw) => ({
+      ...emptyLedger(),
+      entries: [
+        {
+          ...entryFor(`wpt|${w.test}`, "fail", {
+            owner: { layer: "blitz:canary", component: "canary" },
+          }),
+          keys: [key(raw)],
+        },
+      ],
+    });
+    const headItems = new Map([[`wpt|${w.test}`, same]]);
+    const okD7 = transition(emptyLedger(), entry("fail"), { headItems });
+    const badD7 = transition(emptyLedger(), entry("pass"), { headItems });
+    rows.push(
+      row(
+        "WPT pass -> fail route (GATE-A3)",
+        `${w.real ? "real" : "synthetic"} clean pass ${w.test} -> fail: raw Blitz fails the same way -> b; raw passes -> c; no raw outcome -> c; old page count != Chrome's -> a; a DEBT key with the run's rawOutcome passes GATE-D7, one with another does not`,
+        `routes ${JSON.stringify(routes)}; D7 ok ${okD7.length}, D7 wrong rawOutcome ${badD7.length}`,
+        routes.b === "b" &&
+          routes.c1 === "c" &&
+          routes.c2 === "c" &&
+          routes.a === "a" &&
+          okD7.length === 0 &&
+          badD7.some((m) => /rawOutcome/.test(m)),
       ),
     );
   }
