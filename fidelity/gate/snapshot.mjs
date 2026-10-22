@@ -16,8 +16,9 @@ import {
   classifyCheckFailures,
   loadExpectedFailures,
 } from "../layout-diff/lib/expected-failures.mjs";
+import { compactProbeV2 } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { comparisonConfig } from "../wpt/lib/provenance.mjs";
-import { suspectFlags } from "../wpt/lib/report.mjs";
+import { suspectFlags, unsupportedFeature } from "../wpt/lib/report.mjs";
 
 export const BASELINE_SCHEMA = "vellora-fidelity/baseline/2";
 
@@ -90,8 +91,13 @@ export function withCheckAllowlist(
   });
 }
 
-/** Compact pdf-probe record: one entry per aligned word, keyed by normalized text + occurrence. */
+/**
+ * Compact pdf-probe record of a pdf-probe.json. v2 (semantics 2): the Chrome-keyed section of
+ * fidelity/layout-diff/lib/pdf-probe-v2.mjs compactProbeV2. v1 (no semantics field, history):
+ * one entry per aligned word, keyed by normalized text + occurrence.
+ */
 export function compactPdfProbe(probe) {
+  if ((probe.semantics ?? 1) === 2) return compactProbeV2(probe);
   const seen = new Map();
   const pairs = (probe.pairs ?? []).map((p) => {
     const norm = p.text.normalize("NFC");
@@ -109,8 +115,27 @@ export function compactPdfProbe(probe) {
   return { pages: probe.pages, words: probe.words, pairs };
 }
 
-/** Load a committed baseline directory (either schema). */
-export function loadBaselineDir(dir) {
+/** Directory where re-scored baselines keep their pdf-probe v1 section (history, not gated). */
+export const PDF_PROBE_V1_DIR = join("attachments", "pdf-probe-v1");
+
+function readProbeDir(path) {
+  const out = {};
+  for (const f of readdirSync(path)
+    .filter((x) => x.endsWith(".json"))
+    .sort()) {
+    out[f.replace(/\.json$/, "")] = JSON.parse(readFileSync(join(path, f), "utf8"));
+  }
+  return out;
+}
+
+/**
+ * Load a committed baseline directory (either schema). `pdfProbe`: "current" (default) loads the
+ * gated section (`pdf-probe/`, else a Phase A `layout-diff-ab/` A/B probe); "v1" loads the
+ * semantics-1 section the baseline was gated with when it was written (`attachments/pdf-probe-v1/`
+ * after a v2 re-score, else `pdf-probe/` or `layout-diff-ab/` when those are still v1), so the
+ * committed-data tests can reproduce a historical verdict exactly.
+ */
+export function loadBaselineDir(dir, { pdfProbe: which = "current" } = {}) {
   const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8"));
   const fixtures = readdirSync(join(dir, "fixtures"))
     .filter((f) => f.endsWith(".json"))
@@ -125,19 +150,18 @@ export function loadBaselineDir(dir) {
     ? JSON.parse(readFileSync(join(wptDir, "crashtests.json"), "utf8"))
     : null;
   let pdfProbe = null;
-  if (existsSync(join(dir, "pdf-probe"))) {
-    pdfProbe = {};
-    for (const f of readdirSync(join(dir, "pdf-probe"))
-      .filter((x) => x.endsWith(".json"))
-      .sort()) {
-      pdfProbe[f.replace(/\.json$/, "")] = JSON.parse(
-        readFileSync(join(dir, "pdf-probe", f), "utf8"),
-      );
-    }
-  } else if (existsSync(join(dir, "layout-diff-ab"))) {
+  const v1Dir = join(dir, PDF_PROBE_V1_DIR);
+  const isV1 = (m) => Object.values(m).every((x) => (x.semantics ?? 1) === 1);
+  if (which === "v1" && existsSync(v1Dir)) {
+    pdfProbe = readProbeDir(v1Dir);
+  } else if (existsSync(join(dir, "pdf-probe"))) {
+    pdfProbe = readProbeDir(join(dir, "pdf-probe"));
+    if (which === "v1" && !isV1(pdfProbe)) pdfProbe = null;
+  }
+  if (!pdfProbe && existsSync(join(dir, "layout-diff-ab"))) {
     // Phase A beta4 baseline: its A/B pdf-probe of the SAME build is layout-diff-ab/
     // <fixture>-<dir name>.pdf-probe.json.gz (4 legacy fixtures; produced by pdf-probe.mjs with
-    // the same print options the shared reference driver uses).
+    // the same print options the shared reference driver uses). Semantics 1.
     const label = basename(dir);
     const suffix = `-${label}.pdf-probe.json.gz`;
     for (const f of readdirSync(join(dir, "layout-diff-ab"))
@@ -172,6 +196,7 @@ export function loadBaselineDir(dir) {
 export function expectationsFromResults(results) {
   const out = {};
   const suspect = {};
+  const unsupported = {};
   let ink = false;
   for (const r of [...results.tests].sort((a, b) => (a.test < b.test ? -1 : 1))) {
     out[r.test] = r.outcome;
@@ -180,6 +205,7 @@ export function expectationsFromResults(results) {
       const flags = suspectFlags(r);
       if (flags.length) suspect[r.test] = flags.join(",");
     }
+    if (r.outcome === "unsupported") unsupported[r.test] = unsupportedFeature(r);
   }
   return {
     schema: 2,
@@ -193,6 +219,7 @@ export function expectationsFromResults(results) {
     inkCheck: ink ? `chrome ${results.chrome?.browserVersion}` : "not-run",
     results: out,
     suspectPasses: suspect,
+    unsupportedFeatures: unsupported,
     derivedFrom: "results.json (gate/snapshot.mjs expectationsFromResults)",
   };
 }
@@ -205,6 +232,13 @@ export function loadRunDir(dir) {
   const results = join(dir, "wpt", "results.json");
   if (existsSync(outcomes)) {
     wpt = { expectations: JSON.parse(readFileSync(outcomes, "utf8")), file: "wpt/outcomes.json" };
+    // Runs before outcomes.json recorded unsupportedFeatures: take them from results.json.
+    if (!wpt.expectations.unsupportedFeatures && existsSync(results)) {
+      wpt.expectations.unsupportedFeatures = expectationsFromResults(
+        JSON.parse(readFileSync(results, "utf8")),
+      ).unsupportedFeatures;
+      wpt.unsupportedFeaturesFrom = "wpt/results.json";
+    }
   } else if (existsSync(results)) {
     wpt = {
       expectations: expectationsFromResults(JSON.parse(readFileSync(results, "utf8"))),

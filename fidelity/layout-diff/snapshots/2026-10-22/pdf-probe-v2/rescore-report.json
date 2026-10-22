@@ -1,0 +1,4856 @@
+{
+  "what": "pdf-probe v1 vs v2 over the committed chain; v2 gate per link; v1-accepted pdf-probe items re-judged under v2",
+  "command": "node <repo>/fidelity/gate/pdf-probe-rescore-report.mjs --out fidelity/layout-diff/snapshots/2026-10-22/pdf-probe-v2/rescore-report.json",
+  "date": "2026-10-22T22:13:10.499Z",
+  "tolerancePt": 1,
+  "classes": {
+    "worse>1pt": "|d| grew by more than 1 pt under v2 (the v2 gate fails on it)",
+    "improved>1pt": "|d| shrank by more than 1 pt",
+    "within1pt-worse": "|d| grew by at most 1 pt (v2 gate: unchanged, counted withinTolerance)",
+    "within1pt-better": "|d| shrank by at most 1 pt",
+    "identical": "same |d|",
+    "unpaired-after": "under v2 the link's word has no Chrome partner within 36 pt on its page",
+    "unpaired-before": "the Chrome word the link's word pairs with under v2 was unpaired in the compared link",
+    "unmapped": "the v1 key's vellora word could not be identified as exactly one PyMuPDF word"
+  },
+  "links": {
+    "pin": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-pin-20261021T054154Z",
+        "missing": [
+          {
+            "fixture": "boleto",
+            "absent": [
+              "layout-diff/boleto/run-all/vellora.pdf",
+              "layout-diff/boleto/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "boleto-febraban",
+            "absent": [
+              "layout-diff/boleto-febraban/run-all/vellora.pdf",
+              "layout-diff/boleto-febraban/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "danfe",
+            "absent": [
+              "layout-diff/danfe/run-all/vellora.pdf",
+              "layout-diff/danfe/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "oss-postmark-receipt",
+            "absent": [
+              "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+              "layout-diff/oss-postmark-receipt/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "oss-sparksuite-invoice",
+            "absent": [
+              "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+              "layout-diff/oss-sparksuite-invoice/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "receipt",
+            "absent": [
+              "layout-diff/receipt/run-all/vellora.pdf",
+              "layout-diff/receipt/run-all/chrome.pdf"
+            ]
+          },
+          {
+            "fixture": "text-stress-ptbr",
+            "absent": [
+              "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+              "layout-diff/text-stress-ptbr/run-all/chrome.pdf"
+            ]
+          }
+        ],
+        "substitute": false
+      },
+      "fixtures": {
+        "invoice": {
+          "v1": null,
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.12,
+            "worstAbsDy": 4.9,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": null,
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.63,
+            "medianAbsDx": 0.33,
+            "worstAbsDy": 10.15,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        }
+      }
+    },
+    "beta4": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-gated-beta4-20261021T072047Z",
+        "missing": [],
+        "substitute": true
+      },
+      "fixtures": {
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 19.12,
+            "medianAbsDy": 5.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 17.37,
+            "medianAbsDy": 5.06,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 21.98,
+            "medianAbsDy": 1.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 24.15,
+            "medianAbsDy": 3.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.89,
+            "medianAbsDy": 7.05,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 11.62,
+            "medianAbsDy": 8.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        }
+      }
+    },
+    "beta4-gated": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-gated-beta4-20261021T072047Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 303,
+            "worstAbsDx": 243.89,
+            "medianAbsDx": 0.15,
+            "worstAbsDy": 247.67,
+            "medianAbsDy": 225.43,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 311,
+              "chrome": 315,
+              "aligned": 303
+            },
+            "unpairedVellora": 8,
+            "unpairedChrome": 12
+          },
+          "v2": {
+            "pairs": 79,
+            "worstAbsDx": 28.48,
+            "medianAbsDx": 0.1,
+            "worstAbsDy": 33.75,
+            "medianAbsDy": 1.74,
+            "unpairedVellora": 232,
+            "unpairedChrome": 236
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 19.12,
+            "medianAbsDy": 5.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 17.37,
+            "medianAbsDy": 5.06,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 585,
+            "worstAbsDx": 426.39,
+            "medianAbsDx": 5.84,
+            "worstAbsDy": 77.67,
+            "medianAbsDy": 6.82,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 625
+            },
+            "unpairedVellora": 5,
+            "unpairedChrome": 5
+          },
+          "v2": {
+            "pairs": 382,
+            "worstAbsDx": 34.18,
+            "medianAbsDx": 3.16,
+            "worstAbsDy": 16.32,
+            "medianAbsDy": 3.84,
+            "unpairedVellora": 248,
+            "unpairedChrome": 248
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 21.98,
+            "medianAbsDy": 1.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 24.15,
+            "medianAbsDy": 3.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 34.22,
+            "medianAbsDy": 8.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 32.1,
+            "medianAbsDy": 5.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 4.1,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 7.73,
+            "medianAbsDy": 6.23,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.89,
+            "medianAbsDy": 7.05,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 11.62,
+            "medianAbsDy": 8.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 357.06,
+            "medianAbsDx": 36.65,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 237.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 405,
+            "worstAbsDx": 35.08,
+            "medianAbsDx": 0.3,
+            "worstAbsDy": 33.6,
+            "medianAbsDy": 9.38,
+            "unpairedVellora": 1441,
+            "unpairedChrome": 1428
+          }
+        }
+      }
+    },
+    "port/00-start": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-s1c-00-start-20261021T074902Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 303,
+            "worstAbsDx": 243.89,
+            "medianAbsDx": 0.15,
+            "worstAbsDy": 247.67,
+            "medianAbsDy": 225.43,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 311,
+              "chrome": 315,
+              "aligned": 303
+            },
+            "unpairedVellora": 8,
+            "unpairedChrome": 12
+          },
+          "v2": {
+            "pairs": 79,
+            "worstAbsDx": 28.48,
+            "medianAbsDx": 0.1,
+            "worstAbsDy": 33.75,
+            "medianAbsDy": 1.74,
+            "unpairedVellora": 232,
+            "unpairedChrome": 236
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 19.12,
+            "medianAbsDy": 5.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 17.37,
+            "medianAbsDy": 5.06,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 585,
+            "worstAbsDx": 426.39,
+            "medianAbsDx": 5.84,
+            "worstAbsDy": 77.67,
+            "medianAbsDy": 6.82,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 625
+            },
+            "unpairedVellora": 5,
+            "unpairedChrome": 5
+          },
+          "v2": {
+            "pairs": 382,
+            "worstAbsDx": 34.18,
+            "medianAbsDx": 3.16,
+            "worstAbsDy": 16.32,
+            "medianAbsDy": 3.84,
+            "unpairedVellora": 248,
+            "unpairedChrome": 248
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 21.98,
+            "medianAbsDy": 1.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 24.15,
+            "medianAbsDy": 3.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 34.22,
+            "medianAbsDy": 8.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 32.1,
+            "medianAbsDy": 5.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 4.1,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 7.73,
+            "medianAbsDy": 6.23,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.89,
+            "medianAbsDy": 7.05,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 11.62,
+            "medianAbsDy": 8.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 357.06,
+            "medianAbsDx": 36.65,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 237.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 405,
+            "worstAbsDx": 35.08,
+            "medianAbsDx": 0.3,
+            "worstAbsDy": 33.6,
+            "medianAbsDy": 9.38,
+            "unpairedVellora": 1441,
+            "unpairedChrome": 1428
+          }
+        }
+      }
+    },
+    "port/01-pagination-gaps": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-01-pagination-gaps-20261021T093020Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 303,
+            "worstAbsDx": 243.89,
+            "medianAbsDx": 0.15,
+            "worstAbsDy": 21.25,
+            "medianAbsDy": 2.01,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 311,
+              "chrome": 315,
+              "aligned": 303
+            },
+            "unpairedVellora": 8,
+            "unpairedChrome": 12
+          },
+          "v2": {
+            "pairs": 232,
+            "worstAbsDx": 28.5,
+            "medianAbsDx": 0.1,
+            "worstAbsDy": 22.58,
+            "medianAbsDy": 3.08,
+            "unpairedVellora": 79,
+            "unpairedChrome": 83
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 18.61,
+            "medianAbsDy": 5.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 16.85,
+            "medianAbsDy": 4.9,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 585,
+            "worstAbsDx": 426.39,
+            "medianAbsDx": 8.98,
+            "worstAbsDy": 79.17,
+            "medianAbsDy": 5.32,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 625
+            },
+            "unpairedVellora": 5,
+            "unpairedChrome": 5
+          },
+          "v2": {
+            "pairs": 382,
+            "worstAbsDx": 34.18,
+            "medianAbsDx": 3.16,
+            "worstAbsDy": 14.82,
+            "medianAbsDy": 2.79,
+            "unpairedVellora": 248,
+            "unpairedChrome": 248
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.85,
+            "medianAbsDy": 0.87,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 34.22,
+            "medianAbsDy": 8.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 32.1,
+            "medianAbsDy": 5.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 10.9,
+            "medianAbsDy": 1.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 8.77,
+            "medianAbsDy": 1.73,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.64,
+            "medianAbsDy": 1.28,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 357.06,
+            "medianAbsDx": 36.65,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 237.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 405,
+            "worstAbsDx": 35.08,
+            "medianAbsDx": 0.3,
+            "worstAbsDy": 32.65,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 1441,
+            "unpairedChrome": 1428
+          }
+        }
+      }
+    },
+    "port/02-delete-noop-passes": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-02-delete-noop-passes-20261021T102146Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 303,
+            "worstAbsDx": 243.89,
+            "medianAbsDx": 0.15,
+            "worstAbsDy": 21.25,
+            "medianAbsDy": 2.01,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 311,
+              "chrome": 315,
+              "aligned": 303
+            },
+            "unpairedVellora": 8,
+            "unpairedChrome": 12
+          },
+          "v2": {
+            "pairs": 232,
+            "worstAbsDx": 28.5,
+            "medianAbsDx": 0.1,
+            "worstAbsDy": 22.58,
+            "medianAbsDy": 3.08,
+            "unpairedVellora": 79,
+            "unpairedChrome": 83
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 18.61,
+            "medianAbsDy": 5.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.69,
+            "worstAbsDy": 16.85,
+            "medianAbsDy": 4.9,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 585,
+            "worstAbsDx": 426.39,
+            "medianAbsDx": 8.98,
+            "worstAbsDy": 79.17,
+            "medianAbsDy": 5.32,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 625
+            },
+            "unpairedVellora": 5,
+            "unpairedChrome": 5
+          },
+          "v2": {
+            "pairs": 382,
+            "worstAbsDx": 34.18,
+            "medianAbsDx": 3.16,
+            "worstAbsDy": 14.82,
+            "medianAbsDy": 2.79,
+            "unpairedVellora": 248,
+            "unpairedChrome": 248
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.85,
+            "medianAbsDy": 0.87,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 34.22,
+            "medianAbsDy": 8.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 32.1,
+            "medianAbsDy": 5.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 10.9,
+            "medianAbsDy": 1.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 8.77,
+            "medianAbsDy": 1.73,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.64,
+            "medianAbsDy": 1.28,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 357.06,
+            "medianAbsDx": 36.65,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 237.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 405,
+            "worstAbsDx": 35.08,
+            "medianAbsDx": 0.3,
+            "worstAbsDy": 32.65,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 1441,
+            "unpairedChrome": 1428
+          }
+        }
+      }
+    },
+    "port/03-table-passes": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-03-table-passes-20261021T114420Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 21.25,
+            "medianAbsDy": 2.01,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 22.58,
+            "medianAbsDy": 3.08,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 1.1,
+            "worstAbsDy": 18.61,
+            "medianAbsDy": 5.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.86,
+            "worstAbsDy": 16.85,
+            "medianAbsDy": 4.9,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 39.29,
+            "medianAbsDy": 5.32,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 14.82,
+            "medianAbsDy": 3.84,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.52,
+            "medianAbsDy": 2.37,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.65,
+            "medianAbsDy": 4.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.85,
+            "medianAbsDy": 0.87,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 34.22,
+            "medianAbsDy": 8.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 32.1,
+            "medianAbsDy": 5.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 10.9,
+            "medianAbsDy": 1.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 8.77,
+            "medianAbsDy": 1.73,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 18.64,
+            "medianAbsDy": 1.28,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 4.15,
+            "medianAbsDy": 2.65,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 237.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 29.96,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 35.6,
+            "medianAbsDy": 3.4,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/04-block-offset": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-04-block-offset-20261021T125346Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 1.1,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.86,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.51,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 11.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 286.04,
+            "medianAbsDx": 0.25,
+            "worstAbsDy": 21.64,
+            "medianAbsDy": 2.03,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 149,
+            "worstAbsDx": 11.52,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 7.1,
+            "medianAbsDy": 0.4,
+            "unpairedVellora": 2,
+            "unpairedChrome": 2
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/05-walk-rewrite": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-05-walk-rewrite-20261021T142201Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 20.59,
+            "medianAbsDx": 1.1,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 20.6,
+            "medianAbsDx": 0.86,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 13.42,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 13.41,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.51,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 244,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 244,
+              "chrome": 248,
+              "aligned": 244
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          },
+          "v2": {
+            "pairs": 244,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 4
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 133,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 10.84,
+            "crossPagePairs": 3,
+            "words": {
+              "vellora": 136,
+              "chrome": 175,
+              "aligned": 136
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 39
+          },
+          "v2": {
+            "pairs": 134,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 3,
+            "unpairedChrome": 46
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 11.23,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 4.38,
+            "medianAbsDy": 1.95,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 151,
+            "worstAbsDx": 11.23,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 3.51,
+            "medianAbsDy": 0.4,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 729.79,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/06-page-rules": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-06-page-rules-20261021T153752Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 1.66,
+            "medianAbsDx": 1.09,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 1.67,
+            "medianAbsDx": 0.76,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 2.65,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 248,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 248,
+              "chrome": 248,
+              "aligned": 248
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 248,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 133,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 10.84,
+            "crossPagePairs": 3,
+            "words": {
+              "vellora": 136,
+              "chrome": 175,
+              "aligned": 136
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 39
+          },
+          "v2": {
+            "pairs": 134,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 3,
+            "unpairedChrome": 46
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 4.38,
+            "medianAbsDy": 1.95,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 2.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 731.88,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/07-media-print": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 1.66,
+            "medianAbsDx": 1.09,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 1.67,
+            "medianAbsDx": 0.76,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 2.65,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 248,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 248,
+              "chrome": 248,
+              "aligned": 248
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 248,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 133,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 10.84,
+            "crossPagePairs": 3,
+            "words": {
+              "vellora": 136,
+              "chrome": 175,
+              "aligned": 136
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 39
+          },
+          "v2": {
+            "pairs": 134,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 3,
+            "unpairedChrome": 46
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 4.38,
+            "medianAbsDy": 1.95,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 2.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 731.88,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/08-html-parse": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-08-html-parse-20261021T191737Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 1.66,
+            "medianAbsDx": 1.09,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 1.67,
+            "medianAbsDx": 0.76,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 2.65,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 248,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 248,
+              "chrome": 248,
+              "aligned": 248
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 248,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 11.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 4.38,
+            "medianAbsDy": 1.95,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 2.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 731.88,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    },
+    "port/09-review-fixes": {
+      "rescore": {
+        "run": "~/.cache/vellora-fidelity/run-all-09-review-fixes-20261021T205223Z",
+        "missing": [],
+        "substitute": false
+      },
+      "fixtures": {
+        "boleto-febraban": {
+          "v1": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 7.91,
+            "medianAbsDy": 1.74,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 315,
+              "chrome": 315,
+              "aligned": 315
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 315,
+            "worstAbsDx": 4.68,
+            "medianAbsDx": 0.85,
+            "worstAbsDy": 6.67,
+            "medianAbsDy": 1.42,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "boleto": {
+          "v1": {
+            "pairs": 254,
+            "worstAbsDx": 1.66,
+            "medianAbsDx": 1.09,
+            "worstAbsDy": 21.61,
+            "medianAbsDy": 8.7,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 254,
+              "chrome": 254,
+              "aligned": 254
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 297,
+            "worstAbsDx": 1.67,
+            "medianAbsDx": 0.76,
+            "worstAbsDy": 19.85,
+            "medianAbsDy": 7.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "danfe": {
+          "v1": {
+            "pairs": 590,
+            "worstAbsDx": 505.14,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 42.29,
+            "medianAbsDy": 9.07,
+            "crossPagePairs": 40,
+            "words": {
+              "vellora": 630,
+              "chrome": 630,
+              "aligned": 630
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 590,
+            "worstAbsDx": 11.05,
+            "medianAbsDx": 2.45,
+            "worstAbsDy": 17.82,
+            "medianAbsDy": 7.15,
+            "unpairedVellora": 40,
+            "unpairedChrome": 40
+          }
+        },
+        "invoice": {
+          "v1": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 3.54,
+            "medianAbsDy": 0.63,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 541,
+              "chrome": 541,
+              "aligned": 541
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 541,
+            "worstAbsDx": 7.08,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 2.65,
+            "medianAbsDy": 1.15,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "notification": {
+          "v1": {
+            "pairs": 248,
+            "worstAbsDx": 0.72,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 7.85,
+            "medianAbsDy": 2.52,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 248,
+              "chrome": 248,
+              "aligned": 248
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 248,
+            "worstAbsDx": 0.75,
+            "medianAbsDx": 0.35,
+            "worstAbsDy": 5.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "oss-postmark-receipt": {
+          "v1": {
+            "pairs": 137,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 37.22,
+            "medianAbsDy": 11.77,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 137,
+              "chrome": 175,
+              "aligned": 137
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 38
+          },
+          "v2": {
+            "pairs": 138,
+            "worstAbsDx": 9.97,
+            "medianAbsDx": 0.97,
+            "worstAbsDy": 35.1,
+            "medianAbsDy": 8.85,
+            "unpairedVellora": 0,
+            "unpairedChrome": 42
+          }
+        },
+        "oss-sparksuite-invoice": {
+          "v1": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 13.9,
+            "medianAbsDy": 4.9,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 46,
+              "chrome": 46,
+              "aligned": 46
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 46,
+            "worstAbsDx": 3.23,
+            "medianAbsDx": 3.22,
+            "worstAbsDy": 11.77,
+            "medianAbsDy": 2.77,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "receipt": {
+          "v1": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 4.38,
+            "medianAbsDy": 1.95,
+            "crossPagePairs": 0,
+            "words": {
+              "vellora": 151,
+              "chrome": 151,
+              "aligned": 151
+            },
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          },
+          "v2": {
+            "pairs": 151,
+            "worstAbsDx": 0.95,
+            "medianAbsDx": 0.23,
+            "worstAbsDy": 2.6,
+            "medianAbsDy": 0.35,
+            "unpairedVellora": 0,
+            "unpairedChrome": 0
+          }
+        },
+        "text-stress-ptbr": {
+          "v1": {
+            "pairs": 1113,
+            "worstAbsDx": 375.18,
+            "medianAbsDx": 0.22,
+            "worstAbsDy": 731.88,
+            "medianAbsDy": 240.36,
+            "crossPagePairs": 707,
+            "words": {
+              "vellora": 1840,
+              "chrome": 1827,
+              "aligned": 1820
+            },
+            "unpairedVellora": 20,
+            "unpairedChrome": 7
+          },
+          "v2": {
+            "pairs": 751,
+            "worstAbsDx": 35.66,
+            "medianAbsDx": 0.24,
+            "worstAbsDy": 34.15,
+            "medianAbsDy": 3.35,
+            "unpairedVellora": 1095,
+            "unpairedChrome": 1082
+          }
+        }
+      }
+    }
+  },
+  "gateV2": {
+    "beta4": {
+      "vsPrevious": {
+        "baseline": "pin",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "not-comparable": 2,
+          "within-tolerance": 208,
+          "regression": 619,
+          "improvement": 38,
+          "gating": 619,
+          "flaggedPassLost": 0,
+          "unchanged": 514,
+          "withinTolerance": 208,
+          "withinToleranceBetter": 195
+        },
+        "perFixture": {
+          "boleto": {
+            "not-comparable fixture": 1
+          },
+          "invoice": {
+            "within-tolerance dx": 63,
+            "regression dy": 191,
+            "improvement dy": 31,
+            "regression dx": 203,
+            "within-tolerance dy": 44,
+            "improvement dx": 7
+          },
+          "notification": {
+            "within-tolerance dx": 101,
+            "regression dy": 225
+          },
+          "receipt": {
+            "not-comparable fixture": 1
+          }
+        },
+        "gating": 619
+      }
+    },
+    "beta4-gated": {
+      "vsPrevious": {
+        "baseline": "beta4",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "not-comparable": 5,
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 2470,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "not-comparable fixture": 1
+          },
+          "danfe": {
+            "not-comparable fixture": 1
+          },
+          "oss-postmark-receipt": {
+            "not-comparable fixture": 1
+          },
+          "oss-sparksuite-invoice": {
+            "not-comparable fixture": 1
+          },
+          "text-stress-ptbr": {
+            "not-comparable fixture": 1
+          }
+        },
+        "gating": 0
+      }
+    },
+    "port/00-start": {
+      "vsPrevious": {
+        "baseline": "beta4-gated",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 4580,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {},
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 4580,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {},
+        "gating": 0
+      }
+    },
+    "port/01-pagination-gaps": {
+      "vsPrevious": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "within-tolerance": 224,
+          "newly-measured": 153,
+          "improvement": 749,
+          "regression": 55,
+          "gating": 55,
+          "flaggedPassLost": 0,
+          "unchanged": 3125,
+          "withinTolerance": 224,
+          "withinToleranceBetter": 427
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "within-tolerance dy": 21,
+            "newly-measured pairing": 153,
+            "improvement dx": 1,
+            "improvement dy": 1,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "within-tolerance dy": 154
+          },
+          "danfe": {
+            "regression dy": 41,
+            "improvement dy": 249,
+            "within-tolerance dx": 12,
+            "within-tolerance dy": 1
+          },
+          "notification": {
+            "within-tolerance dy": 20,
+            "improvement dy": 187
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 14
+          },
+          "receipt": {
+            "improvement dy": 111
+          },
+          "text-stress-ptbr": {
+            "within-tolerance dy": 16,
+            "improvement dy": 170
+          }
+        },
+        "gating": 55
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "within-tolerance": 224,
+          "newly-measured": 153,
+          "improvement": 749,
+          "regression": 55,
+          "gating": 55,
+          "flaggedPassLost": 0,
+          "unchanged": 3125,
+          "withinTolerance": 224,
+          "withinToleranceBetter": 427
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "within-tolerance dy": 21,
+            "newly-measured pairing": 153,
+            "improvement dx": 1,
+            "improvement dy": 1,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "within-tolerance dy": 154
+          },
+          "danfe": {
+            "regression dy": 41,
+            "improvement dy": 249,
+            "within-tolerance dx": 12,
+            "within-tolerance dy": 1
+          },
+          "notification": {
+            "within-tolerance dy": 20,
+            "improvement dy": 187
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 14
+          },
+          "receipt": {
+            "improvement dy": 111
+          },
+          "text-stress-ptbr": {
+            "within-tolerance dy": 16,
+            "improvement dy": 170
+          }
+        },
+        "gating": 55
+      }
+    },
+    "port/02-delete-noop-passes": {
+      "vsPrevious": {
+        "baseline": "port/01-pagination-gaps",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 4886,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {},
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "within-tolerance": 224,
+          "newly-measured": 153,
+          "improvement": 749,
+          "regression": 55,
+          "gating": 55,
+          "flaggedPassLost": 0,
+          "unchanged": 3125,
+          "withinTolerance": 224,
+          "withinToleranceBetter": 427
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "within-tolerance dy": 21,
+            "newly-measured pairing": 153,
+            "improvement dx": 1,
+            "improvement dy": 1,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "within-tolerance dy": 154
+          },
+          "danfe": {
+            "regression dy": 41,
+            "improvement dy": 249,
+            "within-tolerance dx": 12,
+            "within-tolerance dy": 1
+          },
+          "notification": {
+            "within-tolerance dy": 20,
+            "improvement dy": 187
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 14
+          },
+          "receipt": {
+            "improvement dy": 111
+          },
+          "text-stress-ptbr": {
+            "within-tolerance dy": 16,
+            "improvement dy": 170
+          }
+        },
+        "gating": 55
+      }
+    },
+    "port/03-table-passes": {
+      "vsPrevious": {
+        "baseline": "port/02-delete-noop-passes",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "newly-measured": 653,
+          "within-tolerance": 408,
+          "improvement": 512,
+          "regression": 84,
+          "gating": 84,
+          "flaggedPassLost": 0,
+          "unchanged": 3828,
+          "withinTolerance": 408,
+          "withinToleranceBetter": 38
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "newly-measured pairing": 83,
+            "within-tolerance dx": 161,
+            "improvement dx": 41,
+            "improvement dy": 3,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "within-tolerance dx": 127
+          },
+          "danfe": {
+            "within-tolerance dx": 118,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "improvement dy": 2,
+            "regression dx": 25,
+            "regression dy": 11,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dx": 182
+          },
+          "text-stress-ptbr": {
+            "newly-measured pairing": 362,
+            "improvement dx": 90,
+            "improvement dy": 16,
+            "regression dy": 12,
+            "regression dx": 20,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 16,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 84
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "newly-measured": 806,
+          "within-tolerance": 508,
+          "improvement": 1235,
+          "regression": 134,
+          "gating": 134,
+          "flaggedPassLost": 0,
+          "unchanged": 2223,
+          "withinTolerance": 508,
+          "withinToleranceBetter": 464
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "improvement dy": 3,
+            "within-tolerance dy": 20,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 154
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "improvement dy": 245,
+            "regression dy": 47,
+            "regression dx": 25,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dx": 182
+          },
+          "notification": {
+            "within-tolerance dy": 20,
+            "improvement dy": 187
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 14
+          },
+          "receipt": {
+            "improvement dy": 111
+          },
+          "text-stress-ptbr": {
+            "within-tolerance dy": 17,
+            "improvement dy": 186,
+            "newly-measured pairing": 362,
+            "improvement dx": 90,
+            "regression dy": 12,
+            "regression dx": 20,
+            "within-tolerance dx": 1,
+            "regression pairing": 16,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 134
+      }
+    },
+    "port/04-block-offset": {
+      "vsPrevious": {
+        "baseline": "port/03-table-passes",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1401,
+          "regression": 1403,
+          "within-tolerance": 46,
+          "newly-measured": 7,
+          "gating": 1403,
+          "flaggedPassLost": 0,
+          "unchanged": 3124,
+          "withinTolerance": 46,
+          "withinToleranceBetter": 179
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 182,
+            "regression dy": 109
+          },
+          "boleto": {
+            "improvement dy": 33,
+            "within-tolerance dy": 9,
+            "regression dy": 231
+          },
+          "danfe": {
+            "improvement dy": 122,
+            "within-tolerance dy": 23,
+            "regression dy": 442
+          },
+          "invoice": {
+            "improvement dy": 462
+          },
+          "notification": {
+            "improvement dy": 142,
+            "within-tolerance dy": 8,
+            "regression dy": 90
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 138
+          },
+          "oss-sparksuite-invoice": {
+            "regression dy": 35
+          },
+          "receipt": {
+            "improvement dy": 84,
+            "within-tolerance dy": 4,
+            "regression dy": 44
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 375,
+            "regression dy": 305,
+            "regression dx": 2,
+            "improvement dx": 1,
+            "within-tolerance dy": 2,
+            "newly-measured pairing": 7,
+            "regression pairing": 7
+          }
+        },
+        "gating": 1403
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1671,
+          "newly-measured": 805,
+          "within-tolerance": 317,
+          "regression": 946,
+          "gating": 946,
+          "flaggedPassLost": 0,
+          "unchanged": 1469,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 162
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 33,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 462,
+            "improvement dx": 182
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 138
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 115,
+            "regression dy": 26
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 280,
+            "newly-measured pairing": 361,
+            "improvement dx": 90,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 946
+      }
+    },
+    "port/05-walk-rewrite": {
+      "vsPrevious": {
+        "baseline": "port/04-block-offset",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "regression": 6,
+          "improvement": 38,
+          "newly-measured": 2,
+          "gating": 6,
+          "flaggedPassLost": 0,
+          "unchanged": 6112,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {
+          "oss-postmark-receipt": {
+            "regression pairing": 4,
+            "regression unpaired-chrome": 1,
+            "regression unpaired-vellora": 1
+          },
+          "receipt": {
+            "improvement dx": 10,
+            "improvement dy": 26,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 6
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1709,
+          "newly-measured": 807,
+          "within-tolerance": 317,
+          "regression": 922,
+          "gating": 922,
+          "flaggedPassLost": 0,
+          "unchanged": 1451,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 162
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 33,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 462,
+            "improvement dx": 182
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 134,
+            "regression pairing": 4,
+            "regression unpaired-chrome": 1,
+            "regression unpaired-vellora": 1
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 141,
+            "improvement dx": 10,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 280,
+            "newly-measured pairing": 361,
+            "improvement dx": 90,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 922
+      }
+    },
+    "port/06-page-rules": {
+      "vsPrevious": {
+        "baseline": "port/05-walk-rewrite",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "improvement": 81,
+          "newly-measured": 4,
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 6065,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 10
+        },
+        "perFixture": {
+          "boleto": {
+            "improvement dy": 4,
+            "improvement dx": 3
+          },
+          "invoice": {
+            "improvement dx": 12,
+            "improvement dy": 12
+          },
+          "notification": {
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1
+          },
+          "receipt": {
+            "improvement dx": 6,
+            "improvement dy": 8
+          },
+          "text-stress-ptbr": {
+            "improvement dx": 14,
+            "improvement dy": 21
+          }
+        },
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1790,
+          "newly-measured": 811,
+          "within-tolerance": 317,
+          "regression": 922,
+          "gating": 922,
+          "flaggedPassLost": 0,
+          "unchanged": 1360,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 172
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 37,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231,
+            "improvement dx": 3
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 474,
+            "improvement dx": 194
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77,
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 134,
+            "regression pairing": 4,
+            "regression unpaired-chrome": 1,
+            "regression unpaired-vellora": 1
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 149,
+            "improvement dx": 16,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 301,
+            "improvement dx": 104,
+            "newly-measured pairing": 361,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 922
+      }
+    },
+    "port/07-media-print": {
+      "vsPrevious": {
+        "baseline": "port/06-page-rules",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 6164,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {},
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1790,
+          "newly-measured": 811,
+          "within-tolerance": 317,
+          "regression": 922,
+          "gating": 922,
+          "flaggedPassLost": 0,
+          "unchanged": 1360,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 172
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 37,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231,
+            "improvement dx": 3
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 474,
+            "improvement dx": 194
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77,
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 134,
+            "regression pairing": 4,
+            "regression unpaired-chrome": 1,
+            "regression unpaired-vellora": 1
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 149,
+            "improvement dx": 16,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 301,
+            "improvement dx": 104,
+            "newly-measured pairing": 361,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 922
+      }
+    },
+    "port/08-html-parse": {
+      "vsPrevious": {
+        "baseline": "port/07-media-print",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "newly-measured": 4,
+          "improvement": 2,
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 6162,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {
+          "oss-postmark-receipt": {
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1790,
+          "newly-measured": 811,
+          "within-tolerance": 317,
+          "regression": 920,
+          "gating": 920,
+          "flaggedPassLost": 0,
+          "unchanged": 1366,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 172
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 37,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231,
+            "improvement dx": 3
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 474,
+            "improvement dx": 194
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77,
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 138
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 149,
+            "improvement dx": 16,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 301,
+            "improvement dx": 104,
+            "newly-measured pairing": 361,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 920
+      }
+    },
+    "port/09-review-fixes": {
+      "vsPrevious": {
+        "baseline": "port/08-html-parse",
+        "verdict": "PASS",
+        "refusals": [],
+        "counts": {
+          "gating": 0,
+          "flaggedPassLost": 0,
+          "unchanged": 6172,
+          "withinTolerance": 0,
+          "withinToleranceBetter": 0
+        },
+        "perFixture": {},
+        "gating": 0
+      },
+      "vs00Start": {
+        "baseline": "port/00-start",
+        "verdict": "FAIL",
+        "refusals": [],
+        "counts": {
+          "improvement": 1790,
+          "newly-measured": 811,
+          "within-tolerance": 317,
+          "regression": 920,
+          "gating": 920,
+          "flaggedPassLost": 0,
+          "unchanged": 1366,
+          "withinTolerance": 317,
+          "withinToleranceBetter": 172
+        },
+        "perFixture": {
+          "boleto-febraban": {
+            "improvement dy": 18,
+            "newly-measured pairing": 236,
+            "within-tolerance dx": 39,
+            "improvement dx": 25,
+            "regression dy": 39,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "boleto": {
+            "improvement dy": 37,
+            "within-tolerance dx": 127,
+            "within-tolerance dy": 4,
+            "regression dy": 231,
+            "improvement dx": 3
+          },
+          "danfe": {
+            "within-tolerance dx": 130,
+            "improvement dy": 97,
+            "newly-measured pairing": 208,
+            "improvement dx": 172,
+            "within-tolerance dy": 15,
+            "regression dx": 25,
+            "regression dy": 270,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "invoice": {
+            "improvement dy": 474,
+            "improvement dx": 194
+          },
+          "notification": {
+            "improvement dy": 163,
+            "regression dy": 77,
+            "newly-measured pairing": 4,
+            "improvement unpaired-chrome": 1
+          },
+          "oss-postmark-receipt": {
+            "regression dy": 138
+          },
+          "oss-sparksuite-invoice": {
+            "improvement dy": 28,
+            "regression dy": 18
+          },
+          "receipt": {
+            "improvement dy": 149,
+            "improvement dx": 16,
+            "newly-measured pairing": 2,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          },
+          "text-stress-ptbr": {
+            "improvement dy": 301,
+            "improvement dx": 104,
+            "newly-measured pairing": 361,
+            "regression dy": 86,
+            "regression dx": 21,
+            "within-tolerance dx": 1,
+            "within-tolerance dy": 1,
+            "regression pairing": 15,
+            "improvement unpaired-chrome": 1,
+            "improvement unpaired-vellora": 1
+          }
+        },
+        "gating": 920
+      }
+    }
+  },
+  "accepted": {
+    "port/01-pagination-gaps": {
+      "previous": "port/00-start",
+      "labels": {
+        "pdf-probe-compensating-drift": {
+          "n": 117,
+          "byFixture": {
+            "notification": {
+              "n": 77,
+              "vsPrevious": {
+                "improved>1pt": 56,
+                "unmapped": 11,
+                "within1pt-better": 10
+              },
+              "vs00Start": {
+                "improved>1pt": 56,
+                "unmapped": 11,
+                "within1pt-better": 10
+              },
+              "examples": []
+            },
+            "oss-sparksuite-invoice": {
+              "n": 18,
+              "vsPrevious": {
+                "within1pt-better": 4,
+                "worse>1pt": 14
+              },
+              "vs00Start": {
+                "within1pt-better": 4,
+                "worse>1pt": 14
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|Website#1|dy",
+                  "v2Key": "p1|Website#1",
+                  "axis": "dy",
+                  "before": -1.73,
+                  "after": 4.27
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|design#1|dy",
+                  "v2Key": "p1|design#1",
+                  "axis": "dy",
+                  "before": -1.73,
+                  "after": 4.27
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|$300.00#1|dy",
+                  "v2Key": "p1|$300.00#1",
+                  "axis": "dy",
+                  "before": -1.73,
+                  "after": 4.27
+                }
+              ]
+            },
+            "danfe": {
+              "n": 22,
+              "vsPrevious": {
+                "worse>1pt": 4,
+                "unpaired-after": 6,
+                "identical": 5,
+                "improved>1pt": 7
+              },
+              "vs00Start": {
+                "worse>1pt": 4,
+                "unpaired-after": 6,
+                "identical": 5,
+                "improved>1pt": 7
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|danfe|NATUREZA#1|dy",
+                  "v2Key": "p1|NATUREZA#1",
+                  "axis": "dy",
+                  "before": -1.41,
+                  "after": -2.91
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|DA#3|dy",
+                  "v2Key": "p1|DA#3",
+                  "axis": "dy",
+                  "before": -1.41,
+                  "after": -2.91
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|OPERAÇÃO#1|dy",
+                  "v2Key": "p1|OPERAÇÃO#1",
+                  "axis": "dy",
+                  "before": -1.41,
+                  "after": -2.91
+                }
+              ]
+            }
+          },
+          "vsPrevious": {
+            "improved>1pt": 63,
+            "unmapped": 11,
+            "within1pt-better": 14,
+            "worse>1pt": 18,
+            "unpaired-after": 6,
+            "identical": 5
+          },
+          "vs00Start": {
+            "improved>1pt": 63,
+            "unmapped": 11,
+            "within1pt-better": 14,
+            "worse>1pt": 18,
+            "unpaired-after": 6,
+            "identical": 5
+          }
+        }
+      }
+    },
+    "port/03-table-passes": {
+      "previous": "port/02-delete-noop-passes",
+      "labels": {
+        "pdf-probe-pairing-artefact": {
+          "n": 16,
+          "byFixture": {
+            "danfe": {
+              "n": 7,
+              "vsPrevious": {
+                "unpaired-before": 2,
+                "within1pt-worse": 1,
+                "identical": 3,
+                "improved>1pt": 1
+              },
+              "vs00Start": {
+                "unpaired-before": 2,
+                "within1pt-worse": 1,
+                "worse>1pt": 1,
+                "identical": 2,
+                "improved>1pt": 1
+              },
+              "examples": []
+            },
+            "text-stress-ptbr": {
+              "n": 9,
+              "vsPrevious": {
+                "unpaired-before": 2,
+                "unpaired-after": 7
+              },
+              "vs00Start": {
+                "unpaired-before": 2,
+                "unpaired-after": 7
+              },
+              "examples": []
+            }
+          },
+          "vsPrevious": {
+            "unpaired-before": 4,
+            "within1pt-worse": 1,
+            "identical": 3,
+            "improved>1pt": 1,
+            "unpaired-after": 7
+          },
+          "vs00Start": {
+            "unpaired-before": 4,
+            "within1pt-worse": 1,
+            "worse>1pt": 1,
+            "identical": 2,
+            "improved>1pt": 1,
+            "unpaired-after": 7
+          }
+        },
+        "coincidental-match-of-wrong-geometry": {
+          "n": 24,
+          "byFixture": {
+            "danfe": {
+              "n": 24,
+              "vsPrevious": {
+                "worse>1pt": 24
+              },
+              "vs00Start": {
+                "worse>1pt": 24
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|danfe|INSCRIÇÃO#2|dx",
+                  "v2Key": "p1|INSCRIÇÃO#2",
+                  "axis": "dx",
+                  "before": -0.17,
+                  "after": 1.83
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|ESTADUAL#2|dx",
+                  "v2Key": "p1|ESTADUAL#2",
+                  "axis": "dx",
+                  "before": -0.14,
+                  "after": 1.86
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|DO#2|dx",
+                  "v2Key": "p1|DO#2",
+                  "axis": "dx",
+                  "before": -0.11,
+                  "after": 1.89
+                }
+              ]
+            }
+          },
+          "vsPrevious": {
+            "worse>1pt": 24
+          },
+          "vs00Start": {
+            "worse>1pt": 24
+          }
+        }
+      }
+    },
+    "port/04-block-offset": {
+      "previous": "port/03-table-passes",
+      "labels": {
+        "pdf-probe-ascent-artefact": {
+          "n": 697,
+          "byFixture": {
+            "boleto": {
+              "n": 29,
+              "vsPrevious": {
+                "within1pt-better": 20,
+                "within1pt-worse": 9
+              },
+              "vs00Start": {
+                "within1pt-better": 25,
+                "within1pt-worse": 4
+              },
+              "examples": []
+            },
+            "boleto-febraban": {
+              "n": 33,
+              "vsPrevious": {
+                "improved>1pt": 9,
+                "within1pt-better": 24
+              },
+              "vs00Start": {
+                "improved>1pt": 7,
+                "unpaired-before": 4,
+                "within1pt-better": 22
+              },
+              "examples": []
+            },
+            "danfe": {
+              "n": 101,
+              "vsPrevious": {
+                "improved>1pt": 76,
+                "within1pt-better": 1,
+                "identical": 2,
+                "within1pt-worse": 22
+              },
+              "vs00Start": {
+                "improved>1pt": 47,
+                "unpaired-before": 24,
+                "within1pt-worse": 14,
+                "worse>1pt": 16
+              },
+              "examples": []
+            },
+            "invoice": {
+              "n": 148,
+              "vsPrevious": {
+                "improved>1pt": 81,
+                "within1pt-better": 67
+              },
+              "vs00Start": {
+                "improved>1pt": 81,
+                "within1pt-better": 67
+              },
+              "examples": []
+            },
+            "notification": {
+              "n": 147,
+              "vsPrevious": {
+                "within1pt-better": 4,
+                "improved>1pt": 129,
+                "unmapped": 6,
+                "within1pt-worse": 8
+              },
+              "vs00Start": {
+                "within1pt-better": 4,
+                "improved>1pt": 137,
+                "unmapped": 6
+              },
+              "examples": []
+            },
+            "oss-sparksuite-invoice": {
+              "n": 11,
+              "vsPrevious": {
+                "within1pt-better": 11
+              },
+              "vs00Start": {
+                "improved>1pt": 11
+              },
+              "examples": []
+            },
+            "receipt": {
+              "n": 30,
+              "vsPrevious": {
+                "improved>1pt": 17,
+                "within1pt-better": 9,
+                "within1pt-worse": 4
+              },
+              "vs00Start": {
+                "improved>1pt": 30
+              },
+              "examples": []
+            },
+            "text-stress-ptbr": {
+              "n": 198,
+              "vsPrevious": {
+                "improved>1pt": 160,
+                "unmapped": 8,
+                "within1pt-better": 30
+              },
+              "vs00Start": {
+                "improved>1pt": 180,
+                "unmapped": 8,
+                "unpaired-before": 8,
+                "within1pt-better": 2
+              },
+              "examples": []
+            }
+          },
+          "vsPrevious": {
+            "within1pt-better": 166,
+            "within1pt-worse": 43,
+            "improved>1pt": 472,
+            "identical": 2,
+            "unmapped": 14
+          },
+          "vs00Start": {
+            "within1pt-better": 120,
+            "within1pt-worse": 18,
+            "improved>1pt": 493,
+            "unpaired-before": 36,
+            "worse>1pt": 16,
+            "unmapped": 14
+          }
+        },
+        "compensating-drift": {
+          "n": 672,
+          "byFixture": {
+            "boleto": {
+              "n": 99,
+              "vsPrevious": {
+                "worse>1pt": 99
+              },
+              "vs00Start": {
+                "worse>1pt": 99
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|boleto|BENEFICIÁRIO#3|dy",
+                  "v2Key": "p1|BENEFICIÁRIO#3",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|boleto|AGÊNCIA#2|dy",
+                  "v2Key": "p1|AGÊNCIA#2",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|boleto|/#3|dy",
+                  "v2Key": "p1|/#3",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                }
+              ]
+            },
+            "boleto-febraban": {
+              "n": 109,
+              "vsPrevious": {
+                "worse>1pt": 109
+              },
+              "vs00Start": {
+                "worse>1pt": 39,
+                "unpaired-before": 69,
+                "improved>1pt": 1
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|boleto-febraban|Data#1|dy",
+                  "v2Key": "p1|Data#1",
+                  "axis": "dy",
+                  "before": -0.83,
+                  "after": 2.17
+                },
+                {
+                  "v1Key": "pdf-probe|boleto-febraban|do#5|dy",
+                  "v2Key": "p1|do#5",
+                  "axis": "dy",
+                  "before": -0.83,
+                  "after": 2.17
+                },
+                {
+                  "v1Key": "pdf-probe|boleto-febraban|documento#1|dy",
+                  "v2Key": "p1|documento#1",
+                  "axis": "dy",
+                  "before": -0.83,
+                  "after": 2.17
+                }
+              ]
+            },
+            "danfe": {
+              "n": 176,
+              "vsPrevious": {
+                "worse>1pt": 176
+              },
+              "vs00Start": {
+                "worse>1pt": 110,
+                "unpaired-before": 47,
+                "improved>1pt": 19
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|danfe|ENDEREÇO#1|dy",
+                  "v2Key": "p1|ENDEREÇO#1",
+                  "axis": "dy",
+                  "before": -0.57,
+                  "after": 2.43
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|BAIRRO/DISTRITO#1|dy",
+                  "v2Key": "p1|BAIRRO/DISTRITO#1",
+                  "axis": "dy",
+                  "before": -0.57,
+                  "after": 2.43
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|CEP#2|dy",
+                  "v2Key": "p1|CEP#2",
+                  "axis": "dy",
+                  "before": -0.57,
+                  "after": 2.43
+                }
+              ]
+            },
+            "notification": {
+              "n": 90,
+              "vsPrevious": {
+                "worse>1pt": 79,
+                "unmapped": 11
+              },
+              "vs00Start": {
+                "worse>1pt": 66,
+                "unmapped": 11,
+                "improved>1pt": 13
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|notification|Permanecendo#1|dy",
+                  "v2Key": "p1|Permanecendo#1",
+                  "axis": "dy",
+                  "before": 1.85,
+                  "after": 4.85
+                },
+                {
+                  "v1Key": "pdf-probe|notification|a#4|dy",
+                  "v2Key": "p1|a#4",
+                  "axis": "dy",
+                  "before": 1.85,
+                  "after": 4.85
+                },
+                {
+                  "v1Key": "pdf-probe|notification|situação#1|dy",
+                  "v2Key": "p1|situação#1",
+                  "axis": "dy",
+                  "before": 1.85,
+                  "after": 4.85
+                }
+              ]
+            },
+            "oss-postmark-receipt": {
+              "n": 48,
+              "vsPrevious": {
+                "worse>1pt": 47,
+                "unmapped": 1
+              },
+              "vs00Start": {
+                "worse>1pt": 47,
+                "unmapped": 1
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|[Product#1|dy",
+                  "v2Key": "p1|[Product#2",
+                  "axis": "dy",
+                  "before": -0.15,
+                  "after": 2.85
+                },
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|Name]#1|dy",
+                  "v2Key": "p1|Name]#2",
+                  "axis": "dy",
+                  "before": -0.15,
+                  "after": 2.85
+                },
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|Hi#1|dy",
+                  "v2Key": "p1|Hi#1",
+                  "axis": "dy",
+                  "before": 3.6,
+                  "after": 6.6
+                }
+              ]
+            },
+            "oss-sparksuite-invoice": {
+              "n": 24,
+              "vsPrevious": {
+                "worse>1pt": 24
+              },
+              "vs00Start": {
+                "improved>1pt": 17,
+                "worse>1pt": 7
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|Sparksuite,#1|dy",
+                  "v2Key": "p1|Sparksuite,#1",
+                  "axis": "dy",
+                  "before": -0.23,
+                  "after": 2.77
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|Inc.#1|dy",
+                  "v2Key": "p1|Inc.#1",
+                  "axis": "dy",
+                  "before": -0.23,
+                  "after": 2.77
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|12345#1|dy",
+                  "v2Key": "p1|12345#1",
+                  "axis": "dy",
+                  "before": -0.23,
+                  "after": 2.77
+                }
+              ]
+            },
+            "receipt": {
+              "n": 44,
+              "vsPrevious": {
+                "worse>1pt": 44
+              },
+              "vs00Start": {
+                "improved>1pt": 18,
+                "worse>1pt": 26
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|receipt|PAGAMENTO#1|dy",
+                  "v2Key": "p1|PAGAMENTO#1",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|receipt|Forma#1|dy",
+                  "v2Key": "p1|Forma#1",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|receipt|de#3|dy",
+                  "v2Key": "p1|de#3",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                }
+              ]
+            },
+            "text-stress-ptbr": {
+              "n": 82,
+              "vsPrevious": {
+                "worse>1pt": 82
+              },
+              "vs00Start": {
+                "worse>1pt": 27,
+                "unpaired-before": 53,
+                "improved>1pt": 2
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|10/01/2026#1|dy",
+                  "v2Key": "p2|10/01/2026#1",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|Saque#1|dy",
+                  "v2Key": "p2|Saque#1",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                },
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|em#1|dy",
+                  "v2Key": "p2|em#1",
+                  "axis": "dy",
+                  "before": -0.4,
+                  "after": 2.6
+                }
+              ]
+            }
+          },
+          "vsPrevious": {
+            "worse>1pt": 660,
+            "unmapped": 12
+          },
+          "vs00Start": {
+            "worse>1pt": 421,
+            "unpaired-before": 169,
+            "improved>1pt": 70,
+            "unmapped": 12
+          }
+        },
+        "misplaced-word-uniform-shift": {
+          "n": 1189,
+          "byFixture": {
+            "boleto": {
+              "n": 89,
+              "vsPrevious": {
+                "worse>1pt": 88,
+                "unmapped": 1
+              },
+              "vs00Start": {
+                "worse>1pt": 88,
+                "unmapped": 1
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|boleto|(-)#2|dy",
+                  "v2Key": "p1|(-)#2",
+                  "axis": "dy",
+                  "before": 6.35,
+                  "after": 9.35
+                },
+                {
+                  "v1Key": "pdf-probe|boleto|OUTRAS#1|dy",
+                  "v2Key": "p1|OUTRAS#1",
+                  "axis": "dy",
+                  "before": 6.35,
+                  "after": 9.35
+                },
+                {
+                  "v1Key": "pdf-probe|boleto|DEDUÇÕES#1|dy",
+                  "v2Key": "p1|DEDUÇÕES#1",
+                  "axis": "dy",
+                  "before": 6.35,
+                  "after": 9.35
+                }
+              ]
+            },
+            "danfe": {
+              "n": 264,
+              "vsPrevious": {
+                "worse>1pt": 264
+              },
+              "vs00Start": {
+                "worse>1pt": 142,
+                "unpaired-before": 122
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|danfe|DADOS#1|dy",
+                  "v2Key": "p1|DADOS#1",
+                  "axis": "dy",
+                  "before": 6.42,
+                  "after": 9.42
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|DOS#2|dy",
+                  "v2Key": "p1|DOS#2",
+                  "axis": "dy",
+                  "before": 6.42,
+                  "after": 9.42
+                },
+                {
+                  "v1Key": "pdf-probe|danfe|PRODUTOS/SERVIÇOS#1|dy",
+                  "v2Key": "p1|PRODUTOS/SERVIÇOS#1",
+                  "axis": "dy",
+                  "before": 6.42,
+                  "after": 9.42
+                }
+              ]
+            },
+            "oss-postmark-receipt": {
+              "n": 89,
+              "vsPrevious": {
+                "worse>1pt": 88,
+                "unmapped": 1
+              },
+              "vs00Start": {
+                "worse>1pt": 88,
+                "unmapped": 1
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|10%#1|dy",
+                  "v2Key": "p1|10%#1",
+                  "axis": "dy",
+                  "before": 5.85,
+                  "after": 8.85
+                },
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|off#1|dy",
+                  "v2Key": "p1|off#1",
+                  "axis": "dy",
+                  "before": 5.85,
+                  "after": 8.85
+                },
+                {
+                  "v1Key": "pdf-probe|oss-postmark-receipt|your#5|dy",
+                  "v2Key": "p1|your#5",
+                  "axis": "dy",
+                  "before": 5.85,
+                  "after": 8.85
+                }
+              ]
+            },
+            "oss-sparksuite-invoice": {
+              "n": 11,
+              "vsPrevious": {
+                "worse>1pt": 11
+              },
+              "vs00Start": {
+                "worse>1pt": 11
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|Hosting#1|dy",
+                  "v2Key": "p1|Hosting#1",
+                  "axis": "dy",
+                  "before": 5.77,
+                  "after": 8.77
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|(3#1|dy",
+                  "v2Key": "p1|(3#1",
+                  "axis": "dy",
+                  "before": 5.77,
+                  "after": 8.77
+                },
+                {
+                  "v1Key": "pdf-probe|oss-sparksuite-invoice|months)#1|dy",
+                  "v2Key": "p1|months)#1",
+                  "axis": "dy",
+                  "before": 5.77,
+                  "after": 8.77
+                }
+              ]
+            },
+            "text-stress-ptbr": {
+              "n": 736,
+              "vsPrevious": {
+                "worse>1pt": 189,
+                "improved>1pt": 51,
+                "unpaired-after": 493,
+                "unpaired-before": 3
+              },
+              "vs00Start": {
+                "worse>1pt": 50,
+                "unpaired-before": 172,
+                "improved>1pt": 21,
+                "unpaired-after": 493
+              },
+              "examples": [
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|02/02/2026#1|dy",
+                  "v2Key": "p2|02/02/2026#1",
+                  "axis": "dy",
+                  "before": 5.6,
+                  "after": 8.6
+                },
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|Compra#2|dy",
+                  "v2Key": "p2|Compra#2",
+                  "axis": "dy",
+                  "before": 5.6,
+                  "after": 8.6
+                },
+                {
+                  "v1Key": "pdf-probe|text-stress-ptbr|no#4|dy",
+                  "v2Key": "p2|no#2",
+                  "axis": "dy",
+                  "before": 5.6,
+                  "after": 8.6
+                }
+              ]
+            }
+          },
+          "vsPrevious": {
+            "worse>1pt": 640,
+            "unmapped": 2,
+            "improved>1pt": 51,
+            "unpaired-after": 493,
+            "unpaired-before": 3
+          },
+          "vs00Start": {
+            "worse>1pt": 379,
+            "unmapped": 2,
+            "unpaired-before": 294,
+            "improved>1pt": 21,
+            "unpaired-after": 493
+          }
+        },
+        "pdf-probe-pairing-artefact": {
+          "n": 11,
+          "byFixture": {
+            "danfe": {
+              "n": 2,
+              "vsPrevious": {
+                "improved>1pt": 2
+              },
+              "vs00Start": {
+                "improved>1pt": 2
+              },
+              "examples": []
+            },
+            "receipt": {
+              "n": 2,
+              "vsPrevious": {
+                "unpaired-after": 2
+              },
+              "vs00Start": {
+                "unpaired-after": 2
+              },
+              "examples": []
+            },
+            "text-stress-ptbr": {
+              "n": 7,
+              "vsPrevious": {
+                "improved>1pt": 2,
+                "unpaired-after": 5
+              },
+              "vs00Start": {
+                "unpaired-before": 2,
+                "unpaired-after": 5
+              },
+              "examples": []
+            }
+          },
+          "vsPrevious": {
+            "improved>1pt": 4,
+            "unpaired-after": 7
+          },
+          "vs00Start": {
+            "improved>1pt": 2,
+            "unpaired-after": 7,
+            "unpaired-before": 2
+          }
+        }
+      }
+    },
+    "port/06-page-rules": {
+      "previous": "port/05-walk-rewrite",
+      "labels": {
+        "pdf-probe-pairing-artefact": {
+          "n": 12,
+          "byFixture": {
+            "text-stress-ptbr": {
+              "n": 12,
+              "vsPrevious": {
+                "improved>1pt": 12
+              },
+              "vs00Start": {
+                "improved>1pt": 12
+              },
+              "examples": []
+            }
+          },
+          "vsPrevious": {
+            "improved>1pt": 12
+          },
+          "vs00Start": {
+            "improved>1pt": 12
+          }
+        }
+      }
+    }
+  }
+}

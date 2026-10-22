@@ -106,3 +106,10 @@ XML, no implied `<tbody>`; `layout-diff/expected-check-failures.json`).
   Upstream is an upper bound (blitz-paint screen paint, `floats` feature, dify comparator).
 - WPT at the pin: 2729 / 8047 pass (33.91 %), 2213 clean, ink check 209 ink-missing + 90
   ink-displaced of 2729 passes (reused Chrome data).
+
+## pdf-probe v2 re-score (2026-10-21)
+
+`pdf-probe/` now holds the pdf-probe semantics 2 sections re-scored from this run's PDFs
+(`fidelity/gate/rescore-pdf-probe.mjs`, recorded in `manifest.json pdfProbeRescore`); the v1
+files this baseline was written with moved unchanged to `attachments/pdf-probe-v1/`. Details:
+`fidelity/baselines/port/README.md`, "pdf-probe v2 re-score".

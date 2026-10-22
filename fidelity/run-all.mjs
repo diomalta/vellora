@@ -11,7 +11,8 @@
 //   oracles-corpus   fidelity/oracles/run.mjs per corpus PDF: plain (all oracles, veraPDF as a
 //                    negative control) and a PDF/A-2b render (qpdf + veraPDF), rendered here
 //   layout-diff      fidelity/layout-diff/run.mjs          per-layer attribution, every fixture
-//   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF
+//   pdf-probe        fidelity/layout-diff/pdf-probe.mjs    per-word PDF dx/dy vs Chrome's PDF (v2:
+//                    PyMuPDF baselines, position pairing, unpaired words; needs fidelity/.venv)
 //
 // then writes ONE combined summary: <out>/summary.json (+ summary.md) with the environment, the
 // exact commands, per-step exit codes, per-fixture per-oracle verdicts keyed by the criterion IDs
@@ -21,7 +22,9 @@
 //   node fidelity/run-all.mjs [--out <dir>] [--chrome <path> | --no-chrome]
 //     [--wpt-chrome | --chrome-from <wpt results.json>]
 //     [--only <steps>] [--skip <steps>] [--wpt-arg <arg>]... [--tools-image <ref>]
-//     [--no-canaries] [--gate --baseline <fidelity/baselines/<name>> [--accept <file>]]
+//     [--no-canaries] [--gate --baseline <fidelity/baselines/<name>> [--accept <file>]
+//       [--head <dir> | --no-head] [--pin <dir> | --no-pin] [--main] [--debt <file>]
+//       [--debt-base <file>] [--step <NN-name>]]
 //   npm --prefix fidelity run all -- [same options]
 //
 // --chrome      Chrome for every Chromium reference (default $VELLORA_FIDELITY_CHROME, else the
@@ -40,6 +43,11 @@
 //               tolerances, WPT clean-pass ratchet, crashtests, canaries, code checks, layout-diff
 //               check allowlist) and write <out>/gate/gate-report.{json,md}. --accept lists
 //               regressions proven to be corrections (reason + evidence), see fidelity/gate/.
+//               The run is also gated against the chain head (--head, default: the head named in
+//               fidelity/baselines/port/README.md) with the debt ledger (--debt, default
+//               fidelity/baselines/port/DEBT.json; --debt-base: the ledger at the merge base) and
+//               classed against the shipped main (--pin, default fidelity/baselines/pin; --main:
+//               a (c) item gates). Options as in fidelity/gate/run.mjs.
 //
 // Exit code: 0 = every selected step ran and wrote its summary (and, with --gate, the gate
 // passed); 1 = a step crashed or did not write its summary file; 2 = --gate refused (missing
@@ -82,9 +90,10 @@ import {
   pdfaDeterminism,
   tally,
 } from "./combine/verdicts.mjs";
-import { gateRefusal, runGate } from "./gate/run.mjs";
+import { gateOptions, gateRefusal, runGate } from "./gate/run.mjs";
 import { loadExpectedFailures } from "./layout-diff/lib/expected-failures.mjs";
 import { FIXTURE_IDS as LEGACY_FIXTURE_IDS } from "./oracles/lib/html-prep.mjs";
+import { pythonUnavailableReason, venvPython } from "./oracles/lib/paths.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -120,6 +129,7 @@ function parseArgs(argv) {
     gate: false,
     baseline: null,
     accept: null,
+    gateArgs: [],
     chromeFrom: null,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -140,6 +150,9 @@ function parseArgs(argv) {
     else if (a === "--gate") opts.gate = true;
     else if (a === "--baseline") opts.baseline = resolve(next());
     else if (a === "--accept") opts.accept = resolve(next());
+    else if (["--head", "--pin", "--debt", "--debt-base", "--step"].includes(a)) {
+      opts.gateArgs.push(a, next());
+    } else if (["--no-head", "--no-pin", "--main"].includes(a)) opts.gateArgs.push(a);
     else if (a === "--chrome-from") opts.chromeFrom = resolve(next());
     else if (a === "--help" || a === "-h") opts.help = true;
     else throw new Error(`unknown option ${a} (see the header of fidelity/run-all.mjs)`);
@@ -214,14 +227,6 @@ function baselineWptExpectations(dir) {
   if (!existsSync(wptDir)) return null;
   const f = readdirSync(wptDir).find((x) => /^expectations-.*\.json$/.test(x));
   return f ? join(wptDir, f) : null;
-}
-
-/** Absolute path of an executable on PATH, or null. */
-function whichSync(name) {
-  for (const dir of (process.env.PATH ?? "").split(":")) {
-    if (dir && existsSync(join(dir, name))) return join(dir, name);
-  }
-  return null;
 }
 
 /** Fixture directories under fixtures/ (index.html + data.json), sorted. */
@@ -546,16 +551,17 @@ async function main() {
   }
   const layoutSummary = readJson(join(dirs.layoutDiff, "summary-run-all.json"));
 
-  // 5b. pdf-probe: vellora's PDF words vs Chrome's PDF words (pdftotext -bbox), per fixture. Uses
-  //     the native.html/browser.html layout-diff just wrote, so it only runs after it.
+  // 5b. pdf-probe (semantics 2): vellora's PDF words vs Chrome's PDF words (PyMuPDF baselines,
+  //     position pairing), per fixture. Uses the native.html/browser.html layout-diff just wrote,
+  //     so it only runs after it.
   {
     const why =
       gate("pdf-probe") ??
-      (layoutSummary ? null : "layout-diff wrote no summary (pdf-probe reuses its inputs)");
-    const pdftotext = whichSync("pdftotext");
+      (layoutSummary ? null : "layout-diff wrote no summary (pdf-probe reuses its inputs)") ??
+      (venvPython() ? null : `PyMuPDF word extractor: ${pythonUnavailableReason()}`);
     steps.push(
-      why || !pdftotext
-        ? notRun("pdf-probe", why ?? "pdftotext not on PATH")
+      why
+        ? notRun("pdf-probe", why)
         : await runNode({
             id: "pdf-probe",
             script: "fidelity/layout-diff/pdf-probe.mjs",
@@ -566,8 +572,6 @@ async function main() {
               "run-all",
               "--out",
               dirs.layoutDiff,
-              "--pdftotext",
-              pdftotext,
               ...(chromeOk ? ["--chrome", opts.chrome] : []),
             ],
             outputs: layoutSummary.fixtures.map((f) =>
@@ -794,6 +798,8 @@ async function main() {
       outDir: join(outDir, "gate"),
       command,
       date: env.dateIso,
+      ...gateOptions(opts.gateArgs),
+      layoutFrom: outDir,
     });
     process.stdout.write(
       `run-all: gate ${report.verdict} vs ${rel(opts.baseline)}: ${Object.entries(report.counts)

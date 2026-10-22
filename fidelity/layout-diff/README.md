@@ -238,7 +238,7 @@ npm ci && npm run build                                      # vellora dist + ad
 PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix fidelity ci           # puppeteer-core 25.15.0 (no browser download)
 node fidelity/layout-diff/run.mjs --label pin                # all 4 fixtures, local Chrome; exit 2 = a check failed
 node fidelity/layout-diff/run.mjs --label beta4 --dump-repo <checkout-with-bump-and-port>
-node fidelity/layout-diff/pdf-probe.mjs --label pin          # paginated probe (needs poppler pdftotext)
+node fidelity/layout-diff/pdf-probe.mjs --label pin          # paginated probe (needs fidelity/.venv: PyMuPDF)
 node fidelity/layout-diff/compare.mjs --a pin --b beta4      # attribute build-to-build changes
 npm --prefix fidelity run test:layout-diff                   # node --test self-tests
 ```
@@ -356,6 +356,10 @@ attribution path is shown to catch a planted defect:
 - checks: viewport mismatch and font-injection loss invalidate attribution;
 - path keys vs CDP snapshot structure, `FONT_ALIASES` drift guard, pdftotext parsing, word
   alignment, PDF word → pagination placement (`fragmentAt`) and build-to-build attribution;
+- pdf-probe v2 (`test/pdf-probe-v2.test.mjs`, synthetic): text keys, the assignment against brute
+  force, row order under a drift larger than half the row pitch, the bound, per-page pairing,
+  Chrome keys, comparability; `test/pdf-probe-canaries.test.mjs` runs the four canaries and the D1
+  check on committed real PDFs (`test/data/notification-07.*.pdf`, skipped without the venv);
 - schema 2 (`test/schema2.test.mjs`, synthetic): raw Blitz text shift → B0 (not the reader);
   reader-only text shift → L0 vs raw B0 (`first_walk_regression.text`); pagination gap error →
   `P` with the pre-pagination headline untouched; later pages re-anchored at their first fragment
@@ -400,7 +404,69 @@ may differ; that run is what should become the baseline). A CI job treats exit 2
 known defects are listed in `expected-check-failures.json` with their expiry instead of keeping
 the run red. `pdf-probe.mjs` prints Chrome's PDF through the same shared print path
 (`fidelity/lib/chrome-reference.mjs printPdf`) as the oracles and the corpus; `run-all.mjs` runs it
-after layout-diff and the gate ratchets its per-word dx/dy (GATE-P1).
+after layout-diff and the gate ratchets its per-word dx/dy, lost pairings and unpaired-word counts
+(GATE-P1; semantics 2, see "pdf-probe v2" below).
+
+## pdf-probe v2 (semantics 2, 2026-10-21; `lib/pdf-probe-v2.mjs`)
+
+Semantics 1 (`lib/pdf-probe-v1.mjs`, history) had three defects, CONFIRMED by the Phase B critic and
+re-checked here:
+
+- **D1, y = bbox top.** v1 scored y by `pdftotext -bbox` yMin = baseline − /Ascent × size, and
+  each producer declares its own /Ascent for the same font file (krilla: OS/2 `sTypoAscender`,
+  Liberation Sans 728, Serif 693.36, Serif Bold 677.25, Mono 612.79; Chrome: hhea, 905.27 / 891.11 /
+  832.52; Chrome's own Times-Roman 750). Every v1 dy carried +(A_chrome − A_krilla) × size with no
+  glyph moving.
+- **D2, k-th occurrence pairs.** The k-th "de" of vellora's extraction order paired with the k-th
+  of Chrome's, so different page counts or line orders paired different instances.
+- **D3, lost words.** A word that disappeared only shrank the pair list (a non-gating "changed").
+
+What v2 does:
+
+- **Coordinates.** PyMuPDF character origins through the layout oracle's own extractor
+  (`fidelity/oracles/py/words.py`, `lib/pdf-words.mjs`): x = pen origin of the word's first glyph,
+  y = its baseline. Words split at whitespace and at span boundaries (not pdftotext's spacing
+  heuristics, so v1 and v2 word counts differ; compare them per word, not in total).
+- **Why origins (probe, CONFIRMED).** `ascent-probe.mjs` rewrites the /Ascent of every font
+  descriptor of the 18 PDFs of port step 07 (9 fixtures × vellora and Chrome; every embedded face:
+  Liberation Sans/Serif/Mono regular and bold, Chrome's Times-Roman) to 450 and to 1100: the v2
+  origins move by exactly 0 pt on every word, pdftotext's yMin by 1.06–9.38 pt
+  (`snapshots/2026-10-21/pdf-probe-v2/ascent-probe.json`). On the committed notification pair,
+  v1 dy − v2 dy = (891.11 − A_krilla) × size within 0.05 pt for every Liberation Serif word
+  (`test/pdf-probe-canaries.test.mjs`).
+- **Pairing.** Per page and text key (NFC, ligatures U+FB00–U+FB06 expanded, case-sensitive: v1
+  lower-cased, which paired a body "débito" with a header "Débito"), a maximum-cardinality,
+  minimum-total-distance assignment (Hungarian, Euclidean on (x, baseline)), bounded at 36 pt: a
+  word with no same-text partner within 36 pt on its page is unpaired. Pairs are keyed by the
+  CHROME word, `p<page>|<text>#<n>` (rank by (baseline, x)); Chrome's PyMuPDF word tuples are
+  identical in every run copy of the chain (pin, beta4-gated, 00–07; 9 fixtures, CONFIRMED), so a
+  key names the same word in two runs. The gate refuses to compare when the Chrome reference words
+  differ (sha256 in `reference.chromeWordsSha256`).
+- **Why an assignment, not greedy-nearest (CONFIRMED on the step-07 DANFE).** The item rows repeat
+  "000", "UN", "0,00" every 11.2 pt in Chrome and every 12 pt in vellora (Blitz row drift). The
+  assignment keeps row order (row i ↔ row i, 9.9 → 18.1 pt, the real accumulating error); greedy
+  nearest pairs each vellora row with the NEXT Chrome row at 3–7 pt and hides it. At step 07 the
+  two disagree on 84 DANFE, 275 text-stress-ptbr and 15 boleto pairs.
+- **Why 36 pt (data, unbounded assignments of runs 00, 01, 03, 04, 07).** At step 07 every pair of
+  8 of the 9 fixtures lies within 36 pt (postmark, whose Chrome and WeasyPrint references disagree
+  by about 22 pt, reaches 24–36 pt); 36 pt is 1.6× the largest Phase A regression the probe must
+  still report as a dy (−22.5 pt). Above it the same-text neighbours dominate: of Chrome's 2137
+  words that have a same-text sibling on their page, 592 (28 %) have one within 36 pt and 1092
+  (51 %) within 72 pt. text-stress-ptbr (8 pages vs 7) has 619 of its 1323 unbounded same-page
+  pairs beyond 36 pt: they are unpaired, not mis-paired.
+- **Unpaired words.** Each section records `words.unpairedVellora` / `unpairedChrome` and both
+  lists; the gate ratchets both counts and every Chrome word that loses its partner (GATE-P1).
+- **Version.** `PDF_PROBE_SEMANTICS = 2` and `PDF_PROBE_SETTINGS` are written into every
+  pdf-probe.json and committed section; the gate REFUSES sections of different semantics or
+  settings (`pdfProbeComparability`, like WPT's `inkCheck`/`HARNESS_SEMANTICS`).
+- **Canaries** (`lib/pdf-probe-canaries.mjs`, run by `oracles/lib/canaries.mjs` on the
+  notification fixture in every run, gated by GATE-K1): the +6 pt body-shift render (dx gates,
+  median change 6 ± 1 pt), one word redacted (unpaired-chrome +1 and the word's pairing gate; control:
+  nothing else moved), one glyph run moved 2 pt away from Chrome (its dy gates by 2 ± 0.05 pt;
+  control: only that run moved), and every /Ascent rewritten (v2 reports nothing; control: the v1
+  extractor's gate fires on the same pair). Mutations: `oracles/py/pdf_mutate.py`.
+- **Committed baselines** were re-scored offline from their run copies
+  (`fidelity/gate/rescore-pdf-probe.mjs`); see `fidelity/baselines/port/README.md`, "pdf-probe v2".
 
 ## Results, 2026-10-21 (local, INDICATIVE; Chrome 155.0.8059.85, macOS 27 arm64)
 
@@ -517,8 +583,11 @@ accessors (they panic for text/comment nodes, so the B0 walk skips nodes without
 - P compares pagination's in-page drift only: where pages break, repeated `<thead>` copies and margin
   boxes are not judged, and a later page is anchored at its first fragment, so an error in THAT
   fragment's own placement (e.g. a margin a forced break should keep) is not measured; pdf-probe
-  aligns PDF words by text occurrence (and, with a schema-2 dump, maps each word to its placement
-  and splits its dy into pagination drift + the rest).
+  pairs PDF words by position within a page (and, with a schema-2 dump, maps each word to its
+  placement and splits its dy into pagination drift + the rest).
+- pdf-probe v2 cannot tell two instances of a repeated token apart when vellora's content is
+  shifted by a whole row pitch or more (text-stress-ptbr's 8-vs-7 page breaks): it pairs the
+  nearest rows in order. The unpaired counts and the page count (REF-P) expose those fixtures.
 - No Linux / Chrome for Testing baseline yet (see CI design). macOS numbers are indicative.
 - Schema-1 dumps only: L0 text includes vellora's inline padding-right compensation, not separable
   from raw Parley (schema 2 separates it: B0 → L0).

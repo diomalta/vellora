@@ -1,0 +1,233 @@
+{
+  "tool": "fidelity/gate/layer-vector.mjs",
+  "command": "node fidelity/gate/layer-vector.mjs --run ~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z --summary --out fidelity/gate/snapshots/2026-10-21/ledger/step07-run-level-summary.json",
+  "date": "2026-10-21T21:04:30.369Z",
+  "environment": {
+    "os": "darwin 27.0.0 arm64",
+    "node": "v22.23.2"
+  },
+  "run": "~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z",
+  "unit": "CSS px (pdf-probe pt x 4/3)",
+  "summary": [
+    {
+      "fixture": "boleto",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 78,
+      "runsWithP": 78,
+      "pDiffersFromFinalPassY": 13,
+      "pMovesBeyondTolY": 13,
+      "finalPassEqualsB0Y": 5,
+      "finalPassEqualsB0Minus2Y": 73,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 78,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 73,
+        "P": 13
+      }
+    },
+    {
+      "fixture": "boleto-febraban",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 98,
+      "runsWithP": 98,
+      "pDiffersFromFinalPassY": 60,
+      "pMovesBeyondTolY": 60,
+      "finalPassEqualsB0Y": 5,
+      "finalPassEqualsB0Minus2Y": 93,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 98,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 93,
+        "P": 60
+      }
+    },
+    {
+      "fixture": "danfe",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 318,
+      "runsWithP": 318,
+      "pDiffersFromFinalPassY": 0,
+      "pMovesBeyondTolY": 0,
+      "finalPassEqualsB0Y": 7,
+      "finalPassEqualsB0Minus2Y": 311,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 318,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 311
+      }
+    },
+    {
+      "fixture": "invoice",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 210,
+      "runsWithP": 210,
+      "pDiffersFromFinalPassY": 0,
+      "pMovesBeyondTolY": 0,
+      "finalPassEqualsB0Y": 20,
+      "finalPassEqualsB0Minus2Y": 190,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 210,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 190
+      }
+    },
+    {
+      "fixture": "notification",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 35,
+      "runsWithP": 35,
+      "pDiffersFromFinalPassY": 0,
+      "pMovesBeyondTolY": 0,
+      "finalPassEqualsB0Y": 29,
+      "finalPassEqualsB0Minus2Y": 6,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 35,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 6
+      }
+    },
+    {
+      "fixture": "oss-postmark-receipt",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 0,
+      "runsWithP": 0,
+      "pDiffersFromFinalPassY": 0,
+      "pMovesBeyondTolY": 0,
+      "finalPassEqualsB0Y": 0,
+      "finalPassEqualsB0Minus2Y": 0,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 0,
+      "yMovedBy": {}
+    },
+    {
+      "fixture": "oss-sparksuite-invoice",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 22,
+      "runsWithP": 22,
+      "pDiffersFromFinalPassY": 0,
+      "pMovesBeyondTolY": 0,
+      "finalPassEqualsB0Y": 13,
+      "finalPassEqualsB0Minus2Y": 9,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 22,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 9
+      }
+    },
+    {
+      "fixture": "receipt",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 60,
+      "runsWithP": 60,
+      "pDiffersFromFinalPassY": 36,
+      "pMovesBeyondTolY": 36,
+      "finalPassEqualsB0Y": 33,
+      "finalPassEqualsB0Minus2Y": 27,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 60,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 27,
+        "P": 36
+      }
+    },
+    {
+      "fixture": "text-stress-ptbr",
+      "finalPass": "auto_table_compact_columns",
+      "layers": [
+        "N0",
+        "B0",
+        "L0",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+        "auto_table_compact_columns",
+        "P"
+      ],
+      "runs": 779,
+      "runsWithP": 779,
+      "pDiffersFromFinalPassY": 364,
+      "pMovesBeyondTolY": 364,
+      "finalPassEqualsB0Y": 59,
+      "finalPassEqualsB0Minus2Y": 720,
+      "finalPassOtherY": 0,
+      "n0EqualsB0EqualsL0Y": 779,
+      "yMovedBy": {
+        "painted_table_cell_text_baselines": 720,
+        "P": 364
+      }
+    }
+  ],
+  "anchors": [],
+  "boxes": []
+}

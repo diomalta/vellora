@@ -8,13 +8,28 @@
 //                   canary, unexpected layout-diff check failure, expired allowlist entry, step
 //                   crash); GATES, cannot be accepted
 //   removed         measured in the baseline, absent from the run (never silently absent); GATES
-//   reported        a regression that is shown but does not gate (WPT flagged passes)
+//   reported        a regression that is shown but does not gate (WPT flagged passes); counted
+//                   in counts.flaggedPassLost and in the report headline (D6)
+//   rejection       a NEW strict-gate rejection: a WPT test that rendered is now "unsupported", or
+//                   a verdict row that was measured now reads "strict gate rejected: <feature>";
+//                   GATES unless a declaredRejections entry (feature, reason, evidence) covers it
+//   declared        a rejection (or a measured -> NOT-RUN/absent row) covered by declaredRejections
+//   within-tolerance  moved the bad way by MORE than 0 and AT MOST its tolerance: never gates, but
+//                   is listed and counted (counts.withinTolerance), never "unchanged" (D4). A
+//                   sub-tolerance move the good way is counted in counts.withinToleranceBetter
 //   improvement | newly-measured | added | changed | not-comparable   never gate
+import { pdfProbeComparability, sectionSemantics } from "../layout-diff/lib/pdf-probe-v2.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { CRASH_BAD, STATUS_RANK, TOLERANCES, UNMEASURED } from "./tolerances.mjs";
 import { compareCrashtests, compareWpt } from "./wpt.mjs";
 
 const isUnmeasured = (s) => UNMEASURED.includes(s) || s === undefined;
+/** A verdict value written for a document the strict gate rejected (corpus/render-corpus.mjs). */
+const REJECTED_RE = /strict gate rejected(?::\s*([^\s;,()]+))?/i;
+export const rejectedFeature = (row) => {
+  const m = REJECTED_RE.exec(String(row?.value ?? ""));
+  return m ? (m[1] ?? "unknown") : null;
+};
 const fmt = (v) => (typeof v === "number" ? String(Math.round(v * 1e4) / 1e4) : String(v ?? "-"));
 
 function groupOf(row) {
@@ -39,6 +54,21 @@ function compareRows(before, after, items, counts) {
         before: b.status,
         after: "absent",
         detail: "verdict row missing from the run (never silently absent)",
+      });
+      continue;
+    }
+    const feature = rejectedFeature(a);
+    if (feature && !rejectedFeature(b) && !isUnmeasured(b.status)) {
+      items.push({
+        key,
+        group,
+        check: "status",
+        class: "rejection",
+        gating: true,
+        feature,
+        before: b.status,
+        after: a.status,
+        detail: `new strict-gate rejection (${feature}): ${b.value ?? ""} -> ${a.value ?? ""}`,
       });
       continue;
     }
@@ -103,17 +133,21 @@ function compareMetrics(before, after, items, counts) {
       check: "value",
       tolClass,
       tol,
+      better: b.better,
       before: b.value,
       after: a?.value ?? null,
     };
+    const rowNow = after.rows.get(b.rowKey);
+    const feature = rejectedFeature(rowNow);
+    const newlyRejected = feature && !rejectedFeature(before.rows.get(b.rowKey));
     if (!a) {
       // The row itself is reported by the status ratchet when it disappeared or went unmeasured.
-      const rowNow = after.rows.get(b.rowKey);
       if (b.value !== null && rowNow && !isUnmeasured(rowNow.status)) {
         items.push({
           ...base,
-          class: "regression",
-          gating: true,
+          ...(newlyRejected
+            ? { class: "rejection", gating: true, feature }
+            : { class: "regression", gating: true }),
           detail: `metric no longer reported (row value now "${rowNow.value}")`,
         });
       }
@@ -135,8 +169,9 @@ function compareMetrics(before, after, items, counts) {
     if (a.value === null) {
       items.push({
         ...base,
-        class: "regression",
-        gating: true,
+        ...(newlyRejected
+          ? { class: "rejection", gating: true, feature }
+          : { class: "regression", gating: true }),
         detail: `no longer measurable: ${a.unmeasured ?? "no value"}`,
       });
       continue;
@@ -160,9 +195,19 @@ function compareMetrics(before, after, items, counts) {
         gating: false,
         detail: `${fmt(b.value)} -> ${fmt(a.value)}`,
       });
+    } else if (bad > eps) {
+      items.push({
+        ...base,
+        delta,
+        class: "within-tolerance",
+        gating: false,
+        detail: `${fmt(b.value)} -> ${fmt(a.value)} (worse, within tolerance ${tol} ${TOLERANCES[tolClass]?.unit ?? ""})`,
+      });
+      counts.withinTolerance++;
+    } else if (bad < -eps) {
+      counts.withinToleranceBetter++;
     } else {
       counts.unchanged++;
-      if (Math.abs(delta) > eps) counts.withinTolerance++;
     }
   }
 }
@@ -229,8 +274,184 @@ function compareCanaries(before, after, items, counts) {
   }
 }
 
-/** Per-word pdf-probe ratchet (|dx|, |dy| of same-page pairs, page moves). */
+/**
+ * Per-word pdf-probe ratchet. Dispatches on the sections' semantics (the caller refused mixed
+ * semantics first, see pdfProbeComparability): v1 = k-th occurrence pairs, pdftotext bbox tops;
+ * v2 = Chrome-keyed position pairs, PyMuPDF baselines (fidelity/layout-diff/lib/pdf-probe-v2.mjs).
+ */
 export function comparePdfProbe(before, after, items, counts) {
+  const semantics = sectionSemantics(Object.values(after ?? {})[0]);
+  if (semantics === 2) comparePdfProbeV2(before, after, items, counts);
+  else comparePdfProbeV1(before, after, items, counts);
+}
+
+/**
+ * pdf-probe v2 (semantics 2). Keys are Chrome words (`p<page>|<text>#<n>`), identical across runs
+ * of the same Chrome and templated HTML, so the same key is the same word on both sides.
+ *   both paired            |dx|, |dy| may not grow by more than pdf-probe-pt (1 pt); a smaller
+ *                          growth is a within-tolerance item (listed, counted, never gates)
+ *   paired -> unpaired     regression: the word is missing, on another page than Chrome's, or
+ *                          farther than settings.maxDistancePt from every same-text Chrome word
+ *   unpaired -> paired     newly-measured
+ *   unpaired-chrome /      per-fixture counts (Chrome words vellora lacks / vellora words Chrome
+ *   unpaired-vellora       lacks), count class: any increase gates
+ *   fixture missing        removed (gates)
+ */
+function comparePdfProbeV2(before, after, items, counts) {
+  const tol = TOLERANCES["pdf-probe-pt"].tol;
+  const eps = 1e-9;
+  const base = { group: "pdf-probe", check: "pdf-probe" };
+  for (const [fixture, a] of Object.entries(after ?? {})) {
+    const b = before?.[fixture];
+    if (!b) {
+      items.push({
+        ...base,
+        key: `pdf-probe|${fixture}`,
+        class: "not-comparable",
+        gating: false,
+        before: "absent",
+        after: `${a.pairs.length} pairs`,
+        detail: "baseline has no pdf-probe for this fixture",
+      });
+      continue;
+    }
+    const bound = a.settings?.maxDistancePt;
+    const was = new Map(b.pairs.map((p) => [p.k, p]));
+    const now = new Set(a.pairs.map((p) => p.k));
+    for (const p of a.pairs) {
+      const key = `pdf-probe|${fixture}|${p.k}`;
+      const q = was.get(p.k);
+      if (!q) {
+        items.push({
+          ...base,
+          key: `${key}|pairing`,
+          class: "newly-measured",
+          gating: false,
+          before: "unpaired",
+          after: `dx ${p.dx} dy ${p.dy}`,
+          detail: `Chrome's "${p.text}" (page ${p.page}) now has a vellora counterpart`,
+        });
+        continue;
+      }
+      for (const axis of ["dx", "dy"]) {
+        const d = Math.abs(p[axis]) - Math.abs(q[axis]);
+        const item = {
+          ...base,
+          key: `${key}|${axis}`,
+          tolClass: "pdf-probe-pt",
+          tol,
+          better: "lower-abs",
+          before: q[axis],
+          after: p[axis],
+          delta: d,
+        };
+        if (d > tol + eps) {
+          items.push({
+            ...item,
+            class: "regression",
+            gating: true,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt vs Chrome (baseline)`,
+          });
+        } else if (d < -(tol + eps)) {
+          items.push({
+            ...item,
+            class: "improvement",
+            gating: false,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt`,
+          });
+        } else if (d > eps) {
+          items.push({
+            ...item,
+            class: "within-tolerance",
+            gating: false,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt (worse, within ${tol} pt)`,
+          });
+          counts.withinTolerance++;
+        } else if (d < -eps || Math.abs(p[axis] - q[axis]) > eps) {
+          // Smaller |d|, or the same |d| on the other side of Chrome: moved, not worse.
+          counts.withinToleranceBetter++;
+        } else {
+          counts.unchanged++;
+        }
+      }
+    }
+    for (const q of b.pairs) {
+      if (now.has(q.k)) continue;
+      items.push({
+        ...base,
+        key: `pdf-probe|${fixture}|${q.k}|pairing`,
+        class: "regression",
+        gating: true,
+        before: `dx ${q.dx} dy ${q.dy}`,
+        after: "unpaired",
+        detail: `Chrome's "${q.text}" (page ${q.page}) lost its vellora counterpart: missing, on another page, or more than ${bound ?? "?"} pt away`,
+      });
+    }
+    for (const [field, name, what] of [
+      ["unpairedChrome", "unpaired-chrome", "Chrome words vellora lacks"],
+      ["unpairedVellora", "unpaired-vellora", "vellora words Chrome lacks"],
+    ]) {
+      const bv = b.words?.[field];
+      const av = a.words?.[field];
+      const item = {
+        ...base,
+        key: `pdf-probe|${fixture}|${name}`,
+        tolClass: "count",
+        tol: TOLERANCES.count.tol,
+        better: "lower",
+        before: bv,
+        after: av,
+        delta: av - bv,
+      };
+      if (typeof bv !== "number" || typeof av !== "number") {
+        items.push({
+          ...item,
+          class: "regression",
+          gating: true,
+          detail: `${what}: count missing`,
+        });
+      } else if (av - bv > TOLERANCES.count.tol) {
+        const was2 = new Set((b[field] ?? []).map((w) => w.k ?? `${w.page}|${w.text}`));
+        const added = (a[field] ?? []).filter((w) => !was2.has(w.k ?? `${w.page}|${w.text}`));
+        items.push({
+          ...item,
+          class: "regression",
+          gating: true,
+          detail: `${what}: ${bv} -> ${av}${
+            added.length
+              ? ` (e.g. ${added
+                  .slice(0, 5)
+                  .map((w) => `"${w.text}" p${w.page}`)
+                  .join(", ")})`
+              : ""
+          }`,
+        });
+      } else if (av < bv) {
+        items.push({
+          ...item,
+          class: "improvement",
+          gating: false,
+          detail: `${what}: ${bv} -> ${av}`,
+        });
+      } else counts.unchanged++;
+    }
+  }
+  for (const [fixture, b] of Object.entries(before ?? {})) {
+    if (after?.[fixture]) continue;
+    items.push({
+      ...base,
+      key: `pdf-probe|${fixture}`,
+      class: "removed",
+      gating: true,
+      before: `${b.pairs.length} pairs`,
+      after: "absent",
+      detail: "fixture measured by the baseline's pdf-probe is missing from the run",
+    });
+  }
+}
+
+/** pdf-probe v1 (semantics 1, history): |dx|, |dy| of same-page k-th occurrence pairs, page moves. */
+function comparePdfProbeV1(before, after, items, counts) {
   const tol = TOLERANCES["pdf-probe-pt"].tol;
   for (const [fixture, a] of Object.entries(after ?? {})) {
     const b = before?.[fixture];
@@ -296,7 +517,24 @@ export function comparePdfProbe(before, after, items, counts) {
             delta: d,
             detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt`,
           });
-        } else counts.unchanged++;
+        } else if (d > 1e-9) {
+          items.push({
+            key: `${key}|${axis}`,
+            group: "pdf-probe",
+            check: "pdf-probe",
+            class: "within-tolerance",
+            gating: false,
+            tolClass: "pdf-probe-pt",
+            tol,
+            better: "lower-abs",
+            before: q[axis],
+            after: p[axis],
+            delta: d,
+            detail: `"${p.text}" |${axis}| ${fmt(Math.abs(q[axis]))} -> ${fmt(Math.abs(p[axis]))} pt (worse, within ${tol} pt)`,
+          });
+          counts.withinTolerance++;
+        } else if (Math.abs(p[axis] - q[axis]) > 1e-9) counts.withinToleranceBetter++;
+        else counts.unchanged++;
       }
     }
     const lost = b.pairs.filter((q) => !a.pairs.some((p) => p.k === q.k)).length;
@@ -408,6 +646,61 @@ export function missingSections(before, after) {
   return out;
 }
 
+/**
+ * A declaredRejections entry ({ feature, reason, evidence, tests? | keys? | keyPrefix? }) covers
+ * a NEW strict-gate rejection the step makes on purpose (fix D5: before, WPT fail -> unsupported
+ * compared as a non-gating "changed"). When the item knows its feature (WPT `cause.feature` via
+ * outcomes.json `unsupportedFeatures`, a corpus row "strict gate rejected: <feature>"), it must
+ * equal the entry's. A WPT entry without `tests` covers every test rejected with that feature,
+ * but only when the run records the feature; committed expectations predating
+ * `unsupportedFeatures` need the tests listed. Rows and metrics need `keys` or `keyPrefix`.
+ * A measured row that becomes NOT-RUN/N/A or disappears (class regression/removed, no feature)
+ * can be declared only by listing its keys.
+ */
+export function matchesDeclaration(item, d) {
+  if (item.feature && d.feature !== item.feature) return false;
+  if (item.check === "wpt") {
+    if (d.tests) return d.tests.includes(item.test);
+    return Boolean(item.feature);
+  }
+  if (d.keys?.includes(item.key)) return true;
+  // A row that went NOT-RUN / absent records no feature: only an explicit key list declares it.
+  if (!item.feature) return false;
+  return [d.keyPrefix ?? []].flat().some((p) => item.key.startsWith(p));
+}
+
+/**
+ * Every item key a snapshot can produce (rows, metrics, WPT tests, crashtests, pdf-probe words and
+ * counts): what "the key vanished from the run" means for a DEBT.json removal (rule iii).
+ */
+export function snapshotKeys(s) {
+  const out = new Set();
+  const { rows, metrics } = verdictIndex(s.fixtures ?? []);
+  for (const k of rows.keys()) out.add(k);
+  for (const k of metrics.keys()) out.add(k);
+  for (const t of Object.keys(s.wpt?.expectations?.results ?? {})) out.add(`wpt|${t}`);
+  for (const t of Object.keys(s.crashtests?.results ?? {})) out.add(`wpt-crash|${t}`);
+  for (const [fx, p] of Object.entries(s.pdfProbe ?? {})) {
+    out.add(`pdf-probe|${fx}`);
+    for (const q of p.pairs ?? []) {
+      for (const axis of ["dx", "dy", "pairing"]) out.add(`pdf-probe|${fx}|${q.k}|${axis}`);
+    }
+    // A Chrome word without a vellora partner still exists: its pairing key has not vanished.
+    for (const w of p.unpairedChrome ?? []) if (w.k) out.add(`pdf-probe|${fx}|${w.k}|pairing`);
+    out.add(`pdf-probe|${fx}|unpaired-chrome`);
+    out.add(`pdf-probe|${fx}|unpaired-vellora`);
+  }
+  return out;
+}
+
+/** Gating items a declaredRejections entry may cover. */
+const declarable = (i) =>
+  i.gating &&
+  (i.class === "rejection" ||
+    ((i.class === "regression" || i.class === "removed") &&
+      (i.check === "status" || i.check === "value") &&
+      (i.after === null || i.after === "absent" || UNMEASURED.includes(i.after))));
+
 function matchesAcceptance(item, entry) {
   if (
     entry.key ? entry.key !== item.key : !(entry.keyPrefix && item.key.startsWith(entry.keyPrefix))
@@ -425,9 +718,9 @@ function matchesAcceptance(item, entry) {
  * Compare two snapshots. `accept`: [{ key | keyPrefix, after?, reason, evidence, label? }].
  * Returns the full report object (see report.mjs for rendering).
  */
-export function compareSnapshots(before, after, { accept = [] } = {}) {
+export function compareSnapshots(before, after, { accept = [], declared = [] } = {}) {
   const items = [];
-  const counts = { unchanged: 0, withinTolerance: 0 };
+  const counts = { unchanged: 0, withinTolerance: 0, withinToleranceBetter: 0 };
   const refusals = [];
   const bi = verdictIndex(before.fixtures ?? []);
   const ai = verdictIndex(after.fixtures ?? []);
@@ -487,14 +780,36 @@ export function compareSnapshots(before, after, { accept = [] } = {}) {
   }
 
   compareCanaries(before.canaries, after.canaries, items, counts);
-  if (after.pdfProbe) comparePdfProbe(before.pdfProbe, after.pdfProbe, items, counts);
+  if (after.pdfProbe) {
+    // Like WPT's inkCheck/HARNESS_SEMANTICS: sections measured with different semantics or
+    // settings are not comparable; the gate refuses instead of producing items.
+    const why = pdfProbeComparability(before.pdfProbe, after.pdfProbe);
+    if (why) refusals.push(`pdf-probe: ${why}`);
+    else comparePdfProbe(before.pdfProbe, after.pdfProbe, items, counts);
+  }
   absoluteChecks(after, items);
   refusals.push(...missingSections(before, after));
   if (before.integrity && !before.integrity.ok) {
     refusals.push(`baseline integrity: ${before.integrity.problems.join("; ")}`);
   }
 
-  // Acceptances: only regressions / removals can be accepted; failures never.
+  // Declared rejections first (D5): a new strict-gate rejection passes only when declared.
+  const usedDecl = new Set();
+  for (const item of items) {
+    if (!declarable(item)) continue;
+    const idx = declared.findIndex((d) => matchesDeclaration(item, d));
+    if (idx < 0) continue;
+    usedDecl.add(idx);
+    const d = declared[idx];
+    Object.assign(item, {
+      class: "declared",
+      gating: false,
+      declaredAs: { feature: d.feature, reason: d.reason, evidence: d.evidence },
+    });
+  }
+  const unusedDeclarations = declared.filter((_, i) => !usedDecl.has(i));
+
+  // Acceptances: only regressions / removals can be accepted; failures and rejections never.
   const used = new Set();
   for (const item of items) {
     if (!(item.gating && (item.class === "regression" || item.class === "removed"))) continue;
@@ -510,6 +825,8 @@ export function compareSnapshots(before, after, { accept = [] } = {}) {
     }
   }
   const unusedAcceptances = accept.filter((_, i) => !used.has(i));
+  // D6: flagged WPT passes that were lost are reported (not gated) and counted in the totals.
+  const flaggedPassLost = items.filter((i) => i.class === "reported" && i.check === "wpt").length;
 
   const gatingItems = items.filter((i) => i.gating);
   const verdict = refusals.length ? "REFUSED" : gatingItems.length ? "FAIL" : "PASS";
@@ -527,13 +844,16 @@ export function compareSnapshots(before, after, { accept = [] } = {}) {
     counts: {
       ...byClass,
       gating: gatingItems.length,
+      flaggedPassLost,
       unchanged: counts.unchanged,
       withinTolerance: counts.withinTolerance,
+      withinToleranceBetter: counts.withinToleranceBetter,
     },
     byGroup,
     wptPerSuite: wpt?.perSuite ?? null,
     items,
     unusedAcceptances,
+    unusedDeclarations,
     tolerances: TOLERANCES,
   };
 }

@@ -2585,6 +2585,15 @@
     "attachments/gate-report-vs-pin.md": "7b1ad7ba3782ece61c7ea09dca18654b852f01364e3d3b1c6c5940bb0633c305",
     "attachments/gate-report-without-acceptances.json": "accba7dfc42d4f845ccab0dae3d6d2fd40c200e386d6985a93de10dbe515e0e4",
     "attachments/gate-report-without-acceptances.md": "854591a0e97f583ebbd70cc5ce0637d51c1ca57ea63bec9fa31b4959fb394311",
+    "attachments/pdf-probe-v1/boleto-febraban.json": "e9deed2af372b24ffd83808cbc600aa290748759a3e0b2459f9bec6b7ffbc506",
+    "attachments/pdf-probe-v1/boleto.json": "495d179f717f133e0766781c18fbf4a6b3ae6a7eecc663ccb24737ac26fb0739",
+    "attachments/pdf-probe-v1/danfe.json": "cdf36eb5a98b7d47a66e55d601b79ae37a634b9d6faf73eaacb695ae7477168e",
+    "attachments/pdf-probe-v1/invoice.json": "751c8af01834bb8b6cc8e945817f28dd9f518157aff711d6875d56052a9bddb6",
+    "attachments/pdf-probe-v1/notification.json": "fa4c66a45ea91406c5d0efe03c5dd7277c542e91cac6da3af57dcd58b3479824",
+    "attachments/pdf-probe-v1/oss-postmark-receipt.json": "5b90828b0374b8454db21ca658565b5453133588894c2e960edaae2898188e9a",
+    "attachments/pdf-probe-v1/oss-sparksuite-invoice.json": "95032144325a17597cc585a54a57d580a2d322f57dc92e0753d9ba245f2c7468",
+    "attachments/pdf-probe-v1/receipt.json": "e697c6730e78e59768dcf36698d8418c270149a14cfd5b0b162d4b136600e97c",
+    "attachments/pdf-probe-v1/text-stress-ptbr.json": "f0eff74dd48205082b5fe3f586fb636c8b5cdbc9d6d2481a77e41274e04ab5c2",
     "canaries.json": "12bbe1fc96751d8a2607425733a4318a4f7486023cc460352f02930d5bb47c13",
     "code-checks.json": "388c51637ddaa9ed6870d1021e8a0c2aa97a59c86167776f88be2054e4322b5f",
     "fixtures/boleto-febraban.json": "ce9e2d8d7ad9c6c9a0066f467d114d8424739680b0e341f5cfd450ac71ddf827",
@@ -2600,18 +2609,238 @@
     "gate-report.json": "2b5003d1da63169a81c726455a329c4a62edbfcb6fb383833426db2c6fffbe3a",
     "gate-report.md": "f605b8a255e8ba1ce89a81284c239aeaac197ec8b6e081343542639acce8e58f",
     "metrics.json": "3b458e43125e70d26c38f26a0af4dc2a9abe264d7db1212a3f99b82e8c5fd27e",
-    "pdf-probe/boleto-febraban.json": "e9deed2af372b24ffd83808cbc600aa290748759a3e0b2459f9bec6b7ffbc506",
-    "pdf-probe/boleto.json": "495d179f717f133e0766781c18fbf4a6b3ae6a7eecc663ccb24737ac26fb0739",
-    "pdf-probe/danfe.json": "cdf36eb5a98b7d47a66e55d601b79ae37a634b9d6faf73eaacb695ae7477168e",
-    "pdf-probe/invoice.json": "751c8af01834bb8b6cc8e945817f28dd9f518157aff711d6875d56052a9bddb6",
-    "pdf-probe/notification.json": "fa4c66a45ea91406c5d0efe03c5dd7277c542e91cac6da3af57dcd58b3479824",
-    "pdf-probe/oss-postmark-receipt.json": "5b90828b0374b8454db21ca658565b5453133588894c2e960edaae2898188e9a",
-    "pdf-probe/oss-sparksuite-invoice.json": "95032144325a17597cc585a54a57d580a2d322f57dc92e0753d9ba245f2c7468",
-    "pdf-probe/receipt.json": "e697c6730e78e59768dcf36698d8418c270149a14cfd5b0b162d4b136600e97c",
-    "pdf-probe/text-stress-ptbr.json": "f0eff74dd48205082b5fe3f586fb636c8b5cdbc9d6d2481a77e41274e04ab5c2",
+    "pdf-probe/boleto-febraban.json": "66dfda844dcd2d0df327416d235291b05a5b30710317381221cb000abc7a9936",
+    "pdf-probe/boleto.json": "8a9a3ea4b2041a30125beefc181f62456ff19050a73bd0b8d45644a5e1479f79",
+    "pdf-probe/danfe.json": "5e046ac8dbd872ee8ac7f7bf76683a8ff50d2289bef8a305474c2ef28d32cf8e",
+    "pdf-probe/invoice.json": "56c9a55050df43655599600c0e9d511f6bce0294bd750e5b6b3cc73085b1c02b",
+    "pdf-probe/notification.json": "c90c788f90fc3cdcb53c30130747456918f013f206e9875fa138214a70d71284",
+    "pdf-probe/oss-postmark-receipt.json": "9365de27d3a7917e184d3ac546e9e8fecab4a2fb31b6018ba26c8adaebc26050",
+    "pdf-probe/oss-sparksuite-invoice.json": "cb9ad508755a86e745ef23dc70ed95af4d5162b54e479ec2dfcec47be0bba5f6",
+    "pdf-probe/receipt.json": "fa93c69cd2e44ee2a58cce00a188c34dea188611d32266bfd40ea572ac8e5803",
+    "pdf-probe/text-stress-ptbr.json": "c384a82d2372433617804b24e96566260a898f0452fbd3b16e0d6315237542c4",
     "wpt/by-directory.json": "7f6241b1744ecd913e74e3ee1c395869a4c23aded882fe1b7a36144ff95ae4dc",
     "wpt/crashtests.json": "71820311635f15f0668476ce442a9e2601841c9255f405750d2e420bcb29a0f0",
     "wpt/expectations-blitz-0.3.0-beta.4.json": "3dc4fb0fa9eb83c55857ba21440e5d8c5a3a2ce2c5fbd22162df8a4665546cee"
   },
-  "formatting": "biome format --write (repo biome.json) before hashing"
+  "formatting": "biome format --write (repo biome.json) before hashing",
+  "pdfProbeRescore": {
+    "semantics": 2,
+    "settings": {
+      "semantics": 2,
+      "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+      "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+      "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+      "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+      "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+      "maxDistancePt": 36,
+      "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+    },
+    "command": "node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/port/01-pagination-gaps --run ~/.cache/vellora-fidelity/run-all-01-pagination-gaps-20261021T093020Z",
+    "date": "2026-10-21T20:05:57.260Z",
+    "environment": {
+      "os": "darwin 27.0.0 arm64",
+      "node": "v22.23.2",
+      "python": "3.12.13",
+      "extractor": "pymupdf 1.28.2"
+    },
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-01-pagination-gaps-20261021T093020Z",
+      "summarySha256": "6e3376f55b214ea0bfbabcd87355d24552fe0af5d85eee1e4078632cc381fd05",
+      "matchesManifestSource": true
+    },
+    "v1": {
+      "location": "attachments/pdf-probe-v1",
+      "note": "semantics 1 (pdftotext -bbox yMin, k-th occurrence pairing): the section this baseline carried before the re-score (a gated link was gated with it); kept unchanged as history, not gated. loadBaselineDir(dir, { pdfProbe: 'v1' }) reads it.",
+      "fixtures": [
+        "boleto",
+        "boleto-febraban",
+        "danfe",
+        "invoice",
+        "notification",
+        "oss-postmark-receipt",
+        "oss-sparksuite-invoice",
+        "receipt",
+        "text-stress-ptbr"
+      ]
+    },
+    "v1Identity": {
+      "boleto": "identical",
+      "boleto-febraban": "identical",
+      "danfe": "identical",
+      "invoice": "identical",
+      "notification": "identical",
+      "oss-postmark-receipt": "identical",
+      "oss-sparksuite-invoice": "identical",
+      "receipt": "identical",
+      "text-stress-ptbr": "identical"
+    },
+    "inputs": {
+      "boleto": {
+        "vellora": {
+          "path": "layout-diff/boleto/run-all/vellora.pdf",
+          "sha256": "31a000ae06053318520b7d4a6d9a8f224bd84af5d38a79078c7f216d9dd6a6c9"
+        },
+        "chrome": {
+          "path": "layout-diff/boleto/run-all/chrome.pdf",
+          "sha256": "d14176459dcc214b25f9ea2fcb43b55a9bc47cd02c9613beefda8e415932846e"
+        },
+        "words": {
+          "vellora": 297,
+          "chrome": 297,
+          "paired": 297,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "boleto-febraban": {
+        "vellora": {
+          "path": "layout-diff/boleto-febraban/run-all/vellora.pdf",
+          "sha256": "c3b9cfbc35ddfaada319052dbd1de8249c6b8b35e873044ec27151e5e6d46668"
+        },
+        "chrome": {
+          "path": "layout-diff/boleto-febraban/run-all/chrome.pdf",
+          "sha256": "e23d0a4f813b3faea776c3cc77781b87be2c343d3c12731443aa8b95d69ffef1"
+        },
+        "words": {
+          "vellora": 311,
+          "chrome": 315,
+          "paired": 232,
+          "unpairedVellora": 79,
+          "unpairedChrome": 83
+        }
+      },
+      "danfe": {
+        "vellora": {
+          "path": "layout-diff/danfe/run-all/vellora.pdf",
+          "sha256": "8b4f86e2d51fbe17fc7fe5c9f556cfe7d0e499a79aa70db3f22a1eb801914207"
+        },
+        "chrome": {
+          "path": "layout-diff/danfe/run-all/chrome.pdf",
+          "sha256": "65dbb9eb40a8b11a5aa801b8e5d0a35f12279685c7ee7313c44384c70467334d"
+        },
+        "words": {
+          "vellora": 630,
+          "chrome": 630,
+          "paired": 382,
+          "unpairedVellora": 248,
+          "unpairedChrome": 248
+        }
+      },
+      "invoice": {
+        "vellora": {
+          "path": "layout-diff/invoice/run-all/vellora.pdf",
+          "sha256": "1519222eacbaffdb9684b75d2fd7ec14d61a5645e9b84639486322fb54155bd8"
+        },
+        "chrome": {
+          "path": "layout-diff/invoice/run-all/chrome.pdf",
+          "sha256": "5e8015c3218cfade02899abe91dbb113db6983c9c4000442324fd80f209d71c3"
+        },
+        "words": {
+          "vellora": 541,
+          "chrome": 541,
+          "paired": 541,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "notification": {
+        "vellora": {
+          "path": "layout-diff/notification/run-all/vellora.pdf",
+          "sha256": "4926bb885b1e77e1068175bae8c2def12cc4cfa2f28ce1c97b58409ab4b25d04"
+        },
+        "chrome": {
+          "path": "layout-diff/notification/run-all/chrome.pdf",
+          "sha256": "c9ac6af6f76942f707f29c854ef14d6de44323e4ba2a0f6cdceaacedb8d92516"
+        },
+        "words": {
+          "vellora": 244,
+          "chrome": 248,
+          "paired": 244,
+          "unpairedVellora": 0,
+          "unpairedChrome": 4
+        }
+      },
+      "oss-postmark-receipt": {
+        "vellora": {
+          "path": "layout-diff/oss-postmark-receipt/run-all/vellora.pdf",
+          "sha256": "08d4eb1fa7c858aa4861f2c3ce15c5324553bc6d33d924b2eb38face953c8647"
+        },
+        "chrome": {
+          "path": "layout-diff/oss-postmark-receipt/run-all/chrome.pdf",
+          "sha256": "f4253747f145925685493c85e794d54ebf09b5dc92b2d9776a0c9e435a09b683"
+        },
+        "words": {
+          "vellora": 138,
+          "chrome": 180,
+          "paired": 138,
+          "unpairedVellora": 0,
+          "unpairedChrome": 42
+        }
+      },
+      "oss-sparksuite-invoice": {
+        "vellora": {
+          "path": "layout-diff/oss-sparksuite-invoice/run-all/vellora.pdf",
+          "sha256": "f4eb1ad35d60143db82a1e07dec62e2d5afe25b11e7a80511a3426ba40843dee"
+        },
+        "chrome": {
+          "path": "layout-diff/oss-sparksuite-invoice/run-all/chrome.pdf",
+          "sha256": "8c0cd5031eb9ca0abca28e3cfae5bc237679fba539013dc261cc2ec3f3e593ff"
+        },
+        "words": {
+          "vellora": 46,
+          "chrome": 46,
+          "paired": 46,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "receipt": {
+        "vellora": {
+          "path": "layout-diff/receipt/run-all/vellora.pdf",
+          "sha256": "d2b515c1a7f30867b0363c71946ad44c8792923f22f7b24cfa542b7cd4c37f4d"
+        },
+        "chrome": {
+          "path": "layout-diff/receipt/run-all/chrome.pdf",
+          "sha256": "51c50fd002288f37da5d6eedb9c90d8169065a8f72fcd493a7922a0473b58143"
+        },
+        "words": {
+          "vellora": 151,
+          "chrome": 151,
+          "paired": 149,
+          "unpairedVellora": 2,
+          "unpairedChrome": 2
+        }
+      },
+      "text-stress-ptbr": {
+        "vellora": {
+          "path": "layout-diff/text-stress-ptbr/run-all/vellora.pdf",
+          "sha256": "7d65c35c1c58d72c42e3eb3f3583bb8853fa26d1544c883f32429481adb8122a"
+        },
+        "chrome": {
+          "path": "layout-diff/text-stress-ptbr/run-all/chrome.pdf",
+          "sha256": "5168a9200c2b4c84867c09e1b84d12c5f65344f2a1c5361c686d732af380c2df"
+        },
+        "words": {
+          "vellora": 1846,
+          "chrome": 1833,
+          "paired": 405,
+          "unpairedVellora": 1441,
+          "unpairedChrome": 1428
+        }
+      }
+    },
+    "missing": [],
+    "v2Fixtures": [
+      "boleto",
+      "boleto-febraban",
+      "danfe",
+      "invoice",
+      "notification",
+      "oss-postmark-receipt",
+      "oss-sparksuite-invoice",
+      "receipt",
+      "text-stress-ptbr"
+    ],
+    "formatting": "biome format --write (repo biome.json) before hashing"
+  }
 }

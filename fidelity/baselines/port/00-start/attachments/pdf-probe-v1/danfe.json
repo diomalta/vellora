@@ -1,0 +1,5013 @@
+{
+  "pages": {
+    "vellora": 2,
+    "chrome": 1
+  },
+  "words": {
+    "vellora": 630,
+    "chrome": 630,
+    "aligned": 625
+  },
+  "pairs": [
+    {
+      "k": "RECEBEMOS#1",
+      "text": "RECEBEMOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": -2.66
+    },
+    {
+      "k": "DE#1",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": -2.66
+    },
+    {
+      "k": "DISTRIBUIDORA#1",
+      "text": "DISTRIBUIDORA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.38,
+      "dy": -2.66
+    },
+    {
+      "k": "EXEMPLO#1",
+      "text": "EXEMPLO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.43,
+      "dy": -2.66
+    },
+    {
+      "k": "DE#2",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.46,
+      "dy": -2.66
+    },
+    {
+      "k": "COMPONENTES#1",
+      "text": "COMPONENTES",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.47,
+      "dy": -2.66
+    },
+    {
+      "k": "LTDA.#1",
+      "text": "LTDA.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.51,
+      "dy": -2.66
+    },
+    {
+      "k": "OS#1",
+      "text": "OS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.53,
+      "dy": -2.66
+    },
+    {
+      "k": "PRODUTOS#1",
+      "text": "PRODUTOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.54,
+      "dy": -2.66
+    },
+    {
+      "k": "E/OU#1",
+      "text": "E/OU",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.58,
+      "dy": -2.66
+    },
+    {
+      "k": "SERVIÇOS#1",
+      "text": "SERVIÇOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.59,
+      "dy": -2.66
+    },
+    {
+      "k": "CONSTANTES#1",
+      "text": "CONSTANTES",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.62,
+      "dy": -2.66
+    },
+    {
+      "k": "DA#1",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.66,
+      "dy": -2.66
+    },
+    {
+      "k": "NOTA#1",
+      "text": "NOTA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.67,
+      "dy": -2.66
+    },
+    {
+      "k": "FISCAL#1",
+      "text": "FISCAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.69,
+      "dy": -2.66
+    },
+    {
+      "k": "ELETRÔNICA#1",
+      "text": "ELETRÔNICA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": -2.66
+    },
+    {
+      "k": "INDICADA#1",
+      "text": "INDICADA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.75,
+      "dy": -2.66
+    },
+    {
+      "k": "AO#1",
+      "text": "AO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": -1.9
+    },
+    {
+      "k": "LADO#1",
+      "text": "LADO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": -1.9
+    },
+    {
+      "k": "NF-e#1",
+      "text": "NF-e",
+      "page": 1,
+      "samePage": true,
+      "dx": -65.56,
+      "dy": -1.28
+    },
+    {
+      "k": "DATA#1",
+      "text": "DATA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": -1.88
+    },
+    {
+      "k": "DE#3",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.35,
+      "dy": -1.88
+    },
+    {
+      "k": "RECEBIMENTO#1",
+      "text": "RECEBIMENTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.35,
+      "dy": -1.88
+    },
+    {
+      "k": "Nº#1",
+      "text": "Nº",
+      "page": 1,
+      "samePage": true,
+      "dx": -65.58,
+      "dy": -1.69
+    },
+    {
+      "k": "000.012.345#1",
+      "text": "000.012.345",
+      "page": 1,
+      "samePage": true,
+      "dx": -65.57,
+      "dy": -1.69
+    },
+    {
+      "k": "SÉRIE#1",
+      "text": "SÉRIE",
+      "page": 1,
+      "samePage": true,
+      "dx": -65.56,
+      "dy": -1.68
+    },
+    {
+      "k": "001#1",
+      "text": "001",
+      "page": 1,
+      "samePage": true,
+      "dx": -65.54,
+      "dy": -1.68
+    },
+    {
+      "k": "IDENTIFICAÇÃO#1",
+      "text": "IDENTIFICAÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 77.98,
+      "dy": -1.88
+    },
+    {
+      "k": "E#1",
+      "text": "E",
+      "page": 1,
+      "samePage": true,
+      "dx": 78.03,
+      "dy": -1.88
+    },
+    {
+      "k": "ASSINATURA#1",
+      "text": "ASSINATURA",
+      "page": 1,
+      "samePage": true,
+      "dx": 78.04,
+      "dy": -1.88
+    },
+    {
+      "k": "DO#1",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 78.08,
+      "dy": -1.88
+    },
+    {
+      "k": "RECEBEDOR#1",
+      "text": "RECEBEDOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 78.09,
+      "dy": -1.88
+    },
+    {
+      "k": "Distribuidora#1",
+      "text": "Distribuidora",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.02,
+      "dy": 0.29
+    },
+    {
+      "k": "Exemplo#1",
+      "text": "Exemplo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.05,
+      "dy": 0.29
+    },
+    {
+      "k": "de#1",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": 0.29
+    },
+    {
+      "k": "Componentes#1",
+      "text": "Componentes",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.12,
+      "dy": 0.29
+    },
+    {
+      "k": "Ltda.#1",
+      "text": "Ltda.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.19,
+      "dy": 0.29
+    },
+    {
+      "k": "DANFE#1",
+      "text": "DANFE",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.45,
+      "dy": 0.71
+    },
+    {
+      "k": "Rua#1",
+      "text": "Rua",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.03,
+      "dy": -0.56
+    },
+    {
+      "k": "dos#1",
+      "text": "dos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.01,
+      "dy": -0.56
+    },
+    {
+      "k": "Testes,#1",
+      "text": "Testes,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.04,
+      "dy": -0.56
+    },
+    {
+      "k": "1234#1",
+      "text": "1234",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.09,
+      "dy": -0.56
+    },
+    {
+      "k": "—#1",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.13,
+      "dy": -0.56
+    },
+    {
+      "k": "Galpão#1",
+      "text": "Galpão",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.15,
+      "dy": -0.56
+    },
+    {
+      "k": "3#1",
+      "text": "3",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.21,
+      "dy": -0.56
+    },
+    {
+      "k": "DOCUMENTO#1",
+      "text": "DOCUMENTO",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.48,
+      "dy": 0.06
+    },
+    {
+      "k": "AUXILIAR#1",
+      "text": "AUXILIAR",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.26,
+      "dy": 0.07
+    },
+    {
+      "k": "DA#2",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.17,
+      "dy": 0.07
+    },
+    {
+      "k": "Distrito#1",
+      "text": "Distrito",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": -0.55
+    },
+    {
+      "k": "Industrial#1",
+      "text": "Industrial",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.04,
+      "dy": -0.55
+    },
+    {
+      "k": "—#2",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.04,
+      "dy": -0.55
+    },
+    {
+      "k": "Campinas#1",
+      "text": "Campinas",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.06,
+      "dy": -0.55
+    },
+    {
+      "k": "/#1",
+      "text": "/",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.14,
+      "dy": -0.55
+    },
+    {
+      "k": "SP#1",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.15,
+      "dy": -0.55
+    },
+    {
+      "k": "—#3",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.17,
+      "dy": -0.55
+    },
+    {
+      "k": "CEP#1",
+      "text": "CEP",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.2,
+      "dy": -0.55
+    },
+    {
+      "k": "13069-000#1",
+      "text": "13069-000",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.23,
+      "dy": -0.55
+    },
+    {
+      "k": "NOTA#2",
+      "text": "NOTA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.33,
+      "dy": -0.68
+    },
+    {
+      "k": "FISCAL#2",
+      "text": "FISCAL",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.28,
+      "dy": -0.68
+    },
+    {
+      "k": "Fone:#1",
+      "text": "Fone:",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.02,
+      "dy": -0.54
+    },
+    {
+      "k": "(19)#1",
+      "text": "(19)",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.07,
+      "dy": -0.54
+    },
+    {
+      "k": "3555-0100#1",
+      "text": "3555-0100",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.1,
+      "dy": -0.54
+    },
+    {
+      "k": "ELETRÔNICA#2",
+      "text": "ELETRÔNICA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.47,
+      "dy": 0.08
+    },
+    {
+      "k": "0#1",
+      "text": "0",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.08,
+      "dy": -0.66
+    },
+    {
+      "k": "-#1",
+      "text": "-",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.07,
+      "dy": -0.66
+    },
+    {
+      "k": "ENTRADA#1",
+      "text": "ENTRADA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.06,
+      "dy": -0.66
+    },
+    {
+      "k": "1#1",
+      "text": "1",
+      "page": 1,
+      "samePage": true,
+      "dx": -32.79,
+      "dy": -5.62
+    },
+    {
+      "k": "1#2",
+      "text": "1",
+      "page": 1,
+      "samePage": true,
+      "dx": -145.33,
+      "dy": 4.88
+    },
+    {
+      "k": "-#2",
+      "text": "-",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.07,
+      "dy": -0.65
+    },
+    {
+      "k": "SAÍDA#1",
+      "text": "SAÍDA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.06,
+      "dy": -0.65
+    },
+    {
+      "k": "CHAVE#1",
+      "text": "CHAVE",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.73,
+      "dy": -1.05
+    },
+    {
+      "k": "DE#4",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.75,
+      "dy": -1.05
+    },
+    {
+      "k": "ACESSO#1",
+      "text": "ACESSO",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.76,
+      "dy": -1.05
+    },
+    {
+      "k": "3526#1",
+      "text": "3526",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.37,
+      "dy": -0.41
+    },
+    {
+      "k": "1012#1",
+      "text": "1012",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.39,
+      "dy": -0.41
+    },
+    {
+      "k": "3456#1",
+      "text": "3456",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.4,
+      "dy": -0.41
+    },
+    {
+      "k": "7800#1",
+      "text": "7800",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.42,
+      "dy": -0.41
+    },
+    {
+      "k": "0195#1",
+      "text": "0195",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.44,
+      "dy": -0.41
+    },
+    {
+      "k": "5500#1",
+      "text": "5500",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.45,
+      "dy": -0.41
+    },
+    {
+      "k": "1000#1",
+      "text": "1000",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.47,
+      "dy": -0.41
+    },
+    {
+      "k": "0123#1",
+      "text": "0123",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.49,
+      "dy": -0.41
+    },
+    {
+      "k": "4517#1",
+      "text": "4517",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.5,
+      "dy": -0.41
+    },
+    {
+      "k": "0524#1",
+      "text": "0524",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.52,
+      "dy": -0.41
+    },
+    {
+      "k": "Nº#2",
+      "text": "Nº",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.45,
+      "dy": -0.07
+    },
+    {
+      "k": "000.012.345#2",
+      "text": "000.012.345",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.44,
+      "dy": -0.07
+    },
+    {
+      "k": "SÉRIE#2",
+      "text": "SÉRIE",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.45,
+      "dy": -0.06
+    },
+    {
+      "k": "001#2",
+      "text": "001",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.42,
+      "dy": -0.06
+    },
+    {
+      "k": "FOLHA#1",
+      "text": "FOLHA",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.45,
+      "dy": -0.05
+    },
+    {
+      "k": "1/1#1",
+      "text": "1/1",
+      "page": 1,
+      "samePage": true,
+      "dx": -89.42,
+      "dy": -0.05
+    },
+    {
+      "k": "Consulta#1",
+      "text": "Consulta",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.55,
+      "dy": -0.23
+    },
+    {
+      "k": "de#2",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.59,
+      "dy": -0.23
+    },
+    {
+      "k": "autenticidade#1",
+      "text": "autenticidade",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.6,
+      "dy": -0.23
+    },
+    {
+      "k": "no#1",
+      "text": "no",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.65,
+      "dy": -0.23
+    },
+    {
+      "k": "portal#1",
+      "text": "portal",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.66,
+      "dy": -0.23
+    },
+    {
+      "k": "nacional#1",
+      "text": "nacional",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.68,
+      "dy": -0.23
+    },
+    {
+      "k": "da#1",
+      "text": "da",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.71,
+      "dy": -0.23
+    },
+    {
+      "k": "www.nfe.fazenda.gov.br/portal#1",
+      "text": "www.nfe.fazenda.gov.br/portal",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.56,
+      "dy": 0.53
+    },
+    {
+      "k": "ou#1",
+      "text": "ou",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.67,
+      "dy": 0.53
+    },
+    {
+      "k": "no#2",
+      "text": "no",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.68,
+      "dy": 0.53
+    },
+    {
+      "k": "site#1",
+      "text": "site",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.7,
+      "dy": 0.53
+    },
+    {
+      "k": "da#2",
+      "text": "da",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.71,
+      "dy": 0.53
+    },
+    {
+      "k": "Autorizadora#1",
+      "text": "Autorizadora",
+      "page": 1,
+      "samePage": true,
+      "dx": 32.63,
+      "dy": -0.21
+    },
+    {
+      "k": "NATUREZA#1",
+      "text": "NATUREZA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": -0.23
+    },
+    {
+      "k": "DA#3",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": -0.23
+    },
+    {
+      "k": "OPERAÇÃO#1",
+      "text": "OPERAÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": -0.23
+    },
+    {
+      "k": "PROTOCOLO#1",
+      "text": "PROTOCOLO",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.14,
+      "dy": -0.23
+    },
+    {
+      "k": "DE#5",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.1,
+      "dy": -0.23
+    },
+    {
+      "k": "AUTORIZAÇÃO#1",
+      "text": "AUTORIZAÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.09,
+      "dy": -0.23
+    },
+    {
+      "k": "DE#6",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.04,
+      "dy": -0.23
+    },
+    {
+      "k": "USO#1",
+      "text": "USO",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.03,
+      "dy": -0.23
+    },
+    {
+      "k": "VENDA#1",
+      "text": "VENDA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 0.57
+    },
+    {
+      "k": "DE#7",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 0.57
+    },
+    {
+      "k": "MERCADORIA#1",
+      "text": "MERCADORIA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 0.57
+    },
+    {
+      "k": "ADQUIRIDA#1",
+      "text": "ADQUIRIDA",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.44,
+      "dy": 0.57
+    },
+    {
+      "k": "DE#8",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.49,
+      "dy": 0.57
+    },
+    {
+      "k": "TERCEIROS#1",
+      "text": "TERCEIROS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.5,
+      "dy": 0.57
+    },
+    {
+      "k": "INSCRIÇÃO#1",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 0.55
+    },
+    {
+      "k": "ESTADUAL#1",
+      "text": "ESTADUAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 0.55
+    },
+    {
+      "k": "135260000123456#1",
+      "text": "135260000123456",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.47,
+      "dy": 0.57
+    },
+    {
+      "k": "15/10/2026#1",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.4,
+      "dy": 0.57
+    },
+    {
+      "k": "10:25:02#1",
+      "text": "10:25:02",
+      "page": 1,
+      "samePage": true,
+      "dx": -64.35,
+      "dy": 0.57
+    },
+    {
+      "k": "INSCRIÇÃO#2",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.17,
+      "dy": 0.55
+    },
+    {
+      "k": "ESTADUAL#2",
+      "text": "ESTADUAL",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.14,
+      "dy": 0.55
+    },
+    {
+      "k": "DO#2",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.1,
+      "dy": 0.55
+    },
+    {
+      "k": "SUBST.#1",
+      "text": "SUBST.",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.09,
+      "dy": 0.55
+    },
+    {
+      "k": "TRIB.#1",
+      "text": "TRIB.",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.07,
+      "dy": 0.55
+    },
+    {
+      "k": "CNPJ#1",
+      "text": "CNPJ",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.67,
+      "dy": 0.55
+    },
+    {
+      "k": "110.042.490.114#1",
+      "text": "110.042.490.114",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 1.35
+    },
+    {
+      "k": "12.345.678/0001-95#1",
+      "text": "12.345.678/0001-95",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.67,
+      "dy": 1.35
+    },
+    {
+      "k": "DESTINATÁRIO/REMETENTE#1",
+      "text": "DESTINATÁRIO/REMETENTE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 1.42
+    },
+    {
+      "k": "NOME/RAZÃO#1",
+      "text": "NOME/RAZÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 1.34
+    },
+    {
+      "k": "SOCIAL#1",
+      "text": "SOCIAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 1.34
+    },
+    {
+      "k": "CNPJ/CPF#1",
+      "text": "CNPJ/CPF",
+      "page": 1,
+      "samePage": true,
+      "dx": -16.41,
+      "dy": 1.34
+    },
+    {
+      "k": "Comércio#1",
+      "text": "Comércio",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 2.13
+    },
+    {
+      "k": "Fictício#1",
+      "text": "Fictício",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 2.13
+    },
+    {
+      "k": "de#3",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.39,
+      "dy": 2.13
+    },
+    {
+      "k": "Eletrônicos#1",
+      "text": "Eletrônicos",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.41,
+      "dy": 2.13
+    },
+    {
+      "k": "São#1",
+      "text": "São",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.45,
+      "dy": 2.13
+    },
+    {
+      "k": "João#1",
+      "text": "João",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.46,
+      "dy": 2.13
+    },
+    {
+      "k": "Ltda.#2",
+      "text": "Ltda.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.48,
+      "dy": 2.13
+    },
+    {
+      "k": "98.765.432/0001-98#1",
+      "text": "98.765.432/0001-98",
+      "page": 1,
+      "samePage": true,
+      "dx": -16.41,
+      "dy": 2.3
+    },
+    {
+      "k": "DATA#2",
+      "text": "DATA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 1.34
+    },
+    {
+      "k": "DA#4",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.25,
+      "dy": 1.34
+    },
+    {
+      "k": "EMISSÃO#1",
+      "text": "EMISSÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.24,
+      "dy": 1.34
+    },
+    {
+      "k": "15/10/2026#2",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 2.13
+    },
+    {
+      "k": "ENDEREÇO#1",
+      "text": "ENDEREÇO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 2.11
+    },
+    {
+      "k": "BAIRRO/DISTRITO#1",
+      "text": "BAIRRO/DISTRITO",
+      "page": 1,
+      "samePage": true,
+      "dx": -121.29,
+      "dy": 2.11
+    },
+    {
+      "k": "CEP#2",
+      "text": "CEP",
+      "page": 1,
+      "samePage": true,
+      "dx": -8.98,
+      "dy": 2.11
+    },
+    {
+      "k": "DATA#3",
+      "text": "DATA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 2.11
+    },
+    {
+      "k": "DA#5",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.25,
+      "dy": 2.11
+    },
+    {
+      "k": "SAÍDA#2",
+      "text": "SAÍDA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.24,
+      "dy": 2.11
+    },
+    {
+      "k": "Avenida#1",
+      "text": "Avenida",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 2.91
+    },
+    {
+      "k": "das#1",
+      "text": "das",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 2.91
+    },
+    {
+      "k": "Nações#1",
+      "text": "Nações",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 2.91
+    },
+    {
+      "k": "Unidas,#1",
+      "text": "Unidas,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.4,
+      "dy": 2.91
+    },
+    {
+      "k": "12901#1",
+      "text": "12901",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.43,
+      "dy": 2.91
+    },
+    {
+      "k": "Brooklin#1",
+      "text": "Brooklin",
+      "page": 1,
+      "samePage": true,
+      "dx": -121.29,
+      "dy": 2.91
+    },
+    {
+      "k": "Paulista#1",
+      "text": "Paulista",
+      "page": 1,
+      "samePage": true,
+      "dx": -121.26,
+      "dy": 2.91
+    },
+    {
+      "k": "04578-000#1",
+      "text": "04578-000",
+      "page": 1,
+      "samePage": true,
+      "dx": -8.98,
+      "dy": 2.91
+    },
+    {
+      "k": "15/10/2026#3",
+      "text": "15/10/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 3.07
+    },
+    {
+      "k": "MUNICÍPIO#1",
+      "text": "MUNICÍPIO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 2.14
+    },
+    {
+      "k": "FONE/FAX#1",
+      "text": "FONE/FAX",
+      "page": 1,
+      "samePage": true,
+      "dx": -117.97,
+      "dy": 2.14
+    },
+    {
+      "k": "UF#1",
+      "text": "UF",
+      "page": 1,
+      "samePage": true,
+      "dx": -66.86,
+      "dy": 2.14
+    },
+    {
+      "k": "INSCRIÇÃO#3",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -16.41,
+      "dy": 2.14
+    },
+    {
+      "k": "ESTADUAL#3",
+      "text": "ESTADUAL",
+      "page": 1,
+      "samePage": true,
+      "dx": -16.38,
+      "dy": 2.14
+    },
+    {
+      "k": "HORA#1",
+      "text": "HORA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 2.14
+    },
+    {
+      "k": "DA#6",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.25,
+      "dy": 2.14
+    },
+    {
+      "k": "SAÍDA#3",
+      "text": "SAÍDA",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.24,
+      "dy": 2.14
+    },
+    {
+      "k": "São#2",
+      "text": "São",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 3.68
+    },
+    {
+      "k": "Paulo#1",
+      "text": "Paulo",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 3.68
+    },
+    {
+      "k": "(11)#1",
+      "text": "(11)",
+      "page": 1,
+      "samePage": true,
+      "dx": -117.97,
+      "dy": 3.68
+    },
+    {
+      "k": "3555-0199#1",
+      "text": "3555-0199",
+      "page": 1,
+      "samePage": true,
+      "dx": -117.95,
+      "dy": 3.68
+    },
+    {
+      "k": "SP#2",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": -66.86,
+      "dy": 3.68
+    },
+    {
+      "k": "407.112.348.110#1",
+      "text": "407.112.348.110",
+      "page": 1,
+      "samePage": true,
+      "dx": -16.41,
+      "dy": 3.68
+    },
+    {
+      "k": "14:00:00#1",
+      "text": "14:00:00",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": 3.85
+    },
+    {
+      "k": "FATURA/DUPLICATAS#1",
+      "text": "FATURA/DUPLICATAS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 3.76
+    },
+    {
+      "k": "DUPLICATA#1",
+      "text": "DUPLICATA",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.08,
+      "dy": 2.92
+    },
+    {
+      "k": "—#4",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.11,
+      "dy": 2.92
+    },
+    {
+      "k": "VENCIMENTO#1",
+      "text": "VENCIMENTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.12,
+      "dy": 2.92
+    },
+    {
+      "k": "—#5",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.16,
+      "dy": 2.92
+    },
+    {
+      "k": "VALOR#1",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.17,
+      "dy": 2.92
+    },
+    {
+      "k": "001#3",
+      "text": "001",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.92,
+      "dy": -3.78
+    },
+    {
+      "k": "—#6",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.91,
+      "dy": -3.78
+    },
+    {
+      "k": "14/11/2026#1",
+      "text": "14/11/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.9,
+      "dy": -3.78
+    },
+    {
+      "k": "—#7",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.85,
+      "dy": -3.78
+    },
+    {
+      "k": "R$#1",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.84,
+      "dy": -3.78
+    },
+    {
+      "k": "7.402,96#1",
+      "text": "7.402,96",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.83,
+      "dy": -3.78
+    },
+    {
+      "k": "002#1",
+      "text": "002",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.34,
+      "dy": -3.78
+    },
+    {
+      "k": "—#8",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.32,
+      "dy": -3.78
+    },
+    {
+      "k": "14/12/2026#1",
+      "text": "14/12/2026",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.31,
+      "dy": -3.78
+    },
+    {
+      "k": "—#9",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.27,
+      "dy": -3.78
+    },
+    {
+      "k": "R$#2",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.26,
+      "dy": -3.78
+    },
+    {
+      "k": "7.185,22#1",
+      "text": "7.185,22",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.25,
+      "dy": -3.78
+    },
+    {
+      "k": "003#1",
+      "text": "003",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.13,
+      "dy": -3.78
+    },
+    {
+      "k": "—#10",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.12,
+      "dy": -3.78
+    },
+    {
+      "k": "13/01/2027#1",
+      "text": "13/01/2027",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.11,
+      "dy": -3.78
+    },
+    {
+      "k": "—#11",
+      "text": "—",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.06,
+      "dy": -3.78
+    },
+    {
+      "k": "R$#3",
+      "text": "R$",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.05,
+      "dy": -3.78
+    },
+    {
+      "k": "7.185,22#2",
+      "text": "7.185,22",
+      "page": 1,
+      "samePage": true,
+      "dx": -1.04,
+      "dy": -3.78
+    },
+    {
+      "k": "CÁLCULO#1",
+      "text": "CÁLCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 4.55
+    },
+    {
+      "k": "DO#3",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 4.55
+    },
+    {
+      "k": "IMPOSTO#1",
+      "text": "IMPOSTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.38,
+      "dy": 4.55
+    },
+    {
+      "k": "BASE#1",
+      "text": "BASE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 3.71
+    },
+    {
+      "k": "DE#9",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.35,
+      "dy": 3.71
+    },
+    {
+      "k": "CÁLCULO#2",
+      "text": "CÁLCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 3.71
+    },
+    {
+      "k": "DO#4",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.39,
+      "dy": 3.71
+    },
+    {
+      "k": "ICMS#1",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.4,
+      "dy": 3.71
+    },
+    {
+      "k": "VALOR#2",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.62,
+      "dy": 3.71
+    },
+    {
+      "k": "DO#5",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.64,
+      "dy": 3.71
+    },
+    {
+      "k": "ICMS#2",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.65,
+      "dy": 3.71
+    },
+    {
+      "k": "BASE#2",
+      "text": "BASE",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.91,
+      "dy": 3.71
+    },
+    {
+      "k": "DE#10",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.93,
+      "dy": 3.71
+    },
+    {
+      "k": "CÁLCULO#3",
+      "text": "CÁLCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.94,
+      "dy": 3.71
+    },
+    {
+      "k": "DO#6",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.97,
+      "dy": 3.71
+    },
+    {
+      "k": "ICMS#3",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.98,
+      "dy": 3.71
+    },
+    {
+      "k": "ST#1",
+      "text": "ST",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.99,
+      "dy": 3.71
+    },
+    {
+      "k": "21.773,40#1",
+      "text": "21.773,40",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.34,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#3",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 4.49
+    },
+    {
+      "k": "DO#7",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.35,
+      "dy": 4.49
+    },
+    {
+      "k": "FRETE#1",
+      "text": "FRETE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 4.49
+    },
+    {
+      "k": "3.919,21#1",
+      "text": "3.919,21",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.95,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#4",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.76,
+      "dy": 4.49
+    },
+    {
+      "k": "DO#8",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.78,
+      "dy": 4.49
+    },
+    {
+      "k": "SEGURO#1",
+      "text": "SEGURO",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.79,
+      "dy": 4.49
+    },
+    {
+      "k": "0,00#1",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -0.35,
+      "dy": 6.03
+    },
+    {
+      "k": "DESCONTO#1",
+      "text": "DESCONTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 7.19,
+      "dy": 4.49
+    },
+    {
+      "k": "0,00#2",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.08,
+      "dy": 6.03
+    },
+    {
+      "k": "VALOR#5",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.2,
+      "dy": 3.71
+    },
+    {
+      "k": "DO#9",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.22,
+      "dy": 3.71
+    },
+    {
+      "k": "ICMS#4",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.23,
+      "dy": 3.71
+    },
+    {
+      "k": "ST#2",
+      "text": "ST",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.25,
+      "dy": 3.71
+    },
+    {
+      "k": "VALOR#6",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 5.49,
+      "dy": 3.71
+    },
+    {
+      "k": "TOTAL#1",
+      "text": "TOTAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 5.51,
+      "dy": 3.71
+    },
+    {
+      "k": "DOS#1",
+      "text": "DOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 5.53,
+      "dy": 3.71
+    },
+    {
+      "k": "PRODUTOS#2",
+      "text": "PRODUTOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 5.54,
+      "dy": 3.71
+    },
+    {
+      "k": "0,00#3",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 2.25,
+      "dy": 5.26
+    },
+    {
+      "k": "0,00#4",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.54,
+      "dy": 5.26
+    },
+    {
+      "k": "OUTRAS#1",
+      "text": "OUTRAS",
+      "page": 1,
+      "samePage": true,
+      "dx": 10.62,
+      "dy": 4.49
+    },
+    {
+      "k": "DESP.#1",
+      "text": "DESP.",
+      "page": 1,
+      "samePage": true,
+      "dx": 10.65,
+      "dy": 4.49
+    },
+    {
+      "k": "ACESSÓRIAS#1",
+      "text": "ACESSÓRIAS",
+      "page": 1,
+      "samePage": true,
+      "dx": 10.67,
+      "dy": 4.49
+    },
+    {
+      "k": "0,00#5",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 6.51,
+      "dy": 6.03
+    },
+    {
+      "k": "21.773,40#2",
+      "text": "21.773,40",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.82,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#7",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 14.06,
+      "dy": 4.49
+    },
+    {
+      "k": "DO#10",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 14.08,
+      "dy": 4.49
+    },
+    {
+      "k": "IPI#1",
+      "text": "IPI",
+      "page": 1,
+      "samePage": true,
+      "dx": 14.09,
+      "dy": 4.49
+    },
+    {
+      "k": "VALOR#8",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 17.49,
+      "dy": 4.49
+    },
+    {
+      "k": "TOTAL#2",
+      "text": "TOTAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 17.51,
+      "dy": 4.49
+    },
+    {
+      "k": "DA#7",
+      "text": "DA",
+      "page": 1,
+      "samePage": true,
+      "dx": 17.53,
+      "dy": 4.49
+    },
+    {
+      "k": "NOTA#3",
+      "text": "NOTA",
+      "page": 1,
+      "samePage": true,
+      "dx": 17.54,
+      "dy": 4.49
+    },
+    {
+      "k": "0,00#6",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 9.94,
+      "dy": 6.03
+    },
+    {
+      "k": "0,00#7",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": 13.37,
+      "dy": 6.03
+    },
+    {
+      "k": "TRANSPORTADOR/VOLUMES#1",
+      "text": "TRANSPORTADOR/VOLUMES",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 6.11
+    },
+    {
+      "k": "TRANSPORTADOS#1",
+      "text": "TRANSPORTADOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.43,
+      "dy": 6.11
+    },
+    {
+      "k": "NOME/RAZÃO#2",
+      "text": "NOME/RAZÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 5.27
+    },
+    {
+      "k": "SOCIAL#2",
+      "text": "SOCIAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 5.27
+    },
+    {
+      "k": "FRETE#2",
+      "text": "FRETE",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 5.27
+    },
+    {
+      "k": "POR#1",
+      "text": "POR",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.71,
+      "dy": 5.27
+    },
+    {
+      "k": "CONTA#1",
+      "text": "CONTA",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.69,
+      "dy": 5.27
+    },
+    {
+      "k": "CÓDIGO#1",
+      "text": "CÓDIGO",
+      "page": 1,
+      "samePage": true,
+      "dx": -101.6,
+      "dy": 5.27
+    },
+    {
+      "k": "ANTT#1",
+      "text": "ANTT",
+      "page": 1,
+      "samePage": true,
+      "dx": -101.57,
+      "dy": 5.27
+    },
+    {
+      "k": "PLACA#1",
+      "text": "PLACA",
+      "page": 1,
+      "samePage": true,
+      "dx": -93.87,
+      "dy": 5.27
+    },
+    {
+      "k": "DO#11",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": -93.85,
+      "dy": 5.27
+    },
+    {
+      "k": "VEÍCULO#1",
+      "text": "VEÍCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": -93.84,
+      "dy": 5.27
+    },
+    {
+      "k": "UF#2",
+      "text": "UF",
+      "page": 1,
+      "samePage": true,
+      "dx": -42.45,
+      "dy": 5.27
+    },
+    {
+      "k": "CNPJ/CPF#2",
+      "text": "CNPJ/CPF",
+      "page": 1,
+      "samePage": true,
+      "dx": -5.84,
+      "dy": 5.27
+    },
+    {
+      "k": "Transportes#1",
+      "text": "Transportes",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 6.82
+    },
+    {
+      "k": "Exemplares#1",
+      "text": "Exemplares",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 6.82
+    },
+    {
+      "k": "S.A.#1",
+      "text": "S.A.",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.42,
+      "dy": 6.82
+    },
+    {
+      "k": "0#2",
+      "text": "0",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 6.82
+    },
+    {
+      "k": "–#1",
+      "text": "–",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.72,
+      "dy": 6.82
+    },
+    {
+      "k": "Remetente#1",
+      "text": "Remetente",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.71,
+      "dy": 6.82
+    },
+    {
+      "k": "ABC1D23#1",
+      "text": "ABC1D23",
+      "page": 1,
+      "samePage": true,
+      "dx": -93.87,
+      "dy": 6.82
+    },
+    {
+      "k": "SP#3",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": -42.45,
+      "dy": 6.82
+    },
+    {
+      "k": "44.555.666/0001-81#1",
+      "text": "44.555.666/0001-81",
+      "page": 1,
+      "samePage": true,
+      "dx": -5.84,
+      "dy": 6.82
+    },
+    {
+      "k": "ENDEREÇO#2",
+      "text": "ENDEREÇO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 6.05
+    },
+    {
+      "k": "MUNICÍPIO#2",
+      "text": "MUNICÍPIO",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 6.05
+    },
+    {
+      "k": "UF#3",
+      "text": "UF",
+      "page": 1,
+      "samePage": true,
+      "dx": -42.45,
+      "dy": 6.05
+    },
+    {
+      "k": "INSCRIÇÃO#4",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -5.84,
+      "dy": 6.05
+    },
+    {
+      "k": "ESTADUAL#4",
+      "text": "ESTADUAL",
+      "page": 1,
+      "samePage": true,
+      "dx": -5.81,
+      "dy": 6.05
+    },
+    {
+      "k": "Rodovia#1",
+      "text": "Rodovia",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 6.85
+    },
+    {
+      "k": "Anhanguera,#1",
+      "text": "Anhanguera,",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 6.85
+    },
+    {
+      "k": "km#1",
+      "text": "km",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.41,
+      "dy": 6.85
+    },
+    {
+      "k": "98#1",
+      "text": "98",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.42,
+      "dy": 6.85
+    },
+    {
+      "k": "Campinas#2",
+      "text": "Campinas",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 6.85
+    },
+    {
+      "k": "SP#4",
+      "text": "SP",
+      "page": 1,
+      "samePage": true,
+      "dx": -42.45,
+      "dy": 6.85
+    },
+    {
+      "k": "244.556.677.118#1",
+      "text": "244.556.677.118",
+      "page": 1,
+      "samePage": true,
+      "dx": -5.84,
+      "dy": 6.85
+    },
+    {
+      "k": "QUANTIDADE#1",
+      "text": "QUANTIDADE",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 7.57
+    },
+    {
+      "k": "ESPÉCIE#1",
+      "text": "ESPÉCIE",
+      "page": 1,
+      "samePage": true,
+      "dx": -24.23,
+      "dy": 7.57
+    },
+    {
+      "k": "MARCA#1",
+      "text": "MARCA",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.47,
+      "dy": 7.57
+    },
+    {
+      "k": "NUMERAÇÃO#1",
+      "text": "NUMERAÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 7.57
+    },
+    {
+      "k": "6#1",
+      "text": "6",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 7.62
+    },
+    {
+      "k": "CAIXA#1",
+      "text": "CAIXA",
+      "page": 1,
+      "samePage": true,
+      "dx": -24.23,
+      "dy": 7.62
+    },
+    {
+      "k": "EXEMPLO#2",
+      "text": "EXEMPLO",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.47,
+      "dy": 7.62
+    },
+    {
+      "k": "1#3",
+      "text": "1",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.73,
+      "dy": 7.62
+    },
+    {
+      "k": "A#1",
+      "text": "A",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.72,
+      "dy": 7.62
+    },
+    {
+      "k": "6#2",
+      "text": "6",
+      "page": 1,
+      "samePage": true,
+      "dx": -80.71,
+      "dy": 7.62
+    },
+    {
+      "k": "PESO#1",
+      "text": "PESO",
+      "page": 1,
+      "samePage": true,
+      "dx": -43.1,
+      "dy": 7.57
+    },
+    {
+      "k": "BRUTO#1",
+      "text": "BRUTO",
+      "page": 1,
+      "samePage": true,
+      "dx": -43.08,
+      "dy": 7.57
+    },
+    {
+      "k": "PESO#2",
+      "text": "PESO",
+      "page": 1,
+      "samePage": true,
+      "dx": 34.16,
+      "dy": 7.57
+    },
+    {
+      "k": "LÍQUIDO#1",
+      "text": "LÍQUIDO",
+      "page": 1,
+      "samePage": true,
+      "dx": 34.18,
+      "dy": 7.57
+    },
+    {
+      "k": "48,600#1",
+      "text": "48,600",
+      "page": 1,
+      "samePage": true,
+      "dx": -42.27,
+      "dy": 7.62
+    },
+    {
+      "k": "4#1",
+      "text": "4",
+      "page": 1,
+      "samePage": true,
+      "dx": 426.39,
+      "dy": -36.7
+    },
+    {
+      "k": "DADOS#1",
+      "text": "DADOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 9.2
+    },
+    {
+      "k": "DOS#2",
+      "text": "DOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 9.2
+    },
+    {
+      "k": "PRODUTOS/SERVIÇOS#1",
+      "text": "PRODUTOS/SERVIÇOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 9.2
+    },
+    {
+      "k": "CÓDIGO#2",
+      "text": "CÓDIGO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.53,
+      "dy": 8.26
+    },
+    {
+      "k": "PRODUTO#1",
+      "text": "PRODUTO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.52,
+      "dy": 8.27
+    },
+    {
+      "k": "DESCRIÇÃO#1",
+      "text": "DESCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 5.26
+    },
+    {
+      "k": "NCM/SH#1",
+      "text": "NCM/SH",
+      "page": 1,
+      "samePage": true,
+      "dx": -129,
+      "dy": 5.26
+    },
+    {
+      "k": "DO#12",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 5.26
+    },
+    {
+      "k": "PRODUTO/SERVIÇO#1",
+      "text": "PRODUTO/SERVIÇO",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.37,
+      "dy": 5.26
+    },
+    {
+      "k": "CFOP#1",
+      "text": "CFOP",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 5.26
+    },
+    {
+      "k": "CST#1",
+      "text": "CST",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.21,
+      "dy": 5.26
+    },
+    {
+      "k": "UN#1",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.64,
+      "dy": 5.26
+    },
+    {
+      "k": "QUANT.#1",
+      "text": "QUANT.",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.35,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#9",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.66,
+      "dy": 5.26
+    },
+    {
+      "k": "UNIT.#1",
+      "text": "UNIT.",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.62,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#10",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.78,
+      "dy": 5.26
+    },
+    {
+      "k": "TOTAL#3",
+      "text": "TOTAL",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.75,
+      "dy": 5.26
+    },
+    {
+      "k": "B.CÁLC.#1",
+      "text": "B.CÁLC.",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.48,
+      "dy": 5.26
+    },
+    {
+      "k": "ICMS#5",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.44,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#11",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.44,
+      "dy": 5.26
+    },
+    {
+      "k": "ICMS#6",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.41,
+      "dy": 5.26
+    },
+    {
+      "k": "VALOR#12",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.73,
+      "dy": 5.26
+    },
+    {
+      "k": "IPI#2",
+      "text": "IPI",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.69,
+      "dy": 5.26
+    },
+    {
+      "k": "ALÍQ.#1",
+      "text": "ALÍQ.",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.59,
+      "dy": 8.26
+    },
+    {
+      "k": "ICMS#7",
+      "text": "ICMS",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.58,
+      "dy": 8.27
+    },
+    {
+      "k": "ALÍQ.#2",
+      "text": "ALÍQ.",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.47,
+      "dy": 8.26
+    },
+    {
+      "k": "IPI#3",
+      "text": "IPI",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.46,
+      "dy": 8.27
+    },
+    {
+      "k": "CMP-0001#1",
+      "text": "CMP-0001",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 9.22
+    },
+    {
+      "k": "Placa-mãe#1",
+      "text": "Placa-mãe",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 9.22
+    },
+    {
+      "k": "micro-ATX#1",
+      "text": "micro-ATX",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.38,
+      "dy": 9.22
+    },
+    {
+      "k": "84733041#1",
+      "text": "84733041",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 9.22
+    },
+    {
+      "k": "com#1",
+      "text": "com",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.3,
+      "dy": 9.22
+    },
+    {
+      "k": "chipset#1",
+      "text": "chipset",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.27,
+      "dy": 9.22
+    },
+    {
+      "k": "000#1",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 9.22
+    },
+    {
+      "k": "B760,#1",
+      "text": "B760,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 9.22
+    },
+    {
+      "k": "4#2",
+      "text": "4",
+      "page": 1,
+      "samePage": true,
+      "dx": 26.38,
+      "dy": -57.46
+    },
+    {
+      "k": "slots#1",
+      "text": "slots",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.17,
+      "dy": 9.22
+    },
+    {
+      "k": "5102#1",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 9.22
+    },
+    {
+      "k": "DDR5#1",
+      "text": "DDR5",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.14,
+      "dy": 9.22
+    },
+    {
+      "k": "UN#2",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 9.22
+    },
+    {
+      "k": "4,0000#1",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 9.22
+    },
+    {
+      "k": "899,90#1",
+      "text": "899,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 9.22
+    },
+    {
+      "k": "3.599,60#1",
+      "text": "3.599,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 9.22
+    },
+    {
+      "k": "3.599,60#2",
+      "text": "3.599,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 9.22
+    },
+    {
+      "k": "647,93#1",
+      "text": "647,93",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 9.22
+    },
+    {
+      "k": "0,00#8",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 9.22
+    },
+    {
+      "k": "18,00#1",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 9.22
+    },
+    {
+      "k": "0,00#9",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 9.22
+    },
+    {
+      "k": "CMP-0002#1",
+      "text": "CMP-0002",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 9.98
+    },
+    {
+      "k": "Memória#1",
+      "text": "Memória",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 9.98
+    },
+    {
+      "k": "DDR5#2",
+      "text": "DDR5",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 9.98
+    },
+    {
+      "k": "16#1",
+      "text": "16",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.34,
+      "dy": 9.98
+    },
+    {
+      "k": "GB#1",
+      "text": "GB",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.32,
+      "dy": 9.98
+    },
+    {
+      "k": "84733042#1",
+      "text": "84733042",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 9.98
+    },
+    {
+      "k": "5600#1",
+      "text": "5600",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.3,
+      "dy": 9.98
+    },
+    {
+      "k": "MT/s#1",
+      "text": "MT/s",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.26,
+      "dy": 9.98
+    },
+    {
+      "k": "000#2",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 9.98
+    },
+    {
+      "k": "5102#2",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 9.98
+    },
+    {
+      "k": "UN#3",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 9.98
+    },
+    {
+      "k": "8,0000#1",
+      "text": "8,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 9.98
+    },
+    {
+      "k": "329,50#1",
+      "text": "329,50",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 9.98
+    },
+    {
+      "k": "2.636,00#1",
+      "text": "2.636,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 9.98
+    },
+    {
+      "k": "2.636,00#2",
+      "text": "2.636,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 9.98
+    },
+    {
+      "k": "474,48#1",
+      "text": "474,48",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 9.98
+    },
+    {
+      "k": "0,00#10",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 9.98
+    },
+    {
+      "k": "18,00#2",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 9.98
+    },
+    {
+      "k": "0,00#11",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 9.98
+    },
+    {
+      "k": "CMP-0003#1",
+      "text": "CMP-0003",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 10.74
+    },
+    {
+      "k": "SSD#1",
+      "text": "SSD",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 10.74
+    },
+    {
+      "k": "NVMe#1",
+      "text": "NVMe",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.42,
+      "dy": 10.74
+    },
+    {
+      "k": "1#4",
+      "text": "1",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.37,
+      "dy": 10.74
+    },
+    {
+      "k": "TB#1",
+      "text": "TB",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 10.74
+    },
+    {
+      "k": "PCIe#1",
+      "text": "PCIe",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.33,
+      "dy": 10.74
+    },
+    {
+      "k": "84717012#1",
+      "text": "84717012",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 10.74
+    },
+    {
+      "k": "4.0#1",
+      "text": "4.0",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.3,
+      "dy": 10.74
+    },
+    {
+      "k": "5102#3",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 10.74
+    },
+    {
+      "k": "UN#4",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 10.74
+    },
+    {
+      "k": "6,0000#1",
+      "text": "6,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 10.74
+    },
+    {
+      "k": "419,00#1",
+      "text": "419,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 10.74
+    },
+    {
+      "k": "2.514,00#1",
+      "text": "2.514,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 10.74
+    },
+    {
+      "k": "2.514,00#2",
+      "text": "2.514,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 10.74
+    },
+    {
+      "k": "452,52#1",
+      "text": "452,52",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 10.74
+    },
+    {
+      "k": "0,00#12",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 10.74
+    },
+    {
+      "k": "18,00#3",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 10.74
+    },
+    {
+      "k": "0,00#13",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 10.74
+    },
+    {
+      "k": "CMP-0004#1",
+      "text": "CMP-0004",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 10.75
+    },
+    {
+      "k": "Fonte#1",
+      "text": "Fonte",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 10.75
+    },
+    {
+      "k": "de#4",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.41,
+      "dy": 10.75
+    },
+    {
+      "k": "alimentação#1",
+      "text": "alimentação",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 10.75
+    },
+    {
+      "k": "85044021#1",
+      "text": "85044021",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 10.75
+    },
+    {
+      "k": "650#1",
+      "text": "650",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.31,
+      "dy": 10.75
+    },
+    {
+      "k": "W#1",
+      "text": "W",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.28,
+      "dy": 10.75
+    },
+    {
+      "k": "80#1",
+      "text": "80",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.27,
+      "dy": 10.75
+    },
+    {
+      "k": "Plus#1",
+      "text": "Plus",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.25,
+      "dy": 10.75
+    },
+    {
+      "k": "000#3",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 21.99
+    },
+    {
+      "k": "Bronze#1",
+      "text": "Bronze",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 10.75
+    },
+    {
+      "k": "5102#4",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 10.75
+    },
+    {
+      "k": "UN#5",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 10.75
+    },
+    {
+      "k": "4,0000#2",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 10.75
+    },
+    {
+      "k": "389,90#1",
+      "text": "389,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 10.75
+    },
+    {
+      "k": "1.559,60#1",
+      "text": "1.559,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 10.75
+    },
+    {
+      "k": "1.559,60#2",
+      "text": "1.559,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 10.75
+    },
+    {
+      "k": "280,73#1",
+      "text": "280,73",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 10.75
+    },
+    {
+      "k": "0,00#14",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 10.75
+    },
+    {
+      "k": "18,00#4",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 10.75
+    },
+    {
+      "k": "0,00#15",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 10.75
+    },
+    {
+      "k": "CMP-0005#1",
+      "text": "CMP-0005",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 12.26
+    },
+    {
+      "k": "Gabinete#1",
+      "text": "Gabinete",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 12.26
+    },
+    {
+      "k": "mid-tower#1",
+      "text": "mid-tower",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 12.26
+    },
+    {
+      "k": "84733099#1",
+      "text": "84733099",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 12.26
+    },
+    {
+      "k": "com#2",
+      "text": "com",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.32,
+      "dy": 12.26
+    },
+    {
+      "k": "painel#1",
+      "text": "painel",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.29,
+      "dy": 12.26
+    },
+    {
+      "k": "000#4",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 22.75
+    },
+    {
+      "k": "lateral#1",
+      "text": "lateral",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.25,
+      "dy": 12.26
+    },
+    {
+      "k": "de#5",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.2,
+      "dy": 12.26
+    },
+    {
+      "k": "vidro#1",
+      "text": "vidro",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.19,
+      "dy": 12.26
+    },
+    {
+      "k": "5102#5",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 12.26
+    },
+    {
+      "k": "temperado#1",
+      "text": "temperado",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.15,
+      "dy": 12.26
+    },
+    {
+      "k": "UN#6",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 12.26
+    },
+    {
+      "k": "4,0000#3",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 12.26
+    },
+    {
+      "k": "275,00#1",
+      "text": "275,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 12.26
+    },
+    {
+      "k": "1.100,00#1",
+      "text": "1.100,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 12.26
+    },
+    {
+      "k": "1.100,00#2",
+      "text": "1.100,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 12.26
+    },
+    {
+      "k": "198,00#1",
+      "text": "198,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 12.26
+    },
+    {
+      "k": "0,00#16",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 12.26
+    },
+    {
+      "k": "18,00#5",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 12.26
+    },
+    {
+      "k": "0,00#17",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 12.26
+    },
+    {
+      "k": "CMP-0006#1",
+      "text": "CMP-0006",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 13.03
+    },
+    {
+      "k": "Cabo#1",
+      "text": "Cabo",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 13.03
+    },
+    {
+      "k": "de#6",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.41,
+      "dy": 13.03
+    },
+    {
+      "k": "força#1",
+      "text": "força",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 13.03
+    },
+    {
+      "k": "tripolar#1",
+      "text": "tripolar",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 13.03
+    },
+    {
+      "k": "85444200#1",
+      "text": "85444200",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 13.03
+    },
+    {
+      "k": "NBR#1",
+      "text": "NBR",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.31,
+      "dy": 13.03
+    },
+    {
+      "k": "14136,#1",
+      "text": "14136,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.27,
+      "dy": 13.03
+    },
+    {
+      "k": "000#5",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 24.26
+    },
+    {
+      "k": "1,8#1",
+      "text": "1,8",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.22,
+      "dy": 13.03
+    },
+    {
+      "k": "m#1",
+      "text": "m",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.2,
+      "dy": 13.03
+    },
+    {
+      "k": "5102#6",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 13.03
+    },
+    {
+      "k": "UN#7",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 13.03
+    },
+    {
+      "k": "20,0000#1",
+      "text": "20,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.38,
+      "dy": 13.03
+    },
+    {
+      "k": "18,90#1",
+      "text": "18,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.64,
+      "dy": 13.03
+    },
+    {
+      "k": "378,00#1",
+      "text": "378,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.77,
+      "dy": 13.03
+    },
+    {
+      "k": "378,00#2",
+      "text": "378,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.48,
+      "dy": 13.03
+    },
+    {
+      "k": "68,04#1",
+      "text": "68,04",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.42,
+      "dy": 13.03
+    },
+    {
+      "k": "0,00#18",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 13.03
+    },
+    {
+      "k": "18,00#6",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 13.03
+    },
+    {
+      "k": "0,00#19",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 13.03
+    },
+    {
+      "k": "CMP-0007#1",
+      "text": "CMP-0007",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 13.79
+    },
+    {
+      "k": "Pasta#1",
+      "text": "Pasta",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 13.79
+    },
+    {
+      "k": "térmica#1",
+      "text": "térmica",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.41,
+      "dy": 13.79
+    },
+    {
+      "k": "de#7",
+      "text": "de",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 13.79
+    },
+    {
+      "k": "prata,#1",
+      "text": "prata,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.34,
+      "dy": 13.79
+    },
+    {
+      "k": "34039900#1",
+      "text": "34039900",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 13.79
+    },
+    {
+      "k": "seringa#1",
+      "text": "seringa",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.3,
+      "dy": 13.79
+    },
+    {
+      "k": "g#1",
+      "text": "g",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.24,
+      "dy": 13.79
+    },
+    {
+      "k": "000#6",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 25.03
+    },
+    {
+      "k": "5102#7",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 13.79
+    },
+    {
+      "k": "UN#8",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 13.79
+    },
+    {
+      "k": "10,0000#1",
+      "text": "10,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.38,
+      "dy": 13.79
+    },
+    {
+      "k": "24,50#1",
+      "text": "24,50",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.64,
+      "dy": 13.79
+    },
+    {
+      "k": "245,00#1",
+      "text": "245,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.77,
+      "dy": 13.79
+    },
+    {
+      "k": "245,00#2",
+      "text": "245,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.48,
+      "dy": 13.79
+    },
+    {
+      "k": "44,10#1",
+      "text": "44,10",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.42,
+      "dy": 13.79
+    },
+    {
+      "k": "0,00#20",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 13.79
+    },
+    {
+      "k": "18,00#7",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 13.79
+    },
+    {
+      "k": "0,00#21",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 13.79
+    },
+    {
+      "k": "CMP-0008#1",
+      "text": "CMP-0008",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 14.55
+    },
+    {
+      "k": "Processador#1",
+      "text": "Processador",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 14.55
+    },
+    {
+      "k": "6#3",
+      "text": "6",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.37,
+      "dy": 14.55
+    },
+    {
+      "k": "núcleos#1",
+      "text": "núcleos",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 14.55
+    },
+    {
+      "k": "85423190#1",
+      "text": "85423190",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 14.55
+    },
+    {
+      "k": "12#1",
+      "text": "12",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.31,
+      "dy": 14.55
+    },
+    {
+      "k": "threads,#1",
+      "text": "threads,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.29,
+      "dy": 14.55
+    },
+    {
+      "k": "000#7",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 25.04
+    },
+    {
+      "k": "soquete#1",
+      "text": "soquete",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.23,
+      "dy": 14.55
+    },
+    {
+      "k": "LGA1700#1",
+      "text": "LGA1700",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.18,
+      "dy": 14.55
+    },
+    {
+      "k": "5102#8",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 14.55
+    },
+    {
+      "k": "UN#9",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 14.55
+    },
+    {
+      "k": "4,0000#4",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 14.55
+    },
+    {
+      "k": "1.129,00#1",
+      "text": "1.129,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.67,
+      "dy": 14.55
+    },
+    {
+      "k": "4.516,00#1",
+      "text": "4.516,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 14.55
+    },
+    {
+      "k": "4.516,00#2",
+      "text": "4.516,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 14.55
+    },
+    {
+      "k": "812,88#1",
+      "text": "812,88",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 14.55
+    },
+    {
+      "k": "0,00#22",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 14.55
+    },
+    {
+      "k": "18,00#8",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 14.55
+    },
+    {
+      "k": "0,00#23",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 14.55
+    },
+    {
+      "k": "CMP-0009#1",
+      "text": "CMP-0009",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 15.31
+    },
+    {
+      "k": "Cooler#1",
+      "text": "Cooler",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 15.31
+    },
+    {
+      "k": "para#1",
+      "text": "para",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.4,
+      "dy": 15.31
+    },
+    {
+      "k": "processador#1",
+      "text": "processador",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.37,
+      "dy": 15.31
+    },
+    {
+      "k": "84145990#1",
+      "text": "84145990",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 15.31
+    },
+    {
+      "k": "com#3",
+      "text": "com",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.29,
+      "dy": 15.31
+    },
+    {
+      "k": "dissipador#1",
+      "text": "dissipador",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.26,
+      "dy": 15.31
+    },
+    {
+      "k": "em#1",
+      "text": "em",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.19,
+      "dy": 15.31
+    },
+    {
+      "k": "alumínio#1",
+      "text": "alumínio",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.17,
+      "dy": 15.31
+    },
+    {
+      "k": "000#8",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 26.55
+    },
+    {
+      "k": "5102#9",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 15.31
+    },
+    {
+      "k": "UN#10",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 15.31
+    },
+    {
+      "k": "4,0000#5",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 15.31
+    },
+    {
+      "k": "149,90#1",
+      "text": "149,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 15.31
+    },
+    {
+      "k": "599,60#1",
+      "text": "599,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.77,
+      "dy": 15.31
+    },
+    {
+      "k": "599,60#2",
+      "text": "599,60",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.48,
+      "dy": 15.31
+    },
+    {
+      "k": "107,93#1",
+      "text": "107,93",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 15.31
+    },
+    {
+      "k": "0,00#24",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 15.31
+    },
+    {
+      "k": "18,00#9",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 15.31
+    },
+    {
+      "k": "0,00#25",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 15.31
+    },
+    {
+      "k": "CMP-0010#1",
+      "text": "CMP-0010",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 16.07
+    },
+    {
+      "k": "Teclado#1",
+      "text": "Teclado",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 16.07
+    },
+    {
+      "k": "ABNT2#1",
+      "text": "ABNT2",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.4,
+      "dy": 16.07
+    },
+    {
+      "k": "com#4",
+      "text": "com",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.34,
+      "dy": 16.07
+    },
+    {
+      "k": "84716052#1",
+      "text": "84716052",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 16.07
+    },
+    {
+      "k": "fio,#1",
+      "text": "fio,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.31,
+      "dy": 16.07
+    },
+    {
+      "k": "USB#1",
+      "text": "USB",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.29,
+      "dy": 16.07
+    },
+    {
+      "k": "000#9",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 27.31
+    },
+    {
+      "k": "5102#10",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 16.07
+    },
+    {
+      "k": "UN#11",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 16.07
+    },
+    {
+      "k": "12,0000#1",
+      "text": "12,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.38,
+      "dy": 16.07
+    },
+    {
+      "k": "89,90#1",
+      "text": "89,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.64,
+      "dy": 16.07
+    },
+    {
+      "k": "1.078,80#1",
+      "text": "1.078,80",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 16.07
+    },
+    {
+      "k": "1.078,80#2",
+      "text": "1.078,80",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 16.07
+    },
+    {
+      "k": "194,18#1",
+      "text": "194,18",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 16.07
+    },
+    {
+      "k": "0,00#26",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 16.07
+    },
+    {
+      "k": "18,00#10",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 16.07
+    },
+    {
+      "k": "0,00#27",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 16.07
+    },
+    {
+      "k": "CMP-0011#1",
+      "text": "CMP-0011",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 16.83
+    },
+    {
+      "k": "Mouse#1",
+      "text": "Mouse",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 16.83
+    },
+    {
+      "k": "óptico#1",
+      "text": "óptico",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.4,
+      "dy": 16.83
+    },
+    {
+      "k": "1600#1",
+      "text": "1600",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 16.83
+    },
+    {
+      "k": "dpi,#1",
+      "text": "dpi,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.32,
+      "dy": 16.83
+    },
+    {
+      "k": "84716053#1",
+      "text": "84716053",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 16.83
+    },
+    {
+      "k": "USB#2",
+      "text": "USB",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.3,
+      "dy": 16.83
+    },
+    {
+      "k": "5102#11",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 16.83
+    },
+    {
+      "k": "UN#12",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 16.83
+    },
+    {
+      "k": "12,0000#2",
+      "text": "12,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.38,
+      "dy": 16.83
+    },
+    {
+      "k": "45,90#1",
+      "text": "45,90",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.64,
+      "dy": 16.83
+    },
+    {
+      "k": "550,80#1",
+      "text": "550,80",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.77,
+      "dy": 16.83
+    },
+    {
+      "k": "550,80#2",
+      "text": "550,80",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.48,
+      "dy": 16.83
+    },
+    {
+      "k": "99,14#1",
+      "text": "99,14",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.42,
+      "dy": 16.83
+    },
+    {
+      "k": "0,00#28",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 16.83
+    },
+    {
+      "k": "18,00#11",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 16.83
+    },
+    {
+      "k": "0,00#29",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 16.83
+    },
+    {
+      "k": "CMP-0012#1",
+      "text": "CMP-0012",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.71,
+      "dy": 17.59
+    },
+    {
+      "k": "Monitor#1",
+      "text": "Monitor",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.45,
+      "dy": 17.59
+    },
+    {
+      "k": "LED#1",
+      "text": "LED",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.39,
+      "dy": 17.59
+    },
+    {
+      "k": "23,8\"#1",
+      "text": "23,8\"",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.36,
+      "dy": 17.59
+    },
+    {
+      "k": "85285200#1",
+      "text": "85285200",
+      "page": 1,
+      "samePage": true,
+      "dx": -129.01,
+      "dy": 17.59
+    },
+    {
+      "k": "Full#1",
+      "text": "Full",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.32,
+      "dy": 17.59
+    },
+    {
+      "k": "HD,#1",
+      "text": "HD,",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.29,
+      "dy": 17.59
+    },
+    {
+      "k": "entrada#1",
+      "text": "entrada",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.26,
+      "dy": 17.59
+    },
+    {
+      "k": "000#10",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 39.32
+    },
+    {
+      "k": "HDMI#1",
+      "text": "HDMI",
+      "page": 1,
+      "samePage": true,
+      "dx": -3.21,
+      "dy": 17.59
+    },
+    {
+      "k": "5102#12",
+      "text": "5102",
+      "page": 1,
+      "samePage": true,
+      "dx": -99.76,
+      "dy": 17.59
+    },
+    {
+      "k": "UN#13",
+      "text": "UN",
+      "page": 1,
+      "samePage": true,
+      "dx": -81.65,
+      "dy": 17.59
+    },
+    {
+      "k": "4,0000#6",
+      "text": "4,0000",
+      "page": 1,
+      "samePage": true,
+      "dx": -56.37,
+      "dy": 17.59
+    },
+    {
+      "k": "749,00#1",
+      "text": "749,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.65,
+      "dy": 17.59
+    },
+    {
+      "k": "2.996,00#1",
+      "text": "2.996,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -49.79,
+      "dy": 17.59
+    },
+    {
+      "k": "2.996,00#2",
+      "text": "2.996,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -51.5,
+      "dy": 17.59
+    },
+    {
+      "k": "539,28#1",
+      "text": "539,28",
+      "page": 1,
+      "samePage": true,
+      "dx": -52.43,
+      "dy": 17.59
+    },
+    {
+      "k": "0,00#30",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -47.72,
+      "dy": 17.59
+    },
+    {
+      "k": "18,00#12",
+      "text": "18,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -36.6,
+      "dy": 17.59
+    },
+    {
+      "k": "0,00#31",
+      "text": "0,00",
+      "page": 1,
+      "samePage": true,
+      "dx": -18.49,
+      "dy": 17.59
+    },
+    {
+      "k": "000#11",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": -77.67
+    },
+    {
+      "k": "000#12",
+      "text": "000",
+      "page": 1,
+      "samePage": true,
+      "dx": -122.2,
+      "dy": 6.34
+    },
+    {
+      "k": "CÁLCULO#4",
+      "text": "CÁLCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 8.65
+    },
+    {
+      "k": "DO#13",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.37,
+      "dy": 8.65
+    },
+    {
+      "k": "ISSQN#1",
+      "text": "ISSQN",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.38,
+      "dy": 8.65
+    },
+    {
+      "k": "INSCRIÇÃO#5",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.33,
+      "dy": 7.81
+    },
+    {
+      "k": "MUNICIPAL#1",
+      "text": "MUNICIPAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 7.81
+    },
+    {
+      "k": "DADOS#2",
+      "text": "DADOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.34,
+      "dy": 9.43
+    },
+    {
+      "k": "ADICIONAIS#1",
+      "text": "ADICIONAIS",
+      "page": 1,
+      "samePage": true,
+      "dx": 0.36,
+      "dy": 9.43
+    },
+    {
+      "k": "VALOR#13",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.79,
+      "dy": 7.81
+    },
+    {
+      "k": "TOTAL#4",
+      "text": "TOTAL",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.81,
+      "dy": 7.81
+    },
+    {
+      "k": "DOS#3",
+      "text": "DOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.83,
+      "dy": 7.81
+    },
+    {
+      "k": "SERVIÇOS#2",
+      "text": "SERVIÇOS",
+      "page": 1,
+      "samePage": true,
+      "dx": 1.85,
+      "dy": 7.81
+    },
+    {
+      "k": "BASE#3",
+      "text": "BASE",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.25,
+      "dy": 7.81
+    },
+    {
+      "k": "DE#11",
+      "text": "DE",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.27,
+      "dy": 7.81
+    },
+    {
+      "k": "CÁLCULO#5",
+      "text": "CÁLCULO",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.28,
+      "dy": 7.81
+    },
+    {
+      "k": "DO#14",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.31,
+      "dy": 7.81
+    },
+    {
+      "k": "ISSQN#2",
+      "text": "ISSQN",
+      "page": 1,
+      "samePage": true,
+      "dx": 3.32,
+      "dy": 7.81
+    },
+    {
+      "k": "VALOR#14",
+      "text": "VALOR",
+      "page": 1,
+      "samePage": true,
+      "dx": 420.27,
+      "dy": -35.51
+    },
+    {
+      "k": "DO#15",
+      "text": "DO",
+      "page": 1,
+      "samePage": true,
+      "dx": 210.45,
+      "dy": -35.51
+    },
+    {
+      "k": "ISSQN#3",
+      "text": "ISSQN",
+      "page": 1,
+      "samePage": true,
+      "dx": 4.74,
+      "dy": 7.81
+    },
+    {
+      "k": "INFORMAÇÕES#1",
+      "text": "INFORMAÇÕES",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.33,
+      "dy": -736.15
+    },
+    {
+      "k": "COMPLEMENTARES#1",
+      "text": "COMPLEMENTARES",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.37,
+      "dy": -736.15
+    },
+    {
+      "k": "RESERVADO#1",
+      "text": "RESERVADO",
+      "page": 2,
+      "samePage": false,
+      "dx": -75.75,
+      "dy": -736.15
+    },
+    {
+      "k": "AO#2",
+      "text": "AO",
+      "page": 2,
+      "samePage": false,
+      "dx": -75.71,
+      "dy": -736.15
+    },
+    {
+      "k": "FISCO#1",
+      "text": "FISCO",
+      "page": 2,
+      "samePage": false,
+      "dx": -75.7,
+      "dy": -736.15
+    },
+    {
+      "k": "SEM#1",
+      "text": "SEM",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.33,
+      "dy": -735.2
+    },
+    {
+      "k": "VALOR#15",
+      "text": "VALOR",
+      "page": 2,
+      "samePage": false,
+      "dx": 16.34,
+      "dy": -753.18
+    },
+    {
+      "k": "FISCAL#3",
+      "text": "FISCAL",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.36,
+      "dy": -735.2
+    },
+    {
+      "k": "—#12",
+      "text": "—",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.38,
+      "dy": -735.2
+    },
+    {
+      "k": "NF-e#2",
+      "text": "NF-e",
+      "page": 2,
+      "samePage": false,
+      "dx": -475.36,
+      "dy": -128.65
+    },
+    {
+      "k": "emitida#1",
+      "text": "emitida",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.4,
+      "dy": -735.2
+    },
+    {
+      "k": "em#2",
+      "text": "em",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.42,
+      "dy": -735.2
+    },
+    {
+      "k": "ambiente#1",
+      "text": "ambiente",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.43,
+      "dy": -735.2
+    },
+    {
+      "k": "de#8",
+      "text": "de",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.45,
+      "dy": -735.2
+    },
+    {
+      "k": "homologação#1",
+      "text": "homologação",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.46,
+      "dy": -735.2
+    },
+    {
+      "k": "(fixture#1",
+      "text": "(fixture",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.49,
+      "dy": -735.2
+    },
+    {
+      "k": "sintética#1",
+      "text": "sintética",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.51,
+      "dy": -735.2
+    },
+    {
+      "k": "do#1",
+      "text": "do",
+      "page": 2,
+      "samePage": false,
+      "dx": -205.19,
+      "dy": -691.88
+    },
+    {
+      "k": "vellora,#1",
+      "text": "vellora,",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.54,
+      "dy": -735.2
+    },
+    {
+      "k": "fidelity/corpus).#1",
+      "text": "fidelity/corpus).",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.56,
+      "dy": -735.2
+    },
+    {
+      "k": "Pedido#1",
+      "text": "Pedido",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.33,
+      "dy": -735.19
+    },
+    {
+      "k": "de#9",
+      "text": "de",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.35,
+      "dy": -735.19
+    },
+    {
+      "k": "compra#1",
+      "text": "compra",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.35,
+      "dy": -735.19
+    },
+    {
+      "k": "nº#1",
+      "text": "nº",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.37,
+      "dy": -735.19
+    },
+    {
+      "k": "PC-2026-0815.#1",
+      "text": "PC-2026-0815.",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.38,
+      "dy": -735.19
+    },
+    {
+      "k": "Entrega#1",
+      "text": "Entrega",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.41,
+      "dy": -735.19
+    },
+    {
+      "k": "no#3",
+      "text": "no",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.43,
+      "dy": -735.19
+    },
+    {
+      "k": "horário#1",
+      "text": "horário",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.44,
+      "dy": -735.19
+    },
+    {
+      "k": "comercial.#1",
+      "text": "comercial.",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.46,
+      "dy": -735.19
+    },
+    {
+      "k": "Valor#1",
+      "text": "Valor",
+      "page": 2,
+      "samePage": false,
+      "dx": -174.22,
+      "dy": -735.93
+    },
+    {
+      "k": "aproximado#1",
+      "text": "aproximado",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.34,
+      "dy": -735.93
+    },
+    {
+      "k": "dos#2",
+      "text": "dos",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.37,
+      "dy": -735.93
+    },
+    {
+      "k": "tributos:#1",
+      "text": "tributos:",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.38,
+      "dy": -735.93
+    },
+    {
+      "k": "R$#4",
+      "text": "R$",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.4,
+      "dy": -735.93
+    },
+    {
+      "k": "4.203,37#1",
+      "text": "4.203,37",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.41,
+      "dy": -735.93
+    },
+    {
+      "k": "(Fonte:#1",
+      "text": "(Fonte:",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.43,
+      "dy": -735.93
+    },
+    {
+      "k": "IBPT)#1",
+      "text": "IBPT)",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.45,
+      "dy": -735.93
+    },
+    {
+      "k": "—#13",
+      "text": "—",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.47,
+      "dy": -735.93
+    },
+    {
+      "k": "valor#1",
+      "text": "valor",
+      "page": 2,
+      "samePage": false,
+      "dx": -256.53,
+      "dy": -674.63
+    },
+    {
+      "k": "fictício.#1",
+      "text": "fictício.",
+      "page": 2,
+      "samePage": false,
+      "dx": 0.49,
+      "dy": -735.93
+    }
+  ]
+}

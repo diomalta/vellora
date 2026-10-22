@@ -1422,6 +1422,121 @@
     "fixtures/receipt.json": "3dc069b85f9decc51ce4afdcb2fda984ec0914e907ab08170c324c502f970222",
     "fixtures/text-stress-ptbr.json": "1a12a1650e91528a72ec961f848298c6a4aadb1d702b434f30e9d1b34b875834",
     "wpt/by-directory.json": "37c15af532db56d3f9112ca0bf810b6f2099c9434e62cbbe102253a0f4b62dd0",
-    "wpt/expectations-blitz-0.3.0-beta.4.json": "fca69c8be529677c073fe3293e2ce127f95e5a29a2ca39c37c0927e9b6337773"
+    "wpt/expectations-blitz-0.3.0-beta.4.json": "fca69c8be529677c073fe3293e2ce127f95e5a29a2ca39c37c0927e9b6337773",
+    "pdf-probe/boleto.json": "4e735c671cef36fa146db534e58e44957309222daf5ae81829c809973a7cc8c9",
+    "pdf-probe/invoice.json": "1da2a27f38268b3955afb3d603bfe014d51f495c9d50be940ebb799a07f7c038",
+    "pdf-probe/notification.json": "7abb7c3c275ea2088381f1265d2367ffccf0b2e3eea5ea04be67226c0cd1fe4f",
+    "pdf-probe/receipt.json": "998ccb1db9eb4faddea9e9947b8853eb77da4118c8e14df3f0096ac0faa67082"
+  },
+  "pdfProbeRescore": {
+    "semantics": 2,
+    "settings": {
+      "semantics": 2,
+      "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+      "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+      "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+      "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+      "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+      "maxDistancePt": 36,
+      "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+    },
+    "command": "node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/beta4 --run ~/.cache/vellora-fidelity/run-all-gated-beta4-20261021T072047Z --fixtures boleto,invoice,notification,receipt --substitute beta4's own v1 pdf-probe (layout-diff-ab/<fixture>-beta4.pdf-probe.json.gz, the Phase A A/B probe of 2026-10-21 06:05Z, label beta4) was measured on PDFs that no run copy kept (~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/layout-diff/<fixture>/run-all/ has no vellora.pdf or chrome.pdf; CONFIRMED 2026-10-21). Stand-in: the PDFs of the beta4-gated run 20261021T072047Z (beta.4 base + fidelity-only changes). Evidence: for the 4 fixtures beta4's v1 section covers, every v1 pair (text, vellora page/x/yMin, Chrome page/x/yMin) of that run equals beta4's A/B probe (boleto 254, invoice 541, notification 244, receipt 151 pairs, 0 differing; v1Identity below re-checks the compacted sections), and beta4-gated/README.md records byte-identical corpus vellora.pdf files for all 6 corpus fixtures. Same producer, same declared /Ascent and the same (x, yMin, size) per word imply the same baselines. Restricted to those 4 fixtures (beta4's v1 coverage).",
+    "date": "2026-10-21T20:05:51.869Z",
+    "environment": {
+      "os": "darwin 27.0.0 arm64",
+      "node": "v22.23.2",
+      "python": "3.12.13",
+      "extractor": "pymupdf 1.28.2"
+    },
+    "source": {
+      "run": "~/.cache/vellora-fidelity/run-all-gated-beta4-20261021T072047Z",
+      "summarySha256": "b9337d0c562923e12dcdefa3ca9b05f07742c2e35245d0ffb7ee7d484973cfcf",
+      "matchesManifestSource": false,
+      "substitute": "beta4's own v1 pdf-probe (layout-diff-ab/<fixture>-beta4.pdf-probe.json.gz, the Phase A A/B probe of 2026-10-21 06:05Z, label beta4) was measured on PDFs that no run copy kept (~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/layout-diff/<fixture>/run-all/ has no vellora.pdf or chrome.pdf; CONFIRMED 2026-10-21). Stand-in: the PDFs of the beta4-gated run 20261021T072047Z (beta.4 base + fidelity-only changes). Evidence: for the 4 fixtures beta4's v1 section covers, every v1 pair (text, vellora page/x/yMin, Chrome page/x/yMin) of that run equals beta4's A/B probe (boleto 254, invoice 541, notification 244, receipt 151 pairs, 0 differing; v1Identity below re-checks the compacted sections), and beta4-gated/README.md records byte-identical corpus vellora.pdf files for all 6 corpus fixtures. Same producer, same declared /Ascent and the same (x, yMin, size) per word imply the same baselines. Restricted to those 4 fixtures (beta4's v1 coverage)."
+    },
+    "v1": {
+      "location": "pdf-probe",
+      "note": "semantics 1 (pdftotext -bbox yMin, k-th occurrence pairing): the section this baseline carried before the re-score (a gated link was gated with it); kept unchanged as history, not gated. loadBaselineDir(dir, { pdfProbe: 'v1' }) reads it.",
+      "fixtures": ["boleto", "invoice", "notification", "receipt"]
+    },
+    "v1Identity": {
+      "boleto": "identical",
+      "invoice": "identical",
+      "notification": "identical",
+      "receipt": "identical"
+    },
+    "inputs": {
+      "boleto": {
+        "vellora": {
+          "path": "layout-diff/boleto/run-all/vellora.pdf",
+          "sha256": "6669127e5ac236bbd116a2fd27fcf9a6d5dbf812449ede02cd006814b6c9c4e1"
+        },
+        "chrome": {
+          "path": "layout-diff/boleto/run-all/chrome.pdf",
+          "sha256": "3b2bf2bfe4e585369e6e4edd295c23aae52f1a645352bdbaf64df0a7357fb3f4"
+        },
+        "words": {
+          "vellora": 297,
+          "chrome": 297,
+          "paired": 297,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "invoice": {
+        "vellora": {
+          "path": "layout-diff/invoice/run-all/vellora.pdf",
+          "sha256": "4db1ab29f3e31956fb2feaae717477880be8ad3b0bf14eecb1778c2dafaee5fb"
+        },
+        "chrome": {
+          "path": "layout-diff/invoice/run-all/chrome.pdf",
+          "sha256": "15f672e270c3b2b8a76f2ac12f8b62361378c8240fec69a819f156332abba05d"
+        },
+        "words": {
+          "vellora": 541,
+          "chrome": 541,
+          "paired": 541,
+          "unpairedVellora": 0,
+          "unpairedChrome": 0
+        }
+      },
+      "notification": {
+        "vellora": {
+          "path": "layout-diff/notification/run-all/vellora.pdf",
+          "sha256": "294722a70d89022ba0a3dd3e73ab52b3e32afcdc409d33ca49033096edcf0c80"
+        },
+        "chrome": {
+          "path": "layout-diff/notification/run-all/chrome.pdf",
+          "sha256": "4e26d235e4740d1291ae1233cd024f6ffa3aa56e1a09ee2e4c40be8da5e57a3a"
+        },
+        "words": {
+          "vellora": 244,
+          "chrome": 248,
+          "paired": 244,
+          "unpairedVellora": 0,
+          "unpairedChrome": 4
+        }
+      },
+      "receipt": {
+        "vellora": {
+          "path": "layout-diff/receipt/run-all/vellora.pdf",
+          "sha256": "ab3ef55509c94383562c572c3d30b2704f332141aa00ee2cda32fe3f82e97f14"
+        },
+        "chrome": {
+          "path": "layout-diff/receipt/run-all/chrome.pdf",
+          "sha256": "e5d9110325f3bc1fdce3f00b5e2f563d557adc4593f1d6085cb30a18c598e3af"
+        },
+        "words": {
+          "vellora": 151,
+          "chrome": 151,
+          "paired": 149,
+          "unpairedVellora": 2,
+          "unpairedChrome": 2
+        }
+      }
+    },
+    "missing": [],
+    "v2Fixtures": ["boleto", "invoice", "notification", "receipt"],
+    "formatting": "biome format --write (repo biome.json) before hashing"
   }
 }

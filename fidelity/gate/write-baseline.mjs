@@ -18,8 +18,9 @@
 //     [--accept <accepted.json>] [--root fidelity/baselines] [--note <text>] [--force]
 //     [--attach <file>[=<name>]]...   extra evidence copied to attachments/ (hashed in files)
 //
-// --accept: the acceptedRegressions the run's gate used; copied verbatim into the manifest (each
-// entry: key|keyPrefix, reason, evidence). Refuses to overwrite an existing directory without
+// --accept: the acceptedRegressions and declaredRejections the run's gate used; copied verbatim
+// into the manifest (acceptance: key|keyPrefix, reason, evidence; declaration: feature, reason,
+// evidence, tests|keys|keyPrefix). Refuses to overwrite an existing directory without
 // --force, and refuses a run whose gate verdict is FAIL/REFUSED unless --force (and says so in
 // the manifest).
 import { spawnSync } from "node:child_process";
@@ -36,13 +37,13 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portable } from "../combine/env.mjs";
 import { verdictIndex } from "./metrics.mjs";
-import { readAcceptances } from "./run.mjs";
+import { readAcceptances, readDeclarations } from "./run.mjs";
 import { BASELINE_SCHEMA, loadRunDir } from "./snapshot.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 // Committed files never carry the local checkout or home path (<repo>/..., ~/...).
-const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
+export const json = (v) => `${JSON.stringify(portable(v, repoRoot), null, 2)}\n`;
 const AUTHORITY =
   "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)";
 
@@ -59,7 +60,7 @@ export function copyPortable(src, dest, root = repoRoot) {
 }
 
 /** `biome format --write` with the repo's pinned biome (a note instead when it is missing). */
-function biomeFormat(path) {
+export function biomeFormat(path) {
   const bin = join(repoRoot, "node_modules", ".bin", "biome");
   // Relative path: biome.json ignores ".claude", which an ABSOLUTE path of a worktree under
   // .claude/worktrees/ would match.
@@ -73,7 +74,7 @@ function biomeFormat(path) {
     : `biome exit ${r.status}: ${String(r.stderr).slice(0, 200)}`;
 }
 
-function listFiles(dir, base = dir) {
+export function listFiles(dir, base = dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
     e.isDirectory() ? listFiles(join(dir, e.name), base) : [relative(base, join(dir, e.name))],
   );
@@ -237,6 +238,7 @@ export function writeBaseline({
     totals: s.totals ?? null,
     gate: gate && { ...gate, writtenDespiteVerdict: forced && gate.verdict !== "PASS" },
     acceptedRegressions: readAcceptances(acceptFile),
+    declaredRejections: readDeclarations(acceptFile),
     extraction: { command, date: new Date().toISOString() },
     files,
   };

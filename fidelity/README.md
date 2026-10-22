@@ -14,7 +14,7 @@ instead of by our own eyes. Private, unpublished, and not a root workspace membe
 | `oracles/` | External PDF oracles: veraPDF, qpdf, barcode decode (ITF + Code 128), three text extractors, WeasyPrint second layout oracle, canaries. |
 | `corpus/` | Real-document corpus (boleto, DANFE, text stress, OSS invoice/receipt under `fixtures/`) and its spec-derived checks. |
 | `lib/chrome-reference.mjs` | THE Chromium reference setup: one font alias table + one puppeteer-core print path, used by corpus, oracles and layout-diff. |
-| `gate/` | The value ratchet: snapshot loaders, metric parser, tolerances, comparator, report, baseline writer, code-checks step, self-tests. |
+| `gate/` | The value ratchet: snapshot loaders, metric parser, tolerances, comparator, report, baseline writer, code-checks step; the head ratchet and debt ledger (`debt.mjs`, `baselines/port/DEBT.json`), the gate's own canaries (`canaries.mjs`), per-item layer vectors (`layer-vector.mjs`, packs in `gate/data/`), ledger candidates (`ledger-candidates.mjs`); self-tests. |
 | `baselines/` | Committed baselines the gate compares against (`pin/`, `beta4/`: Phase A shape; `<name>/` written by `gate/write-baseline.mjs`: gate shape; `port/NN-name/`: the Phase B port chain, each step gated against the previous one, convention in `baselines/port/README.md`) and `wpt/<engine>.json` expectations. |
 | `ACCEPTANCE.md` | Per-document-class acceptance criteria, each traced to a primary source, plus the gate rules and tolerances (section 8). |
 | `run-all.mjs`, `combine/` | Single entry point over every area, the combined summary, and the LET-*/TXT-B1 evaluation (`combine/letter.mjs`). |
@@ -65,6 +65,20 @@ node fidelity/run-all.mjs --gate --baseline fidelity/baselines/<previous step> \
 # the same comparison over an existing run directory (no re-run), e.g. against another baseline
 node fidelity/gate/run.mjs --baseline fidelity/baselines/pin --run fidelity/results/run-all/<id>
 
+# both commands ALSO gate against the chain head (--head, default port/00-start, named in
+# baselines/port/README.md) with the debt ledger (--debt, default baselines/port/DEBT.json;
+# --debt-base <the ledger at the merge base> checks its transition), run the gate's own canaries
+# and report the pin view (--pin, default baselines/pin). A merge to main adds --main.
+git show main:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json   # absent = first population
+node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous> --run <run> \
+  --step <NN-name> --debt-base /tmp/debt-base.json [--accept accepted.json]
+node fidelity/gate/debt.mjs check --base /tmp/debt-base.json --step <NN-name>   # ledger only
+
+# evidence for a DEBT.json entry: per-item layer vectors of the head-gating items of a report
+node fidelity/gate/layer-vector.mjs --run <run-all dir> --keys-from <gate-report.json> --out v.json
+node fidelity/gate/ledger-candidates.mjs --report <gate-report.json> --layout-from <run-all dir> \
+  --head-wpt <head run wpt/results.json> --pin-wpt <pin run wpt/results.json> --out <dir>
+
 # commit the run as the next baseline (refuses a FAIL/REFUSED gate unless --force, recorded)
 node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/<id> --name <step> [--accept accepted.json]
 ```
@@ -75,7 +89,9 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
   on BOTH sides (the Phase A baselines only carry value strings): REF-W max/p95 (mm), REF-R worst
   anchor (mm), page-count deltas, required-string counts per extractor, EXT-2 missing/extra per
   extractor, DANFE/BOL geometry excess outside the spec window, segments/glyphs, LET-1 (mm),
-  LET-2, TXT-B1, and per-word pdf-probe dx/dy (pt). Each metric has a tolerance class.
+  LET-2, TXT-B1, and per-word pdf-probe dx/dy (pt; semantics 2: baselines, position pairs keyed
+  by the Chrome word, unpaired words counted; a section of another semantics is REFUSED). Each
+  metric has a tolerance class.
 - **WPT**: per-test outcomes; a lost CLEAN pass gates, a lost FLAGGED pass is reported; a test
   that starts to error gates; comparison is refused unless both sides carry the same Chrome ink
   data (`inkCheck`). `wpt/run.mjs` writes `outcomes.json` on every run for this, and refuses
@@ -87,9 +103,18 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
   narrowed WPT); a section the baseline measured but the run lacks, or a run without code checks,
   canaries or crashtests, makes the verdict REFUSED (exit 2), never an empty PASS.
 - **acceptedRegressions**: `{ "acceptedRegressions": [{ "key": "<metric key from gate-report>",
-  "after": <accepted value>, "reason": "...", "evidence": "..." }] }`. Only for regressions PROVEN
-  to correct a wrong old value (false pass, oracle artefact) with Chrome + WeasyPrint consensus or
-  WPT reference analysis; the writer copies them into the new baseline's `manifest.json`.
+  "after": <accepted value>, "class": "a", "reason": "...", "evidence": "..." }],
+  "declaredRejections": [{ "feature": "css:…", "reason": "...", "evidence": "...", "tests"?: […] }] }`.
+  Acceptances only for regressions PROVEN to correct a wrong old value (class a: false pass, oracle
+  artefact; GATE-A1); compensating drift (class b) goes into `baselines/port/DEBT.json` with a
+  layer vector, never here. Declarations for new strict-gate rejections (GATE-A2). The writer
+  copies both lists into the new baseline's `manifest.json`.
+- **Head ratchet** (GATE-H1, D4): an item worse than the chain head beyond tolerance gates unless a
+  class-a acceptance or declaration of the step, or a `DEBT.json` entry within its ceiling (rules
+  i–vi, GATE-D*), covers it. Within-tolerance worsening against the previous link is listed and
+  counted, never "unchanged"; lost flagged WPT passes are counted in the headline (D6).
+- **Pin view** (GATE-H3): every item worse than the shipped main classed (a)/(b)/(c); `--main`
+  makes (c) gate.
 
 Self-tests: `gate/test/` (synthetic regression, synthetic accepted regression, every rule, and a
 real canary on committed data: `baselines/beta4` against `baselines/pin` must flag notification
@@ -104,16 +129,34 @@ acceptance and only the oss-postmark-receipt text rows improving; the Phase A ba
 which predate the layout-diff allowlist, are classified with its frozen copy
 `layout-diff/expected-check-failures-phase-a.json`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).
+Since the D4–D6 fixes (2026-10-21): `06-page-rules` against `05` gates its 10 undeclared
+`css:page-varying-width` rejections on top of its 13 acceptances and passes with the declaration
+it would have needed (`committed-canary.test.mjs`); `07-media-print` against `06` with `--head
+port/00-start` is 0 gating link to link and 985 `head-regression` items, and its pin view has 213
+(c) items while `DEBT.json` is empty (`head-chain.test.mjs`; evidence and candidate classes in
+`gate/snapshots/2026-10-21/ledger/`); every DEBT rule, the relaxed (b) rule and the pin view have a
+planted self-test (`debt.test.mjs`); layer vectors are checked on committed packs
+(`layer-vector.test.mjs`).
 
 ## Canaries
 
-`oracles/run-fixtures.mjs` runs 38 canary rows on every invocation; `summary.json canaryCounts`
-splits them: **30 detection canaries** (4 qpdf structural, 2 veraPDF PDF/A rule breakers, 9 text
-extractor, 6 copy-paste, 4 ITF, 4 Code 128, 1 layout-consensus), each must be caught, and **8
+`oracles/run-fixtures.mjs` runs 42 canary rows on every invocation; `summary.json canaryCounts`
+splits them: **34 detection canaries** (4 qpdf structural, 2 veraPDF PDF/A rule breakers, 9 text
+extractor, 6 copy-paste, 4 ITF, 4 Code 128, 1 layout-consensus, 4 pdf-probe v2: +6 pt shift, one
+word deleted, one glyph run moved 2 pt, /Ascent rewritten that must NOT be flagged; since
+2026-10-21, 30/38 before), each must be caught, and **8
 measurement-only rows** (`caught: null`: the 6 Chrome renders of the copy-paste canaries and the 2
 sub-CSS-px ITF renders), which show a behaviour and test no oracle. Phase A manifests said "24
 caught / 8 measurement-only" (24 detection canaries then) while `oracles/README.md` said "two rows
 are measurements"; both counts now come from `canaryCounts`.
+
+The gate's own rules have **13 more detection canaries** (`gate/canaries.mjs`, GATE-K2), run on
+every gate evaluation and planted into the snapshots being gated: sub-tolerance creep only the head
+ratchet sees, WPT fail → unsupported, a verdict row → `strict gate rejected` and → NOT-RUN, a lost
+flagged pass (counted, not gating), DEBT rules i/ii, iii, iv, v, vi, the relaxed (b) rule, a
+misaligned layer-vector mapping and a planted pass step. They are listed in the gate report; an
+uncaught one is an absolute failure. `gate/test/canaries.test.mjs` breaks each rule on purpose and
+asserts that its canary is then uncaught.
 
 ## Reference parity (one Chrome setup)
 

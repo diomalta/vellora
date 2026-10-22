@@ -11,27 +11,58 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   the chain, `00-start`, is gated against `fidelity/baselines/beta4-gated`. Full chain:
   `pin` (Phase A, Blitz pin `2003ba5`) → `beta4` (Phase A, mechanical bump to 0.3.0-beta.4) →
   `beta4-gated` (hardened-gate re-baseline) → `port/00-start` → `port/01-…` → …
+- **Chain head** (the `--head` default of `fidelity/gate/run.mjs` and `fidelity/run-all.mjs
+  --gate`, read from this line by `gate/debt.mjs chainHead`): `port/00-start`. Every run is
+  gated against the previous link AND against this head (GATE-H1): an item worse than the head
+  beyond its tolerance passes only as a class-`a` acceptance of the current step or a
+  `DEBT.json` entry within its ceiling ("Head ratchet and debt ledger" below).
 - One step, one gated run, one baseline:
 
   ```sh
   export PATH="$HOME/.nvm/versions/node/v22.23.2/bin:$PATH"
+  # The ledger at the merge base (the commit the step branches from); a missing file is the
+  # ledger's first population (rule iii exempts it from the count and sum rule).
+  git show <merge base>:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json
   node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/<previous step> \
+    --step <NN-name> --debt-base /tmp/debt-base.json \
     --chrome-from <wpt results.json> --tools-image vellora-fidelity-tools:baseline-beta4 \
     --out fidelity/results/run-all/<NN-name> [--accept accepted.json]
-  # exit 0 = PASS. Then commit the run as the next link (--name takes no "/", so --root carries port/):
+  # Defaults: --head = the Chain head above (port/00-start), --debt = baselines/port/DEBT.json,
+  # --pin = baselines/pin (pin view, reported). A merge to main adds --main ((c) items gate).
+  # exit 0 = PASS (previous link AND head). The same evaluation over an existing run, no re-run:
+  #   node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous step> \
+  #     --run fidelity/results/run-all/<NN-name> --step <NN-name> --debt-base /tmp/debt-base.json \
+  #     [--accept accepted.json]
+  # Then commit the run as the next link (--name takes no "/", so --root carries port/):
   node fidelity/gate/write-baseline.mjs --run fidelity/results/run-all/<NN-name> \
     --root fidelity/baselines/port --name <NN-name> [--accept accepted.json] \
     [--attach <report>=<name>]...
   ```
 
-- **Merge rule.** The step merges only when its gate is PASS. A chain step is never written with
-  `--force`: `manifest.json gate.writtenDespiteVerdict` must be `false` and
-  `gate.baseline` must name the previous step. A value that gets worse beyond its tolerance passes
-  only as an `acceptedRegressions` entry (`--accept`: key, `after`, reason, evidence) that PROVES
-  the old value was wrong (false pass, oracle artefact) with Chrome + WeasyPrint consensus or WPT
-  reference analysis (GATE-A1); the writer copies the list into `manifest.json`, and the same list
-  goes into the step's commit message. The run's code-checks step must be green (GATE-C1:
-  `cargo test --workspace`, `npm run test:ts`, `npm run lint`, `npm --prefix fidelity test`).
+  `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii);
+  `--debt-base` turns on the ledger's transition check (rule iii). Without it the report says
+  "transition not checked (no --debt-base)". The relaxed (b) rule (GATE-D7) is checked on every
+  entry on every run, with or without `--debt-base`.
+- **Merge rule.** The step merges only when its gate is PASS against the previous link AND the
+  chain head. A chain step is never written with `--force`: `manifest.json
+  gate.writtenDespiteVerdict` must be `false` and `gate.baseline` must name the previous step. A
+  value worse beyond its tolerance (against the previous link or the head) passes only as one of:
+  - an `acceptedRegressions` entry of the step with `class: "a"` (`--accept`: key, `after`, class,
+    reason, evidence) that PROVES the OLD value was wrong: a WPT false pass, or an oracle artefact
+    shown on the same PDFs by an independent measurement (GATE-A1 (a));
+  - a `DEBT.json` entry (class b, compensating drift with a committed layer vector, within its
+    ceiling; GATE-A1 (b), GATE-D1…D7), never an acceptance (`readAcceptances` refuses any class
+    other than `a`);
+  - a `declaredRejections` entry for a new strict-gate rejection: WPT tests moving to
+    `unsupported`, verdict rows becoming `strict gate rejected: <feature>`, measured rows becoming
+    NOT-RUN (GATE-A2).
+
+  An OLD value that was correct (for example lost text) blocks the merge. The writer copies
+  `acceptedRegressions` and `declaredRejections` into `manifest.json`, and the step's commit
+  message lists them. Entries without `class`, from steps 01–06, still reproduce the
+  link-to-link verdicts they were written for. They do not cover anything against the head.
+  The run's code-checks step must be green (GATE-C1: `cargo test --workspace`,
+  `npm run test:ts`, `npm run lint`, `npm --prefix fidelity test`).
 - **Older baselines.** Comparisons of the same run against older links (`beta4`, `pin`, …) are
   post-hoc: `node fidelity/gate/run.mjs --baseline fidelity/baselines/<old> --run <run dir> --out
   <run dir>/gate-vs-<old>`, then `--attach` the reports (`attachments/gate-report-vs-<old>.*`).
@@ -46,7 +77,19 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   `~/.cache/vellora-fidelity/run-all-<NN-name>-<runId>` so later steps can re-gate or reuse it.
 - **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
   (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
-  against its predecessor.
+  against its predecessor. `fidelity/gate/test/head-chain.test.mjs` re-checks the head ratchet
+  and the pin view on the committed links: the ledger is the empty `vellora-fidelity/debt/1`
+  ledger, and `07` against `06` with `--head port/00-start` gives the counts in "Head ratchet
+  and debt ledger" below. A new link should add its own head and pin counts there.
+- **pdf-probe semantics.** Since 2026-10-21 every link's gated pdf-probe section
+  (`pdf-probe/<fixture>.json`) is semantics 2 ("pdf-probe v2 re-score" below); the gate refuses
+  to compare it with a semantics-1 section, so a new link is gated with v2 only. The v1 sections
+  the links 00-start to 07 were gated with are kept under `attachments/pdf-probe-v1/` and their
+  `acceptedRegressions` (v1 keys) are history; the committed-canary test reproduces those
+  verdicts on the v1 sections.
+  The pair keys name Chrome words, so the gate REFUSES a pdf-probe comparison whose Chrome
+  reference words differ (`reference.chromeWordsSha256`): a deliberate change of a fixture's
+  template (or of Chrome) needs the previous link re-measured with it before the next link is gated.
 
 ## `00-start`: beta.4 + whitespace test fix + reader fix + hardened oracles
 
@@ -511,8 +554,36 @@ Each variant was a full `run-all --gate` against `03-table-passes` (same environ
 - **Why it stays.** Removing it gains 7 WPT passes (margin-collapse-106/155,
   white-space-normal-001/002, white-space-collapsing-bidi-003, ws-break-spaces-applies-to-012/013).
   It costs the REF-W values above and 175 more gating items. Retire it together with the drift fix.
-- **Layer proof.** In this run, every layout-diff text run's final-layer y equals raw Blitz's B0
-  placement, or B0 − 2 px (the kept pass). No other vellora layer moves text y.
+- **Layer proof (corrected 2026-10-22).** This bullet used to end "No other vellora layer moves
+  text y". That is wrong. The first half holds: every layout-diff text run's last
+  layout_normalize layer (`auto_table_compact_columns`) has y equal to B0, or to B0 − 2 px (the
+  kept pass), on all 9 fixtures. But pagination's P layer, measured after that last pass, moves
+  y too. CONFIRMED by re-measuring the step-04 run copy
+  `~/.cache/vellora-fidelity/run-all-04-block-offset-20261021T125346Z` with
+  `node fidelity/gate/layer-vector.mjs --run <run copy> --summary --anchor "notification:Gerente do Departamento"`
+  (darwin 27.0.0 arm64, Node v22.23.2; written 2026-10-21, reproduced byte for byte 2026-10-22;
+  committed as `fidelity/gate/snapshots/2026-10-21/ledger/step04-run-level-summary.json`).
+  Text runs where P's y differs from the last pass's y, out of all runs in the fixture:
+
+  | fixture | P ≠ last pass (y) | last pass = B0 / B0 − 2 px | N0 = B0 = L0 |
+  |---|---|---|---|
+  | boleto | **13 / 78** | 5 / 73 | 78 / 78 |
+  | boleto-febraban | **60 / 98** | 5 / 93 | 98 / 98 |
+  | receipt | **36 / 56** | 29 / 27 | 56 / 56 |
+  | text-stress-ptbr | **364 / 779** | 59 / 720 | 779 / 779 |
+  | danfe, invoice, notification, oss-sparksuite-invoice | 0 (318, 210, 35, 22 runs) | 7/311, 20/190, 29/6, 13/9 | all |
+  | oss-postmark-receipt | 0 / 44 | 44 / 0 | N0 n/a on all 44 (no aligned raw run while `html_normalize` existed) |
+
+  Every P move is larger than layout-diff's 0.5 px tolerance (`pMovesBeyondTolY` = the same
+  counts). At step 07 (`step07-run-level-summary.json`, run copy `…-07-media-print-20261021T162148Z`)
+  the counts are the same, except that receipt is 36 / 60 and postmark has no aligned runs. The
+  earlier "60/98 boleto-febraban, 13/78 boleto, 36/60 receipt" figures came from step 07; at step
+  04 receipt is 36 / 56. The step's own target is unaffected: LET-1's anchor "Gerente do
+  Departamento de Cobrança" (notification) has dy +6.516 px in every layer: N0 = B0 = L0 = each
+  pass = P. The same command on the step-03 run copy (`…-03-table-passes-20261021T114420Z`,
+  2026-10-22) gives the identical vector. So the LET-1 change at this step (0.75 → 1.81 mm) moved
+  no layout layer of that anchor (CONFIRMED). That it comes from removing the constant 4 px PDF
+  text raise, the step's only PDF-stage change, is a HYPOTHESIS that was not measured separately.
 
 ### `acceptedRegressions` (2587; per-item numbers in `attachments/accepted-evidence.json`)
 
@@ -1364,3 +1435,221 @@ Follow-ups (not changed here): fragment an oversize block or layout table and an
 line box across pages (the two pinned gaps); evaluate `@page` inside feature media queries
 (needs the page box before Stylo's viewport); a span's `padding-left` on its runs; Chrome's
 blank-page placement of monolithic content under a forced-break margin.
+
+## pdf-probe v2 re-score (2026-10-21, branch `phaseb/oracle-v2`)
+
+GATE-P1 now measures pdf-probe semantics 2 (`fidelity/layout-diff/README.md`, "pdf-probe v2"):
+PyMuPDF baselines instead of pdftotext bbox tops (D1), position pairs keyed by the Chrome word
+instead of k-th occurrence pairs (D2), and unpaired words recorded and gated (D3). Every committed
+link was re-scored OFFLINE from the PDFs of the run it was written from; no other value of any
+baseline changed (CONFIRMED: every manifest equals its previous version except `files` and the new
+`pdfProbeRescore` block).
+
+**Where the sections live (decision).**
+
+- `pdf-probe/<fixture>.json` is the v2 section, the one the gate compares and the writer writes
+  for new runs.
+- The v1 files a link was gated with moved byte for byte to `attachments/pdf-probe-v1/` (same
+  sha256; only the `manifest.files` keys were renamed). Moving keeps one meaning for the gated
+  location (current semantics) in the writer, the loader and the gate, while the history stays
+  verifiable: `loadBaselineDir(dir, { pdfProbe: "v1" })` reads it, and
+  `committed-canary.test.mjs` reproduces every historical verdict (150 / 40 / 2587 / 18 / 13
+  accepted keys) on it.
+- Phase A `beta4` keeps its v1 in `layout-diff-ab/` (unchanged). `pin` had no pdf-probe section.
+- `acceptedRegressions` are unchanged. Their pdf-probe keys are v1 keys and match no v2 item; the
+  debt ledger supersedes them.
+
+**Gate rules of v2 beyond "|dx|, |dy| may not grow" (DESIGN TARGET; the orchestrator may reverse any).**
+
+- A Chrome word that loses its vellora partner gates twice: its `…|pairing` item and the fixture's
+  `unpaired-chrome` count.
+- `unpaired-vellora` (words Chrome does not print where vellora does) gates too. At step 05 it
+  fires on postmark's newly drawn "Download as PDF" (0 → 3), which may be progress: no Chrome word
+  lies within 36 pt of it.
+- A fixture the baseline measured and the run lacks is `removed` (gates); v1 ignored it.
+- The text key is case-sensitive (v1 lower-cased): a text-transform difference makes the words
+  unpaired instead of measured.
+- Near the bound: step 04's postmark "The [Product Name] team" paired at dy 35.1 pt, 0.9 pt inside
+  the 36 pt bound; a small worsening of such a word reads as a lost pairing.
+- `withinTolerance` counts every sub-tolerance change of a v2 pair (v1 counted none, D4).
+
+**How (per link, recorded in `manifest.json pdfProbeRescore`).**
+`node fidelity/gate/rescore-pdf-probe.mjs --baseline fidelity/baselines/<link> --run
+~/.cache/vellora-fidelity/<run copy>`, 2026-10-21 ~20:10Z, darwin 27.0.0 arm64, Node v22.23.2,
+Python 3.12.13, PyMuPDF 1.28.2 (local, INDICATIVE). Before writing, the script checks (all CONFIRMED):
+
+- the run copy's `summary.json` sha256 equals the manifest's source (11/11 links);
+- the run's own v1 `pdf-probe.json`, re-compacted, equals the committed v1 section for every
+  fixture (10 links; pin had none), so these are the PDFs the link measured;
+- integrity before and after, and (gate schema) no file outside `manifest.files`.
+
+After the re-score, a fresh `layout-diff/run.mjs` + `pdf-probe.mjs` run of this branch (the step-07
+crates, a new render and a new Chrome 155 print) reproduced all 9 committed `07-media-print` v2
+sections exactly (compacted JSON equal; CONFIRMED 2026-10-21), so the next link's pdf-probe gate
+compares like with like.
+
+**Missing inputs (CONFIRMED).**
+
+- `pin`: its run kept the PDFs of invoice and notification only; boleto, boleto-febraban, danfe,
+  oss-postmark-receipt, oss-sparksuite-invoice, receipt and text-stress-ptbr are recorded as
+  missing. pin's v2 section covers the 2 fixtures.
+- `beta4`: its v1 section came from a Phase A A/B probe whose PDFs no run copy kept
+  (`run-all-beta4-20261021T054809Z/layout-diff/*/run-all/` has no PDFs). The PDFs of the
+  `beta4-gated` run stand in, for beta4's 4 fixtures only, recorded as `source.substitute` with the
+  evidence: every v1 pair of that run equals beta4's A/B probe (boleto 254, invoice 541,
+  notification 244, receipt 151 pairs, 0 differing) and `beta4-gated/README.md` records
+  byte-identical corpus PDFs. Without the stand-in, every comparison against beta4 would be refused.
+
+**v2 gate of the chain** (`fidelity/layout-diff/snapshots/2026-10-21/pdf-probe-v2/rescore-report.json`,
+`node fidelity/gate/pdf-probe-rescore-report.mjs`; gating = gating pdf-probe items, each link's
+own v1-era acceptances applied, which match no v2 key):
+
+| link | vs previous link: gating (per fixture) | v1 pdf-probe items accepted then | vs 00-start: gating |
+|---|---|---|---|
+| beta4 vs pin | 619 (invoice 394, notification 225) | — (pin had no pdf-probe) | — |
+| beta4-gated vs beta4 | 0 (5 fixtures not comparable) | — | — |
+| 00-start vs beta4-gated | 0, no item at all (identical PDFs) | 0 | 0 |
+| 01-pagination-gaps | 55 (danfe 41 dy, sparksuite 14 dy); 749 improvements, 153 boleto-febraban words newly paired | 117 | 55 |
+| 02-delete-noop-passes | 0, no item at all (identical PDFs) | 0 | 55 |
+| 03-table-passes | 84 (danfe 36, text-stress-ptbr 48 incl. 16 lost pairings); 653 newly paired | 40 | 134 |
+| 04-block-offset | 1403 (danfe 442, text-stress-ptbr 314, boleto 231, postmark 138, boleto-febraban 109, notification 90, receipt 44, sparksuite 35); 1401 improvements | 2569 | 946 |
+| 05-walk-rewrite | 6: postmark "The [Product Name] team" lost (4 pairings), unpaired-chrome 42 → 46, unpaired-vellora 0 → 3 | 0 (v1: a non-gating "changed") | 922 |
+| 06-page-rules | 0; 81 improvements | 12 | 922 |
+| 07-media-print | 0, no item at all (identical PDFs) | 0 | 922 (danfe 295, boleto 231, postmark 140, text-stress-ptbr 122, notification 77, boleto-febraban 39, sparksuite 18) |
+| 08-html-parse (re-scored 2026-10-22) | 0; postmark "The [Product Name] team" pairs again (4 newly measured), unpaired-chrome 46 → 42, unpaired-vellora 3 → 0 (see below) | 0 | 920 (postmark 138, others as 07) |
+| 09-review-fixes (re-scored 2026-10-22) | 0, no item at all (identical PDFs) | 0 | 920 (as 08) |
+
+**08 and 09 (2026-10-22, branch `phaseb/10-base`).** Both links were written after the re-score
+above, with v1 sections, and were re-scored the same way: `node fidelity/gate/rescore-pdf-probe.mjs
+--baseline fidelity/baselines/port/<link> --run ~/.cache/vellora-fidelity/<run copy>` with
+`run-all-08-html-parse-20261021T191737Z` and `run-all-09-review-fixes-20261021T205223Z`
+(darwin 27.0.0 arm64, Node v22.23.2, Python 3.12.13, PyMuPDF 1.28.2; INDICATIVE). CONFIRMED for
+both: summary.json sha256 equals the manifest source; the run's v1 probe equals the committed v1
+section for all 9 fixtures; the 9 v1 files are byte-identical in `attachments/pdf-probe-v1/`; the
+manifest differs from its previous version only in `files` and `pdfProbeRescore`; integrity ok.
+The table rows come from `node fidelity/gate/pdf-probe-rescore-report.mjs --out
+fidelity/layout-diff/snapshots/2026-10-22/pdf-probe-v2/rescore-report.json` (its CHAIN now ends at
+09; the gating counts of 00..07 equal the 2026-10-21 report, only the within-tolerance
+bookkeeping added since by D4 differs). Caveat on 08: unpaired-vellora 3 → 0 reads as an
+improvement, but postmark's 3 "Download as PDF" words are not gone; they now lie below the page
+edge of vellora's single page, where the v2 word list does not see them. An off-page word is
+not gated yet (INTEGRATION-TODO item 2).
+
+**The v1-accepted pdf-probe words under v2.** Each v1 key is mapped to the vellora word it named
+(the run copy's v1 `pdf-probe.json`), then to the PyMuPDF word with the same page, text and x
+whose baseline is within 1.2 em below the pdftotext box top, then to its v2 pair; that pair's |d|
+on the accepted axis is compared with the same Chrome word's pair in the previous link and in
+00-start. improved / worse = |d| changed by more than 1 pt; within = at most 1 pt (v2: unchanged);
+unpaired = no v2 pair in the link (after) or in the compared link (before); unmapped = no single
+PyMuPDF word (pdftotext and PyMuPDF split words differently).
+
+| link · label | n | vs previous: improved / within / worse / unpaired / unmapped | vs 00-start: improved / within / worse / unpaired / unmapped |
+|---|---|---|---|
+| 01 · pdf-probe-compensating-drift | 117 | 63 / 19 / 18 (sparksuite 14, danfe 4) / 6 / 11 | = previous |
+| 03 · pdf-probe-pairing-artefact | 16 | 1 / 4 / 0 / 11 / 0 | 1 / 3 / 1 / 11 / 0 |
+| 03 · coincidental-match-of-wrong-geometry | 24 | 0 / 0 / 24 / 0 / 0 | 0 / 0 / 24 / 0 / 0 |
+| 04 · pdf-probe-ascent-artefact | 697 | 472 / 211 / 0 / 0 / 14 | 493 / 138 / 16 (danfe) / 36 / 14 |
+| 04 · compensating-drift (words) | 672 | 0 / 0 / 660 / 0 / 12 | 70 / 0 / 421 / 169 / 12 |
+| 04 · misplaced-word-uniform-shift | 1189 | 51 / 0 / 640 / 496 / 2 | 21 / 0 / 379 / 787 / 2 |
+| 04 · pdf-probe-pairing-artefact | 11 | 4 / 0 / 0 / 7 / 0 | 2 / 0 / 0 / 9 / 0 |
+| 06 · pdf-probe-pairing-artefact | 12 | 12 / 0 / 0 / 0 / 0 | 12 / 0 / 0 / 0 / 0 |
+
+Reading it (CONFIRMED from the numbers above; the per-fixture split is in the report):
+
+- **D1 was real**: none of step 04's 697 ascent artefacts is worse beyond 1 pt against step 03;
+  472 are better by more than 1 pt.
+- **Step 01's compensating drift was mostly an oracle artefact**: 82 of 117 are not worse (63
+  better), 18 are still worse beyond 1 pt (14 sparksuite, 4 danfe).
+- **D2 was real**: step 06's 12 pairing artefacts all improved; step 03's and 04's are unchanged,
+  improved or unpaired (a v1 pair across rows or pages), with one word worse against 00-start.
+- **The remaining debt is real and gated now**: step 03's 24 coincidental matches, step 04's 660
+  compensating-drift words and 640 misplaced words are worse beyond 1 pt under v2.
+- **Against 00-start the latest link (07) is worse on 922 v2 items** (the accumulated drift of D4
+  is visible this way, not by link-to-link tolerance).
+
+**Latest link (07) per fixture, v1 → v2** (pairs; unpaired vellora / Chrome; worst / median
+|dx| and |dy| in pt; v1 counts same-page pairs, its "unpaired" = words − pairs):
+
+| fixture | v1 | v2 |
+|---|---|---|
+| boleto | 254; 0/0; dx 1.66/1.09; dy 21.61/8.70 | 297; 0/0; dx 1.67/0.76; dy 19.85/7.85 |
+| boleto-febraban | 315; 0/0; dx 4.68/0.85; dy 7.91/1.74 | 315; 0/0; dx 4.68/0.85; dy 6.67/1.42 |
+| danfe | 590 (40 cross-page); 0/0; dx 505.14/2.45; dy 42.29/9.07 | 590; 40/40; dx 11.05/2.45; dy 17.82/7.15 |
+| invoice | 541; 0/0; dx 7.08/0.35; dy 3.54/0.63 | 541; 0/0; dx 7.08/0.35; dy 2.65/1.15 |
+| notification | 248; 0/0; dx 0.72/0.35; dy 7.85/2.52 | 248; 0/0; dx 0.75/0.35; dy 5.60/0.35 |
+| oss-postmark-receipt | 133 (3 cross-page); 0/39; dx 9.97/0.97; dy 37.22/10.84 | 134; 3/46; dx 9.97/0.97; dy 35.10/8.85 |
+| oss-sparksuite-invoice | 46; 0/0; dx 3.23/3.22; dy 13.90/4.90 | 46; 0/0; dx 3.23/3.22; dy 11.77/2.77 |
+| receipt | 151; 0/0; dx 0.95/0.23; dy 4.38/1.95 | 151; 0/0; dx 0.95/0.23; dy 2.60/0.35 |
+| text-stress-ptbr | 1113 (707 cross-page); 20/7; dx 375.18/0.22; dy 731.88/240.36 | 751; 1095/1082; dx 35.66/0.24; dy 34.15/3.35 |
+
+v1's worst values of hundreds of pt were pairs of different instances; text-stress-ptbr (8 pages
+vs 7) leaves 1082 of Chrome's 1833 words without a partner within 36 pt on the same page, which
+v1 hid as cross-page or mis-paired pairs.
+
+## Head ratchet and debt ledger (2026-10-21/22, branch `phaseb/oracle-v2-ledger`)
+
+Gating only against the previous link let sub-tolerance worsening pile up (critic finding D4).
+Since this branch every gate run also compares against the **Chain head** (`port/00-start`,
+GATE-H1). An item worse than the head beyond its tolerance passes only as a class-`a`
+acceptance of the current step, a declaration (GATE-A2), or an entry in `DEBT.json` that stays
+within its ceiling (GATE-D1…D7). `DEBT.json` is the empty `vellora-fidelity/debt/1` ledger. The
+only worked entry is a test fixture (`fidelity/gate/test/data/debt-example.json`, DANFE
+"NOME/RAZÃO" at step 07: raw Blitz +3.656 px, painted pass −2 px, run 2.213 px). Real entries
+have not been written yet.
+
+**Post-hoc evaluation of step 07 (no re-render).** CONFIRMED, asserted in
+`fidelity/gate/test/head-chain.test.mjs`. Reports are in
+`fidelity/gate/snapshots/2026-10-21/ledger/`. Local macOS, INDICATIVE. Commands as recorded in
+the reports:
+`node fidelity/gate/run.mjs --baseline fidelity/baselines/port/06-page-rules --run fidelity/baselines/port/07-media-print --accept fidelity/baselines/port/07-media-print/manifest.json --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z --step 07-media-print`,
+then `node fidelity/gate/ledger-candidates.mjs …` (command in `ledger-candidates.md`).
+
+| view | gating | by check |
+|---|---|---|
+| 07 vs 06 (previous link) | 0 | – |
+| 07 vs head 00-start | **985** (FAIL) | pdf-probe 922, WPT regression 38, WPT rejection 10 (step 06's undeclared `css:page-varying-width`), value 13, status 2 |
+| 07 vs pin (shipped main), pin view | 213 (c), merge to main BLOCKED | pdf-probe 140, WPT 56, value 15, status 2 |
+
+None of the 985 head items is covered: the ledger is empty, and 07's manifest has no class-`a`
+acceptance. Legacy acceptances from steps 01–06, which carry no `class`, do not count against
+the head. All 13 gate canaries (GATE-K2) are caught on this evaluation.
+
+**Candidate classes** (`ledger-candidates.mjs`). These are candidates, not verdicts: an item is
+covered only once a class-`a` acceptance or a DEBT entry is committed.
+
+| candidate | head view (985) | pin view (213) |
+|---|---|---|
+| (b) layer vector on which the relaxed rule can hold | 616 | 133 |
+| (b) one page-scoped entry (rule vi; text-stress-ptbr) | 122 | 0 |
+| (a) artefact label or WPT page-count difference | 37 | 19 |
+| declare (strict-gate rejection) | 10 | 10 |
+| (c) lost text, or vellora worse than raw Blitz | 15 | 14 |
+| none: no evidence for (a) or (b) yet | 185 | 37 |
+
+**No possible (a)/(b) classification yet**: 200 head items, 51 pin items.
+
+- **(c), head**: all 15 are oss-postmark-receipt text lost at step 05 (the XHTML doctype is
+  parsed as XML, which drops the text after each `<br>`). That covers INV-X1/X2 PASS → FAIL,
+  their `found` counts 6 → 5, the EXT-2 `missing` counts, 4 lost Chrome words ("The [Product
+  Name] team"), and unpaired-chrome 42 → 46 and unpaired-vellora 0 → 3. The OLD value was
+  right, so these block the merge until the text is restored.
+- **(c), pin**: the 9 postmark corpus and EXT-2 rows above (not its words), plus 5 invoice
+  words on page 3 ("Total a pagar R$ 50.724,90"). For those words |run| 3.533 px > |N0| 1.984 px: vellora's layers made them worse
+  than raw Blitz.
+- **none, head**:
+  - 134 postmark words: layout-diff aligned no text run, so there is no layer vector.
+  - 44 boleto words: they map to no layout-diff run.
+  - 6 aggregate metrics with no per-item vector yet: DANFE-L1a…d `posErrMm`, and INV-R1
+    `worstMm` for postmark and sparksuite.
+  - WPT `css/CSS2/floats/zero-width-floats.html` (pass → fail, step 01 "two errors
+    cancelling"). WPT tests have no layer vector.
+- **none, pin**: 27 WPT pass → fail with no artefact evidence (the old render's page count
+  equals Chrome's), DANFE-M1 `excessB` 8.552 → 24.173, DANFE-L1a…d, invoice REF-W p95 1.78 →
+  2.51 mm, invoice EXT-2 pdfminer status, postmark INV-R1, and 2 invoice words.
+
+**How a step uses this**: the chain convention above (`--head`, `--debt-base`, `--step`). Add
+the step's head and pin counts to `head-chain.test.mjs`. A DEBT entry is written from a
+committed vector (`node fidelity/gate/layer-vector.mjs --run <run copy> --keys-from
+<gate-report.json>`). It must satisfy the relaxed (b) rule (GATE-D7). Then
+`node fidelity/gate/debt.mjs check --base <ledger at merge base> --step <NN-name>` must be
+clean.

@@ -227,3 +227,13 @@ regressions): reproduced on a real git checkout.
 - Phase B questions left open (HYPOTHESIS): why `auto_table_compact_columns` shifts right-aligned
   text further than the cell box at beta.4; the DANFE-F4c/F11 and CSS2/backgrounds losses (not
   attributed here).
+
+## pdf-probe v2 re-score (2026-10-21)
+
+`pdf-probe/` now holds pdf-probe semantics 2 sections for boleto, invoice, notification and
+receipt (PyMuPDF baselines, position pairs; `fidelity/layout-diff/README.md`, "pdf-probe v2").
+The A/B PDFs behind `layout-diff-ab/*-beta4.pdf-probe.json.gz` were not kept, so the PDFs of the
+`beta4-gated` run stand in; the evidence (every v1 pair identical) is in `manifest.json
+pdfProbeRescore.source.substitute`. `layout-diff-ab/` is unchanged and is the v1 history
+(`loadBaselineDir(dir, { pdfProbe: "v1" })`). Details: `fidelity/baselines/port/README.md`,
+"pdf-probe v2 re-score".
