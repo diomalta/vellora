@@ -36,7 +36,7 @@ export function RAW_MODE_INFO({ xhtmlRender, xmlParse }) {
     enabled: true,
     field: "rawOutcome",
     render:
-      "renderPdf(..., { _bridge: xhtml_render R=1 }) = vellora_core::debug_render_raw_blitz (Blitz layout as its painter places it; no reader compensations, no layout_normalize passes, paginate_flat)",
+      "renderPdf(..., { _bridge: xhtml_render R=1 }) = vellora_core::debug_render_raw_blitz (Blitz layout as its painter places it; no reader compensations, no layout_normalize passes, no display-list rect merge, paginate_flat)",
     keeps: [
       "strict gates (validate_css, depth, fonts, element gate, unresolved images)",
       "@page box (size, margins; Blitz viewport = content box)",
