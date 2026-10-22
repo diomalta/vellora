@@ -146,6 +146,10 @@ export function runChecks({
   );
 
   // ---- self-consistency ----
+  // normalize_wrappers_located and normalize_dom_roundtrip are historical since port step 05
+  // (html_normalize deleted: every dump records 0 wrappers and both parses are the same HTML, so
+  // they always pass). Kept, not removed (port step 10 audit): they still judge the committed
+  // Phase A dumps (test/receipt-n0.test.mjs, expected-check-failures-phase-a.json).
   const rec = model.normalize?.wrappers_recorded ?? 0;
   const loc = model.normalize?.wrappers_located ?? 0;
   out.push(

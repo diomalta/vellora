@@ -162,9 +162,20 @@ pub fn debug_layout_dump(
 /// Blitz's own layout. Port step 05 deleted that pre-pass (the box walk now
 /// reads Blitz's anonymous blocks itself), so the render path lays out the input
 /// exactly as given and this dump's Blitz tree equals [`debug_layout_dump`]'s
-/// by construction. Kept so `fidelity/layout-diff/` keeps its `N0` layer and the
-/// source-DOM checks built on it (`source_dom_keys_vs_chromium`). Debug/fidelity
-/// tooling ONLY.
+/// by construction. Debug/fidelity tooling ONLY, and NOT dead code (audited at
+/// port step 10). Its readers:
+///
+/// - `examples/layout_dump.rs --no-html-normalize` calls it, and
+///   `fidelity/layout-diff/run.mjs` writes its output as `vellora-dump-source.json`;
+///   `fidelity/layout-diff/lib/vellora-model.mjs` loads that file as layer `N0` and
+///   refuses it unless its JSON `html_normalize` reads `"skipped"`
+///   (see `layout_dump/json.rs`);
+/// - `fidelity/gate/layer-vector.mjs` takes each item's `N0` value from it for the
+///   relaxed GATE-A1 (b) rule `|run| <= |N0|` (`fidelity/ACCEPTANCE.md`), the
+///   evidence a `DEBT.json` entry carries;
+/// - layout-diff's source-DOM check `source_dom_keys_vs_chromium`.
+///
+/// Removing it removes the raw-Blitz reference of the debt ledger.
 #[doc(hidden)]
 pub fn debug_layout_dump_source_html(
     html_bytes: &[u8],
