@@ -1,0 +1,520 @@
+{
+  "tool": "fidelity/gate/layer-vector.mjs",
+  "command": "node fidelity/gate/layer-vector.mjs --run ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z --key pdf-probe|oss-sparksuite-invoice|p1|Invoice#1|dx --key pdf-probe|oss-sparksuite-invoice|p1|Check#1|dx --key pdf-probe|oss-sparksuite-invoice|p1|Payment#1|dx --key pdf-probe|oss-sparksuite-invoice|p1|Payment#1|dy --out fidelity/gate/snapshots/2026-10-22/10-spark/sparksuite-layer-vectors.json",
+  "date": "2026-10-23T00:34:09.769Z",
+  "environment": {
+    "os": "darwin 27.0.0 arm64",
+    "node": "v22.23.2"
+  },
+  "run": "~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z",
+  "unit": "CSS px (pdf-probe pt x 4/3)",
+  "words": [
+    {
+      "item": "pdf-probe|oss-sparksuite-invoice|p1|Invoice#1|dx",
+      "axis": "dx",
+      "fixture": "oss-sparksuite-invoice",
+      "key": "p1|Invoice#1",
+      "text": "Invoice",
+      "page": 1,
+      "mapped": true,
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(2)",
+      "runText": "Invoice #: 123",
+      "dxExact": true,
+      "dx": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -2.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -2.307
+          }
+        ],
+        "relaxedB": {
+          "possible": false,
+          "absRun": 2.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [
+            {
+              "layer": "run",
+              "step": -2.307
+            }
+          ],
+          "why": "|run| 2.307 > |N0| 0"
+        }
+      },
+      "dy": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      }
+    },
+    {
+      "item": "pdf-probe|oss-sparksuite-invoice|p1|Check#1|dx",
+      "axis": "dx",
+      "fixture": "oss-sparksuite-invoice",
+      "key": "p1|Check#1",
+      "text": "Check",
+      "page": 1,
+      "mapped": true,
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(2)",
+      "runText": "Check #",
+      "dxExact": true,
+      "dx": {
+        "vector": {
+          "unit": "px",
+          "N0": 0.008,
+          "B0": 0.008,
+          "L0": 0.008,
+          "painted_table_cell_text_baselines": 0.008,
+          "table_percent_widths": 0.008,
+          "auto_table_compact_columns": 0.008,
+          "P": 0.008,
+          "run": -2.293
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -2.301
+          }
+        ],
+        "relaxedB": {
+          "possible": false,
+          "absRun": 2.293,
+          "absN0": 0.008,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [
+            {
+              "layer": "run",
+              "step": -2.301
+            }
+          ],
+          "why": "|run| 2.293 > |N0| 0.008"
+        }
+      },
+      "dy": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      }
+    },
+    {
+      "item": "pdf-probe|oss-sparksuite-invoice|p1|Payment#1|dx",
+      "axis": "dx",
+      "fixture": "oss-sparksuite-invoice",
+      "key": "p1|Payment#1",
+      "text": "Payment",
+      "page": 1,
+      "mapped": true,
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1)",
+      "runText": "Payment Method",
+      "dxExact": true,
+      "dx": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      },
+      "dy": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      }
+    },
+    {
+      "item": "pdf-probe|oss-sparksuite-invoice|p1|Payment#1|dy",
+      "axis": "dy",
+      "fixture": "oss-sparksuite-invoice",
+      "key": "p1|Payment#1",
+      "text": "Payment",
+      "page": 1,
+      "mapped": true,
+      "owner": "html>body:nth-child(2)>div:nth-child(1)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(3)>td:nth-child(1)",
+      "runText": "Payment Method",
+      "dxExact": true,
+      "dx": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      },
+      "dy": {
+        "vector": {
+          "unit": "px",
+          "N0": 0,
+          "B0": 0,
+          "L0": 0,
+          "painted_table_cell_text_baselines": 0,
+          "table_percent_widths": 0,
+          "auto_table_compact_columns": 0,
+          "P": 0,
+          "run": -0.307
+        },
+        "finalPass": "auto_table_compact_columns",
+        "steps": [
+          {
+            "layer": "B0",
+            "step": 0
+          },
+          {
+            "layer": "L0",
+            "step": 0
+          },
+          {
+            "layer": "painted_table_cell_text_baselines",
+            "step": 0
+          },
+          {
+            "layer": "table_percent_widths",
+            "step": 0
+          },
+          {
+            "layer": "auto_table_compact_columns",
+            "step": 0
+          },
+          {
+            "layer": "P",
+            "step": 0
+          },
+          {
+            "layer": "run",
+            "step": -0.307
+          }
+        ],
+        "relaxedB": {
+          "possible": true,
+          "absRun": 0.307,
+          "absN0": 0,
+          "stepTolerance": 0.5,
+          "runTolerance": 1.333,
+          "nonZeroVelloraSteps": [],
+          "why": null
+        }
+      }
+    }
+  ],
+  "mapping": {
+    "oss-sparksuite-invoice": {
+      "method": "LCS of Chrome PDF words (page, baseline, x) vs layout-diff Chrome fragment tokens (visual order), text key = pdf-probe v2 textKey",
+      "chromeWords": 46,
+      "mapped": 46,
+      "unmapped": 0,
+      "pairs": 46,
+      "pairsMapped": 46,
+      "xCheck": {
+        "firstTokensOnPage1": 22,
+        "medianOffsetPx": 59,
+        "medianBaselineOffsetPxBySize": {
+          "12": 54
+        },
+        "within3px": 1
+      },
+      "pAgreement": {
+        "wordsOnPage1": 46,
+        "agreeWithinRunTolerance": 1
+      }
+    }
+  },
+  "extractor": "pymupdf 1.28.2",
+  "anchors": [],
+  "boxes": []
+}

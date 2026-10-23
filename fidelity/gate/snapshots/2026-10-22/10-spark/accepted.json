@@ -1,0 +1,25 @@
+{
+  "acceptedRegressions": [
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "The OLD pair was an oracle artefact: Chrome's PDF draws the masthead \"[Product Name]\" twice, the text (#1, #A8AAAF, baseline 57.75 pt) and its `text-shadow: 0 1px 0 white` copy (#2, #FFFFFF, baseline 58.50 pt, 1 px = 0.75 pt lower); vellora draws no text-shadow, so it has one instance. At 09 that instance (baseline 61.35 pt) paired with the white shadow copy #2; at 10-spark the cellspacing/cellpadding hints put it at 57.60 pt and it pairs with the text #1 (dy -0.15 pt, newly measured). No text was lost.",
+      "evidence": "PyMuPDF rawdict of ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/chrome.pdf: span '[Product Name]' at (253.453, 58.5) color 0xffffff and at (253.453, 57.75) color 0xa8aaaf; vellora.pdf: one span at (252.55, 57.596) color 0xa8aaaf; fixtures/oss-postmark-receipt/index.html .email-masthead_name { text-shadow: 0 1px 0 white }; the same run's pdf-probe pairs p1|[Product#1 at dx -0.90 dy -0.15 (2026-10-22, darwin arm64, Chrome 155.0.8059.85, INDICATIVE)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "Same word as [Product#2: the second half of the masthead \"[Product Name]\", whose Chrome #2 instance is the white text-shadow copy (baseline 58.50 pt). vellora's single instance now pairs with the text #1 (p1|Name]#1, dx -0.90 dy -0.15 pt, newly measured).",
+      "evidence": "As for pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing (same spans, same run)."
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|unpaired-vellora",
+      "after": 3,
+      "class": "a",
+      "reason": "The OLD count 0 was false: at 09 the 3 words \"Download as PDF\" were drawn below the page (baseline 855.60 pt on an 841.92 pt page), where PyMuPDF's page words do not report them (fidelity/ACCEPTANCE.md GATE-P1, the documented step-08 case). 09's own pdf-probe section lists them in offPage.vellora. At 10-spark they are inside page 1 (baseline 815.85 pt), visible, so they are counted; Chrome prints them on page 2 (the known oversize-block gap: vellora does not fragment the layout table). Off-page vellora words go 40 -> 37 (Download, as, PDF), none added.",
+      "evidence": "fidelity/baselines/port/09-review-fixes/pdf-probe/oss-postmark-receipt.json offPage.vellora: Download/as/PDF at y 855.6; ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/pdf-probe.json unpairedVellora: Download/as/PDF at y 815.85 page 1, offPage.vellora 37 words, a per-text multiset that contains no text more often than 09's (2026-10-22, INDICATIVE)"
+    }
+  ]
+}
