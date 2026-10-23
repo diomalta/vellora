@@ -90,7 +90,7 @@ rendering.
 
 | layer | what it is |
 |---|---|
-| `N0` | Blitz's own layout tree of the **source HTML** (`layout_dump --no-html-normalize`: html_normalize skipped), keyed by the source DOM; `layout_children` walk incl. anonymous blocks, rounded `final_layout`. **Raw Blitz.** |
+| `N0` | Blitz's own layout tree of the **source HTML** (`layout_dump --no-html-normalize`: html_normalize skipped), keyed by the source DOM; `layout_children` walk incl. anonymous blocks, rounded `final_layout`. **Raw Blitz** under vellora's document setup: since port step 10-spark that setup includes the user-agent sheet of `blitz_engine::table_spacing_hints_css` (the `<table cellspacing>` / `cellpadding` presentational hints Blitz 0.3.0-beta.4 lacks), so N0 is not the `debug_render_raw_blitz` / WPT `--raw` render, which has no hints. |
 | `N0u` | Same N0 tree from `unrounded_layout`. Diagnostic only (flags "rounding" when N0 diverges but N0u does not). |
 | `B0` | Blitz's own layout tree of **html_normalize's output** (what the render path lays out). With N0 present, **N0 → B0 is html_normalize's step**. Without N0, B0 is raw Blitz only if html_normalize changed nothing. |
 | `B0u` | Same B0 tree from `unrounded_layout`. Diagnostic only. |

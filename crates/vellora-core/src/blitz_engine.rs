@@ -850,6 +850,99 @@ fn document_config(font_ctx: parley::FontContext) -> DocumentConfig {
     }
 }
 
+/// The HTML `<table cellspacing>` and `<table cellpadding>` presentational hints, which Blitz
+/// 0.3.0-beta.4 does not synthesize (blitz-dom `stylo.rs`
+/// `synthesize_presentational_hints_for_legacy_attributes` maps no table attribute but
+/// `width`/`height`/`align`/`bgcolor`), as a user-agent sheet with one rule per distinct
+/// attribute value (<https://html.spec.whatwg.org/multipage/rendering.html#tables-2>):
+///
+/// - `cellspacing` maps to the pixel length property `border-spacing` of the table:
+///   `table[cellspacing="<value>"] { border-spacing: <n>px }`;
+/// - `cellpadding` maps to the pixel length properties `padding-*` of the table's own cells:
+///   `table[cellpadding="<value>"] > thead|tbody|tfoot > tr > td|th` (and
+///   `> tr >` for the XML parse, where no `tbody` is inserted) `{ padding: <n>px }`.
+///
+/// `<n>` comes from the HTML rules for parsing non-negative integers (Stylo's
+/// `parse_unsigned_integer`, the "pixel length" mapping); a value that does not parse maps to
+/// nothing, as in the spec.
+///
+/// Why it matters since beta.4 (port step `10-spark`): beta.4 applies `border-spacing` at the
+/// table's edges as well as between cells (blitz-dom 0.3.0-beta.4 `layout/table.rs`: the
+/// `style.gap` block adds the spacing to the table's padding on all four sides), where the pin
+/// 2003ba5 used it only as the grid gap (its `layout/table.rs` `style.gap`). So the UA default
+/// `table { border-spacing: 2px }` now insets every cell of a `cellspacing="0"` table by 2 px
+/// per side and adds 2 px per row (the `oss-sparksuite-invoice` outer table: 25 words of
+/// right-aligned text 3.23 pt left of Chrome). `cellpadding` replaces the UA
+/// `td { padding: 1px }` of cells the author does not pad (the `oss-postmark-receipt` layout
+/// tables).
+///
+/// Cascade level: a presentational hint sits above the UA sheet and below every author rule.
+/// A UA sheet appended after Blitz's default one gives the same result for these properties: it
+/// beats the default `table` / `td, th` rules (higher specificity, later in the same origin) and
+/// loses to any author rule, whatever its specificity. Rules are emitted in sorted order, so the
+/// sheet is a pure function of the document. `None` when no table carries either attribute.
+fn table_spacing_hints_css(doc: &BaseDocument) -> Option<String> {
+    use std::collections::BTreeMap;
+    let (mut spacing, mut padding) = (BTreeMap::new(), BTreeMap::new());
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        if let Some(el) = node.data.downcast_element() {
+            if el.name.local == blitz_dom::local_name!("table") {
+                for attr in el.attrs() {
+                    let into = match &*attr.name.local {
+                        "cellspacing" => &mut spacing,
+                        "cellpadding" => &mut padding,
+                        _ => continue,
+                    };
+                    if let Ok(px) = style::servo::attr::parse_unsigned_integer(attr.value.chars()) {
+                        into.insert(attr.value.to_string(), px);
+                    }
+                }
+            }
+        }
+        stack.extend(node.children.iter().copied());
+    }
+    if spacing.is_empty() && padding.is_empty() {
+        return None;
+    }
+    let mut css = String::new();
+    for (value, px) in &spacing {
+        css.push_str(&format!(
+            "table[cellspacing=\"{}\"] {{ border-spacing: {px}px; }}\n",
+            css_string_body(value)
+        ));
+    }
+    for (value, px) in &padding {
+        let t = format!("table[cellpadding=\"{}\"]", css_string_body(value));
+        let selectors: Vec<String> = ["thead > ", "tbody > ", "tfoot > ", ""]
+            .iter()
+            .flat_map(|group| ["td", "th"].map(|cell| format!("{t} > {group}tr > {cell}")))
+            .collect();
+        css.push_str(&format!(
+            "{} {{ padding: {px}px; }}\n",
+            selectors.join(", ")
+        ));
+    }
+    Some(css)
+}
+
+/// `value` as the body of a double-quoted CSS string: `"`, `\` and every control character are
+/// written as hex escapes (CSS Syntax 3 §2.1 / §4.3.7), everything else verbatim.
+fn css_string_body(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for c in value.chars() {
+        if c == '"' || c == '\\' || c.is_control() {
+            out.push_str(&format!("\\{:x} ", c as u32));
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 fn walk_for_denied(
     base: &BaseDocument,
     node_id: NodeId,
@@ -1058,6 +1151,12 @@ fn resolve_and_walk<O: LayoutObserver>(
     let viewport_px = (content_width_px as u32, content_height_px.max(0.0) as u32);
     let viewport = Viewport::new(viewport_px.0, viewport_px.1, 1.0, ColorScheme::Light);
     doc.set_viewport(viewport);
+    // Off in the raw-Blitz render: it is a vellora layer, not Blitz's layout.
+    if O::VELLORA_CORRECTIONS {
+        if let Some(css) = table_spacing_hints_css(&doc) {
+            doc.add_user_agent_stylesheet(blitz_dom::UserAgentStylesheet::parse(&css));
+        }
+    }
     doc.resolve(0.0);
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on

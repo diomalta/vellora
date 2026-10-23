@@ -4,9 +4,10 @@
 // instead of /tmp scripts.
 //
 // A layer vector is the item's delta vs Chrome in each layer of vellora's pipeline, in CSS px
-// (layout-diff's unit): N0 raw Blitz on the source HTML, B0 html_normalize (deleted at step 05:
-// B0 = N0), L0 the walk / text reader, one entry per layout_normalize pass in run order, P
-// pagination's in-page drift; then `run`, what the PDF-level oracle measured:
+// (layout-diff's unit): N0 raw Blitz on the source HTML (since port step 10-spark with vellora's
+// table presentational-hint UA sheet; the raw-Blitz WPT render has none), B0 html_normalize
+// (deleted at step 05: B0 = N0), L0 the walk / text reader, one entry per layout_normalize pass
+// in run order, P pagination's in-page drift; then `run`, what the PDF-level oracle measured:
 //   word   (pdf-probe v2 key)  dy / dx of the vellora PDF word vs Chrome's PDF word (pt -> px).
 //          The word is mapped to its layout-diff text run through CHROME's own layout: Chrome's
 //          PDF words (page, baseline, x order) are aligned with the tokens of layout-diff's Chrome
