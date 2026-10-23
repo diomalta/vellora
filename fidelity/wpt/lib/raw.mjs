@@ -49,7 +49,7 @@ export function RAW_MODE_INFO({ xhtmlRender, xmlParse }) {
     drops: [
       "reader compensation: inline padding-right advance (run_padding_right_px)",
       "layout_normalize passes (LAYOUT_NORMALIZE_PASSES)",
-      "display-list rect merge (merge_adjacent_rects, 4 px tolerance)",
+      "display-list rect merge (merge_adjacent_rects: touching same-colour rects)",
       "pagination: break rules, keep-together, <thead> repeat, fit tolerance, margin boxes (flat page bands instead)",
     ],
     xmlParse,
