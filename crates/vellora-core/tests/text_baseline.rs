@@ -222,12 +222,13 @@ fn a_collapsed_interior_top_border_row_is_not_raised_known_gap() {
         }
     }
     // Unchanged elsewhere: the first row of a collapsed table (Chrome Aaa 29.25 pt: Blitz moves
-    // that text below the border, the raise puts it 1.5 pt above) and a separated table (Chrome
-    // Ccc 59.25 pt) keep the 2 px raise, the corpus compensator's behaviour.
+    // that text below the border, the raise puts it 1.5 pt above) keeps the 2 px raise, the
+    // corpus compensator's behaviour. A separated table is not raised since port step 10-spark:
+    // its row 3 is at Chrome's 59.25 pt (57.75 with the raise).
     let pdf = render(bordered_row_table("collapse", 4, 0).as_bytes(), &opts()).expect("render");
     let first = pdf_text_baselines_pt(&pdf)[0];
     assert!((first - 27.75).abs() <= 0.1, "first row {first} pt");
     let pdf = render(bordered_row_table("separate", 4, 2).as_bytes(), &opts()).expect("render");
     let separate = pdf_text_baselines_pt(&pdf)[2];
-    assert!((separate - 57.75).abs() <= 0.1, "separate {separate} pt");
+    assert!((separate - 59.25).abs() <= 0.1, "separate {separate} pt");
 }

@@ -50,9 +50,22 @@ pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBo
 /// exact; a first row, or the same table with `border-collapse: separate`, is off by the 2 px
 /// raise only. So the raise doubled a raw Blitz error there: the invoice "Total a pagar" row
 /// (`border-top: 0.8pt`) on page 3 was |run| 3.53 px > |N0| 1.98 px, the pin view's (c) item
-/// (`fidelity/gate/layer-vector.mjs` over the 09 run copy). Every other painted cell keeps the
-/// raise (a corpus compensator for raw Blitz flow drift, see the port README).
+/// (`fidelity/gate/layer-vector.mjs` over the 09 run copy).
+///
+/// Not a cell of a `border-collapse: separate` table either (port step 10-spark). There the raise
+/// is the only error: Chrome probe above, row 3 of the separated table at 59.25 pt, the raised
+/// build at 57.75. Its corpus target, raw Blitz row drift of painted rows, is in collapsed tables:
+/// excluding separated tables moves no text run of the seven owned fixtures (layout-diff, all 9
+/// fixtures, 2026-10-22). `oss-sparksuite-invoice` paints separated `cellspacing="0"` tables,
+/// whose spurious UA border-spacing (2 px per row) the raise partly cancelled until
+/// `blitz_engine::table_spacing_hints_css` removed it; with that fixed, its raw Blitz text y equals
+/// Chrome's on every row (layout-diff N0 dy 0) and the raise put the 9 text runs of its 5 painted
+/// rows 2 px above Chrome. Every other painted cell keeps the raise (a corpus compensator for raw
+/// Blitz flow drift, see the port README).
 fn table_cell_has_own_paint(cell: &LaidOutBox, interior_row: bool) -> bool {
+    if !cell.table_border_collapse {
+        return false;
+    }
     if !cell.rounded_borders.is_empty() {
         return true;
     }
@@ -108,15 +121,16 @@ fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64
 /// `layout/table.rs`, `collect_table_cells` / `percent_track`) the way Chrome
 /// does; so `table-layout: fixed` tables are left alone (port step 03; Chrome
 /// probe in `tests/layout_fidelity.rs`).
+///
+/// Every table is visited, nested ones included, outer before inner (document order); each
+/// visit adjusts only that table's own rows. Until port step 10-spark the loop jumped past a
+/// table's subtree, so a table nested in another one was never adjusted: every table of
+/// `oss-postmark-receipt` (one layout table holds the document) kept Blitz's widths.
 pub(crate) fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
+    for i in 0..boxes.len() {
         if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
             let end = subtree_end_by_depth(boxes, i);
             normalize_table_percent_widths_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
         }
     }
 }
@@ -334,7 +348,11 @@ fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
         .filter_map(|idx| boxes[*idx].width_pct_hint)
         .map(|pct| row_width * pct)
         .sum();
-    if explicit_width >= row_width {
+    // Percentages that over-subscribe the row are left to Blitz. Exactly 100% is not
+    // over-subscribed (port step 10-spark): `oss-postmark-receipt`'s `width="80%"` /
+    // `width="20%"` rows are Chrome's 384 / 96 px, and the `>=` this replaced left them at
+    // Blitz's 401 / 79 px (its "Total" label 17.5 px right of Chrome).
+    if explicit_width > row_width + 0.01 {
         return;
     }
 
@@ -388,7 +406,14 @@ fn adjust_subtree_inline_geometry(
     let end = subtree_end_by_depth(boxes, root_idx);
 
     for (offset, b) in boxes[root_idx..end].iter_mut().enumerate() {
-        let is_root = offset == 0;
+        // A descendant exactly as wide as the cell (same left edge and width: an auto-width
+        // block with no inline inset, e.g. postmark's `<td width="80%"><p>Total</p></td>`)
+        // resizes with it, as the browser's would; a narrower one keeps its width.
+        let is_root = offset == 0
+            || ((b.x - old_x).abs() < 0.5
+                && (b.width - old_width).abs() < 0.5
+                && b.image_runs.is_empty()
+                && !matches!(b.tag.as_deref(), Some("table" | "img")));
         adjust_visual_inline_geometry(&mut b.visual_rects, old_x, old_width, dx, dw);
         for border in &mut b.rounded_borders {
             border.x += dx;
