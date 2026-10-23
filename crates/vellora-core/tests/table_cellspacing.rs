@@ -128,3 +128,38 @@ fn a_nested_table_without_the_attribute_keeps_the_ua_spacing() {
         (23.5625, 32.0),
     );
 }
+
+#[test]
+fn cellpadding_replaces_the_ua_cell_padding() {
+    // Chrome, cellspacing="0" and no author padding: the UA `td { padding: 1px }` puts D at
+    // 21.5625,30; cellpadding="0" at 19.5625,28; cellpadding="4" at 27.5625,36.
+    assert_cells(
+        "",
+        &format!("<table cellspacing=\"0\">{ROWS}</table>"),
+        (8.0, 8.0),
+        (21.5625, 30.0),
+    );
+    assert_cells(
+        "",
+        &format!("<table cellspacing=\"0\" cellpadding=\"0\">{ROWS}</table>"),
+        (8.0, 8.0),
+        (19.5625, 28.0),
+    );
+    assert_cells(
+        "",
+        &format!("<table cellspacing=\"0\" cellpadding=\"4\">{ROWS}</table>"),
+        (8.0, 8.0),
+        (27.5625, 36.0),
+    );
+}
+
+#[test]
+fn an_author_padding_beats_cellpadding() {
+    // Chrome: `.p td { padding: 5px }` over cellpadding="0": D at 29.5625,38.
+    assert_cells(
+        ".p td { padding: 5px; }",
+        &format!("<table class=\"p\" cellspacing=\"0\" cellpadding=\"0\">{ROWS}</table>"),
+        (8.0, 8.0),
+        (29.5625, 38.0),
+    );
+}
