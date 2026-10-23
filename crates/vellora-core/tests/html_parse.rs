@@ -263,11 +263,14 @@ fn postmark_receipt_draws_its_layout_table_tail_off_page_known_gap() {
     // tail is emitted below the 841.92 pt page edge: in the PDF, never visible. Chrome 155
     // breaks the table: 2 pages, "1234 Street Rd." and "Suite 1234" on page 2 at baselines
     // 225.75 and 241.50 pt (probe g_postmark_raw, fidelity/baselines/port/09-review-fixes).
-    // A fix that fragments the table must update this test.
+    // A fix that fragments the table must update this test. Port step 10-spark: the template's
+    // 12 `cellspacing="0"` tables no longer keep Blitz's UA 2 px border-spacing, so the tail
+    // moved up 33.0 pt (1038.60 -> 1005.60), toward Chrome's continuous layout (layout-diff N0
+    // dy of "1234 Street Rd." was +66.3 px at 10-crates); it is still below the page edge.
     let p = paginate(POSTMARK);
     assert_eq!(p.pages.len(), 1, "Chrome prints 2 pages");
     let runs = emitted(&p);
-    for (text, at_pt) in [("1234 Street Rd.", 1038.60), ("Suite 1234", 1054.35)] {
+    for (text, at_pt) in [("1234 Street Rd.", 1005.60), ("Suite 1234", 1021.35)] {
         let (page, _, _, y, on_page) = runs
             .iter()
             .find(|(_, t, ..)| t == text)
