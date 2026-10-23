@@ -55,7 +55,19 @@ pub struct PaginationReport {
 /// fragment paints must also stay above a drawn `@bottom-center` line
 /// (`band_fit_height`, port step 10).
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
-const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
+/// How far apart (px) two same-paint rects of one band may be and still be drawn as ONE rect
+/// by [`merge_adjacent_rects`]: rects that touch (or overlap by up to 0.5 px) within this
+/// sub-pixel epsilon. Chrome paints such rects as one seamless area; drawing them as two leaves an
+/// anti-aliased seam at vellora's fractional page offsets in some PDF rasterizers. A real gap is
+/// never bridged, so the background between them shows as it does in Chrome.
+///
+/// Was 4 px (`RECT_MERGE_TOLERANCE_PX`, "Refine PDF visual chrome", 2026-06), which drew two
+/// black WPT stripes 2 px apart as one 42 px rect (30 head / 14 pin WPT passes lost at port link
+/// 01, `fidelity/gate/snapshots/2026-10-22/wpt-raw/`). Over the corpus, oracle fixtures,
+/// layout-diff and probe suite (trace of every merge, 2026-10-22) the merged gaps are exactly
+/// 0, 1 or 2 px, so any epsilon below 1 px gives the same display list; the 1 and 2 px gaps are
+/// no longer bridged (port step `10-rects`, `fidelity/baselines/port/README.md`).
+const RECT_MERGE_EPSILON_PX: f64 = 0.05;
 
 /// Debug/fidelity trace of [`paginate`]'s decisions (fidelity layer `P`, read by
 /// `fidelity/layout-diff/`). Filled only by [`paginate_traced`] with `Some`; the
@@ -794,8 +806,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         pages.push(PdfPage {
             width_px: page.width,
             height_px: page.height,
-            // Not `merge_adjacent_rects`: its 4 px gap tolerance is a vellora display-list
-            // correction (it joins two same-colour boxes up to 4 px apart into one rect).
+            // Not `merge_adjacent_rects`: the raw render draws Blitz's boxes one rect each.
             rects,
             rounded_strokes,
             images,
@@ -1599,6 +1610,9 @@ fn lower_to_display_list(
     (merge_adjacent_rects(rects), rounded_strokes, images, runs)
 }
 
+/// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch
+/// horizontally, within [`RECT_MERGE_EPSILON_PX`], into one rect. Rects with a real gap between
+/// them stay apart.
 fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
     rects.sort_by(|a, b| {
         a.y.partial_cmp(&b.y)
@@ -1613,7 +1627,7 @@ fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
             if prev.color == rect.color
                 && (prev.y - rect.y).abs() <= 0.5
                 && (prev.height - rect.height).abs() <= 0.5
-                && (-0.5..=RECT_MERGE_TOLERANCE_PX).contains(&gap)
+                && (-0.5..=RECT_MERGE_EPSILON_PX).contains(&gap)
             {
                 let right = (rect.x + rect.width).max(prev.x + prev.width);
                 prev.width = right - prev.x;
@@ -1817,4 +1831,66 @@ fn shared_face(
     }
     seen.push(data.clone());
     data.clone()
+}
+
+#[cfg(test)]
+mod merge_tests {
+    use super::*;
+
+    fn rect(x: f64, width: f64) -> FilledRect {
+        FilledRect {
+            x,
+            y: 10.0,
+            width,
+            height: 96.0,
+            color: [0, 0, 0],
+        }
+    }
+
+    fn spans(rects: Vec<FilledRect>) -> Vec<(f64, f64)> {
+        merge_adjacent_rects(rects)
+            .iter()
+            .map(|r| (r.x, r.width))
+            .collect()
+    }
+
+    #[test]
+    fn touching_and_overlapping_same_colour_rects_merge() {
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(28.0, 20.0)]),
+            vec![(8.0, 40.0)]
+        );
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(27.5, 20.0)]),
+            vec![(8.0, 39.5)]
+        );
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(28.03, 20.0)]),
+            vec![(8.0, 40.03)]
+        );
+    }
+
+    #[test]
+    fn a_real_gap_is_never_bridged() {
+        // WPT css/CSS2/linebox/line-height-006.xht: two stripes 2 px apart. The corpus's merged
+        // gaps before port step 10-rects were exactly 1 and 2 px (collapsed-border segments,
+        // `cellspacing` tables Blitz lays out with the default 2 px spacing).
+        for gap in [0.1, 1.0, 2.0, 4.0] {
+            assert_eq!(
+                spans(vec![rect(8.0, 20.0), rect(28.0 + gap, 20.0)]),
+                vec![(8.0, 20.0), (28.0 + gap, 20.0)],
+                "gap {gap}"
+            );
+        }
+    }
+
+    #[test]
+    fn different_colour_or_band_never_merges() {
+        let mut other = rect(28.0, 20.0);
+        other.color = [1, 0, 0];
+        assert_eq!(spans(vec![rect(8.0, 20.0), other]).len(), 2);
+        let mut lower = rect(28.0, 20.0);
+        lower.y = 11.0;
+        assert_eq!(spans(vec![rect(8.0, 20.0), lower]).len(), 2);
+    }
 }

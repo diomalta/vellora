@@ -1893,3 +1893,102 @@ cancelling") is (b), raw Blitz fails it the same way.
 carries `rawOutcome` (the wpt step takes about twice as long: 52.9 s → 106.8 s for the default
 suites, `fidelity/wpt/README.md` "Raw-Blitz mode"), then run `ledger-candidates.mjs` with
 `--raw-wpt <run>/wpt/results.json` and the old runs' `--head-wpt` / `--pin-wpt`.
+
+## `10-rects`: `merge_adjacent_rects` joins only touching rects (2026-10-22, branch `phaseb/10-rects`)
+
+Not a baseline yet (integration-3 writes baseline 10). Local macOS, INDICATIVE: darwin 27.0.0 arm64
+(macOS 27.0.1, Apple M5 Pro), Node v22.23.2, rustc 1.96.0, Chrome 155.0.8059.85, blitz-dom
+0.3.0-beta.4, WPT `9d8aceec`, PyMuPDF 1.28.2.
+
+**Change.** `pagination::merge_adjacent_rects` drew same-colour rects of one band up to
+`RECT_MERGE_TOLERANCE_PX` = 4 px apart as one rect (added in `66aa59d` "Refine PDF visual chrome",
+for collapsed `<th>` backgrounds forming one band). It now merges only rects that touch:
+−0.5 px ≤ gap ≤ `RECT_MERGE_EPSILON_PX` = 0.05 px. A real gap is never bridged.
+
+**Why the 30 head WPT tests passed at 00-start (CONFIRMED).** `layout_dump --pdf` built from
+`659db88` (00-start) and `8290b06` (01) on `css/CSS2/linebox/line-height-006.xht` and its reference
+(Ahem, the reference's image supplied):
+
+| build | test rects (x, y, w × h, px) | reference images (x, y) |
+|---|---|---|
+| `659db88` | (68.47, 94.47, 20 × 96), (90.47, 190.47, 20 × 96): stacked | (68.47, 94.47), (90.47, 190.47): stacked |
+| `8290b06` | (68.47, 110.47, 42 × 96): side by side, then merged | (68.47, 110.47), (90.47, 110.47) |
+
+At 00-start the test and the reference were drawn the same wrong way (the old paginator re-stacked
+fragments), so they compared equal: a false pass. The merge did not apply because the two y
+differed. From 01 on the stripes sit side by side and the merge filled the 2 px gap between them.
+This is display-list evidence. It is not GATE-A1's ink-flag or page-count evidence, but the
+question is moot because the tests now pass.
+
+**What the 4 px tolerance bridged (CONFIRMED).** Every merge was traced during `corpus`,
+`oracles-fixtures`, `layout-diff` and `pdf-probe-suite` (temporary `eprintln`, not committed;
+logs in `~/.cache/vellora-fidelity/rects-merge-evidence-20261022/trace-logs/`). The gaps were
+exactly 0 px (3545 merges), 1 px (900) or 2 px (26). Nothing fell strictly between 0 and 1 px or
+between 1 and 2 px, so any epsilon below 1 px gives the same display list.
+
+- **1 px gaps.** Black or grey 1 px border segments of `border-collapse: collapse` tables
+  (boleto-febraban, danfe, the legacy boleto and invoice fixtures). Blitz 0.3.0-beta.4 draws
+  each cell's own borders, with a doubled 1 px line at every junction, where Chrome draws one
+  line. The old merge closed the 1 px notch of the horizontal line between the doubled verticals,
+  but only in some rows: at boleto-febraban y 73.9 the vertical rects sort between the segments
+  and they were never merged. Now that notch is open in every row. It is 1 px² at 8× zoom, inside
+  an already-doubled junction.
+- **2 px gaps.** oss-sparksuite-invoice (heading band 35 px, 1 px hairlines) and
+  oss-postmark-receipt (hairlines). These are Blitz's default 2 px `border-spacing` in tables
+  marked `cellspacing="0"`. blitz-dom 0.3.0-beta.4 has no `cellspacing` presentational hint:
+  `stylo.rs` `synthesize_presentational_hints_for_legacy_attributes` maps `align`, `width`,
+  `height`, `hspace`, `vspace`, `border` (img), `bgcolor` and `hidden`, but not `cellspacing`, and
+  `layout/table.rs` reads only `border-spacing`. Chrome draws the sparksuite heading cells
+  touching (96 + 359 = 455 px). vellora drew 325 + **2** + 270 px and the merge hid the slit in
+  the paint only. Now the 2 px slit shows (8× raster: 237 → 255 over 2 px). The cell geometry was
+  wrong before and after the change.
+- **Seam guard kept.** Touching same-colour rects still merge.
+  `table_header_background_merges_across_adjacent_cells` still passes: collapsed `<th>` cells
+  touch at beta.4, gap 0.
+
+**Gate** (run `20261023T000308Z`, build `1981837`; copy
+`~/.cache/vellora-fidelity/run-all-10-rects-20261023T000308Z`, with ledger candidates):
+`node fidelity/run-all.mjs --gate --raw --baseline fidelity/baselines/port/09-review-fixes
+--chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json
+--tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/10-rects`.
+
+The verdict is FAIL, from the head and pin views only:
+
+- **Previous link (09): 0 gating.** Improvement 41, within-tolerance 4, gate canaries 20/20.
+  - The improvements are 36 WPT fail → pass and invoice p3 dy −2.65 → −1.15 pt ×5 (10-crates).
+  - The 36 WPT are the 30 head tests, plus `line-height-069/072/073/094/095/102`.
+  - The 4 within-tolerance items are receipt dy −1.15 → 0.35 pt (10-crates).
+- **Head view: 1386 → 1356 gating** (10 declared). The 30 gone are exactly the 30 WPT (c) tests.
+  No item was added and no value changed. WPT went 38 → 8; pdf-probe and values are unchanged.
+- **Pin view: (c) 1140 → 1122** (10 declared).
+  - The 14 WPT of the merge class are gone (WPT 46 → 32).
+  - The 4 receipt dy items are gone, from 10-crates.
+  - The 5 invoice p3 dy items now read −1.15 pt (10-crates).
+- **Candidates** (`ledger-candidates.mjs --raw-wpt` the run):
+  - head: a 1, b 1154, b-page 144, **c 0** (was 30), none 57;
+  - pin: a 1, b 935, b-page 89, **c 38** (was 57), none 59.
+- **WPT outcome × rawOutcome** (8047): pass×pass 3646 → 3682, fail×pass 111 → 75.
+  `position-relative-nested-001` is still product fail × raw pass, pin-flagged. A different vellora
+  layer owns it: 20000 px differ, a 100 × 200 box (HYPOTHESIS, not investigated).
+- **Render scope.** Against the 10-crates render copy (`run-all-merged-render-check-20261022`),
+  45 of 66 vellora PDFs are byte-identical. The 21 that differ are exactly the fixtures with 1 or
+  2 px merges. In every one, page count and words (text + bbox, PyMuPDF) are identical; only the
+  fills differ (fill area: danfe −211 px², sparksuite −148 px²).
+
+**For the next phase.** The 2 px sparksuite and postmark slits come from the missing
+`cellspacing` hint, which also misplaces the text. A throwaway experiment (not committed)
+rendered both fixtures with a zero-specificity emulation injected,
+`:where(table[cellspacing="0"]) { border-spacing: 0px }`, and paired words with Chrome by text
+(indicative, not pdf-probe; `cellspacing-experiment/` in the evidence copy):
+
+| fixture | without the hint | with the hint |
+|---|---|---|
+| sparksuite \|dx\| median | 3.22 pt | 1.72 pt |
+| sparksuite \|dy\| p95 | 11.92 pt | 1.58 pt |
+| postmark \|dy\| median | 9.05 pt | 1.55 pt |
+| postmark \|dy\| p95 | 35.24 pt | 8.24 pt |
+
+With the hint, the sparksuite heading cells touch again and are drawn as one band. HYPOTHESIS:
+the pin-view sparksuite dx 25 item (−0.23 → −3.23 pt) shares this root cause. Settling it needs
+the hint in the core (for example a user-agent-origin rule per distinct `cellspacing` value,
+through `blitz_engine.rs`), gated as its own link. `cellpadding` has the same gap in Blitz.
