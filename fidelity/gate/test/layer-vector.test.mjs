@@ -14,12 +14,14 @@ import {
   PACK_DIR,
   anchorVector,
   boxVector,
+  geometryFallback,
   lcsAlign,
   loadPack,
   packWordVectors,
   readDiff,
   relaxedBFacts,
   runLevelSummary,
+  specAnchorVector,
   stepsOf,
 } from "../layer-vector.mjs";
 
@@ -149,5 +151,108 @@ test("box vectors and the LCS alignment", () => {
       [2, 2],
       [3, 4],
     ],
+  );
+});
+
+// 2026-10-27: the boleto pack of the 10-tip run (run-all-10-tip-20261023T004536Z, a293cf5). Its 44
+// barcode-line digits are 44 one-digit Chrome PDF words but ONE layout-diff fragment, so the LCS
+// leaves them unmapped; the page-1 position fallback maps them to that fragment.
+const boleto = loadPack(join(PACK_DIR, "boleto-10tip.layer-vector-pack.json.gz"));
+const wb = packWordVectors(boleto);
+
+test("10-tip boleto: the LCS maps 249 of 297 words, the geometry fallback the 44 barcode digits", () => {
+  assert.deepEqual([wb.mapping.chromeWords, wb.mapping.mapped], [297, 249]);
+  assert.equal(wb.mapping.geometry.mapped, 44);
+  assert.equal(wb.mapping.pairsMapped, 249 + 44);
+  const geo = [...wb.vectors.values()].filter((x) => x.mappedBy === "geometry");
+  assert.equal(geo.length, 44);
+  for (const g of geo) {
+    assert.match(g.text, /^\d$/);
+    assert.equal(g.runText, "99991999900000123459990000012345670000004200");
+    assert.ok(Math.abs(g.geometry.fragmentBottomDeltaPx) <= 3);
+    assert.deepEqual(g.dy.vector, {
+      unit: "px",
+      N0: 28.531,
+      B0: 28.531,
+      L0: 28.531,
+      painted_table_cell_text_baselines: 28.531,
+      table_percent_widths: 28.531,
+      auto_table_compact_columns: 28.531,
+      P: 25.531,
+      run: 26.467,
+    });
+    // Independent check: the PDF-level dy agrees with the fragment's P within the run tolerance.
+    assert.ok(Math.abs(g.dy.vector.run - g.dy.vector.P) <= 4 / 3);
+    assert.equal(g.dy.relaxedB.possible, true);
+    assert.deepEqual(g.dy.relaxedB.nonZeroVelloraSteps, [{ layer: "P", step: -3 }]);
+  }
+  // Only the first digit starts the fragment: dx is exact for it alone.
+  assert.equal(geo.filter((g) => g.dxExact).length, 1);
+  // The LCS-mapped words are untouched by the fallback (no record carries mappedBy).
+  assert.equal([...wb.vectors.values()].filter((x) => x.mapped && !x.mappedBy).length, 249);
+});
+
+test("geometry fallback: ambiguous, text-inconsistent and off-page-1 words stay unmapped", () => {
+  const frag = (text, x, y, w = 40, h = 10) => ({
+    chrome_text: text,
+    chrome: { x, y, w, h },
+    per_layer: { N0: { dy: 1 }, P: { dy: 1 } },
+  });
+  const diff = { text_events: [frag("abc", 0, 0), frag("abc", 10, 0), frag("xyz", 100, 0)] };
+  const xCheck = { medianOffsetPx: 0, medianBaselineOffsetPxBySize: { 10: 0 } };
+  const pt = (px) => px * 0.75;
+  const words = [
+    { page: 1, text: "abc", x: pt(20), y: pt(10), size: 10 }, // inside both "abc": ambiguous
+    { page: 1, text: "q", x: pt(110), y: pt(10), size: 10 }, // inside "xyz" but not its text
+    { page: 2, text: "xyz", x: pt(110), y: pt(10), size: 10 }, // page 2: no page-1 offsets
+    { page: 1, text: "xyz,", x: pt(100), y: pt(11), size: 10 }, // trailing punctuation dropped
+  ];
+  const m = geometryFallback(words, new Map(), diff, xCheck);
+  assert.deepEqual([...m.keys()], [3]);
+  assert.equal(m.get(3).event, 2);
+  assert.equal(m.get(3).first, true);
+});
+
+test("spec anchor (DANFE-L1 posErrMm): Chrome's spec error + each layer's delta; run = vellora's", () => {
+  // The 10-tip DANFE-L1d numbers: font_sizes.py dy 3.17 mm (Chrome) and 6.49 mm (vellora),
+  // layout-diff dy 11.922 px in every layer of "DADOS DOS PRODUTOS/SERVIÇOS".
+  const layer = { dy: 11.922 };
+  const diff = {
+    layers: [{ name: "N0" }, { name: "B0" }, { name: "L0" }, { name: "P" }],
+    text_events: [
+      {
+        owner: "div",
+        chrome_text: "DADOS DOS PRODUTOS/SERVIÇOS",
+        chrome: { x: 0, y: 660, w: 135, h: 9 },
+        per_layer: { N0: layer, B0: layer, L0: layer, P: layer },
+      },
+    ],
+  };
+  const r = specAnchorVector({
+    diff,
+    text: "DADOS DOS PRODUTOS/SERVIÇOS",
+    chromeErr: { dx: -0.12, dy: 3.17 },
+    velloraErr: { dx: 0, dy: 6.49 },
+  });
+  assert.deepEqual(r.vector, {
+    unit: "px",
+    N0: 23.903,
+    B0: 23.903,
+    L0: 23.903,
+    P: 23.903,
+    run: 24.529,
+  });
+  // 0.626 px above P: inside the documented Chrome DOM-vs-PDF spread, but above the 0.5 px run
+  // tolerance of a position-mm item, so the relaxed (b) rule does NOT hold.
+  assert.equal(r.relaxedB.possible, false);
+  // The metric is max(|dx|, |dy|): a dx-dominated error has no dy vector.
+  assert.equal(
+    specAnchorVector({
+      diff,
+      text: "DADOS",
+      chromeErr: { dx: 5, dy: 1 },
+      velloraErr: { dx: 0, dy: 2 },
+    }),
+    null,
   );
 });

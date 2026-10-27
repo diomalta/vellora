@@ -17,13 +17,18 @@
 //   anchor (text)  the first layout-diff run whose Chrome text starts with the anchor text
 //          (e.g. LET-1's signature lines); `run` = the pdf-probe pair of its first word.
 //   box    (path)  diff.boxes[path].layers; `run` = P (no PDF-level box oracle).
+//   spec anchor (fixture:rule, since 2026-10-27)  a posErrMm item measured against a spec target
+//          (DANFE-L1): Chrome's oracle error + each layer's delta vs Chrome; `run` = vellora's
+//          oracle error (specAnchorVector). Written to `specAnchors[]` and `vectors{ item: vector }`.
+//   Words the LCS leaves unmapped on page 1 are mapped by position (geometryFallback, 2026-10-27):
+//          their records carry `mappedBy: "geometry"` and the placement evidence.
 // "final" in fidelity/ACCEPTANCE.md GATE-A1 (b) is `run`: |run| <= |N0| is the relaxed rule. The
 // last layout_normalize layer, `final_layer` in layout-diff's own reports, is called `finalPass`
 // here so the two are never confused (layout-diff's "P vs final" = P vs finalPass).
 //
 //   node fidelity/gate/layer-vector.mjs --run <run-all dir> [--fixtures a,b]
 //     [--key <pdf-probe item key>]... [--keys-from <gate-report.json>] [--anchor <fixture>:<text>]...
-//     [--box <fixture>:<path>]... [--summary] [--out <file.json>]
+//     [--box <fixture>:<path>]... [--spec-anchor <fixture>:<rule id>]... [--summary] [--out <file.json>]
 //     [--pack <fixture>=<out.json.gz>]   write the offline self-test input of one fixture
 //   --keys-from  every pdf-probe word item (dx/dy) of the report head section (head-gating items),
 //              else of its gating items
@@ -222,23 +227,26 @@ export function wordVectors({ diff, probe, chromeWords, fixture }) {
   );
   const at = (w) => `${w.page}|${w.x}|${w.y}|${w.text}`;
   const wordIndex = new Map(words.map((w, i) => [at(w), i]));
+  const xCheck = mappingXCheck(words, tokens, map, diff);
+  const geo = geometryFallback(words, map, diff, xCheck);
   const vectors = new Map();
   for (const p of probe.pairs) {
     const wi = wordIndex.get(at({ ...p.chrome, text: p.text }));
     const ti = wi === undefined ? undefined : map.get(wi);
+    const g = wi === undefined || ti !== undefined ? undefined : geo.get(wi);
     const base = { fixture, key: p.k, text: p.text, page: p.chrome.page };
-    if (ti === undefined) {
+    if (ti === undefined && g === undefined) {
       vectors.set(p.k, { ...base, mapped: false });
       continue;
     }
-    const t = tokens[ti];
-    const e = diff.text_events[t.event];
+    const e = diff.text_events[ti !== undefined ? tokens[ti].event : g.event];
     const rec = {
       ...base,
       mapped: true,
+      ...(g ? { mappedBy: "geometry", geometry: g.evidence } : {}),
       owner: e.owner,
       runText: e.chrome_text ?? e.text,
-      dxExact: t.first,
+      dxExact: ti !== undefined ? tokens[ti].first : g.first,
     };
     for (const axis of ["dx", "dy"]) {
       const v = { unit: "px", ...vectorOf(e.per_layer, order, axis) };
@@ -257,10 +265,78 @@ export function wordVectors({ diff, probe, chromeWords, fixture }) {
       unmapped: words.length - map.size,
       pairs: probe.pairs.length,
       pairsMapped: [...vectors.values()].filter((x) => x.mapped).length,
-      xCheck: mappingXCheck(words, tokens, map, diff),
+      xCheck,
+      // Since 2026-10-27: page-1 words the LCS leaves unmapped, mapped by position (below).
+      geometry: {
+        method: GEOMETRY_METHOD,
+        mapped: geo.size,
+        pairsMapped: [...vectors.values()].filter((x) => x.mappedBy === "geometry").length,
+      },
       pAgreement: pAgreement(vectors),
     },
   };
+}
+
+export const GEOMETRY_METHOD =
+  "page 1 only: Chrome PDF word origin (pt -> px) minus the page-1 median x offset and the median baseline offset of its font size (mappingXCheck) lies inside exactly one layout-diff Chrome fragment (x within [x - 1, x + w + 1] px, |baseline - fragment bottom| <= 3 px) whose whitespace-free text contains the word's whitespace-free text (trailing , . ; : ! ? dropped: a PDF word may end in the next fragment's punctuation)";
+
+const squash = (s) => String(s ?? "").replace(/\s+/g, "");
+
+/**
+ * Position fallback for the Chrome PDF words the LCS leaves unmapped (2026-10-27). The LCS fails
+ * where Chrome's PDF words and layout-diff's fragments disagree on the TOKENS (boleto's 44-digit
+ * barcode line is one fragment but 44 one-digit PDF words) or on the visual ORDER (text-stress-
+ * ptbr's monospace fragments sit 1 px lower than their line, so the 2 px line buckets reorder
+ * them). On page 1 Chrome's PDF and its continuous layout differ by the page margins only
+ * (mappingXCheck: one x offset, one baseline offset per font size), so a word is placed in the
+ * Chrome layout and mapped to the fragment that contains it and contains its text. Ambiguous
+ * (two fragments) or text-inconsistent candidates stay unmapped. Returns Map(wordIndex -> {
+ * event, first, evidence }).
+ */
+export function geometryFallback(words, map, diff, xCheck) {
+  const out = new Map();
+  const mx = xCheck?.medianOffsetPx;
+  const my = xCheck?.medianBaselineOffsetPxBySize ?? {};
+  if (typeof mx !== "number") return out;
+  const frags = (diff.text_events ?? [])
+    .map((e, i) => ({ e, i }))
+    .filter(({ e }) => e.chrome && (e.chrome_text ?? e.text));
+  words.forEach((w, wi) => {
+    if (map.has(wi) || w.page !== 1) return;
+    const off = my[Math.round((w.size ?? 0) * 10) / 10];
+    // "solicitado," is one PDF word over two Chrome fragments ("itálico solicitado" + ", "): the
+    // word's run is the fragment holding its origin, the punctuation is the next one.
+    const text = squash(w.text).replace(/[,.;:!?]+$/, "");
+    if (typeof off !== "number" || !text) return;
+    const x = w.x * PX_PER_PT - mx;
+    const b = w.y * PX_PER_PT - off;
+    const hits = frags.filter(({ e }) => {
+      const c = e.chrome;
+      return (
+        x >= c.x - 1 &&
+        x <= c.x + c.w + 1 &&
+        Math.abs(b - (c.y + c.h)) <= 3 &&
+        squash(e.chrome_text ?? e.text).includes(text)
+      );
+    });
+    if (hits.length !== 1) return;
+    const { e, i } = hits[0];
+    const c = e.chrome;
+    const ft = squash(e.chrome_text ?? e.text);
+    out.set(wi, {
+      event: i,
+      // dx is exact for the fragment's first word only: the word must start the fragment's text
+      // and sit at its left edge.
+      first: ft.startsWith(text) && Math.abs(x - c.x) <= 3,
+      evidence: {
+        xPx: r3(x),
+        baselinePx: r3(b),
+        fragment: { x: c.x, y: c.y, w: c.w, h: c.h },
+        fragmentBottomDeltaPx: r3(b - (c.y + c.h)),
+      },
+    });
+  });
+  return out;
 }
 
 /**
@@ -374,6 +450,43 @@ export function anchorVector(diff, text, axis = "dy") {
   return { owner: e.owner, runText: e.chrome_text ?? e.text, axis, vector: v, steps: stepsOf(v) };
 }
 
+export const PX_PER_MM = 96 / 25.4;
+
+/**
+ * Spec-anchor vector (2026-10-27) for a metric measured against a SPECIFICATION target, not
+ * against Chrome: DANFE-L1 `posErrMm` = max(|dx|, |dy|) of a block title's glyph box vs the
+ * MOC 3.8.1 suggested position (fidelity/corpus/font_sizes.py `pos_error_mm`). Each layer's
+ * value is the error vs the spec the layer would give: Chrome's own error (the same oracle on
+ * Chrome's PDF) + the layer's delta vs Chrome (layout-diff anchor run of the rule's text, dy);
+ * `run` = the oracle's error on vellora's PDF (what the gate measured). Unit px (the vector's
+ * step tolerances), converted to mm by the gate (GATE-D7). Only the dy axis is supported: the
+ * metric must be |dy| on both sides (|dy| >= |dx|), else null. A negative vellora dy flips the
+ * whole vector so that `run` = +metric (the metric is an absolute value; |run| <= |N0| is
+ * sign-free). Returns { vector, steps, inputs } or null.
+ */
+export function specAnchorVector({ diff, text, chromeErr, velloraErr }) {
+  if (!chromeErr || !velloraErr) return null;
+  if (Math.abs(chromeErr.dy) < Math.abs(chromeErr.dx)) return null;
+  if (Math.abs(velloraErr.dy) < Math.abs(velloraErr.dx)) return null;
+  const a = anchorVector(diff, text, "dy");
+  if (!a) return null;
+  const sign = velloraErr.dy < 0 ? -1 : 1;
+  const c = chromeErr.dy * PX_PER_MM;
+  const v = { unit: "px" };
+  for (const [layer, d] of Object.entries(a.vector)) {
+    if (layer !== "unit") v[layer] = r3(sign * (c + d));
+  }
+  v.run = r3(sign * velloraErr.dy * PX_PER_MM);
+  return {
+    owner: a.owner,
+    runText: a.runText,
+    vector: v,
+    steps: stepsOf(v),
+    relaxedB: relaxedBFacts(v, "position-mm"),
+    inputs: { chromeErrMm: chromeErr, velloraErrMm: velloraErr, layoutDiffDy: a.vector },
+  };
+}
+
 /** Box vector: diff.boxes[path] layer deltas; `run` = P (or the final pass when P is n/a). */
 export function boxVector(diff, path, axis = "dy") {
   const b = (diff.boxes ?? []).find((x) => x.path === path);
@@ -415,7 +528,7 @@ async function main() {
   const runDir = val("--run") && resolve(val("--run"));
   if (!runDir || !existsSync(join(runDir, "layout-diff"))) {
     process.stderr.write(
-      "usage: node fidelity/gate/layer-vector.mjs --run <run-all dir> [--fixtures a,b] [--key k]... [--keys-from gate-report.json] [--anchor fx:text]... [--box fx:path]... [--summary] [--out file]\n",
+      "usage: node fidelity/gate/layer-vector.mjs --run <run-all dir> [--fixtures a,b] [--key k]... [--keys-from gate-report.json] [--anchor fx:text]... [--box fx:path]... [--spec-anchor fx:rule]... [--summary] [--out file]\n",
     );
     process.exitCode = 2;
     return;
@@ -518,6 +631,68 @@ async function main() {
       ...anchorVector(readDiff(runDir, fixture), rest.join(":")),
     };
   });
+  // --spec-anchor <fixture>:<rule id>: a DANFE-L1-style posErrMm item (specAnchorVector); the
+  // oracle (fidelity/corpus/font_sizes.py) is re-run on the run's corpus PDFs of both sides.
+  const specs = all("--spec-anchor");
+  if (specs.length) {
+    const { execFileSync } = await import("node:child_process");
+    const { requirePython } = await import("../layout-diff/lib/pdf-words.mjs");
+    const python = requirePython();
+    const fontSizes = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "..",
+      "corpus",
+      "font_sizes.py",
+    );
+    const oracle = (fixture, side) => {
+      const dir = join(runDir, "corpus", fixture);
+      return JSON.parse(
+        execFileSync(
+          python,
+          [
+            "-I",
+            fontSizes,
+            "--pdf",
+            join(dir, `${side}.pdf`),
+            "--rules",
+            join(dir, `${side}-fontrules.json`),
+            "--html",
+            join(dir, "templated.html"),
+          ],
+          { encoding: "utf8", maxBuffer: 1 << 26 },
+        ),
+      );
+    };
+    out.specAnchors = [];
+    out.vectors = {};
+    const cache = new Map();
+    for (const s of specs) {
+      const [fixture, rule] = s.split(":");
+      for (const side of ["chrome", "vellora"]) {
+        if (!cache.has(`${fixture}|${side}`))
+          cache.set(`${fixture}|${side}`, oracle(fixture, side));
+      }
+      const find = (side) => cache.get(`${fixture}|${side}`).rules.find((r) => r.id === rule);
+      const c = find("chrome");
+      const v = find("vellora");
+      const item = `${fixture}|${rule}|corpus||criterion#1|posErrMm`;
+      const rec = specAnchorVector({
+        diff: readDiff(runDir, fixture),
+        text: v?.text ?? c?.text,
+        chromeErr: c?.pos_error_mm,
+        velloraErr: v?.pos_error_mm,
+      });
+      out.specAnchors.push({
+        item,
+        fixture,
+        rule,
+        text: v?.text ?? c?.text,
+        oracle: "fidelity/corpus/font_sizes.py on corpus/<fixture>/{chrome,vellora}.pdf",
+        ...(rec ?? { error: "no anchor run, or |dx| dominates the metric" }),
+      });
+      if (rec) out.vectors[item] = rec.vector;
+    }
+  }
   out.boxes = all("--box").map((a) => {
     const [fixture, ...rest] = a.split(":");
     return { fixture, ...boxVector(readDiff(runDir, fixture), rest.join(":")) };
