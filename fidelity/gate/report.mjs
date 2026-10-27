@@ -1,4 +1,5 @@
 // Gate report rendering (markdown) from compareSnapshots() output. Pure.
+import { renderDocAggregateMarkdown } from "./doc-aggregate.mjs";
 
 const esc = (v) =>
   String(v ?? "")
@@ -194,6 +195,7 @@ export function renderGateMarkdown(report, { baseline, run, command, date, envir
       "",
     );
   }
+  if (report.docAggregate) lines.push(...renderDocAggregateMarkdown(report.docAggregate));
   if (report.wptPerSuite) {
     lines.push(
       "## WPT per directory (pass / clean pass)",

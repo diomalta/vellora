@@ -17,6 +17,7 @@ import {
   transitionProblems,
 } from "./debt.mjs";
 import { mergeChainDeclarations } from "./declarations.mjs";
+import { DOC_AGGREGATE_TOLERANCE, evaluateDocAggregate } from "./doc-aggregate.mjs";
 import { PACK_DIR, loadPack, packWordVectors, relaxedBFacts } from "./layer-vector.mjs";
 import { wptRoute } from "./wpt-route.mjs";
 
@@ -193,6 +194,8 @@ export function runGateCanaries({
   resolveBase = resolveLedgerBase,
   carry = mergeChainDeclarations,
   route = wptRoute,
+  docAggregate = null,
+  docRule = evaluateDocAggregate,
 } = {}) {
   const rows = [];
   const seed = probeSeed(run);
@@ -927,6 +930,174 @@ export function runGateCanaries({
           layoutUnnamed.length > 0 &&
           layoutNamed.length > 0 &&
           runStep.length > 0,
+      ),
+    );
+  }
+  rows.push(...docAggregateCanaries(docAggregate, docRule));
+  return rows;
+}
+
+/** A real fixture row of the run's doc-aggregate (synthetic when none) and a pin equal to it. */
+function docSeed(doc) {
+  const real = Object.entries(doc?.fixtures ?? {}).find(
+    ([, r]) => typeof r.medianMm === "number" && typeof r.within1mmPct === "number",
+  );
+  const [fixture, row] = real ?? [
+    "canary",
+    {
+      pages: 1,
+      chromePages: 1,
+      chromeWords: 100,
+      missingWords: 0,
+      medianMm: 0.5,
+      p90Mm: 0.9,
+      within1mmPct: 90,
+      inputs: { nativeHtmlSha256: "canary-html", chromeGeometrySha256: "canary-geometry" },
+    },
+  ];
+  // Pages equal to Chrome's in the seed, so only the DOC-4 canary plants a page difference.
+  const base = { ...clone(row), chromePages: row.pages };
+  const method = doc?.method ?? { canary: true };
+  const noise = {
+    max: Object.fromEntries(Object.keys(DOC_AGGREGATE_TOLERANCE).map((m) => [m, 0])),
+  };
+  return {
+    fixture,
+    real: Boolean(real),
+    pin: { method, noise, fixtures: { [fixture]: clone(base) } },
+    run: (edit = (r) => r) => ({ method, fixtures: { [fixture]: edit(clone(base)) } }),
+  };
+}
+
+/**
+ * DOC-1..DOC-4 canaries (GATE-K2, 2026-10-27): planted into a real row of the run's document
+ * aggregate; each must be caught by the doc-aggregate rule (injectable for the self-test).
+ */
+function docAggregateCanaries(doc, rule) {
+  const seed = docSeed(doc);
+  const tol = DOC_AGGREGATE_TOLERANCE;
+  const src = seed.real ? `real row ${seed.fixture}` : "synthetic row";
+  const gatingKeys = (r) => r.items.filter((i) => i.gating).map((i) => i.key);
+  const key = (m) => `doc-aggregate|${seed.fixture}|${m}`;
+  const round = (v) => Math.round(v * 1000) / 1000;
+  const rows = [];
+  {
+    const at = rule({
+      pin: seed.pin,
+      run: seed.run((r) => ({ ...r, medianMm: round(r.medianMm + tol.medianMm) })),
+      main: true,
+    });
+    const over = rule({
+      pin: seed.pin,
+      run: seed.run((r) => ({ ...r, medianMm: round(r.medianMm + tol.medianMm + 0.01) })),
+      main: true,
+    });
+    const noMain = rule({
+      pin: seed.pin,
+      run: seed.run((r) => ({ ...r, medianMm: r.medianMm + 1 })),
+      main: false,
+    });
+    const listed = noMain.items.find((i) => i.key === key("medianMm"));
+    rows.push(
+      row(
+        "DOC-1 median word distance worse than the published engine",
+        `${src}: +${tol.medianMm} mm (= tolerance) passes; +${round(tol.medianMm + 0.01)} mm gates under --main; +1 mm without --main is listed, not gating`,
+        `at tolerance gating [${gatingKeys(at)}]; over [${gatingKeys(over)}]; no --main listed ${Boolean(listed)} gating ${listed?.gating}`,
+        gatingKeys(at).length === 0 &&
+          gatingKeys(over).includes(key("medianMm")) &&
+          listed?.gating === false &&
+          noMain.verdict === "PASS",
+      ),
+    );
+  }
+  {
+    const over = rule({
+      pin: seed.pin,
+      run: seed.run((r) => ({
+        ...r,
+        within1mmPct: round(r.within1mmPct - tol.within1mmPct - 0.1),
+      })),
+      main: true,
+    });
+    const at = rule({
+      pin: seed.pin,
+      run: seed.run((r) => ({ ...r, within1mmPct: round(r.within1mmPct - tol.within1mmPct) })),
+      main: true,
+    });
+    rows.push(
+      row(
+        "DOC-1 share of words within 1 mm below the published engine",
+        `${src}: -${tol.within1mmPct} pp passes; -${round(tol.within1mmPct + 0.1)} pp gates under --main`,
+        `at tolerance gating [${gatingKeys(at)}]; over [${gatingKeys(over)}]`,
+        gatingKeys(at).length === 0 && gatingKeys(over).includes(key("within1mmPct")),
+      ),
+    );
+  }
+  {
+    const r = rule({
+      pin: seed.pin,
+      run: seed.run((x) => ({ ...x, missingWords: x.missingWords + 1 })),
+      main: true,
+    });
+    rows.push(
+      row(
+        "DOC-1 one more missing word than the published engine",
+        `${src}: missingWords +1 gates under --main`,
+        `gating [${gatingKeys(r)}]`,
+        gatingKeys(r).includes(key("missingWords")),
+      ),
+    );
+  }
+  {
+    const r = rule({ pin: seed.pin, run: { method: seed.pin.method, fixtures: {} }, main: true });
+    const none = rule({ pin: seed.pin, run: null, main: true });
+    rows.push(
+      row(
+        "DOC-3 a fixture (or the whole aggregate) absent from the run",
+        `${src}: the fixture removed gates; no run aggregate refuses under --main`,
+        `removed gating [${gatingKeys(r)}]; no aggregate ${none.verdict}`,
+        gatingKeys(r).includes(`doc-aggregate|${seed.fixture}`) && none.verdict === "REFUSED",
+      ),
+    );
+  }
+  {
+    const html = rule({
+      pin: seed.pin,
+      run: seed.run((x) => ({ ...x, inputs: { ...x.inputs, nativeHtmlSha256: "changed" } })),
+      main: true,
+    });
+    const geometry = rule({
+      pin: seed.pin,
+      run: seed.run((x) => ({ ...x, inputs: { ...x.inputs, chromeGeometrySha256: "changed" } })),
+      main: true,
+    });
+    const noisy = rule({
+      pin: { ...seed.pin, noise: { max: { ...seed.pin.noise.max, medianMm: tol.medianMm * 2 } } },
+      run: seed.run(),
+      main: true,
+    });
+    rows.push(
+      row(
+        "DOC-2 the pin scored on another input, Chrome geometry or above its noise",
+        `${src}: native.html sha changed, Chrome geometry sha changed, pin noise 2x the median tolerance: each REFUSED under --main`,
+        `html ${html.verdict}; geometry ${geometry.verdict}; noise ${noisy.verdict}`,
+        html.verdict === "REFUSED" && geometry.verdict === "REFUSED" && noisy.verdict === "REFUSED",
+      ),
+    );
+  }
+  {
+    const plant = (x) => ({ ...x, pages: x.chromePages + 1 });
+    const report = rule({ pin: seed.pin, run: seed.run(plant), main: true, contract: false });
+    const gated = rule({ pin: seed.pin, run: seed.run(plant), main: true, contract: true });
+    const listed = report.items.find((i) => i.key === key("pages"));
+    rows.push(
+      row(
+        "DOC-4 page count differs from Chrome's (contract condition 3)",
+        `${src}: pages = Chrome + 1 is reported (not gating) under --main, gating under --contract`,
+        `--main listed ${Boolean(listed)} gating ${listed?.gating} condition3 ${report.condition3}; --contract gating [${gatingKeys(gated)}]`,
+        listed?.gating === false &&
+          report.condition3 === "FAIL" &&
+          gatingKeys(gated).includes(key("pages")),
       ),
     );
   }

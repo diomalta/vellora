@@ -7,7 +7,7 @@
 //   node fidelity/gate/run.mjs --baseline <fidelity/baselines/<name>> --run <run-all out dir>
 //     [--accept <accepted.json>] [--out <dir>] [--head <baseline dir> | --no-head]
 //     [--pin <baseline dir> | --no-pin] [--main] [--debt <DEBT.json>] [--debt-base <DEBT.json>]
-//     [--step <NN-name>] [--layout-from <run-all dir>]
+//     [--step <NN-name>] [--layout-from <run-all dir>] [--contract] [--doc-aggregate <file>]
 //
 // --baseline the previous link (GATE-S1..R1, per-step tolerances).
 // --head     the chain head (default: the "**Chain head**" named in fidelity/baselines/port/
@@ -26,6 +26,11 @@
 //            The head comparison merges the declaredRejections of every port link from the head
 //            (exclusive) to this step (inclusive), the pin view those of every link up to it
 //            (manifests + baselines/port/declared-rejections.json; I4, gate/declarations.mjs).
+// --contract the strict exit contract (ACCEPTANCE.md "Strict exit contract"): implies --main and
+//            also gates DOC-4, the page count of every fixture equal to Chrome's (condition 3).
+// --doc-aggregate  the run's document aggregate (default <run>/doc-aggregate/summary.json, written
+//            by the run-all step doc-aggregate); compared with <pin>/doc-aggregate.json (DOC-1..4,
+//            gate/doc-aggregate.mjs): reported always, gating under --main.
 // --layout-from  a run-all dir whose layout-diff dumps give the run's layout_normalize passes
 //            (rule v) when the snapshot does not record them (baselines written before
 //            2026-10-21, or a committed baseline used as --run).
@@ -60,6 +65,11 @@ import {
   transitionProblems,
 } from "./debt.mjs";
 import { chainDeclarations } from "./declarations.mjs";
+import {
+  evaluateDocAggregate,
+  loadPinDocAggregate,
+  loadRunDocAggregate,
+} from "./doc-aggregate.mjs";
 import { verdictIndex } from "./metrics.mjs";
 import { renderGateMarkdown } from "./report.mjs";
 import { loadSnapshot } from "./snapshot.mjs";
@@ -253,6 +263,9 @@ const countClasses = (items) => {
  *   pin           the shipped main (GATE-H3, pin view): every item worse than it is classed
  *                 (a) / (b) / (c); with `main` a (c) item gates (a merge to main)
  *   ledger        DEBT.json (GATE-D1..D7); ledgerBase: the ledger at the merge base (rule iii)
+ *   docAggregate  { run, pin } document aggregates (DOC-1..DOC-4; a null member = absent, which
+ *                 REFUSES under main); undefined = the section is not evaluated (pure callers)
+ *   contract      the strict exit contract: DOC-4 (pages == Chrome's) gates as well
  * Returns the report (compareSnapshots shape + head, pin, ledger, gateCanaries sections).
  */
 export function evaluateGate({
@@ -270,6 +283,8 @@ export function evaluateGate({
   step = null,
   passes = null,
   main = false,
+  contract = false,
+  docAggregate = undefined,
   canaries = true,
 }) {
   const report = compareSnapshots(before, after, { accept, declared });
@@ -346,8 +361,18 @@ export function evaluateGate({
       detail: p,
     });
   }
+  if (docAggregate !== undefined) {
+    const d = evaluateDocAggregate({ ...docAggregate, main: main || contract, contract });
+    report.docAggregate = d;
+    report.items.push(...d.items);
+    report.refusals.push(...d.refusals.map((r) => `doc-aggregate: ${r}`));
+  }
   if (canaries) {
-    report.gateCanaries = runGateCanaries({ run: after, passes });
+    report.gateCanaries = runGateCanaries({
+      run: after,
+      passes,
+      docAggregate: docAggregate?.run ?? null,
+    });
     report.items.push(...gateCanaryItems(report.gateCanaries));
   }
   if (pin) {
@@ -389,6 +414,12 @@ export function evaluateGate({
     ...(report.pin
       ? { pinA: report.pin.counts.a, pinB: report.pin.counts.b, pinC: report.pin.counts.c }
       : {}),
+    ...(report.docAggregate?.counts
+      ? {
+          docRegressions: report.docAggregate.counts.regressions,
+          contractPagesFailing: report.docAggregate.counts.contractPagesFailing,
+        }
+      : {}),
   };
   const byGroup = {};
   for (const i of report.items) {
@@ -421,6 +452,8 @@ export function runGate({
   step = null,
   layoutFrom = null,
   main = false,
+  contract = false,
+  docAggregateFile = null,
   git = runGit,
 }) {
   const before = loadSnapshot(baselineDir);
@@ -435,7 +468,14 @@ export function runGate({
     current: declared,
     step,
   });
-  const pin = loadOptional(pinDir === undefined ? join(BASELINES_DIR, "pin") : pinDir);
+  const resolvedPin = pinDir === undefined ? join(BASELINES_DIR, "pin") : pinDir;
+  const pin = loadOptional(resolvedPin);
+  // DOC-*: the pin reference lives in the pin baseline; --no-pin leaves it absent (REFUSED under
+  // --main, like every other missing doc-aggregate input).
+  const docAggregate = {
+    run: loadRunDocAggregate(runDir, docAggregateFile),
+    pin: loadPinDocAggregate(resolvedPin),
+  };
   const ledger = loadDebt(debtFile);
   const base = resolveLedgerBase({ debtBase, git });
   const ledgerBase = base.refusal ? undefined : base.ledger;
@@ -455,6 +495,8 @@ export function runGate({
     step,
     passes,
     main,
+    contract,
+    docAggregate,
   });
   const meta = {
     date: date ?? new Date().toISOString(),
@@ -472,6 +514,8 @@ export function runGate({
     ledgerBase: base.refusal ?? base.source,
     step,
     layoutFrom: layoutFrom ? rel(layoutFrom) : null,
+    docAggregateFile: docAggregateFile ? rel(docAggregateFile) : null,
+    contract,
   };
   mkdirSync(outDir, { recursive: true });
   writeFileSync(
@@ -491,7 +535,10 @@ export function runGate({
   return { report, exitCode: GATE_EXIT[report.verdict] ?? 1 };
 }
 
-/** --head/--no-head, --pin/--no-pin, --debt, --debt-base, --step, --layout-from, --main. */
+/**
+ * --head/--no-head, --pin/--no-pin, --debt, --debt-base, --step, --layout-from, --main, --contract
+ * (implies --main), --doc-aggregate.
+ */
 export function gateOptions(argv) {
   const val = (name) => {
     const i = argv.indexOf(name);
@@ -506,7 +553,9 @@ export function gateOptions(argv) {
     debtBase: val("--debt-base") ? resolve(val("--debt-base")) : undefined,
     step: val("--step") ?? null,
     layoutFrom: val("--layout-from") ? resolve(val("--layout-from")) : null,
-    main: argv.includes("--main"),
+    main: argv.includes("--main") || argv.includes("--contract"),
+    contract: argv.includes("--contract"),
+    docAggregateFile: val("--doc-aggregate") ? resolve(val("--doc-aggregate")) : null,
   };
 }
 
@@ -552,6 +601,10 @@ async function main() {
     }${
       report.pin
         ? `gate: pin view ${report.pin.baseline}: (a) ${report.pin.counts.a}, (b) ${report.pin.counts.b}, (c) ${report.pin.counts.c}, declared ${report.pin.counts.declared}; merge to main ${report.pin.mainMerge}\n`
+        : ""
+    }${
+      report.docAggregate
+        ? `gate: doc-aggregate ${report.docAggregate.verdict}; contract condition 2 ${report.docAggregate.condition2 ?? "-"}, condition 3 ${report.docAggregate.condition3 ?? "-"}\n`
         : ""
     }${report.refusals.map((r) => `gate: REFUSED ${r}\n`).join("")}gate: report ${join(outDir, "gate-report.md")}\n`,
   );

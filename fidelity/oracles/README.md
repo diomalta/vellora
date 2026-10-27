@@ -140,6 +140,16 @@ does not exist is treated like a missing venv.
   zbar (`-Sdisable -Scode128.enable`) and validates the chave's mod-11 cDV with the corpus
   validator (`fidelity/corpus/lib/nfe.mjs`, MOC 7.0 Visão Geral 2.2.6.2); DANFE-B1 is no longer
   not-run.
+- **doc-aggregate** (`doc-aggregate.mjs`, `lib/doc-aggregate.mjs`, `py/words.py`; 2026-10-27,
+  exit-contract condition 2): per fixture of a run-all dir, the run's `vellora.pdf` vs Chrome's
+  `chrome.pdf` as whole documents: median and p90 word-origin distance (mm), share of Chrome's
+  words within 1 mm, missing / extra words, pages vs Chrome's, plus the sha256 of the input HTML,
+  both PDFs and both word geometries. Run-all step `doc-aggregate` writes
+  `<run>/doc-aggregate/summary.json`; `node fidelity/oracles/doc-aggregate.mjs --run <dir> --out
+  <file>` re-scores an existing run without writing into it. The pin reference
+  (`baselines/pin/doc-aggregate.json`) is made by `doc-aggregate-pin.mjs` with the published
+  engine. Method, pin provenance and the gate rules (DOC-1..DOC-4): `fidelity/ACCEPTANCE.md`
+  section 9.
 - **layout-consensus** (`lib/layout.mjs`, `lib/consensus.mjs`, `py/words.py`): word anchors are
   the pen origin x of the first glyph and the baseline y (PyMuPDF `rawdict`). Box tops are not
   used, because they come from producer-declared font ascents (see
