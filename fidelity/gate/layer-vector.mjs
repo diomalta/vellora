@@ -97,7 +97,12 @@ export function relaxedBFacts(vector, tolClass = "pdf-probe-pt") {
   const steps = stepsOf(vector).filter(
     (s) => Math.abs(s.step) > (s.layer === "run" ? runTol : tol),
   );
-  const ok = Math.abs(vector.run) <= Math.abs(vector.N0) + runTol;
+  const runOk = Math.abs(vector.run) <= Math.abs(vector.N0) + runTol;
+  // Rule (ii), 2026-10-27 (gate/debt.mjs relaxedBKey): the layout layers end at P, measured
+  // against the same reference as N0, so |P| may exceed |N0| by the step tolerance only.
+  const pOk =
+    typeof vector.P !== "number" || Math.abs(vector.P) <= Math.abs(vector.N0) + tol + 1e-6;
+  const ok = runOk && pOk;
   return {
     possible: ok,
     absRun: r3(Math.abs(vector.run)),
@@ -105,7 +110,11 @@ export function relaxedBFacts(vector, tolClass = "pdf-probe-pt") {
     stepTolerance: tol,
     runTolerance: r3(runTol),
     nonZeroVelloraSteps: steps,
-    why: ok ? null : `|run| ${r3(Math.abs(vector.run))} > |N0| ${r3(Math.abs(vector.N0))}`,
+    why: !runOk
+      ? `|run| ${r3(Math.abs(vector.run))} > |N0| ${r3(Math.abs(vector.N0))}`
+      : !pOk
+        ? `|P| ${r3(Math.abs(vector.P))} > |N0| ${r3(Math.abs(vector.N0))} + ${tol}`
+        : null,
   };
 }
 

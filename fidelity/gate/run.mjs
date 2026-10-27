@@ -205,6 +205,16 @@ export function pageMetricKeys(snapshot) {
   return new Set([...metrics].filter(([, m]) => m.tolClass === "page-delta").map(([k]) => k));
 }
 
+/** Page-count (page-delta) metric values of a snapshot: Map(key -> value) (rule vi' binds them). */
+export function pageMetricValues(snapshot) {
+  const { metrics } = verdictIndex(snapshot?.fixtures ?? []);
+  return new Map(
+    [...metrics]
+      .filter(([, m]) => m.tolClass === "page-delta" && typeof m.value === "number")
+      .map(([k, m]) => [k, m.value]),
+  );
+}
+
 /** The layout_normalize pass names a snapshot recorded (fixtures' layoutDiff.passes), or null. */
 export function snapshotPasses(snapshot, layoutFrom = null) {
   const out = new Set();
@@ -279,11 +289,13 @@ export function evaluateGate({
         step,
         presentKeys: snapshotKeys(after),
         headItems: hr ? new Map(hr.items.map((i) => [i.key, i])) : null,
+        headPageValues: head ? pageMetricValues(head.snapshot) : null,
+        runPageValues: pageMetricValues(after),
       }),
     );
   }
   if (head) {
-    const applied = applyLedger(hr, doc, { passes });
+    const applied = applyLedger(hr, doc, { passes, pageValues: pageMetricValues(after) });
     problems.push(...applied.problems);
     const items = [
       ...applied.items,
@@ -334,7 +346,11 @@ export function evaluateGate({
   }
   if (pin) {
     const pr = compareSnapshots(pin.snapshot, after, { accept: classA, declared: pinDeclared });
-    report.pin = { baseline: pin.dir, ...pinView(pr, doc), main };
+    report.pin = {
+      baseline: pin.dir,
+      ...pinView(pr, doc, { pageValues: pageMetricValues(after) }),
+      main,
+    };
     if (main) {
       // When --baseline is the pin itself the same items already gate: do not count them twice.
       const gatingKeys = new Set(report.items.filter((i) => i.gating).map((i) => i.key));

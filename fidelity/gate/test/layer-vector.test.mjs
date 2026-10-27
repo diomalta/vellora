@@ -242,9 +242,11 @@ test("spec anchor (DANFE-L1 posErrMm): Chrome's spec error + each layer's delta;
     P: 23.903,
     run: 24.529,
   });
-  // 0.626 px above P: inside the documented Chrome DOM-vs-PDF spread, but above the 0.5 px run
-  // tolerance of a position-mm item, so the relaxed (b) rule does NOT hold.
-  assert.equal(r.relaxedB.possible, false);
+  // 0.626 px above P: inside the measured Chrome DOM-vs-PDF spread (danfe page-1 dy -0.284..+1.113
+  // px). Since rule (ii) (2026-10-27) a position-mm item shares the pdf-probe run tolerance
+  // (1.333 px), so the relaxed (b) rule holds; before, its 0.5 px run tolerance refused it.
+  assert.equal(r.relaxedB.possible, true);
+  assert.equal(r.relaxedB.runTolerance, 1.333);
   // The metric is max(|dx|, |dy|): a dx-dominated error has no dy vector.
   assert.equal(
     specAnchorVector({

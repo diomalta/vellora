@@ -750,6 +750,158 @@ export function runGateCanaries({
       ),
     );
   }
+  // 21. Rule vi' (GATE-D6b; rule (i) of Phase B integration 5, 2026-10-27): a listed page scope
+  // binds a page metric unchanged vs the head (1 -> 1, not a head item; the run's value comes
+  // from the snapshot). Its listed page-2 word is covered while the page delta is 1; the page
+  // delta 1 -> 2 gates (the metric and the word: debt-exceeded); a page-1 word of the fixture
+  // worsening beyond tolerance still gates (head-regression); at page delta 0 the listed word is
+  // compared again (head-regression). D7: the exact entry ties to the snapshots (control: none);
+  // a head 1 / run 2 metric or a ceiling above the page delta is a problem.
+  {
+    const page = "canary|TXT-P1|corpus||criterion#1|pageDelta";
+    const p2 = "pdf-probe|canary|p2|Canary#1|dy";
+    const p1 = "pdf-probe|canary|p1|Canary#1|dy";
+    const word = (key) => ({
+      key,
+      group: "pdf-probe",
+      check: "pdf-probe",
+      tolClass: "pdf-probe-pt",
+      tol: 1,
+      better: "lower-abs",
+      before: 0.1,
+      after: 5,
+      class: "regression",
+      gating: true,
+      detail: "canary word",
+    });
+    const pageItem = {
+      key: page,
+      check: "value",
+      tolClass: "page-delta",
+      tol: 0,
+      better: "lower",
+      before: 1,
+      after: 2,
+      class: "regression",
+      gating: true,
+      detail: "canary page delta 1 -> 2",
+    };
+    const scopedEntry = (ceiling = 1, extra = {}) => ({
+      id: "CANARY-PS",
+      class: "b",
+      owner: { layer: "vellora:pagination", component: "canary pagination" },
+      compensators: [],
+      closesAt: "99-canary",
+      introducedBy: "99-canary",
+      evidence: ["gate canary"],
+      scope: { fixture: "canary", fromPage: 2, keys: [p2] },
+      keys: [
+        {
+          key: page,
+          tolClass: "page-delta",
+          headValue: 1,
+          ceiling,
+          measured: 1,
+          layerVectorRef: null,
+          ...extra,
+        },
+      ],
+    });
+    const ledger = { ...emptyLedger(), entries: [scopedEntry()] };
+    const cls = (items, value, key) =>
+      apply({ items }, ledger, { passes, pageValues: new Map([[page, value]]) }).items.find(
+        (i) => i.key === key,
+      );
+    const same = cls([word(p2), word(p1)], 1, p2);
+    const p1Same = cls([word(p2), word(p1)], 1, p1);
+    const grew = cls([word(p2), pageItem], 2, p2);
+    const grewPage = cls([word(p2), pageItem], 2, page);
+    const matched = cls([word(p2)], 0, p2);
+    const headItems = new Map([[p2, word(p2)]]);
+    const vals = (v) => new Map([[page, v]]);
+    const d7 = (l, h, r) =>
+      transition(emptyLedger(), l, { headItems, headPageValues: vals(h), runPageValues: vals(r) });
+    const okD7 = d7(ledger, 1, 1);
+    const movedD7 = d7(ledger, 1, 2);
+    const slackD7 = d7({ ...emptyLedger(), entries: [scopedEntry(2)] }, 1, 1);
+    const shape = ledgerCheck(ledger);
+    const s = (i) => `${i?.class}/${i?.gating}`;
+    rows.push(
+      row(
+        "DEBT rule vi': listed page scope on an unchanged page metric (rule i, 2026-10-27)",
+        "page delta 1 (= head): listed p2 word -> debt; page-1 word -> head-regression; page delta 1 -> 2 -> metric and word debt-exceeded; page delta 0 -> listed word head-regression; D7: exact entry none, head 1 / run 2 a problem, ceiling 2 a problem; ledger shape none",
+        `p2 ${s(same)}; p1 ${s(p1Same)}; 1->2 word ${s(grew)} metric ${s(grewPage)}; 0 ${s(matched)}; D7 ok ${okD7.length}, moved ${movedD7.length}, slack ${slackD7.length}; shape ${shape.length}`,
+        same?.class === "debt" &&
+          !same.gating &&
+          p1Same?.class === "head-regression" &&
+          p1Same.gating &&
+          grew?.class === "debt-exceeded" &&
+          grew.gating &&
+          grewPage?.class === "debt-exceeded" &&
+          grewPage.gating &&
+          matched?.class === "head-regression" &&
+          matched.gating &&
+          okD7.length === 0 &&
+          movedD7.length > 0 &&
+          slackD7.length > 0 &&
+          shape.length === 0,
+      ),
+    );
+  }
+  // 22. Rule (ii) (2026-10-27): ONE run tolerance (1.333 px, the pdf-probe value) for position-mm
+  // and pdf-probe vectors, covering Chrome's DOM -> PDF offset only. On the DANFE-L1d spec-anchor
+  // vector of run 20261023T004510Z (N0 = every layer = P 23.903 px, run 24.529 px): the vector as
+  // measured is (b) with no compensator (control); a +0.6 px layout-layer step stays (c) whether
+  // the pass is named or not (step tolerance 0.5 px; |P| <= |N0| + 0.5 px); a +1.5 px P -> run step
+  // gates even with `run` named (|run| > |N0| + 1.333 px).
+  {
+    const key = "danfe|DANFE-L1d|corpus||criterion#1|posErrMm";
+    const n0 = 23.903;
+    const layers = [
+      "B0",
+      "L0",
+      "painted_table_cell_text_baselines",
+      "table_percent_widths",
+      "auto_table_compact_columns",
+      "P",
+    ];
+    const vec = (passStep, runStep) => {
+      const v = { unit: "px", N0: n0 };
+      for (const l of layers) {
+        v[l] = Math.round((n0 + (l === "B0" || l === "L0" ? 0 : passStep)) * 1000) / 1000;
+      }
+      v.run = Math.round((v.P + runStep) * 1000) / 1000;
+      return v;
+    };
+    const e = (v, compensators) =>
+      entryFor(
+        key,
+        Math.abs(v.run),
+        { compensators, owner: { layer: "blitz:block-offset", component: "canary" } },
+        { tolClass: "position-mm", layerVectorRef: v },
+      );
+    const control = relaxed(e(vec(0, 0.626), []));
+    const layoutUnnamed = relaxed(e(vec(0.6, 0.626), []));
+    const layoutNamed = relaxed(
+      e(vec(0.6, 0.626), [
+        "auto_table_compact_columns",
+        "painted_table_cell_text_baselines",
+        "table_percent_widths",
+      ]),
+    );
+    const runStep = relaxed(e(vec(0, 1.5), ["run"]));
+    rows.push(
+      row(
+        "rule (ii): shared run tolerance on a DANFE-L1 position-mm vector",
+        "DANFE-L1d as measured (P -> run +0.626 px) -> none; +0.6 px layout step unnamed -> problem; named -> problem (|P| > |N0| + 0.5); +1.5 px P -> run with run named -> problem (|run| > |N0| + 1.333)",
+        `control ${control.length}; layout unnamed ${layoutUnnamed.length}, named ${layoutNamed.length}; P->run +1.5 ${runStep.length}`,
+        control.length === 0 &&
+          layoutUnnamed.length > 0 &&
+          layoutNamed.length > 0 &&
+          runStep.length > 0,
+      ),
+    );
+  }
   return rows;
 }
 

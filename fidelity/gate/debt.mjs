@@ -58,6 +58,14 @@
 //   (vi)  words displaced to another page collapse into ONE page-scoped entry per page-count
 //         criterion: no two entries name the same page-count metric, and no entry lists a
 //         per-word key its fixture's page-scoped entry covers
+//   (vi') the LISTED page-scope route (rule (i) of Phase B integration 5, 2026-10-27; GATE-D6b): a
+//         page-scoped entry with `scope.keys` (the per-word keys it scopes out) may bind a
+//         page-count metric that is NOT a head item, i.e. whose run value equals its head value
+//         (measured = headValue = the run's value = ceiling >= 1; no layer vector). It covers ONLY
+//         the listed keys (on pages >= fromPage of its fixture) and only while the run's value of
+//         its metric is >= 1 and <= its ceiling: above the ceiling the words and the metric gate
+//         (debt-exceeded); at 0 (pagination matches the reference) the listed keys are compared
+//         again (head-regression when still worse than the head). The list never grows (rule iii)
 //   new keys (absent from the previous ledger) satisfy the RELAXED (b) rule on their vector:
 //         |run| <= |N0| (+ run tolerance), every non-zero vellora layer step is a named
 //         compensator, the residual owner is named; and GATE-D7 ties them to the run (I3):
@@ -67,7 +75,8 @@
 //
 //   node fidelity/gate/debt.mjs check [--ledger <DEBT.json>] [--base <previous DEBT.json>]
 //     [--step <NN-name>] [--report <gate-report.json>]   validate a ledger (and its transition
-//     from --base; --report gives the head items GATE-D7 ties new keys to); exit 0 ok, 3 not
+//     from --base; --report gives the head items GATE-D7 ties new keys to; [--head-dir <baseline>]
+//     [--run <run dir>] give the page metrics a listed page scope binds, rule vi'); exit 0 ok, 3 not
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -191,6 +200,7 @@ export function resolveEntryVectors(e, opts = {}) {
     ...e,
     keys: e.keys.map((k) => {
       if (!k || typeof k !== "object" || k.layerVectorRef === undefined) return k;
+      if (k.layerVectorRef === null && isPageScopeKey(e, k)) return k;
       const r = resolveVectorRef(k.layerVectorRef, opts);
       return r.vector ? { ...k, layerVector: r.vector } : { ...k, layerVectorError: r.error };
     }),
@@ -267,6 +277,10 @@ export function pdfProbePage(key) {
 const isPerWordKey = (key) => pdfProbePage(key) !== null;
 /** A WPT key carrying raw-Blitz evidence instead of a layer vector (GATE-A3 route b). */
 const isWptRawKey = (rec) => String(rec?.key ?? "").startsWith("wpt|");
+/** An entry of the LISTED page-scope route (rule vi', GATE-D6b): a scope with a per-word key list. */
+export const isListedPageScope = (e) => Boolean(e?.scope) && Array.isArray(e.scope.keys);
+/** The page-count key of a listed page-scope entry: no layer vector (rule vi', GATE-D6b). */
+const isPageScopeKey = (e, rec) => isListedPageScope(e) && rec?.tolClass === "page-delta";
 /** Key records of an entry (debt/2); [] for a malformed one. */
 const keyRecs = (e) =>
   Array.isArray(e?.keys) ? e.keys.filter((k) => k && typeof k === "object") : [];
@@ -303,6 +317,11 @@ function relaxedBKey(entry, rec) {
     }
     return p;
   }
+  if (isPageScopeKey(entry, rec)) {
+    // Rule vi' (GATE-D6b): the page-count metric has no layer vector; its evidence is that it is
+    // unchanged vs the head, which GATE-D7 checks (pageScopeD7Problems).
+    return p;
+  }
   const v = rec.layerVector;
   if (!v || typeof v.N0 !== "number" || typeof v.run !== "number") {
     return [
@@ -315,6 +334,14 @@ function relaxedBKey(entry, rec) {
   if (Math.abs(v.run) > Math.abs(v.N0) + runTol) {
     p.push(
       `${id}: |run| ${Math.abs(v.run)} > |N0| ${Math.abs(v.N0)}: vellora made the item worse than raw Blitz, not compensating drift`,
+    );
+  }
+  // Rule (ii), 2026-10-27: the run tolerance covers only Chrome's DOM-vs-PDF offset (the P -> run
+  // reference change). vellora's layout layers end at P, measured against the SAME reference as
+  // N0 (Chrome's DOM), so |P| may exceed |N0| by the step tolerance only.
+  if (typeof v.P === "number" && Math.abs(v.P) > Math.abs(v.N0) + tol + EPS) {
+    p.push(
+      `${id}: |P| ${Math.abs(v.P)} > |N0| ${Math.abs(v.N0)} + ${tol}: vellora's layout made the item worse than raw Blitz (the run tolerance covers only Chrome's DOM-vs-PDF offset), not compensating drift`,
     );
   }
   const named = new Set(entry.compensators ?? []);
@@ -421,6 +448,50 @@ export function d7KeyProblems(entry, rec, item) {
   return p;
 }
 
+/**
+ * GATE-D7 for the NEW page-count key of a listed page scope (rule vi', GATE-D6b; rule (i) of Phase
+ * B integration 5, 2026-10-27) whose metric is NOT a head item (unchanged vs the head): the key is
+ * tied to the run by the snapshots instead. `headValues` / `runValues`: Map(page-delta metric key
+ * -> value) of the head and of the run. measured = headValue = the head's value = the run's value,
+ * ceiling = measured (the current page delta, no slack), measured >= 1, and every listed per-word
+ * key is a gating item of the head comparison (`headItems`). Returns problems.
+ */
+export function pageScopeD7Problems(
+  entry,
+  rec,
+  { headValues = null, runValues = null, headItems = null } = {},
+) {
+  const id = `${entry.id} ${rec.key}`;
+  const p = [];
+  const h = headValues?.get(rec.key);
+  const r = runValues?.get(rec.key);
+  if (!numeric(h) || !numeric(r)) {
+    return [
+      `${id}: the head's and the run's values of the page-count metric are needed (rule vi', GATE-D7); head ${h ?? "unknown"}, run ${r ?? "unknown"}`,
+    ];
+  }
+  if (h !== r)
+    p.push(
+      `${id}: head ${h} != run ${r}: only an unchanged page metric binds without a head item (rule vi')`,
+    );
+  if (rec.headValue !== h)
+    p.push(`${id}: headValue ${rec.headValue} is not the head's value ${h} (GATE-D7)`);
+  if (rec.measured !== r)
+    p.push(`${id}: measured ${rec.measured} is not the run's value ${r} (GATE-D7)`);
+  if (rec.ceiling !== r)
+    p.push(`${id}: ceiling ${rec.ceiling} is not the run's page delta ${r} (GATE-D7, rule vi')`);
+  if (!(r >= 1)) p.push(`${id}: page delta ${r}: nothing to scope out (rule vi')`);
+  for (const k of entry.scope?.keys ?? []) {
+    const item = headItems?.get(k);
+    if (!item || !HEAD_GATING_CLASSES.includes(item.headClass ?? item.class)) {
+      p.push(
+        `${id}: scope.keys ${k} is not a gating item of the head comparison (GATE-D7, rule vi')`,
+      );
+    }
+  }
+  return p;
+}
+
 /** Shape rules every entry obeys (and rule iv). */
 export function entryProblems(e) {
   const p = [];
@@ -501,6 +572,30 @@ export function ledgerProblems(ledger, { pageMetricKeys = null } = {}) {
         );
     }
   }
+  // Rule vi' (GATE-D6b): a listed page scope binds exactly one page-count key and lists per-word
+  // keys of its own fixture on pages >= fromPage, each once.
+  for (const e of scoped.filter(isListedPageScope)) {
+    const recs = keyRecs(e);
+    if (recs.length !== 1 || recs[0].tolClass !== "page-delta") {
+      p.push(`${e.id}: a listed page scope binds exactly one page-delta key (rule vi')`);
+    }
+    if (!e.scope.keys.length) p.push(`${e.id}: scope.keys is empty (rule vi')`);
+    const seen = new Set();
+    for (const k of e.scope.keys) {
+      if (
+        typeof k !== "string" ||
+        !isPerWordKey(k) ||
+        pdfProbeFixture(k) !== e.scope.fixture ||
+        pdfProbePage(k) < e.scope.fromPage
+      ) {
+        p.push(
+          `${e.id}: scope.keys ${JSON.stringify(k)} is not a per-word key of ${e.scope.fixture} on a page >= ${e.scope.fromPage} (rule vi')`,
+        );
+      }
+      if (seen.has(k)) p.push(`${e.id}: scope.keys lists ${k} twice (rule vi')`);
+      seen.add(k);
+    }
+  }
   return p;
 }
 
@@ -525,6 +620,9 @@ function scopeCovers(e, item) {
   const fx = pdfProbeFixture(item.key);
   if (fx !== e.scope.fixture) return false;
   const page = pdfProbePage(item.key);
+  // Rule vi' (GATE-D6b): a listed scope covers exactly its listed keys.
+  if (isListedPageScope(e))
+    return page !== null && page >= e.scope.fromPage && e.scope.keys.includes(item.key);
   if (page !== null) return page >= e.scope.fromPage;
   return /\|unpaired-(chrome|vellora)$/.test(item.key);
 }
@@ -539,9 +637,11 @@ export const HEAD_GATING_CLASSES = Object.freeze(["regression", "removed", "reje
  *   debt-exceeded    covered, beyond its key's ceiling (rule ii)   GATES
  *   debt-regate      covered, but a compensator pass is gone from the run (rule v)   GATES
  * `passes`: the run's layout_normalize pass names (null = unknown: rule v cannot be checked,
- * reported as a problem when an entry names a pass compensator).
+ * reported as a problem when an entry names a pass compensator). `pageValues`: Map(page-delta
+ * metric key -> the RUN's value), what a listed page scope (rule vi') binds when its metric is not
+ * a head item (unchanged vs the head); unknown = the scope covers nothing and is a problem.
  */
-export function applyLedger(headReport, ledger, { passes = null } = {}) {
+export function applyLedger(headReport, ledger, { passes = null, pageValues = null } = {}) {
   const entries = ledger?.entries ?? [];
   const problems = [];
   const missingPass = new Map();
@@ -560,14 +660,32 @@ export function applyLedger(headReport, ledger, { passes = null } = {}) {
   const recOf = new Map();
   for (const e of entries) for (const k of keyRecs(e)) recOf.set(k.key, { e, rec: k });
   const used = new Set();
+  const scopeUnknown = new Set();
   const items = [];
   for (const i of headReport.items) {
     if (!i.gating || !HEAD_GATING_CLASSES.includes(i.class)) continue;
     let hit = recOf.get(i.key);
+    let listedBound = null;
     if (!hit) {
       const e = entries.find((x) => scopeCovers(x, i));
       // A page-scoped entry's ceiling binds its page-count metric; the words it covers ride on it.
       if (e) hit = { e, rec: keyRecs(e)[0], scoped: true };
+      if (e && isListedPageScope(e)) {
+        // Rule vi': the run's value of the bound metric, from the head item when it moved, else
+        // from the run (unchanged vs the head). Unknown or 0: the scope covers nothing.
+        const k = keyRecs(e)[0]?.key;
+        const after = byKey.get(k)?.after ?? pageValues?.get(k);
+        if (typeof after !== "number") {
+          scopeUnknown.add(
+            `${e.id}: the run's value of ${k} is unknown: the listed page scope covers nothing (rule vi')`,
+          );
+          hit = null;
+        } else if (!(after >= 1)) {
+          hit = null; // pagination now matches the reference: compare the listed keys again
+        } else {
+          listedBound = { key: k, after, better: "lower" };
+        }
+      }
     }
     const base = { ...i, headClass: i.class };
     if (!hit) {
@@ -591,7 +709,7 @@ export function applyLedger(headReport, ledger, { passes = null } = {}) {
       });
       continue;
     }
-    const bound = hit.scoped ? byKey.get(rec?.key) : i;
+    const bound = hit.scoped ? (listedBound ?? byKey.get(rec?.key)) : i;
     const ok = bound && rec ? withinCeiling(bound, rec.ceiling) : true;
     items.push({
       ...base,
@@ -606,6 +724,7 @@ export function applyLedger(headReport, ledger, { passes = null } = {}) {
   // Rule ii for covered keys that improved past the head or stayed inside tolerance: nothing to
   // gate. Entries no item used are stale (reported, not gating: rule iii decides their removal).
   const unused = entries.filter((e) => !used.has(e.id)).map((e) => e.id);
+  problems.push(...scopeUnknown);
   return { items, problems, unused };
 }
 
@@ -633,7 +752,13 @@ const keyMap = (entries) => {
 export function transitionProblems(
   oldLedger,
   newLedger,
-  { step = null, presentKeys = null, headItems = null } = {},
+  {
+    step = null,
+    presentKeys = null,
+    headItems = null,
+    headPageValues = null,
+    runPageValues = null,
+  } = {},
 ) {
   const p = [];
   const before = oldLedger?.entries ?? [];
@@ -664,8 +789,27 @@ export function transitionProblems(
     if (!o) {
       if (!fresh.has(e.id)) fresh.set(e.id, { e, keys: new Set() });
       fresh.get(e.id).keys.add(key);
-      p.push(...d7KeyProblems(e, rec, headItems?.get(key) ?? null).map((x) => `new key ${x}`));
+      const hi = headItems?.get(key) ?? null;
+      const d7 =
+        isPageScopeKey(e, rec) && !hi
+          ? pageScopeD7Problems(e, rec, {
+              headValues: headPageValues,
+              runValues: runPageValues,
+              headItems,
+            })
+          : d7KeyProblems(e, rec, hi);
+      p.push(...d7.map((x) => `new key ${x}`));
       continue;
+    }
+    if (isListedPageScope(e)) {
+      // Rule iii for rule vi': the listed keys of a page scope never grow.
+      const was = new Set(isListedPageScope(o.e) ? o.e.scope.keys : []);
+      const grown = e.scope.keys.filter((k) => !was.has(k));
+      if (grown.length) {
+        p.push(
+          `${e.id} ${key}: scope.keys grew by ${grown.length} (${grown.slice(0, 3).join(", ")}${grown.length > 3 ? ", ..." : ""}): a listed page scope may only shrink (rule iii, rule vi')`,
+        );
+      }
     }
     if (numeric(o.rec.ceiling) && numeric(rec.ceiling) && rec.ceiling > o.rec.ceiling + EPS) {
       p.push(
@@ -706,8 +850,8 @@ export function transitionProblems(
 }
 
 /** Pin view class of a pin-comparison item: (a) accepted artefact, (b) ledger, (c) otherwise. */
-export function pinView(pinReport, ledger) {
-  const applied = applyLedger(pinReport, ledger, { passes: null });
+export function pinView(pinReport, ledger, { pageValues = null } = {}) {
+  const applied = applyLedger(pinReport, ledger, { passes: null, pageValues });
   const items = [];
   for (const i of pinReport.items) {
     if (i.class === "accepted") items.push({ ...i, pinClass: "a" });
@@ -732,7 +876,7 @@ async function main() {
   const val = (n) => (argv.indexOf(n) >= 0 ? argv[argv.indexOf(n) + 1] : undefined);
   if (argv[0] !== "check") {
     process.stdout.write(
-      "usage: node fidelity/gate/debt.mjs check [--ledger <DEBT.json>] [--base <previous DEBT.json>] [--step <NN-name>] [--report <gate-report.json>]\n",
+      "usage: node fidelity/gate/debt.mjs check [--ledger <DEBT.json>] [--base <previous DEBT.json>] [--step <NN-name>] [--report <gate-report.json>] [--head-dir <baseline dir>] [--run <run dir>]\n",
     );
     process.exitCode = 2;
     return;
@@ -743,7 +887,24 @@ async function main() {
     const base = loadDebt(resolve(val("--base"))) ?? emptyLedger();
     const rep = val("--report") ? readJsonFile(resolve(val("--report"))) : null;
     const headItems = rep?.head ? new Map(rep.head.items.map((i) => [i.key, i])) : null;
-    problems.push(...transitionProblems(base, ledger, { step: val("--step") ?? null, headItems }));
+    // Rule vi': a listed page scope's metric is read from the head and run snapshots.
+    let headPageValues = null;
+    let runPageValues = null;
+    if (val("--head-dir") || val("--run")) {
+      const { loadSnapshot } = await import("./snapshot.mjs");
+      const { pageMetricValues } = await import("./run.mjs");
+      if (val("--head-dir"))
+        headPageValues = pageMetricValues(loadSnapshot(resolve(val("--head-dir"))));
+      if (val("--run")) runPageValues = pageMetricValues(loadSnapshot(resolve(val("--run"))));
+    }
+    problems.push(
+      ...transitionProblems(base, ledger, {
+        step: val("--step") ?? null,
+        headItems,
+        headPageValues,
+        runPageValues,
+      }),
+    );
   }
   for (const x of problems) process.stdout.write(`debt: ${x}\n`);
   process.stdout.write(

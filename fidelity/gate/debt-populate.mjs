@@ -36,12 +36,15 @@ import { compareSnapshots } from "./compare.mjs";
 import {
   DEBT_SCHEMA,
   HEAD_GATING_CLASSES,
+  ledgerProblems,
+  pageScopeD7Problems,
   pdfProbePage,
   relaxedB,
   resolveVectorRef,
 } from "./debt.mjs";
 import { relaxedBFacts } from "./layer-vector.mjs";
 import { verdictIndex } from "./metrics.mjs";
+import { pageMetricValues } from "./run.mjs";
 import { loadSnapshot, readJsonMaybeGz } from "./snapshot.mjs";
 import { vectorRunTolerance } from "./tolerances.mjs";
 
@@ -103,6 +106,82 @@ export function pageMismatchFixtures(snapshot) {
   return out;
 }
 
+/** The step a Phase C pagination entry closes at (rule iv needs one; DESIGN TARGET placeholder). */
+export const PAGINATION_CLOSES_AT = "11-pagination";
+
+/**
+ * The page-count criterion a fixture's listed page scope binds: the fixture's own corpus criterion
+ * (e.g. TXT-P1), not the generic layout oracle's REF-P (both measure the same two page counts;
+ * rule vi allows ONE entry per criterion and a fixture's words collapse into one scope). Pure.
+ */
+export function pageCriterionKey(keys) {
+  const sorted = [...keys].sort();
+  return sorted.find((k) => !/\|REF-P\|/.test(k)) ?? sorted[0] ?? null;
+}
+
+/**
+ * Rule vi' (GATE-D6b; rule (i) of Phase B integration 5, 2026-10-27): one listed page-scope entry
+ * per fixture from its "page-scope" residual items, when the fixture's page-count metric is NOT a
+ * head item (head value = run value >= 1). Returns { entries, left } (left: residual items whose
+ * fixture does not qualify, with the reason). `pageKeys`: Map(fixture -> [page-delta keys]);
+ * `headValues` / `runValues`: Map(key -> value); `introduced(key)`: the link that introduced a
+ * listed key. Pure.
+ */
+export function pageScopeEntries(
+  residual,
+  { pageKeys, headValues, runValues, introduced, pages = new Map(), evidence = [] },
+) {
+  const byFixture = new Map();
+  for (const r of residual.filter((x) => x.route === "page-scope")) {
+    const fx = r.key.split("|")[1];
+    byFixture.set(fx, [...(byFixture.get(fx) ?? []), r]);
+  }
+  const entries = [];
+  const left = [];
+  for (const [fx, items] of [...byFixture].sort(([a], [b]) => a.localeCompare(b))) {
+    const key = pageCriterionKey(pageKeys.get(fx) ?? []);
+    const h = headValues.get(key);
+    const r = runValues.get(key);
+    if (!key || typeof h !== "number" || typeof r !== "number" || h !== r || !(r >= 1)) {
+      const why = `rule vi' needs the page metric unchanged vs the head and >= 1: ${key ?? "(no page metric)"} head ${h ?? "?"}, run ${r ?? "?"}`;
+      left.push(...items.map((i) => ({ ...i, why: `${i.why}; ${why}` })));
+      continue;
+    }
+    const keys = items.map((i) => i.key).sort();
+    const links = {};
+    for (const k of keys) links[introduced(k)] = (links[introduced(k)] ?? 0) + 1;
+    const ordered = Object.keys(links).sort();
+    entries.push({
+      id: `DEBT-10-${fx}-page-scope`,
+      class: "b",
+      owner: {
+        layer: "vellora:pagination",
+        component: `vellora pagination (layer P, crates/vellora-core/src/pagination.rs) prints ${fx} on a page count ${r} off Chrome's${pages.get(fx) ? ` (this run: vellora ${pages.get(fx).vellora}, Chrome ${pages.get(fx).chrome})` : ""}, at the head (port/00-start) and now alike (${key} = ${h} -> ${r}); the listed words on Chrome pages >= 2 are displaced by the different page breaks, so their per-word vectors do not describe the PDF (rule vi). Owner: Phase C (pagination / table fragmentation)`,
+        upstream: null,
+      },
+      compensators: [],
+      closesAt: PAGINATION_CLOSES_AT,
+      introducedBy: ordered[0],
+      evidence: [
+        `rule vi' (GATE-D6b): ${key} is not a head item (head ${h}, run ${r}); ${keys.length} listed head-gating words on pages >= 2, introduced by ${ordered.map((l) => `${l} ${links[l]}`).join(", ")}`,
+        ...evidence,
+      ],
+      scope: { fixture: fx, fromPage: 2, keys },
+      keys: [
+        {
+          key,
+          tolClass: "page-delta",
+          headValue: h,
+          ceiling: r,
+          measured: r,
+          layerVectorRef: null,
+        },
+      ],
+    });
+  }
+  return { entries, left };
+}
+
 /** GATE-A3 (b) for a WPT head item from the run's results.json record. */
 export function classifyWptItem(item, record) {
   if (!record) return { ok: false, why: "no record in the run's wpt/results.json" };
@@ -157,10 +236,49 @@ export function groupEntries(records, { evidence = [], date = null } = {}) {
   });
 }
 
+/** The user-agent sheet N0 includes since port step 10-spark (fidelity/layout-diff/README.md). */
+export const TABLE_SPACING_UA_SHEET = "blitz_engine::table_spacing_hints_css";
+const SPACING_ATTR = /<table\b[^>]*\b(cellspacing|cellpadding)\s*=/i;
+
+/**
+ * Fixtures whose source HTML uses `<table cellspacing>` / `cellpadding`: corpus fixtures
+ * (fixtures/<fx>/index.html) and pdf-probe-suite probes (`probe-<id>`, fidelity/layout-diff/probes/
+ * *.json). For them N0 is NOT pure raw Blitz: it includes vellora's TABLE_SPACING_UA_SHEET.
+ */
+export function tableSpacingHintFixtures(root = REPO_ROOT) {
+  const out = new Set();
+  const fxDir = join(root, "fixtures");
+  for (const d of existsSync(fxDir) ? readdirSync(fxDir) : []) {
+    const f = join(fxDir, d, "index.html");
+    if (existsSync(f) && SPACING_ATTR.test(readFileSync(f, "utf8"))) out.add(d);
+  }
+  const probeDir = join(root, "fidelity", "layout-diff", "probes");
+  for (const f of existsSync(probeDir)
+    ? readdirSync(probeDir).filter((x) => x.endsWith(".json"))
+    : []) {
+    for (const p of JSON.parse(readFileSync(join(probeDir, f), "utf8")).probes ?? []) {
+      if (SPACING_ATTR.test(p.html ?? "")) out.add(`probe-${p.id}`);
+    }
+  }
+  return out;
+}
+
+/**
+ * The residual owner text of a word key. For a fixture that uses cellspacing/cellpadding it names
+ * the vellora UA sheet N0 includes (since 10-spark), so "raw Blitz" is never claimed for it.
+ */
+export function wordOwnerComponent(fixture, axis, hintFixtures = new Set()) {
+  const tail = `already places each word's run off Chrome on ${axis}; the residual |run| <= |N0| (+ run tolerance) is Blitz's, and the vellora layers listed as compensators move the run by more than the 0.5 px step tolerance`;
+  if (!hintFixtures.has(fixture)) {
+    return `raw Blitz (blitz-dom 0.3.0-beta.4 + parley) layout of ${fixture}: N0, Blitz on the source HTML, ${tail}`;
+  }
+  return `Blitz (blitz-dom 0.3.0-beta.4 + parley) layout of ${fixture} plus vellora's <table cellspacing>/cellpadding user-agent sheet ${TABLE_SPACING_UA_SHEET} (${fixture} uses those attributes; N0 includes the sheet since port step 10-spark, so it is NOT pure raw Blitz): N0 ${tail}`;
+}
+
 const OWNERS = {
-  word: (fixture, axis) => ({
+  word: (fixture, axis, hints) => ({
     layer: `blitz:text-position-${axis}`,
-    component: `raw Blitz (blitz-dom 0.3.0-beta.4 + parley) layout of ${fixture}: N0, Blitz on the source HTML, already places each word's run off Chrome on ${axis}; the residual |run| <= |N0| (+ run tolerance) is Blitz's, and the vellora layers listed as compensators move the run by more than the 0.5 px step tolerance`,
+    component: wordOwnerComponent(fixture, axis, hints),
     upstream: null,
   }),
   spec: (fixture) => ({
@@ -233,7 +351,9 @@ async function main() {
     ]),
   );
   const runName = runDir.split(homedir()).join("~");
-  const pageMismatch = pageMismatchFixtures(loadSnapshot(runDir));
+  const runSnapshot = loadSnapshot(runDir);
+  const pageMismatch = pageMismatchFixtures(runSnapshot);
+  const hints = tableSpacingHintFixtures(REPO_ROOT);
   // One item -> { record } (a ledger key) or { residual }. Shared by the head items and the pin view.
   const classify = (i) => {
     if (accepted.has(i.key)) {
@@ -297,7 +417,7 @@ async function main() {
     return {
       record: {
         fixture,
-        owner: isSpec ? OWNERS.spec(fixture) : OWNERS.word(fixture, axis),
+        owner: isSpec ? OWNERS.spec(fixture) : OWNERS.word(fixture, axis, hints),
         compensators: c.compensators,
         introducedBy: introducedBy(i.key, linkReports, step),
         evidence: [
@@ -321,24 +441,61 @@ async function main() {
     if (r.record) records.push(r.record);
     else residual.push(r.residual);
   }
-  const entries = groupEntries(records, {
-    evidence: [
-      `head items: ${reportFile.split(homedir()).join("~")} (head ${report.head.baseline}); built by node fidelity/gate/debt-populate.mjs ${argv.join(" ")}`
-        .split(homedir())
-        .join("~"),
-    ],
+  const builtBy =
+    `head items: ${reportFile.split(homedir()).join("~")} (head ${report.head.baseline}); built by node fidelity/gate/debt-populate.mjs ${argv.join(" ")}`
+      .split(homedir())
+      .join("~");
+  const entries = groupEntries(records, { evidence: [builtBy] });
+  // Rule vi' (GATE-D6b): the page-scope residual of a fixture whose page metric is unchanged vs
+  // the head becomes ONE listed page-scope entry; the rest stays residual.
+  const runPageValues = pageMetricValues(runSnapshot);
+  const pageKeys = new Map();
+  for (const k of runPageValues.keys()) {
+    const fx = k.split("|")[0];
+    pageKeys.set(fx, [...(pageKeys.get(fx) ?? []), k]);
+  }
+  const scoped = pageScopeEntries(residual, {
+    pageKeys,
+    headValues: pageMetricValues(head),
+    runValues: runPageValues,
+    introduced: (k) => introducedBy(k, linkReports, step),
+    pages: new Map(
+      Object.entries(runSnapshot.pdfProbe ?? {})
+        .filter(([, sec]) => sec?.pages)
+        .map(([fx, sec]) => [fx, sec.pages]),
+    ),
+    evidence: [builtBy],
   });
-  // Self-check: every proposed entry passes the ledger's own relaxed (b) rule.
-  const problems = entries.flatMap((e) =>
-    relaxedB({
-      ...e,
-      keys: e.keys.map((k) =>
-        k.layerVectorRef ? { ...k, layerVector: vectorOf(k.key).vector } : k,
-      ),
-    }),
+  entries.push(...scoped.entries);
+  const scopedKeys = new Set(scoped.entries.flatMap((e) => e.scope.keys));
+  residual.splice(
+    0,
+    residual.length,
+    ...residual.filter((r) => r.route !== "page-scope"),
+    ...scoped.left,
+  );
+  for (const e of scoped.entries) {
+    const d7 = pageScopeD7Problems(e, e.keys[0], {
+      headValues: pageMetricValues(head),
+      runValues: runPageValues,
+      headItems: new Map(report.head.items.map((i) => [i.key, i])),
+    });
+    if (d7.length) throw new Error(`proposed page scope fails GATE-D7:\n${d7.join("\n")}`);
+  }
+  // Self-check: the proposed ledger passes its own shape rules and every entry the relaxed (b) rule.
+  const problems = ledgerProblems({ entries });
+  problems.push(
+    ...entries.flatMap((e) =>
+      relaxedB({
+        ...e,
+        keys: e.keys.map((k) =>
+          typeof k.layerVectorRef === "string" ? { ...k, layerVector: vectorOf(k.key).vector } : k,
+        ),
+      }),
+    ),
   );
   if (problems.length)
-    throw new Error(`proposed entries fail relaxed (b):\n${problems.join("\n")}`);
+    throw new Error(`proposed entries fail the ledger rules:\n${problems.join("\n")}`);
   const out = {
     schema: DEBT_SCHEMA,
     head: "port/00-start",

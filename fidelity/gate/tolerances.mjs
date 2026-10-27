@@ -69,15 +69,37 @@ export const LAYER_STEP_TOLERANCE = Object.freeze({ px: 0.5 });
 export const layerStepTolerance = (unit) => LAYER_STEP_TOLERANCE[unit] ?? 0.01;
 
 const PX_PER = Object.freeze({ pt: 4 / 3, mm: 96 / 25.4, px: 1 });
+
 /**
- * Tolerance of the PDF-level step (P -> run) and of |run| <= |N0| in a layer vector: the larger of
- * the layer step tolerance and the item's own gate tolerance in the vector's unit (pdf-probe-pt
- * 1 pt = 1.333 px, position-mm 0.1 mm = 0.378 px). N0..P are deltas vs Chrome's continuous DOM
- * layout, run is the delta vs Chrome's PDF; the two references differ by Chrome's own
- * DOM-vs-PDF rounding (up to 1.11 px on page 1 at step 07, above), which no vellora layer causes
- * and the gate itself does not resolve (it compares values at this tolerance). DESIGN TARGET.
+ * The ONE run tolerance of a layer vector's PDF-level step (P -> run) and of |run| <= |N0| + it, in
+ * CSS px, shared by every tolClass a layer vector is built for (VECTOR_RUN_TOL_CLASSES): the
+ * pdf-probe word gate tolerance (1 pt = 1.333 px). N0..P are deltas vs Chrome's continuous DOM
+ * layout, run is the delta vs Chrome's PDF; the two references differ by Chrome's own DOM-vs-PDF
+ * offset, which no vellora layer causes. Rule (ii) of Phase B integration 5 (2026-10-27): the
+ * position-mm vectors (DANFE-L1 posErrMm spec anchors) used max(0.5 px, 0.1 mm = 0.378 px) = 0.5 px,
+ * BELOW that measured offset, so a title no vellora layer moves (DANFE-L1d, only step P -> run
+ * +0.626 px) could not be (b). Measured (CONFIRMED, fidelity/gate/snapshots/2026-10-27/10-final/
+ * scripts/run_p_spread.mjs on the committed 10-debt head vectors of run 20261023T004510Z,
+ * 2026-10-27): run - P over the 459 danfe page-1 words, dy median +0.557, range -0.284..+1.113 px
+ * (dx +0.447..+1.233 px); over all 7 fixtures and both axes |run - P| <= 1.233 px. The largest,
+ * + the 0.01 pt (0.013 px) probe resolution, is 1.246 px < 1.333 px, so the pdf-probe value covers
+ * it and is kept: one value, not two. A step above it (e.g. +1.5 px) still gates. DESIGN TARGET
+ * (the bound is measured on one run and one Chrome, 155.0.8059.85).
+ */
+export const VECTOR_RUN_TOLERANCE_PX = TOLERANCES["pdf-probe-pt"].tol * PX_PER.pt;
+/** tolClasses whose layer vectors use VECTOR_RUN_TOLERANCE_PX (the only ones with vectors). */
+export const VECTOR_RUN_TOL_CLASSES = Object.freeze(["pdf-probe-pt", "position-mm"]);
+
+/**
+ * Tolerance of the PDF-level step (P -> run) and of |run| <= |N0| in a layer vector, in `unit`:
+ * VECTOR_RUN_TOLERANCE_PX for pdf-probe-pt and position-mm (never below the layer step
+ * tolerance); any other class keeps max(layer step tolerance, its own gate tolerance in `unit`).
+ * DESIGN TARGET.
  */
 export function vectorRunTolerance(tolClass, unit = "px") {
+  if (VECTOR_RUN_TOL_CLASSES.includes(tolClass) && PX_PER[unit]) {
+    return Math.max(layerStepTolerance(unit), VECTOR_RUN_TOLERANCE_PX / PX_PER[unit]);
+  }
   const t = TOLERANCES[tolClass];
   const conv = t && PX_PER[t.unit] && PX_PER[unit] ? (t.tol * PX_PER[t.unit]) / PX_PER[unit] : 0;
   return Math.max(layerStepTolerance(unit), conv);

@@ -560,3 +560,100 @@ test("debt/2 migration and layerVectorRef resolution", () => {
   );
   assert.match(entryProblems(missing.entries[0]).join(";"), /nope.json does not exist/);
 });
+
+// Rule vi' (GATE-D6b, rule (i) of Phase B integration 5, 2026-10-27): the listed page scope.
+const PS_PAGE = "fx|TXT-P1|corpus||criterion#1|pageDelta";
+const PS_W2 = "pdf-probe|fx|p2|w#1|dy";
+const psEntry = (rec = {}, scope = {}) => ({
+  id: "PS",
+  class: "b",
+  owner: { layer: "vellora:pagination", component: "c" },
+  compensators: [],
+  closesAt: "11-pagination",
+  introducedBy: "10-x",
+  evidence: ["e"],
+  scope: { fixture: "fx", fromPage: 2, keys: [PS_W2], ...scope },
+  keys: [
+    {
+      key: PS_PAGE,
+      tolClass: "page-delta",
+      headValue: 1,
+      ceiling: 1,
+      measured: 1,
+      layerVectorRef: null,
+      ...rec,
+    },
+  ],
+});
+
+test("rule vi': a listed page scope parses without a vector, passes relaxed (b) and its shape rules", () => {
+  const doc = parseDebt(
+    JSON.stringify({ schema: "vellora-fidelity/debt/2", entries: [psEntry()] }),
+  );
+  assert.deepEqual(entryProblems(doc.entries[0]), []);
+  assert.deepEqual(relaxedB(doc.entries[0]), []);
+  assert.deepEqual(ledgerProblems(doc), []);
+  // A listed key on page 1, of another fixture, or listed twice is refused.
+  for (const keys of [["pdf-probe|fx|p1|w#1|dy"], ["pdf-probe|other|p2|w#1|dy"], [PS_W2, PS_W2]]) {
+    const p = ledgerProblems({ entries: [psEntry({}, { keys })] });
+    assert.ok(
+      p.some((x) => /rule vi'/.test(x)),
+      JSON.stringify(keys),
+    );
+  }
+  // A listed scope binding a non-page key is refused.
+  assert.ok(
+    ledgerProblems({ entries: [psEntry({ tolClass: "count" })] }).some((x) => /page-delta/.test(x)),
+  );
+});
+
+test("rule vi': D7 ties the unchanged page metric to the snapshots; the list never grows", () => {
+  const word = { key: PS_W2, class: "regression", gating: true };
+  const headItems = new Map([[PS_W2, word]]);
+  const vals = (v) => new Map([[PS_PAGE, v]]);
+  const t = (l, h, r, hi = headItems) =>
+    transitionProblems(emptyLedger(), l, {
+      headItems: hi,
+      headPageValues: vals(h),
+      runPageValues: vals(r),
+    });
+  const one = (e) => ({ ...emptyLedger(), entries: [e] });
+  assert.deepEqual(t(one(psEntry()), 1, 1), []);
+  assert.ok(t(one(psEntry()), 1, 2).some((x) => /head 1 != run 2/.test(x)));
+  assert.ok(t(one(psEntry({ ceiling: 2 })), 1, 1).some((x) => /ceiling 2/.test(x)));
+  assert.ok(t(one(psEntry({ headValue: 0 })), 1, 1).some((x) => /headValue 0/.test(x)));
+  assert.ok(
+    t(one(psEntry({ measured: 0, ceiling: 0, headValue: 0 })), 0, 0).some((x) =>
+      /nothing to scope out/.test(x),
+    ),
+  );
+  assert.ok(t(one(psEntry()), 1, 1, new Map()).some((x) => /not a gating item/.test(x)));
+  assert.ok(
+    transitionProblems(emptyLedger(), one(psEntry()), { headItems }).some((x) =>
+      /are needed/.test(x),
+    ),
+  );
+  // Rule iii: an existing listed scope may only shrink its list.
+  const grown = psEntry({}, { keys: [PS_W2, "pdf-probe|fx|p3|w#1|dy"] });
+  assert.ok(
+    transitionProblems(one(psEntry()), one(grown), {}).some((x) => /scope.keys grew by 1/.test(x)),
+  );
+  assert.deepEqual(transitionProblems(one(grown), one(psEntry()), {}), []);
+});
+
+test("rule vi': coverage follows the run's page delta (1 covered, 2 exceeded, 0 compared again, unknown a problem)", () => {
+  const word = (key) => ({ key, class: "regression", gating: true, after: 5, better: "lower-abs" });
+  const ledger = { ...emptyLedger(), entries: [psEntry()] };
+  const run = (v, items = [word(PS_W2)]) =>
+    applyLedger({ items }, ledger, {
+      pageValues: v === undefined ? null : new Map([[PS_PAGE, v]]),
+    });
+  assert.equal(run(1).items[0].class, "debt");
+  assert.equal(run(2).items[0].class, "debt-exceeded");
+  assert.equal(run(0).items[0].class, "head-regression");
+  const unknown = run(undefined);
+  assert.equal(unknown.items[0].class, "head-regression");
+  assert.ok(unknown.problems.some((x) => /unknown/.test(x)));
+  // An unlisted page-2 word of the same fixture is not covered.
+  assert.equal(run(1, [word("pdf-probe|fx|p2|other#1|dy")]).items[0].class, "head-regression");
+});

@@ -25,7 +25,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 20);
+    assert.equal(rows.length, 22);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -106,7 +106,10 @@ test("a ledger that ignores ceilings, compensators, transitions, owners, collaps
   assert.equal(c4["DEBT rule iv: vellora-owned entry without a retirement step"], false);
   assert.equal(c4["DEBT rule vi: displaced words not collapsed"], false);
   const c5 = caughtBy(
-    runGateCanaries({ run: step07, relaxed: (e) => relaxedB(e).filter((p) => !/\|run\|/.test(p)) }),
+    runGateCanaries({
+      run: step07,
+      relaxed: (e) => relaxedB(e).filter((p) => !/\|run\||\|P\|/.test(p)),
+    }),
   );
   assert.equal(c5["relaxed (b): |run| > |N0|, unnamed compensator, no owner"], false);
 });
@@ -214,6 +217,56 @@ test("a WPT route that ignores the raw-Blitz outcome, or trusts a missing one, l
     wptRoute({ ...item, rawOutcome: item.rawOutcome ?? item.after }, o);
   const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: trustMissing }));
   assert.equal(c2["WPT pass -> fail route (GATE-A3)"], false);
+});
+
+test("a listed page scope that ignores the run's page delta, covers page 1, or skips its D7 leaves the rule vi' canary uncaught", () => {
+  const name = "DEBT rule vi': listed page scope on an unchanged page metric (rule i, 2026-10-27)";
+  const mapEntries = (l, f) => ({ ...l, entries: l.entries.map((e) => (e.scope ? f(e) : e)) });
+  // The pre-rule-(i) bound: an unlisted scope covers its pages whatever the metric reads now.
+  const unbound = (hr, l, o) =>
+    applyLedger(
+      hr,
+      mapEntries(l, (e) => ({
+        ...e,
+        scope: { fixture: e.scope.fixture, fromPage: e.scope.fromPage },
+      })),
+      { ...o, pageValues: null },
+    );
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: unbound }));
+  assert.equal(c1[name], false);
+  // A scope that also lists the page-1 word hides it.
+  const p1 = "pdf-probe|canary|p1|Canary#1|dy";
+  const allPages = (hr, l, o) =>
+    applyLedger(
+      hr,
+      mapEntries(l, (e) => ({
+        ...e,
+        scope: { ...e.scope, fromPage: 1, keys: [...e.scope.keys, p1] },
+      })),
+      o,
+    );
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: allPages }));
+  assert.equal(c2[name], false);
+  // A D7 that does not tie the page metric to the snapshots (a moved metric or slack passes).
+  const looseD7 = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/pageDelta/.test(p));
+  const c3 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: looseD7 }));
+  assert.equal(c3[name], false);
+});
+
+test("a relaxed (b) rule without |P| <= |N0| + step, without |run| <= |N0| + run tolerance, or with the old 0.5 px leaves the rule (ii) canary uncaught", () => {
+  const name = "rule (ii): shared run tolerance on a DANFE-L1 position-mm vector";
+  const noP = (e) => relaxedB(e).filter((p) => !/\|P\|/.test(p));
+  const noRun = (e) => relaxedB(e).filter((p) => !/\|run\|/.test(p));
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: noP }));
+  assert.equal(c1[name], false);
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: noRun }));
+  assert.equal(c2[name], false);
+  // The pre-rule-(ii) position-mm run tolerance (0.5 px) refuses DANFE-L1d as measured.
+  const beyondOld = (k) =>
+    k.tolClass === "position-mm" && Math.abs(k.layerVector.run) > Math.abs(k.layerVector.N0) + 0.5;
+  const old = (e) => [...relaxedB(e), ...(e.keys.some(beyondOld) ? ["|run| beyond 0.5 px"] : [])];
+  const c3 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: old }));
+  assert.equal(c3[name], false);
 });
 
 test("an uncaught gate canary becomes an absolute failure item", () => {
