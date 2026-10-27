@@ -2074,7 +2074,7 @@ root reproduces every file except `manifest.json` `command`/`date` (CONFIRMED 20
 | head vs `port/00-start` | **gating 0**: debt 1169, accepted 4, declared 10; 3 flagged WPT passes lost, reported, not gating (GATE-W1: `background-position-002`, `page-name-001-print`, `page-name-orthogonal-writing-002-print`) |
 | pin view vs `baselines/pin` | (a) 1, (b) 693, (c) 165, declared 10: merge to main BLOCKED |
 | ledger | 27 entries, 1026 keys (+144 listed scope keys), 0 problems; base: no DEBT.json at the merge base with main = first population |
-| gate canaries (GATE-K2) | 22/22 caught |
+| gate canaries (GATE-K2) | 22/22 caught (23/23 after the verify fix of GATE-D6b, phaseb/10-final-verify; report otherwise identical: `fidelity/gate/snapshots/2026-10-27/10-final/README.md`) |
 
 **What changed since 09** (the 10-rects, 10-spark and 10-crates product changes, each described
 in its section above; the gate's own breakdown of this re-gate):

@@ -171,6 +171,42 @@ it was committed. CONFIRMED, each by re-running the command above into a scratch
 - write-baseline into a scratch root: `diff -rq` vs `fidelity/baselines/port/10-integration` differs
   only in `manifest.json` `provenance.command` (`--root`) and `date`.
 
+## Independent verify (branch `phaseb/10-final-verify`, 2026-10-27)
+
+Fresh worktree (npm ci, npm run build, fidelity deps, fidelity/.venv), darwin 27.0.0 arm64, Node
+v22.23.2; local macOS, INDICATIVE. CONFIRMED by re-running every command above into scratch
+directories: re-gate PASS with every report field identical except `date`/`command`/run path;
+item-by-item vs `../10-debt`: head 145 `head-regression -> debt` = the 10-debt residual, pin 52
+`pin-regression (c) -> debt (b)`, vs 09 none, no item appeared or vanished, no `before`/`after`
+value changed; debt-populate, pin classification (b-provable 103, page-scope 38, c 16, none 8),
+`run_p_spread.mjs` and `lost_text.py` outputs identical; baseline `port/10-integration` integrity
+65/65, runId `20261023T004510Z`; a gate of the tip copy against `port/10-integration` is all
+unchanged (15866) with the head and pin views as above; the derived copy differs from the tip copy
+only in the four `gate/` files and keeps the raw run-all report byte-identical.
+
+Each canary was also made to fire through the real gate on mutated scratch clones of the tip copy
+or of DEBT.json (not stored in the run store):
+
+| mutation | head view | gate |
+|---|---|---|
+| TXT-P1 `8 vs reference 7` -> `9 vs` (page delta 1 -> 2) | 145 `debt-exceeded` (metric + 144 words) | FAIL |
+| TXT-P1 -> `7 vs` (page delta 0) | 144 listed words `head-regression` | FAIL |
+| page-1 `Relatório#1` dy +3 pt | 1 `head-regression` | FAIL |
+| DANFE-L1d vector: +0.6 px at the first layout pass (run kept), unnamed / named | ledger: \|P\| > \|N0\| + 0.5 (+ unnamed step) | FAIL / FAIL |
+| DANFE-L1d vector: N0..P = run - 1.5 px, unnamed / `run` named | ledger: \|run\| > \|N0\| + 1.333 | FAIL / FAIL |
+| control: DANFE-L1d vector inline, unmutated | 0 | PASS |
+| listed word `p2 02/02/2026#1` dy 8.6 -> 28.6 pt, page delta still 1 | covered (debt) | FAIL only through the vs-09 view |
+
+The last row is the rule as written (a listed word rides on the page metric with no per-word
+ceiling while the delta holds); the previous-link comparison is what gates it.
+
+Two gaps between the rule (vi') code and GATE-D6b were found and fixed (commit on this branch,
+GATE-K2 row 23, canaries 23/23): (1) a listed scope binding a page metric that IS a head item
+(TXT-P1 1 -> 2, entered with measured = ceiling = 2) passed the head view with no ledger problem;
+(2) `fromPage` 1 was accepted, so a listed page-1 word was covered. After the fix the re-gate of
+the tip copy is identical to `gate-report-10-integration.*` except the 23rd canary row; the
+committed report and the baseline's `gate-report.*` record the 22-row gate as it ran.
+
 ## Files
 
 | file | content |
