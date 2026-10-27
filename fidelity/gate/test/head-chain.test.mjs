@@ -1,6 +1,7 @@
 // The head ratchet and the pin view on the committed chain (no render): 07-media-print gated
 // post-hoc against 06 (and, below, 09-review-fixes against 08) with --head 00-start and the
-// (empty) DEBT.json, and classed against the shipped main (pin). Numbers are asserted so a change of the rules or of
+// ledger as it stood for those links (empty: DEBT.json was first populated on 2026-10-27, at
+// step 10-integration), and classed against the shipped main (pin). Numbers are asserted so a change of the rules or of
 // the committed data is visible here; their reading is in fidelity/baselines/port/README.md
 // ("Head ratchet and debt ledger").
 import assert from "node:assert/strict";
@@ -9,7 +10,7 @@ import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
-import { DEBT_FILE, loadDebt } from "../debt.mjs";
+import { DEBT_FILE, emptyLedger, loadDebt } from "../debt.mjs";
 import { chainDeclarations } from "../declarations.mjs";
 import { evaluateGate } from "../run.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
@@ -45,7 +46,7 @@ const r = evaluateGate({
   declared: s07.manifest.declaredRejections ?? [],
   headDeclared: c07.head,
   pinDeclared: c07.pin,
-  ledger: loadDebt(DEBT_FILE),
+  ledger: emptyLedger(),
   ledgerBase: null,
   passes: PASSES,
 });
@@ -55,11 +56,12 @@ const tally = (items, f) => {
   return out;
 };
 
-test("the committed DEBT.json is the empty vellora-fidelity/debt/2 ledger", () => {
+test("the committed DEBT.json is a debt/2 ledger (first population 2026-10-27); 07 and 09 ran with none", () => {
   const l = loadDebt(DEBT_FILE);
   assert.equal(l.schema, "vellora-fidelity/debt/2");
   assert.equal(l.migratedFrom, undefined);
-  assert.deepEqual(l.entries, []);
+  // 26 entries / 1024 keys of step 10-integration (gate/test/debt-populate.test.mjs checks them).
+  assert.equal(l.entries.length, 26);
   assert.deepEqual(r.ledger.problems, []);
 });
 
@@ -163,7 +165,7 @@ const r09 = evaluateGate({
   declared: s09.manifest.declaredRejections ?? [],
   headDeclared: c09.head,
   pinDeclared: c09.pin,
-  ledger: loadDebt(DEBT_FILE),
+  ledger: emptyLedger(),
   ledgerBase: null,
   passes: PASSES,
 });
