@@ -23,9 +23,16 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   # The ledger base (rule iii) defaults to DEBT.json at `git merge-base HEAD main` since
   # 2026-10-22 (I2; absent there = first population, exempt from the count and sum rule); pass
   # --debt-base <file> only where that merge base cannot be determined (e.g. a clone without main).
+  # Chrome is PINNED (since 2026-10-27): local stable Chrome auto-updated to 156.0.8078.4, which
+  # would mix a Chrome major change into the gate. Install Chrome for Testing 155.0.8059.85 per
+  # checkout (fidelity/.cache/chrome, gitignored) and pass it with --chrome (the path below is
+  # the one the 10-repro run recorded, repro-10/repro-10-summary.json):
+  node fidelity/wpt/install-chrome.mjs
   node fidelity/run-all.mjs --gate --baseline fidelity/baselines/port/<previous step> \
     --step <NN-name> \
-    --chrome-from <wpt results.json> --tools-image vellora-fidelity-tools:baseline-beta4 \
+    --chrome "fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing" \
+    --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json \
+    --tools-image vellora-fidelity-tools:baseline-beta4 \
     --out fidelity/results/run-all/<NN-name> [--accept accepted.json]
   # Defaults: --head = the Chain head above (port/00-start), --debt = baselines/port/DEBT.json,
   # --pin = baselines/pin (pin view, reported). A merge to main adds --main ((c) items gate).
@@ -82,8 +89,12 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   `wpt/results.json` (Chrome outcomes for 8046 of 8047 tests, raw-Blitz outcomes for all 8047) is
   the `--chrome-from` source from then on, with `--tools-image vellora-fidelity-tools:baseline-beta4`
   (the image was rebuilt from `fidelity/oracles/docker/tools.Dockerfile`, new id
-  `sha256:c405e06c653a...`; equivalence of its verdicts with the lost image is UNVERIFIED until a
-  re-run matches 10-tip).
+  `sha256:c405e06c653a...`; equivalence with the lost image `sha256:6b648b83...` is CONFIRMED on
+  this corpus by the reproducibility run `20261027T130144Z`,
+  `fidelity/gate/snapshots/2026-10-27/repro-10/README.md`: 71/71 product PDFs and 10/10 WeasyPrint
+  PDFs byte-identical, oracle verdicts, WPT outcomes 8047/8047 and gate counts identical). The
+  veraPDF image `verapdf/cli:v1.30.3` was also lost and was re-pulled by digest (same id
+  `sha256:45b2f7cd...`).
 - **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
   (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
   against its predecessor. `fidelity/gate/test/head-chain.test.mjs` re-checks the head ratchet
@@ -2024,3 +2035,149 @@ with the first population of `DEBT.json` and the step's class-a acceptances
   fix; neither is hidden in the ledger.
 - Numbers, commands, residual and the pin classification:
   `fidelity/gate/snapshots/2026-10-27/10-debt/README.md`.
+
+## `10-integration`: baseline 10 written (2026-10-27, branch `phaseb/10-final`)
+
+Link `port/10-integration`, gated against `port/09-review-fixes`. No re-render: every number is
+from ONE run, `20261023T004510Z` (phaseb/10-tip a293cf5 = 10-rects + 10-spark + 10-crates on Blitz
+0.3.0-beta.4 from crates.io; `run-all --gate --raw`, 2026-10-23, Chrome 155.0.8059.85), re-gated
+post hoc on 2026-10-27 with the step's class-a acceptances and the re-populated `DEBT.json`.
+Environment of run and re-gate: darwin 27.0.0 arm64 (macOS 27.0.1, Apple M5 Pro), Node v22.23.2,
+rustc 1.96.0, PyMuPDF 1.28.2; local macOS, INDICATIVE. `<RUN>` =
+`~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5`
+(the copy's directory carries `004536Z`; its `summary.json` `runId` is `004510Z`, CONFIRMED by
+the 10-verify agent). Full numbers, commands and the item-by-item diff against 10-debt:
+`fidelity/gate/snapshots/2026-10-27/10-final/README.md`.
+
+```
+node fidelity/gate/run.mjs --baseline fidelity/baselines/port/09-review-fixes --run <RUN> \
+  --accept fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json \
+  --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from <RUN> \
+  --debt fidelity/baselines/port/DEBT.json --step 10-integration --out <scratch>/regate
+# exit 0: PASS
+```
+
+**Baseline source.** `write-baseline.mjs` reads the verdict from the run's `gate/gate-report.json`
+and refuses a FAIL without `--force`; the tip copy's own report is the 2026-10-23 run-all gate (vs
+09, no acceptances, no ledger: FAIL raw). The baseline is therefore written from the derived copy
+`~/Repositories/vellora-fidelity-runs/run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5`
+= the tip copy with `gate/gate-report.{json,md}` replaced by the re-gate above (the run-all report
+kept beside it and attached as `attachments/gate-report-run-all-vs-09-raw.md`). `diff -rq` of the
+two copies: only those `gate/` files (CONFIRMED 2026-10-27). Re-writing the baseline into a scratch
+root reproduces every file except `manifest.json` `command`/`date` (CONFIRMED 2026-10-27).
+
+### Gate results (CONFIRMED, `10-integration/gate-report.{json,md}`)
+
+| view | result |
+|---|---|
+| vs `09-review-fixes` | **gating 0**: improvement 93, added 5, within-tolerance 327, newly-measured 39, accepted 3, unchanged 14486 |
+| head vs `port/00-start` | **gating 0**: debt 1169, accepted 4, declared 10; 3 flagged WPT passes lost, reported, not gating (GATE-W1: `background-position-002`, `page-name-001-print`, `page-name-orthogonal-writing-002-print`) |
+| pin view vs `baselines/pin` | (a) 1, (b) 693, (c) 165, declared 10: merge to main BLOCKED |
+| ledger | 27 entries, 1026 keys (+144 listed scope keys), 0 problems; base: no DEBT.json at the merge base with main = first population |
+| gate canaries (GATE-K2) | 22/22 caught |
+
+**What changed since 09** (the 10-rects, 10-spark and 10-crates product changes, each described
+in its section above; the gate's own breakdown of this re-gate):
+
+- Improvements 93: WPT 45 fail → pass (36 from 10-rects, section above); pdf-probe words
+  sparksuite 25, postmark 9, invoice 5 (p3 dy −2.65 → −1.15 pt, 10-crates); values: INV-R1
+  postmark and sparksuite FAIL → PASS (`worstMm` 10.26 → 0.18 and 4.15 → 0.61), postmark EXT-2
+  missing tokens pdftotext 38 → 35, PyMuPDF 40 → 37, invoice REF-W `maxMm` 2.53 → 1.68 and `p95Mm`
+  2.51 → 1.55, invoice EXT-2 pdfminer.six status 2 → 3.
+- Within tolerance 327 (listed, not gating): postmark 235, sparksuite 67, invoice 21, receipt 4.
+- Newly measured 39: the 37 `pdf-probe-suite` probe fixtures (`probe-*`, first gated in this run;
+  09 has no `probe-*` pdf-probe section, CONFIRMED by listing `09-review-fixes/pdf-probe/`) and
+  postmark `[Product#1` / `Name]#1` (now paired, dx −0.90 dy −0.15 pt). Added 5: gate canaries.
+
+**Class-a acceptances** (`fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json`, 4, each with
+its re-check on the tip PDFs): the 3 of 10-spark (postmark `[Product#2` and `Name]#2` pairing:
+Chrome's white `text-shadow` copy, which vellora does not draw, was the old partner; postmark
+`unpaired-vellora` 0 → 3: "Download as PDF" was drawn below the page at 09 and is now on page 1),
+counted vs 09 and vs the head; and the WPT false pass `css/css-page/monolithic-overflow-014-print.html`,
+head view only.
+
+### DEBT.json (27 entries, 1026 keys + 144 listed scope keys)
+
+Re-populated from exactly this run with the committed inputs (command in
+`fidelity/gate/snapshots/2026-10-27/10-debt/README.md`; output `27 entries, 1026 keys (1025 covered
+records + 1 page metric), 144 listed scope keys; residual 0`). By tolerance class: pdf-probe-pt
+1014, WPT count 7, position-mm 4 (DANFE-L1a-d `posErrMm`), page-delta 1. By owner layer (keys):
+`blitz:text-position-dy` 847, `blitz:text-position-dx` 167, `blitz:wpt-raw-fail` 7,
+`blitz:block-offset` 4, `vellora:pagination` 1 (the page-scope entry, `closesAt` `11-pagination`,
+Phase C). By `introducedBy` (entries / keys): `04-block-offset` 16 / 734, `03-table-passes` 4 / 156,
+`01-pagination-gaps` 6 / 131, `05-walk-rewrite` 1 / 5. Against the 10-debt ledger (26 / 1024): 25
+entries byte-identical, `DEBT-10-danfe-1` gains DANFE-L1d (rule ii), and
+`DEBT-10-text-stress-ptbr-page-scope` is new (rule i). Owner text: since 10-spark, N0 includes
+vellora's `<table cellspacing>`/`cellpadding` user-agent sheet
+(`blitz_engine::table_spacing_hints_css`); `debt-populate.mjs` names it for the fixtures whose source
+uses those attributes (`oss-postmark-receipt`, `oss-sparksuite-invoice`, `probe-g_postmark_raw`;
+none of them has a DEBT key, so no committed owner text changed).
+
+### The two rule changes (orchestrator decisions, 2026-10-27; ACCEPTANCE.md GATE-D6b, GATE-D7)
+
+- **(i) Listed page scope (GATE-D6b, rule vi′).** A page-scoped entry may bind a page metric whose
+  measured value equals its head value, on the page-scope route only; ceiling = the current page
+  delta; it scopes out only its listed per-word keys on pages ≥ 2 of that fixture while the delta
+  is ≥ 1. Used once: `text-stress-ptbr|TXT-P1|corpus||criterion#1|pageDelta` (head 1 = run 1;
+  vellora 8 pages, Chrome 7), 144 listed words (94 dy, 35 dx, 15 pairing; introduced by
+  03-table-passes 65, 04-block-offset 79). Lost-text check of the 15 pairing items: displaced, not
+  lost (`10-final/lost-text-text-stress-ptbr.json`). Canaries: page delta 1 → 2 gates; a page-1
+  word worsening beyond tolerance gates; page delta 0 compares the listed word again.
+- **(ii) One vector run tolerance (GATE-D7).** `gate/tolerances.mjs` `VECTOR_RUN_TOLERANCE_PX` =
+  the pdf-probe word tolerance 1 pt = 1.333 px for both pdf-probe-pt and position-mm vectors
+  (position-mm was 0.5 px). Measurement (CONFIRMED, `node
+  fidelity/gate/snapshots/2026-10-27/10-final/scripts/run_p_spread.mjs .`, 2026-10-27, on the
+  committed 10-debt head vectors): run − P over the 459 mapped danfe page-1 words, dy median
+  +0.557, range −0.284..+1.113 px; max |run − P| over 7 fixtures and both axes 1.233 px (danfe dx),
+  + 0.013 px resolution = 1.246 px < 1.333 px, so the pdf-probe value covers it and is kept as the
+  single value. Added with it: the relaxed (b) rule also requires |P| ≤ |N0| + 0.5 px, so the wider
+  run tolerance cannot absorb a layout-layer worsening (refuses none of the 1014 committed word
+  keys). Classification change: exactly one key, `danfe|DANFE-L1d|corpus||criterion#1|posErrMm`
+  (head residual → DEBT, pin c → b). Canaries on the DANFE-L1d vector: a +0.6 px layout-layer step
+  stays (c), named or not; a +1.5 px P → run step gates.
+
+Effect, item by item vs the 10-debt re-gate (CONFIRMED): head exactly 145 `head-regression → debt`
+(DANFE-L1d + the 144 text-stress-ptbr words on pages ≥ 2 = the 10-debt residual), nothing else; vs
+09 nothing; pin 52 `c → b` (DANFE-L1d + 51 page-scope words that are head items), so pin (b)
+641 → 693 and (c) 217 → 165.
+
+### Loss event and reproducibility
+
+`~/.cache/vellora-fidelity` (every older run copy), the tools image and the veraPDF image were lost
+between 2026-10-23 and 2026-10-27 (chain convention above). The tools image was rebuilt from
+`fidelity/oracles/docker/tools.Dockerfile` (`sha256:c405e06c653a...`); veraPDF `verapdf/cli:v1.30.3`
+was re-pulled by digest (same id `sha256:45b2f7cd...`). Tools-image equivalence is now CONFIRMED on
+this corpus by the reproducibility run `20261027T130144Z`
+(`fidelity/gate/snapshots/2026-10-27/repro-10/README.md`, copy
+`~/Repositories/vellora-fidelity-runs/run-all-10-repro-20261027T130144Z`): 71/71 product PDFs
+byte-identical, oracle verdicts, WPT outcomes 8047/8047 and gate counts identical. Chain convention
+gains `--chrome` pinned to Chrome for Testing 155.0.8059.85 (`node fidelity/wpt/install-chrome.mjs`;
+local stable Chrome is now 156.0.8078.4).
+
+### Known failures that become the floor
+
+- Off-page vellora words (GATE-P1 counts): `probe-g_inline_body` 66 (vellora 1 page, Chrome 3),
+  `probe-g_postmark_raw` 23 (vellora 1, Chrome 2). Newly measured at this link: 09 has no `probe-*`
+  pdf-probe section, so there is no earlier number to compare with (CONFIRMED). Postmark: 37
+  (09: 40; −3 = "Download as PDF").
+- Postmark "Download as PDF": vellora page 1 (baseline 815.85 pt on 841.92 pt), Chrome page 2 (the
+  layout table is not fragmented; Phase C).
+- 3 flagged WPT passes lost vs the head (reported, not gating; listed above).
+
+### What blocks main (pin view (c) 165, `10-final/pin-classification.json`)
+
+Re-counted after rules (i) and (ii) (before: b-provable 103, page-scope 89, c 17, none 8 = 217):
+
+- **b-provable 103** (not entered: the ledger is head debt, GATE-D1, and these are not worse than
+  the head): 26 WPT raw-Blitz fails; danfe 41 (26 dx, 15 dy), invoice 35 dx, boleto-febraban 1 dx.
+- **page-scope 38**: text-stress-ptbr words on pages ≥ 2 worse than the pin but not than the head
+  (29 dy, 4 dx, 5 pairing), so not listed in the scope; closes with pagination (Phase C).
+- **c 16**: `oss-sparksuite-invoice` p1 dx −0.23 → −1.73 pt (`Invoice#1`, `#:#1`, `123#1`,
+  `Created:#1`, `January#1`, `1,#1`, `2023#1`, `Due:#1`, `February#1`, `1,#2`, `2023#2`,
+  `Acme#1`, `Corp.#1`, `John#1`, `Doe#1`, `john@example.com#1`): relaxed (b) fails (|run| 2.307 px >
+  |N0| 0). HYPOTHESIS: a right- vs left-aligned Chrome DOM → PDF offset; not measured.
+  DANFE-L1d left this group (rule ii).
+- **none 8** (no usable vector): `danfe|DANFE-M1|…|excessB` 8.552 → 24.173 (no vector);
+  invoice `p2|QTD.#1` and `p3|QTD.#1` dx 1.21 → 4.42 pt (not mapped); invoice p3 `Total#1`, `a#1`,
+  `pagar#1`, `R$#14`, `50.724,90#1` dy 1.1 → −1.15 pt (|run − P| 3.52 px > 1.333 px: the vector does
+  not describe the PDF). Rule (ii) changed none of these 8.
