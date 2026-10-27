@@ -21,14 +21,16 @@ height error is in tables.
 | notification | `.deadline-table` +2.01 (3 rows, `border: 1px`) | +6.02 | +6.33 |
 | receipt | items table +1.33 (7 rows) | +9.64 | +9.91 |
 | invoice | header table +2.13 (1 row) | +3.20 | +3.26 |
-| danfe | +1.0 (rows with a fixed `height`, `0.5pt` borders) | see note | +13.69 |
+| danfe | +1.0 (rows with a fixed `height`, `0.5pt` borders; mechanism HYPOTHESIS, see note) | see note | +13.69 |
 | boleto-febraban | +0.86..+1.7 | | |
 
 - In boleto and notification the sum of the table height deltas is the drift at the bottom of the
   flow, within 0.3 px. Every box before the first collapsed table has dy ≈ 0 and every box after
   it carries the accumulated sum. This is the "error grows down the page".
 - danfe's tables sit inside positioned bands, so their dh do not add up to the bottom dy linearly
-  (UNVERIFIED which bands absorb it). The +1.0 px per row matches the `tr { height }` variant below.
+  (UNVERIFIED which bands absorb it). The +1.0 px per row is HYPOTHESIS: two variants below give
+  +1 per row (`collapse_b1_tr_height48`, `collapse_first_cell_borderless`); danfe was matched to the
+  first by reading its CSS (`tr.h085` heights), not by measurement.
 
 ## Minimal repro (CONFIRMED, both engines measured)
 
@@ -41,6 +43,10 @@ python3 blitz.py <repo>/target/release/examples/layout_dump repro results/blitz-
 python3 blitz.py /tmp/c01/pin/target/release/examples/layout_dump repro results/blitz-pin.json pin2003ba5
 python3 show.py results/<engine>.json t,c0a,c1a,c2a,after  # → results/summary.txt
 ```
+
+The pin binary: `git archive 8009f96 | tar -x -C /tmp/c01/pin` and then, in that directory,
+`cargo build --release --offline -p vellora-core --example layout_dump`. `blitz.py` writes its
+intermediate dumps to `/tmp/c01/`.
 
 Cell y / height (px). `t` is the table; `after` is the block after it.
 
@@ -57,14 +63,17 @@ Cell y / height (px). `t` is the table; `after` is the block after it.
 | `collapse_first_cell_borderless` | as b1 | 112 | 0/38, 38/38, 76/38 | 114 | +1 |
 | `collapse_table_border2_cells_none` | rows at 0/36/72, last 37 tall | 110 | rows at 0/36/72, 36 tall | 108 | table border lost (−2) |
 | `collapse_b1_tr_height48` (`tr {height:48px}`) | 0.5/48, 48.5/48, 96.5/48 | 145 | 1/48, 50/48, 99/48 | 148 | +1 |
+| `collapse_b1_lronly` (left+right only) | 0/36, 36/36, 72/36 | 108 | identical | 108 | 0 (predicted by the cause below: no vertical border in the measure, gutter 0) |
 
 - The separated model is exact, so the error is specific to `border-collapse: collapse`.
 - Text: row 0's text line is exact against Chrome; each later row's text is +2 px per row
   (`textTop` in the JSON; Chrome's value is the glyph content-area top, so compare differences
   against the `separate_s0_b1` row, which is exact in both).
-- **Blitz 2003ba5 gives byte-for-byte the same cell rects as beta.4 on every variant except
-  `collapse_b1_tr_height48`.** There the pin ignores `tr { height }` (38 px rows), and beta.4
-  honours it but adds the 1 px gutter. So **beta.4 did not introduce the collapsed-row drift**. The
+- **Blitz 2003ba5 gives the same cell rects as beta.4 on every variant except
+  `collapse_b1_tr_height48` and `collapse_b1_lronly`.** In the first, the pin ignores `tr { height }`
+  (38 px rows), and beta.4 honours it but adds the 1 px gutter. In the second, the pin uses a 3 px
+  (`medium`) gutter for the `border-style: none` sides (table 120); beta.4's `side_width` (table.rs
+  137-166) fixed that. So **beta.4 did not introduce the collapsed-row drift**. The
   published vellora hid it with compensating layers: the 4 px PDF text raise removed in port step
   04 (`baselines/port/README.md`, "Where raw Blitz placed boxes too low, the raise hid part of that
   drift") and the pin-era pagination row stacking. That history comes from the README; it was not
@@ -99,9 +108,11 @@ the variants:
 - With a row `height`, the gutter is added on top of the specified height. Chrome's row height
   includes the collapsed border (+B per row).
 
-Upstream `main` (fetched 2026-10-27 via raw.githubusercontent, rev not recorded, so UNVERIFIED
-which commit): lines 1-3 are unchanged, and `compute_child_layout` still delegates without any
-style override. Related open items (read-only GitHub API, 2026-10-27): #386 "Bug: border-collapse
+Upstream `main` at `fe33b778baaef5375d941c8a4f491f62cbd31d30` (committed 2026-10-27T13:05:24Z;
+read-only `gh api repos/DioxusLabs/blitz/contents/packages/blitz-dom/src/layout/table.rs`,
+2026-10-27, CONFIRMED): the same code, shifted by one line. Cell border zeroing is at 639-642, the
+table border override at 406, and `compute_child_layout` (816-824) still delegates to
+`self.doc.compute_child_layout` without overriding the style. So it is not fixed after beta.4. Related open items (read-only GitHub API, 2026-10-27): #386 "Bug: border-collapse
 rendered incorrectly" (open), #422 (open PR; fixes the table-border offset part of #386), #504
 (phantom 3 px grid / per-edge colours), #1112 (open PR: keep cells' borders when the grid has no
 width). In what was read, none of them names the measure-with-own-borders path (UNVERIFIED: search
@@ -129,9 +140,10 @@ terms `border-collapse`, `collapse row height`, first 10-20 results).
 
 ## Draft issue text (NOT SUBMITTED)
 
-> **Title:** `border-collapse: collapse`: each table row is 2× the border width taller than in browsers
+> **Title:** `border-collapse: collapse`: each table row is 2× the border width taller than in Chrome
 >
-> In the collapsed border model every row is `2 × border-width` px taller than in Chrome/Firefox,
+> In the collapsed border model every row is `2 × border-width` px taller than in Chrome 155
+> (only Chrome was measured),
 > so content below a table drifts down by `2 × B × rows`.
 >
 > ```html

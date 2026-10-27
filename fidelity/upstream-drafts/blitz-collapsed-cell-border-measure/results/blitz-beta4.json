@@ -465,6 +465,87 @@
         "textTop": 391
       }
     ],
+    "collapse_b1_lronly": [
+      {
+        "id": "t",
+        "y": 0,
+        "h": 108,
+        "ry": 0,
+        "rh": 108,
+        "border": [0, 0, 0, 0],
+        "padding": [0, 0, 0, 0]
+      },
+      {
+        "id": "c0a",
+        "y": 0,
+        "h": 36,
+        "ry": 0,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 8
+      },
+      {
+        "id": "c0b",
+        "y": 0,
+        "h": 36,
+        "ry": 0,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 8
+      },
+      {
+        "id": "c1a",
+        "y": 36,
+        "h": 36,
+        "ry": 36,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 44
+      },
+      {
+        "id": "c1b",
+        "y": 36,
+        "h": 36,
+        "ry": 36,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 44
+      },
+      {
+        "id": "c2a",
+        "y": 72,
+        "h": 36,
+        "ry": 72,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 80
+      },
+      {
+        "id": "c2b",
+        "y": 72,
+        "h": 36,
+        "ry": 72,
+        "rh": 36,
+        "border": [0, 0, 0, 0],
+        "padding": [8, 8, 8, 8],
+        "textTop": 80
+      },
+      {
+        "id": "after",
+        "y": 108,
+        "h": 20,
+        "ry": 108,
+        "rh": 20,
+        "border": [0, 0, 0, 0],
+        "padding": [0, 0, 0, 0],
+        "textTop": 108
+      }
+    ],
     "collapse_b1_tbonly": [
       {
         "id": "t",

@@ -28,4 +28,8 @@ export const VARIANTS = {
     head("table{border-collapse:collapse;border-bottom:2px solid #000} td{border:0}") + rows(3),
   collapse_b1_tr_height48:
     head("table{border-collapse:collapse} td{border:1px solid #000} tr{height:48px}") + rows(3),
+  collapse_b1_lronly:
+    head(
+      "table{border-collapse:collapse} td{border-left:1px solid #000;border-right:1px solid #000}",
+    ) + rows(3),
 };
