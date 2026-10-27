@@ -1,0 +1,2100 @@
+{
+  "report": "<scratch>/regate/gate-report.json",
+  "pin": "fidelity/baselines/pin",
+  "total": 193,
+  "byRoute": {
+    "none": 70,
+    "b-provable": 80,
+    "b": 27,
+    "c": 16
+  },
+  "items": [
+    {
+      "key": "wpt|css/CSS2/abspos/between-float-and-text.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats-clear/clear-applies-to-009.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats-clear/clear-float-005.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats-clear/floats-153.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/float-in-inline-anonymous-block-with-overflow-hidden.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/float-nowrap-2.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/float-nowrap-8.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-001a.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-003.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/zero-width-floats.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/generated-content/after-content-display-012.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/generated-content/after-content-display-013.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/generated-content/before-content-display-012.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/generated-content/before-content-display-013.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/block-in-inline-float-between-001.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/normal-flow/inline-table-zorder-001.xht",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/CSS2/visuren/float-inside-inline-between-blocks-1.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-054.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-055.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-058.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-break/ruby-003.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-page/monolithic-overflow-014-print.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/tab-size/tab-size-integer-001.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/tab-size/tab-size-integer-002.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/tab-size/tab-size-integer-003.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/text-align/text-align-end-006.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/text-justify/text-justify-and-trailing-spaces-003.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/text-justify/text-justify-and-trailing-spaces-004.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "wpt|css/css-text/white-space/text-wrap-balance-text-indent-001.html",
+      "before": "pass",
+      "after": "fail",
+      "route": "none",
+      "why": "raw-Blitz outcome (none) is not the run's outcome fail (GATE-A3 (b) needs the same failure)"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0042#2|dy",
+      "before": -6.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|/#4|dy",
+      "before": -6.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|00012345-6#2|dy",
+      "before": -6.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|22/06/2026#1|dy",
+      "before": -4.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|DOC-00042#1|dy",
+      "before": -4.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|DM#1|dy",
+      "before": -4.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|00000000000123456-7#2|dy",
+      "before": -4.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|17#1|dy",
+      "before": -3.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|R$#2|dy",
+      "before": -3.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|1#3|dy",
+      "before": -3.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|R$#3|dy",
+      "before": -3.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|1.842,50#2|dy",
+      "before": -3.47,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|•#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|Não#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|receber#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|após#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|30#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|dias#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|do#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|vencimento.#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|R$#4|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|0,00#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|Desconto#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|de#7|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|R$#6|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|92,13#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|para#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|pagamento#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|até#2|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|boleto|p1|05/07/2026.#1|dy",
+      "before": -1.97,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|no#2|dx",
+      "before": -4.76,
+      "after": 1.07,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|21.773,40#3|dx",
+      "before": -7.36,
+      "after": 1.19,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|18,00#5|dy",
+      "before": -3.26,
+      "after": 1.24,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|18,00#8|dy",
+      "before": -1.72,
+      "after": 1.28,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|0,00#23|dy",
+      "before": -1.72,
+      "after": 1.28,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|danfe|p1|com#3|dy",
+      "before": -12.96,
+      "after": 1.29,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|São#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Paulo#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|—#2|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|SP#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Avenida#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Central,#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|4500#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|—#3|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Conjunto#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|12#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|faturamento@acmewidgets.example#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|CNPJ#2|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|98.765.432/0001-21#1|dy",
+      "before": -1.3,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|QTD.#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|40#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|25#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|18#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|60#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|120#1|dx",
+      "before": 1.2,
+      "after": 4.43,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|30#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|22#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|44#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|12#2|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|24#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p1|8#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|QTD.#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "none",
+      "why": "no committed layer vector for the key",
+      "vector": null
+    },
+    {
+      "key": "pdf-probe|invoice|p2|10#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|6#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|30#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|14#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|20#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|5#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|35#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|50#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|28#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|56#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|16#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|64#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|18#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|22#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|22#2|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|15#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|40#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p2|8#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|QTD.#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "none",
+      "why": "no committed layer vector for the key",
+      "vector": null
+    },
+    {
+      "key": "pdf-probe|invoice|p3|30#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|12#1|dx",
+      "before": 1.2,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|5#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|1#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|invoice|p3|2#1|dx",
+      "before": 1.21,
+      "after": 4.42,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": ["auto_table_compact_columns"],
+      "owner": "blitz:text-position-dx"
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Invoice#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|#:#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|123#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Created:#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|January#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|1,#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|2023#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Due:#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|February#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|1,#2|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|2023#2|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Acme#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Corp.#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|John#1|dx",
+      "before": -0.22,
+      "after": -1.72,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.293 > |N0| 0.008 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0.008,
+        "B0": 0.008,
+        "L0": 0.008,
+        "table_percent_widths": 0.008,
+        "auto_table_compact_columns": 0.008,
+        "P": 0.008,
+        "run": -2.293
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|Doe#1|dx",
+      "before": -0.22,
+      "after": -1.72,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.293 > |N0| 0.008 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0.008,
+        "B0": 0.008,
+        "L0": 0.008,
+        "table_percent_widths": 0.008,
+        "auto_table_compact_columns": 0.008,
+        "P": 0.008,
+        "run": -2.293
+      }
+    },
+    {
+      "key": "pdf-probe|oss-sparksuite-invoice|p1|john@example.com#1|dx",
+      "before": -0.23,
+      "after": -1.73,
+      "route": "c",
+      "why": "relaxed (b) rule fails: |run| 2.307 > |N0| 0 (px)",
+      "vector": {
+        "unit": "px",
+        "N0": 0,
+        "B0": 0,
+        "L0": 0,
+        "table_percent_widths": 0,
+        "auto_table_compact_columns": 0,
+        "P": 0,
+        "run": -2.307
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|DESCRIÇÃO#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|receipt|p1|QTD#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|receipt|p1|UNITÁRIO#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|receipt|p1|TOTAL#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|receipt|p1|SKU#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|receipt|p1|CAF-ESP-002#1|dy",
+      "before": -1.12,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#6|dy",
+      "before": -12.4,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#9|dy",
+      "before": -7.9,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#13|dy",
+      "before": -16.9,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#15|dy",
+      "before": -15.4,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|em#6|dy",
+      "before": -16.9,
+      "after": 1.1,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#28|dy",
+      "before": -28.15,
+      "after": 1.85,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Lançamentos#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#2|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|2026#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#2|dy",
+      "before": -17.65,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#9|dy",
+      "before": -1.15,
+      "after": 1.1,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#11|dy",
+      "before": -4.9,
+      "after": 1.85,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#16|dy",
+      "before": -15.4,
+      "after": 1.85,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|Lançamentos#1|dy",
+      "before": -4.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.42 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 2.891,
+        "B0": 2.891,
+        "L0": 2.891,
+        "table_percent_widths": 2.891,
+        "auto_table_compact_columns": 2.891,
+        "P": 2.891,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#1|dy",
+      "before": -4.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.42 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 2.891,
+        "B0": 2.891,
+        "L0": 2.891,
+        "table_percent_widths": 2.891,
+        "auto_table_compact_columns": 2.891,
+        "P": 2.891,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#2|dy",
+      "before": -4.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.42 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 2.891,
+        "B0": 2.891,
+        "L0": 2.891,
+        "table_percent_widths": 2.891,
+        "auto_table_compact_columns": 2.891,
+        "P": 2.891,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|2026#1|dy",
+      "before": -4.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.42 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 2.891,
+        "B0": 2.891,
+        "L0": 2.891,
+        "table_percent_widths": 2.891,
+        "auto_table_compact_columns": 2.891,
+        "P": 2.891,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#4|dy",
+      "before": -19.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.8 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.266,
+        "B0": 3.266,
+        "L0": 3.266,
+        "table_percent_widths": 3.266,
+        "auto_table_compact_columns": 3.266,
+        "P": 3.266,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#14|dy",
+      "before": -5.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.83 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.297,
+        "B0": 3.297,
+        "L0": 3.297,
+        "table_percent_widths": 3.297,
+        "auto_table_compact_columns": 3.297,
+        "P": 3.297,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#15|dy",
+      "before": -2.65,
+      "after": 1.85,
+      "route": "b-provable",
+      "why": "the layer vector proves (b) (or raw Blitz fails the same way), but the item is not worse than the head: the ledger is head debt (GATE-D1) and does not carry it",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#17|dy",
+      "before": -12.4,
+      "after": 1.85,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#18|dy",
+      "before": -2.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.02 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.484,
+        "B0": 3.484,
+        "L0": 3.484,
+        "table_percent_widths": 3.484,
+        "auto_table_compact_columns": 3.484,
+        "P": 3.484,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#19|dy",
+      "before": -19.9,
+      "after": 1.85,
+      "route": "b",
+      "why": "a head item the ledger would cover",
+      "compensators": [],
+      "owner": "blitz:text-position-dy"
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#20|dy",
+      "before": -16.9,
+      "after": 1.85,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 1.39 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.859,
+        "B0": 3.859,
+        "L0": 3.859,
+        "table_percent_widths": 3.859,
+        "auto_table_compact_columns": 3.859,
+        "P": 3.859,
+        "run": 2.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Lançamentos#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.52 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.984,
+        "B0": 3.984,
+        "L0": 3.984,
+        "table_percent_widths": 3.984,
+        "auto_table_compact_columns": 3.984,
+        "P": 3.984,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.52 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.984,
+        "B0": 3.984,
+        "L0": 3.984,
+        "table_percent_widths": 3.984,
+        "auto_table_compact_columns": 3.984,
+        "P": 3.984,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#2|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.52 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.984,
+        "B0": 3.984,
+        "L0": 3.984,
+        "table_percent_widths": 3.984,
+        "auto_table_compact_columns": 3.984,
+        "P": 3.984,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|2026#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.52 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 3.984,
+        "B0": 3.984,
+        "L0": 3.984,
+        "table_percent_widths": 3.984,
+        "auto_table_compact_columns": 3.984,
+        "P": 3.984,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#7|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.61 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.078,
+        "B0": 4.078,
+        "L0": 4.078,
+        "table_percent_widths": 4.078,
+        "auto_table_compact_columns": 4.078,
+        "P": 4.078,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#9|dy",
+      "before": -2.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.8 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.266,
+        "B0": 4.266,
+        "L0": 4.266,
+        "table_percent_widths": 4.266,
+        "auto_table_compact_columns": 4.266,
+        "P": 4.266,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#11|dy",
+      "before": -9.4,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.89 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.359,
+        "B0": 4.359,
+        "L0": 4.359,
+        "table_percent_widths": 4.359,
+        "auto_table_compact_columns": 4.359,
+        "P": 4.359,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Lançamentos#2|dy",
+      "before": -25.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.08 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.547,
+        "B0": 4.547,
+        "L0": 4.547,
+        "table_percent_widths": 4.547,
+        "auto_table_compact_columns": 4.547,
+        "P": 4.547,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#13|dy",
+      "before": -25.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.08 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.547,
+        "B0": 4.547,
+        "L0": 4.547,
+        "table_percent_widths": 4.547,
+        "auto_table_compact_columns": 4.547,
+        "P": 4.547,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#14|dy",
+      "before": -25.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.08 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.547,
+        "B0": 4.547,
+        "L0": 4.547,
+        "table_percent_widths": 4.547,
+        "auto_table_compact_columns": 4.547,
+        "P": 4.547,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|2026#2|dy",
+      "before": -25.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.08 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.547,
+        "B0": 4.547,
+        "L0": 4.547,
+        "table_percent_widths": 4.547,
+        "auto_table_compact_columns": 4.547,
+        "P": 4.547,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#18|dy",
+      "before": -6.4,
+      "after": 1.85,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.36 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.828,
+        "B0": 4.828,
+        "L0": 4.828,
+        "table_percent_widths": 4.828,
+        "auto_table_compact_columns": 4.828,
+        "P": 4.828,
+        "run": 2.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#9|dy",
+      "before": -10.15,
+      "after": 1.85,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 2.49 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 4.953,
+        "B0": 4.953,
+        "L0": 4.953,
+        "table_percent_widths": 4.953,
+        "auto_table_compact_columns": 4.953,
+        "P": 4.953,
+        "run": 2.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.05 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.516,
+        "B0": 5.516,
+        "L0": 5.516,
+        "table_percent_widths": 5.516,
+        "auto_table_compact_columns": 5.516,
+        "P": 5.516,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.05 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.516,
+        "B0": 5.516,
+        "L0": 5.516,
+        "table_percent_widths": 5.516,
+        "auto_table_compact_columns": 5.516,
+        "P": 5.516,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#1|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.05 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.516,
+        "B0": 5.516,
+        "L0": 5.516,
+        "table_percent_widths": 5.516,
+        "auto_table_compact_columns": 5.516,
+        "P": 5.516,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#7|dy",
+      "before": -7.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.24 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.703,
+        "B0": 5.703,
+        "L0": 5.703,
+        "table_percent_widths": 5.703,
+        "auto_table_compact_columns": 5.703,
+        "P": 5.703,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#10|dy",
+      "before": -8.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.7 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.172,
+        "B0": 5.172,
+        "L0": 5.172,
+        "table_percent_widths": 5.172,
+        "auto_table_compact_columns": 5.172,
+        "P": 5.172,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|—#7|dy",
+      "before": -4.15,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.08 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.547,
+        "B0": 5.547,
+        "L0": 5.547,
+        "table_percent_widths": 5.547,
+        "auto_table_compact_columns": 5.547,
+        "P": 5.547,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|—#8|dy",
+      "before": -2.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.27 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.734,
+        "B0": 5.734,
+        "L0": 5.734,
+        "table_percent_widths": 5.734,
+        "auto_table_compact_columns": 5.734,
+        "P": 5.734,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#12|dy",
+      "before": -2.65,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.27 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.734,
+        "B0": 5.734,
+        "L0": 5.734,
+        "table_percent_widths": 5.734,
+        "auto_table_compact_columns": 5.734,
+        "P": 5.734,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#2|dy",
+      "before": -13.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.17 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.641,
+        "B0": 5.641,
+        "L0": 5.641,
+        "table_percent_widths": 5.641,
+        "auto_table_compact_columns": 5.641,
+        "P": 5.641,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#13|dy",
+      "before": -13.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.17 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.641,
+        "B0": 5.641,
+        "L0": 5.641,
+        "table_percent_widths": 5.641,
+        "auto_table_compact_columns": 5.641,
+        "P": 5.641,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#2|dy",
+      "before": -13.9,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.17 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.641,
+        "B0": 5.641,
+        "L0": 5.641,
+        "table_percent_widths": 5.641,
+        "auto_table_compact_columns": 5.641,
+        "P": 5.641,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#25|dy",
+      "before": -15.4,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.24 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.703,
+        "B0": 5.703,
+        "L0": 5.703,
+        "table_percent_widths": 5.703,
+        "auto_table_compact_columns": 5.703,
+        "P": 5.703,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#26|dy",
+      "before": -15.4,
+      "after": 1.1,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 4.24 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 5.703,
+        "B0": 5.703,
+        "L0": 5.703,
+        "table_percent_widths": 5.703,
+        "auto_table_compact_columns": 5.703,
+        "P": 5.703,
+        "run": 1.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#29|dy",
+      "before": -7.15,
+      "after": 1.85,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 3.8 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 6.266,
+        "B0": 6.266,
+        "L0": 6.266,
+        "table_percent_widths": 6.266,
+        "auto_table_compact_columns": 6.266,
+        "P": 6.266,
+        "run": 2.467
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p7|de#5|dy",
+      "before": -20.65,
+      "after": 1.03,
+      "route": "none",
+      "why": "the vector does not describe the run: |run - P| 5.57 px > 1.33 (P, layout-diff's in-page drift vs Chrome's continuous layout, is not this word's PDF position: e.g. a later page whose page-break offset differs from Chrome's)",
+      "vector": {
+        "unit": "px",
+        "N0": 6.938,
+        "B0": 6.938,
+        "L0": 6.938,
+        "table_percent_widths": 6.938,
+        "auto_table_compact_columns": 6.938,
+        "P": 6.938,
+        "run": 1.373
+      }
+    }
+  ]
+}

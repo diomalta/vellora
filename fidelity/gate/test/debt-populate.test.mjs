@@ -34,6 +34,16 @@ import { loadBaselineDir } from "../snapshot.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SNAP = resolve(here, "..", "snapshots", "2026-10-27", "10-debt");
+// The ledger as committed at port step 10-integration, frozen when Phase C 02 shrank DEBT.json.
+const LEDGER_10 = resolve(
+  here,
+  "..",
+  "snapshots",
+  "2026-10-27",
+  "10-final",
+  "DEBT-10-integration.json",
+);
+const SNAP_C02 = resolve(here, "..", "snapshots", "2026-10-27", "c02");
 const BASELINES = resolve(here, "..", "..", "baselines");
 
 // The boleto barcode digit of the 10-tip run (layer-vector geometry mapping): N0 28.531 px, P -3.
@@ -122,8 +132,8 @@ test("introducedBy is the first link that has the key; grouping by fixture, owne
   );
 });
 
-test("the committed ledger: 27 entries, 1026 keys, every key passes D7 against the committed head report", () => {
-  const ledger = loadDebt(DEBT_FILE);
+test("the 10-integration ledger: 27 entries, 1026 keys, every key passes D7 against its head report", () => {
+  const ledger = loadDebt(LEDGER_10);
   assert.equal(ledger.entries.length, 27);
   assert.deepEqual(ledgerProblems(ledger), []);
   const report = JSON.parse(
@@ -150,6 +160,41 @@ test("the committed ledger: 27 entries, 1026 keys, every key passes D7 against t
   }
   assert.equal(keys, 1026);
   assert.equal(scoped, 144);
+});
+
+// Phase C 02 (2026-10-27): DEBT.json shrunk from run 20261027T231548Z (snapshots/2026-10-27/c02):
+// 10 entries, 180 keys, each a key the 10-integration ledger covered, no ceiling above its old one,
+// every removed key recorded in closed[]; every key passes D7 against the c02 no-ledger re-gate.
+test("the committed ledger (c02 shrink): 10 entries, 180 keys, D7 against the c02 head report, only shrunk", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const old = loadDebt(LEDGER_10);
+  assert.equal(ledger.entries.length, 10);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  const report = JSON.parse(
+    gunzipSync(readFileSync(join(SNAP_C02, "gate-report-c02-nodebt.json.gz"))).toString(),
+  );
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  const oldKeys = new Map(old.entries.flatMap((e) => e.keys.map((k) => [k.key, k])));
+  const oldScope = new Set(old.entries.flatMap((e) => e.scope?.keys ?? []));
+  const kept = new Set();
+  for (const e of ledger.entries) {
+    assert.deepEqual(entryProblems(e), [], e.id);
+    assert.deepEqual(relaxedB(e), [], e.id);
+    assert.equal(e.scope, undefined, e.id);
+    for (const k of e.keys) {
+      kept.add(k.key);
+      assert.deepEqual(d7KeyProblems(e, k, head.get(k.key)), [], k.key);
+      const o = oldKeys.get(k.key);
+      assert.ok(o || oldScope.has(k.key), `${k.key}: not covered by the 10-integration ledger`);
+      if (o && typeof o.ceiling === "number") assert.ok(k.ceiling <= o.ceiling + 1e-9, k.key);
+    }
+  }
+  assert.equal(kept.size, 180);
+  const closed = new Set(ledger.closed.map((c) => c.key));
+  for (const key of oldKeys.keys()) {
+    if (!kept.has(key)) assert.ok(closed.has(key), `${key}: removed without a closed[] record`);
+  }
+  assert.equal(ledger.closed.length, 855);
 });
 
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {

@@ -1,0 +1,200 @@
+{
+  "invoice": {
+    "pin": {
+      "pages": 3,
+      "chromePages": 3,
+      "chromeWords": 541,
+      "missingWords": 0,
+      "medianMm": 1.42,
+      "p90Mm": 1.68,
+      "within1mm": 36.0,
+      "samePagePct": 100.0
+    },
+    "new": {
+      "pages": 3,
+      "chromePages": 3,
+      "chromeWords": 541,
+      "missingWords": 0,
+      "medianMm": 0.21,
+      "p90Mm": 0.65,
+      "within1mm": 93.2,
+      "samePagePct": 100.0
+    }
+  },
+  "receipt": {
+    "pin": {
+      "pages": 2,
+      "chromePages": 2,
+      "chromeWords": 151,
+      "missingWords": 0,
+      "medianMm": 5.22,
+      "p90Mm": 77.04,
+      "within1mm": 7.9,
+      "samePagePct": 88.1
+    },
+    "new": {
+      "pages": 2,
+      "chromePages": 2,
+      "chromeWords": 151,
+      "missingWords": 0,
+      "medianMm": 0.2,
+      "p90Mm": 0.44,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "boleto": {
+    "pin": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 297,
+      "missingWords": 0,
+      "medianMm": 1.74,
+      "p90Mm": 14.08,
+      "within1mm": 33.3,
+      "samePagePct": 100.0
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 297,
+      "missingWords": 0,
+      "medianMm": 0.29,
+      "p90Mm": 0.49,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "notification": {
+    "pin": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 248,
+      "missingWords": 4,
+      "medianMm": 0.33,
+      "p90Mm": 0.95,
+      "within1mm": 89.9,
+      "samePagePct": 98.4
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 248,
+      "missingWords": 0,
+      "medianMm": 0.23,
+      "p90Mm": 0.3,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "boleto-febraban": {
+    "pin": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 315,
+      "missingWords": 8,
+      "medianMm": 80.66,
+      "p90Mm": 82.28,
+      "within1mm": 13.7,
+      "samePagePct": 97.5
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 315,
+      "missingWords": 0,
+      "medianMm": 0.06,
+      "p90Mm": 0.27,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "danfe": {
+    "pin": {
+      "pages": 2,
+      "chromePages": 1,
+      "chromeWords": 630,
+      "missingWords": 1,
+      "medianMm": 17.73,
+      "p90Mm": 38.06,
+      "within1mm": 8.3,
+      "samePagePct": 93.5
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 630,
+      "missingWords": 0,
+      "medianMm": 0.29,
+      "p90Mm": 0.51,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "text-stress-ptbr": {
+    "pin": {
+      "pages": 8,
+      "chromePages": 7,
+      "chromeWords": 1827,
+      "missingWords": 7,
+      "medianMm": 106.44,
+      "p90Mm": 221.09,
+      "within1mm": 1.4,
+      "samePagePct": 54.7
+    },
+    "new": {
+      "pages": 7,
+      "chromePages": 7,
+      "chromeWords": 1827,
+      "missingWords": 0,
+      "medianMm": 0.43,
+      "p90Mm": 0.7,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  },
+  "oss-postmark-receipt": {
+    "pin": {
+      "pages": 1,
+      "chromePages": 2,
+      "chromeWords": 177,
+      "missingWords": 37,
+      "medianMm": 0.62,
+      "p90Mm": 18.14,
+      "within1mm": 40.1,
+      "samePagePct": 77.4
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 2,
+      "chromeWords": 177,
+      "missingWords": 37,
+      "medianMm": 0.19,
+      "p90Mm": 0.32,
+      "within1mm": 75.7,
+      "samePagePct": 77.4
+    }
+  },
+  "oss-sparksuite-invoice": {
+    "pin": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 46,
+      "missingWords": 0,
+      "medianMm": 9.82,
+      "p90Mm": 10.89,
+      "within1mm": 0.0,
+      "samePagePct": 100.0
+    },
+    "new": {
+      "pages": 1,
+      "chromePages": 1,
+      "chromeWords": 46,
+      "missingWords": 0,
+      "medianMm": 0.61,
+      "p90Mm": 0.61,
+      "within1mm": 100.0,
+      "samePagePct": 100.0
+    }
+  }
+}
