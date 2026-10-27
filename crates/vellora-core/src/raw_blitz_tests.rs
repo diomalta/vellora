@@ -321,10 +321,14 @@ fn blitz_still_lays_collapsed_rows_out_two_borders_too_tall() {
          now matches Chrome, DELETE the compensation: in crates/vellora-core/src/blitz_engine.rs \
          `compensate_collapsed_borders`, `CollapsedBorders`, `collapsed_table_grid`, \
          `collect_table_part`, `GridCollect`, `edge_borders`, `edge_style`, `set_border_widths`, \
-         `mutate_primary_style`, `TableColumnCursor`, the `collapsed` field of `WalkSink` and its \
-         uses in `push_box` / `read_visuals`, the `resolve_stylist` + compensation call in \
-         `resolve_and_walk`; the module src/collapsed_borders.rs (and its `mod` line in lib.rs); \
-         this canary and the `collapsed_border_compensation_*` tests in src/raw_blitz_tests.rs. \
+         `mutate_primary_style`, `TableColumnCursor`, `CompensatedCell`, `collapsed_row_lines`, \
+         the `collapsed` field of `WalkSink` and its uses in `push_box` / `read_visuals`, the \
+         `resolve_stylist` + compensation call in `resolve_and_walk`; the module \
+         src/collapsed_borders.rs (and its `mod` line in lib.rs); the `collapsed` straddle \
+         handling of `adjust_visual_inline_geometry` in src/layout_normalize.rs; this canary and \
+         the `collapsed_border_compensation_*` tests in src/raw_blitz_tests.rs. \
+         `cell_height_as_minimum` is called from the compensation: if its canary \
+         `blitz_still_fixes_a_cell_to_its_specified_height` still passes, keep that correction. \
          Then re-measure with fidelity/layout-diff before trusting either layout.\n"
     );
 }
@@ -582,8 +586,9 @@ fn blitz_still_fixes_a_cell_to_its_specified_height() {
          lays the repro cell out at its 30 px height (Chrome 155: 64 px, the cell grows with its \
          content; blitz-dom 0.3.0-beta.4 src/layout/table.rs 722-728 kept the height as a fixed \
          size). If Blitz now matches Chrome, DELETE `cell_height_as_minimum` and its call in \
-         `compensate_collapsed_borders` (crates/vellora-core/src/blitz_engine.rs) and this canary, \
-         then re-measure with fidelity/layout-diff.\n"
+         `compensate_collapsed_borders` (crates/vellora-core/src/blitz_engine.rs), this canary and \
+         `collapsed_border_compensation_grows_a_cell_past_its_specified_height`, then re-measure \
+         with fidelity/layout-diff.\n"
     );
 }
 

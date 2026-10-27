@@ -1056,9 +1056,12 @@ fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
 /// `TableColumnCursor`, `CompensatedCell`, `collapsed_row_lines`, `collect_table_part`,
 /// `GridCollect`, the `collapsed` field of [`WalkSink`] and its uses in [`push_box`] and
 /// [`read_visuals`], the `resolve_stylist` + compensation calls in [`resolve_and_walk`], the
-/// module `src/collapsed_borders.rs`, and the canary test
+/// module `src/collapsed_borders.rs` (and its `mod` line in `lib.rs`), the `collapsed` straddle
+/// handling of `layout_normalize::adjust_visual_inline_geometry`, the canary test
 /// `blitz_still_lays_collapsed_rows_out_two_borders_too_tall` (`src/raw_blitz_tests.rs`), which
-/// fails as soon as raw Blitz stops producing the bug.
+/// fails as soon as raw Blitz stops producing the bug, and the `collapsed_border_compensation_*`
+/// tests there. [`cell_height_as_minimum`] is called from here: if its own canary still passes
+/// then, keep that correction (re-scoped to collapsed tables) rather than deleting it with this.
 fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
     use style::values::specified::box_::DisplayInside;
     let mut out = CollapsedBorders::default();
