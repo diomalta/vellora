@@ -12,8 +12,9 @@ publish = false
 # Blitz comes from crates.io at the exact pre-release `=0.3.0-beta.4` (since the
 # Phase B port; before it, git rev 2003ba5fc2d8931da9213ef26a813b0d24c83ca6 of
 # the v0.3.0-alpha.5 line, the shipped main's engine and the fidelity `pin`
-# baseline). The bump was gated by the fidelity chain fidelity/baselines/port
-# (head port/00-start) and its debt ledger fidelity/baselines/port/DEBT.json.
+# baseline). The bump is gated by the fidelity chain fidelity/baselines/port
+# (head port/00-start) and its debt ledger fidelity/baselines/port/DEBT.json;
+# its gate status is in fidelity/baselines/port/README.md.
 # All Blitz contact is funneled through `src/blitz_engine.rs` so a bump touches
 # one file.
 #

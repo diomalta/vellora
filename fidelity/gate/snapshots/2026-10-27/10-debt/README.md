@@ -14,6 +14,9 @@ Note: `tip-10/tip-10-summary.json` names the run `20261023T004510Z`; the survivi
 is `...T004536Z...`. CONFIRMED same run for every purpose here: the re-gate with the 10-spark
 acceptances reproduces the committed round-2 counts exactly (head 1170, pin (c) 859, vs-09 gating
 0). The 26 s difference between the two ids is not explained by anything in this snapshot.
+Resolved by the independent verify (2026-10-27, `phaseb/10-verify`): the run copy's own
+`summary.json` records `runId` `20261023T004510Z` (`dateIso` 2026-10-23T00:45:10Z), so `004510Z`
+is the run and `004536Z` is only the copy's directory name (CONFIRMED).
 
 ## Verdict: FAIL (head gating 145). Baseline 10 NOT written.
 
