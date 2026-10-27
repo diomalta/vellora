@@ -20,10 +20,21 @@ import {
   tableSpacingHintFixtures,
   wordOwnerComponent,
 } from "../debt-populate.mjs";
-import { DEBT_FILE, d7KeyProblems, entryProblems, loadDebt, relaxedB } from "../debt.mjs";
+import {
+  DEBT_FILE,
+  d7KeyProblems,
+  entryProblems,
+  ledgerProblems,
+  loadDebt,
+  pageScopeD7Problems,
+  relaxedB,
+} from "../debt.mjs";
+import { pageMetricValues } from "../run.mjs";
+import { loadBaselineDir } from "../snapshot.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SNAP = resolve(here, "..", "snapshots", "2026-10-27", "10-debt");
+const BASELINES = resolve(here, "..", "..", "baselines");
 
 // The boleto barcode digit of the 10-tip run (layer-vector geometry mapping): N0 28.531 px, P -3.
 const BARCODE = {
@@ -111,23 +122,34 @@ test("introducedBy is the first link that has the key; grouping by fixture, owne
   );
 });
 
-test("the committed ledger: 26 entries, 1024 keys, every key passes D7 against the committed head report", () => {
+test("the committed ledger: 27 entries, 1026 keys, every key passes D7 against the committed head report", () => {
   const ledger = loadDebt(DEBT_FILE);
-  assert.equal(ledger.entries.length, 26);
+  assert.equal(ledger.entries.length, 27);
+  assert.deepEqual(ledgerProblems(ledger), []);
   const report = JSON.parse(
     gunzipSync(readFileSync(join(SNAP, "gate-report-10-integration-nodebt.json.gz"))).toString(),
   );
   const head = new Map(report.head.items.map((i) => [i.key, i]));
+  // The listed page scope (rule vi') binds a page metric that is no head item: its head and run
+  // values come from the snapshots (port/00-start and port/10-integration, the same run).
+  const headValues = pageMetricValues(loadBaselineDir(join(BASELINES, "port", "00-start")));
+  const runValues = pageMetricValues(loadBaselineDir(join(BASELINES, "port", "10-integration")));
   let keys = 0;
+  let scoped = 0;
   for (const e of ledger.entries) {
     assert.deepEqual(entryProblems(e), [], e.id);
     assert.deepEqual(relaxedB(e), [], e.id);
     for (const k of e.keys) {
       keys++;
-      assert.deepEqual(d7KeyProblems(e, k, head.get(k.key)), [], k.key);
+      const p = e.scope
+        ? pageScopeD7Problems(e, k, { headValues, runValues, headItems: head })
+        : d7KeyProblems(e, k, head.get(k.key));
+      assert.deepEqual(p, [], k.key);
     }
+    scoped += e.scope?.keys?.length ?? 0;
   }
-  assert.equal(keys, 1024);
+  assert.equal(keys, 1026);
+  assert.equal(scoped, 144);
 });
 
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {

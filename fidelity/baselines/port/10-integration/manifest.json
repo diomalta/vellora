@@ -1,0 +1,463 @@
+{
+  "schema": "vellora-fidelity/baseline/2",
+  "name": "10-integration",
+  "labels": {
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)",
+    "what": "Baseline for the fidelity value ratchet (fidelity/gate/): verdicts with values, WPT per-test outcomes with Chrome ink flags, crashtests, per-word pdf-probe, canaries, code checks.",
+    "note": "Run 20261023T004510Z (phaseb/10-tip a293cf5, run-all --gate --raw, 2026-10-23), copy run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5. gate-report.{json,md} is the post-hoc re-gate (2026-10-27, phaseb/10-final, no re-render) vs port/09-review-fixes with the 10-integration acceptances and DEBT.json after rule decisions (i) and (ii): PASS vs 09 and vs the head. The run's own run-all gate report (vs 09, no acceptances, FAIL raw) is attachments/gate-report-run-all-vs-09-raw.md. Written from run copy run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5 = the tip copy with gate/ holding that re-gate (every other file identical, diff -rq)."
+  },
+  "provenance": {
+    "runId": "20261023T004510Z",
+    "date": "Fri Oct 23 00:45:10 UTC 2026",
+    "dateIso": "2026-10-23T00:45:10Z",
+    "command": "node fidelity/run-all.mjs --gate --raw --baseline fidelity/baselines/port/09-review-fixes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/10-tip",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "chrome": "Google Chrome 155.0.8059.85",
+    "poppler": "pdftoppm version 26.06.0",
+    "python": "Python 3.12.13",
+    "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+    "verapdfImage": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+    "git": {
+      "head": "a293cf5913e07621758a2832cec1de019e44d278",
+      "branch": "phaseb/10-tip",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "4c423ed21aae28c249c4058efba11c7d543f9c8cc727fd305302cedce4d2b2fd"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    }
+  },
+  "environment": {
+    "date": "Fri Oct 23 00:45:10 UTC 2026",
+    "dateIso": "2026-10-23T00:45:10Z",
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "cpuCount": 18,
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "chrome": {
+      "path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "version": "Google Chrome 155.0.8059.85"
+    },
+    "poppler": {
+      "pdftoppm": "pdftoppm version 26.06.0",
+      "pdftotext": "pdftotext version 26.06.0",
+      "pdftocairo": "pdftocairo version 26.06.0",
+      "pdfinfo": "pdfinfo version 26.06.0",
+      "pdffonts": "pdffonts version 26.06.0",
+      "pdfimages": "pdfimages version 26.06.0"
+    },
+    "python": {
+      "interpreter": "Python 3.12.13",
+      "packages": {
+        "cffi": "2.1.1",
+        "charset-normalizer": "3.5.2",
+        "cryptography": "50.0.2",
+        "pdfminer-six": "20260107",
+        "pillow": "12.3.0",
+        "pycparser": "3.11",
+        "pymupdf": "1.28.2",
+        "zxing-cpp": "3.1.1",
+        "pypdf": "6.21.1",
+        "fonttools": "4.67.0"
+      }
+    },
+    "docker": {
+      "server": "29.8.2",
+      "toolsImage": {
+        "image": "vellora-fidelity-tools:baseline-beta4",
+        "present": true,
+        "id": "sha256:6b648b83e2ccdb815b081936cd25b2d4d05a796f719abbc861c2108cb0dafe26",
+        "architecture": "arm64"
+      },
+      "verapdfImage": {
+        "image": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+        "present": true,
+        "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+        "architecture": "amd64"
+      }
+    },
+    "git": {
+      "head": "a293cf5913e07621758a2832cec1de019e44d278",
+      "branch": "phaseb/10-tip",
+      "dirtyEntries": 0
+    },
+    "blitz": {
+      "version": "0.3.0-beta.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    "addon": [
+      {
+        "file": "vellora.darwin-arm64.node",
+        "sha256": "4c423ed21aae28c249c4058efba11c7d543f9c8cc727fd305302cedce4d2b2fd"
+      }
+    ],
+    "wpt": {
+      "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+    },
+    "command": "node fidelity/run-all.mjs --gate --raw --baseline fidelity/baselines/port/09-review-fixes --chrome-from ~/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/10-tip",
+    "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)"
+  },
+  "source": {
+    "run": "~/Repositories/vellora-fidelity-runs/run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5",
+    "summarySha256": "cbe813cdf96c5432dcb4ffbac5f57f8e4d53a310fdb1ce28fb6264c1dfe7d379",
+    "note": "fidelity/results/ is gitignored; the run directory is not committed"
+  },
+  "canaryCounts": {
+    "total": 43,
+    "detection": 35,
+    "caught": 35,
+    "notCaught": 0,
+    "notRun": 0,
+    "measurement": 8
+  },
+  "totals": {
+    "all": {
+      "counts": {
+        "PASS": 144,
+        "FAIL": 36,
+        "WARN": 7,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 20,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 12,
+          "FAIL": 1,
+          "WARN": 7,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 11,
+          "FAIL": 12,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 10,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 2,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 75,
+          "FAIL": 18,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 6,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "excludingDiagnostic": {
+      "counts": {
+        "PASS": 122,
+        "FAIL": 32,
+        "WARN": 6,
+        "INFO": 0,
+        "N/A": 0,
+        "NOT-RUN": 3
+      },
+      "byOracle": {
+        "oracles:qpdf": {
+          "PASS": 18,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles": {
+          "PASS": 8,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:text": {
+          "PASS": 11,
+          "FAIL": 1,
+          "WARN": 6,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:layout": {
+          "PASS": 10,
+          "FAIL": 11,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 3
+        },
+        "oracles:verapdf": {
+          "PASS": 9,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "oracles:barcode": {
+          "PASS": 1,
+          "FAIL": 2,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus:audit": {
+          "PASS": 0,
+          "FAIL": 3,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "corpus": {
+          "PASS": 60,
+          "FAIL": 15,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        },
+        "run-all": {
+          "PASS": 5,
+          "FAIL": 0,
+          "WARN": 0,
+          "INFO": 0,
+          "N/A": 0,
+          "NOT-RUN": 0
+        }
+      },
+      "caveated": 0
+    },
+    "failedControls": [],
+    "stepsByStatus": {
+      "ok": 21
+    }
+  },
+  "gate": {
+    "verdict": "PASS",
+    "baseline": "fidelity/baselines/port/09-review-fixes",
+    "counts": {
+      "improvement": 93,
+      "added": 5,
+      "within-tolerance": 327,
+      "newly-measured": 39,
+      "accepted": 3,
+      "gating": 0,
+      "headGating": 0,
+      "debt": 1169,
+      "flaggedPassLost": 0,
+      "unchanged": 14486,
+      "withinTolerance": 327,
+      "withinToleranceBetter": 1,
+      "missingTokensNotComparable": 0,
+      "pinA": 1,
+      "pinB": 693,
+      "pinC": 165
+    },
+    "refusals": [],
+    "accepted": [
+      {
+        "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+        "before": "dx -0.9 dy 2.85",
+        "after": "unpaired",
+        "reason": "The OLD pair was an oracle artefact: Chrome's PDF draws the masthead \"[Product Name]\" twice, the text (#1, #A8AAAF, baseline 57.75 pt) and its `text-shadow: 0 1px 0 white` copy (#2, #FFFFFF, baseline 58.50 pt, 1 px = 0.75 pt lower); vellora draws no text-shadow, so it has one instance. At 09 that instance (baseline 61.35 pt) paired with the white shadow copy #2; at 10-spark the cellspacing/cellpadding hints put it at 57.60 pt and it pairs with the text #1 (dy -0.15 pt, newly measured). No text was lost.",
+        "evidence": "PyMuPDF rawdict of ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/chrome.pdf: span '[Product Name]' at (253.453, 58.5) color 0xffffff and at (253.453, 57.75) color 0xa8aaaf; vellora.pdf: one span at (252.55, 57.596) color 0xa8aaaf; fixtures/oss-postmark-receipt/index.html .email-masthead_name { text-shadow: 0 1px 0 white }; the same run's pdf-probe pairs p1|[Product#1 at dx -0.90 dy -0.15 (2026-10-22, darwin arm64, Chrome 155.0.8059.85, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+        "label": null
+      },
+      {
+        "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+        "before": "dx -0.9 dy 2.85",
+        "after": "unpaired",
+        "reason": "Same word as [Product#2: the second half of the masthead \"[Product Name]\", whose Chrome #2 instance is the white text-shadow copy (baseline 58.50 pt). vellora's single instance now pairs with the text #1 (p1|Name]#1, dx -0.90 dy -0.15 pt, newly measured).",
+        "evidence": "As for pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing (same spans, same run). Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+        "label": null
+      },
+      {
+        "key": "pdf-probe|oss-postmark-receipt|unpaired-vellora",
+        "before": 0,
+        "after": 3,
+        "reason": "The OLD count 0 was false: at 09 the 3 words \"Download as PDF\" were drawn below the page (baseline 855.60 pt on an 841.92 pt page), where PyMuPDF's page words do not report them (fidelity/ACCEPTANCE.md GATE-P1, the documented step-08 case). 09's own pdf-probe section lists them in offPage.vellora. At 10-spark they are inside page 1 (baseline 815.85 pt), visible, so they are counted; Chrome prints them on page 2 (the known oversize-block gap: vellora does not fragment the layout table). Off-page vellora words go 40 -> 37 (Download, as, PDF), none added.",
+        "evidence": "fidelity/baselines/port/09-review-fixes/pdf-probe/oss-postmark-receipt.json offPage.vellora: Download/as/PDF at y 855.6; ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/pdf-probe.json unpairedVellora: Download/as/PDF at y 815.85 page 1, offPage.vellora 37 words, a per-text multiset that contains no text more often than 09's (2026-10-22, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+        "label": null
+      }
+    ],
+    "gating": [],
+    "writtenDespiteVerdict": false
+  },
+  "acceptedRegressions": [
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "The OLD pair was an oracle artefact: Chrome's PDF draws the masthead \"[Product Name]\" twice, the text (#1, #A8AAAF, baseline 57.75 pt) and its `text-shadow: 0 1px 0 white` copy (#2, #FFFFFF, baseline 58.50 pt, 1 px = 0.75 pt lower); vellora draws no text-shadow, so it has one instance. At 09 that instance (baseline 61.35 pt) paired with the white shadow copy #2; at 10-spark the cellspacing/cellpadding hints put it at 57.60 pt and it pairs with the text #1 (dy -0.15 pt, newly measured). No text was lost.",
+      "evidence": "PyMuPDF rawdict of ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/chrome.pdf: span '[Product Name]' at (253.453, 58.5) color 0xffffff and at (253.453, 57.75) color 0xa8aaaf; vellora.pdf: one span at (252.55, 57.596) color 0xa8aaaf; fixtures/oss-postmark-receipt/index.html .email-masthead_name { text-shadow: 0 1px 0 white }; the same run's pdf-probe pairs p1|[Product#1 at dx -0.90 dy -0.15 (2026-10-22, darwin arm64, Chrome 155.0.8059.85, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+      "carriedFrom": "10-spark (fidelity/gate/snapshots/2026-10-22/10-spark/accepted.json)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "Same word as [Product#2: the second half of the masthead \"[Product Name]\", whose Chrome #2 instance is the white text-shadow copy (baseline 58.50 pt). vellora's single instance now pairs with the text #1 (p1|Name]#1, dx -0.90 dy -0.15 pt, newly measured).",
+      "evidence": "As for pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing (same spans, same run). Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+      "carriedFrom": "10-spark (fidelity/gate/snapshots/2026-10-22/10-spark/accepted.json)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|unpaired-vellora",
+      "after": 3,
+      "class": "a",
+      "reason": "The OLD count 0 was false: at 09 the 3 words \"Download as PDF\" were drawn below the page (baseline 855.60 pt on an 841.92 pt page), where PyMuPDF's page words do not report them (fidelity/ACCEPTANCE.md GATE-P1, the documented step-08 case). 09's own pdf-probe section lists them in offPage.vellora. At 10-spark they are inside page 1 (baseline 815.85 pt), visible, so they are counted; Chrome prints them on page 2 (the known oversize-block gap: vellora does not fragment the layout table). Off-page vellora words go 40 -> 37 (Download, as, PDF), none added.",
+      "evidence": "fidelity/baselines/port/09-review-fixes/pdf-probe/oss-postmark-receipt.json offPage.vellora: Download/as/PDF at y 855.6; ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/pdf-probe.json unpairedVellora: Download/as/PDF at y 815.85 page 1, offPage.vellora 37 words, a per-text multiset that contains no text more often than 09's (2026-10-22, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md).",
+      "carriedFrom": "10-spark (fidelity/gate/snapshots/2026-10-22/10-spark/accepted.json)"
+    },
+    {
+      "key": "wpt|css/css-page/monolithic-overflow-014-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail vs the head (port/00-start). The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 pages and matched, while Chrome prints 4 pages for both (the 350vh monolithic inline-block); same wrong picture on both sides (old ink 92160 px, bbox [48, 48, 431, 287] vs Chrome 73728 px, bbox [48, 48, 431, 239]). At 10-tip the test still prints 2 pages, now differs from the 2-page reference (maxDifference 255). Not route (b): raw Blitz fails differently (pages [4, 1], pageCountMismatch).",
+      "evidence": "(1) fidelity/gate/snapshots/2026-10-22/tip-10/ledger-candidates.json.gz head item: 'old test render 2 page(s) vs Chrome 4 (reference 2): a false pass by page count', computed 2026-10-23 by gate/ledger-candidates.mjs from the port/00-start run copy's wpt/results.json record (that run copy is gone since the loss event; direct re-check of the 00-start record UNAVAILABLE). (2) fidelity/baselines/port/05-walk-rewrite/attachments/accepted-evidence.json: the port/04 record of the same pass, pageCounts [2, 2], inkCheck chromeSignificant, Chrome pageCounts [4, 4]. (3) ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json (2026-10-23, Chrome 155.0.8059.85 local macOS, INDICATIVE): test pageCounts [2, 2], Chrome [4, 4], rawOutcome fail with raw pageCounts [4, 1]."
+    }
+  ],
+  "declaredRejections": [],
+  "extraction": {
+    "command": "node fidelity/gate/write-baseline.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5 --root fidelity/baselines/port --name 10-integration --accept fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json --attach ~/Repositories/vellora-fidelity-runs/run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5/gate/run-all-gate-report-vs-09-raw.md=gate-report-run-all-vs-09-raw.md --note Run 20261023T004510Z (phaseb/10-tip a293cf5, run-all --gate --raw, 2026-10-23), copy run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5. gate-report.{json,md} is the post-hoc re-gate (2026-10-27, phaseb/10-final, no re-render) vs port/09-review-fixes with the 10-integration acceptances and DEBT.json after rule decisions (i) and (ii): PASS vs 09 and vs the head. The run's own run-all gate report (vs 09, no acceptances, FAIL raw) is attachments/gate-report-run-all-vs-09-raw.md. Written from run copy run-all-10-integration-20261023T004510Z-regate-20261027-blitz-0.3.0-beta.4-vellora-a293cf5 = the tip copy with gate/ holding that re-gate (every other file identical, diff -rq).",
+    "date": "2026-10-27T14:12:41.180Z"
+  },
+  "files": {
+    "attachments/gate-report-run-all-vs-09-raw.md": "794c6a5201112f03ec33df4d1602b144d396f790f190457da6245fdcbca8bd30",
+    "canaries.json": "9c5293c7ec58123abcc0eb906b5d462cb72a21c0d5fc7cf42041a7d48ecae82c",
+    "code-checks.json": "6540181fa20a86f49abceeb5a53ab8afd4d0e428491dd804adcd6220e3a3a17f",
+    "fixtures/boleto-febraban.json": "a796d1fec96e6307f50a67febdf6a256164ac747994d0df61f84c89a654f4dae",
+    "fixtures/boleto-febraban.px-grid.json": "7345e30f3209a074eb3f56635bd2fb141f67d0e25038a3324eecee2b93c13d99",
+    "fixtures/boleto.json": "0096abe57727541b81187801a4139f11fbf27df4fcfa84ff2e18ca735785f06b",
+    "fixtures/danfe.json": "b038f20472c92aae1a139fa966afdc4d07de22d8a38cc885c28103743177888c",
+    "fixtures/invoice.json": "ef43867acd8263386ad430e2b1952acb434a47b16c3796b299a4f5dfcfae3786",
+    "fixtures/notification.json": "8fc395241ab15b15650c25b2864ecf0f6c8c04a5d2a0a6a3abb8c90ac71bc06e",
+    "fixtures/oss-postmark-receipt.json": "c0054267b66f1f8716b283ad08600b9c5a263f16bd8f73d58fdf3a3458201cd0",
+    "fixtures/oss-sparksuite-invoice.json": "b3937f1a85d645b0ada11c528862ea94ed05a6508e70b375758ffd8e6ae023ea",
+    "fixtures/receipt.json": "8c2ef6d92d7df4276de6aa48253c9135867128c48d846d481c0e279fcfd9f149",
+    "fixtures/text-stress-ptbr.json": "b285a8e8eef5d0ec7e31825adb00bf788c3c2454c20930a639a3a7a783ee0612",
+    "gate-report.json": "a75f3d8ce1f070ebc3f201d70b4dabb2de7e253297833f757ef2ae6bf7b655dd",
+    "gate-report.md": "df8df6b360fbe867f84af90ce73bbab2c4a00c1e53f0bd84aced24432325e47a",
+    "metrics.json": "e7f7f722c9c92d005e82119405c3712b0cb49d3dcd4871e535b4488ca6c8df8d",
+    "pdf-probe/boleto-febraban.json": "cee6b14e2c41ebe2fbe60d5c4e34dcfe954ccba4f595749393e7f53c49177f9c",
+    "pdf-probe/boleto.json": "d66f156dbc3a25fc47a458edbc6befbf2260298604cdf7937147f76c1308c623",
+    "pdf-probe/danfe.json": "c35666764573a1cc1e31e8f39c1894ad3a529768cc4a0836cead34454a8d241f",
+    "pdf-probe/invoice.json": "fd53903a6fb039992872a481be70a530ffe515fd069c4a45015a6c362edb8938",
+    "pdf-probe/notification.json": "e325e4a598f4488c1eb358551e8c429dca06bd7ebe505a57bfa6f95a2bd88914",
+    "pdf-probe/oss-postmark-receipt.json": "9696e2292c5b9c31b0d622f5d89a412479a2b308d9201dee6f91e81e61b3c7a3",
+    "pdf-probe/oss-sparksuite-invoice.json": "74d46fb8c05da10c636e21047add35b81c0f72c984fb24965f8304fb9c74cb78",
+    "pdf-probe/probe-f3_avoid_feature.json": "6794c4da2ebb3729afd1b7123e3cb7d6a27839d3c329ea6b9d1e0aa68fd5d99b",
+    "pdf-probe/probe-f3_feature_match.json": "a6c4a98ac0654b696d120996cf5c79db607b19eae6be887d49f9724cb8ff1e57",
+    "pdf-probe/probe-f3_feature_nomatch.json": "421c9a3c807005088f5f57f95bf27d854b65ad73fff634c9988276d572a899aa",
+    "pdf-probe/probe-f3_nested.json": "a6c4a98ac0654b696d120996cf5c79db607b19eae6be887d49f9724cb8ff1e57",
+    "pdf-probe/probe-f3_nested_nomatch.json": "df7522652b5249eceaea37aebca208b93e3aa686fc7740e92e132636f6203ce8",
+    "pdf-probe/probe-f3_not_feature.json": "df7522652b5249eceaea37aebca208b93e3aa686fc7740e92e132636f6203ce8",
+    "pdf-probe/probe-f3_orientation.json": "a6c4a98ac0654b696d120996cf5c79db607b19eae6be887d49f9724cb8ff1e57",
+    "pdf-probe/probe-f3_page_in_feature.json": "be9e217cbf43eeac7e53a33b5992d4b524062e55bd5a42f33de7fd953c840260",
+    "pdf-probe/probe-f3_width_600.json": "24969dc4e2c6299dbdbc9dd4b4db60321f5a303e43d7d4d7690c60f97ef63e9f",
+    "pdf-probe/probe-f3_width_750.json": "c4822626a7b68318ba2a4d1490d2538cfc2ae7394fd2d6132dc6d7947854ac25",
+    "pdf-probe/probe-f5_allowance_footer.json": "346a2eb03d7cff089ab4c913813d6719c86a742d41ccd5fa23fe8b48b66c5c8e",
+    "pdf-probe/probe-f5_allowance_nofooter.json": "9af9ee3210e70bad7c27ff92c8d585ac8b3d436e323ed7d58fd88a8df4144fe2",
+    "pdf-probe/probe-f5_box_partial.json": "a4d32000c048b234bbcae30f5c43fc6baf396f59a0b6f83f5516413390ed4d09",
+    "pdf-probe/probe-f5_img_partial.json": "a9a656092b859a8262809cd9d5493ffc49ec9b3a9cf7416b07fb606d5e49678a",
+    "pdf-probe/probe-f5_line_big_margin.json": "8bee4fcc97cf62014b17f59c993e9b3638d2ed34cd6dca6a1d4fc1e0b1b3a67c",
+    "pdf-probe/probe-f5_lines_partial.json": "e83d8c507ab452b7fc5b35a4c758fbd8bb5d3b8b24ba97566af4c1a066023c4d",
+    "pdf-probe/probe-f5_ref.json": "0f1cf0fadf74deaee4935d7a7752702a6fc2c4fe08ce34d4bddbd8651cfb66d4",
+    "pdf-probe/probe-f5_table_partial.json": "ddf7bd4c13da7e8c511395817777814a35aa39baa7558e1259d656e9b25c7527",
+    "pdf-probe/probe-g_inline_body.json": "429e9cbcbe7ae6d3f189900c3ebe38dc1d2419d6544e449c1ea22f85186b32d5",
+    "pdf-probe/probe-g_p_body.json": "008743208b2776b49bd66da6ce5613ecc4462b0ab353185fdeb45b14e56ee288",
+    "pdf-probe/probe-g_postmark_raw.json": "32cd68bf051e4917e9e86841d17925222c102e6b55fd8de21abaa12f6c55b1f2",
+    "pdf-probe/probe-m_allneg.json": "91d861d2affcca5324c508a201d7910157c6f4b32b72fd9c9853f537ab11b8d5",
+    "pdf-probe/probe-m_chain.json": "3db3c96b57e1b21b9d13a66e8d0ebc0183b4503f1e04cacdf909c546d29a705d",
+    "pdf-probe/probe-m_dropped.json": "d3aca1a32f45b4596963d6537e84d40454441f566383949c16a1e78af4899ccd",
+    "pdf-probe/probe-m_dropped_neg.json": "3db3c96b57e1b21b9d13a66e8d0ebc0183b4503f1e04cacdf909c546d29a705d",
+    "pdf-probe/probe-m_negroot_pos_child.json": "2c6d2eb5f647409590d014a7a869cdc2ae956968d252d88eb1904ce8405cc5f0",
+    "pdf-probe/probe-m_posneg.json": "7dd9e253f3b822e121d4e8034c05b28061c221cf457a723d80e2f701d2181746",
+    "pdf-probe/probe-m_pospos.json": "d3aca1a32f45b4596963d6537e84d40454441f566383949c16a1e78af4899ccd",
+    "pdf-probe/probe-m_ref.json": "098fe244dc84c8eb4164f3a94d36a363a8776e1e8b1862fe3401ca3089dcebbd",
+    "pdf-probe/probe-m_wrapper.json": "4face52927a55a96389bf4d20716fff19caeca083984531d5c05f30aaa8f7cf2",
+    "pdf-probe/probe-r_ltr_end.json": "127bd4a56a3d4ea37c222ca959da704622e49bbabdee4729a6542e122f4d6ae6",
+    "pdf-probe/probe-r_ltr_start.json": "81dfebceafba9d05499b49a0813bdcffe9f4d24c5dd418642760c2fee9d7cc40",
+    "pdf-probe/probe-r_rtl_end.json": "81dfebceafba9d05499b49a0813bdcffe9f4d24c5dd418642760c2fee9d7cc40",
+    "pdf-probe/probe-r_rtl_left.json": "81dfebceafba9d05499b49a0813bdcffe9f4d24c5dd418642760c2fee9d7cc40",
+    "pdf-probe/probe-r_rtl_right.json": "127bd4a56a3d4ea37c222ca959da704622e49bbabdee4729a6542e122f4d6ae6",
+    "pdf-probe/probe-r_rtl_root_start.json": "33de5615c85b0c8d6c48f4e94059dfa52447a0211d967af840eee77a53bb2d46",
+    "pdf-probe/probe-r_rtl_start.json": "127bd4a56a3d4ea37c222ca959da704622e49bbabdee4729a6542e122f4d6ae6",
+    "pdf-probe/receipt.json": "eb497ce17eef72854c48f8c113425ec187ec154700cceb1e84dac48d9bf9c3b4",
+    "pdf-probe/text-stress-ptbr.json": "2a0433a9e4d6714c7c5768c5b45f72015600f2f4e2e0d5ceb965e2608c4075e5",
+    "wpt/by-directory.json": "9fbf3991e3b31c0bc39ab139df449cbada95272b7e44f04bd4dc238ad5ff7165",
+    "wpt/crashtests.json": "cf3808a2607d7105706ff7d1c8a45bd9226ea1e4aafc21084a7692941be482ca",
+    "wpt/expectations-blitz-0.3.0-beta.4.json": "1669c9e7509df4740a9f38c7812b69492a5822e655b7e57af82d4fb04947386b"
+  },
+  "formatting": "biome format --write (repo biome.json) before hashing"
+}

@@ -1,0 +1,2241 @@
+{
+  "schema": "vellora-layout-diff/pdf-probe/2",
+  "semantics": 2,
+  "settings": {
+    "semantics": 2,
+    "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+    "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+    "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+    "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+    "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+    "maxDistancePt": 36,
+    "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+  },
+  "reference": {
+    "chromeWordsSha256": "f909787ed0f9a440864e4805c80790fc504e23ff5d414a65efb558baf2b11365"
+  },
+  "pages": {
+    "vellora": 1,
+    "chrome": 1
+  },
+  "words": {
+    "vellora": 315,
+    "chrome": 315,
+    "paired": 315,
+    "unpairedVellora": 0,
+    "unpairedChrome": 0
+  },
+  "pairs": [
+    {
+      "k": "p1|Recibo#1",
+      "text": "Recibo",
+      "page": 1,
+      "dx": -0.82,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#1",
+      "text": "do",
+      "page": 1,
+      "dx": -0.82,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Pagador#1",
+      "text": "Pagador",
+      "page": 1,
+      "dx": -0.82,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|104-0#1",
+      "text": "104-0",
+      "page": 1,
+      "dx": -0.7,
+      "dy": -1.26
+    },
+    {
+      "k": "p1|10492.46810#1",
+      "text": "10492.46810",
+      "page": 1,
+      "dx": -0.68,
+      "dy": -0.25
+    },
+    {
+      "k": "p1|31000.100045#1",
+      "text": "31000.100045",
+      "page": 1,
+      "dx": -0.63,
+      "dy": -0.25
+    },
+    {
+      "k": "p1|00041.700139#1",
+      "text": "00041.700139",
+      "page": 1,
+      "dx": -0.58,
+      "dy": -0.25
+    },
+    {
+      "k": "p1|7#1",
+      "text": "7",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.25
+    },
+    {
+      "k": "p1|16460000184250#1",
+      "text": "16460000184250",
+      "page": 1,
+      "dx": -0.51,
+      "dy": -0.25
+    },
+    {
+      "k": "p1|BANCO#1",
+      "text": "BANCO",
+      "page": 1,
+      "dx": 0.1,
+      "dy": -1.19
+    },
+    {
+      "k": "p1|EXEMPLO#1",
+      "text": "EXEMPLO",
+      "page": 1,
+      "dx": 0.1,
+      "dy": -1.19
+    },
+    {
+      "k": "p1|Beneficiário#1",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|CPF/CNPJ#1",
+      "text": "CPF/CNPJ",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|do#2",
+      "text": "do",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Beneficiário#2",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Agência#1",
+      "text": "Agência",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|/#1",
+      "text": "/",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Código#1",
+      "text": "Código",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|do#3",
+      "text": "do",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Beneficiário#3",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Oficina#1",
+      "text": "Oficina",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Exemplo#1",
+      "text": "Exemplo",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|de#1",
+      "text": "de",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Testes#1",
+      "text": "Testes",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Ltda.#1",
+      "text": "Ltda.",
+      "page": 1,
+      "dx": 0.86,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|11.222.333/0001-81#1",
+      "text": "11.222.333/0001-81",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|1234#1",
+      "text": "1234",
+      "page": 1,
+      "dx": 3.9,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|/#2",
+      "text": "/",
+      "page": 1,
+      "dx": 3.9,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|246813-1#1",
+      "text": "246813-1",
+      "page": 1,
+      "dx": 3.9,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Endereço#1",
+      "text": "Endereço",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|do#4",
+      "text": "do",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Beneficiário#4",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Rua#1",
+      "text": "Rua",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|das#1",
+      "text": "das",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Acácias,#1",
+      "text": "Acácias,",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|1500,#1",
+      "text": "1500,",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Sala#1",
+      "text": "Sala",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|42#1",
+      "text": "42",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|—#1",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Jardim#1",
+      "text": "Jardim",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Sintético#1",
+      "text": "Sintético",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|—#2",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|São#1",
+      "text": "São",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|José#1",
+      "text": "José",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|dos#1",
+      "text": "dos",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Exemplos#1",
+      "text": "Exemplos",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|/#3",
+      "text": "/",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|SP#1",
+      "text": "SP",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|—#3",
+      "text": "—",
+      "page": 1,
+      "dx": 0.83,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|CEP#1",
+      "text": "CEP",
+      "page": 1,
+      "dx": 0.83,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|01310-930#1",
+      "text": "01310-930",
+      "page": 1,
+      "dx": 0.83,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Data#1",
+      "text": "Data",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|do#5",
+      "text": "do",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|documento#1",
+      "text": "documento",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Nr.#1",
+      "text": "Nr.",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|do#6",
+      "text": "do",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|documento#2",
+      "text": "documento",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Aceite#1",
+      "text": "Aceite",
+      "page": 1,
+      "dx": 2.54,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Data#2",
+      "text": "Data",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|do#7",
+      "text": "do",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|processamento#1",
+      "text": "processamento",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Nosso#1",
+      "text": "Nosso",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Número#1",
+      "text": "Número",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|15/10/2026#1",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|NF-2026/00417#1",
+      "text": "NF-2026/00417",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|N#1",
+      "text": "N",
+      "page": 1,
+      "dx": 2.54,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|15/10/2026#2",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|14/000000000417001-1#1",
+      "text": "14/000000000417001-1",
+      "page": 1,
+      "dx": 3.9,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Pagador#2",
+      "text": "Pagador",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|CPF/CNPJ#2",
+      "text": "CPF/CNPJ",
+      "page": 1,
+      "dx": 3.45,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|do#8",
+      "text": "do",
+      "page": 1,
+      "dx": 3.45,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Pagador#3",
+      "text": "Pagador",
+      "page": 1,
+      "dx": 3.45,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Maria#1",
+      "text": "Maria",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|da#1",
+      "text": "da",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Conceição#1",
+      "text": "Conceição",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Exemplo#2",
+      "text": "Exemplo",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|123.456.789-09#1",
+      "text": "123.456.789-09",
+      "page": 1,
+      "dx": 3.45,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Carteira#1",
+      "text": "Carteira",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Espécie#1",
+      "text": "Espécie",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Vencimento#1",
+      "text": "Vencimento",
+      "page": 1,
+      "dx": 2.54,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Valor#1",
+      "text": "Valor",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|do#9",
+      "text": "do",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Documento#1",
+      "text": "Documento",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Valor#2",
+      "text": "Valor",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Cobrado#1",
+      "text": "Cobrado",
+      "page": 1,
+      "dx": 4.66,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|RG#1",
+      "text": "RG",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|R$#1",
+      "text": "R$",
+      "page": 1,
+      "dx": 1.32,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|30/11/2026#1",
+      "text": "30/11/2026",
+      "page": 1,
+      "dx": 2.54,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|1.842,50#1",
+      "text": "1.842,50",
+      "page": 1,
+      "dx": 2.97,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Referência#1",
+      "text": "Referência",
+      "page": 1,
+      "dx": 0.1,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|Demonstrativo#1",
+      "text": "Demonstrativo",
+      "page": 1,
+      "dx": -0.18,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|Valor#3",
+      "text": "Valor",
+      "page": 1,
+      "dx": 0.3,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|(R$)#1",
+      "text": "(R$)",
+      "page": 1,
+      "dx": 0.3,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|10/2026#1",
+      "text": "10/2026",
+      "page": 1,
+      "dx": 0.1,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Revisão#1",
+      "text": "Revisão",
+      "page": 1,
+      "dx": -0.18,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|programada#1",
+      "text": "programada",
+      "page": 1,
+      "dx": -0.15,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|—#4",
+      "text": "—",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|mão#1",
+      "text": "mão",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|de#2",
+      "text": "de",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|obra#1",
+      "text": "obra",
+      "page": 1,
+      "dx": -0.07,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|980,00#1",
+      "text": "980,00",
+      "page": 1,
+      "dx": 0.27,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|10/2026#2",
+      "text": "10/2026",
+      "page": 1,
+      "dx": 0.1,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Peças#1",
+      "text": "Peças",
+      "page": 1,
+      "dx": -0.18,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|de#3",
+      "text": "de",
+      "page": 1,
+      "dx": -0.16,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|reposição#1",
+      "text": "reposição",
+      "page": 1,
+      "dx": -0.14,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|(filtros,#1",
+      "text": "(filtros,",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|óleo#1",
+      "text": "óleo",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|sintético)#1",
+      "text": "sintético)",
+      "page": 1,
+      "dx": -0.06,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|712,50#1",
+      "text": "712,50",
+      "page": 1,
+      "dx": 0.27,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|10/2026#3",
+      "text": "10/2026",
+      "page": 1,
+      "dx": 0.1,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|Alinhamento#1",
+      "text": "Alinhamento",
+      "page": 1,
+      "dx": -0.18,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|e#1",
+      "text": "e",
+      "page": 1,
+      "dx": -0.14,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|balanceamento#1",
+      "text": "balanceamento",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|150,00#1",
+      "text": "150,00",
+      "page": 1,
+      "dx": 0.27,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|Autenticação#1",
+      "text": "Autenticação",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|Mecânica#1",
+      "text": "Mecânica",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|—#5",
+      "text": "—",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|Recibo#2",
+      "text": "Recibo",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|do#10",
+      "text": "do",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|Pagador#4",
+      "text": "Pagador",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 6.67
+    },
+    {
+      "k": "p1|Corte#1",
+      "text": "Corte",
+      "page": 1,
+      "dx": -0.83,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|na#1",
+      "text": "na",
+      "page": 1,
+      "dx": -0.83,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|linha#1",
+      "text": "linha",
+      "page": 1,
+      "dx": -0.83,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|pontilhada#1",
+      "text": "pontilhada",
+      "page": 1,
+      "dx": -0.83,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|104-0#2",
+      "text": "104-0",
+      "page": 1,
+      "dx": -0.7,
+      "dy": -3.51
+    },
+    {
+      "k": "p1|10492.46810#2",
+      "text": "10492.46810",
+      "page": 1,
+      "dx": -0.68,
+      "dy": -2.5
+    },
+    {
+      "k": "p1|31000.100045#2",
+      "text": "31000.100045",
+      "page": 1,
+      "dx": -0.63,
+      "dy": -2.5
+    },
+    {
+      "k": "p1|00041.700139#2",
+      "text": "00041.700139",
+      "page": 1,
+      "dx": -0.58,
+      "dy": -2.5
+    },
+    {
+      "k": "p1|7#2",
+      "text": "7",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -2.5
+    },
+    {
+      "k": "p1|16460000184250#2",
+      "text": "16460000184250",
+      "page": 1,
+      "dx": -0.51,
+      "dy": -2.5
+    },
+    {
+      "k": "p1|BANCO#2",
+      "text": "BANCO",
+      "page": 1,
+      "dx": 0.1,
+      "dy": -3.44
+    },
+    {
+      "k": "p1|EXEMPLO#2",
+      "text": "EXEMPLO",
+      "page": 1,
+      "dx": 0.1,
+      "dy": -3.44
+    },
+    {
+      "k": "p1|Local#1",
+      "text": "Local",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|de#4",
+      "text": "de",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|pagamento#1",
+      "text": "pagamento",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|Vencimento#2",
+      "text": "Vencimento",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|EM#1",
+      "text": "EM",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|TODA#1",
+      "text": "TODA",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|A#1",
+      "text": "A",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|REDE#1",
+      "text": "REDE",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|BANCÁRIA#1",
+      "text": "BANCÁRIA",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|E#1",
+      "text": "E",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|SEUS#1",
+      "text": "SEUS",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|CORRESPONDENTES#1",
+      "text": "CORRESPONDENTES",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|ATÉ#1",
+      "text": "ATÉ",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|O#1",
+      "text": "O",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|VALOR#1",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|LIMITE#1",
+      "text": "LIMITE",
+      "page": 1,
+      "dx": 0.86,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|30/11/2026#2",
+      "text": "30/11/2026",
+      "page": 1,
+      "dx": 3.92,
+      "dy": -2.33
+    },
+    {
+      "k": "p1|Beneficiário#5",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Agência#2",
+      "text": "Agência",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|/#4",
+      "text": "/",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Código#2",
+      "text": "Código",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|do#11",
+      "text": "do",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Beneficiário#6",
+      "text": "Beneficiário",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Oficina#2",
+      "text": "Oficina",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Exemplo#3",
+      "text": "Exemplo",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|de#5",
+      "text": "de",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Testes#2",
+      "text": "Testes",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Ltda.#2",
+      "text": "Ltda.",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|—#6",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|CNPJ#1",
+      "text": "CNPJ",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|11.222.333/0001-81#2",
+      "text": "11.222.333/0001-81",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|1234#2",
+      "text": "1234",
+      "page": 1,
+      "dx": 3.92,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|/#5",
+      "text": "/",
+      "page": 1,
+      "dx": 3.92,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|246813-1#2",
+      "text": "246813-1",
+      "page": 1,
+      "dx": 3.93,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Rua#2",
+      "text": "Rua",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|das#2",
+      "text": "das",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Acácias,#2",
+      "text": "Acácias,",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|1500,#2",
+      "text": "1500,",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Sala#2",
+      "text": "Sala",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|42#2",
+      "text": "42",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|—#7",
+      "text": "—",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Jardim#2",
+      "text": "Jardim",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Sintético#2",
+      "text": "Sintético",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|—#8",
+      "text": "—",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|São#2",
+      "text": "São",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|José#2",
+      "text": "José",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|dos#2",
+      "text": "dos",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Exemplos#2",
+      "text": "Exemplos",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|/#6",
+      "text": "/",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|SP#2",
+      "text": "SP",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|—#9",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|CEP#2",
+      "text": "CEP",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|01310-930#2",
+      "text": "01310-930",
+      "page": 1,
+      "dx": 0.84,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Data#3",
+      "text": "Data",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#12",
+      "text": "do",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|documento#3",
+      "text": "documento",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Nr.#2",
+      "text": "Nr.",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#13",
+      "text": "do",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Documento#2",
+      "text": "Documento",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Espécie#2",
+      "text": "Espécie",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|DOC#1",
+      "text": "DOC",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Aceite#2",
+      "text": "Aceite",
+      "page": 1,
+      "dx": 3,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Data#4",
+      "text": "Data",
+      "page": 1,
+      "dx": 3.47,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#14",
+      "text": "do",
+      "page": 1,
+      "dx": 3.47,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|processamento#2",
+      "text": "processamento",
+      "page": 1,
+      "dx": 3.47,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Nosso#2",
+      "text": "Nosso",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Número#2",
+      "text": "Número",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|15/10/2026#3",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|NF-2026/00417#2",
+      "text": "NF-2026/00417",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|DM#1",
+      "text": "DM",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|N#2",
+      "text": "N",
+      "page": 1,
+      "dx": 3,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|15/10/2026#4",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": 3.47,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|14/000000000417001-1#2",
+      "text": "14/000000000417001-1",
+      "page": 1,
+      "dx": 3.92,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Uso#1",
+      "text": "Uso",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|do#15",
+      "text": "do",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Banco#1",
+      "text": "Banco",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Carteira#2",
+      "text": "Carteira",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Espécie#3",
+      "text": "Espécie",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Moeda#1",
+      "text": "Moeda",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Qtde#1",
+      "text": "Qtde",
+      "page": 1,
+      "dx": 3,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|moeda#1",
+      "text": "moeda",
+      "page": 1,
+      "dx": 3,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|xValor#1",
+      "text": "xValor",
+      "page": 1,
+      "dx": 3.47,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|(=)#1",
+      "text": "(=)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Valor#4",
+      "text": "Valor",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|do#16",
+      "text": "do",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Documento#3",
+      "text": "Documento",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|RG#2",
+      "text": "RG",
+      "page": 1,
+      "dx": 1.32,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|R$#2",
+      "text": "R$",
+      "page": 1,
+      "dx": 2.54,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|1.842,50#2",
+      "text": "1.842,50",
+      "page": 1,
+      "dx": 3.92,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Instruções#1",
+      "text": "Instruções",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(Texto#1",
+      "text": "(Texto",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|de#6",
+      "text": "de",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Responsabilidade#1",
+      "text": "Responsabilidade",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#17",
+      "text": "do",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Beneficiário)#1",
+      "text": "Beneficiário)",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(-)#1",
+      "text": "(-)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Desconto#1",
+      "text": "Desconto",
+      "page": 1,
+      "dx": 4.68,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Após#1",
+      "text": "Após",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|o#1",
+      "text": "o",
+      "page": 1,
+      "dx": 0.87,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|vencimento,#1",
+      "text": "vencimento,",
+      "page": 1,
+      "dx": 0.88,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|cobrar#1",
+      "text": "cobrar",
+      "page": 1,
+      "dx": 0.93,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|multa#1",
+      "text": "multa",
+      "page": 1,
+      "dx": 0.95,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|de#7",
+      "text": "de",
+      "page": 1,
+      "dx": 0.97,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|2,00%#1",
+      "text": "2,00%",
+      "page": 1,
+      "dx": 0.98,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|e#2",
+      "text": "e",
+      "page": 1,
+      "dx": 1.01,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|juros#1",
+      "text": "juros",
+      "page": 1,
+      "dx": 1.02,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|de#8",
+      "text": "de",
+      "page": 1,
+      "dx": 1.04,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|mora#1",
+      "text": "mora",
+      "page": 1,
+      "dx": 1.05,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|de#9",
+      "text": "de",
+      "page": 1,
+      "dx": 1.07,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|1,00%#1",
+      "text": "1,00%",
+      "page": 1,
+      "dx": 1.08,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|ao#1",
+      "text": "ao",
+      "page": 1,
+      "dx": 1.11,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|mês.#1",
+      "text": "mês.",
+      "page": 1,
+      "dx": 1.12,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(-)#2",
+      "text": "(-)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Outras#1",
+      "text": "Outras",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Deduções/Abatimento#1",
+      "text": "Deduções/Abatimento",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 0.67
+    },
+    {
+      "k": "p1|Desconto#2",
+      "text": "Desconto",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|de#10",
+      "text": "de",
+      "page": 1,
+      "dx": 0.89,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|R$#3",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.9,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|92,13#1",
+      "text": "92,13",
+      "page": 1,
+      "dx": 0.91,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|para#1",
+      "text": "para",
+      "page": 1,
+      "dx": 0.93,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|pagamento#2",
+      "text": "pagamento",
+      "page": 1,
+      "dx": 0.95,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|até#1",
+      "text": "até",
+      "page": 1,
+      "dx": 0.99,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|20/11/2026.#1",
+      "text": "20/11/2026.",
+      "page": 1,
+      "dx": 1.01,
+      "dy": -0.83
+    },
+    {
+      "k": "p1|Não#1",
+      "text": "Não",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|receber#1",
+      "text": "receber",
+      "page": 1,
+      "dx": 0.86,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|após#1",
+      "text": "após",
+      "page": 1,
+      "dx": 0.9,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|60#1",
+      "text": "60",
+      "page": 1,
+      "dx": 0.91,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|dias#1",
+      "text": "dias",
+      "page": 1,
+      "dx": 0.93,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#18",
+      "text": "do",
+      "page": 1,
+      "dx": 0.94,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|vencimento.#1",
+      "text": "vencimento.",
+      "page": 1,
+      "dx": 0.95,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(+)#1",
+      "text": "(+)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|Mora/Multa/Juros#1",
+      "text": "Mora/Multa/Juros",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 1.42
+    },
+    {
+      "k": "p1|DOCUMENTO#1",
+      "text": "DOCUMENTO",
+      "page": 1,
+      "dx": 0.85,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|DE#1",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.91,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|TESTE#1",
+      "text": "TESTE",
+      "page": 1,
+      "dx": 0.92,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|—#10",
+      "text": "—",
+      "page": 1,
+      "dx": 0.96,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|SEM#1",
+      "text": "SEM",
+      "page": 1,
+      "dx": 0.97,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|VALOR.#1",
+      "text": "VALOR.",
+      "page": 1,
+      "dx": 1,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|Fixture#1",
+      "text": "Fixture",
+      "page": 1,
+      "dx": 1.03,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|sintética#1",
+      "text": "sintética",
+      "page": 1,
+      "dx": 1.06,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|do#19",
+      "text": "do",
+      "page": 1,
+      "dx": 1.09,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|vellora#1",
+      "text": "vellora",
+      "page": 1,
+      "dx": 1.11,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(fidelity/corpus).#1",
+      "text": "(fidelity/corpus).",
+      "page": 1,
+      "dx": 1.13,
+      "dy": -0.08
+    },
+    {
+      "k": "p1|(+)#2",
+      "text": "(+)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Outros#1",
+      "text": "Outros",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|Acréscimos#1",
+      "text": "Acréscimos",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.17
+    },
+    {
+      "k": "p1|(=)#2",
+      "text": "(=)",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Valor#5",
+      "text": "Valor",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Cobrado#2",
+      "text": "Cobrado",
+      "page": 1,
+      "dx": 4.68,
+      "dy": 2.92
+    },
+    {
+      "k": "p1|Pagador#5",
+      "text": "Pagador",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Maria#2",
+      "text": "Maria",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|da#2",
+      "text": "da",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Conceição#2",
+      "text": "Conceição",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Exemplo#4",
+      "text": "Exemplo",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|—#11",
+      "text": "—",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|CPF#1",
+      "text": "CPF",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|123.456.789-09#2",
+      "text": "123.456.789-09",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Avenida#1",
+      "text": "Avenida",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Paulista,#1",
+      "text": "Paulista,",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|1000,#1",
+      "text": "1000,",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Apto#1",
+      "text": "Apto",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|101#1",
+      "text": "101",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|—#12",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Bela#1",
+      "text": "Bela",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Vista#1",
+      "text": "Vista",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|—#13",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|São#3",
+      "text": "São",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Paulo#1",
+      "text": "Paulo",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|/#7",
+      "text": "/",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|SP#3",
+      "text": "SP",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|—#14",
+      "text": "—",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|CEP#3",
+      "text": "CEP",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|01310-100#1",
+      "text": "01310-100",
+      "page": 1,
+      "dx": 0.84,
+      "dy": 3.67
+    },
+    {
+      "k": "p1|Sacador/Avalista#1",
+      "text": "Sacador/Avalista",
+      "page": 1,
+      "dx": 0.85,
+      "dy": 4.42
+    },
+    {
+      "k": "p1|Autenticação#2",
+      "text": "Autenticação",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|Mecânica#2",
+      "text": "Mecânica",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|-#1",
+      "text": "-",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|Ficha#1",
+      "text": "Ficha",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|de#11",
+      "text": "de",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|Compensação#1",
+      "text": "Compensação",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|Ficha#2",
+      "text": "Ficha",
+      "page": 1,
+      "dx": 0,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|de#12",
+      "text": "de",
+      "page": 1,
+      "dx": 0.01,
+      "dy": 5.17
+    },
+    {
+      "k": "p1|Compensação#2",
+      "text": "Compensação",
+      "page": 1,
+      "dx": 0.01,
+      "dy": 5.17
+    }
+  ],
+  "unpairedChrome": [],
+  "unpairedVellora": [],
+  "offPage": {
+    "vellora": [],
+    "chrome": []
+  }
+}

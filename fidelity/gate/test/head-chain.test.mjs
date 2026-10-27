@@ -60,8 +60,9 @@ test("the committed DEBT.json is a debt/2 ledger (first population 2026-10-27); 
   const l = loadDebt(DEBT_FILE);
   assert.equal(l.schema, "vellora-fidelity/debt/2");
   assert.equal(l.migratedFrom, undefined);
-  // 26 entries / 1024 keys of step 10-integration (gate/test/debt-populate.test.mjs checks them).
-  assert.equal(l.entries.length, 26);
+  // 27 entries / 1026 keys of step 10-integration (re-populated 2026-10-27 with rules (i) and (ii);
+  // gate/test/debt-populate.test.mjs checks them).
+  assert.equal(l.entries.length, 27);
   assert.deepEqual(r.ledger.problems, []);
 });
 
@@ -240,4 +241,42 @@ test("merged-09 candidates: WPT (a) only with old-pass evidence, raw Blitz split
     ["Download", "as", "PDF"],
   );
   assert.equal(pinC.filter((i) => i.key.includes("|missingTokens.")).length, 6);
+});
+
+// Port link 10-integration (2026-10-27, phaseb/10-final): run 20261023T004510Z re-gated against 09
+// with the step's class-a acceptances and the committed DEBT.json (rules (i) and (ii)): PASS vs the
+// previous link and vs the head; pin (c) 165 (fidelity/gate/snapshots/2026-10-27/10-final/).
+test("10-integration vs 09 with the committed ledger: PASS vs 09 and vs the head, pin (c) 165", () => {
+  const s09 = load("port", "09-review-fixes");
+  const s10 = load("port", "10-integration");
+  assert.equal(s10.integrity.ok, true, s10.integrity.problems.join("; "));
+  assert.equal(s10.manifest.gate.verdict, "PASS");
+  assert.equal(s10.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(s10.manifest.gate.baseline, "fidelity/baselines/port/09-review-fixes");
+  const accept = s10.manifest.acceptedRegressions;
+  assert.equal(accept.length, 4);
+  assert.ok(accept.every((e) => e.class === "a"));
+  const c10 = carried("09-review-fixes", "10-integration", s10.manifest.declaredRejections ?? []);
+  const g = evaluateGate({
+    before: s09,
+    after: s10,
+    head,
+    pin,
+    accept,
+    declared: s10.manifest.declaredRejections ?? [],
+    headDeclared: c10.head,
+    pinDeclared: c10.pin,
+    ledger: loadDebt(DEBT_FILE),
+    ledgerBase: null,
+    step: "10-integration",
+    passes: PASSES,
+    canaries: false,
+  });
+  assert.equal(g.counts.gating, 0);
+  assert.equal(g.counts.accepted, 3);
+  assert.equal(g.counts.improvement, 93);
+  assert.equal(g.head.counts.gating, 0);
+  assert.equal(g.head.counts.debt, 1169);
+  assert.deepEqual(g.ledger.problems, []);
+  assert.deepEqual(g.pin.counts, { a: 1, b: 693, c: 165, declared: 10 });
 });

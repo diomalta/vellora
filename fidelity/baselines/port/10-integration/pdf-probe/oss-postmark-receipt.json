@@ -1,0 +1,1539 @@
+{
+  "schema": "vellora-layout-diff/pdf-probe/2",
+  "semantics": 2,
+  "settings": {
+    "semantics": 2,
+    "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+    "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+    "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+    "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+    "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+    "maxDistancePt": 36,
+    "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+  },
+  "reference": {
+    "chromeWordsSha256": "bc48f28d2f0eee9f7a45d75d7558145db0acdf8f2796d3e4692f3524b7fbf94f"
+  },
+  "pages": {
+    "vellora": 1,
+    "chrome": 2
+  },
+  "words": {
+    "vellora": 141,
+    "chrome": 180,
+    "paired": 138,
+    "unpairedVellora": 3,
+    "unpairedChrome": 42
+  },
+  "pairs": [
+    {
+      "k": "p1|[Product#1",
+      "text": "[Product",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Name]#1",
+      "text": "Name]",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Hi#1",
+      "text": "Hi",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Maria#1",
+      "text": "Maria",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Exemplo,#1",
+      "text": "Exemplo,",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Thanks#1",
+      "text": "Thanks",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#1",
+      "text": "for",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|using#1",
+      "text": "using",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|[Product#3",
+      "text": "[Product",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Name].#1",
+      "text": "Name].",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|This#1",
+      "text": "This",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|email#1",
+      "text": "email",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|is#1",
+      "text": "is",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|the#1",
+      "text": "the",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|receipt#1",
+      "text": "receipt",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#2",
+      "text": "for",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#1",
+      "text": "your",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|purchase.#1",
+      "text": "purchase.",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|No#1",
+      "text": "No",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|payment#1",
+      "text": "payment",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|is#2",
+      "text": "is",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|due.#1",
+      "text": "due.",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|This#2",
+      "text": "This",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|purchase#1",
+      "text": "purchase",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|will#1",
+      "text": "will",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|appear#1",
+      "text": "appear",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|as#1",
+      "text": "as",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|“[Credit#1",
+      "text": "“[Credit",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Card#1",
+      "text": "Card",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Statement#1",
+      "text": "Statement",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Name]”#1",
+      "text": "Name]”",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|on#1",
+      "text": "on",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#2",
+      "text": "your",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|credit#1",
+      "text": "credit",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|card#1",
+      "text": "card",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|statement#1",
+      "text": "statement",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#3",
+      "text": "for",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#3",
+      "text": "your",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Visa#1",
+      "text": "Visa",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|ending#1",
+      "text": "ending",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|in#1",
+      "text": "in",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|4242.#1",
+      "text": "4242.",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Need#1",
+      "text": "Need",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|to#1",
+      "text": "to",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|update#1",
+      "text": "update",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#4",
+      "text": "your",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|payment#2",
+      "text": "payment",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|information#1",
+      "text": "information",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|?#1",
+      "text": "?",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|10%#1",
+      "text": "10%",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|off#1",
+      "text": "off",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#5",
+      "text": "your",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|next#1",
+      "text": "next",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|purchase!#1",
+      "text": "purchase!",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Thanks#2",
+      "text": "Thanks",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#4",
+      "text": "for",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#6",
+      "text": "your",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|support!#1",
+      "text": "support!",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Here's#1",
+      "text": "Here's",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|a#1",
+      "text": "a",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|coupon#1",
+      "text": "coupon",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#5",
+      "text": "for",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|10%#2",
+      "text": "10%",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|off#2",
+      "text": "off",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|your#7",
+      "text": "your",
+      "page": 1,
+      "dx": -0.54,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|next#2",
+      "text": "next",
+      "page": 1,
+      "dx": -0.54,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|purchase#2",
+      "text": "purchase",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|if#1",
+      "text": "if",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|used#1",
+      "text": "used",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|by#1",
+      "text": "by",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|November#1",
+      "text": "November",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|15,#1",
+      "text": "15,",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|2026.#1",
+      "text": "2026.",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.9
+    },
+    {
+      "k": "p1|Use#1",
+      "text": "Use",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|this#1",
+      "text": "this",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|discount#1",
+      "text": "discount",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|now...#1",
+      "text": "now...",
+      "page": 1,
+      "dx": -0.9,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|#RCPT-2026-000417#1",
+      "text": "#RCPT-2026-000417",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|October#1",
+      "text": "October",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|15,#2",
+      "text": "15,",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|2026#1",
+      "text": "2026",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Description#1",
+      "text": "Description",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Amount#1",
+      "text": "Amount",
+      "page": 1,
+      "dx": -0.52,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Pro#1",
+      "text": "Pro",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|plan#1",
+      "text": "plan",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|—#1",
+      "text": "—",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|monthly#1",
+      "text": "monthly",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|subscription#1",
+      "text": "subscription",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|(Oct#1",
+      "text": "(Oct",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|15#1",
+      "text": "15",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|–#1",
+      "text": "–",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Nov#1",
+      "text": "Nov",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|14,#1",
+      "text": "14,",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|2026)#1",
+      "text": "2026)",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|$49.00#1",
+      "text": "$49.00",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Additional#1",
+      "text": "Additional",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|seats#1",
+      "text": "seats",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|×#1",
+      "text": "×",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|3#1",
+      "text": "3",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|$27.00#1",
+      "text": "$27.00",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Priority#1",
+      "text": "Priority",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|support#1",
+      "text": "support",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|add-on#1",
+      "text": "add-on",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|$15.00#1",
+      "text": "$15.00",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Credit#1",
+      "text": "Credit",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|applied#1",
+      "text": "applied",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|from#1",
+      "text": "from",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|referral#1",
+      "text": "referral",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|−$10.00#1",
+      "text": "−$10.00",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Total#1",
+      "text": "Total",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|$81.00#1",
+      "text": "$81.00",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|If#1",
+      "text": "If",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|you#1",
+      "text": "you",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|have#1",
+      "text": "have",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|any#1",
+      "text": "any",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|questions#1",
+      "text": "questions",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|about#1",
+      "text": "about",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|this#2",
+      "text": "this",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|receipt,#1",
+      "text": "receipt,",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|simply#1",
+      "text": "simply",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|reply#1",
+      "text": "reply",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|to#2",
+      "text": "to",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|this#3",
+      "text": "this",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|email#2",
+      "text": "email",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|or#1",
+      "text": "or",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|reach#1",
+      "text": "reach",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|out#1",
+      "text": "out",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|to#3",
+      "text": "to",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|our#1",
+      "text": "our",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|support#2",
+      "text": "support",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|team#1",
+      "text": "team",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|for#6",
+      "text": "for",
+      "page": 1,
+      "dx": -0.54,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|help.#1",
+      "text": "help.",
+      "page": 1,
+      "dx": -0.54,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Cheers,#1",
+      "text": "Cheers,",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|The#1",
+      "text": "The",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|[Product#4",
+      "text": "[Product",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|Name]#3",
+      "text": "Name]",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    },
+    {
+      "k": "p1|team#2",
+      "text": "team",
+      "page": 1,
+      "dx": -0.53,
+      "dy": -0.15
+    }
+  ],
+  "unpairedChrome": [
+    {
+      "k": "p1|[Product#2",
+      "text": "[Product",
+      "page": 1,
+      "x": 253.45,
+      "y": 58.5
+    },
+    {
+      "k": "p1|Name]#2",
+      "text": "Name]",
+      "page": 1,
+      "x": 306.12,
+      "y": 58.5
+    },
+    {
+      "k": "p2|Download#1",
+      "text": "Download",
+      "page": 2,
+      "x": 249.76,
+      "y": 46.5
+    },
+    {
+      "k": "p2|as#1",
+      "text": "as",
+      "page": 2,
+      "x": 306.45,
+      "y": 46.5
+    },
+    {
+      "k": "p2|PDF#1",
+      "text": "PDF",
+      "page": 2,
+      "x": 322.46,
+      "y": 46.5
+    },
+    {
+      "k": "p2|Need#1",
+      "text": "Need",
+      "page": 2,
+      "x": 120.38,
+      "y": 116.25
+    },
+    {
+      "k": "p2|a#1",
+      "text": "a",
+      "page": 2,
+      "x": 146.92,
+      "y": 116.25
+    },
+    {
+      "k": "p2|printable#1",
+      "text": "printable",
+      "page": 2,
+      "x": 155.06,
+      "y": 116.25
+    },
+    {
+      "k": "p2|copy#1",
+      "text": "copy",
+      "page": 2,
+      "x": 198.94,
+      "y": 116.25
+    },
+    {
+      "k": "p2|for#1",
+      "text": "for",
+      "page": 2,
+      "x": 224.41,
+      "y": 116.25
+    },
+    {
+      "k": "p2|your#1",
+      "text": "your",
+      "page": 2,
+      "x": 240.12,
+      "y": 116.25
+    },
+    {
+      "k": "p2|records?#1",
+      "text": "records?",
+      "page": 2,
+      "x": 263.95,
+      "y": 116.25
+    },
+    {
+      "k": "p2|You#1",
+      "text": "You",
+      "page": 2,
+      "x": 308.21,
+      "y": 116.25
+    },
+    {
+      "k": "p2|can#1",
+      "text": "can",
+      "page": 2,
+      "x": 327.37,
+      "y": 116.25
+    },
+    {
+      "k": "p2|download#1",
+      "text": "download",
+      "page": 2,
+      "x": 345.8,
+      "y": 116.25
+    },
+    {
+      "k": "p2|a#2",
+      "text": "a",
+      "page": 2,
+      "x": 390.24,
+      "y": 116.25
+    },
+    {
+      "k": "p2|PDF#2",
+      "text": "PDF",
+      "page": 2,
+      "x": 398.37,
+      "y": 116.25
+    },
+    {
+      "k": "p2|version#1",
+      "text": "version",
+      "page": 2,
+      "x": 420.58,
+      "y": 116.25
+    },
+    {
+      "k": "p2|.#1",
+      "text": ".",
+      "page": 2,
+      "x": 452.03,
+      "y": 116.25
+    },
+    {
+      "k": "p2|Moved#1",
+      "text": "Moved",
+      "page": 2,
+      "x": 120.38,
+      "y": 144
+    },
+    {
+      "k": "p2|recently?#1",
+      "text": "recently?",
+      "page": 2,
+      "x": 152.35,
+      "y": 144
+    },
+    {
+      "k": "p2|Have#1",
+      "text": "Have",
+      "page": 2,
+      "x": 194.61,
+      "y": 144
+    },
+    {
+      "k": "p2|a#3",
+      "text": "a",
+      "page": 2,
+      "x": 220.08,
+      "y": 144
+    },
+    {
+      "k": "p2|new#1",
+      "text": "new",
+      "page": 2,
+      "x": 228.21,
+      "y": 144
+    },
+    {
+      "k": "p2|credit#1",
+      "text": "credit",
+      "page": 2,
+      "x": 248.8,
+      "y": 144
+    },
+    {
+      "k": "p2|card?#1",
+      "text": "card?",
+      "page": 2,
+      "x": 275.35,
+      "y": 144
+    },
+    {
+      "k": "p2|You#2",
+      "text": "You",
+      "page": 2,
+      "x": 302.29,
+      "y": 144
+    },
+    {
+      "k": "p2|can#2",
+      "text": "can",
+      "page": 2,
+      "x": 321.45,
+      "y": 144
+    },
+    {
+      "k": "p2|easily#1",
+      "text": "easily",
+      "page": 2,
+      "x": 339.88,
+      "y": 144
+    },
+    {
+      "k": "p2|update#1",
+      "text": "update",
+      "page": 2,
+      "x": 367.52,
+      "y": 144
+    },
+    {
+      "k": "p2|your#2",
+      "text": "your",
+      "page": 2,
+      "x": 400.05,
+      "y": 144
+    },
+    {
+      "k": "p2|billing#1",
+      "text": "billing",
+      "page": 2,
+      "x": 421.72,
+      "y": 144
+    },
+    {
+      "k": "p2|information#1",
+      "text": "information",
+      "page": 2,
+      "x": 120.38,
+      "y": 159.75
+    },
+    {
+      "k": "p2|.#2",
+      "text": ".",
+      "page": 2,
+      "x": 168.61,
+      "y": 159.75
+    },
+    {
+      "k": "p2|[Company#1",
+      "text": "[Company",
+      "page": 2,
+      "x": 248.53,
+      "y": 261
+    },
+    {
+      "k": "p2|Name,#1",
+      "text": "Name,",
+      "page": 2,
+      "x": 295.67,
+      "y": 261
+    },
+    {
+      "k": "p2|LLC]#1",
+      "text": "LLC]",
+      "page": 2,
+      "x": 327.1,
+      "y": 261
+    },
+    {
+      "k": "p2|1234#1",
+      "text": "1234",
+      "page": 2,
+      "x": 263.98,
+      "y": 276.75
+    },
+    {
+      "k": "p2|Street#1",
+      "text": "Street",
+      "page": 2,
+      "x": 288.37,
+      "y": 276.75
+    },
+    {
+      "k": "p2|Rd.#1",
+      "text": "Rd.",
+      "page": 2,
+      "x": 317.1,
+      "y": 276.75
+    },
+    {
+      "k": "p2|Suite#1",
+      "text": "Suite",
+      "page": 2,
+      "x": 274.81,
+      "y": 292.5
+    },
+    {
+      "k": "p2|1234#2",
+      "text": "1234",
+      "page": 2,
+      "x": 299.74,
+      "y": 292.5
+    }
+  ],
+  "unpairedVellora": [
+    {
+      "text": "Download",
+      "page": 1,
+      "x": 248.87,
+      "y": 815.85
+    },
+    {
+      "text": "as",
+      "page": 1,
+      "x": 305.56,
+      "y": 815.85
+    },
+    {
+      "text": "PDF",
+      "page": 1,
+      "x": 321.56,
+      "y": 815.85
+    }
+  ],
+  "offPage": {
+    "vellora": [
+      {
+        "text": "Need",
+        "page": 1,
+        "x": 119.85,
+        "y": 885.6
+      },
+      {
+        "text": "a",
+        "page": 1,
+        "x": 146.4,
+        "y": 885.6
+      },
+      {
+        "text": "printable",
+        "page": 1,
+        "x": 154.53,
+        "y": 885.6
+      },
+      {
+        "text": "copy",
+        "page": 1,
+        "x": 198.41,
+        "y": 885.6
+      },
+      {
+        "text": "for",
+        "page": 1,
+        "x": 223.88,
+        "y": 885.6
+      },
+      {
+        "text": "your",
+        "page": 1,
+        "x": 239.59,
+        "y": 885.6
+      },
+      {
+        "text": "records?",
+        "page": 1,
+        "x": 263.43,
+        "y": 885.6
+      },
+      {
+        "text": "You",
+        "page": 1,
+        "x": 307.67,
+        "y": 885.6
+      },
+      {
+        "text": "can",
+        "page": 1,
+        "x": 326.83,
+        "y": 885.6
+      },
+      {
+        "text": "download",
+        "page": 1,
+        "x": 345.26,
+        "y": 885.6
+      },
+      {
+        "text": "a",
+        "page": 1,
+        "x": 389.7,
+        "y": 885.6
+      },
+      {
+        "text": "PDF",
+        "page": 1,
+        "x": 397.84,
+        "y": 885.6
+      },
+      {
+        "text": "version",
+        "page": 1,
+        "x": 420.05,
+        "y": 885.6
+      },
+      {
+        "text": ".",
+        "page": 1,
+        "x": 451.49,
+        "y": 885.6
+      },
+      {
+        "text": "Moved",
+        "page": 1,
+        "x": 119.85,
+        "y": 913.35
+      },
+      {
+        "text": "recently?",
+        "page": 1,
+        "x": 151.82,
+        "y": 913.35
+      },
+      {
+        "text": "Have",
+        "page": 1,
+        "x": 194.08,
+        "y": 913.35
+      },
+      {
+        "text": "a",
+        "page": 1,
+        "x": 219.55,
+        "y": 913.35
+      },
+      {
+        "text": "new",
+        "page": 1,
+        "x": 227.68,
+        "y": 913.35
+      },
+      {
+        "text": "credit",
+        "page": 1,
+        "x": 248.27,
+        "y": 913.35
+      },
+      {
+        "text": "card?",
+        "page": 1,
+        "x": 274.82,
+        "y": 913.35
+      },
+      {
+        "text": "You",
+        "page": 1,
+        "x": 301.74,
+        "y": 913.35
+      },
+      {
+        "text": "can",
+        "page": 1,
+        "x": 320.9,
+        "y": 913.35
+      },
+      {
+        "text": "easily",
+        "page": 1,
+        "x": 339.33,
+        "y": 913.35
+      },
+      {
+        "text": "update",
+        "page": 1,
+        "x": 366.99,
+        "y": 913.35
+      },
+      {
+        "text": "your",
+        "page": 1,
+        "x": 399.51,
+        "y": 913.35
+      },
+      {
+        "text": "billing",
+        "page": 1,
+        "x": 421.19,
+        "y": 913.35
+      },
+      {
+        "text": "information",
+        "page": 1,
+        "x": 119.85,
+        "y": 929.1
+      },
+      {
+        "text": ".",
+        "page": 1,
+        "x": 168.08,
+        "y": 929.1
+      },
+      {
+        "text": "[Company",
+        "page": 1,
+        "x": 248.01,
+        "y": 1030.35
+      },
+      {
+        "text": "Name,",
+        "page": 1,
+        "x": 295.15,
+        "y": 1030.35
+      },
+      {
+        "text": "LLC]",
+        "page": 1,
+        "x": 326.58,
+        "y": 1030.35
+      },
+      {
+        "text": "1234",
+        "page": 1,
+        "x": 263.45,
+        "y": 1046.1
+      },
+      {
+        "text": "Street",
+        "page": 1,
+        "x": 287.85,
+        "y": 1046.1
+      },
+      {
+        "text": "Rd.",
+        "page": 1,
+        "x": 316.57,
+        "y": 1046.1
+      },
+      {
+        "text": "Suite",
+        "page": 1,
+        "x": 274.29,
+        "y": 1061.85
+      },
+      {
+        "text": "1234",
+        "page": 1,
+        "x": 299.22,
+        "y": 1061.85
+      }
+    ],
+    "chrome": []
+  }
+}
