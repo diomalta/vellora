@@ -33,6 +33,7 @@
 
 pub mod blitz_engine;
 pub mod break_css;
+mod collapsed_borders;
 pub mod css_scan;
 mod fonts;
 #[doc(hidden)]

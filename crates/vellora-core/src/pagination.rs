@@ -128,10 +128,8 @@ pub struct FragmentPlacement {
     /// `none` (flow gap 0), `page-origin` (page 1: the document's leading
     /// offset is kept), `page-start` (unforced break: adjoining margins
     /// truncate to 0), `forced-break-margin` (forced break: the margin after it
-    /// is kept, CSS Fragmentation 3 §5.2), `collapsed-rows` (a row of a
-    /// collapsed-border table placed against the previous row, Blitz's flow gap
-    /// between them dropped), `out-of-order` (its flow position lies above the
-    /// page top, so it follows the previous fragment).
+    /// is kept, CSS Fragmentation 3 §5.2), `out-of-order` (its flow position lies
+    /// above the page top, so it follows the previous fragment).
     pub gap_applied: f64,
     pub gap_note: &'static str,
     /// A repeated `<thead>` band injected right above this fragment (it sits at
@@ -192,12 +190,6 @@ struct Fragment {
     /// [`leading_margin`]), including those of an ancestor whose forced break
     /// moved onto this fragment and of dropped fragments it collapses through.
     break_margin: CollapsedMargin,
-    /// A part (header, row, row group) of a `border-collapse: collapse` table:
-    /// its rows abut (CSS 2.2 §17.6.2: no spacing between cells), so the flow
-    /// gap Blitz 0.3.0-beta.4 leaves between them is not kept (Chrome 155 row
-    /// pitch 21 px for 20 px rows with 1 px collapsed borders, Blitz flow 23 px:
-    /// `tests/pagination_gaps.rs`, f2).
-    collapsed_table: bool,
     /// Root table node for table-row/header fragments.
     table_id: Option<usize>,
     /// If this fragment is a `<thead>`, its boxes get repeated for that table.
@@ -271,8 +263,6 @@ pub fn paginate_traced(
     let mut page_start = PageStart::Origin;
     // Used height on the current page (the bottom of the last placed fragment).
     let mut cursor = 0.0_f64;
-    // Table of the last placed fragment (a body row/group), if any.
-    let mut last_table: Option<usize> = None;
     let mut thead_repeated: Vec<bool> = Vec::new();
     let mut oversize_hit = false;
     // Trace only: the flow bottom of the last placed fragment (to report the
@@ -409,11 +399,11 @@ pub fn paginate_traced(
         };
 
         // Where the fragment goes if it stays on the current page: its flow
-        // position. Two table cases: a row whose table starts on this page sits
-        // right under its header band, which is placed at the band's own flow
-        // position; and rows of a `border-collapse: collapse` table abut (no
-        // spacing between cells in the collapsing model, CSS 2.2 §17.6.2), so the
-        // flow gap Blitz leaves between them is dropped (`collapsed-rows`).
+        // position. A row whose table starts on this page sits right under its
+        // header band, which is placed at the band's own flow position. (Rows of a
+        // `border-collapse: collapse` table abut in the flow itself since Phase C
+        // step 02, `blitz_engine::compensate_collapsed_borders`; the gap drop that
+        // stood in for that, `collapsed-rows`, is gone.)
         // A fragment whose flow position lies above the top of the current page
         // comes out of flow order (DOM order is not always flow order: Blitz
         // lays a `<tfoot>` written before the body out at the table bottom); the
@@ -424,9 +414,6 @@ pub fn paginate_traced(
             let header_h = header_for(&headers_on_current).map_or(0.0, |(_, header)| header.height);
             let (top, note) = if let Some((_, header)) = header_for(&headers_on_current) {
                 (header.top + shift + header.height, None)
-            } else if frag.collapsed_table && frag.table_id.is_some() && last_table == frag.table_id
-            {
-                (cursor, Some("collapsed-rows"))
             } else {
                 (frag.top + shift, None)
             };
@@ -571,7 +558,6 @@ pub fn paginate_traced(
         current.append(&mut placed);
         cursor = placed_top + frag_height;
         prev_flow_bottom = Some(frag.bottom);
-        last_table = frag.table_id;
 
         if oversize {
             push_page(
@@ -890,16 +876,10 @@ fn collect_table_headers(fragments: &[Fragment], out: &mut HashMap<usize, TableH
             continue;
         };
         let (top, bottom) = row_span(&fragment.boxes);
-        // A collapsed-border table's rows abut its band (no spacing in that
-        // model, see `Fragment::collapsed_table`).
-        let band_bottom = if fragment.collapsed_table {
-            bottom
-        } else {
-            fragments[i + 1..]
-                .iter()
-                .find(|next| next.table_id == Some(table_id) && !next.is_thead)
-                .map_or(bottom, |next| next.top)
-        };
+        let band_bottom = fragments[i + 1..]
+            .iter()
+            .find(|next| next.table_id == Some(table_id) && !next.is_thead)
+            .map_or(bottom, |next| next.top);
         out.insert(
             table_id,
             TableHeader {
@@ -957,7 +937,6 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
             bottom,
             contained_bottom: bottom.min(box_bottom(body)),
             break_margin: leading_margin(&subtree),
-            collapsed_table: false,
             table_id: None,
             is_thead: false,
             break_before: body.break_before_page,
@@ -1018,7 +997,6 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
                 bottom,
                 contained_bottom: bottom.min(box_bottom(b)),
                 break_margin: leading_margin(subtree),
-                collapsed_table: false,
                 table_id: None,
                 is_thead: false,
                 break_before: b.break_before_page,
@@ -1349,7 +1327,6 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
                     .min(box_bottom(child_root))
                     .min(box_bottom(&subtree[0])),
                 break_margin: leading_margin(child).collapse(break_margin.unwrap_or_default()),
-                collapsed_table: false,
                 table_id: None,
                 is_thead: false,
                 break_before: break_margin.is_some(),
@@ -1372,7 +1349,6 @@ fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>)
 fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
     let table = TableRef {
         id: subtree.first().map(|b| b.node_id),
-        collapsed: subtree.first().is_some_and(|b| b.table_border_collapse),
     };
     emit_table_parts(subtree, table, out);
 }
@@ -1381,8 +1357,6 @@ fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
 #[derive(Clone, Copy)]
 struct TableRef {
     id: Option<usize>,
-    /// `border-collapse: collapse` (see `Fragment::collapsed_table`).
-    collapsed: bool,
 }
 
 fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragment>) {
@@ -1409,7 +1383,6 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
                     contained_bottom: bottom,
                     // Rows and row groups have no margins.
                     break_margin: CollapsedMargin::default(),
-                    collapsed_table: table.collapsed,
                     table_id: table.id,
                     is_thead,
                     break_before: !is_thead && (b.break_before_page || pending_break_before),
@@ -1445,7 +1418,6 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
                         bottom,
                         contained_bottom: bottom,
                         break_margin: CollapsedMargin::default(),
-                        collapsed_table: table.collapsed,
                         table_id: table.id,
                         is_thead: false,
                         break_before,

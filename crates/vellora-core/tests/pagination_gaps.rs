@@ -598,9 +598,11 @@ fn separate_border_rows_keep_their_spacing_and_the_header_repeats_at_the_top() {
 fn collapsed_border_rows_abut() {
     // CSS 2.2 §17.6.2: no spacing between the cells of a collapsed-border table.
     // Chrome: 21 px pitch (20 px rows sharing 1 px borders), R10 last on page 1,
-    // R11 first on page 2. Blitz 0.3.0-beta.4 does not share the borders (22 px
-    // cells) and leaves a further 1 px flow gap between rows; pagination drops
-    // that gap (rows abut), so the pitch is the 22 px cell height.
+    // R11 first on page 2. Raw Blitz 0.3.0-beta.4 does not share the borders (22 px
+    // cells) and leaves a further 1 px flow gap between rows (23 px pitch); since
+    // Phase C step 02 the collapsed-border compensation
+    // (`blitz_engine::compensate_collapsed_borders`) lays the rows out at Chrome's
+    // pitch, and pagination keeps the flow (its `collapsed_table` gap drop is gone).
     let p = paginate(&doc(
         &format!(
             "{SMALL_PAGE} {BASE} table {{ border-collapse: collapse; }} \
@@ -614,12 +616,8 @@ fn collapsed_border_rows_abut() {
     ));
     let (r01, r02, r10, r11) = (at(&p, "R01"), at(&p, "R02"), at(&p, "R10"), at(&p, "R11"));
     assert_eq!((r10.0, r11.0), (0, 1));
-    assert_px(
-        r02.1 - r01.1,
-        22.0,
-        "row pitch = Blitz cell height, no flow gap",
-    );
-    assert_px(r10.1 - r01.1, 9.0 * 22.0, "R10");
+    assert_px(r02.1 - r01.1, 21.0, "row pitch");
+    assert_px(r10.1 - r01.1, 9.0 * 21.0, "R10");
 }
 
 #[test]

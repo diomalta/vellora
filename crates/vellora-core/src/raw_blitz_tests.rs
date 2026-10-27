@@ -239,3 +239,248 @@ fn flat_pagination_caps_the_page_count() {
     let flat = pagination::paginate_flat(&doc, &page_box);
     assert_eq!(flat.pages.len(), 200);
 }
+
+// ---------------------------------------------------------------------------------------------
+// The collapsed-border compensation (`blitz_engine::compensate_collapsed_borders`) and its
+// canary. Variants of `fidelity/upstream-drafts/blitz-collapsed-cell-border-measure/variants.mjs`;
+// Chrome numbers from its `results/summary.txt` (Chrome for Testing 155.0.8059.85, print media,
+// 2026-10-27).
+// ---------------------------------------------------------------------------------------------
+
+/// One repro variant: a 400 px table of `rows` rows x 2 cells (`td { padding: 8px }`, 20 px
+/// lines, so 36 px of cell content box), extra CSS `css`, then a block after it.
+fn collapse_variant(css: &str, rows: usize) -> String {
+    let body: String = (0..rows)
+        .map(|i| format!("<tr><td>a{i}</td><td>b{i}</td></tr>"))
+        .collect();
+    format!(
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>\
+         @page {{ size: A4; margin: 16mm; }} body {{ margin: 0; font-family: \"Liberation Serif\"; \
+         font-size: 10pt; line-height: 20px; }} table {{ width: 400px; }} td {{ padding: 8px; }} \
+         {css}</style></head><body><table><tbody>{body}</tbody></table><div>after</div></body></html>"
+    )
+}
+
+/// `(table y, table height, [first-column cell (y, height)], y of the block after the table)`.
+fn table_geometry(doc: &LaidOutDoc) -> (f64, f64, Vec<(f64, f64)>, f64) {
+    let table = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table box");
+    let cells: Vec<(f64, f64)> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .step_by(2)
+        .map(|b| (b.y, b.height))
+        .collect();
+    let after = doc
+        .boxes
+        .iter()
+        .rfind(|b| b.tag.as_deref() == Some("div"))
+        .expect("after box");
+    (table.y, table.height, cells, after.y)
+}
+
+fn product_layout(html: &str) -> LaidOutDoc {
+    validate_and_lay_out(
+        html.as_bytes(),
+        &RenderOptions::default(),
+        DocumentSyntax::Html,
+        &mut NoObserver,
+    )
+    .unwrap_or_else(|e| panic!("lays out: {e}"))
+    .0
+}
+
+/// CANARY of the collapsed-border compensation: raw Blitz still lays the `collapse_b1` repro
+/// out 118 px tall (cells at y 1 / 40 / 79, 38 tall) where Chrome 155 makes it 112 px (cells at
+/// 0.5 / 37.5 / 74.5, 37 tall). When this fails, Blitz has changed its collapsed-border layout:
+/// the compensation now distorts tables instead of correcting them and must be deleted.
+#[test]
+fn blitz_still_lays_collapsed_rows_out_two_borders_too_tall() {
+    let html = collapse_variant(
+        "table{border-collapse:collapse} td{border:1px solid #000}",
+        3,
+    );
+    let (raw, _) = raw_layout(&html);
+    let geometry = table_geometry(&raw);
+    assert_eq!(
+        geometry,
+        (
+            0.0,
+            118.0,
+            vec![(1.0, 38.0), (40.0, 38.0), (79.0, 38.0)],
+            118.0
+        ),
+        "\n\nBLITZ CHANGED ITS `border-collapse: collapse` LAYOUT. Raw Blitz no longer lays the \
+         collapse_b1 repro out 118 px tall (cells at y 1 / 40 / 79, 38 tall; Chrome 155: 112 px, \
+         cells at 0.5 / 37.5 / 74.5, 37 tall), the bug the collapsed-border compensation works \
+         around (blitz-dom 0.3.0-beta.4 src/layout/table.rs 638-642, 814-822, 369-411). If Blitz \
+         now matches Chrome, DELETE the compensation: in crates/vellora-core/src/blitz_engine.rs \
+         `compensate_collapsed_borders`, `CollapsedBorders`, `collapsed_table_grid`, \
+         `collect_table_part`, `GridCollect`, `edge_borders`, `edge_style`, `set_border_widths`, \
+         `mutate_primary_style`, `TableColumnCursor`, the `collapsed` field of `WalkSink` and its \
+         uses in `push_box` / `read_visuals`, the `resolve_stylist` + compensation call in \
+         `resolve_and_walk`; the module src/collapsed_borders.rs (and its `mod` line in lib.rs); \
+         this canary and the `collapsed_border_compensation_*` tests in src/raw_blitz_tests.rs. \
+         Then re-measure with fidelity/layout-diff before trusting either layout.\n"
+    );
+}
+
+/// The compensation against Chrome 155 on every repro variant: table height, first-column
+/// cells' y / height (Chrome's are fractional 0.5 px halves; vellora's boxes are Taffy-rounded,
+/// so within 0.5 px, never accumulating), and the block after the table (exact).
+#[test]
+fn collapsed_border_compensation_gives_chromes_rows() {
+    let b1 = "table{border-collapse:collapse} td{border:1px solid #000}";
+    let rows3 = |ys: [f64; 3], h: [f64; 3]| vec![(ys[0], h[0]), (ys[1], h[1]), (ys[2], h[2])];
+    // (variant, css, rows, Chrome table height, Chrome first-column cell (y, h) per row).
+    type Case = (&'static str, String, usize, f64, Vec<(f64, f64)>);
+    let cases: Vec<Case> = vec![
+        (
+            "collapse_b1",
+            b1.into(),
+            3,
+            112.0,
+            rows3([0.5, 37.5, 74.5], [37.0; 3]),
+        ),
+        (
+            "collapse_b1_10rows",
+            b1.into(),
+            10,
+            371.0,
+            (0..10).map(|i| (0.5 + 37.0 * i as f64, 37.0)).collect(),
+        ),
+        (
+            "collapse_b0",
+            "table{border-collapse:collapse} td{border:0}".into(),
+            3,
+            108.0,
+            rows3([0.0, 36.0, 72.0], [36.0; 3]),
+        ),
+        (
+            "collapse_b2",
+            "table{border-collapse:collapse} td{border:2px solid #000}".into(),
+            3,
+            116.0,
+            rows3([1.0, 39.0, 77.0], [38.0; 3]),
+        ),
+        (
+            "collapse_b05",
+            "table{border-collapse:collapse} td{border:0.5px solid #000}".into(),
+            3,
+            112.0,
+            rows3([0.5, 37.5, 74.5], [37.0; 3]),
+        ),
+        (
+            "collapse_b1_tbonly",
+            "table{border-collapse:collapse} \
+             td{border-top:1px solid #000;border-bottom:1px solid #000}"
+                .into(),
+            3,
+            112.0,
+            rows3([0.5, 37.5, 74.5], [37.0; 3]),
+        ),
+        (
+            "collapse_first_cell_borderless",
+            format!("{b1} tr:first-child td:first-child{{border:0}}"),
+            3,
+            112.0,
+            rows3([0.5, 37.5, 74.5], [37.0; 3]),
+        ),
+        (
+            "collapse_table_border2_cells_none",
+            "table{border-collapse:collapse;border-bottom:2px solid #000} td{border:0}".into(),
+            3,
+            110.0,
+            rows3([0.0, 36.0, 72.0], [36.0, 36.0, 37.0]),
+        ),
+        (
+            "collapse_b1_tr_height48",
+            format!("{b1} tr{{height:48px}}"),
+            3,
+            145.0,
+            rows3([0.5, 48.5, 96.5], [48.0; 3]),
+        ),
+        (
+            "collapse_b1_lronly",
+            "table{border-collapse:collapse} \
+             td{border-left:1px solid #000;border-right:1px solid #000}"
+                .into(),
+            3,
+            108.0,
+            rows3([0.0, 36.0, 72.0], [36.0; 3]),
+        ),
+        (
+            "separate_s0_b1",
+            "table{border-collapse:separate;border-spacing:0} td{border:1px solid #000}".into(),
+            3,
+            114.0,
+            rows3([0.0, 38.0, 76.0], [38.0; 3]),
+        ),
+    ];
+    for (name, css, rows, chrome_height, chrome_cells) in &cases {
+        let doc = product_layout(&collapse_variant(css, *rows));
+        let (table_y, height, cells, after) = table_geometry(&doc);
+        assert_eq!((table_y, height), (0.0, *chrome_height), "{name}: table");
+        assert_eq!(after, *chrome_height, "{name}: block after the table");
+        assert_eq!(cells.len(), chrome_cells.len(), "{name}");
+        for (i, ((y, h), (cy, ch))) in cells.iter().zip(chrome_cells).enumerate() {
+            assert!(
+                (y - cy).abs() <= 0.5 && (y + h - (cy + ch)).abs() <= 0.5,
+                "{name} row {i}: vellora {y}/{h}, Chrome {cy}/{ch}"
+            );
+        }
+    }
+}
+
+/// The compensated table paints each resolved edge once, full width, centred on the grid line:
+/// `collapse_b1` gets 4 horizontal 1 px lines (y 0..1, 37..38, 74..75, 111..112 in Chrome's
+/// geometry; vellora's sit on the rounded cell boxes, within 0.5 px), one per column each, and
+/// 3 vertical ones per row, and the table paints no border of its own.
+#[test]
+fn collapsed_border_compensation_paints_each_edge_once() {
+    let html = collapse_variant(
+        "table{border-collapse:collapse} td{border:1px solid #000}",
+        3,
+    );
+    let doc = product_layout(&html);
+    let rects: Vec<&crate::blitz_engine::VisualRect> = doc
+        .boxes
+        .iter()
+        .flat_map(|b| &b.visual_rects)
+        .filter(|r| r.color == [0, 0, 0])
+        .collect();
+    let mut horizontal: Vec<f64> = rects
+        .iter()
+        .filter(|r| r.height == 1.0 && r.width > 1.0)
+        .map(|r| r.y)
+        .collect();
+    let vertical = rects
+        .iter()
+        .filter(|r| r.width == 1.0 && r.height > 1.0)
+        .count();
+    assert_eq!(horizontal.len(), 8, "{rects:?}");
+    assert_eq!(vertical, 9, "{rects:?}");
+    horizontal.sort_by(f64::total_cmp);
+    horizontal.dedup();
+    assert_eq!(horizontal.len(), 4, "{rects:?}");
+    for (line, chrome) in horizontal.iter().zip([0.0, 37.0, 74.0, 111.0]) {
+        assert!(
+            (line - chrome).abs() <= 0.5,
+            "row line at {line}, Chrome {chrome}"
+        );
+    }
+    let table = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table");
+    assert!(table.visual_rects.is_empty());
+    assert!(
+        table.table_border_collapse,
+        "the authored border-collapse is reported"
+    );
+}

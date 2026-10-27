@@ -68,12 +68,7 @@ fn layers_are_l0_then_every_named_pass_in_order() {
     let names: Vec<&str> = dump.layers.iter().map(|l| l.name.as_str()).collect();
     assert_eq!(
         names,
-        [
-            "L0",
-            "painted_table_cell_text_baselines",
-            "table_percent_widths",
-            "auto_table_compact_columns",
-        ]
+        ["L0", "table_percent_widths", "auto_table_compact_columns",]
     );
     assert!(!dump.blitz_tree.is_empty());
     assert_eq!(dump.media_type, "print");

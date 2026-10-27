@@ -6,114 +6,11 @@
 
 use crate::blitz_engine::{InlineAlign, LaidOutBox, VisualRect};
 
-const PAINTED_TABLE_CELL_TEXT_RAISE_PX: f64 = 2.0;
-
-pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBox]) {
-    let first_rows = first_rows_of_their_tables(boxes);
-    let mut i = 0;
-    while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("tr") {
-            let row_end = subtree_end_by_depth(boxes, i);
-            let cell_depth = boxes[i].depth + 1;
-            let cells: Vec<usize> = (i + 1..row_end)
-                .filter(|idx| {
-                    boxes[*idx].depth == cell_depth
-                        && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
-                })
-                .collect();
-            let interior_row = !first_rows.contains(&i);
-            if cells
-                .iter()
-                .any(|idx| table_cell_has_own_paint(&boxes[*idx], interior_row))
-            {
-                for idx in cells {
-                    let cell_end = subtree_end_by_depth(boxes, idx).min(row_end);
-                    shift_text_runs_y(boxes, idx, cell_end, -PAINTED_TABLE_CELL_TEXT_RAISE_PX);
-                }
-            }
-            i = row_end;
-        } else {
-            i += 1;
-        }
-    }
-}
-
-/// Whether a cell's paint makes its row's text raised.
-///
-/// Not a cell of an interior row (`interior_row`: not its table's first row) of a
-/// `border-collapse: collapse` table whose only paint is its top border (port step 10). Blitz
-/// 0.3.0-beta.4 already places that cell's text higher than Chrome 155, by the width of the
-/// border: it counts the collapsed border in the row's height but does not move the cell's
-/// content below it. Chrome probes (2026-10-22, the shared reference path; 4-row table, row 3
-/// with `border-top: W px`, `tests/text_baseline.rs`): the row-3 text of the step-09 build sits
-/// 3 / 6 / 10 px above Chrome's for W = 1 / 4 / 8 px (raise 2 px + W), while the row below is
-/// exact; a first row, or the same table with `border-collapse: separate`, is off by the 2 px
-/// raise only. So the raise doubled a raw Blitz error there: the invoice "Total a pagar" row
-/// (`border-top: 0.8pt`) on page 3 was |run| 3.53 px > |N0| 1.98 px, the pin view's (c) item
-/// (`fidelity/gate/layer-vector.mjs` over the 09 run copy).
-///
-/// Not a cell of a `border-collapse: separate` table either (port step 10-spark). There the raise
-/// is the only error: Chrome probe above, row 3 of the separated table at 59.25 pt, the raised
-/// build at 57.75. Its corpus target, raw Blitz row drift of painted rows, is in collapsed tables:
-/// excluding separated tables moves no text run of the seven owned fixtures (layout-diff, all 9
-/// fixtures, 2026-10-22). `oss-sparksuite-invoice` paints separated `cellspacing="0"` tables,
-/// whose spurious UA border-spacing (2 px per row) the raise partly cancelled until
-/// `blitz_engine::table_spacing_hints_css` removed it; with that fixed, its raw Blitz text y equals
-/// Chrome's on every row (layout-diff N0 dy 0) and the raise put the 9 text runs of its 5 painted
-/// rows 2 px above Chrome. Every other painted cell keeps the raise (a corpus compensator for raw
-/// Blitz flow drift, see the port README).
-fn table_cell_has_own_paint(cell: &LaidOutBox, interior_row: bool) -> bool {
-    if !cell.table_border_collapse {
-        return false;
-    }
-    if !cell.rounded_borders.is_empty() {
-        return true;
-    }
-    let top_border = |rect: &VisualRect| {
-        cell.height > 0.0 && (rect.y - cell.y).abs() < 0.01 && rect.height < cell.height - 0.01
-    };
-    if interior_row && cell.table_border_collapse && cell.visual_rects.iter().all(top_border) {
-        return false;
-    }
-    !cell.visual_rects.is_empty()
-}
-
-/// Indexes of the `<tr>` boxes that are the first row of their nearest `<table>` ancestor
-/// (document order, across its row groups).
-fn first_rows_of_their_tables(boxes: &[LaidOutBox]) -> std::collections::HashSet<usize> {
-    let mut first = std::collections::HashSet::new();
-    // Open tables: (depth, whether a row of it was seen).
-    let mut tables: Vec<(usize, bool)> = Vec::new();
-    for (i, b) in boxes.iter().enumerate() {
-        while tables.last().is_some_and(|(depth, _)| *depth >= b.depth) {
-            tables.pop();
-        }
-        match b.tag.as_deref() {
-            Some("table") => tables.push((b.depth, false)),
-            Some("tr") => {
-                if let Some((_, seen)) = tables.last_mut() {
-                    if !*seen {
-                        first.insert(i);
-                    }
-                    *seen = true;
-                }
-            }
-            _ => {}
-        }
-    }
-    first
-}
-
-fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
-    if dy == 0.0 || start >= end {
-        return;
-    }
-    for b in &mut boxes[start..end] {
-        for run in &mut b.text_runs {
-            run.origin_y += dy;
-        }
-    }
-}
+// `normalize_painted_table_cell_text_baselines` (a constant 2 px raise of the text of painted
+// table rows, a corpus compensator for raw Blitz's collapsed-row drift) was retired in Phase C
+// step 02 together with that drift: `blitz_engine::compensate_collapsed_borders` lays collapsed
+// tables out at Chrome's row pitch, and the raise then put those rows' text 2 px above Chrome's
+// (`tests/text_baseline.rs`).
 
 /// Give `width: <percentage>` cells of auto-layout tables their share of the row.
 /// Blitz 0.3.0-beta.4 drops a percentage cell width to `auto` unless the table
@@ -414,7 +311,14 @@ fn adjust_subtree_inline_geometry(
                 && (b.width - old_width).abs() < 0.5
                 && b.image_runs.is_empty()
                 && !matches!(b.tag.as_deref(), Some("table" | "img")));
-        adjust_visual_inline_geometry(&mut b.visual_rects, old_x, old_width, dx, dw);
+        adjust_visual_inline_geometry(
+            &mut b.visual_rects,
+            old_x,
+            old_width,
+            dx,
+            dw,
+            b.table_border_collapse,
+        );
         for border in &mut b.rounded_borders {
             border.x += dx;
             if is_root {
@@ -442,17 +346,30 @@ fn adjust_subtree_inline_geometry(
     }
 }
 
+/// Move (and, for a rect spanning the box, resize) a box's visual rects with its new inline
+/// geometry. `collapsed`: the box is a part of a `border-collapse: collapse` table, whose
+/// cells paint their edges centred on the box edges (`blitz_engine::compensate_collapsed_borders`):
+/// a rect straddling the box's left / right edge counts as on that edge.
 fn adjust_visual_inline_geometry(
     rects: &mut [VisualRect],
     old_x: f64,
     old_width: f64,
     dx: f64,
     dw: f64,
+    collapsed: bool,
 ) {
     let old_right = old_x + old_width;
     for rect in rects {
-        let is_full_width = (rect.x - old_x).abs() < 0.5 && (rect.width - old_width).abs() < 0.5;
-        let is_right_edge = (rect.x + rect.width - old_right).abs() < 0.5;
+        let rect_right = rect.x + rect.width;
+        let straddles = |edge: f64| collapsed && rect.x < edge && rect_right > edge;
+        let on_left = (rect.x - old_x).abs() < 0.5 || straddles(old_x);
+        let on_right = (rect_right - old_right).abs() < 0.5 || straddles(old_right);
+        let is_full_width = if collapsed {
+            on_left && on_right
+        } else {
+            (rect.x - old_x).abs() < 0.5 && (rect.width - old_width).abs() < 0.5
+        };
+        let is_right_edge = on_right;
         rect.x += dx;
         if is_full_width {
             rect.width = (rect.width + dw).max(0.0);
