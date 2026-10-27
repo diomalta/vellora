@@ -2079,7 +2079,8 @@ root reproduces every file except `manifest.json` `command`/`date` (CONFIRMED 20
 **What changed since 09** (the 10-rects, 10-spark and 10-crates product changes, each described
 in its section above; the gate's own breakdown of this re-gate):
 
-- Improvements 93: WPT 45 fail → pass (36 from 10-rects, section above); pdf-probe words
+- Improvements 93: WPT 45 fail → pass (the 10-rects run alone had 36 vs 09, section above; which
+  later change owns the other 9 is not attributed here, UNVERIFIED); pdf-probe words
   sparksuite 25, postmark 9, invoice 5 (p3 dy −2.65 → −1.15 pt, 10-crates); values: INV-R1
   postmark and sparksuite FAIL → PASS (`worstMm` 10.26 → 0.18 and 4.15 → 0.61), postmark EXT-2
   missing tokens pdftotext 38 → 35, PyMuPDF 40 → 37, invoice REF-W `maxMm` 2.53 → 1.68 and `p95Mm`

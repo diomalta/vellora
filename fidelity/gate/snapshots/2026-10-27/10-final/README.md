@@ -165,6 +165,9 @@ it was committed. CONFIRMED, each by re-running the command above into a scratch
 - the pin classification: `pin-classification.json` identical (modulo `<scratch>`; the committed
   file is biome-formatted).
 - `scripts/run_p_spread.mjs`: `run-p-spread.json` identical (modulo biome's array layout).
+- `scripts/lost_text.py` (command above): `lost-text-text-stress-ptbr.json` identical (modulo `~`).
+- `gate-report-10-integration.{json.gz,md}` = `baselines/port/10-integration/gate-report.{json,md}`
+  byte for byte (gunzipped).
 - write-baseline into a scratch root: `diff -rq` vs `fidelity/baselines/port/10-integration` differs
   only in `manifest.json` `provenance.command` (`--root`) and `date`.
 
