@@ -840,7 +840,8 @@
     "pdf-probe/receipt.json": "e94a94dfacd403c8c7c2b2980a0a4886121c65744423d761562b66950a0c5db9",
     "pdf-probe/text-stress-ptbr.json": "33e716e59793c652f0fca59c005f88a13b8b3e912080a65755a900455cd621c5",
     "attachments/pdf-probe-v2-inputs-evidence.json": "0fce52112081e8c0598456f1f7f1eeafc8436bc41c69288075f2a8ab06aefce6",
-    "ext2-tokens.json": "22838d7682fa24bbe2a3af6eb345a8058cb5e6d57f63438832b62fa015f369cb"
+    "ext2-tokens.json": "22838d7682fa24bbe2a3af6eb345a8058cb5e6d57f63438832b62fa015f369cb",
+    "doc-aggregate.json": "b35a80852fa904cb5609b98c6cb63fc3dfc1edd10007ea502411a7fa65d865b3"
   },
   "pdfProbeRescore": {
     "semantics": 2,
@@ -1444,5 +1445,11 @@
     "rows": 10,
     "incomplete": ["text-stress-ptbr|plain pdftotext 40/78"],
     "missingRecords": []
+  },
+  "docAggregate": {
+    "date": "2026-10-27",
+    "file": "doc-aggregate.json",
+    "what": "document-level aggregate reference of the published engine (fidelity/ACCEPTANCE.md section 9, DOC-1..DOC-4): pin PDFs re-rendered with v0.2.0 (5810062, Blitz 2003ba5) from the native.html of run 20261023T004510Z and scored against that run's Chrome PDFs; 8009f96 renders the same 9 PDFs byte-identically",
+    "command": "node fidelity/oracles/doc-aggregate-pin.mjs (full command inside the file)"
   }
 }

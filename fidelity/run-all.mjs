@@ -26,8 +26,8 @@
 //     [--wpt-chrome | --chrome-from <wpt results.json>]
 //     [--only <steps>] [--skip <steps>] [--wpt-arg <arg>]... [--raw] [--tools-image <ref>]
 //     [--no-canaries] [--gate --baseline <fidelity/baselines/<name>> [--accept <file>]
-//       [--head <dir> | --no-head] [--pin <dir> | --no-pin] [--main] [--debt <file>]
-//       [--debt-base <file>] [--step <NN-name>]]
+//       [--head <dir> | --no-head] [--pin <dir> | --no-pin] [--main] [--contract]
+//       [--debt <file>] [--debt-base <file>] [--step <NN-name>]]
 //   npm --prefix fidelity run all -- [same options]
 //
 // --chrome      Chrome for every Chromium reference (default $VELLORA_FIDELITY_CHROME, else the
@@ -120,6 +120,7 @@ const STEP_IDS = [
   "layout-diff",
   "pdf-probe",
   "pdf-probe-suite",
+  "doc-aggregate",
 ];
 /** Fixtures under fixtures/ that are deliberately not measured, with the reason. */
 const EXCLUDED_FIXTURES = {
@@ -168,8 +169,9 @@ export function parseArgs(argv) {
     else if (a === "--accept") opts.accept = resolve(next());
     else if (["--head", "--pin", "--debt", "--debt-base", "--step"].includes(a)) {
       opts.gateArgs.push(a, next());
-    } else if (["--no-head", "--no-pin", "--main"].includes(a)) opts.gateArgs.push(a);
-    else if (a === "--chrome-from") opts.chromeFrom = resolve(next());
+    } else if (["--no-head", "--no-pin", "--main", "--contract"].includes(a)) {
+      opts.gateArgs.push(a);
+    } else if (a === "--chrome-from") opts.chromeFrom = resolve(next());
     else if (a === "--help" || a === "-h") opts.help = true;
     else throw new Error(`unknown option ${a} (see the header of fidelity/run-all.mjs)`);
   }
@@ -338,6 +340,7 @@ async function main() {
     oraclesFixtures: join(outDir, "oracles", "fixtures"),
     oraclesCorpus: join(outDir, "oracles", "corpus"),
     layoutDiff: join(outDir, "layout-diff"),
+    docAggregate: join(outDir, "doc-aggregate"),
   };
   const gate = (id) => {
     if (!selected.includes(id)) return "not selected (--only/--skip)";
@@ -627,6 +630,28 @@ async function main() {
             outputs: suite.probes.map((p) =>
               join(dirs.layoutDiff, probeFixture(p.id), "run-all", "pdf-probe.json"),
             ),
+            logDir,
+          }),
+    );
+  }
+
+  // 5d. Document-level aggregate (2026-10-27, exit-contract condition 2; ACCEPTANCE.md DOC-*): per
+  //     fixture, vellora's PDF vs Chrome's PDF written by pdf-probe (median / p90 word-origin
+  //     distance, share within 1 mm, missing words, pages). The gate compares it with
+  //     baselines/pin/doc-aggregate.json (gate/doc-aggregate.mjs).
+  {
+    const why =
+      gate("doc-aggregate") ??
+      (layoutSummary ? null : "layout-diff wrote no summary (doc-aggregate scores its PDFs)") ??
+      (venvPython() ? null : `PyMuPDF word extractor: ${pythonUnavailableReason()}`);
+    steps.push(
+      why
+        ? notRun("doc-aggregate", why)
+        : await runNode({
+            id: "doc-aggregate",
+            script: "fidelity/oracles/doc-aggregate.mjs",
+            args: ["--run", outDir, "--label", "run-all"],
+            outputs: [join(dirs.docAggregate, "summary.json")],
             logDir,
           }),
     );
