@@ -268,7 +268,11 @@ and Blitz rev, the command, the sha256 of every pin PDF, its input HTML and Chro
 and the measured noise. The published engine is release `v0.2.0` = main `5810062` (Blitz
 `2003ba5`). CONFIRMED 2026-10-27: `a8b126d` (an older main) lacks #40 (break-inside / break-before),
 renders text-stress-ptbr in 5 pages instead of 8 and the other 8 fixtures byte-identically; it is
-not the published engine. The run side's `vellora.pdf` comes from `layout_dump --pdf`
+not the published engine. `8009f96` (feat/fidelity-oracles, the commit the committed pin baseline
+was measured with; it adds the layout_dump hooks), built fresh, renders all 9 pin PDFs
+byte-identical to `v0.2.0` (CONFIRMED 2026-10-27), so the reference holds for either commit. The
+file is listed in the pin `manifest.json` `files` (sha256), so an edit fails the baseline integrity
+check. The run side's `vellora.pdf` comes from `layout_dump --pdf`
 (`vellora_core::render`); re-rendering the same 9 `native.html` through `renderPdf` of the same
 build gave identical metrics for 9/9 (CONFIRMED 2026-10-27, PDF bytes differ by the title metadata).
 

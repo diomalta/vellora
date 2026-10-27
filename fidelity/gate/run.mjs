@@ -282,11 +282,13 @@ export function evaluateGate({
   ledgerBaseSource = null,
   step = null,
   passes = null,
-  main = false,
+  main: mainFlag = false,
   contract = false,
   docAggregate = undefined,
   canaries = true,
 }) {
+  // The strict exit contract implies a merge to main (one place: pin view and DOC rules alike).
+  const main = mainFlag || contract;
   const report = compareSnapshots(before, after, { accept, declared });
   const classA = accept.filter((e) => e.class === "a");
   const doc = ledger ?? emptyLedger();
@@ -362,7 +364,7 @@ export function evaluateGate({
     });
   }
   if (docAggregate !== undefined) {
-    const d = evaluateDocAggregate({ ...docAggregate, main: main || contract, contract });
+    const d = evaluateDocAggregate({ ...docAggregate, main, contract });
     report.docAggregate = d;
     report.items.push(...d.items);
     report.refusals.push(...d.refusals.map((r) => `doc-aggregate: ${r}`));
