@@ -137,8 +137,9 @@ Swap it with `setNativeBridge(...)` or per-call via the internal `_bridge` optio
 - **Strict-by-default never mutates.** `strict: true` (default) passes templated HTML to the bridge
   byte-unchanged and **must never even import `@vellora/lint`**. Only `strict: false` lazily imports it
   and runs fixers first. `@vellora/lint` is dev-time/CI tooling, never on the render path.
-- **All Blitz contact goes through `crates/vellora-core/src/blitz_engine.rs`.** Blitz is pinned to a git
-  rev (pre-alpha, churns); funneling keeps an upstream break to one file. Don't import Blitz elsewhere.
+- **All Blitz contact goes through `crates/vellora-core/src/blitz_engine.rs`.** Blitz is pinned to the
+  exact crates.io pre-release `=0.3.0-beta.4` (`blitz-dom`, `blitz-html`, `blitz-traits`; it was a git
+  rev before); it is pre-1.0 and churns, and funneling keeps an upstream break to one file. Don't import Blitz elsewhere.
 - **`panic = "unwind"` in the workspace `[profile.release]` is mandatory** (it's workspace-wide, not
   per-member). The napi panic-to-rejection contract depends on it. Cargo.toml says so explicitly.
 - **No recursion and no super-linear cost on user input before the depth gate.** A stack overflow

@@ -74,12 +74,21 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   checked by `wpt/run.mjs`, which refuses a mismatch). If the harness or the WPT pin changes, run
   Chrome live once (`--wpt-chrome`) and keep that run's `wpt/results.json` as the new reuse source.
 - **Run copies.** `fidelity/results/` is gitignored: copy each step's run directory to
-  `~/.cache/vellora-fidelity/run-all-<NN-name>-<runId>` so later steps can re-gate or reuse it.
+  `~/Repositories/vellora-fidelity-runs/run-all-<NN-name>-<runId>[-<engine>-vellora-<sha>]` so
+  later steps can re-gate or reuse it (since 2026-10-27; never `~/.cache`). Loss event (CONFIRMED
+  2026-10-27): `~/.cache/vellora-fidelity` and every run copy in it disappeared between 2026-10-23
+  and 2026-10-27, so the `~/.cache/...` paths cited by the sections below no longer exist; the only
+  surviving run copy is `run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5`. Its
+  `wpt/results.json` (Chrome outcomes for 8046 of 8047 tests, raw-Blitz outcomes for all 8047) is
+  the `--chrome-from` source from then on, with `--tools-image vellora-fidelity-tools:baseline-beta4`
+  (the image was rebuilt from `fidelity/oracles/docker/tools.Dockerfile`, new id
+  `sha256:c405e06c653a...`; equivalence of its verdicts with the lost image is UNVERIFIED until a
+  re-run matches 10-tip).
 - **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
   (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
   against its predecessor. `fidelity/gate/test/head-chain.test.mjs` re-checks the head ratchet
-  and the pin view on the committed links: the ledger is the empty `vellora-fidelity/debt/1`
-  ledger, and `07` against `06` with `--head port/00-start` gives the counts in "Head ratchet
+  and the pin view on the committed links with the ledger they were gated with (empty; DEBT.json
+  was first populated on 2026-10-27, `fidelity/gate/snapshots/2026-10-27/10-debt/`), and `07` against `06` with `--head port/00-start` gives the counts in "Head ratchet
   and debt ledger" below. A new link should add its own head and pin counts there.
 - **pdf-probe semantics.** Since 2026-10-21 every link's gated pdf-probe section
   (`pdf-probe/<fixture>.json`) is semantics 2 ("pdf-probe v2 re-score" below); the gate refuses
@@ -1992,3 +2001,26 @@ With the hint, the sparksuite heading cells touch again and are drawn as one ban
 the pin-view sparksuite dx 25 item (−0.23 → −3.23 pt) shares this root cause. Settling it needs
 the hint in the core (for example a user-agent-origin rule per distinct `cellspacing` value,
 through `blitz_engine.rs`), gated as its own link. `cellpadding` has the same gap in Blitz.
+
+## Debt population and the 10-integration gate (2026-10-27, branch `phaseb/10-debt`): baseline 10 NOT written
+
+Post-hoc re-gate (no render) of the surviving 10-tip run copy
+(`run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5`, phaseb/10-tip a293cf5)
+with the first population of `DEBT.json` and the step's class-a acceptances
+(`fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json`: the 3 of 10-spark, re-checked on the
+10-tip PDFs, plus the WPT false pass `monolithic-overflow-014`). Local macOS, INDICATIVE.
+
+- vs `09-review-fixes`: gating 0. Head vs `00-start`: gating **145** (debt 1024, accepted 4,
+  declared 10). Pin: (a) 1, (b) 641, (c) 217. Gate canaries 20/20. Verdict FAIL, so
+  `10-integration` is not written.
+- `DEBT.json`: 26 entries, 1024 keys (1014 pdf-probe words, DANFE-L1a-c `posErrMm`, 7 WPT
+  raw-Blitz fails), every owner `blitz:*`, built by `fidelity/gate/debt-populate.mjs` from that
+  one run and the committed vectors of the snapshot. The 53 round-2 "none" items got vectors from
+  two `layer-vector.mjs` extensions (page-1 geometry fallback; `--spec-anchor` for DANFE-L1).
+- The 145 that block: `DANFE-L1d posErrMm` (its only layer step is P -> run +0.626 px, Chrome's
+  DOM-vs-PDF offset, above the 0.5 px position-mm run tolerance) and 144 text-stress-ptbr words
+  on pages 2-7 (8 pages vs Chrome 7: rule vi needs a page-scoped entry, which GATE-D7 refuses
+  because `TXT-P1 pageDelta` is unchanged vs the head). Both need a rule decision or a pagination
+  fix; neither is hidden in the ledger.
+- Numbers, commands, residual and the pin classification:
+  `fidelity/gate/snapshots/2026-10-27/10-debt/README.md`.

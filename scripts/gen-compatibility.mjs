@@ -168,6 +168,21 @@ const allowedRows = [
     note: "Page size and margins are honoured; running content is drawn in the `@top-center` and `@bottom-center` margin boxes, with `counter(page)` / `counter(pages)`. The other margin boxes are rejected (see below).",
   },
   {
+    feature: "`@page :first` / `:left` / `:right`",
+    status: "Partial",
+    note: 'Every `@page` rule of every `<style>` element is read in cascade order (selectors, cascade layers, `!important`, `@media print`). A page selector may change `margin-top`, `margin-bottom`, the page height and the margin boxes per page. A rule that gives pages different content widths (page width minus the left and right margins) is rejected as `css:page-varying-width`: the document is laid out once, at one width. Route such a template to `engine: "chromium"`.',
+  },
+  {
+    feature: "HTML parsing",
+    status: "Supported",
+    note: "Every document is parsed with the HTML parser, as a browser parses `text/html`, whatever its doctype or XML prolog: an XHTML doctype or `<?xml` prolog no longer switches to an XML parse (where `<br>` is not void and the text after it was lost).",
+  },
+  {
+    feature: "`<table cellspacing>` / `<table cellpadding>`",
+    status: "Supported",
+    note: "Mapped like Chrome's presentational hints: `cellspacing` to `border-spacing` (in px), `cellpadding` to the cells' padding; author CSS (`border-spacing`, cell `padding`) wins over them, and a table without the attribute keeps the user-agent 2 px spacing.",
+  },
+  {
     feature: "`@media print` / `@media screen`",
     status: "Supported",
     note: "Documents are styled for print media, like a browser printing: `@media print` (and `all`, `not screen`) rules apply, `@media screen` rules do not. Media features (`width`, `height`, …) are evaluated against the first page's `@page` content box (whole CSS px); browsers use their own print page size instead. `@page` rules inside an `@media` block are read by media type only: a query with a media feature does not match for them (the page box decides the content box the features are measured against). The `media` attribute of a `<style>` element is not evaluated: its rules always apply.",
