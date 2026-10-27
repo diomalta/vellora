@@ -41,6 +41,7 @@
 // step); 2 REFUSED (not comparable: WPT commit / settings / ink data differ, baseline integrity);
 // 1 the gate itself crashed.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gateCanaryItems, runGateCanaries } from "./canaries.mjs";
@@ -64,7 +65,12 @@ import { renderGateMarkdown } from "./report.mjs";
 import { loadSnapshot } from "./snapshot.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const rel = (p) => relative(repoRoot, p) || ".";
+// A path outside the checkout (the durable run store) is written as ~/... rather than a "../.."
+// path that depends on where the checkout or worktree sits.
+const rel = (p) => {
+  const r = relative(repoRoot, p) || ".";
+  return r.startsWith("..") ? resolve(p).split(homedir()).join("~") : r;
+};
 
 export const GATE_EXIT = Object.freeze({ PASS: 0, FAIL: 3, REFUSED: 2 });
 

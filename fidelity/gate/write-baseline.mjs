@@ -260,7 +260,10 @@ export function writeBaseline({
     },
     environment: env,
     source: {
-      run: relative(repoRoot, runDir),
+      // A run copy outside the checkout (the durable run store) is recorded by its absolute
+      // path, which json() makes portable (~/...); a relative "../.." path would depend on
+      // where the checkout or worktree sits.
+      run: relative(repoRoot, runDir).startsWith("..") ? runDir : relative(repoRoot, runDir),
       summarySha256: sha256(readFileSync(join(runDir, "summary.json"))),
       note: "fidelity/results/ is gitignored; the run directory is not committed",
     },

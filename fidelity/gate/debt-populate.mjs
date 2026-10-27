@@ -556,8 +556,12 @@ async function main() {
     );
     process.stdout.write(`debt-populate: pin (c) ${pinItems.length}: ${JSON.stringify(byRoute)}\n`);
   }
+  // Ledger keys = the covered records (one per key) + each listed page scope's bound page metric;
+  // the listed scope keys are counted apart (they are scoped out, not ledger keys).
+  const ledgerKeys = entries.reduce((s, e) => s + e.keys.length, 0);
+  const scopeKeys = entries.reduce((s, e) => s + (e.scope?.keys?.length ?? 0), 0);
   process.stdout.write(
-    `debt-populate: ${entries.length} entries, ${records.length} keys; residual ${residual.length} (${residual.filter((r) => r.route === "a").length} class-a)\n`,
+    `debt-populate: ${entries.length} entries, ${ledgerKeys} keys (${records.length} covered records${ledgerKeys > records.length ? ` + ${ledgerKeys - records.length} page metric` : ""}), ${scopeKeys} listed scope keys; residual ${residual.length} (${residual.filter((r) => r.route === "a").length} class-a)\n`,
   );
 }
 
