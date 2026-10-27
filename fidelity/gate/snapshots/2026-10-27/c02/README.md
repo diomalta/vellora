@@ -35,12 +35,14 @@ minimum of 6c0e2e3.
 | head vs port/00-start | gating **88** (head-regression), debt 180, declared 10 |
 | pin view vs baselines/pin | (a) 0, (b) 93, (c) **193**, declared 10: merge to main BLOCKED |
 | ledger | 10 entries, 180 keys, 0 problems (`debt.mjs check`, base = merge base with main: absent) |
-| gate canaries | caught (run-all summary: 35/35 detection canaries) |
+| gate canaries (GATE-K2) | 23/23 caught in the re-gate (the run's oracle canaries: 35/35 detection caught) |
 
-The 127: CONFIRMED residual, not borders. Chrome floors each length to LayoutUnit (1/64 px): 10
-table rows with `padding: 1mm` are 275.3125 px in Chrome 155 against 275.5905 in Blitz (probe, this
-date). The `table.extrato` rows add about 0.04 px each, 6.5 px over the continuous flow and up to
-1.9 pt within a page. The retired 2 px raise had pushed the same words 0.4 to 34 pt ABOVE Chrome.
+The 127 are not border-related. CONFIRMED: the `table.extrato` rows are each about 0.04 px
+taller than Chrome's (layout-diff N0u dh), 6.5 px over the continuous flow and up to 1.9 pt within
+a page. CONFIRMED mechanism for part of it: Chrome floors lengths to LayoutUnit (1/64 px); 10 table
+rows with `padding: 1mm` are 275.3125 px in Chrome 155 against 275.5905 in Blitz (probe, this
+date), 0.028 px per row. The remaining ~0.01 px per row is UNVERIFIED. The retired 2 px raise had
+put the same words 0.4 to 34 pt ABOVE Chrome.
 
 ## Pin view (c) 193, classified (`pin-classification.json`)
 
