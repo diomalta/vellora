@@ -965,8 +965,57 @@ struct CollapsedBorders {
     /// Authored `border-collapse: collapse` tables whose computed style is now
     /// `separate` / `border-spacing: 0` with half-width outer borders.
     tables: std::collections::HashSet<NodeId>,
-    /// The cells of those tables, with their resolved edges.
-    cells: std::collections::HashMap<NodeId, crate::collapsed_borders::ResolvedCell>,
+    /// The cells of those tables, with their resolved edges (physical sides).
+    cells: std::collections::HashMap<NodeId, CompensatedCell>,
+    /// Per compensated table, in DOM order: its cells with their grid rows `(cell, first row,
+    /// end row)` (exclusive end, clamped to the grid), for [`collapsed_row_lines`].
+    grids: Vec<Vec<(NodeId, usize, usize)>>,
+}
+
+/// One cell of a compensated table.
+#[derive(Clone, Copy)]
+struct CompensatedCell {
+    resolved: crate::collapsed_borders::ResolvedCell,
+    /// The top and bottom grid lines of the cell's rows, relative to its table's border box
+    /// (laid out, [`collapsed_row_lines`]): where its horizontal edges are painted. Blitz does
+    /// not stretch a cell with a specified `height` to its row (a Taffy grid item with a
+    /// definite height), while Chrome's cell always spans its row (WPT
+    /// `css-tables/height-distribution/td-different-subpixel-padding-in-same-row.html`), so the
+    /// cell's own box is not the row. `None` until computed.
+    lines: Option<(f64, f64)>,
+}
+
+/// The grid lines of every compensated cell's rows, from the laid-out cells: a row's top line is
+/// the top of the highest cell starting in it, the last line the bottom of the lowest cell
+/// ending there. Relative to the table (a cell's location is relative to its table).
+fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
+    for grid in &collapsed.grids {
+        let rows = grid.iter().map(|&(_, _, r1)| r1).max().unwrap_or(0);
+        let mut tops = vec![f64::INFINITY; rows + 1];
+        let mut bottom = f64::NEG_INFINITY;
+        for &(id, r0, r1) in grid {
+            let Some(node) = doc.get_node(id).filter(|n| node_has_layout_data(n)) else {
+                continue;
+            };
+            let layout = node.final_layout();
+            let (y, h) = (layout.location.y as f64, layout.size.height as f64);
+            tops[r0] = tops[r0].min(y);
+            if r1 == rows {
+                bottom = bottom.max(y + h);
+            }
+        }
+        if bottom.is_finite() {
+            tops[rows] = bottom;
+        }
+        for &(id, r0, r1) in grid {
+            let (top, end) = (tops[r0], tops[r1]);
+            if let Some(cell) = collapsed.cells.get_mut(&id) {
+                if top.is_finite() && end.is_finite() && end >= top {
+                    cell.lines = Some((top, end));
+                }
+            }
+        }
+    }
 }
 
 /// COMPENSATES A BLITZ BUG: Blitz lays out `border-collapse: collapse` tables taller than
@@ -1004,8 +1053,9 @@ struct CollapsedBorders {
 ///
 /// WHEN BLITZ FIXES THIS, DELETE: this function, [`CollapsedBorders`], `collapsed_table_grid`,
 /// `edge_borders`, `edge_style`, `set_border_widths`, `mutate_primary_style`,
-/// `TableColumnCursor`, the `collapsed` field of [`WalkSink`] and its uses in [`push_box`] and
-/// [`read_visuals`], the `resolve_stylist` + compensation call in [`resolve_and_walk`], the
+/// `TableColumnCursor`, `CompensatedCell`, `collapsed_row_lines`, `collect_table_part`,
+/// `GridCollect`, the `collapsed` field of [`WalkSink`] and its uses in [`push_box`] and
+/// [`read_visuals`], the `resolve_stylist` + compensation calls in [`resolve_and_walk`], the
 /// module `src/collapsed_borders.rs`, and the canary test
 /// `blitz_still_lays_collapsed_rows_out_two_borders_too_tall` (`src/raw_blitz_tests.rs`), which
 /// fails as soon as raw Blitz stops producing the bug.
@@ -1029,14 +1079,23 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
         stack.extend(node.children.iter().rev().copied());
     }
     for table in tables {
-        let Some((grid, cell_ids)) = collapsed_table_grid(doc, table) else {
+        let Some((grid, cell_ids, rtl)) = collapsed_table_grid(doc, table) else {
             continue;
         };
         let resolved = crate::collapsed_borders::resolve(&grid);
         if !resolved.any_border {
             continue;
         }
-        let half = resolved.table_half;
+        // Back from the grid's logical columns to physical sides (an RTL table's first column
+        // is on the right).
+        let physical = |sides: [f64; 4]| {
+            if rtl {
+                crate::collapsed_borders::mirrored(sides)
+            } else {
+                sides
+            }
+        };
+        let half = physical(resolved.table_half);
         mutate_primary_style(doc, table, |values| {
             use style::values::computed::{BorderSpacing, NonNegativeLengthPercentage};
             use style::Zero as _;
@@ -1051,13 +1110,31 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
             padding.set_padding_bottom(NonNegativeLengthPercentage::zero());
             padding.set_padding_left(NonNegativeLengthPercentage::zero());
         });
-        for (cell, resolved_cell) in cell_ids.iter().zip(&resolved.cells) {
+        let mut rows = Vec::with_capacity(cell_ids.len());
+        for ((cell, resolved_cell), grid_cell) in
+            cell_ids.iter().zip(&resolved.cells).zip(&grid.cells)
+        {
+            let resolved_cell = if rtl {
+                resolved_cell.mirrored()
+            } else {
+                *resolved_cell
+            };
             let half = resolved_cell.half_widths();
             mutate_primary_style(doc, *cell, |values| {
                 set_border_widths(values.mutate_border(), half)
             });
-            out.cells.insert(*cell, *resolved_cell);
+            out.cells.insert(
+                *cell,
+                CompensatedCell {
+                    resolved: resolved_cell,
+                    lines: None,
+                },
+            );
+            let r0 = grid_cell.row.min(grid.rows);
+            let r1 = (grid_cell.row + grid_cell.rowspan.max(1)).min(grid.rows);
+            rows.push((*cell, r0, r1.max(r0)));
         }
+        out.grids.push(rows);
         out.tables.insert(table);
     }
     out
@@ -1293,10 +1370,13 @@ fn collect_table_part(doc: &BaseDocument, id: NodeId, state: &mut GridCollect) -
 fn collapsed_table_grid(
     doc: &BaseDocument,
     table: NodeId,
-) -> Option<(crate::collapsed_borders::TableGrid, Vec<NodeId>)> {
+) -> Option<(crate::collapsed_borders::TableGrid, Vec<NodeId>, bool)> {
+    use style::computed_values::direction::T as Direction;
     use style::values::specified::box_::DisplayInside;
     let node = doc.get_node(table)?;
-    let table_sides = edge_borders(&node.primary_styles()?.clone());
+    let table_styles = node.primary_styles()?.clone();
+    let rtl = matches!(table_styles.clone_direction(), Direction::Rtl);
+    let table_sides = edge_borders(&table_styles);
     let group_order = |id: NodeId| -> u8 {
         match doc
             .get_node(id)
@@ -1324,17 +1404,31 @@ fn collapsed_table_grid(
     if state.cells.is_empty() {
         return None;
     }
-    Some((
-        crate::collapsed_borders::TableGrid {
-            rows: state.rows.len(),
-            cols: state.cursor.num_columns,
-            table: table_sides,
-            row_borders: state.rows,
-            groups: state.groups,
-            cells: state.cells,
-        },
-        state.ids,
-    ))
+    // The grid is resolved in logical columns (the first column is the start one, CSS 2.1
+    // §17.6.2.1's "further to the left (ltr) / right (rtl)" tie-break): an RTL table's
+    // physical left and right sides are swapped into it, and back by the caller.
+    let logical = |sides: [crate::collapsed_borders::EdgeBorder; 4]| {
+        if rtl {
+            crate::collapsed_borders::mirrored(sides)
+        } else {
+            sides
+        }
+    };
+    let mut grid = crate::collapsed_borders::TableGrid {
+        rows: state.rows.len(),
+        cols: state.cursor.num_columns,
+        table: logical(table_sides),
+        row_borders: state.rows.into_iter().map(logical).collect(),
+        groups: state.groups,
+        cells: state.cells,
+    };
+    for group in &mut grid.groups {
+        group.sides = logical(group.sides);
+    }
+    for cell in &mut grid.cells {
+        cell.sides = logical(cell.sides);
+    }
+    Some((grid, state.ids, rtl))
 }
 
 fn walk_for_denied(
@@ -1572,13 +1666,14 @@ fn resolve_and_walk<O: LayoutObserver>(
     // `compensate_collapsed_borders`) edits computed styles between the cascade and layout:
     // style the document, edit, then `resolve` (whose own style pass then has nothing to
     // restyle) lays it out. Off in the raw-Blitz render.
-    let collapsed = if O::VELLORA_CORRECTIONS {
+    let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
         compensate_collapsed_borders(&mut doc)
     } else {
         CollapsedBorders::default()
     };
     doc.resolve(0.0);
+    collapsed_row_lines(&doc, &mut collapsed);
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
     // the device that just styled the document, matches (port step 09).
@@ -2118,7 +2213,12 @@ fn read_visuals(
         return (rects, rounded_borders);
     }
     if let Some(cell) = collapsed.cells.get(&node.id) {
-        for (x, y, width, height, color) in cell.paint_rects(abs_x, abs_y, width, height) {
+        // The cell's rows, not its own box (see `CompensatedCell::lines`).
+        let (top, height) = cell.lines.map_or((abs_y, height), |(top, bottom)| {
+            let table_y = abs_y - layout.location.y as f64;
+            (table_y + top, bottom - top)
+        });
+        for (x, y, width, height, color) in cell.resolved.paint_rects(abs_x, top, width, height) {
             rects.push(VisualRect {
                 x,
                 y,

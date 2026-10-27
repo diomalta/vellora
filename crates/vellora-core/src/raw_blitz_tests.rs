@@ -484,3 +484,73 @@ fn collapsed_border_compensation_paints_each_edge_once() {
         "the authored border-collapse is reported"
     );
 }
+
+/// An RTL collapsed table: the grid is resolved in logical columns, so the physical outer right
+/// edge (the first column's) is painted, and every edge once (WPT
+/// `css-tables/row-margin-border-padding.html`, which lost its pass when the right edge was
+/// never painted).
+#[test]
+fn collapsed_border_compensation_paints_rtl_tables_on_both_outer_edges() {
+    let ltr = collapse_variant(
+        "table{border-collapse:collapse} td{border:2px solid #000}",
+        2,
+    );
+    let rtl = ltr.replace("<table>", "<table dir=\"rtl\">");
+    let verticals = |html: &str| -> Vec<f64> {
+        let doc = product_layout(html);
+        let mut xs: Vec<f64> = doc
+            .boxes
+            .iter()
+            .flat_map(|b| &b.visual_rects)
+            .filter(|r| r.color == [0, 0, 0] && r.width == 2.0 && r.height > 2.0)
+            .map(|r| r.x)
+            .collect();
+        xs.sort_by(f64::total_cmp);
+        xs
+    };
+    let (l, r) = (verticals(&ltr), verticals(&rtl));
+    // 3 vertical lines (left, middle, right) x 2 rows in both directions, the outer ones at the
+    // same x (the middle one follows the mirrored columns' widths).
+    assert_eq!(l.len(), 6, "{l:?}");
+    assert_eq!(r.len(), 6, "{r:?}");
+    assert_eq!(
+        (l[0], l[1], l[4], l[5]),
+        (r[0], r[1], r[4], r[5]),
+        "ltr {l:?} vs rtl {r:?}"
+    );
+}
+
+/// Cells with a specified `height` are not stretched to their row by Blitz (Chrome's always
+/// span it): the bottom edge is still painted on the row's bottom line, one unbroken line (WPT
+/// `css-tables/height-distribution/td-different-subpixel-padding-in-same-row.html`).
+#[test]
+fn collapsed_border_compensation_paints_on_the_row_lines_not_the_cell_boxes() {
+    let html = "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 0 } \
+        td { width: 20px; height: 20px } table { border: 2px solid #000; \
+        border-collapse: collapse }</style></head><body><table><tr>\
+        <td style=\"padding: 1px 2px\"></td><td style=\"padding: 2px\"></td>\
+        <td style=\"padding: 3px 2px\"></td></tr></table></body></html>";
+    let doc = product_layout(html);
+    let table = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table");
+    let bottoms: Vec<f64> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .flat_map(|b| &b.visual_rects)
+        .filter(|r| r.height == 2.0 && r.width > 2.0 && r.y > table.y + 2.0)
+        .map(|r| r.y + r.height)
+        .collect();
+    assert_eq!(bottoms.len(), 3, "{bottoms:?}");
+    assert!(
+        bottoms
+            .iter()
+            .all(|b| (b - (table.y + table.height)).abs() < 1e-9),
+        "every cell's bottom edge ends on the table's bottom: {bottoms:?}, table {} + {}",
+        table.y,
+        table.height
+    );
+}

@@ -16,10 +16,10 @@
 //! (`hidden` wins; `none` loses; wider wins; then by style, `double`, `solid`, `dashed`,
 //! `dotted`, `ridge`, `outset`, `groove`, `inset` in that order; then cell over row over row
 //! group over table; then the border offered first, i.e. the one further up and left in an LTR
-//! table), row and column spans, holes in the grid.
+//! table), row and column spans, holes in the grid, RTL tables (resolved in logical columns:
+//! the caller swaps physical left / right with [`mirrored`]).
 //!
-//! Not modelled (stated, not handled): `<col>`/`<colgroup>` borders; RTL tables (the
-//! left/top tie-break is LTR); vertical writing modes; a spanning cell whose units along one
+//! Not modelled (stated, not handled): `<col>`/`<colgroup>` borders; vertical writing modes; a spanning cell whose units along one
 //! side resolve to different borders (the side takes the widest unit's border for both layout
 //! and paint); Chrome's exact choice of the table's left/right outer width (CSS 2.1 takes the
 //! first row's cells; here the widest edge of the whole column line, UNVERIFIED against Chrome
@@ -125,7 +125,21 @@ pub(crate) struct ResolvedCell {
     pub paints: [bool; 4],
 }
 
+/// `sides` with left and right swapped: physical sides of an RTL table <-> the grid's logical
+/// (start / end) columns.
+pub(crate) fn mirrored<T: Copy>(sides: [T; 4]) -> [T; 4] {
+    [sides[TOP], sides[LEFT], sides[BOTTOM], sides[RIGHT]]
+}
+
 impl ResolvedCell {
+    /// The cell with left and right swapped ([`mirrored`]).
+    pub(crate) fn mirrored(&self) -> ResolvedCell {
+        ResolvedCell {
+            sides: mirrored(self.sides),
+            paints: mirrored(self.paints),
+        }
+    }
+
     /// The cell's border widths for layout: half of each resolved edge (Chrome's collapsed
     /// model, CSS 2.1 §17.6.2: the edge's border is centred on the grid line).
     pub(crate) fn half_widths(&self) -> [f64; 4] {
