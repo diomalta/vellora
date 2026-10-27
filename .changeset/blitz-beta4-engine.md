@@ -37,8 +37,9 @@ Losses and new rejections:
 - Some text sits further from Chrome's PDF than with the previous engine:
   - Right-aligned header text in the sparksuite invoice is 1.7 pt left of Chrome's PDF (0.2 pt
     before). vellora's layout matches the on-screen positions the harness reads from Chrome
-    here, but Chrome's PDF places this right-aligned text about 2 px further right than those
-    positions, and left-aligned text it does not. Which side is right is not settled yet.
+    here. Going from those positions to its PDF, Chrome moves right-aligned text about 2 px
+    further right than left-aligned text, while vellora uses one offset for both. Which side is
+    right is not settled yet.
   - The DANFE block titles sit up to 6.5 mm below the MOC 3.8.1 suggested positions (6.0 mm
     before). The cause is Blitz's own block placement: no vellora layer moves these titles.
 - Long documents can still break pages differently from Chrome. The text-stress fixture prints 8
