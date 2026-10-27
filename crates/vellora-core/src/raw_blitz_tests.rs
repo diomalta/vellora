@@ -554,3 +554,49 @@ fn collapsed_border_compensation_paints_on_the_row_lines_not_the_cell_boxes() {
         table.height
     );
 }
+
+/// The cell-height repro of `blitz_engine::cell_height_as_minimum`: a 3-line cell
+/// (`line-height: 20px`) with `height: 30px; padding: 2px` (border-box). Chrome 155 (CfT
+/// 155.0.8059.85, print media, 2026-10-27): table, cells and row 64 px.
+fn cell_height_repro(collapse: &str) -> String {
+    format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: A4; margin: 0 }} * {{ box-sizing: \
+         border-box }} body {{ margin: 0; font-family: \"Liberation Serif\"; font-size: 10pt; \
+         line-height: 20px }} table {{ width: 400px; border-collapse: {collapse}; border-spacing: \
+         0 }} td {{ height: 30px; padding: 2px; vertical-align: top }}</style></head><body><table>\
+         <tr><td>line one<br>line two<br>line three</td><td>x</td></tr></table><div>after</div>\
+         </body></html>"
+    )
+}
+
+/// CANARY of `blitz_engine::cell_height_as_minimum`: raw Blitz still lays the cell-height repro
+/// out 30 px tall (its specified height) where Chrome 155 grows it to its 64 px of content.
+#[test]
+fn blitz_still_fixes_a_cell_to_its_specified_height() {
+    let (raw, _) = raw_layout(&cell_height_repro("separate"));
+    let (_, height, cells, after) = table_geometry(&raw);
+    assert_eq!(
+        (height, cells, after),
+        (30.0, vec![(0.0, 30.0)], 30.0),
+        "\n\nBLITZ CHANGED HOW IT SIZES A TABLE CELL WITH A SPECIFIED `height`: raw Blitz no longer \
+         lays the repro cell out at its 30 px height (Chrome 155: 64 px, the cell grows with its \
+         content; blitz-dom 0.3.0-beta.4 src/layout/table.rs 722-728 kept the height as a fixed \
+         size). If Blitz now matches Chrome, DELETE `cell_height_as_minimum` and its call in \
+         `compensate_collapsed_borders` (crates/vellora-core/src/blitz_engine.rs) and this canary, \
+         then re-measure with fidelity/layout-diff.\n"
+    );
+}
+
+/// The correction against Chrome on the repro, in a collapsed table (the scope of the
+/// correction), cells with a 1 px border: Chrome 155 table 66 px (cells at 0.5, 65 tall; the
+/// block after at 66; same Chrome and date as above).
+#[test]
+fn collapsed_border_compensation_grows_a_cell_past_its_specified_height() {
+    let html = cell_height_repro("collapse").replace(
+        "vertical-align: top",
+        "vertical-align: top; border: 1px solid #000",
+    );
+    let doc = product_layout(&html);
+    let (_, height, _, after) = table_geometry(&doc);
+    assert_eq!((height, after), (66.0, 66.0));
+}

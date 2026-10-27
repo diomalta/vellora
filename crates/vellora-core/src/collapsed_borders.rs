@@ -6,11 +6,22 @@
 //! `border-collapse: collapse` table, its row groups, rows and cells into a [`TableGrid`], and
 //! [`resolve`] returns, per grid edge, the border that wins the conflict (§17.6.2.1), folded
 //! per cell side. The compensation then lays the table out in the *separated* model with
-//! `border-spacing: 0`, which Blitz 0.3.0-beta.4 lays out like Chrome 155, giving each cell
-//! half of each resolved edge and the table half of its outer edges ([`Resolved::table_half`]).
-//! That is Chrome's geometry for the collapsed model: the table's border box holds half of the
-//! outer collapsed border, each cell's border box half of each of its edges (repro
-//! `collapse_b1`: Chrome cells at y 0.5 / 37.5 / 74.5, height 37, table 112).
+//! `border-spacing: 0`, which Blitz 0.3.0-beta.4 lays out like Chrome 155, giving each box on
+//! either side of a resolved edge a share of it ([`ResolvedCell::border_widths`],
+//! [`table_border_widths`]). That is Chrome's geometry for the collapsed model (CSS 2.1
+//! §17.6.2): the full width of every grid line lies between the rows / columns it separates, so
+//! the row pitch is content + one collapsed border and every cell's content box is where
+//! Chrome's is (repro `collapse_b1`: Chrome table 112, content of row k at 9 + 37 k).
+//!
+//! Chrome splits each edge exactly in half (cell boxes at y 0.5 / 37.5 / 74.5 for a 1 px edge).
+//! Here the box above / to the left of a line takes `ceil(W / 2)` and the one below / to the
+//! right `floor(W / 2)`, whole px (Stylo snaps border widths to whole px): Taffy rounds a box's
+//! border and padding separately against its cumulative position
+//! (`round(c + border) - round(c)`, `round(c + padding) - round(c)`, taffy 0.15
+//! `compute/mod.rs` `round_layout_inner`), so a half-px border share put the content of some
+//! cells of a row 1 px below the others (receipt items rows, layout-diff 2026-10-27). The split
+//! moves only the cell box edges (by 0.5 px for an odd width: backgrounds, the paint origin),
+//! never the content or the pitch.
 //!
 //! Modelled: per-edge conflict resolution between cells, rows, row groups and the table
 //! (`hidden` wins; `none` loses; wider wins; then by style, `double`, `solid`, `dashed`,
@@ -140,16 +151,24 @@ impl ResolvedCell {
         }
     }
 
-    /// The cell's border widths for layout: half of each resolved edge (Chrome's collapsed
-    /// model, CSS 2.1 §17.6.2: the edge's border is centred on the grid line).
-    pub(crate) fn half_widths(&self) -> [f64; 4] {
-        self.sides.map(|side| side.used_width() / 2.0)
+    /// The cell's border widths for layout (physical sides): its share of each resolved
+    /// edge, [`lower_share`] of its top and left edges and [`upper_share`] of its bottom and
+    /// right ones (the module comment says why not exact halves).
+    pub(crate) fn border_widths(&self) -> [f64; 4] {
+        let w = self.sides.map(|side| side.used_width());
+        [
+            lower_share(w[TOP]),
+            upper_share(w[RIGHT]),
+            upper_share(w[BOTTOM]),
+            lower_share(w[LEFT]),
+        ]
     }
 
     /// The rectangles that paint this cell's owned sides, given its border box
-    /// `(x, y, width, height)` laid out with [`Self::half_widths`]: each edge's full width
-    /// centred on the box edge, horizontal edges extended over the vertical edges' halves so
-    /// the corners close. `(x, y, width, height, color)`.
+    /// `(x, y, width, height)` laid out with [`Self::border_widths`]: each edge's full width
+    /// over its grid line (the cell's share inside the box, the rest outside), horizontal
+    /// edges extended over the vertical lines so the corners close.
+    /// `(x, y, width, height, color)`.
     pub(crate) fn paint_rects(
         &self,
         x: f64,
@@ -169,28 +188,54 @@ impl ResolvedCell {
                 }
             }
         };
-        let (left, right) = (x - w[LEFT] / 2.0, x + width + w[RIGHT] / 2.0);
-        let (top, bottom) = (y - w[TOP] / 2.0, y + height + w[BOTTOM] / 2.0);
-        push(TOP, (left, top, right - left, w[TOP]));
-        push(
-            RIGHT,
-            (x + width - w[RIGHT] / 2.0, top, w[RIGHT], bottom - top),
+        let own = self.border_widths();
+        let (left, right) = (
+            x - (w[LEFT] - own[LEFT]),
+            x + width + (w[RIGHT] - own[RIGHT]),
         );
+        let (top, bottom) = (
+            y - (w[TOP] - own[TOP]),
+            y + height + (w[BOTTOM] - own[BOTTOM]),
+        );
+        push(TOP, (left, top, right - left, w[TOP]));
+        push(RIGHT, (x + width - own[RIGHT], top, w[RIGHT], bottom - top));
         push(
             BOTTOM,
-            (left, y + height - w[BOTTOM] / 2.0, right - left, w[BOTTOM]),
+            (left, y + height - own[BOTTOM], right - left, w[BOTTOM]),
         );
         push(LEFT, (left, top, w[LEFT], bottom - top));
         out
     }
 }
 
+/// The share of a `width` px edge taken by the box below / to the right of its grid line.
+pub(crate) fn lower_share(width: f64) -> f64 {
+    (width / 2.0).floor()
+}
+
+/// The share of a `width` px edge taken by the box above / to the left of its grid line.
+pub(crate) fn upper_share(width: f64) -> f64 {
+    width - lower_share(width)
+}
+
+/// The table's border widths for layout (physical sides) from its outer edge widths
+/// ([`Resolved::table_edges`], physical): the table is above its top line and left of its left
+/// line, below its bottom line and right of its right line.
+pub(crate) fn table_border_widths(edges: [f64; 4]) -> [f64; 4] {
+    [
+        upper_share(edges[TOP]),
+        lower_share(edges[RIGHT]),
+        lower_share(edges[BOTTOM]),
+        upper_share(edges[LEFT]),
+    ]
+}
+
 /// The resolution of one table.
 #[derive(Clone, Debug)]
 pub(crate) struct Resolved {
-    /// The table's border widths for layout: half of the widest resolved edge on each outer
-    /// grid line `[top, right, bottom, left]`.
-    pub table_half: [f64; 4],
+    /// The widest resolved edge on each outer grid line `[top, right, bottom, left]` (in the
+    /// grid's columns; [`table_border_widths`] gives the table's share).
+    pub table_edges: [f64; 4],
     /// One entry per [`TableGrid::cells`] entry, same order.
     pub cells: Vec<ResolvedCell>,
     /// Whether any edge of the table has a non-zero width. When none has, Blitz's collapsed
@@ -364,11 +409,11 @@ pub(crate) fn resolve(grid: &TableGrid) -> Resolved {
     let max_width = |it: &mut dyn Iterator<Item = EdgeBorder>| {
         it.map(|b| b.used_width()).fold(0.0_f64, f64::max)
     };
-    let table_half = [
-        max_width(&mut (0..cols).map(|c| edges.h(0, c))) / 2.0,
-        max_width(&mut (0..rows).map(|r| edges.v(r, cols))) / 2.0,
-        max_width(&mut (0..cols).map(|c| edges.h(rows, c))) / 2.0,
-        max_width(&mut (0..rows).map(|r| edges.v(r, 0))) / 2.0,
+    let table_edges = [
+        max_width(&mut (0..cols).map(|c| edges.h(0, c))),
+        max_width(&mut (0..rows).map(|r| edges.v(r, cols))),
+        max_width(&mut (0..cols).map(|c| edges.h(rows, c))),
+        max_width(&mut (0..rows).map(|r| edges.v(r, 0))),
     ];
     let any_border = edges
         .h
@@ -376,7 +421,7 @@ pub(crate) fn resolve(grid: &TableGrid) -> Resolved {
         .chain(edges.v.iter())
         .any(|(b, _)| b.used_width() > 0.0);
     Resolved {
-        table_half,
+        table_edges,
         cells,
         any_border,
     }
@@ -425,18 +470,19 @@ mod tests {
         }
     }
 
-    /// Chrome's collapsed-table height for the repro: the table's top and bottom halves plus,
-    /// per row, the cells' content box (36 px: 20 px line + 2 x 8 px padding) or the row's
-    /// specified height, and the row's cells' halves. The cells of a row are as tall as its
+    /// The collapsed-table height for the repro: the table's top and bottom shares plus, per
+    /// row, the cells' content box (36 px: 20 px line + 2 x 8 px padding) or the row's
+    /// specified height, and the row's cells' shares. The cells of a row are as tall as its
     /// tallest cell (Chrome stretches them to the row).
     fn table_height(resolved: &Resolved, row_height: Option<f64>) -> f64 {
-        let mut height = resolved.table_half[TOP] + resolved.table_half[BOTTOM];
+        let table = table_border_widths(resolved.table_edges);
+        let mut height = table[TOP] + table[BOTTOM];
         for row in 0..3 {
             let tallest = resolved.cells[row * 2..row * 2 + 2]
                 .iter()
                 .map(|cell| {
-                    let half = cell.half_widths();
-                    36.0 + half[TOP] + half[BOTTOM]
+                    let own = cell.border_widths();
+                    36.0 + own[TOP] + own[BOTTOM]
                 })
                 .fold(0.0_f64, f64::max);
             height += row_height.map_or(tallest, |h| h.max(tallest));
@@ -449,14 +495,26 @@ mod tests {
 
     #[test]
     fn uniform_cell_borders_give_chromes_rows() {
-        // collapse_b1: t 112, c0a 0.5 / 37; collapse_b2: t 116, c0a 1 / 38.
-        for (b, table, first_y, cell_h) in [(1.0, 112.0, 0.5, 37.0), (2.0, 116.0, 1.0, 38.0)] {
+        // collapse_b1: t 112, first content at 9 (0.5 + 0.5 + 8), pitch 37; collapse_b2: t 116,
+        // first content at 10, pitch 38.
+        for (b, table, content, pitch) in [(1.0, 112.0, 9.0, 37.0), (2.0, 116.0, 10.0, 38.0)] {
             let r = resolve(&grid(|_, _| [solid(b); 4], [EdgeBorder::NONE; 4]));
             assert!(r.any_border);
             assert_eq!(table_height(&r, None), table, "border {b}");
-            assert_eq!(r.table_half[TOP], first_y, "border {b}");
-            let half = r.cells[0].half_widths();
-            assert_eq!(36.0 + half[TOP] + half[BOTTOM], cell_h, "border {b}");
+            let own = r.cells[0].border_widths();
+            let first = table_border_widths(r.table_edges)[TOP] + own[TOP] + 8.0;
+            assert_eq!(first, content, "border {b}");
+            assert_eq!(36.0 + own[TOP] + own[BOTTOM], pitch, "border {b}");
+            // Whole px shares that add up to the edge.
+            assert_eq!(
+                own,
+                [
+                    b - (b / 2.0f64).ceil(),
+                    (b / 2.0f64).ceil(),
+                    (b / 2.0f64).ceil(),
+                    b - (b / 2.0f64).ceil()
+                ]
+            );
         }
     }
 
@@ -473,7 +531,8 @@ mod tests {
             [EdgeBorder::NONE; 4],
         ));
         assert_eq!(table_height(&lr, None), 108.0);
-        assert_eq!(lr.table_half, [0.0, 0.5, 0.0, 0.5]);
+        assert_eq!(lr.table_edges, [0.0, 1.0, 0.0, 1.0]);
+        assert_eq!(table_border_widths(lr.table_edges), [0.0, 0.0, 0.0, 1.0]);
     }
 
     #[test]
@@ -499,7 +558,7 @@ mod tests {
             [EdgeBorder::NONE; 4],
         ));
         assert_eq!(table_height(&r, None), 112.0);
-        assert_eq!(r.table_half[TOP], 0.5);
+        assert_eq!(r.table_edges[TOP], 1.0);
         // Its right and bottom edges are its neighbours' borders; its top and left the table's
         // outer edge, where no border was offered.
         assert_eq!(r.cells[0].sides[RIGHT].used_width(), 1.0);
@@ -522,7 +581,7 @@ mod tests {
         ));
         assert!(r.any_border);
         assert_eq!(table_height(&r, None), 110.0);
-        let last = r.cells[4].half_widths();
+        let last = r.cells[4].border_widths();
         assert_eq!(36.0 + last[TOP] + last[BOTTOM], 37.0);
     }
 
@@ -649,9 +708,10 @@ mod tests {
         assert_eq!(r.cells[0].paints, [true, false, false, true]);
         // Bottom-right cell: paints all four.
         assert_eq!(r.cells[5].paints, [true, true, true, true]);
-        // Paint rects of the collapse_b1 top-left cell at Chrome's box (0.5, 0.5, w 200, h 37):
-        // the 1 px top edge spans y 0..1, the left edge x 0..1.
-        let rects = r.cells[0].paint_rects(0.5, 0.5, 200.0, 37.0);
+        // Paint rects of the collapse_b1 top-left cell at its box (1, 1, w 200, h 37: the table
+        // takes the whole 1 px of the outer lines): the top edge spans y 0..1, the left edge
+        // x 0..1, as in Chrome.
+        let rects = r.cells[0].paint_rects(1.0, 1.0, 200.0, 37.0);
         assert_eq!(rects.len(), 2);
         assert_eq!(rects[0], (0.0, 0.0, 201.0, 1.0, [0, 0, 0]));
         assert_eq!(rects[1], (0.0, 0.0, 1.0, 38.0, [0, 0, 0]));

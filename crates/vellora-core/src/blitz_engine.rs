@@ -963,7 +963,7 @@ fn css_string_body(value: &str) -> String {
 #[derive(Default)]
 struct CollapsedBorders {
     /// Authored `border-collapse: collapse` tables whose computed style is now
-    /// `separate` / `border-spacing: 0` with half-width outer borders.
+    /// `separate` / `border-spacing: 0` with whole-px shares of its outer edges as borders.
     tables: std::collections::HashSet<NodeId>,
     /// The cells of those tables, with their resolved edges (physical sides).
     cells: std::collections::HashMap<NodeId, CompensatedCell>,
@@ -1045,11 +1045,11 @@ fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
 /// HTML through unchanged): after the cascade and before layout it rewrites the computed style
 /// of each such table into the separated model, which Blitz lays out exactly like Chrome
 /// (`separate_s0_b1`: 114 px in both). The table becomes `border-collapse: separate;
-/// border-spacing: 0; padding: 0` with half of its resolved outer edges as its border, and each
-/// cell gets half of each resolved edge (CSS 2.1 §17.6.2; conflict resolution, and what it does
-/// not model, in [`crate::collapsed_borders`]). That is Chrome's collapsed geometry.
-/// [`read_visuals`] then paints each resolved edge at full width centred on the grid line, and
-/// the table's own border not at all. Off in the raw-Blitz render ([`RawBlitz`]).
+/// border-spacing: 0; padding: 0` and the table and each cell get a whole-px share of each
+/// resolved edge around them as their border (CSS 2.1 §17.6.2; conflict resolution, the split
+/// and what is not modelled in [`crate::collapsed_borders`]). That is Chrome's collapsed row
+/// pitch and content placement. [`read_visuals`] then paints each resolved edge at full width
+/// over its grid line, and the table's own border not at all. Off in the raw-Blitz render ([`RawBlitz`]).
 ///
 /// WHEN BLITZ FIXES THIS, DELETE: this function, [`CollapsedBorders`], `collapsed_table_grid`,
 /// `edge_borders`, `edge_style`, `set_border_widths`, `mutate_primary_style`,
@@ -1095,11 +1095,12 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
                 sides
             }
         };
-        let half = physical(resolved.table_half);
+        let table_widths =
+            crate::collapsed_borders::table_border_widths(physical(resolved.table_edges));
         mutate_primary_style(doc, table, |values| {
             use style::values::computed::{BorderSpacing, NonNegativeLengthPercentage};
             use style::Zero as _;
-            set_border_widths(values.mutate_border(), half);
+            set_border_widths(values.mutate_border(), table_widths);
             let table_style = values.mutate_inherited_table();
             table_style.set_border_collapse(BorderCollapse::Separate);
             table_style.set_border_spacing(BorderSpacing::zero());
@@ -1119,9 +1120,10 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
             } else {
                 *resolved_cell
             };
-            let half = resolved_cell.half_widths();
+            let widths = resolved_cell.border_widths();
             mutate_primary_style(doc, *cell, |values| {
-                set_border_widths(values.mutate_border(), half)
+                set_border_widths(values.mutate_border(), widths);
+                cell_height_as_minimum(values);
             });
             out.cells.insert(
                 *cell,
@@ -1138,6 +1140,51 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
         out.tables.insert(table);
     }
     out
+}
+
+/// COMPENSATES A SECOND BLITZ BUG, in the cells of the tables [`compensate_collapsed_borders`]
+/// re-lays out: Blitz gives a table cell's specified `height` as a FIXED size, where it is the
+/// cell's minimum (CSS 2.1 §17.5.3: the row is as tall as its tallest cell's content; Chrome
+/// grows the cell). Remove this when Blitz fixes it.
+///
+/// The bug (CONFIRMED, Phase C step 02, 2026-10-27): blitz-dom 0.3.0-beta.4
+/// `src/layout/table.rs` `collect_table_cells` resets the grid-item style's `size.width` to
+/// `auto` (728) but keeps `size.height` (722-728), so Taffy sizes the cell to it and the
+/// overflowing content is ignored by the row. Upstream `main` `fe33b778` (read-only, 2026-10-27)
+/// has the same code (723-729). Repro (`* { box-sizing: border-box }`, `td { height: 30px;
+/// padding: 2px }`, a 3-line cell at `line-height: 20px`): Chrome 155 row and table 64 px,
+/// Blitz 0.3.0-beta.4 30 px. In the corpus: the danfe `tr.cabecalho td { height: 3.92cm }`
+/// header (Chrome cell 150.625 px, Blitz 148.16 px), which lifted everything below it by
+/// 2.47 px once the 2 px text raise that hid it was retired.
+///
+/// The correction moves a length `height` into `min-height` (the larger of the two) and sets
+/// `height: auto`, so Taffy grows the cell with its content and still honours the height as a
+/// minimum. Scope: only the cells of compensated (collapsed, bordered) tables; whether the
+/// separated model needs it too is UNVERIFIED (the same Blitz code path, not measured here).
+/// Percentage heights are left as they are.
+///
+/// WHEN BLITZ FIXES THIS, DELETE this function, its call in [`compensate_collapsed_borders`]
+/// and the canary `blitz_still_fixes_a_cell_to_its_specified_height` (`src/raw_blitz_tests.rs`).
+fn cell_height_as_minimum(values: &mut style::properties::ComputedValues) {
+    use style::values::generics::length::Size;
+    let length_px = |size: &style::values::computed::Size| match size {
+        Size::LengthPercentage(lp) => lp.0.to_length().map(|l| l.px()),
+        _ => None,
+    };
+    let height = values.get_position().clone_height();
+    let Some(height_px) = length_px(&height) else {
+        return;
+    };
+    let min = values.get_position().clone_min_height();
+    let keep_min = match &min {
+        Size::Auto => false,
+        other => length_px(other).is_none_or(|m| m >= height_px),
+    };
+    let position = values.mutate_position();
+    if !keep_min {
+        position.set_min_height(height);
+    }
+    position.set_height(Size::Auto);
 }
 
 /// `[top, right, bottom, left]` border widths (CSS px) on a computed border struct, as solid
