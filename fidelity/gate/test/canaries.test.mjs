@@ -25,7 +25,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 22);
+    assert.equal(rows.length, 23);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -251,6 +251,20 @@ test("a listed page scope that ignores the run's page delta, covers page 1, or s
   const looseD7 = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/pageDelta/.test(p));
   const c3 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: looseD7 }));
   assert.equal(c3[name], false);
+});
+
+test("a listed page scope that binds a moved page metric or starts at page 1 leaves the GATE-D6b shape canary uncaught", () => {
+  const name = "DEBT rule vi': a listed page scope binds no moved page metric and no page-1 word";
+  // The pre-fix D7 (verify 10-final): a moved page metric entered through d7KeyProblems alone.
+  const movedOk = (o, n, x) =>
+    transitionProblems(o, n, x).filter((p) => !/the page metric is a head item/.test(p));
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: movedOk }));
+  assert.equal(c1[name], false);
+  // The pre-fix shape check: any fromPage.
+  const anyFrom = (l, o) =>
+    ledgerProblems(l, o).filter((p) => !/a listed page scope starts at a page >= 2/.test(p));
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, ledgerCheck: anyFrom }));
+  assert.equal(c2[name], false);
 });
 
 test("a relaxed (b) rule without |P| <= |N0| + step, without |run| <= |N0| + run tolerance, or with the old 0.5 px leaves the rule (ii) canary uncaught", () => {

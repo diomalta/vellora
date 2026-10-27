@@ -847,6 +847,34 @@ export function runGateCanaries({
           shape.length === 0,
       ),
     );
+    // 23. GATE-D6b's two shape limits (verify 10-final, 2026-10-27): the listed route binds only a
+    // page metric that is NOT a head item, so a page-count regression vs the head (1 -> 2, a head
+    // item) entered with measured = ceiling = 2 is refused (before: d7KeyProblems alone accepted
+    // it, and the relaxed (b) rule skips page-delta keys of a listed scope); and a listed scope
+    // starts at page >= 2, so fromPage 1 listing the page-1 word is refused (before: accepted, and
+    // the page-1 word rode on the page metric). Control: the exact entry (none, row 21).
+    const movedHead = new Map([
+      [p2, word(p2)],
+      [page, pageItem],
+    ]);
+    const movedEntry = { ...emptyLedger(), entries: [scopedEntry(2, { measured: 2 })] };
+    const movedHeadD7 = transition(emptyLedger(), movedEntry, {
+      headItems: movedHead,
+      headPageValues: vals(1),
+      runPageValues: vals(2),
+    });
+    const fromPage1 = ledgerCheck({
+      ...emptyLedger(),
+      entries: [{ ...scopedEntry(), scope: { fixture: "canary", fromPage: 1, keys: [p1, p2] } }],
+    });
+    rows.push(
+      row(
+        "DEBT rule vi': a listed page scope binds no moved page metric and no page-1 word",
+        "page metric a head item (1 -> 2) entered with measured = ceiling = 2 -> a problem; fromPage 1 listing the page-1 word -> a ledger problem; exact entry -> none",
+        `moved metric ${movedHeadD7.length}; fromPage 1 ${fromPage1.length}; exact D7 ${okD7.length}, shape ${shape.length}`,
+        movedHeadD7.length > 0 && fromPage1.length > 0 && okD7.length === 0 && shape.length === 0,
+      ),
+    );
   }
   // 22. Rule (ii) (2026-10-27): ONE run tolerance (1.333 px, the pdf-probe value) for position-mm
   // and pdf-probe vectors, covering Chrome's DOM -> PDF offset only. On the DANFE-L1d spec-anchor

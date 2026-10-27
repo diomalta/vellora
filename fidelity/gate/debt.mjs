@@ -65,7 +65,8 @@
 //         the listed keys (on pages >= fromPage of its fixture) and only while the run's value of
 //         its metric is >= 1 and <= its ceiling: above the ceiling the words and the metric gate
 //         (debt-exceeded); at 0 (pagination matches the reference) the listed keys are compared
-//         again (head-regression when still worse than the head). The list never grows (rule iii)
+//         again (head-regression when still worse than the head). The list never grows (rule iii).
+//         fromPage is an integer >= 2, and a page metric that IS a head item cannot enter this way
 //   new keys (absent from the previous ledger) satisfy the RELAXED (b) rule on their vector:
 //         |run| <= |N0| (+ run tolerance), every non-zero vellora layer step is a named
 //         compensator, the residual owner is named; and GATE-D7 ties them to the run (I3):
@@ -579,6 +580,13 @@ export function ledgerProblems(ledger, { pageMetricKeys = null } = {}) {
     if (recs.length !== 1 || recs[0].tolClass !== "page-delta") {
       p.push(`${e.id}: a listed page scope binds exactly one page-delta key (rule vi')`);
     }
+    // GATE-D6b: a page-1 word of the fixture is never covered, so the scope starts at page 2 or
+    // later (fromPage 1 let a listed page-1 word ride on the page metric; verify 10-final).
+    if (!(Number.isInteger(e.scope.fromPage) && e.scope.fromPage >= 2)) {
+      p.push(
+        `${e.id}: a listed page scope starts at a page >= 2, not ${JSON.stringify(e.scope.fromPage)}: a page-1 word is never covered (rule vi', GATE-D6b)`,
+      );
+    }
     if (!e.scope.keys.length) p.push(`${e.id}: scope.keys is empty (rule vi')`);
     const seen = new Set();
     for (const k of e.scope.keys) {
@@ -790,6 +798,15 @@ export function transitionProblems(
       if (!fresh.has(e.id)) fresh.set(e.id, { e, keys: new Set() });
       fresh.get(e.id).keys.add(key);
       const hi = headItems?.get(key) ?? null;
+      // GATE-D6b: a listed page scope binds only a page metric that is NOT a head item (its run
+      // value equals its head value). A moved one (e.g. a page-count regression 1 -> 2) has no
+      // layer vector and no other (b) evidence, so it cannot enter by this route (verify 10-final:
+      // before, d7KeyProblems alone let it in as debt).
+      if (isPageScopeKey(e, rec) && hi) {
+        p.push(
+          `new key ${e.id} ${key}: the page metric is a head item (${hi.before} -> ${hi.after}): a listed page scope binds only a page metric unchanged vs the head (rule vi', GATE-D6b)`,
+        );
+      }
       const d7 =
         isPageScopeKey(e, rec) && !hi
           ? pageScopeD7Problems(e, rec, {

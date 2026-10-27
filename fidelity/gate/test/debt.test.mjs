@@ -657,3 +657,36 @@ test("rule vi': coverage follows the run's page delta (1 covered, 2 exceeded, 0 
   // An unlisted page-2 word of the same fixture is not covered.
   assert.equal(run(1, [word("pdf-probe|fx|p2|other#1|dy")]).items[0].class, "head-regression");
 });
+
+test("rule vi': a listed scope binds no moved page metric and starts at page >= 2 (GATE-D6b, verify 10-final)", () => {
+  const one = (e) => ({ ...emptyLedger(), entries: [e] });
+  // A page-count regression vs the head (1 -> 2, a head item) entered with measured = ceiling = 2.
+  const pageItem = { key: PS_PAGE, class: "regression", gating: true, before: 1, after: 2 };
+  const word = { key: PS_W2, class: "regression", gating: true };
+  const moved = transitionProblems(emptyLedger(), one(psEntry({ measured: 2, ceiling: 2 })), {
+    headItems: new Map([
+      [PS_W2, word],
+      [PS_PAGE, pageItem],
+    ]),
+    headPageValues: new Map([[PS_PAGE, 1]]),
+    runPageValues: new Map([[PS_PAGE, 2]]),
+  });
+  assert.ok(
+    moved.some((x) => /the page metric is a head item \(1 -> 2\)/.test(x)),
+    moved.join(";"),
+  );
+  // fromPage 1 (which would let a listed page-1 word ride on the page metric) is refused.
+  for (const fromPage of [1, 0, "2", undefined]) {
+    const p = ledgerProblems(
+      one(psEntry({}, { fromPage, keys: ["pdf-probe|fx|p1|w#1|dy", PS_W2] })),
+    );
+    assert.ok(
+      p.some((x) => /a listed page scope starts at a page >= 2/.test(x)),
+      `${fromPage}: ${p.join(";")}`,
+    );
+  }
+  assert.deepEqual(
+    ledgerProblems(one(psEntry({}, { fromPage: 3, keys: ["pdf-probe|fx|p3|w#1|dy"] }))),
+    [],
+  );
+});
