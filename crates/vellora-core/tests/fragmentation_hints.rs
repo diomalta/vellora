@@ -255,3 +255,231 @@ fn a_forced_break_inside_an_avoid_group_wins() {
     assert_eq!(pages_with(&paginated, "[G1R1]"), vec![0]);
     assert_eq!(pages_with(&paginated, "[G2R1]"), vec![1]);
 }
+
+/// `break-after: page` / `page-break-after: always` (Phase C step 04): the box after it starts a
+/// new page, from a `<style>` rule, inline `style`, inside a flattened wrapper and between table
+/// row groups; a forced break after the last box makes no trailing page; a break after a last
+/// child propagates to its parent (CSS Fragmentation 3 §3.1). Chrome 155.0.8059.85 prints the WPT
+/// css/CSS2/pagination references that use `page-break-after: always` this way.
+#[test]
+fn break_after_page_starts_the_next_box_on_a_fresh_page() {
+    let doc = |css: &str, body: &str| {
+        format!(
+            "<!DOCTYPE html><html><head><style>{SHORT_PAGE} {css}</style></head><body>{body}</body></html>"
+        )
+    };
+    let rule = paginate(&doc(
+        ".end { break-after: page; }",
+        "<h2 class=\"end\">Weekdays</h2><p>Monday</p><p>Tuesday</p>",
+    ));
+    assert_eq!(rule.report.page_count, 2);
+    assert_eq!(pages_with(&rule, "Weekdays"), vec![0]);
+    assert_eq!(pages_with(&rule, "Monday"), vec![1]);
+    assert_eq!(pages_with(&rule, "Tuesday"), vec![1]);
+
+    let inline = paginate(&doc(
+        "",
+        "<p style=\"page-break-after: always\">One</p><p>Two</p><p style=\"break-after: page\">Three</p>",
+    ));
+    assert_eq!(inline.report.page_count, 2, "no trailing blank page");
+    assert_eq!(pages_with(&inline, "Two"), vec![1]);
+    assert_eq!(pages_with(&inline, "Three"), vec![1]);
+
+    let wrapped = paginate(&doc(
+        "",
+        "<div><p>Alpha</p><p style=\"break-after: page\">Beta</p><p>Gamma</p></div>",
+    ));
+    assert_eq!(wrapped.report.page_count, 2);
+    assert_eq!(pages_with(&wrapped, "Beta"), vec![0]);
+    assert_eq!(pages_with(&wrapped, "Gamma"), vec![1]);
+
+    let propagated = paginate(&doc(
+        "",
+        "<section><p>First</p><p style=\"break-after: page\">Last child</p></section><p>Next</p>",
+    ));
+    assert_eq!(propagated.report.page_count, 2);
+    assert_eq!(pages_with(&propagated, "Last child"), vec![0]);
+    assert_eq!(pages_with(&propagated, "Next"), vec![1]);
+
+    let groups = paginate(&grouped_table(
+        "tbody.meal:first-of-type { break-after: page; }",
+        2,
+        2,
+    ));
+    assert_eq!(groups.report.page_count, 2);
+    assert_eq!(pages_with(&groups, "[G1R2]"), vec![0]);
+    assert_eq!(pages_with(&groups, "[G2R1]"), vec![1]);
+
+    let avoid = paginate(&doc(
+        ".x { break-after: avoid; }",
+        "<p class=\"x\">A</p><p>B</p>",
+    ));
+    assert_eq!(avoid.report.page_count, 1);
+
+    // Chrome 155 (probes fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py): an empty
+    // block after the break still opens page 2; an inline-block's break-after is ignored; an
+    // absolutely positioned sibling stays on the break's page.
+    let empty_next = paginate(&doc(
+        "",
+        "<p style=\"break-after: page\">One</p><div></div>",
+    ));
+    assert_eq!(empty_next.report.page_count, 2);
+    let inline_block = paginate(&doc(
+        "",
+        "<p>One <span style=\"display: inline-block; break-after: page\">IB</span> Two</p><p>Three</p>",
+    ));
+    assert_eq!(inline_block.report.page_count, 1);
+    let abspos = paginate(&doc(
+        "",
+        "<div style=\"position: relative\"><p style=\"break-after: page\">One</p>\
+         <div style=\"position: absolute; top: 0; left: 200px\">Abs</div><p>Two</p></div>",
+    ));
+    assert_eq!(abspos.report.page_count, 2);
+    assert_eq!(pages_with(&abspos, "Abs"), vec![0]);
+    assert_eq!(pages_with(&abspos, "Two"), vec![1]);
+}
+
+/// `break-after: page` on an item of a row flex line breaks after the line, not between the
+/// items beside each other (Chrome 155, WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-082c-print.html: items 3 and 4 share page 1, 5 starts
+/// page 2).
+#[test]
+fn break_after_on_a_row_flex_item_breaks_after_its_line() {
+    let html = format!(
+        "<!DOCTYPE html><html><head><style>{SHORT_PAGE} .f {{ display: flex; flex-wrap: wrap; }} \
+         .f > div {{ width: 50%; }}</style></head><body>\
+         <div class=\"f\"><div>Item1</div><div>Item2</div>\
+         <div style=\"break-after: page\">Item3</div><div>Item4</div></div>\
+         <div class=\"f\"><div>Item5</div><div>Item6</div></div></body></html>"
+    );
+    let p = paginate(&html);
+    assert_eq!(p.report.page_count, 2);
+    assert_eq!(pages_with(&p, "Item4"), vec![0]);
+    assert_eq!(pages_with(&p, "Item5"), vec![1]);
+}
+
+/// A `<thead>` repeats only when it is at most a quarter of the page's content height (Chrome
+/// 155: 48 px repeats and 49 px does not on a 192 px content box, probes
+/// fidelity/gate/snapshots/2026-10-28/c04-frag/probes/thead-repeat*.py); one that does not repeat is
+/// placed once, in the flow, and a forced break after it starts the body on the next page (WPT
+/// css/CSS2/pagination/rowgroup-page-break-inside-avoid-5-print-ref.html). Phase C step 04.
+#[test]
+fn a_header_taller_than_a_quarter_page_is_not_repeated() {
+    let table = |head_h: u32, css: &str| {
+        let rows: String = (1..=12)
+            .map(|i| format!("<tr><td><div style=\"height: 40px\">R{i}.</div></td></tr>"))
+            .collect();
+        format!(
+            "<!DOCTYPE html><html><head><style>@page {{ size: 5in 3in; margin: 0.5in; }} \
+             body {{ margin: 0 }} table {{ border-spacing: 0 }} td {{ padding: 0 }} {css}</style></head><body>\
+             <table><thead><tr><td><div style=\"height: {head_h}px\">HEAD</div></td></tr></thead>\
+             <tbody>{rows}</tbody></table></body></html>"
+        )
+    };
+    let heads = |p: &pagination::Paginated| pages_with(p, "HEAD");
+    let small = paginate(&table(48, ""));
+    assert!(small.report.page_count > 1);
+    assert_eq!(heads(&small).len(), small.report.page_count);
+    let tall = paginate(&table(49, ""));
+    assert!(tall.report.page_count > 1);
+    assert_eq!(heads(&tall), vec![0]);
+
+    let after = |head_h: u32| {
+        let p = paginate(&table(head_h, "thead { page-break-after: always }"));
+        (pages_with(&p, "HEAD"), pages_with(&p, "R1."))
+    };
+    // Chrome: a repeating header's break-after is inert (R1 stays under it on page 1); a
+    // header that does not repeat sits alone on page 1.
+    assert_eq!(after(20).1, vec![0]);
+    assert_eq!(after(60), (vec![0], vec![1]));
+}
+
+/// A `<tfoot>` written before the body is laid out (and paginated) after it, and a
+/// `break-inside: avoid` `<tbody>` of one oversize row starts on a fresh page before it is cut
+/// (Chrome 155, WPT css/CSS2/pagination/rowgroup-page-break-inside-avoid-4-print.html).
+#[test]
+fn a_tfoot_follows_the_body_and_a_one_row_avoid_group_moves_before_it_is_cut() {
+    let html = "<!DOCTYPE html><html><head><style>@page { size: 5in 3in; margin: 0.5in; } \
+                p { height: 1in; width: 1in; margin: 0; } .test { page-break-inside: avoid; }</style></head><body>\
+                <table border=\"1\"><tfoot><tr><td><p>Foot</p></td></tr></tfoot>\
+                <thead><tr><td><p>Head</p></td></tr></thead>\
+                <tbody class=\"test\"><tr><td><p>Body1</p><p>Body2</p></td></tr></tbody></table>\
+                </body></html>";
+    let p = paginate(html);
+    assert_eq!(p.report.page_count, 3);
+    assert_eq!(pages_with(&p, "Head"), vec![0]);
+    assert_eq!(pages_with(&p, "Body1"), vec![1]);
+    assert_eq!(pages_with(&p, "Foot"), vec![2]);
+}
+
+/// Named pages (CSS Page 3 §4.1): a forced break wherever the page name changes between
+/// adjacent in-flow siblings, with start/end values propagated from first/last children; the
+/// page counts are Chrome 155's for the WPT css/css-page/page-name-* tests these mirror.
+#[test]
+fn a_change_of_page_name_forces_a_page_break() {
+    let doc = |css: &str, body: &str| {
+        format!(
+            "<!DOCTYPE html><html><head><style>{SHORT_PAGE} {css}</style></head><body>{body}</body></html>"
+        )
+    };
+    let pages = |html: &str| paginate(html).report.page_count;
+    // page-name-siblings-001: b, b, auto -> 2 pages.
+    let siblings = paginate(&doc(
+        "",
+        "<div style=\"page: b\">Sa</div><div style=\"page: b\">Sb</div><div>Sc</div>",
+    ));
+    assert_eq!(siblings.report.page_count, 2);
+    assert_eq!(pages_with(&siblings, "Sb"), vec![0]);
+    assert_eq!(pages_with(&siblings, "Sc"), vec![1]);
+    // From a rule, propagated from the last child (page-name-propagated-007): 3 pages.
+    assert_eq!(
+        pages(&doc(
+            ".x { page: x }",
+            "<div>A</div><div><div>B</div><div class=\"x\">C</div></div><div>D</div>"
+        )),
+        3
+    );
+    // An empty element between two changes keeps its own page (page-name-display-none-child).
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: a\">A</div><div style=\"page: c\"><div style=\"display: none\">C</div></div>\
+             <div style=\"page: b\">B</div>"
+        )),
+        3
+    );
+    // Floats, absolutely positioned boxes and inline-blocks do not take part
+    // (page-name-float-002, page-name-inline-block-002): 2 pages each.
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: a\">A</div><div style=\"page: b; float: left\">B</div><div style=\"page: c\">C</div>"
+        )),
+        2
+    );
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: c; display: inline-block\"><div style=\"page: a\">A</div>\
+             <div style=\"page: b\">B</div></div><div style=\"page: c\">C</div>"
+        )),
+        2
+    );
+    // An orthogonal flow is monolithic (page-name-orthogonal-writing-003): 1 page.
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"writing-mode: vertical-rl\"><div style=\"page: a\">A</div>\
+             <div style=\"page: b\">B</div></div>"
+        )),
+        1
+    );
+    // `page: auto` and an unnamed document: no break.
+    assert_eq!(
+        pages(&doc(
+            ".p { page: auto }",
+            "<div class=\"p\">A</div><div>B</div>"
+        )),
+        1
+    );
+}

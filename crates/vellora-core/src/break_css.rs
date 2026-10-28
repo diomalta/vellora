@@ -1,6 +1,6 @@
 //! Focused reader for the CSS Fragmentation properties the paginator honours:
-//! `break-inside: avoid` and `break-before: page`, plus their legacy
-//! `page-break-inside` / `page-break-before` aliases.
+//! `break-inside: avoid`, `break-before: page` and `break-after: page`, plus their
+//! legacy `page-break-inside` / `page-break-before` / `page-break-after` aliases.
 //!
 //! Stylo only implements these longhands for the Gecko engine (`engine =
 //! "gecko"` in its `longhands.toml`), so the Servo-mode style system Blitz uses
@@ -35,6 +35,17 @@ pub struct BreakRules {
     /// `blitz_engine::balance_text_wrap` reads them from here (Phase C step 04).
     pub wrap_balance: Vec<BreakRule>,
     pub wrap_unbalance: Vec<BreakRule>,
+    /// Selector lists declaring a forced break after the element (Phase C step 04).
+    pub page_after: Vec<BreakRule>,
+    /// Selector lists declaring the `page` property (CSS Page 3 §4.1, named pages), in source
+    /// order, with the declared name (`None` for `auto`). Phase C step 04.
+    pub page_names: Vec<(BreakRule, Option<String>)>,
+    /// Selector lists declaring `writing-mode`, in source order, with whether it is vertical.
+    /// Stylo computes `writing-mode` only behind the `layout.writing-mode.enabled` pref
+    /// (stylo 0.22.0 `properties/longhands.toml` `[writing-mode] servo_pref`), off in Blitz, so
+    /// the computed style always says `horizontal-tb`; named-page breaks need the declared value
+    /// to find orthogonal flows ([`resolve_named_page_breaks`]). Phase C step 04.
+    pub writing_modes: Vec<(BreakRule, bool)>,
     /// Every `@media` block a rule was read in, in the order they open (an
     /// enclosing block comes before the blocks inside it).
     pub media: Vec<MediaBlock>,
@@ -56,32 +67,30 @@ pub struct MediaBlock {
 }
 
 impl BreakRules {
-    /// The selector lists (`avoid_inside`, `page_before`) of the rules whose
+    /// The selector lists (`avoid_inside`, `page_before`, `page_after`) of the rules whose
     /// every enclosing `@media` block matches, `matches` evaluating one media
     /// query list. Each distinct query text is evaluated once, and a block
     /// inside a block that does not match is not evaluated (linear in the
     /// number of blocks, whatever their nesting).
-    pub fn applicable<'a>(
-        &'a self,
-        mut matches: impl FnMut(&str) -> bool,
-    ) -> (Vec<&'a str>, Vec<&'a str>) {
-        let applies = self.media_applies(&mut matches);
-        let select = |rules: &'a [BreakRule]| select_rules(rules, &applies);
-        (select(&self.avoid_inside), select(&self.page_before))
+    pub fn applicable(
+        &self,
+        matches: impl FnMut(&str) -> bool,
+    ) -> (Vec<&str>, Vec<&str>, Vec<&str>) {
+        self.selected(&self.media_applies(matches))
     }
 
     /// The `(wrap_balance, wrap_unbalance)` selector lists whose `@media` blocks all match, like
     /// [`BreakRules::applicable`].
-    pub fn applicable_wrap(&self, mut matches: impl FnMut(&str) -> bool) -> (Vec<&str>, Vec<&str>) {
-        let applies = self.media_applies(&mut matches);
+    pub fn applicable_wrap(&self, matches: impl FnMut(&str) -> bool) -> (Vec<&str>, Vec<&str>) {
+        let applies = self.media_applies(matches);
         (
             select_rules(&self.wrap_balance, &applies),
             select_rules(&self.wrap_unbalance, &applies),
         )
     }
 
-    /// Whether each `@media` block applies (it and every block it sits in match).
-    fn media_applies(&self, matches: &mut impl FnMut(&str) -> bool) -> Vec<bool> {
+    /// Whether each `@media` block of [`BreakRules::media`] applies (see [`BreakRules::applicable`]).
+    pub fn media_applies(&self, mut matches: impl FnMut(&str) -> bool) -> Vec<bool> {
         let mut by_query: std::collections::HashMap<&str, bool> = std::collections::HashMap::new();
         let mut applies: Vec<bool> = Vec::with_capacity(self.media.len());
         for block in &self.media {
@@ -95,6 +104,119 @@ impl BreakRules {
         }
         applies
     }
+
+    /// The selector lists (`avoid_inside`, `page_before`, `page_after`) of the rules whose
+    /// `@media` blocks apply (`applies` from [`BreakRules::media_applies`]).
+    pub fn selected<'a>(&'a self, applies: &[bool]) -> (Vec<&'a str>, Vec<&'a str>, Vec<&'a str>) {
+        let select = |rules: &'a [BreakRule]| -> Vec<&'a str> {
+            rules
+                .iter()
+                .filter(|rule| rule.media.is_none_or(|block| applies[block]))
+                .map(|rule| rule.selector.as_str())
+                .collect()
+        };
+        (
+            select(&self.avoid_inside),
+            select(&self.page_before),
+            select(&self.page_after),
+        )
+    }
+
+    /// The `writing-mode` declarations whose `@media` blocks apply, in source order:
+    /// `(selector, vertical)`.
+    pub fn writing_modes<'a>(&'a self, applies: &[bool]) -> Vec<(&'a str, bool)> {
+        self.writing_modes
+            .iter()
+            .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
+            .map(|(rule, vertical)| (rule.selector.as_str(), *vertical))
+            .collect()
+    }
+
+    /// The `page` declarations whose `@media` blocks apply, in source order: `(selector, name)`,
+    /// `None` for `page: auto`.
+    pub fn page_names<'a>(&'a self, applies: &[bool]) -> Vec<(&'a str, Option<&'a str>)> {
+        self.page_names
+            .iter()
+            .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
+            .map(|(rule, name)| (rule.selector.as_str(), name.as_deref()))
+            .collect()
+    }
+}
+
+/// The `page` property declared in one declaration block: `Some(Some(name))` for a page name,
+/// `Some(None)` for `auto`, `None` when the block does not declare it (or declares an invalid
+/// value). The last declaration wins. CSS Page 3 §4.1: `page: auto | <custom-ident>`.
+pub fn declared_page(block: &str) -> Option<Option<String>> {
+    let mut out = None;
+    for decl in block.split(';') {
+        let Some((prop, value)) = decl.split_once(':') else {
+            continue;
+        };
+        if !prop.trim().eq_ignore_ascii_case("page") {
+            continue;
+        }
+        let value = value.split('!').next().unwrap_or_default().trim();
+        if value.eq_ignore_ascii_case("auto") {
+            out = Some(None);
+        } else if is_custom_ident(value) {
+            out = Some(Some(value.to_string()));
+        }
+    }
+    out
+}
+
+/// The `writing-mode` declared in one declaration block: `Some(true)` for a vertical mode
+/// (`vertical-rl`, `vertical-lr`, `sideways-rl`, `sideways-lr`, the legacy `tb`, `tb-rl`),
+/// `Some(false)` for a horizontal one (`horizontal-tb`, legacy `lr`, `lr-tb`, `rl`, `rl-tb`),
+/// `None` when not declared. The last declaration wins.
+pub fn declared_writing_mode(block: &str) -> Option<bool> {
+    let mut out = None;
+    for decl in block.split(';') {
+        let Some((prop, value)) = decl.split_once(':') else {
+            continue;
+        };
+        if !prop.trim().eq_ignore_ascii_case("writing-mode") {
+            continue;
+        }
+        let value = value
+            .split('!')
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .to_ascii_lowercase();
+        match value.as_str() {
+            "vertical-rl" | "vertical-lr" | "sideways-rl" | "sideways-lr" | "tb" | "tb-rl" => {
+                out = Some(true)
+            }
+            "horizontal-tb" | "lr" | "lr-tb" | "rl" | "rl-tb" => out = Some(false),
+            _ => {}
+        }
+    }
+    out
+}
+
+/// A plain CSS identifier (no escapes) that may name a page: not a CSS-wide keyword.
+fn is_custom_ident(value: &str) -> bool {
+    let mut chars = value.chars();
+    let first_ok = match chars.next() {
+        Some('-') => true,
+        Some(c) => c.is_ascii_alphabetic() || c == '_' || !c.is_ascii(),
+        None => false,
+    };
+    first_ok
+        && value
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || !c.is_ascii())
+        && ![
+            "initial",
+            "inherit",
+            "unset",
+            "revert",
+            "revert-layer",
+            "default",
+        ]
+        .iter()
+        .any(|kw| value.eq_ignore_ascii_case(kw))
 }
 
 /// The selectors of `rules` whose `@media` block applies.
@@ -115,6 +237,190 @@ pub struct BreakHints {
     /// another `text-wrap-style`, or a `text-wrap` without `balance` (the shorthand resets the
     /// style to `auto`); `None`: neither property.
     pub wrap_balance: Option<bool>,
+    pub page_after: bool,
+}
+
+/// Turn every forced break AFTER a box into a forced break BEFORE the box that follows it, the
+/// form the paginator reads (`LaidOutBox::break_before_page`). CSS Fragmentation 3 §3.1: a
+/// `break-after` value applies to the break between the box and its next sibling, and §4.1 (class
+/// A break points): a forced break on the last child propagates to its parent's break after, so
+/// the break lands before the parent's next sibling. A forced break after the last box of the
+/// document makes no page (Chrome 155 prints no trailing blank page for
+/// `<p style="page-break-after: always">` as the body's last child).
+///
+/// A sibling laid out beside the box (the other items of a row flex line, the next cells of a
+/// grid row) cannot start a page of its own: the break goes after the whole row, before the
+/// first sibling that starts below the box, or to the parent when no sibling does. Chrome 155
+/// propagates `break-after: page` on a row flex item to its flex line (WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-082c-print.html; css-flexbox-1 §12 "Flex Layout
+/// Fragmentation").
+///
+/// `boxes` is the walk's depth-ordered pre-order list (a box's descendants follow it with a
+/// greater `depth`). The list is read back to front, so a child's propagated break reaches its
+/// parent before the parent is visited. Each box is visited once, its parent comes from one
+/// forward pass and its next in-flow sibling is remembered per depth.
+pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
+    if !boxes.iter().any(|b| b.break_after_page) {
+        return;
+    }
+    let mut stack: Vec<usize> = Vec::new();
+    let parent: Vec<Option<usize>> = (0..boxes.len())
+        .map(|i| {
+            while stack
+                .last()
+                .is_some_and(|&j| boxes[j].depth >= boxes[i].depth)
+            {
+                stack.pop();
+            }
+            let parent = stack.last().copied();
+            stack.push(i);
+            parent
+        })
+        .collect();
+    // next_at[d]: index of the box at depth d that follows the box being visited, at the same
+    // depth and within the same parent (reset when the walk climbs above depth d).
+    let mut next_at: Vec<Option<usize>> = Vec::new();
+    // next_sibling[i]: the next in-flow sibling of box i (filled when i is visited).
+    let mut next_sibling: Vec<Option<usize>> = vec![None; boxes.len()];
+    // `b` sits beside `a` on the inline axis (no horizontal overlap) and starts above a's bottom.
+    let beside = |a: &crate::blitz_engine::LaidOutBox, b: &crate::blitz_engine::LaidOutBox| {
+        const EPS: f64 = 0.5;
+        b.y < a.y + a.height - EPS && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+    };
+    for i in (0..boxes.len()).rev() {
+        let depth = boxes[i].depth;
+        if next_at.len() <= depth {
+            next_at.resize(depth + 1, None);
+        }
+        // Boxes deeper than this one belong to its subtree (or to an earlier sibling's, already
+        // left): they are no siblings of anything visited from here on.
+        next_at.truncate(depth + 1);
+        let next = next_at[depth];
+        // CSS Fragmentation 3 §3.1: the break properties apply to block-level boxes in the
+        // normal flow. An inline-level (atomic inline) or absolutely positioned box neither
+        // forces a break nor takes one: Chrome 155 prints `One <span style="display:
+        // inline-block; break-after: page">IB</span> Two` on one page, and keeps an absolutely
+        // positioned sibling after a `break-after: page` box on the box's page (probes
+        // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`, 2026-10-28).
+        let in_flow = !boxes[i].out_of_flow && !boxes[i].atomic_inline;
+        if !in_flow {
+            boxes[i].break_after_page = false;
+            continue;
+        }
+        next_sibling[i] = next;
+        if boxes[i].break_after_page {
+            let mut target = next;
+            while let Some(j) = target.filter(|&j| beside(&boxes[i], &boxes[j])) {
+                target = next_sibling[j];
+            }
+            match target {
+                Some(j) => boxes[j].break_before_page = true,
+                None => {
+                    // Last child: propagate to the parent (the nearest earlier box one level up).
+                    if let Some(parent) = parent[i] {
+                        boxes[parent].break_after_page = true;
+                    }
+                }
+            }
+        }
+        next_at[depth] = Some(i);
+    }
+}
+
+/// Named pages (CSS Page 3 §4.1, "Using named pages"; Phase C step 04): a forced page break
+/// goes between two adjacent in-flow siblings when the END page value of the first differs
+/// from the START page value of the second, set as `break_before_page` on the second. A box's
+/// used page value is its own `page` name or, for `auto`, its parent's (the root's is the empty
+/// name); its start (end) page value is the start (end) value of its first (last) in-flow child,
+/// or its used value when it has none. Only block-level boxes in the normal flow take part:
+/// floated, absolutely positioned and atomic inline boxes and orthogonal flows, and everything
+/// inside them, neither
+/// carry nor separate a page name, and a sibling laid out beside the box (a flex row) is no
+/// break point (as in [`resolve_break_after`]). Only the breaks are implemented: a named
+/// `@page` rule still does not apply to its pages (`page_css`).
+///
+/// Measured against Chrome for Testing 155.0.8059.85 with the WPT css/css-page/page-name-*
+/// tests (their page counts are in the run's `chrome.comparisons`): e.g. `<div page:a>`,
+/// `<div page:b><div page:c><div abspos>b</div><div page:x>c</div></div></div>` prints 2 pages
+/// (page-name-propagated-004), `<div page:a>a</div><div page:c><div display:none></div></div>
+/// <div page:b>` 3 (page-name-display-none-child: the middle page is empty).
+pub fn resolve_named_page_breaks(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
+    if !boxes.iter().any(|b| b.page_name.is_some()) {
+        return;
+    }
+    let n = boxes.len();
+    let mut stack: Vec<usize> = Vec::new();
+    let parent: Vec<Option<usize>> = (0..n)
+        .map(|i| {
+            while stack
+                .last()
+                .is_some_and(|&j| boxes[j].depth >= boxes[i].depth)
+            {
+                stack.pop();
+            }
+            let parent = stack.last().copied();
+            stack.push(i);
+            parent
+        })
+        .collect();
+    // Forward: whether the box takes part, and its used page value (an index into `boxes`
+    // whose `page_name` it uses, `None` for the root's empty name).
+    let mut takes_part = vec![false; n];
+    let mut used: Vec<Option<usize>> = vec![None; n];
+    // `writing-mode` is inherited: the declared value, else the parent's (horizontal at the root).
+    let mut vertical = vec![false; n];
+    for i in 0..n {
+        let b = &boxes[i];
+        vertical[i] = b
+            .writing_mode_vertical
+            .unwrap_or_else(|| parent[i].is_some_and(|p| vertical[p]));
+        let inside = parent[i].is_none_or(|p| takes_part[p]);
+        // An orthogonal flow (a writing mode perpendicular to the parent's) is monolithic: Chrome
+        // 155 prints `<div style="writing-mode: horizontal-tb">` holding `page: a` / `page: b`
+        // children inside a vertical-rl root on one page (WPT css/css-page/
+        // page-name-orthogonal-writing-001/003-print).
+        let orthogonal = parent[i].is_some_and(|p| vertical[p] != vertical[i]);
+        takes_part[i] = inside && !b.out_of_flow && !b.floated && !b.atomic_inline && !orthogonal;
+        used[i] = if b.page_name.is_some() {
+            Some(i)
+        } else {
+            parent[i].and_then(|p| used[p])
+        };
+    }
+    let name = |boxes: &[crate::blitz_engine::LaidOutBox], at: Option<usize>| {
+        at.and_then(|i| boxes[i].page_name.clone())
+    };
+    // Back to front: first/last in-flow child, so start/end values are final before the parent.
+    let mut first_child: Vec<Option<usize>> = vec![None; n];
+    let mut last_child: Vec<Option<usize>> = vec![None; n];
+    let mut next_sibling: Vec<Option<usize>> = vec![None; n];
+    let mut start: Vec<Option<String>> = vec![None; n];
+    let mut end: Vec<Option<String>> = vec![None; n];
+    for i in (0..n).rev() {
+        if !takes_part[i] {
+            continue;
+        }
+        start[i] = first_child[i].map_or_else(|| name(boxes, used[i]), |c| start[c].clone());
+        end[i] = last_child[i].map_or_else(|| name(boxes, used[i]), |c| end[c].clone());
+        if let Some(p) = parent[i] {
+            next_sibling[i] = first_child[p];
+            if last_child[p].is_none() {
+                last_child[p] = Some(i);
+            }
+            first_child[p] = Some(i);
+        }
+    }
+    let beside = |a: &crate::blitz_engine::LaidOutBox, b: &crate::blitz_engine::LaidOutBox| {
+        const EPS: f64 = 0.5;
+        b.y < a.y + a.height - EPS && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+    };
+    for i in 0..n {
+        if let Some(j) = next_sibling[i] {
+            if end[i] != start[j] && !beside(&boxes[i], &boxes[j]) {
+                boxes[j].break_before_page = true;
+            }
+        }
+    }
 }
 
 /// Collect the break rules declared in the document's `<style>` elements.
@@ -137,9 +443,33 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
                 });
             }
             match hints.wrap_balance {
-                Some(true) => rules.wrap_balance.push(BreakRule { selector, media }),
-                Some(false) => rules.wrap_unbalance.push(BreakRule { selector, media }),
+                Some(true) => rules.wrap_balance.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                }),
+                Some(false) => rules.wrap_unbalance.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                }),
                 None => {}
+            }
+            if hints.page_after {
+                rules.page_after.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                });
+            }
+            if let Some(vertical) = declared_writing_mode(&body) {
+                rules.writing_modes.push((
+                    BreakRule {
+                        selector: selector.clone(),
+                        media,
+                    },
+                    vertical,
+                ));
+            }
+            if let Some(name) = declared_page(&body) {
+                rules.page_names.push((BreakRule { selector, media }, name));
             }
         }
     }
@@ -186,6 +516,18 @@ pub fn declares(block: &str) -> BreakHints {
                     } else {
                         Some(value.split_ascii_whitespace().any(|v| v == "balance"))
                     };
+            }
+            // The same values as `break-before` (CSS Fragmentation 3 §3.1; the legacy alias maps
+            // `always` to `page`, §3.4). Chrome 155 starts the next sibling on a new page for
+            // `page-break-after: always` (WPT css/CSS2/pagination reference files).
+            "break-after" => {
+                hints.page_after = matches!(
+                    value,
+                    "page" | "always" | "left" | "right" | "recto" | "verso"
+                );
+            }
+            "page-break-after" => {
+                hints.page_after = matches!(value, "always" | "left" | "right");
             }
             _ => {}
         }
@@ -351,7 +693,8 @@ mod tests {
     /// only (`page_css::media_matches`, the evaluator of port step 07): the parse-level tests
     /// below use it; the render path evaluates with Stylo (`blitz_engine`).
     fn by_type(rules: &BreakRules) -> (Vec<&str>, Vec<&str>) {
-        rules.applicable(crate::page_css::media_matches)
+        let (avoid, before, _) = rules.applicable(crate::page_css::media_matches);
+        (avoid, before)
     }
 
     #[test]
@@ -551,6 +894,21 @@ mod tests {
             ".c { content: \"/*\" } .pb { break-before: page } /* .x { break-before: page } */",
         ));
         assert_eq!(by_type(&rules).1, vec![".pb"]);
+    }
+
+    #[test]
+    fn collects_break_after_and_its_legacy_alias() {
+        let rules = parse_break_rules(&page(
+            ".a { break-after: page } .b { page-break-after: always } \
+             .c { break-after: avoid } .d { page-break-after: auto } \
+             @media screen { .s { break-after: page } } .e { break-after: page; break-after: auto }",
+        ));
+        let (_, before, after) = rules.applicable(crate::page_css::media_matches);
+        assert!(before.is_empty());
+        assert_eq!(after, vec![".a", ".b"]);
+        assert!(declares("PAGE-BREAK-AFTER: Always").page_after);
+        assert!(!declares("break-after: column").page_after);
+        assert!(!declares("page-break-after: always").page_before);
     }
 
     #[test]
