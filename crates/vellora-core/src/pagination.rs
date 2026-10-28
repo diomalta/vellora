@@ -1068,7 +1068,14 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
             emit_wrapper_child_fragments(subtree, &mut parts);
         }
 
-        if splittable && !b.break_inside_avoid {
+        // A wrapper with a forced break whose children paint nothing yields no parts; it stays
+        // one (empty) block fragment so `finalize_fragments` carries its break on (Phase C step
+        // 04: the empty `<div style="page: c">` of WPT css/css-page/page-name-display-none-child
+        // keeps its page; before, the break was dropped with the wrapper). Without a forced
+        // break such a wrapper is still dropped, as before (WPT css/css-page/
+        // page-background-003-print-ref: a 500 px abspos wrapper of unloaded images).
+        let empty_forced_wrapper = splittable && b.break_before_page && parts.is_empty();
+        if splittable && !b.break_inside_avoid && !empty_forced_wrapper {
             if b.break_before_page {
                 move_forced_break_to_first_part(&mut parts, leading_margin(subtree));
             }
@@ -1137,9 +1144,20 @@ fn finalize_fragments(fragments: &mut Vec<Fragment>) {
             continue;
         }
         if let Some(margin) = carried_break.take() {
-            carrier = None;
-            fragment.break_before = true;
-            fragment.break_margin = fragment.break_margin.collapse(margin);
+            // An empty element between two forced breaks keeps its own (blank) page: Chrome 155
+            // prints `<div page:a>a</div><div page:c><div display:none></div></div><div
+            // page:b>b</div>` on 3 pages (WPT css/css-page/page-name-display-none-child-print).
+            match carrier.take() {
+                Some(mut empty) if fragment.break_before && is_element_fragment(&empty) => {
+                    empty.break_before = true;
+                    empty.break_margin = margin;
+                    kept.push(empty);
+                }
+                _ => {
+                    fragment.break_before = true;
+                    fragment.break_margin = fragment.break_margin.collapse(margin);
+                }
+            }
         }
         kept.push(fragment);
     }
@@ -1150,18 +1168,22 @@ fn finalize_fragments(fragments: &mut Vec<Fragment>) {
     // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`). The empty element is kept,
     // with the break.
     if let (Some(margin), Some(mut fragment)) = (carried_break, carrier) {
-        let element = fragment
-            .boxes
-            .first()
-            .and_then(|root| root.tag.as_deref())
-            .is_some_and(is_renderable_flow_tag);
-        if element {
+        if is_element_fragment(&fragment) {
             fragment.break_before = true;
             fragment.break_margin = margin;
             kept.push(fragment);
         }
     }
     *fragments = kept;
+}
+
+/// Whether a fragment's root is an element of the flow (not an anonymous box or `<head>` etc.).
+fn is_element_fragment(fragment: &Fragment) -> bool {
+    fragment
+        .boxes
+        .first()
+        .and_then(|root| root.tag.as_deref())
+        .is_some_and(is_renderable_flow_tag)
 }
 
 /// Adjoining vertical margins collapsed into one (CSS 2.2 §8.3.1): "the

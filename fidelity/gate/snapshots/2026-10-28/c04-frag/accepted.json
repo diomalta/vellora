@@ -1,94 +1,30 @@
 {
   "step": "13-c04-frag",
-  "note": "Class-a acceptances of Phase C step 04, fragmentation lane (phasec/04-frag). New: 11 WPT passes false by page count that break-after exposed (layers-001, 10 page-name-*). Carried: the 2 oss-postmark masthead pairing artefacts (from 12-phase-c-03) and monolithic-overflow-014 (from 10-debt, orchestrator decision (a)). Not carried: c03's 6 css/CSS2/pagination entries, which now pass (break-after).",
+  "note": "Class-a acceptances of Phase C step 04, fragmentation lane (phasec/04-frag). New: 3 WPT passes false by page count that named-page breaks exposed (css/css-page/page-name-flex-001/002/004; Chrome fails them too). Carried: the 2 oss-postmark masthead pairing artefacts (from 12-phase-c-03) and monolithic-overflow-014 (from 10-debt, orchestrator decision (a)). Not carried: c03's 6 css/CSS2/pagination entries, which now pass (break-after).",
   "acceptedRegressions": [
     {
-      "key": "wpt|css/css-page/layers-001-print.html",
+      "key": "wpt|css/css-page/page-name-flex-001-print.html",
       "after": "fail",
       "class": "a",
       "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 4 pages for both. The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 \u00a74.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name, so the test prints 4 page(s) (Chrome 4); the reference prints 1 (Chrome 1). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ too.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [4, 1], chrome pageCounts [4, 1]."
     },
     {
-      "key": "wpt|css/css-page/page-name-display-none-child-print.html",
+      "key": "wpt|css/css-page/page-name-flex-002-print.html",
       "after": "fail",
       "class": "a",
       "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 3 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 3) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 3]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [3, 3]."
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 3 pages for both. The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 \u00a74.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name, so the test prints 3 page(s) (Chrome 3); the reference prints 1 (Chrome 1). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ too.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [3, 1]."
     },
     {
-      "key": "wpt|css/css-page/page-name-propagated-004-print.html",
+      "key": "wpt|css/css-page/page-name-flex-004-print.html",
       "after": "fail",
       "class": "a",
       "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-propagated-007-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 3 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 3 page(s) (Chrome 3) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 3]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 3], chrome pageCounts [3, 3]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-propagated-008-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 3 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 3 page(s) (Chrome 3) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 3]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 3], chrome pageCounts [3, 3]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-propagated-009-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-siblings-001-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-siblings-002-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-siblings-003-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-siblings-004-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
-    },
-    {
-      "key": "wpt|css/css-page/page-name-siblings-005-print.html",
-      "after": "fail",
-      "class": "a",
-      "label": "wpt-false-pass",
-      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 2 pages for both. The reference forces its page breaks with `break-after: page` / `page-break-after: always`, which vellora ignored until Phase C step 04; the test forces them with named pages (`page: <name>`, CSS Page 3 \u00a74.1) or a named `@page` rule's margins, which vellora does not implement. With break-after the reference now prints 2 page(s) (Chrome 2) and the test still 1, so the two differ. Next step: named-page breaks.",
-      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [2, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-1/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag 0ffebb9, 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [1, 2], chrome pageCounts [2, 2]."
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 4 pages for both. The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 \u00a74.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name, so the test prints 3 page(s) (Chrome 4); the reference prints 1 (Chrome 2). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ too.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [4, 2]."
     },
     {
       "key": "wpt|css/css-page/monolithic-overflow-014-print.html",

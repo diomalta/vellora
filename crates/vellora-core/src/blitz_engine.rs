@@ -82,6 +82,18 @@ pub struct LaidOutBox {
     /// normal flow, so it takes no forced break from the box before it
     /// ([`crate::break_css::resolve_break_after`]).
     pub out_of_flow: bool,
+    /// Whether the box is floated (`float` other than `none`).
+    pub floated: bool,
+    /// The `writing-mode` the element declares (`Some(true)` vertical, `Some(false)`
+    /// horizontal, `None` when nothing declares it; read by vellora, see
+    /// [`crate::break_css::BreakRules::writing_modes`]). A box whose writing mode is orthogonal
+    /// to its parent's is monolithic for named-page breaks
+    /// ([`crate::break_css::resolve_named_page_breaks`]).
+    pub writing_mode_vertical: Option<bool>,
+    /// The page name the element declares (`page: <custom-ident>`, CSS Page 3 §4.1); `None`
+    /// for `page: auto` and when nothing declares it. Read by
+    /// [`crate::break_css::resolve_named_page_breaks`] (Phase C step 04).
+    pub page_name: Option<String>,
     /// Whether this box is an atomic inline-level box (`inline-block`, `inline-flex`,
     /// `inline-grid`, `inline-table`): it sits in one line box of its parent and is monolithic
     /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
@@ -2059,15 +2071,18 @@ fn resolve_and_walk<O: LayoutObserver>(
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
     // the device that just styled the document, matches (port step 09).
-    let (avoid_inside, page_before, page_after) = {
+    let media_applies = {
         let device = doc.stylist_device();
-        breaks.applicable(|query| media_query_matches(device, query))
+        breaks.media_applies(|query| media_query_matches(device, query))
     };
+    let (avoid_inside, page_before, page_after) = breaks.selected(&media_applies);
     let base: &BaseDocument = &doc;
     let break_targets = BreakTargets {
         avoid_inside: matched_nodes(base, &avoid_inside),
         page_before: matched_nodes(base, &page_before),
         page_after: matched_nodes(base, &page_after),
+        page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
+        writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
     };
     let mut boxes = Vec::new();
     // Resolves each <img> source to bytes during the walk and records the first
@@ -2104,6 +2119,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         walk_box(base, root_id, 0, &mut sink);
     }
     crate::break_css::resolve_break_after(&mut boxes);
+    crate::break_css::resolve_named_page_breaks(&mut boxes);
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
     // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (none in the raw-Blitz render).
     if O::VELLORA_CORRECTIONS {
@@ -2161,6 +2177,45 @@ struct BreakTargets {
     avoid_inside: std::collections::HashSet<NodeId>,
     page_before: std::collections::HashSet<NodeId>,
     page_after: std::collections::HashSet<NodeId>,
+    /// The `page` value each matched node gets from the stylesheet (`None` = `auto`).
+    page_names: std::collections::HashMap<NodeId, Option<String>>,
+    /// The `writing-mode` each matched node gets from the stylesheet (`true` = vertical).
+    writing_modes: std::collections::HashMap<NodeId, bool>,
+}
+
+/// The declared `writing-mode` of every node a rule matches (later rule wins, as
+/// [`matched_page_names`]).
+fn matched_writing_modes(
+    base: &BaseDocument,
+    rules: &[(&str, bool)],
+) -> std::collections::HashMap<NodeId, bool> {
+    let mut out = std::collections::HashMap::new();
+    for (selector, vertical) in rules {
+        if let Ok(nodes) = base.query_selector_all(selector) {
+            for node in nodes {
+                out.insert(node, *vertical);
+            }
+        }
+    }
+    out
+}
+
+/// The `page` value of every node a `page` rule matches. The later rule wins, in source order
+/// (specificity is not compared: UNVERIFIED ASSUMPTION that documents naming pages do not rely
+/// on it; an inline `style` still wins over every rule, see `push_box`).
+fn matched_page_names(
+    base: &BaseDocument,
+    rules: &[(&str, Option<&str>)],
+) -> std::collections::HashMap<NodeId, Option<String>> {
+    let mut out = std::collections::HashMap::new();
+    for (selector, name) in rules {
+        if let Ok(nodes) = base.query_selector_all(selector) {
+            for node in nodes {
+                out.insert(node, name.map(str::to_string));
+            }
+        }
+    }
+    out
 }
 
 /// Resolve each selector list with Stylo's selector matching. A selector Stylo
@@ -2454,6 +2509,9 @@ fn push_box(
         .attr(blitz_dom::local_name!("style"))
         .map(crate::break_css::declares)
         .unwrap_or_default();
+    let floated = node.primary_styles().is_some_and(|styles| {
+        !matches!(styles.clone_float(), style::computed_values::float::T::None)
+    });
 
     sink.out.push(LaidOutBox {
         // Blitz 0.3.0-beta.4 ids are versioned `NodeId(u64)` (slot index + version)
@@ -2483,12 +2541,20 @@ fn push_box(
         // fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py); a float after a
         // break-after box still takes the break (probe ba-float-next).
         break_after_page: (inline_breaks.page_after || sink.breaks.page_after.contains(&node_id))
-            && !node.primary_styles().is_some_and(|styles| {
-                !matches!(styles.clone_float(), style::computed_values::float::T::None)
-            }),
+            && !floated,
         out_of_flow: node
             .primary_styles()
             .is_some_and(|styles| styles.clone_position().is_absolutely_positioned()),
+        floated,
+        writing_mode_vertical: node
+            .attr(blitz_dom::local_name!("style"))
+            .and_then(crate::break_css::declared_writing_mode)
+            .or_else(|| sink.breaks.writing_modes.get(&node_id).copied()),
+        page_name: node
+            .attr(blitz_dom::local_name!("style"))
+            .and_then(crate::break_css::declared_page)
+            .or_else(|| sink.breaks.page_names.get(&node_id).cloned())
+            .flatten(),
         atomic_inline: atomic_inline(node),
         clips_overflow: node.primary_styles().is_some_and(|styles| {
             styles.clone_overflow_y() != style::values::computed::Overflow::Visible

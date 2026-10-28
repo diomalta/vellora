@@ -19,9 +19,13 @@ content height is printed once instead of on every page (a forced break after it
 `break-inside: avoid` `<tbody>` with one row taller than a page starts on a new page before it is
 split. The input HTML is not changed. Documents without these constructs are byte-identical.
 
+Named pages force their page breaks: wherever the `page` name changes between two adjacent
+blocks (`<section style="page: cover">` then `<section>`), the second starts a new page, as in
+Chrome. Only the break is implemented; a named `@page cover { … }` rule does not yet change that
+page's size or margins.
+
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85
-reference; indicative, not CI): WPT reftest passes 3762 -> 3767 (8047 tests), including the six
-css/CSS2/pagination tests whose references use `page-break-after`. Eleven earlier passes are now
-failures because their references use `break-after` while the tests use named pages
-(`page: <name>`), which vellora does not implement; those passes were false (vellora printed 1
-page where Chrome prints 2 or 3).
+reference; indicative, not CI): WPT reftest passes 3762 -> 3783 (8047 tests), including the six
+css/CSS2/pagination tests whose references use `page-break-after` and 10 css/css-page named-page
+tests. Three earlier passes are now failures (css/css-page/page-name-flex-001/002/004, which
+Chrome fails too); those passes were false (vellora printed 1 page where Chrome prints 3 or 4).

@@ -411,3 +411,75 @@ fn a_tfoot_follows_the_body_and_a_one_row_avoid_group_moves_before_it_is_cut() {
     assert_eq!(pages_with(&p, "Body1"), vec![1]);
     assert_eq!(pages_with(&p, "Foot"), vec![2]);
 }
+
+/// Named pages (CSS Page 3 §4.1): a forced break wherever the page name changes between
+/// adjacent in-flow siblings, with start/end values propagated from first/last children; the
+/// page counts are Chrome 155's for the WPT css/css-page/page-name-* tests these mirror.
+#[test]
+fn a_change_of_page_name_forces_a_page_break() {
+    let doc = |css: &str, body: &str| {
+        format!(
+            "<!DOCTYPE html><html><head><style>{SHORT_PAGE} {css}</style></head><body>{body}</body></html>"
+        )
+    };
+    let pages = |html: &str| paginate(html).report.page_count;
+    // page-name-siblings-001: b, b, auto -> 2 pages.
+    let siblings = paginate(&doc(
+        "",
+        "<div style=\"page: b\">Sa</div><div style=\"page: b\">Sb</div><div>Sc</div>",
+    ));
+    assert_eq!(siblings.report.page_count, 2);
+    assert_eq!(pages_with(&siblings, "Sb"), vec![0]);
+    assert_eq!(pages_with(&siblings, "Sc"), vec![1]);
+    // From a rule, propagated from the last child (page-name-propagated-007): 3 pages.
+    assert_eq!(
+        pages(&doc(
+            ".x { page: x }",
+            "<div>A</div><div><div>B</div><div class=\"x\">C</div></div><div>D</div>"
+        )),
+        3
+    );
+    // An empty element between two changes keeps its own page (page-name-display-none-child).
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: a\">A</div><div style=\"page: c\"><div style=\"display: none\">C</div></div>\
+             <div style=\"page: b\">B</div>"
+        )),
+        3
+    );
+    // Floats, absolutely positioned boxes and inline-blocks do not take part
+    // (page-name-float-002, page-name-inline-block-002): 2 pages each.
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: a\">A</div><div style=\"page: b; float: left\">B</div><div style=\"page: c\">C</div>"
+        )),
+        2
+    );
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"page: c; display: inline-block\"><div style=\"page: a\">A</div>\
+             <div style=\"page: b\">B</div></div><div style=\"page: c\">C</div>"
+        )),
+        2
+    );
+    // An orthogonal flow is monolithic (page-name-orthogonal-writing-003): 1 page.
+    assert_eq!(
+        pages(&doc(
+            "",
+            "<div style=\"writing-mode: vertical-rl\"><div style=\"page: a\">A</div>\
+             <div style=\"page: b\">B</div></div>"
+        )),
+        1
+    );
+    // `page: auto` and an unnamed document: no break.
+    assert_eq!(
+        pages(&doc(
+            ".p { page: auto }",
+            "<div class=\"p\">A</div><div>B</div>"
+        )),
+        1
+    );
+}
