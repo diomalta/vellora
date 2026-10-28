@@ -149,6 +149,98 @@ export function crossCheck(metrics, key, docAggregate, label) {
   return problems;
 }
 
+/** Item key without the gate's view prefix ("pin|wpt|x" -> "wpt|x"). */
+const itemId = (key) => String(key).replace(/^pin\|/, "");
+const ids = (items, pred) =>
+  [...new Set((items ?? []).filter(pred).map((i) => itemId(i.key)))].sort();
+
+/**
+ * The strict exit contract's four conditions, read from a gate report (fidelity/gate/run.mjs
+ * --contract). `met` is derived only from the report's own counts and verdicts; `items` lists
+ * the ids that hold a condition open (ids only, no measured values).
+ */
+export function gateConditions(gate) {
+  const c = gate.counts ?? {};
+  const pinC = c.pinC ?? gate.pin?.counts?.c ?? 0;
+  const regressions = ids(gate.items, (i) => i.gating && i.class === "regression");
+  const headVerdict = gate.head?.verdict ?? null;
+  const headGating = ids(gate.head?.items, (i) => i.gating);
+  const doc = gate.docAggregate ?? {};
+  return [
+    {
+      id: 1,
+      what: "pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt)",
+      met: pinC === 0,
+      count: pinC,
+      items: ids(gate.pin?.items, (i) => i.pinClass === "c"),
+    },
+    {
+      id: 2,
+      what: "every fixture's median error and share within 1 mm at least as good as the published package's",
+      met: doc.condition2 ? doc.condition2 === "PASS" : (c.docRegressions ?? 0) === 0,
+      count: c.docRegressions ?? 0,
+      items: [],
+    },
+    {
+      id: 3,
+      what: "every fixture's page count equal to Chrome's",
+      met: doc.condition3 ? doc.condition3 === "PASS" : (c.contractPagesFailing ?? 0) === 0,
+      count: c.contractPagesFailing ?? 0,
+      items: [],
+    },
+    {
+      id: 4,
+      what: "step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes",
+      met: regressions.length === 0 && (c.regression ?? 0) === 0 && headVerdict !== "FAIL",
+      count: c.regression ?? 0,
+      items: regressions,
+      head: { verdict: headVerdict, gating: c.headGating ?? headGating.length, items: headGating },
+    },
+  ];
+}
+
+/** Per-fixture totals of one paint-probe summary (fidelity/oracles/paint-probe.mjs). */
+function paintSide(probe) {
+  return Object.fromEntries(
+    FIXTURES.filter((f) => probe.fixtures?.[f.id]).map((f) => {
+      const x = probe.fixtures[f.id];
+      return [
+        f.id,
+        {
+          pages: x.pages,
+          chromePages: x.chromePages,
+          dashSegments: x.dashSegments,
+          underlines: x.underlines,
+          canvasMismatchPages: x.canvasMismatchPages ?? [],
+          flags: x.flags ?? [],
+        },
+      ];
+    }),
+  );
+}
+
+/** The report-only paint probe, for the branch (`after`) and optionally the published package. */
+export function paintSection(after, before) {
+  const a = paintSide(after);
+  const b = before ? paintSide(before) : null;
+  // Chrome's side of both probes must be the same PDFs, so the two columns share one reference.
+  for (const id of Object.keys(b ?? {})) {
+    const same = (k) =>
+      a[id] && a[id][k].chrome === b[id][k].chrome && a[id].chromePages === b[id].chromePages;
+    if (!same("dashSegments") || !same("underlines")) {
+      throw new Error(`paint probes: ${id} was compared with different Chrome PDFs`);
+    }
+  }
+  return {
+    what: "Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it",
+    reportOnly: true,
+    method: after.method?.facts,
+    tool: after.tool,
+    after: { command: after.command, fixtures: a },
+    before: before ? { command: before.command, fixtures: b } : null,
+  };
+}
+
 /**
  * Build the manifest. `inputs`:
  *   metrics      visual-compare metrics.json (per fixture: { [pinKey]: m, [newKey]: m })
@@ -158,7 +250,9 @@ export function crossCheck(metrics, key, docAggregate, label) {
  *   wptRun       the run's wpt/summary.json (Chrome reference totals), optional
  *   wptBefore    fidelity/baselines/pin/wpt/by-directory.json
  *   gate         gate report (verdict, date, command, counts), optional
- *   images       [{ fixture, page, file, pagesShown }] from the composer
+ *   paint        the run's paint-probe summary.json, optional
+ *   paintBefore  a paint-probe summary of the published package's PDFs (--subject), optional
+ *   images      [{ fixture, page, file, pagesShown }] from the composer
  *   files        { name: { path, sha256 } } portable input paths and hashes
  *   commands     { images, regenerate }
  */
@@ -247,16 +341,22 @@ export function buildManifest(inputs) {
           contract: gate.contract === true,
           command: gate.command,
           counts: {
-            gating: gate.counts?.gating,
-            pinC: gate.counts?.pinC,
-            regression: gate.counts?.regression,
-            pinCGating: gate.counts?.["pin-c"],
-            contractPages: gate.counts?.["contract-pages"],
-            contractPagesFailing: gate.counts?.contractPagesFailing,
-            docRegressions: gate.counts?.docRegressions,
+            gating: gate.counts?.gating ?? 0,
+            pinA: gate.counts?.pinA ?? 0,
+            pinB: gate.counts?.pinB ?? 0,
+            pinC: gate.counts?.pinC ?? 0,
+            regression: gate.counts?.regression ?? 0,
+            pinCGating: gate.counts?.["pin-c"] ?? 0,
+            // The gate writes a count key only when the count is non-zero.
+            contractPages: gate.counts?.["contract-pages"] ?? 0,
+            contractPagesFailing: gate.counts?.contractPagesFailing ?? 0,
+            docRegressions: gate.counts?.docRegressions ?? 0,
+            headGating: gate.counts?.headGating ?? 0,
           },
+          conditions: gateConditions(gate),
         }
       : null,
+    paint: inputs.paint ? paintSection(inputs.paint, inputs.paintBefore) : null,
     fixtures,
     wpt: {
       what: "WPT reftests passed through the vellora pipeline, printed to PDF and compared with the reference page: coverage of the CSS test subset the harness runs, not a document-quality score",
@@ -690,11 +790,74 @@ function lossesBlock(m) {
     `**WPT:** ${int(w.after.totals.pass)} of ${int(w.after.totals.reftests)} reftests pass (${pct2(w.after.totals.passRate)}); ${int(w.after.totals.passClean)} (${pct2(w.after.totals.passRateClean)}) pass without any suspect-pass flag. ${int(w.after.totals.fail)} still fail and ${int(w.after.totals.unsupported)} are rejected as outside the strict subset.`,
   );
   if (m.gate && m.gate.verdict !== "PASS") {
-    items.push(
-      `**Merge gate:** verdict ${m.gate.verdict} on this run, with ${int(m.gate.counts.gating)} gating items: ${int(m.gate.counts.regression)} step-to-step ratchet regressions, ${int(m.gate.counts.pinCGating)} further items worse than the published package that the gate cannot classify yet, and ${int(m.gate.counts.contractPages)} page-count item. The branch does not merge until the contract passes.`,
-    );
+    items.push(gateLines(m.gate));
   }
   return items.map((i) => `- ${i}`).join("\n");
+}
+
+const testIds = (list) => list.map((k) => `\`${k.replace(/^wpt\|/, "")}\``).join(", ");
+
+/** The merge gate's verdict, one sub-item per strict-contract condition. */
+function gateLines(g) {
+  const head = `**Merge gate: verdict ${g.verdict}** on this run${g.contract ? " (strict contract, --contract)" : ""}, ${plural(g.counts.gating, "gating item")}. The branch does not merge until every condition is met.`;
+  if (!g.conditions) return head;
+  const sub = g.conditions.map((c) => {
+    const state = c.met ? "met" : "NOT met";
+    let detail = "";
+    if (c.id === 1 && !c.met) {
+      detail = ` ${plural(c.count, "item")} worse than the published package that the gate cannot classify yet${c.items.length ? `: ${testIds(c.items)}` : ""}. Classified: ${int(g.counts.pinA)} class a, ${int(g.counts.pinB)} class b.`;
+    }
+    if ((c.id === 2 || c.id === 3) && !c.met) detail = ` ${plural(c.count, "fixture")} failing.`;
+    if (c.id === 4 && !c.met) {
+      const r = c.count
+        ? ` ${plural(c.count, "regression")} against the previous gated step${c.items.length ? `: ${testIds(c.items)}` : ""}.`
+        : "";
+      const h =
+        c.head?.verdict === "FAIL"
+          ? ` Head view: FAIL, ${plural(c.head.gating, "item")}${c.head.items.length ? ` (${testIds(c.head.items)})` : ""}.`
+          : "";
+      detail = `${r}${h}`;
+    }
+    return `  - (${c.id}) ${c.what}: **${state}**.${detail}`;
+  });
+  return [head, ...sub].join("\n");
+}
+
+function paintBlock(m) {
+  const p = m.paint;
+  if (!p) return "Paint probe: not supplied.";
+  const before = p.before?.fixtures ?? null;
+  const pair = (x) => `${int(x.vellora)} / ${int(x.chrome)}`;
+  const over = (x) =>
+    x.vellora > x.chrome ? ` (${int(x.vellora - x.chrome)} more than Chrome)` : "";
+  const any = (x) =>
+    x &&
+    (x.dashSegments.chrome ||
+      x.dashSegments.vellora ||
+      x.underlines.chrome ||
+      x.underlines.vellora ||
+      x.canvasMismatchPages.length ||
+      x.flags.length);
+  const shown = m.fixtures.filter((f) => any(p.after.fixtures[f.id]) || any(before?.[f.id]));
+  const rest = m.fixtures.length - shown.length;
+  const canvas = (x) =>
+    x.canvasMismatchPages.length ? `pages ${x.canvasMismatchPages.join(", ")}` : "none";
+  const flags = (x) => (x.flags.length ? x.flags.join(", ") : "none");
+  const rows = shown.map((f) => {
+    const a = p.after.fixtures[f.id];
+    const b = before?.[f.id];
+    const cell = (fn) => (b ? `${fn(b)} → ${fn(a)}` : fn(a));
+    return `| ${f.name} (\`${f.id}\`) | ${cell((x) => pair(x.dashSegments))}${over(a.dashSegments)} | ${cell((x) => pair(x.underlines))}${over(a.underlines)} | ${cell(canvas)} | ${cell(flags)} |`;
+  });
+  return [
+    `${p.what}.${before ? ` Each cell reads ${m.before.label} → ${m.after.label}. Both are probed against this run's Chrome PDFs (the published package's PDFs through \`paint-probe.mjs --subject\`; the generator checks that Chrome's side of both probes agrees).` : ""}`,
+    "",
+    "| Fixture | Dashed/dotted border segments, vellora / Chrome | Underlines, vellora / Chrome | Pages whose canvas colour differs from Chrome's | Probe flags |",
+    "|---|---:|---:|---:|---:|",
+    ...rows,
+    "",
+    `${rest ? `The other ${plural(rest, "fixture")} have no dashed borders, underlines or canvas colour in either PDF. ` : ""}A count equal to Chrome's says the segments exist, not that each one sits where Chrome's does. Method: ${p.method}; ${p.tool}.`,
+  ].join("\n");
 }
 
 function wptBlock(m) {
@@ -764,6 +927,11 @@ function envBlock(m) {
     m.gate
       ? `- Gate: \`${m.gate.command}\` → ${m.gate.verdict} (${m.gate.date}).`
       : "- Gate: none supplied.",
+    ...(m.paint
+      ? [
+          `- Paint probe (report-only): \`${m.paint.after.command}\`${m.paint.before ? `; published package: \`${m.paint.before.command}\`` : ""}.`,
+        ]
+      : []),
     `- Page images: \`${m.commands.images ?? "n/a"}\``,
     `- This page: \`${m.commands.regenerate ?? "n/a"}\``,
     `- Raw values: [manifest.json](${MANIFEST_URL}).`,
@@ -781,6 +949,7 @@ export function renderBlocks(m, flavor) {
     table: tableBlock(m),
     losses: lossesBlock(m),
     wpt: wptBlock(m),
+    paint: paintBlock(m),
     gallery: galleryBlock(m, flavor),
     attribution: attributionBlock(m),
     env: envBlock(m),

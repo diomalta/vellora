@@ -66,9 +66,9 @@ The tables are rewritten by the generator, so they cannot drift from it.
 ### Results
 
 <!-- fidelity-evidence:headline -->
-- **7 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
-- **0.61 mm or less** median word-position error on every one of the 9 fixtures (largest: oss-sparksuite-invoice). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
-- **8 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9. Still open: oss-postmark-receipt prints 1 page where Chrome prints 2.
+- **8 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
+- **0.21 mm or less** median word-position error on every one of the 9 fixtures (largest: danfe). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
+- **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
 <!-- /fidelity-evidence:headline -->
 
 <!-- fidelity-evidence:charts -->
@@ -82,24 +82,27 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 
 | Fixture | Chrome words | Median error (mm) | p90 error (mm) | Words within 1 mm | Chrome words unpaired | Pages: 0.2.0 / branch / Chrome |
 |---|---:|---:|---:|---:|---:|---:|
-| Invoice (`invoice`) | 541 | 1.46 → 0.19 | 1.73 → 0.64 | 36.0% → 93.2% | 0 → 0 | 3 / 3 / 3 |
-| Receipt (`receipt`) | 151 | 5.18 → 0.15 | 77.00 → 0.40 | 7.9% → 100.0% | 0 → 0 | 2 / 2 / 2 |
-| Boleto (bank slip) (`boleto`) | 297 | 1.77 → 0.39 | 14.09 → 0.46 | 32.0% → 100.0% | 0 → 0 | 1 / 1 / 1 |
-| Boleto, FEBRABAN layout (`boleto-febraban`) | 315 | 80.70 → 0.07 | 82.32 → 0.30 | 15.6% → 100.0% | 8 → 0 | 1 / 1 / 1 |
-| DANFE (NF-e invoice) (`danfe`) | 630 | 17.68 → 0.26 | 37.17 → 0.46 | 8.9% → 100.0% | 1 → 0 | 2 / 1 / 1 |
-| Notification letter (`notification`) | 248 | 0.41 → 0.17 | 1.02 → 0.25 | 86.7% → 100.0% | 4 → 0 | 1 / 1 / 1 |
-| Long pt-BR text (stress) (`text-stress-ptbr`) | 1,833 | 106.22 → 0.40 | 221.05 → 0.66 | 1.4% → 100.0% | 7 → 0 | 8 / 7 / 7 |
-| Postmark receipt (OSS template) (`oss-postmark-receipt`) | 180 | 0.66 → 0.19 | 18.19 → 0.32 | 40.0% → 75.0% | 39 → 39 | 1 / 1 / 2 (open) |
-| Sparksuite simple invoice (OSS template) (`oss-sparksuite-invoice`) | 46 | 9.87 → 0.61 | 10.95 → 0.62 | 0.0% → 100.0% | 0 → 0 | 1 / 1 / 1 |
+| Invoice (`invoice`) | 541 | 1.46 → 0.10 | 1.73 → 0.28 | 36.0% → 100.0% | 0 → 0 | 3 / 3 / 3 |
+| Receipt (`receipt`) | 151 | 5.18 → 0.05 | 77.00 → 0.11 | 7.9% → 100.0% | 0 → 0 | 2 / 2 / 2 |
+| Boleto (bank slip) (`boleto`) | 297 | 1.77 → 0.12 | 14.09 → 0.20 | 32.0% → 100.0% | 0 → 0 | 1 / 1 / 1 |
+| Boleto, FEBRABAN layout (`boleto-febraban`) | 315 | 80.70 → 0.08 | 82.32 → 0.28 | 15.6% → 100.0% | 8 → 0 | 1 / 1 / 1 |
+| DANFE (NF-e invoice) (`danfe`) | 630 | 17.68 → 0.21 | 37.17 → 0.27 | 8.9% → 100.0% | 1 → 0 | 2 / 1 / 1 |
+| Notification letter (`notification`) | 248 | 0.41 → 0.01 | 1.02 → 0.09 | 86.7% → 100.0% | 4 → 0 | 1 / 1 / 1 |
+| Long pt-BR text (stress) (`text-stress-ptbr`) | 1,833 | 106.22 → 0.02 | 221.05 → 0.27 | 1.4% → 100.0% | 7 → 0 | 8 / 7 / 7 |
+| Postmark receipt (OSS template) (`oss-postmark-receipt`) | 180 | 0.66 → 0.13 | 18.19 → 0.14 | 40.0% → 97.2% | 39 → 2 | 1 / 2 / 2 |
+| Sparksuite simple invoice (OSS template) (`oss-sparksuite-invoice`) | 46 | 9.87 → 0.00 | 10.95 → 0.00 | 0.0% → 100.0% | 0 → 0 | 1 / 1 / 1 |
 <!-- /fidelity-evidence:table -->
 
 ### Losses and open items
 
 <!-- fidelity-evidence:losses -->
-- **invoice: 93.2% of words within 1 mm** (vellora 0.2.0 (published): 36.0%); p90 error 0.64 mm.
-- **oss-postmark-receipt: 1 page, Chrome prints 2.** 39 of Chrome's 180 words have no counterpart in vellora's PDF (vellora 0.2.0 (published): 39). Tracked as table fragmentation across pages (exit-contract condition 3). Not fixed on this branch.
-- **WPT:** 3,769 of 8,047 reftests pass (46.84%); 3,228 (40.11%) pass without any suspect-pass flag. 3,388 still fail and 877 are rejected as outside the strict subset.
-- **Merge gate:** verdict FAIL on this run, with 295 gating items: 127 step-to-step ratchet regressions, 167 further items worse than the published package that the gate cannot classify yet, and 1 page-count item. The branch does not merge until the contract passes.
+- **oss-postmark-receipt: 97.2% of words within 1 mm** (vellora 0.2.0 (published): 40.0%); p90 error 0.14 mm.
+- **WPT:** 4,414 of 8,047 reftests pass (54.85%); 3,883 (48.25%) pass without any suspect-pass flag. 2,745 still fail and 877 are rejected as outside the strict subset.
+- **Merge gate: verdict FAIL** on this run (strict contract, --contract), 6 gating items. The branch does not merge until every condition is met.
+  - (1) pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt): **NOT met**. 6 items worse than the published package that the gate cannot classify yet: `css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html`, `css/css-break/ruby-003.html`, `css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`. Classified: 5 class a, 4 class b.
+  - (2) every fixture's median error and share within 1 mm at least as good as the published package's: **met**.
+  - (3) every fixture's page count equal to Chrome's: **met**.
+  - (4) step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes: **NOT met**. 5 regressions against the previous gated step: `css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html`, `css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`. Head view: FAIL, 4 items (`css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`).
 <!-- /fidelity-evidence:losses -->
 
 ### WPT subset coverage
@@ -114,11 +117,11 @@ WPT reftests passed through the vellora pipeline, printed to PDF and compared wi
 | | Blitz 0.3.0-alpha.5 engine of vellora 0.2.0 (baseline commit with layout instrumentation) | vellora (unreleased branch) (Blitz 0.3.0-beta.4, crates.io) | Chrome/155.0.8059.85 through the same harness |
 |---|---:|---:|---:|
 | Reftests | 8,047 | 8,047 | 8,046 |
-| Pass | 2,578 (32.04%) | 3,769 (46.84%) | 7,258 (90.21%) |
-| Pass without suspect-pass flags | 1,988 (24.70%) | 3,228 (40.11%) | 7,258 (90.21%) |
+| Pass | 2,578 (32.04%) | 4,414 (54.85%) | 7,258 (90.21%) |
+| Pass without suspect-pass flags | 1,988 (24.70%) | 3,883 (48.25%) | 7,258 (90.21%) |
 | Unsupported (rejected by the strict subset) | 869 | 877 | 0 |
 
-Commits: 2c66544 (2026-10-21T05:41:54Z), 4b7bcd8 (2026-10-27T23:39:13Z); WPT `9d8aceec`. Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from). The 0.2.0 column was measured on a baseline commit that adds layout instrumentation to the 0.2.0 engine; its render-path equivalence to the tag is not separately verified.
+Commits: 2c66544 (2026-10-21T05:41:54Z), 16fa504 (2026-10-28T06:25:27Z); WPT `9d8aceec`. Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from). The 0.2.0 column was measured on a baseline commit that adds layout instrumentation to the 0.2.0 engine; its render-path equivalence to the tag is not separately verified.
 <!-- /fidelity-evidence:wpt -->
 
 ### Page by page
@@ -182,13 +185,14 @@ The document data is synthetic.
 - Status: **DRAFT** (gate report verdict FAIL: the strict merge contract is not met yet). INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available.
 - Reference: Google Chrome for Testing 155.0.8059.85, headless print-to-PDF (fidelity/lib/chrome-reference.mjs).
 - Before: vellora 0.2.0 (published), tag `v0.2.0`, commit `5810062`, Blitz 0.3.0-alpha.5 line, git 2003ba5. Scored 2026-10-27T22:36:58.971Z.
-- After: vellora (unreleased branch) `phasec/02-tip`, commit `4b7bcd8`, Blitz 0.3.0-beta.4, crates.io. Run `20261027T233913Z` (2026-10-27T23:39:13Z).
+- After: vellora (unreleased branch) `phasec/05-tip`, commit `16fa504`, Blitz 0.3.0-beta.4, crates.io. Run `20261028T062527Z` (2026-10-28T06:25:27Z).
 - Environment: darwin 27.0.0 arm64 (macOS 27.0.1), Apple M5 Pro, Node v22.23.2, rustc 1.96.0 (ac68faa20 2026-05-25), PyMuPDF 1.28.2, pdftoppm version 26.06.0.
 - Word positions: fidelity/oracles/py/words.py (PyMuPDF rawdict: pen origin x, baseline y); pairing: k-th occurrence of a text key in reading order (page, baseline, x) ↔ k-th in Chrome's; quantiles: nearest rank over paired words (ceil(q*n)-th smallest).
-- Run command: `node fidelity/run-all.mjs --gate --main --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/c02-tip`
-- Gate: `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8 --debt fidelity/baselines/port/DEBT.json --step 11-collapse-comp --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/gate-contract` → FAIL (2026-10-27T23:49:25.169Z).
+- Run command: `node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --step 14-phase-c-05-tip --out fidelity/results/run-all/c05-tip`
+- Gate: `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --debt fidelity/baselines/port/DEBT.json --step 14-phase-c-05-tip --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract` → FAIL (2026-10-28T06:36:08.682Z).
+- Paint probe (report-only): `node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c05-tip --label run-all`; published package: `node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c05/paint-probe-pin-v0.2.0.json`.
 - Page images: `node fidelity/report/visual-compare.mjs --run <RUN> --pin-pdfs <doc-aggregate-pin.mjs --pdf-out dir> --out <compare dir> (pdftoppm -r 55), composed by fidelity/report/py/compose.py`
-- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/visual-compare-c02/out --run ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8 --gate ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/gate-contract/gate-report.json --pin-key pin --new-key c02 --update-docs`
+- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c05/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --gate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c05 --update-docs`
 - Raw values: [manifest.json](https://github.com/diomalta/vellora/blob/main/docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:env -->
 

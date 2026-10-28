@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 248" width="760" height="248" role="img" aria-labelledby="wpt-t wpt-d">
 <title id="wpt-t">WPT reftests passed (coverage of the CSS test subset, not a quality score)</title>
-<desc id="wpt-d">Bar chart. vellora 0.2.0 · Blitz 0.3.0-alpha.5: 32.04%, 2578 of 8047; unreleased branch · Blitz 0.3.0-beta.4: 46.84%, 3769 of 8047; Chrome for Testing 155 (reference): 90.21%, 7258 of 8046.</desc>
+<desc id="wpt-d">Bar chart. vellora 0.2.0 · Blitz 0.3.0-alpha.5: 32.04%, 2578 of 8047; unreleased branch · Blitz 0.3.0-beta.4: 54.85%, 4414 of 8047; Chrome for Testing 155 (reference): 90.21%, 7258 of 8046.</desc>
 <style>
   text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   .num{font-variant-numeric:tabular-nums}
@@ -35,10 +35,10 @@
   <text class="t2 num" x="407.324" y="92" font-size="12">32.04% (2,578 / 8,047)</text>
 </g>
 <g>
-  <title>unreleased branch · Blitz 0.3.0-beta.4: 3,769 of 8,047 reftests pass (46.84%)</title>
+  <title>unreleased branch · Blitz 0.3.0-beta.4: 4,414 of 8,047 reftests pass (54.85%)</title>
   <text class="t1" x="288" y="132" font-size="12" text-anchor="end">unreleased branch · Blitz 0.3.0-beta.4</text>
-  <path class="afterFill" d="M300,116 h141.204 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-141.204 z"/>
-  <text class="t2 num" x="453.204" y="132" font-size="12">46.84% (3,769 / 8,047)</text>
+  <path class="afterFill" d="M300,116 h166.035 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-166.035 z"/>
+  <text class="t2 num" x="478.03499999999997" y="132" font-size="12">54.85% (4,414 / 8,047)</text>
 </g>
 <g>
   <title>Chrome for Testing 155 (reference): 7,258 of 8,046 reftests pass (90.21%)</title>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 422" width="760" height="422" role="img" aria-labelledby="within-1mm-t within-1mm-d">
 <title id="within-1mm-t">Share of words within 1 mm of Chrome's position, per fixture (higher is better)</title>
-<desc id="within-1mm-d">Dumbbell chart, 0 to 100 percent. Invoice: 36.0% to 93.2%; Receipt: 7.9% to 100.0%; Boleto (bank slip): 32.0% to 100.0%; Boleto, FEBRABAN layout: 15.6% to 100.0%; DANFE (NF-e invoice): 8.9% to 100.0%; Notification letter: 86.7% to 100.0%; Long pt-BR text (stress): 1.4% to 100.0%; Postmark receipt (OSS template): 40.0% to 75.0%; Sparksuite simple invoice (OSS template): 0.0% to 100.0%.</desc>
+<desc id="within-1mm-d">Dumbbell chart, 0 to 100 percent. Invoice: 36.0% to 100.0%; Receipt: 7.9% to 100.0%; Boleto (bank slip): 32.0% to 100.0%; Boleto, FEBRABAN layout: 15.6% to 100.0%; DANFE (NF-e invoice): 8.9% to 100.0%; Notification letter: 86.7% to 100.0%; Long pt-BR text (stress): 1.4% to 100.0%; Postmark receipt (OSS template): 40.0% to 97.2%; Sparksuite simple invoice (OSS template): 0.0% to 100.0%.</desc>
 <style>
   text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   .num{font-variant-numeric:tabular-nums}
@@ -35,12 +35,12 @@
 <text class="t2" x="594" y="92" font-size="11" text-anchor="end">Chrome for Testing 155.0.8059.85 = 100% (reference)</text>
 <text class="mu" x="614" y="92" font-size="11">before → after</text>
 <g>
-  <title>Invoice: vellora 0.2.0 (published) 36.0%, vellora (unreleased branch) 93.2%</title>
+  <title>Invoice: vellora 0.2.0 (published) 36.0%, vellora (unreleased branch) 100.0%</title>
   <text class="t1" x="188" y="115" font-size="12" text-anchor="end">Invoice</text>
-  <line class="link" x1="344" y1="111" x2="572.8" y2="111" stroke-width="2"/>
+  <line class="link" x1="344" y1="111" x2="600" y2="111" stroke-width="2"/>
   <circle class="before" cx="344" cy="111" r="5" stroke-width="2"/>
-  <circle class="after" cx="572.8" cy="111" r="5" stroke-width="2"/>
-  <text class="t2 num" x="614" y="115" font-size="12">36.0% → 93.2%</text>
+  <circle class="after" cx="600" cy="111" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="115" font-size="12">36.0% → 100.0%</text>
 </g>
 <g>
   <title>Receipt: vellora 0.2.0 (published) 7.9%, vellora (unreleased branch) 100.0%</title>
@@ -91,12 +91,12 @@
   <text class="t2 num" x="614" y="295" font-size="12">1.4% → 100.0%</text>
 </g>
 <g>
-  <title>Postmark receipt (OSS template): vellora 0.2.0 (published) 40.0%, vellora (unreleased branch) 75.0%</title>
+  <title>Postmark receipt (OSS template): vellora 0.2.0 (published) 40.0%, vellora (unreleased branch) 97.2%</title>
   <text class="t1" x="188" y="325" font-size="12" text-anchor="end">Postmark receipt (OSS)</text>
-  <line class="link" x1="360" y1="321" x2="500" y2="321" stroke-width="2"/>
+  <line class="link" x1="360" y1="321" x2="588.8" y2="321" stroke-width="2"/>
   <circle class="before" cx="360" cy="321" r="5" stroke-width="2"/>
-  <circle class="after" cx="500" cy="321" r="5" stroke-width="2"/>
-  <text class="t2 num" x="614" y="325" font-size="12">40.0% → 75.0%</text>
+  <circle class="after" cx="588.8" cy="321" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="325" font-size="12">40.0% → 97.2%</text>
 </g>
 <g>
   <title>Sparksuite simple invoice (OSS template): vellora 0.2.0 (published) 0.0%, vellora (unreleased branch) 100.0%</title>

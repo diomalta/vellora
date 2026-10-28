@@ -8,6 +8,9 @@
 //     --run <run-all dir>                     summary.json (env, command, WPT totals), wpt/summary.json,
 //                                             doc-aggregate/summary.json (cross-checked)
 //     [--gate <gate-report.json[.gz]>]        status is DRAFT unless its verdict is PASS
+//     [--paint <paint-probe summary.json>]   default <run>/paint-probe/summary.json (report-only)
+//     [--paint-before <paint-probe json>]    the published package's PDFs probed against the
+//                                             run's Chrome PDFs (paint-probe.mjs --subject)
 //     [--pin-key pin] [--new-key c02]
 //     [--pin-doc fidelity/baselines/pin/doc-aggregate.json]
 //     [--wpt-before fidelity/baselines/pin/wpt/by-directory.json]
@@ -159,6 +162,8 @@ function main() {
       },
       out: { type: "string", default: DEFAULT_OUT },
       og: { type: "string", default: join(REPO_ROOT, "docs/public/fidelity/og.jpg") },
+      paint: { type: "string" },
+      "paint-before": { type: "string" },
       python: { type: "string" },
       "update-docs": { type: "boolean", default: false },
       check: { type: "boolean", default: false },
@@ -188,6 +193,12 @@ function main() {
   const wptRun = existsSync(wptRunPath) ? readJson(wptRunPath) : null;
   const wptBefore = readJson(a["wpt-before"]);
   const gate = a.gate ? readJson(a.gate) : null;
+  // Report-only paint probe: the run's own step, and optionally the published package's PDFs
+  // probed against the same Chrome PDFs (paint-probe.mjs --run <run> --subject <pin pdfs>).
+  const paintPath = a.paint ?? join(a.run, "paint-probe", "summary.json");
+  const paint = existsSync(paintPath) ? readJson(paintPath) : null;
+  const paintBefore = a["paint-before"] ? readJson(a["paint-before"]) : null;
+  if (paintBefore && !paint) throw new Error("--paint-before needs the run's paint probe");
 
   // The numbers must be the committed oracle's: metrics.json against the pin reference and the
   // run's own doc-aggregate summary.
@@ -208,9 +219,11 @@ function main() {
     wptBefore: fileEntry(a["wpt-before"]),
     ...(wptRun ? { wptRun: fileEntry(wptRunPath) } : {}),
     ...(gate ? { gate: fileEntry(a.gate) } : {}),
+    ...(paint ? { paint: fileEntry(paintPath) } : {}),
+    ...(paintBefore ? { paintBefore: fileEntry(a["paint-before"]) } : {}),
   };
   const regenerate = portable(
-    `node fidelity/report/build-site-evidence.mjs --compare ${resolve(a.compare)} --run ${resolve(a.run)}${a.gate ? ` --gate ${resolve(a.gate)}` : ""} --pin-key ${a["pin-key"]} --new-key ${a["new-key"]} --update-docs`,
+    `node fidelity/report/build-site-evidence.mjs --compare ${resolve(a.compare)} --run ${resolve(a.run)}${a.gate ? ` --gate ${resolve(a.gate)}` : ""}${a.paint ? ` --paint ${resolve(a.paint)}` : ""}${paintBefore ? ` --paint-before ${resolve(a["paint-before"])}` : ""} --pin-key ${a["pin-key"]} --new-key ${a["new-key"]} --update-docs`,
     REPO_ROOT,
   );
   const commands = {
@@ -231,6 +244,8 @@ function main() {
     wptRun,
     wptBefore,
     gate,
+    paint,
+    paintBefore,
     files,
     commands,
   });
@@ -250,7 +265,17 @@ function main() {
   for (const [name, svg] of Object.entries(renderCharts(manifest))) {
     writeFileSync(join(a.out, name), svg);
   }
-  writeFileSync(join(a.out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  const manifestPath = join(a.out, "manifest.json");
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  // The repo's formatter (npm run lint runs `biome check`) packs short arrays onto one line.
+  const biome = join(REPO_ROOT, "node_modules", ".bin", "biome");
+  if (existsSync(biome)) {
+    const f = spawnSync(biome, ["format", "--write", relative(REPO_ROOT, manifestPath)], {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+    });
+    if (f.status !== 0) throw new Error(`biome format ${manifestPath}:\n${f.stderr}`);
+  }
   if (a["update-docs"]) updateDocs(manifest);
   console.log(
     `${manifest.status}: ${images.length} composites, 3 charts, manifest.json -> ${relative(REPO_ROOT, a.out)}${a["update-docs"] ? "; docs updated" : ""}`,

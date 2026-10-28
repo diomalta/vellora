@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 import { pagesToShow } from "../build-site-evidence.mjs";
 import {
   DOC_FILES,
@@ -16,6 +17,9 @@ import {
   checkDocs,
   crossCheck,
   evidenceStatus,
+  gateConditions,
+  paintSection,
+  renderBlocks,
   renderCharts,
 } from "../lib/evidence.mjs";
 
@@ -41,7 +45,7 @@ const m = (over = {}) => ({
   ...over,
 });
 
-function synthetic(gate) {
+function synthetic(gate, extra = {}) {
   const metrics = Object.fromEntries(
     FIXTURES.map((f, i) => [
       f.id,
@@ -60,11 +64,35 @@ function synthetic(gate) {
       environment: {
         os: "darwin 27.0.0 arm64",
         chrome: { version: "Google Chrome for Testing 1" },
+        git: { head: "e".repeat(40), branch: "b" },
       },
-      wpt: { velloraCommit: "c".repeat(40), totals: { reftests: 10, pass: 5, passRate: 50 } },
+      wpt: {
+        velloraCommit: "c".repeat(40),
+        totals: {
+          reftests: 10,
+          pass: 5,
+          passRate: 50,
+          passClean: 4,
+          passRateClean: 40,
+          fail: 4,
+          unsupported: 1,
+        },
+      },
     },
-    wptBefore: { velloraCommit: "d".repeat(40), totals: { reftests: 10, pass: 3, passRate: 30 } },
+    wptBefore: {
+      velloraCommit: "d".repeat(40),
+      totals: {
+        reftests: 10,
+        pass: 3,
+        passRate: 30,
+        passClean: 2,
+        passRateClean: 20,
+        fail: 6,
+        unsupported: 1,
+      },
+    },
     gate,
+    ...extra,
   });
 }
 
@@ -98,7 +126,7 @@ test("crossCheck reports any metric that differs from the oracle output", () => 
 
 test("the committed manifest carries the committed oracle's numbers, before and after", () => {
   const pin = json("fidelity/baselines/pin/doc-aggregate.json");
-  const after = json("fidelity/gate/snapshots/2026-10-27/c02/doc-aggregate-c02-tip.json");
+  const after = json("fidelity/gate/snapshots/2026-10-28/c05/doc-aggregate-c05-tip.json");
   for (const f of manifest.fixtures) {
     for (const [k, v] of Object.entries(f.before))
       assert.equal(v, pin.fixtures[f.id][k], `${f.id}.before.${k}`);
@@ -204,4 +232,114 @@ test("pagesToShow: page 1, plus every page that not all three PDFs have", () => 
   assert.deepEqual(pagesToShow({ pages: 2 }, { pages: 1 }, 1), [1, 2]);
   assert.deepEqual(pagesToShow({ pages: 1 }, { pages: 1 }, 2), [1, 2]);
   assert.deepEqual(pagesToShow({ pages: 8 }, { pages: 7 }, 7), [1, 8]);
+});
+
+const gateReport = (over = {}) => ({
+  verdict: "FAIL",
+  contract: true,
+  counts: { gating: 3, regression: 2, "pin-c": 1, pinA: 4, pinB: 5, pinC: 1, headGating: 1 },
+  items: [
+    { key: "wpt|t/a.html", class: "regression", gating: true },
+    { key: "wpt|t/b.html", class: "regression", gating: true },
+    { key: "pin|wpt|t/c.html", class: "pin-c", gating: true },
+    { key: "wpt|t/d.html", class: "improvement", gating: false },
+  ],
+  pin: {
+    counts: { a: 4, b: 5, c: 1 },
+    items: [
+      { key: "wpt|t/c.html", class: "pin-regression", pinClass: "c" },
+      { key: "wpt|t/e.html", class: "accepted", pinClass: "a" },
+    ],
+  },
+  head: { verdict: "FAIL", items: [{ key: "wpt|t/a.html", gating: true }] },
+  docAggregate: { condition2: "PASS", condition3: "PASS" },
+  ...over,
+});
+
+test("gate conditions: a count key the gate omits (zero) reads as 0, never undefined", () => {
+  const g = synthetic(gateReport()).gate;
+  assert.equal(g.counts.contractPages, 0);
+  assert.equal(g.counts.contractPagesFailing, 0);
+  assert.equal(g.counts.docRegressions, 0);
+  const losses = renderBlocks(synthetic(gateReport()), "vitepress").losses;
+  assert.doesNotMatch(losses, /undefined|NaN/);
+});
+
+test("gate conditions: met/not met per condition, with the ids that hold it open", () => {
+  const [c1, c2, c3, c4] = gateConditions(gateReport());
+  assert.equal(c1.met, false);
+  assert.deepEqual(c1.items, ["wpt|t/c.html"]);
+  assert.equal(c2.met, true);
+  assert.equal(c3.met, true);
+  assert.equal(c4.met, false);
+  assert.deepEqual(c4.items, ["wpt|t/a.html", "wpt|t/b.html"]);
+  assert.equal(c4.head.verdict, "FAIL");
+  const losses = renderBlocks(synthetic(gateReport()), "vitepress").losses;
+  assert.match(losses, /\(1\) [^\n]*\*\*NOT met\*\*[^\n]*`t\/c\.html`/);
+  assert.match(losses, /\(3\) [^\n]*\*\*met\*\*/);
+  assert.match(
+    losses,
+    /\(4\) [^\n]*2 regressions[^\n]*`t\/a\.html`, `t\/b\.html`[^\n]*Head view: FAIL/,
+  );
+  const clean = gateConditions(
+    gateReport({
+      counts: { gating: 0 },
+      items: [],
+      pin: { counts: { c: 0 }, items: [] },
+      head: { verdict: "PASS", items: [] },
+    }),
+  );
+  assert.ok(clean.every((c) => c.met));
+});
+
+test("the paint block shows before → after against Chrome and marks an over-count", () => {
+  const fx = (dash, ul, canvas = [], flags = []) => ({
+    pages: 1,
+    chromePages: 1,
+    dashSegments: dash,
+    underlines: ul,
+    canvasMismatchPages: canvas,
+    flags,
+  });
+  const zero = { chrome: 0, vellora: 0 };
+  const probe = (map) => ({
+    command: "node fidelity/oracles/paint-probe.mjs --run R",
+    tool: "pymupdf 1",
+    method: { facts: "paint.py" },
+    fixtures: Object.fromEntries(FIXTURES.map((f) => [f.id, map[f.id] ?? fx(zero, zero)])),
+  });
+  const after = probe({
+    danfe: fx({ chrome: 10, vellora: 12 }, zero),
+    receipt: fx(zero, { chrome: 2, vellora: 2 }),
+  });
+  const before = probe({
+    danfe: fx({ chrome: 10, vellora: 0 }, zero, [], ["dashes-missing"]),
+    receipt: fx(zero, { chrome: 2, vellora: 0 }, [1], ["canvas", "underlines-missing"]),
+  });
+  assert.equal(paintSection(after, before).reportOnly, true);
+  const block = renderBlocks(
+    synthetic(null, { paint: after, paintBefore: before }),
+    "vitepress",
+  ).paint;
+  assert.match(block, /`danfe`\) \| 0 \/ 10 → 12 \/ 10 \(2 more than Chrome\)/);
+  assert.match(block, /`receipt`\) [^\n]*0 \/ 2 → 2 \/ 2 [^\n]*pages 1 → none/);
+  assert.match(block, /The other 7 fixtures/);
+  assert.match(block, /Report-only/);
+  // Before and after must be probed against the same Chrome PDFs.
+  const other = probe({ danfe: fx({ chrome: 11, vellora: 0 }, zero) });
+  assert.throws(() => paintSection(after, other), /different Chrome PDFs/);
+});
+
+test("the committed manifest's gate and paint numbers are the committed snapshots'", () => {
+  const gz = readFileSync(
+    join(REPO, "fidelity/gate/snapshots/2026-10-28/c05/gate-report-c05-tip-contract.json.gz"),
+  );
+  const g = JSON.parse(gunzipSync(gz).toString("utf8"));
+  assert.equal(manifest.gate.verdict, g.verdict);
+  for (const k of ["gating", "pinA", "pinB", "pinC", "regression", "headGating"])
+    assert.equal(manifest.gate.counts[k], g.counts[k] ?? 0, k);
+  assert.deepEqual(manifest.gate.conditions, gateConditions(g));
+  const paint = json("fidelity/gate/snapshots/2026-10-28/c05/paint-probe-c05-tip.json");
+  const before = json("fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json");
+  assert.deepEqual(manifest.paint, paintSection(paint, before));
 });

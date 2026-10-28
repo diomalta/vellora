@@ -105,13 +105,13 @@ not released.
 
 ![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Synthetic document data.](./docs/assets/fidelity/danfe-p1.jpg)
 
-<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.26 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
 
 Measured against Chrome for Testing 155.0.8059.85 headless print-to-PDF on 9 document fixtures, comparing the position of every word in each PDF:
 
-- **7 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
-- **0.61 mm or less** median word-position error on every one of the 9 fixtures (largest: oss-sparksuite-invoice). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
-- **8 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9. Still open: oss-postmark-receipt prints 1 page where Chrome prints 2.
+- **8 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
+- **0.21 mm or less** median word-position error on every one of the 9 fixtures (largest: danfe). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
+- **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
 
 Method, the full table with the losses, and how to reproduce it: [Measured fidelity](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity). Raw values: [manifest.json](./docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:readme -->
