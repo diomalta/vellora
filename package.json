@@ -13,7 +13,7 @@
     "test": "npm run test:rust && npm run test:ts",
     "test:rust": "cargo test",
     "test:ts": "vitest run",
-    "lint": "npm run lint:rust && npm run lint:ts",
+    "lint": "npm run lint:rust && npm run lint:ts && npm run compat:check",
     "lint:rust": "cargo clippy --all-targets -- -D warnings && cargo fmt --check",
     "lint:ts": "biome check .",
     "supply-chain:install-scripts": "node scripts/check-install-scripts.mjs",

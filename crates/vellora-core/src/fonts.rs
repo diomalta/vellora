@@ -6,15 +6,15 @@
 //! any system library or font requirement (no `libfontconfig`), so it runs on
 //! slim / Alpine (musl) / Lambda images out of the box. Custom user-supplied
 //! fonts (the planned `fonts` option) will register into this same context;
-//! host/system fonts are intentionally never consulted for anything vellora
-//! draws. One exception reads them without drawing with them: Blitz's own usvg
-//! parse of an inline `<svg>` (blitz-dom 0.3.0-beta.4 `util.rs` `FONT_DB`, the
-//! `svg` feature) loads the host font list once per process for Blitz's SVG tree,
-//! which vellora never paints (it paints from its own parse, `crate::svg`, with
-//! these bundled faces) and whose size it does not use for a `viewBox`-less SVG
-//! of `auto` size, the case where that size depends on text
-//! (`blitz_engine::size_svgs_like_chrome`, which also lists the percentage case
-//! it does not cover).
+//! host/system fonts are intentionally never consulted, neither for anything
+//! vellora draws nor for layout. Inline `<svg>` included: Blitz's own usvg parse
+//! of an `<svg>` (blitz-dom 0.3.0-beta.4 `util.rs` `FONT_DB`, the `svg` feature)
+//! would load the host font list and size a `viewBox`-less SVG from its text, so
+//! the render path never lets it run (`blitz_engine::hide_svgs_from_blitz`: Blitz
+//! gets a content-free, font-free size-only tree) and vellora paints the SVG from
+//! its own parse (`crate::svg`) with these bundled faces and the caller's fonts.
+//! Only the raw-Blitz render (fidelity tooling, never the render path) keeps
+//! Blitz's parse.
 
 use parley::fontique::{Blob, Collection, CollectionOptions, FamilyId, GenericFamily, SourceCache};
 use parley::FontContext;

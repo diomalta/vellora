@@ -61,7 +61,7 @@ Run from the repo root. Node 22 (`.nvmrc`), Rust pinned to 1.96.0 (`rust-toolcha
 | All tests (Rust + TS) | `npm test` |
 | Rust tests only | `npm run test:rust` (`cargo test`) |
 | TS tests only | `npm run test:ts` (`vitest run`) |
-| Lint (clippy `-D warnings` + `cargo fmt --check` + `biome check`) | `npm run lint` |
+| Lint (clippy `-D warnings` + `cargo fmt --check` + `biome check` + `compat:check`, COMPATIBILITY.md == its generator) | `npm run lint` |
 | Format (biome + `cargo fmt`) | `npm run format` |
 | Remove all build output | `npm run clean` |
 

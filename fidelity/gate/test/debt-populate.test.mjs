@@ -153,23 +153,27 @@ test("introducedBy is the first link that has the key; grouping by fixture, owne
   );
 });
 
-// The committed ledger (Phase C 06 tip shrink, step 15-phase-c-06-tip, run 20261028T084519Z):
-// 2 entries / 5 WPT keys, every key still debt in the c06 contract re-gate, and rule iii clean
-// against the frozen base DEBT-BASE.json names. Until the 2026-10-28 prune this file also checked
-// the 10-integration ledger (27 / 1026, D7 against its head report), the c03 rebuild (15 / 187)
-// and every shrink c03 -> c04 -> c05 -> c06 against the frozen 10-integration ledger; those
-// ledgers and reports were removed with their snapshots, so the checks were deleted (they live at
-// the local tag fidelity-archive-2026-10-28, b5c9546).
-test("the committed ledger (c06 tip shrink): 2 entries / 5 keys, every key debt in the c06 contract re-gate, rule iii vs its frozen base", () => {
+// The committed ledger (Phase C 07 tip shrink, step 16-phase-c-07-tip, run 20261028T110750Z):
+// 1 entry / 1 WPT key (flex-fragmented-with-float-descendant-001, an ink-flagged pass, still a head
+// debt item), the 4 keys the pin-b fixes made pass with a clean head comparison closed as fixed,
+// and rule iii clean against the frozen base DEBT-BASE.json names. Until the 2026-10-28 prune this
+// file also checked the 10-integration ledger (27 / 1026, D7 against its head report), the c03
+// rebuild (15 / 187), every shrink c03 -> c04 -> c05 -> c06 against the frozen 10-integration
+// ledger and the c07 shrink against the frozen c06 ledger; those ledgers and reports were removed
+// with their snapshots, so the checks were deleted (they live at the git tag
+// fidelity-archive-2026-10-28, b5c9546, and on branch docs/fidelity-results-c07).
+test("the committed ledger (c07 tip shrink): 1 entry / 1 key, 4 keys closed as fixed, every key debt in the c07 contract re-gate, rule iii vs its frozen base", () => {
   const ledger = loadDebt(DEBT_FILE);
   const pointer = JSON.parse(readFileSync(join(BASELINES, "port", "DEBT-BASE.json"), "utf8"));
   const base = loadDebt(resolve(here, "..", "..", "..", pointer.ledger));
   assert.deepEqual(ledgerProblems(ledger), []);
   assert.deepEqual(
-    ledger.entries.map((e) => [e.id, e.keys.length]),
+    ledger.entries.map((e) => [e.id, e.keys.map((k) => k.key)]),
     [
-      ["DEBT-10-wpt-1", 4],
-      ["DEBT-10-wpt-2", 1],
+      [
+        "DEBT-10-wpt-1",
+        ["wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"],
+      ],
     ],
   );
   // closed[] is append-only from the base and every closure is a fixed or vanished record.
@@ -185,24 +189,41 @@ test("the committed ledger (c06 tip shrink): 2 entries / 5 keys, every key debt 
           "..",
           "snapshots",
           "2026-10-28",
-          "c06",
-          "gate-report-c06-tip-contract.json.gz",
+          "c07",
+          "gate-report-c07-tip-contract.json.gz",
         ),
       ),
     ).toString(),
   );
-  assert.equal(report.step, "15-phase-c-06-tip");
+  assert.equal(report.step, "16-phase-c-07-tip");
   assert.equal(report.verdict, "PASS");
+  assert.equal(report.counts.pinC, 0);
+  assert.equal(report.counts.pinB, 1);
   const head = new Map(report.head.items.map((i) => [i.key, i]));
   for (const e of ledger.entries) {
     for (const k of e.keys) assert.equal(head.get(k.key)?.class, "debt", k.key);
   }
+  const added = ledger.closed.filter((c) => c.step === "16-phase-c-07-tip");
+  assert.deepEqual(
+    added.map((c) => [c.id, c.key, c.headComparison.class]),
+    [
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/floats/floats-placement-vertical-003.xht", "none"],
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/floats/floats-placement-vertical-004.xht", "none"],
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html", "none"],
+      ["DEBT-10-wpt-2", "wpt|css/CSS2/floats/zero-width-floats.html", "none"],
+    ],
+  );
+  for (const c of added) {
+    assert.equal(c.fixed, true, c.key);
+    assert.equal(c.runId, "20261028T110750Z", c.key);
+    assert.equal(head.get(c.key)?.gating ?? false, false, c.key);
+  }
   assert.match(
     ledger.note,
-    /Phase C 06 tip .*\(step 15-phase-c-06-tip\) from run 20261028T084519Z/,
+    /Phase C 07 tip .*\(step 16-phase-c-07-tip\) from run 20261028T110750Z/,
   );
   assert.deepEqual(
-    transitionProblems(base, ledger, { step: "15-phase-c-06-tip", headItems: head }),
+    transitionProblems(base, ledger, { step: "16-phase-c-07-tip", headItems: head }),
     [],
   );
 });

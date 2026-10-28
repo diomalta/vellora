@@ -161,6 +161,22 @@ const ids = (items, pred) =>
   [...new Set((items ?? []).filter(pred).map((i) => itemId(i.key)))].sort();
 
 /**
+ * How each pin class-b item ends on the branch, from the gate item itself: `after` and
+ * `rawOutcome` as the gate records them, and `flag`, the suspect-pass flag of a pass the gate
+ * scores as worse than a clean pass (read from the item's detail, "pass[<flag>]"; null when the
+ * detail names none). A class-b item can still fail, or pass with such a flag.
+ */
+function classBOutcomes(items) {
+  const out = {};
+  for (const i of items ?? []) {
+    if (i.pinClass !== "b") continue;
+    const flag = i.after === "pass" ? (/pass\[([^\]]+)\]/.exec(i.detail ?? "")?.[1] ?? null) : null;
+    out[itemId(i.key)] = { after: i.after ?? null, rawOutcome: i.rawOutcome ?? null, flag };
+  }
+  return out;
+}
+
+/**
  * The strict exit contract's four conditions, read from a gate report (fidelity/gate/run.mjs
  * --contract). `met` is derived only from the report's own counts and verdicts; `items` lists
  * the ids that hold a condition open (ids only, no measured values).
@@ -175,13 +191,14 @@ export function gateConditions(gate) {
   return [
     {
       id: 1,
-      what: "pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt)",
+      what: "pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: carried in the debt ledger)",
       met: pinC === 0,
       count: pinC,
       items: ids(gate.pin?.items, (i) => i.pinClass === "c"),
       // What the condition lets through, shown as losses even when it is met.
       classA: ids(gate.pin?.items, (i) => i.pinClass === "a"),
       classB: ids(gate.pin?.items, (i) => i.pinClass === "b"),
+      classBOutcomes: classBOutcomes(gate.pin?.items),
       declared: ids(gate.pin?.items, (i) => i.pinClass === "declared"),
     },
     {
@@ -831,9 +848,21 @@ function gateLines(g) {
         : ` ${plural(c.count, "item")} worse than the published package that the gate cannot classify yet${c.items.length ? `: ${testIds(c.items)}` : ""}.`;
       const a = c.classA ?? [];
       const b = c.classB ?? [];
+      const outcome = (id) => c.classBOutcomes?.[id] ?? {};
+      const bPass = b.filter((id) => outcome(id).after === "pass");
+      const bFail = b.filter((id) => outcome(id).after !== "pass");
+      const flaggedPass = (id) => {
+        const o = outcome(id);
+        const flag = o.flag ? `flag \`${o.flag}\`` : "flagged";
+        const raw = o.rawOutcome ? `; raw Blitz: ${o.rawOutcome}` : "";
+        return `${testIds([id])} (${flag}${raw})`;
+      };
+      const classB = b.length
+        ? ` Class b (recorded in the debt ledger, not fixed):${bFail.length ? ` fail on the branch: ${testIds(bFail)}.` : ""}${bPass.length ? ` pass on the branch with a suspect-pass flag, which the gate scores as worse than the published package's clean pass: ${bPass.map(flaggedPass).join(", ")}.` : ""}`
+        : "";
       const classified =
         a.length || b.length
-          ? ` Passed with the published engine and fail on the branch: ${plural(a.length + b.length, "WPT test")}.${a.length ? ` Class a (the old pass was false, or Chrome fails it too): ${testIds(a)}.` : ""}${b.length ? ` Class b (raw Blitz fails it the same way; recorded in the debt ledger, not fixed): ${testIds(b)}.` : ""}`
+          ? ` Passed with the published engine and not matched on the branch: ${plural(a.length + b.length, "WPT test")}.${a.length ? ` Class a (the old pass was false, or Chrome fails it too): ${testIds(a)}.` : ""}${classB}`
           : ` Classified: ${int(g.counts.pinA)} class a, ${int(g.counts.pinB)} class b.`;
       const declared = c.declared?.length
         ? ` ${plural(c.declared.length, "test")} that failed before ${c.declared.length === 1 ? "is" : "are"} now rejected by the strict subset.`
