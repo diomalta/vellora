@@ -5,6 +5,14 @@ Branch `phasec/07-tip` from `phasec/06-verify` b81811a. Local macOS (darwin 27.0
 `vellora-fidelity-tools:baseline-beta4` (c405e06c), veraPDF image 45b2f7cd, WPT 9d8aceec, Blitz
 crates.io 0.3.0-beta.4. Every number here is INDICATIVE.
 
+> **Pruned paths.** After this step the keep-latest prune (`fidelity/scripts/prune-evidence.mjs`)
+> removed `../c07-pin-b/README.md`, `../c06/` (incl. `DEBT-c06-tip.json`, the base of the ledger
+> check below) and `port/10-integration`; they are at the git tag `fidelity-archive-2026-10-28-c07`
+> (commit `99b05156e0ea7c69d7ec9b8f80bd9f2797170c9a`). `c03/scripts/shrink-ledger.mjs` is now
+> `fidelity/gate/shrink-ledger.mjs`, and `c06-svg/scripts/cmp-fixtures.py` is at the tag
+> `fidelity-archive-2026-10-28`. The `c07-pin-b/...` paths other than its README, and `c07-tip/...`,
+> are in the run store, not in the tree. The text below is the record as written.
+
 The branch records stay where their workers wrote them: `../c07-pin-b/README.md` (in this tree)
 and the run stores `~/Repositories/vellora-fidelity-runs/c07-pin-b/` and `.../c07-svgfonts/`. This
 step's tools and logs: `~/Repositories/vellora-fidelity-runs/c07-tip/`.

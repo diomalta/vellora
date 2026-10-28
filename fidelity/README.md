@@ -159,6 +159,11 @@ this tree: everything is at the git tag **`fidelity-archive-2026-10-28`**, commi
 **`b5c95460eebedcc86a6dce3c0e262a940b0a8c27`** (`git show fidelity-archive-2026-10-28:<path>`,
 or `git archive fidelity-archive-2026-10-28 fidelity | tar -x -C <dir>`).
 
+The Phase C 07 prune (after `port/12-phase-c-final` and the c07 snapshot were committed) removed
+`port/10-integration` and the snapshots `2026-10-28/c06/`, `c06-docs/` and `c07-pin-b/`. They are
+at the git tag **`fidelity-archive-2026-10-28-c07`**, commit
+**`99b05156e0ea7c69d7ec9b8f80bd9f2797170c9a`**.
+
 ## Canaries
 
 `oracles/run-fixtures.mjs` runs 42 canary rows on every invocation; `summary.json canaryCounts`

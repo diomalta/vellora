@@ -6,15 +6,20 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 
 > **Pruned evidence (2026-10-28).** This tree keeps only what the gate reads going forward and what
 > the published claims cite (`node fidelity/scripts/prune-evidence.mjs --keep-latest`, rule in its
-> header): `pin/`, `port/00-start` (chain head), the latest link `port/11-phase-c` and the link it
-> was gated against, `port/10-integration`, this directory's files, `baselines/wpt/blitz-0.3.0-beta.4.json`
-> and the snapshot `gate/snapshots/2026-10-28/c06/` that holds the `DEBT-BASE.json` ledger. The
+> header): `pin/`, `port/00-start` (chain head), the latest link `port/12-phase-c-final` and the
+> link it was gated against, `port/11-phase-c`, this directory's files, `baselines/wpt/blitz-0.3.0-beta.4.json`,
+> the snapshot `gate/snapshots/2026-10-28/c07/` that holds the `DEBT-BASE.json` ledger, and the
+> snapshot files the docs cite (`c07-docs/paint-probe-pin-v0.2.0.json`, `linux-arm64/`). The
 > links `01-pagination-gaps` … `09-review-fixes`, `beta4/`, `beta4-gated/`, every other dated
 > snapshot (including `2026-10-27/10-final/DEBT-10-integration.json`, the previous rule-iii base),
 > the layout-diff / combine snapshots, oracle reports and upstream drafts that the sections below
 > (and `DEBT.json`'s evidence strings) cite are **not in this tree**: they are at the git tag
 > `fidelity-archive-2026-10-28`, commit `b5c95460eebedcc86a6dce3c0e262a940b0a8c27`
-> (`git show fidelity-archive-2026-10-28:<path>`). The sections are kept verbatim as the record.
+> (`git show fidelity-archive-2026-10-28:<path>`). The Phase C 07 prune then removed `port/10-integration`
+> and the snapshots `2026-10-28/c06/` (the previous rule-iii base `c06/DEBT-c06-tip.json`, the c06
+> `accepted.json` and reports), `c06-docs/` and `c07-pin-b/`; they are at the git tag
+> `fidelity-archive-2026-10-28-c07`, commit `99b05156e0ea7c69d7ec9b8f80bd9f2797170c9a` (10-integration
+> and c06 also at the first tag). The sections are kept verbatim as the record.
 
 ## Chain convention
 

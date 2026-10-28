@@ -6,7 +6,8 @@
 // Without --apply it only lists what the rule keeps and what it would delete (dry run). With
 // --apply it deletes the files from the working tree (stage with `git add -A fidelity`). Pruned
 // evidence stays recoverable from git history; the 2026-10-28 prune left the full tree at the
-// local tag `fidelity-archive-2026-10-28` (b5c95460eebedcc86a6dce3c0e262a940b0a8c27).
+// tag `fidelity-archive-2026-10-28` (b5c95460eebedcc86a6dce3c0e262a940b0a8c27), the Phase C 07
+// prune at `fidelity-archive-2026-10-28-c07` (99b05156e0ea7c69d7ec9b8f80bd9f2797170c9a).
 //
 // What the gate needs going forward, and what a third party needs to re-check the published
 // claims (docs/assets/fidelity/manifest.json), is KEPT:

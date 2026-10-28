@@ -10,6 +10,10 @@ by up to 0.123 pt, and it draws the `@page` margin-box footer in a different fal
 committed pdf-probe and doc-aggregate baseline was measured with macOS Chrome, so the gate refuses
 the comparison as designed.
 
+`fidelity/gate/snapshots/2026-10-28/c06/accepted.json` (the `--accept` file below) was pruned from
+the tree after Phase C 07; it is at the git tag `fidelity-archive-2026-10-28` (b5c9546), the
+source this run was built from.
+
 ## Environment
 
 | | value |
