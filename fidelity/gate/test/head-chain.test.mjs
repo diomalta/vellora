@@ -69,10 +69,11 @@ test("the committed DEBT.json is a debt/2 ledger (first population 2026-10-27); 
   const l = loadDebt(DEBT_FILE);
   assert.equal(l.schema, "vellora-fidelity/debt/2");
   assert.equal(l.migratedFrom, undefined);
-  // 10 entries / 180 keys since Phase C 02 (shrunk from 27 / 1026 of step 10-integration, frozen in
+  // 2 entries / 11 keys since Phase C 03 (Phase C 02: 10 / 180, frozen in
+  // snapshots/2026-10-27/c02/DEBT-c02.json; step 10-integration: 27 / 1026, frozen in
   // snapshots/2026-10-27/10-final/DEBT-10-integration.json; gate/test/debt-populate.test.mjs checks
-  // both).
-  assert.equal(l.entries.length, 10);
+  // all three).
+  assert.equal(l.entries.length, 2);
   assert.equal(loadDebt(LEDGER_10).entries.length, 27);
   assert.deepEqual(r.ledger.problems, []);
 });

@@ -44,6 +44,9 @@ const LEDGER_10 = resolve(
   "DEBT-10-integration.json",
 );
 const SNAP_C02 = resolve(here, "..", "snapshots", "2026-10-27", "c02");
+// The c02 shrink, frozen when Phase C 03 shrank DEBT.json again.
+const LEDGER_C02 = join(SNAP_C02, "DEBT-c02.json");
+const SNAP_C03 = resolve(here, "..", "snapshots", "2026-10-27", "c03");
 const BASELINES = resolve(here, "..", "..", "baselines");
 
 // The boleto barcode digit of the 10-tip run (layer-vector geometry mapping): N0 28.531 px, P -3.
@@ -165,8 +168,8 @@ test("the 10-integration ledger: 27 entries, 1026 keys, every key passes D7 agai
 // Phase C 02 (2026-10-27): DEBT.json shrunk from run 20261027T231548Z (snapshots/2026-10-27/c02):
 // 10 entries, 180 keys, each a key the 10-integration ledger covered, no ceiling above its old one,
 // every removed key recorded in closed[]; every key passes D7 against the c02 no-ledger re-gate.
-test("the committed ledger (c02 shrink): 10 entries, 180 keys, D7 against the c02 head report, only shrunk", () => {
-  const ledger = loadDebt(DEBT_FILE);
+test("the c02 ledger (frozen): 10 entries, 180 keys, D7 against the c02 head report, only shrunk", () => {
+  const ledger = loadDebt(LEDGER_C02);
   const old = loadDebt(LEDGER_10);
   assert.equal(ledger.entries.length, 10);
   assert.deepEqual(ledgerProblems(ledger), []);
@@ -195,6 +198,40 @@ test("the committed ledger (c02 shrink): 10 entries, 180 keys, D7 against the c0
     if (!kept.has(key)) assert.ok(closed.has(key), `${key}: removed without a closed[] record`);
   }
   assert.equal(ledger.closed.length, 855);
+});
+
+// Phase C 03 (2026-10-27): DEBT.json shrunk from run 20261028T004705Z (snapshots/2026-10-27/c03):
+// 2 entries, 11 keys (danfe dx), each a key the c02 ledger had, no ceiling above its old one,
+// every removed key (169) recorded in closed[]; every key passes D7 against the c03 no-ledger
+// re-gate.
+test("the committed ledger (c03 shrink): 2 entries, 11 keys, D7 against the c03 head report, only shrunk", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const old = loadDebt(LEDGER_C02);
+  assert.equal(ledger.entries.length, 2);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  const report = JSON.parse(
+    gunzipSync(readFileSync(join(SNAP_C03, "gate-report-c03-nodebt.json.gz"))).toString(),
+  );
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  const oldKeys = new Map(old.entries.flatMap((e) => e.keys.map((k) => [k.key, k])));
+  const kept = new Set();
+  for (const e of ledger.entries) {
+    assert.deepEqual(entryProblems(e), [], e.id);
+    assert.deepEqual(relaxedB(e), [], e.id);
+    for (const k of e.keys) {
+      kept.add(k.key);
+      assert.deepEqual(d7KeyProblems(e, k, head.get(k.key)), [], k.key);
+      const o = oldKeys.get(k.key);
+      assert.ok(o, `${k.key}: not in the c02 ledger`);
+      if (typeof o.ceiling === "number") assert.ok(k.ceiling <= o.ceiling + 1e-9, k.key);
+    }
+  }
+  assert.equal(kept.size, 11);
+  const closed = new Set(ledger.closed.map((c) => c.key));
+  for (const key of oldKeys.keys()) {
+    if (!kept.has(key)) assert.ok(closed.has(key), `${key}: removed without a closed[] record`);
+  }
+  assert.equal(ledger.closed.length, 855 + 169);
 });
 
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {

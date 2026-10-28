@@ -55,4 +55,54 @@ Probe suite: page counts and pairs unchanged on all 37 probes, median |dy| 0.15 
 vs 10-integration 0 clean passes lost, 17 flagged, 77 improvements). DET-1: 9 fixtures x 4
 renders (3 concurrent + 1) byte-identical.
 
-Gated run and item-by-item classes: see the section below (added after the run).
+## The gated run (one), 8a7c686
+
+`node fidelity/run-all.mjs --gate --main --raw --chrome <CfT 155.0.8059.85> --baseline
+fidelity/baselines/port/10-integration --chrome-from <10-tip copy>/wpt/results.json --tools-image
+vellora-fidelity-tools:baseline-beta4 --out fidelity/results/run-all/c03-lu`: runId
+20261028T004705Z, exit 3, 0 steps errored, oracle canaries 35/35. Durable copy:
+`~/Repositories/vellora-fidelity-runs/run-all-c03-lu-20261028T004705Z-blitz-0.3.0-beta.4-vellora-8a7c686`.
+
+Its own gate (`gate-report-c03-run.json.gz`) carries the 9e06be6 ledger, whose `measured` values
+are the c02 run's: 169 GATE-D7 problems (the expected stale-ledger failure). Post-hoc, no re-render:
+
+1. `gate/run.mjs ... --debt <empty ledger> --step 12-layoutunit --contract` ->
+   `gate-report-c03-nodebt.json.gz`: vs 10-integration **0 regressions**; head 22 = 8 WPT + 11
+   danfe dx + 3 postmark artefacts; pin (c) 98.
+2. Ledger shrink (only shrink): every DEBT key that is no longer a head-gating item is removed with
+   a `closed[]` record (169), the rest keep their entry with `measured` = the run's value and a
+   ceiling never raised: 10 entries / 180 keys -> **2 entries / 11 keys** (danfe dx). The c02
+   ledger is frozen in `../c02/DEBT-c02.json`. Rule iii tension (unchanged from c02, needs the
+   user's decision): `debt.mjs check --base ../c02/DEBT-c02.json` lists the 169 removals as
+   "removed before its closesAt"; against the configured base (main, no ledger) 0 problems.
+3. `gate/run.mjs ... --step 12-layoutunit --accept ../../2026-10-22/10-spark/accepted.json
+   --contract` -> `gate-report-c03-contract.{json.gz,md}` (the shrunk ledger, the 3 class-a
+   postmark acceptances of step 10): gating 88 = pin (c) 87 + contract pages 1; vs 10-integration
+   0 regressions (improvement 2362, within-tolerance 527, 17 flagged WPT passes lost, reported);
+   head: head-regression 8, debt 11, accepted 3; ledger no problem; gate canaries 29/29.
+
+### Exit contract
+
+| condition | c02-tip | c03 |
+|---|---|---|
+| (1) pin `--main` (c) = 0 | 193 | **87**: invoice dx 37 (b-provable 35, none 2: p2/p3 `QTD.`), WPT 32 (b-provable 26, b 5, none 1), sparksuite dx 16 (c), danfe dx 2 (b-provable) |
+| (2) doc aggregate >= pin | MET 9/9 | MET 9/9 (`doc-aggregate-c03.json`; text-stress median 0.40 -> 0.08 mm) |
+| (3) pages == Chrome | 8/9 | 8/9 (oss-postmark-receipt 1 vs 2) |
+| (4) previous-link ratchets | 127 + 88 head | **0** vs 10-integration; head 8 (WPT: 7 fail the same way in raw Blitz, GATE-A3 b; `monolithic-overflow-014-print` does not) |
+
+Every pin (c) item left is horizontal (dx) or WPT: no dy item remains.
+
+### The 127 and the 88, item by item (`c02-items-by-class.json`)
+
+The 127 previous-link regressions (all text-stress-ptbr dy, c02 +1.1 / +1.85 / +1.03 pt) now:
+109 at 0 pt, 17 at -0.75 pt, 1 at +0.75 pt; gate class improvement 110, within-tolerance 5, no
+item (equal to the 10-integration value within 1e-9) 12; none gates. Cause class: LayoutUnit row
+pitch (all) + whole-px baselines (all) + the June `<tbody>` page move (the p4-p6 words, through
+the 12 px row slack once the rows were right).
+
+The 88 head items: text-stress 50, receipt 14, invoice 13 -> all |dy| <= 1 pt (0 or -0.75), no
+head item; postmark 3 -> accepted (class a of step 10, `10-spark/accepted.json`); WPT 8 -> still
+fail, raw Blitz fails the same way (`rawOutcome` fail at this commit): `floats-153`,
+`floats-placement-vertical-003/-004`, `zero-width-floats`, `baseline-block-with-overflow-001`,
+`inline-formatting-context-001`, `flex-fragmented-with-float-descendant-001`,
+`monolithic-overflow-014-print` (raw page counts [4,1] vs product [2,2]: not the same failure).
