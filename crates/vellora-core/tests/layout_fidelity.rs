@@ -24,7 +24,7 @@ fn lay_out_for_render(html: &str) -> (blitz_engine::LaidOutDoc, page_css::PageBo
     let laid = blitz_engine::validate_then_lay_out(
         html,
         vellora_core::validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,
@@ -1507,7 +1507,9 @@ fn party_block_table_stays_inside_page_content_box() {
 
     let (laid, pb) = lay_out_for_render(html);
     let paginated = pagination::paginate(&laid, &pb);
-    let content_right = pb.width - pb.margin_right;
+    // Chrome's content box: whole-px origin + whole-px layout width (`PageBox::content_origin`,
+    // `layout_content_width`; Phase C step 03), 68 + 658 = 726 px for 18 mm margins.
+    let content_right = pb.content_origin(false).0 + pb.layout_content_width();
     let border_right = paginated.pages[0]
         .rects
         .iter()

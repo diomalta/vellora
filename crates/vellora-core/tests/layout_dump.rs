@@ -35,7 +35,7 @@ fn final_layer_is_exactly_what_render_lays_out() {
     let laid_out = blitz_engine::validate_then_lay_out(
         INVOICE,
         validation::denied_elements(),
-        page_box.content_width(),
+        page_box.layout_content_width(),
         page_box.content_height(),
         &Default::default(),
         None,
@@ -59,7 +59,10 @@ fn final_layer_is_exactly_what_render_lays_out() {
     }
     assert!(dump.layer_order_violations.is_empty());
     assert!(dump.run_meta_mismatches.is_empty());
-    assert_eq!(dump.viewport_width_px, page_box.content_width() as u32);
+    assert_eq!(
+        dump.viewport_width_px,
+        page_box.layout_content_width() as u32
+    );
 }
 
 #[test]
@@ -369,7 +372,7 @@ fn pagination_trace_is_consistent_with_paginate() {
     let laid_out = blitz_engine::validate_then_lay_out(
         INVOICE,
         validation::denied_elements(),
-        page_box.content_width(),
+        page_box.layout_content_width(),
         page_box.content_height(),
         &Default::default(),
         None,
@@ -418,11 +421,12 @@ fn pagination_trace_is_consistent_with_paginate() {
             groups.push((h.node_ids.clone(), p.placed_top - h.height - h.top));
         }
         for (ids, offset) in groups {
-            let dy = offset + page_box.margin_top;
+            let (origin_x, origin_y) = page_box.content_origin(false);
+            let dy = offset + origin_y;
             for id in &ids {
                 for run in &boxes[id].text_runs {
                     let y = run.origin_y + dy;
-                    let x = run.origin_x + page_box.margin_left;
+                    let x = run.origin_x + origin_x;
                     assert!(
                         page.text_runs.iter().any(|r| (r.origin_y - y).abs() < 1e-6
                             && (r.origin_x - x).abs() < 1e-6
@@ -492,7 +496,7 @@ fn tracing_pagination_does_not_change_the_pages() {
     let laid_out = blitz_engine::validate_then_lay_out(
         INVOICE,
         validation::denied_elements(),
-        page_box.content_width(),
+        page_box.layout_content_width(),
         page_box.content_height(),
         &Default::default(),
         None,

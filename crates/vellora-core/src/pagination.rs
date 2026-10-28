@@ -602,8 +602,10 @@ pub fn paginate_traced(
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
         let page = &page_boxes[i];
+        // Chromium's whole-px content origin (`PageBox::content_origin`).
+        let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
         let (rects, rounded_strokes, images, text_runs) =
-            lower_to_display_list(slice, page.margin_left, page.margin_top);
+            lower_to_display_list(slice, origin_x, origin_y);
 
         // Keep `report.footers` in lock-step with what is actually emitted: a
         // footer string is only recorded when its `MarginText` was produced.
@@ -752,7 +754,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     let mut pages = Vec::with_capacity(total);
     for (i, l) in lists.into_iter().enumerate() {
         let page = geometry.page(i).clone();
-        let (ml, mt) = (page.margin_left, page.margin_top);
+        let (ml, mt) = page.content_origin(geometry.rtl);
         let rects = l
             .rects
             .into_iter()

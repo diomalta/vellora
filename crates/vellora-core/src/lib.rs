@@ -276,7 +276,9 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     let laid_out = blitz_engine::validate_then_lay_out_observed(
         html,
         validation::denied_elements(),
-        page_box.content_width(),
+        // Chromium's print layout width (whole px, rounded up), not the exact content box:
+        // `PageBox::layout_content_width` (Phase C step 03).
+        page_box.layout_content_width(),
         page_box.content_height(),
         &opts.images,
         opts.base_url.as_deref(),

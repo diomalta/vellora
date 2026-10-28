@@ -5,8 +5,9 @@
 //! resizes with it, so its right-aligned text ends where Chrome's does.
 //!
 //! Expected numbers: Chrome 155.0.8059.85 (local macOS, INDICATIVE; 2026-10-22), the fidelity
-//! reference setup (print media, bundled faces), at the 657 px viewport vellora hands Blitz for
-//! A4 minus 2 x 18 mm: cell boxes and the text's `Range.getClientRects()`. Probe and raw numbers:
+//! reference setup (print media, bundled faces), at the 657 px viewport vellora handed Blitz for
+//! A4 minus 2 x 18 mm until Phase C step 03 (now 658 px, Chrome's print width; see
+//! `assert_like_chrome`): cell boxes and the text's `Range.getClientRects()`. Probe and raw numbers:
 //! `fidelity/gate/snapshots/2026-10-22/10-spark/chrome-pct-cells.{mjs,json}`.
 
 use vellora_core::{blitz_engine, page_css};
@@ -30,7 +31,7 @@ fn lay_out(html: &str) -> blitz_engine::LaidOutDoc {
     blitz_engine::validate_then_lay_out(
         html,
         vellora_core::validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,
@@ -57,9 +58,12 @@ fn run_span(doc: &blitz_engine::LaidOutDoc, text: &str) -> (f64, f64) {
 
 fn assert_like_chrome(html: &str) {
     let doc = lay_out(html);
-    // Chrome: the 80% cell is 8..520.797 and the 20% cell 520.797..649 in both rows; "Total"
-    // ends at 520.797, "$81.00" and "$9.00" at 649, "Item" starts at 8.
-    for (text, right) in [("Total", 520.797), ("$81.00", 649.0), ("$9.00", 649.0)] {
+    // Chrome: the 80% cell is 8..521.6 and the 20% cell 521.6..650 in both rows; "Total"
+    // ends at 521.6, "$81.00" and "$9.00" at 650, "Item" starts at 8. Phase C step 03: Chrome's
+    // print PDF (155.0.8059.85, 68 px origin) has "Total" ending at 589.59, "$81.00" at 717.99,
+    // "Item" starting at 76.0, i.e. the 658 px layout width (`PageBox::layout_content_width`);
+    // the former 520.797 / 649 were a DOM at the 657 px viewport vellora then used.
+    for (text, right) in [("Total", 521.6), ("$81.00", 650.0), ("$9.00", 650.0)] {
         let got = run_span(&doc, text).1;
         assert!(
             (got - right).abs() <= 0.6,

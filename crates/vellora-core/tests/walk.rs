@@ -25,6 +25,11 @@
 //!
 //! Probe HTML and raw numbers:
 //! `fidelity/baselines/port/05-walk-rewrite/attachments/chrome-probes-walk.json`.
+//!
+//! Block widths: 642 px since Phase C step 03 (641 was measured in a DOM laid out at the 657 px
+//! viewport vellora then handed Blitz). Chrome 155.0.8059.85's print lays A4 minus 2 x 18 mm out at
+//! ceil(657.64) = 658 px from a 68 px origin: a full-width block's painted rect is 76..718 px in
+//! its PDF (`PageBox::layout_content_width`, `content_origin`).
 
 use vellora_core::{blitz_engine, page_css, pagination};
 
@@ -42,7 +47,7 @@ fn lay_out(html: &str) -> blitz_engine::LaidOutDoc {
     blitz_engine::validate_then_lay_out(
         html,
         vellora_core::validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,
@@ -168,8 +173,8 @@ fn abspos_against_the_initial_containing_block_and_z_index_reach_the_page() {
     for (color, (x, y)) in [([0, 0, 255], (200.0, 100.0)), ([255, 0, 0], (300.0, 10.0))] {
         assert!(
             pages[0].rects.iter().any(|r| r.color == color
-                && near(r.x, x + pb.margin_left, 0.01)
-                && near(r.y, y + pb.margin_top, 0.01)),
+                && near(r.x, x + pb.content_origin(false).0, 0.01)
+                && near(r.y, y + pb.content_origin(false).1, 0.01)),
             "{color:?} box not on the page at ({x}, {y}) + margins"
         );
     }
@@ -204,7 +209,7 @@ fn text_next_to_a_block_child_is_read_from_the_anonymous_blocks() {
     assert_run_at(&doc, "bold", (59.578, 95.0));
     let anon = owner(&doc, "leading text");
     assert_eq!(anon.tag, None, "an anonymous block box is not an element");
-    assert_box(anon, (8.0, 8.0, 641.0, 20.0), "anonymous block");
+    assert_box(anon, (8.0, 8.0, 642.0, 20.0), "anonymous block");
 }
 
 /// The body's own text after a block child (an anonymous block of the body)
@@ -218,10 +223,8 @@ fn the_bodys_own_text_is_drawn() {
     let pb = page_css::parse_page_box(&html);
     let pages = pagination::paginate(&doc, &pb).pages;
     assert!(
-        pages[0]
-            .text_runs
-            .iter()
-            .any(|r| run_text(r) == "body text" && near(r.origin_y, 43.0 + pb.margin_top, 0.5)),
+        pages[0].text_runs.iter().any(|r| run_text(r) == "body text"
+            && near(r.origin_y, 43.0 + pb.content_origin(false).1, 0.5)),
         "the body's own text reaches page 1"
     );
 }
@@ -254,16 +257,16 @@ fn a_body_that_is_an_inline_root_reaches_the_page() {
     for (text, (x, y)) in [("only inline", (8.0, 23.0)), ("text", (83.609, 23.0))] {
         assert!(
             pages[0].text_runs.iter().any(|r| run_text(r) == text
-                && near(r.origin_x, x + pb.margin_left, 0.5)
-                && near(r.origin_y, y + pb.margin_top, 0.5)),
+                && near(r.origin_x, x + pb.content_origin(false).0, 0.5)
+                && near(r.origin_y, y + pb.content_origin(false).1, 0.5)),
             "{text:?} not on page 1 at Chrome's position"
         );
     }
     for (color, (x, y)) in [([0, 170, 0], (116.516, 13.0)), ([0, 0, 255], (100.0, 60.0))] {
         assert!(
             pages[0].rects.iter().any(|r| r.color == color
-                && near(r.x, x + pb.margin_left, 0.5)
-                && near(r.y, y + pb.margin_top, 0.5)),
+                && near(r.x, x + pb.content_origin(false).0, 0.5)
+                && near(r.y, y + pb.content_origin(false).1, 0.5)),
             "{color:?} box not on page 1 at ({x}, {y}) + margins"
         );
     }
@@ -271,7 +274,7 @@ fn a_body_that_is_an_inline_root_reaches_the_page() {
 
 /// A block `::before` is a box of its own (an `AnonymousBlock` node in Blitz)
 /// with its background and its generated text. Chrome's print PDF: "BEFORE" at
-/// 8 / 23 and "inner block" at 8 / 43; the `::before` box is 8, 8, 641 x 20
+/// 8 / 23 and "inner block" at 8 / 43; the `::before` box is 8, 8, 642 x 20
 /// (`#mix` starts at 8 and `#inner` at 28).
 #[test]
 fn a_block_before_pseudo_element_is_drawn() {
@@ -284,7 +287,7 @@ fn a_block_before_pseudo_element_is_drawn() {
     assert_run_at(&doc, "next", (8.0, 63.0));
     let pseudo = owner(&doc, "BEFORE");
     assert_eq!(pseudo.tag, None);
-    assert_box(pseudo, (8.0, 8.0, 641.0, 20.0), "::before");
+    assert_box(pseudo, (8.0, 8.0, 642.0, 20.0), "::before");
     assert!(pseudo.visual_rects.iter().any(|r| r.color == [255, 255, 0]));
 }
 
