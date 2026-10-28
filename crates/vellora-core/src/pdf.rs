@@ -169,19 +169,28 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             draw_rounded_stroke(&mut surface, s);
         }
 
-        // Each run with its `text-decoration` lines: underlines and overlines under the
-        // glyphs, line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
+        // The runs' `text-decoration` lines: underlines and overlines under the glyphs,
+        // line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
+        let runs = || {
+            page.text_runs
+                .iter()
+                .chain(page.margin_texts.iter().flat_map(|mt| mt.runs.iter()))
+        };
+        for r in decoration_rects(runs(), false) {
+            draw_rect(&mut surface, &r);
+        }
+
         for run in &page.text_runs {
-            draw_decorations(&mut surface, run, false);
             draw_text_run(&mut surface, run, &mut font_cache)?;
-            draw_decorations(&mut surface, run, true);
         }
 
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
         for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
-            draw_decorations(&mut surface, run, false);
             draw_text_run(&mut surface, run, &mut font_cache)?;
-            draw_decorations(&mut surface, run, true);
+        }
+
+        for r in decoration_rects(runs(), true) {
+            draw_rect(&mut surface, &r);
         }
 
         surface.finish();
@@ -402,23 +411,40 @@ fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Op
     pb.finish()
 }
 
-/// A run's `text-decoration` lines ([`TextRun::decorations`]) with `over_text` as given, as
-/// filled rects relative to the run's origin.
-fn draw_decorations(surface: &mut krilla::surface::Surface, run: &TextRun, over_text: bool) {
-    for d in run.decorations.iter().filter(|d| d.over_text == over_text) {
-        if d.width > 0.0 && d.height > 0.0 {
-            draw_rect(
-                surface,
-                &FilledRect {
-                    x: run.origin_x + d.x,
-                    y: run.origin_y + d.top,
-                    width: d.width,
-                    height: d.height,
-                    color: d.color,
-                },
-            );
+/// The `text-decoration` lines ([`TextRun::decorations`]) of `runs` with `over_text` as given,
+/// as page rects, in run order. A line continued by the next run of the same line (same colour,
+/// top and height, the next starting within 0.5 px of its end) is one rect: two abutting rects
+/// leave an anti-aliasing seam between them in a rasterizer.
+fn decoration_rects<'a>(
+    runs: impl Iterator<Item = &'a TextRun>,
+    over_text: bool,
+) -> Vec<FilledRect> {
+    let mut out: Vec<FilledRect> = Vec::new();
+    for run in runs {
+        for d in run.decorations.iter().filter(|d| d.over_text == over_text) {
+            if !(d.width > 0.0 && d.height > 0.0) {
+                continue;
+            }
+            let rect = FilledRect {
+                x: run.origin_x + d.x,
+                y: run.origin_y + d.top,
+                width: d.width,
+                height: d.height,
+                color: d.color,
+            };
+            if let Some(prev) = out.last_mut().filter(|p| {
+                p.color == rect.color
+                    && (p.y - rect.y).abs() < 1e-6
+                    && (p.height - rect.height).abs() < 1e-6
+                    && (rect.x - (p.x + p.width)).abs() <= 0.5
+            }) {
+                prev.width = rect.x + rect.width - prev.x;
+                continue;
+            }
+            out.push(rect);
         }
     }
+    out
 }
 
 fn draw_text_run(

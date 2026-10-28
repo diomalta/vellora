@@ -243,6 +243,10 @@ pub struct LaidOutDoc {
     /// else the HTML `<body>`'s (CSS Backgrounds 3 §2.11.2). Pagination fills every page's page
     /// area with it; the element it came from paints no background of its own.
     pub canvas_background: Option<[u8; 3]>,
+    /// Whether the root element generates a box. A `display: none` root prints blank pages:
+    /// no canvas and no `@page` background either (Chrome 155, WPT
+    /// css/css-page/root-element-display-none-print.html, `@page { background: hotpink }`).
+    pub root_rendered: bool,
 }
 
 /// The page context of a laid-out document (CSS Paged Media 3: "The page context inherits from
@@ -2158,6 +2162,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         unresolved_image,
         page_context: page_context_of(base, font_ctx),
         canvas_background: canvas.map(|(_, color)| color),
+        root_rendered: root_rendered(base),
     }
 }
 
@@ -2696,7 +2701,17 @@ fn colspan(node: &blitz_dom::Node) -> usize {
 /// `#F2F4F6`, A4, `@page { margin: 10mm }`, two pages) fills x 38..756 / y 38..1085 px of both
 /// pages and leaves the margins white; with `html { background: #9cf }` too, the page area is
 /// `#9cf` and the body box paints its own `#ccc` (Phase C step 04).
+/// Whether the root element generates a box (its `display` is not `none`).
+fn root_rendered(base: &BaseDocument) -> bool {
+    base.root_element()
+        .primary_styles()
+        .is_some_and(|s| !s.clone_display().is_none())
+}
+
 fn canvas_background(base: &BaseDocument) -> Option<(NodeId, [u8; 3])> {
+    if !root_rendered(base) {
+        return None;
+    }
     fn own_background(node: &blitz_dom::Node) -> Option<[u8; 3]> {
         let styles = node.primary_styles()?;
         let color = styles
@@ -3291,7 +3306,8 @@ fn read_text_runs(
                 continue;
             }
             let ascent_em = f64::from(run.font_metrics().ascent) / f64::from(font_size.max(1e-3));
-            let decorations = run_decorations(base, style.brush.id, ascent_em, &glyphs);
+            let root_shift = f64::from(glyph_run.baseline() - line_metrics.baseline);
+            let decorations = run_decorations(base, style.brush.id, ascent_em, root_shift, &glyphs);
 
             runs.push(TextRun {
                 text: source.clone(),
@@ -3324,10 +3340,19 @@ fn read_text_runs(
 /// decorating box's font size, `text-decoration-color` and thickness; `ascent_em` is the run's
 /// first-font ascent per em, scaled to the decorating box's font size. Every line covers the
 /// run's advance (`glyphs`).
+///
+/// A line sits on its DECORATING box's baseline, which `vertical-align` on descendants does not
+/// move (CSS 2.2 §16.3.1; WPT css/CSS2/text/text-decoration-va-length-001/002): a block-level
+/// decorating box's baseline is the line's root baseline (`root_shift` = run baseline - line
+/// baseline, px, down); an inline one's is the run's baseline moved back by the length
+/// `vertical-align` of the boxes between the run and it ([`baseline_raise`]), or, when one of those
+/// is a keyword, the root baseline moved by the decorating box's own chain up to the block; when
+/// neither chain is all lengths, the run's baseline.
 fn run_decorations(
     base: &BaseDocument,
     brush: NodeId,
     ascent_em: f64,
+    root_shift: f64,
     glyphs: &[Glyph],
 ) -> Vec<TextDecoration> {
     use crate::text_decoration::{geometry, Kind};
@@ -3355,12 +3380,45 @@ fn run_decorations(
     if width <= 0.0 {
         return Vec::new();
     }
+    let is_inline = |n: &blitz_dom::Node| {
+        use style::values::specified::box_::DisplayOutside;
+        n.primary_styles()
+            .is_some_and(|s| s.clone_display().outside() == DisplayOutside::Inline)
+    };
+    // The raise (px, up) of every inline box from `from` up to (not including) the first that
+    // is `stop` or block-level; `None` if one of them is not a plain length.
+    let chain_raise = |from: &blitz_dom::Node, stop: Option<NodeId>| -> Option<f64> {
+        let mut raise = 0.0;
+        let mut cur = Some(from);
+        while let Some(c) = cur {
+            if Some(c.id) == stop || !is_inline(c) {
+                break;
+            }
+            raise += c
+                .primary_styles()
+                .map_or(Some(0.0), |s| baseline_raise(&s))?;
+            cur = parent(c);
+        }
+        Some(raise)
+    };
     let mut out = Vec::new();
     let mut node = Some(start);
     while let Some(n) = node {
         let Some(styles) = n.primary_styles() else {
             node = parent(n);
             continue;
+        };
+        // Where this box's baseline is, relative to the run's (px, down).
+        let baseline = if n.id == start.id {
+            0.0
+        } else if !is_inline(n) {
+            -root_shift
+        } else if let Some(raise) = chain_raise(start, Some(n.id)) {
+            raise
+        } else if let Some(raise) = chain_raise(n, None) {
+            -root_shift - raise
+        } else {
+            0.0
         };
         let text = styles.get_text();
         let lines = text.text_decoration_line;
@@ -3387,7 +3445,7 @@ fn run_decorations(
                     out.push(TextDecoration {
                         x: 0.0,
                         width,
-                        top,
+                        top: baseline + top,
                         height,
                         color,
                         over_text: line == Kind::LineThrough,
@@ -3410,6 +3468,34 @@ fn run_decorations(
         node = parent(n);
     }
     out
+}
+
+/// How far `vertical-align` raises a box's baseline above its parent's (px, up): `baseline`
+/// alignment with a length (or percentage of the box's `line-height`, as blitz-dom 0.3.0-beta.4
+/// `stylo_to_parley::vertical_align` resolves it) shift; `None` for a keyword shift (`sub`,
+/// `super`, `top`, ...) or another alignment, whose amount Parley decides.
+fn baseline_raise(styles: &style::properties::ComputedValues) -> Option<f64> {
+    use style::values::computed::{AlignmentBaseline, BaselineShift};
+    let b = styles.get_box();
+    if !matches!(b.clone_alignment_baseline(), AlignmentBaseline::Baseline) {
+        return None;
+    }
+    match b.clone_baseline_shift() {
+        BaselineShift::Length(lp) => {
+            let font = styles.get_font();
+            let font_size = font.font_size.used_size.0.px();
+            let line_height = match font.line_height {
+                style::values::computed::font::LineHeight::Normal => font_size * 1.2,
+                style::values::computed::font::LineHeight::Number(n) => font_size * n.0,
+                style::values::computed::font::LineHeight::Length(v) => v.0.px(),
+            };
+            Some(f64::from(
+                lp.resolve(style::values::computed::Length::new(line_height))
+                    .px(),
+            ))
+        }
+        _ => None,
+    }
 }
 
 /// Shortens the decorations of a line's last run by the advance of the white space it ends

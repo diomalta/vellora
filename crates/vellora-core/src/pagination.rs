@@ -657,7 +657,7 @@ pub fn paginate_traced(
         let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
         let (mut rects, rounded_strokes, images, text_runs) =
             lower_to_display_list(slice, origin_x, origin_y);
-        paint_canvas(&mut rects, page, doc.canvas_background);
+        paint_canvas(&mut rects, page, doc);
 
         // Keep `report.footers` in lock-step with what is actually emitted: a
         // footer string is only recorded when its `MarginText` was produced.
@@ -816,7 +816,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 ..r
             })
             .collect();
-        paint_canvas(&mut rects, &page, doc.canvas_background);
+        paint_canvas(&mut rects, &page, doc);
         let rounded_strokes = l
             .strokes
             .into_iter()
@@ -2281,23 +2281,35 @@ fn lower_to_display_list(
 /// Puts the canvas background ([`LaidOutDoc::canvas_background`], CSS Backgrounds 3 §2.11.2)
 /// under everything else of a page: one rect over the page's page area
 /// ([`PageBox::page_area`]), on every page, as Chrome 155's print path paints it.
-fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, canvas: Option<[u8; 3]>) {
-    let Some(color) = canvas else {
+///
+/// Under it, the page's own `@page` background ([`PageBox::background`]) over the whole page box.
+/// Neither when the root element generates no box ([`LaidOutDoc::root_rendered`]).
+fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, doc: &LaidOutDoc) {
+    if !doc.root_rendered {
         return;
-    };
-    let (x0, y0, x1, y1) = page.page_area();
-    if x1 > x0 && y1 > y0 {
-        rects.insert(
-            0,
-            FilledRect {
-                x: x0,
-                y: y0,
-                width: x1 - x0,
-                height: y1 - y0,
-                color,
-            },
-        );
     }
+    let canvas = doc.canvas_background;
+    let mut under = Vec::new();
+    if let Some(color) = page.background {
+        under.push(FilledRect {
+            x: 0.0,
+            y: 0.0,
+            width: page.width,
+            height: page.height,
+            color,
+        });
+    }
+    let (x0, y0, x1, y1) = page.page_area();
+    if let Some(color) = canvas.filter(|_| x1 > x0 && y1 > y0) {
+        under.push(FilledRect {
+            x: x0,
+            y: y0,
+            width: x1 - x0,
+            height: y1 - y0,
+            color,
+        });
+    }
+    rects.splice(0..0, under);
 }
 
 /// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch

@@ -166,3 +166,34 @@ fn undecorated_text_carries_no_lines() {
         .iter()
         .all(|r| r.decorations.is_empty()));
 }
+
+#[test]
+fn vertical_align_on_descendants_does_not_move_the_decorating_boxs_line() {
+    // CSS 2.2 §16.3.1 / WPT css/CSS2/text/text-decoration-va-length-001: a block's overline
+    // stays on the block's baseline under raised and lowered spans (one line, not three).
+    let p = paginate(&doc(
+        "<div style=\"font-size: 60px; line-height: 1; text-decoration: overline\">\
+         <span style=\"font-size: 0.4em\"><span style=\"vertical-align: 0.5em\">abc</span>\
+         <span style=\"vertical-align: 0\">def</span><span style=\"vertical-align: -0.5em\">ghi</span>\
+         </span></div>",
+    ));
+    let tops: Vec<f64> = ["abc", "def", "ghi"]
+        .iter()
+        .map(|t| {
+            let run = runs(&p, t)[0];
+            run.origin_y + run.decorations[0].top
+        })
+        .collect();
+    assert!(
+        tops.windows(2).all(|w| (w[0] - w[1]).abs() < 1e-9),
+        "one overline: {tops:?}"
+    );
+    let raised = runs(&p, "abc")[0];
+    let lowered = runs(&p, "ghi")[0];
+    assert!(raised.origin_y < lowered.origin_y, "the spans did move");
+    // An inline decorating box on a raised span follows the span: its own line moves with it.
+    let p = paginate(&doc(
+        "<p><span style=\"vertical-align: 10px; text-decoration: underline\">up</span> z</p>",
+    ));
+    assert_eq!(runs(&p, "up")[0].decorations[0].top, 1.0);
+}

@@ -122,6 +122,10 @@ pub struct PageBox {
     pub margin_left: f64,
     /// Running header/footer templates.
     pub margins_content: Vec<MarginContent>,
+    /// The page's own background colour (`@page { background(-color): <color> }`, opaque sRGB),
+    /// painted over the whole page box, margins included, under the canvas background
+    /// ([`page_background_color`]).
+    pub background: Option<[u8; 3]>,
     /// Every `@page` rule of the document, for [`PageBox::for_page`].
     sheet: Arc<PageSheet>,
 }
@@ -214,6 +218,7 @@ impl PageBox {
             margin_bottom: m,
             margin_left: m,
             margins_content: Vec::new(),
+            background: None,
             sheet: Arc::new(PageSheet::default()),
         }
     }
@@ -488,6 +493,11 @@ impl PageSheet {
                     }
                     "margin-left" => {
                         page.margin_left = length_px(&d.value).unwrap_or(page.margin_left)
+                    }
+                    "background" | "background-color" => {
+                        if let Some(color) = page_background_color(&d.value) {
+                            page.background = color;
+                        }
                     }
                     p if TEXT_PROPERTIES.contains(&p) => set_declaration(&mut page_style, d),
                     _ => {}
@@ -1046,6 +1056,38 @@ fn margin_box_name(name: &str) -> Option<MarginBox> {
         "bottom-center" => Some(MarginBox::BottomCenter),
         _ => None,
     }
+}
+
+/// The colour of an `@page` `background` / `background-color` value: `Some(None)` for
+/// `transparent`, `Some(Some(rgb))` for a hex or named colour (composited over white when it has
+/// alpha), `None` when no token is one of those (the declaration is then ignored, like an
+/// invalid one; `rgb()` and other functions are not parsed here). The page background covers
+/// the whole page box, margins included, on every page its rule matches: Chrome for Testing
+/// 155.0.8059.85, `@page { size: A4; margin: 20mm; background: yellow } @page :first {
+/// background-color: #9cf }` paints page 1 `#99ccff` and page 2 `#ffff00` over x 0..794, y
+/// 0..1123 px, the body's canvas background over the page area on top (Phase C step 04, repro
+/// `fidelity/gate/snapshots/2026-10-28/c04-paint/repro/pagebg.html`; WPT
+/// css/css-page/page-box-001-print.html).
+pub(crate) fn page_background_color(value: &str) -> Option<Option<[u8; 3]>> {
+    value.split_whitespace().find_map(|token| {
+        let token = token.trim_end_matches(',');
+        if token.eq_ignore_ascii_case("transparent") {
+            return Some(None);
+        }
+        let (r, g, b, a) = if let Some(hex) = token.strip_prefix('#') {
+            cssparser::color::parse_hash_color(hex.as_bytes()).ok()?
+        } else {
+            let (r, g, b) =
+                cssparser::color::parse_named_color(&token.to_ascii_lowercase()).ok()?;
+            (r, g, b, 1.0)
+        };
+        let over_white = |c: u8| {
+            (f32::from(c) * a + 255.0 * (1.0 - a))
+                .round()
+                .clamp(0.0, 255.0) as u8
+        };
+        Some((a > 0.0).then(|| [over_white(r), over_white(g), over_white(b)]))
+    })
 }
 
 fn apply_size(page: &mut PageBox, value: &str) {

@@ -142,3 +142,55 @@ fn the_page_area_follows_each_pages_own_margins() {
     assert_eq!(edges(&p.pages[0].rects[0]), (76.0, 76.0, 719.0, 1047.0));
     assert_eq!(edges(&p.pages[1].rects[0]), PAGE_AREA_A4_10MM);
 }
+
+#[test]
+fn an_at_page_background_covers_the_whole_page_box_under_the_canvas() {
+    // Chrome (repro `pagebg.html`): page 1 `#99ccff` (`:first`), page 2 `#ffff00`, each over
+    // x 0..794, y 0..1123 px; the body's `#cccccc` canvas over the 20 mm page area on top.
+    let html = "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 20mm; \
+                background: yellow } @page :first { background-color: #9cf } \
+                body { background: #ccc; margin: 0 } div { height: 600px }</style></head>\
+                <body><div>1</div><div>2</div></body></html>";
+    let p = paginate(html);
+    assert_eq!(p.report.page_count, 2);
+    for (i, color) in [(0, [0x99, 0xcc, 0xff]), (1, [0xff, 0xff, 0])] {
+        let page = &p.pages[i];
+        assert_eq!(
+            page.rects[0].color, color,
+            "page {i}: its own @page background first"
+        );
+        assert_eq!(
+            edges(&page.rects[0]),
+            (0.0, 0.0, page.width_px, page.height_px),
+            "page {i}: the whole page box"
+        );
+        assert_eq!(page.rects[1].color, [0xcc, 0xcc, 0xcc]);
+        assert_eq!(edges(&page.rects[1]), (76.0, 76.0, 719.0, 1047.0));
+    }
+}
+
+#[test]
+fn at_page_background_values_parse_like_a_colour_or_are_ignored() {
+    let bg = |css: &str| {
+        page_css::parse_page_box(&format!(
+            "<html><head><style>@page {{ {css} }}</style></head></html>"
+        ))
+        .background
+    };
+    assert_eq!(bg("background: yellow"), Some([0xff, 0xff, 0]));
+    assert_eq!(bg("background-color: #102030"), Some([0x10, 0x20, 0x30]));
+    assert_eq!(bg("background: #00000080"), Some([0x7f, 0x7f, 0x7f]));
+    assert_eq!(bg("background: transparent"), None);
+    assert_eq!(bg("background: url(x.png)"), None);
+    assert_eq!(bg("margin: 1cm"), None);
+}
+
+#[test]
+fn a_display_none_root_prints_a_blank_page() {
+    // Chrome 155 passes WPT css/css-page/root-element-display-none-print.html: neither the
+    // `@page` background nor the root's own background is painted.
+    let html = "<!DOCTYPE html><html><head><style>@page { background: hotpink } \
+                html { display: none; background: red }</style></head><body>x</body></html>";
+    let p = paginate(html);
+    assert!(p.pages.iter().all(|page| page.rects.is_empty()));
+}
