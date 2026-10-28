@@ -1108,14 +1108,28 @@ const OVERLAP_EPSILON_PX: f64 = 0.5;
 ///    the line's top (y = 0 in the div), over the text; Chrome puts it below the line (y = 15).
 ///    Edit: `margin-top` grown by the distance to the line's bottom, which lays the float's border
 ///    box exactly there. Only for inline roots with `text-wrap-mode: nowrap` (`white-space:
-///    nowrap | pre`), only when some glyph run precedes the float on its line (a float that
-///    starts the line keeps it: float-nowrap-1-notref.html) and its margin box overlaps a glyph
-///    run of that line. The grown margin also narrows that line for the content after the
-///    float, which changes nothing on a line that cannot wrap but would re-break a wrapping one
-///    (Chrome does not narrow it), so wrapping lines keep Blitz's placement. Testing every glyph
-///    run of the unbreakable line, not only the ones before the float, is Gecko's rule (the one
-///    float-nowrap-1..8 encode); Chrome 155 keeps the float up when the text before it fits
-///    beside it (so it fails float-nowrap-8, CONFIRMED in this step's WPT Chrome results).
+///    nowrap | pre`), and only when the float's margin box overlaps a glyph run that precedes
+///    the float on its line. That is Chrome 155's rule: the float stays on the line when the
+///    content before it plus its margin box fit in the line's free width, whatever follows it.
+///    Measured in Chrome for Testing 155.0.8059.85 (2026-10-28, 10ch nowrap div, ch 9.633 px):
+///    `Some <float 5ch>text that overflows my parent.` (WPT float-nowrap-8) keeps the float at
+///    y = 0; `S<float 5ch>ome text…` (float-nowrap-7) y = 0; a 30ch line `Hello world <float
+///    5ch>and more text that overflows the box by far` y = 0; `Somex<float 6ch> text` y = 20
+///    (below); a float that starts its line stays (float-nowrap-1-notref.html), even a 12ch one
+///    wider than the line. Collapsible spaces before the float do not count (`Some <float 6ch>`
+///    stays: 4ch + 6ch fit), preserved ones do (`white-space: pre`, and `&nbsp;`: below). In
+///    Blitz's layout of `Some <float>text` the glyph runs are `Some` and ` text` (the collapsed
+///    space after the float's inline box), so the runs before the float already leave that
+///    space out (measured on the same repros). Gecko's rule tests every glyph run of
+///    the unbreakable line (float-nowrap-1..8 encode it), so vellora fails float-nowrap-7 and -8
+///    exactly as Chrome 155 does. The grown margin also narrows that line for the content after
+///    the float, which changes nothing on a line that cannot wrap but would re-break a wrapping
+///    one (Chrome does not narrow it), so wrapping lines keep Blitz's placement. Not handled
+///    (same before and after this rule): a LEFT float that does not fit. Blitz shifts the whole
+///    line, the text before the float included, right of the float at the line's top, so no run
+///    overlaps it; Chrome 155 puts it below the line with the text at x = 0 (`Some text
+///    <left float 5ch>that…` in 10ch: float y = 20). A left float that fits matches Chrome
+///    (float at (0, 0), text from x = 5ch).
 fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
     let mut geometry = FloatGeometry::default();
     let root = base.root_element().id;
@@ -1171,14 +1185,13 @@ fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
         }) else {
             continue;
         };
-        // A float that starts its line keeps its place (nothing precedes it there).
-        if !line.runs.iter().any(|run| run.0 < at) {
-            continue;
-        }
+        // Chrome's rule: only the glyph runs before the float on its line count. A float that
+        // starts its line has none and keeps its place; text after the float may run under it.
         let line_rect = |run: &(usize, f64, f64)| [run.1, line.top, run.2, line.bottom];
         if line
             .runs
             .iter()
+            .filter(|run| run.0 < at)
             .map(line_rect)
             .any(|run| overlap(run, float.margin_rect))
         {

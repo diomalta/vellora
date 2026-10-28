@@ -877,8 +877,11 @@ fn blitz_still_places_a_float_over_its_nowrap_line() {
          half of `float_avoidance_fixups` (`nowrap_lines`, `LineGeometry`, `inline_root_lines`, \
          `FloatFixup::MarginTop`), this canary and \
          `float_avoidance_moves_a_float_below_its_nowrap_line`; with the other half gone too, \
-         also the second `resolve` in `resolve_and_walk`. Then re-measure css/CSS2/floats with \
-         fidelity/wpt before trusting either layout.\n"
+         also the second `resolve` in `resolve_and_walk`. KEEP \
+         `float_avoidance_keeps_a_float_whose_preceding_text_fits` (Chrome 155's rule, on \
+         Blitz's own layout then): if it fails, Blitz moved to Gecko's rule (every glyph run of \
+         the line, WPT float-nowrap-7/8 pass), which Chrome 155 does not follow. Then re-measure \
+         css/CSS2/floats with fidelity/wpt before trusting either layout.\n"
     );
 }
 
@@ -905,6 +908,56 @@ fn float_avoidance_leaves_boxes_that_fit() {
     let narrow = BFC_TABLE_BESIDE_FLOAT.replace("width: 250px", "width: 150px");
     let (x, y, _) = bfc_table_geometry(&product_layout(&narrow));
     assert_eq!((x, y), (100.0, 0.0));
+}
+
+/// The no-wrap edit follows Chrome 155's rule, not Gecko's: only the text before the float
+/// counts. Chrome for Testing 155.0.8059.85 (2026-10-28) keeps the float at the line's top in WPT
+/// float-nowrap-8 (`Some ` then the float, then the overflowing text: Chrome fails that test) and
+/// for a right float after unbreakable text that fits beside it on a 30ch line, and moves it
+/// below the line when the text before it plus the float do not fit (`Somex` + a 6ch float in
+/// 10ch, and `Some ` + a 6ch float under `white-space: pre`, whose space is preserved).
+#[test]
+fn float_avoidance_keeps_a_float_whose_preceding_text_fits() {
+    let move_text = |text: &str| {
+        let html = FLOAT_AFTER_NOWRAP_TEXT.replace(
+            "Some text that overflows my parent.\n    <span></span>",
+            text,
+        );
+        assert_ne!(html, FLOAT_AFTER_NOWRAP_TEXT);
+        html
+    };
+    // float-nowrap-8.
+    let nowrap_8 = move_text("Some <span></span>\n    text that overflows my parent.");
+    assert_eq!(nowrap_8_float_top(&nowrap_8), 0.0);
+    // A 30ch line: 11ch of text, a 5ch right float, then text past the line's end.
+    let wide = move_text("Hello world <span></span>and more text that overflows the box by far")
+        .replace("width: 10ch;", "width: 30ch;");
+    assert_eq!(nowrap_8_float_top(&wide), 0.0);
+    // Does not fit: below the line (its top on the div's one-line height).
+    let six = |text: &str, ws: &str| {
+        move_text(text)
+            .replace("width: 5ch;", "width: 6ch;")
+            .replace("white-space: nowrap;", ws)
+    };
+    // (Under `pre` the template's own newlines would add lines: one line only.)
+    let pre = six("Some <span></span>text after", "white-space: pre;")
+        .replace("<div>\n    Some", "<div>Some")
+        .replace("text after\n    </div>", "text after</div>");
+    for html in [
+        six("Somex<span></span> text after", "white-space: nowrap;"),
+        pre,
+    ] {
+        let (top, line_height) = nowrap_float_geometry(&product_layout(&html));
+        assert!(line_height > 0.0);
+        assert_eq!(top, line_height, "{html}");
+    }
+    // Fits once the collapsible space before the float is dropped (4ch + 6ch in 10ch).
+    let fits = six("Some <span></span>text after", "white-space: nowrap;");
+    assert_eq!(nowrap_float_geometry(&product_layout(&fits)).0, 0.0);
+}
+
+fn nowrap_8_float_top(html: &str) -> f64 {
+    nowrap_float_geometry(&product_layout(html)).0
 }
 
 /// WPT css/CSS2/abspos/between-float-and-text.html: an absolutely positioned green square and a
