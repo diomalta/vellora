@@ -2932,6 +2932,7 @@ dependencies = [
  "stylo_traits",
  "url",
  "usvg 0.47.0",
+ "usvg 0.48.1",
 ]
 
 [[package]]

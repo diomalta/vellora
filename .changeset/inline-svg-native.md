@@ -18,9 +18,10 @@ An `<image>` / `<feImage>` inside an inline SVG whose `href` is not a `data:` UR
 render with `image:unresolved`: the engine's SVG parser would otherwise read that path from the
 host filesystem. `@vellora/lint`'s `inline-svg` rule is now a `warning` (the rasterizing codemod
 stays available and best-effort mode still runs it; a report with only this finding is still not
-`conformant`, so `vellora lint` still exits with the diagnostics code for it). The first inline
-SVG of a process costs about 20 ms more (local macOS, indicative): the engine's SVG parser loads
-the host's font list once, which is never used to draw.
+`conformant`, so `vellora lint` still exits with the diagnostics code for it). The box size comes
+only from the `<svg>`'s attributes and CSS, never from its content, and no host font is read: the
+layout engine's own SVG parse (which would load the host's font list and size some SVGs from their
+text) never runs on the render path.
 
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85 reference;
 indicative, not CI): css/css-break + css/css-multicol 371 -> 372 passes (1121 tests, only
