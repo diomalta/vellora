@@ -2408,23 +2408,30 @@ fn lower_to_display_list(
 
 /// The page's rects in painting order, combining the two orders of Phase C step 04: the paint
 /// tiers of `blitz_engine::paint_tier` (phasec/04-floats: in-flow blocks, floats, positioned
-/// boxes) and the atomic-inline split of [`in_atomic_inline`] (phasec/04-text). CSS 2.2
-/// Appendix E paints in-flow block backgrounds (step 4), then floats (step 5), then inline
-/// content, where an atomic inline paints as a whole (step 7), then positioned boxes (step 8).
-/// So the groups are: tier-0 non-atomic, floats (their own atomic inlines after their blocks),
-/// tier-0 atomic inlines, then positioned boxes (their atomic inlines after their blocks). Each
-/// group is merged on its own by [`merge_adjacent_rects`]. Coarse like the tiers: a float inside
-/// an atomic inline paints with the floats, not inside the atomic inline.
+/// boxes) and the atomic-inline split of [`in_atomic_inline`] (phasec/04-text). Groups, each
+/// merged on its own by [`merge_adjacent_rects`]: tier-0 blocks, tier-0 atomic inlines, floats
+/// (their blocks, then their atomic inlines), positioned boxes (likewise). Coarse like the
+/// tiers: a float inside an atomic inline paints with the floats.
+///
+/// DELIBERATE DEVIATION from CSS 2.2 Appendix E, which paints in-flow atomic inlines (step 7)
+/// AFTER floats (step 5). Line boxes are shortened around floats, so an in-flow atomic inline
+/// overlaps a float only where it overflows its container, and vellora does not clip
+/// `overflow: hidden`. Painting it over the float then shows the overflow Chrome clips: WPT
+/// `css/CSS2/floats/floats-wrap-bfc-003-right-overflow.xht` (a 250 px purple inline-block in a
+/// 200 px `overflow: hidden` block beside a blue float) fails with the Appendix E order (purple
+/// over the float, 2500 px differ; c04-tip pre-run, 2026-10-28, local macOS) and passes with
+/// this one, which is also each branch's measured order (floats: atomics in tier 0; text:
+/// atomics after the blocks). Revisit together with overflow clipping.
 fn paint_ordered_rects(rects: Vec<FilledRect>, atomic_rects: Vec<FilledRect>) -> Vec<FilledRect> {
     use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
     let group = |tier: u8, atomic: bool| -> usize {
         match (tier, atomic) {
             (PAINT_TIER_POSITIONED, false) => 4,
             (PAINT_TIER_POSITIONED, true) => 5,
-            (PAINT_TIER_FLOAT, false) => 1,
-            (PAINT_TIER_FLOAT, true) => 2,
+            (PAINT_TIER_FLOAT, false) => 2,
+            (PAINT_TIER_FLOAT, true) => 3,
             (_, false) => 0,
-            (_, true) => 3,
+            (_, true) => 1,
         }
     };
     let mut groups: [Vec<FilledRect>; 6] = Default::default();
@@ -2772,11 +2779,11 @@ mod merge_tests {
         assert_eq!(order, vec![(0, 40.0), (1, 20.0), (2, 0.0)]);
     }
 
-    /// The merge of the floats tiers with the text branch's atomic-inline split follows CSS 2.2
-    /// Appendix E: in-flow blocks (4), floats with their own atomic inlines (5), in-flow atomic
-    /// inlines (7), positioned boxes with their atomic inlines (8).
+    /// The merge of the floats tiers with the text branch's atomic-inline split: in-flow blocks,
+    /// in-flow atomic inlines, floats with their own atomic inlines, positioned boxes with theirs
+    /// (`paint_ordered_rects` says why in-flow atomic inlines go before floats).
     #[test]
-    fn atomic_inlines_paint_after_floats_and_before_positioned_boxes() {
+    fn atomic_inlines_paint_after_the_blocks_of_their_tier() {
         use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
         let at = |x: f64, tier: u8| FilledRect {
             tier,
@@ -2797,7 +2804,7 @@ mod merge_tests {
         .iter()
         .map(|r| r.x)
         .collect();
-        assert_eq!(order, vec![20.0, 10.0, 50.0, 40.0, 0.0, 30.0]);
+        assert_eq!(order, vec![20.0, 40.0, 10.0, 50.0, 0.0, 30.0]);
     }
 
     #[test]
