@@ -120,8 +120,9 @@ rejections, like `transform`, you remove by hand.
   ```
 
 - **`vellora lint` and `vellora fix`** from [`@vellora/cli`](https://www.npmjs.com/package/@vellora/cli)
-  check or rewrite template files, which makes them easy to run in CI. They need version 0.3.2,
-  the next release; in 0.3.0 the installed `vellora` command exits without doing anything.
+  (0.3.2 or newer) check or rewrite template files in CI. The lint does not catch everything the
+  renderer rejects (an inline `transform`, for example), so the surest CI check is a strict
+  `renderPdf` of each template with sample data.
 
 ## The full list
 

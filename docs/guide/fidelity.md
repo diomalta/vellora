@@ -178,8 +178,7 @@ vellora doctor invoice.html --pixel-diff --reference-pdf old-output.pdf --out ar
 ```
 
 It writes page images and red diff overlays to `artifacts/visual`. It needs poppler's `pdftoppm`
-and `@vellora/cli` 0.3.2, the next release (the 0.3.0 command exits without output). Until then,
-open your old PDF and vellora's side by side. All the options, and how to send
+and `@vellora/cli` 0.3.2 or newer. All the options, and how to send
 a template to Chrome instead, are in [When you need Chrome](/guide/chromium-engine#check-a-template-against-your-old-pdf).
 
 ## How we measured {#how-we-measured}

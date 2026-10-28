@@ -134,8 +134,7 @@ vellora doctor invoice.html \
 It rasterizes both PDFs with `pdftoppm` (from poppler, which you need installed), writes page
 images and red diff overlays to `artifacts/visual`, and recommends native or Chromium based on the
 share of pixels that differ. vellora never installs or starts Puppeteer for this; the old PDF is
-just a file. `vellora doctor` needs `@vellora/cli` 0.3.2, the next release (see the known issue
-below).
+just a file. `vellora doctor` needs `@vellora/cli` 0.3.2 or newer (see the known issue below).
 
 To see how the Chromium engine does against the same old PDF, add `--subject chromium`:
 
@@ -167,7 +166,7 @@ Useful options:
 If no browser binary can be found when one is needed, `vellora doctor` exits with code `4`.
 
 **If `npx vellora` prints nothing:** `@vellora/cli` 0.3.0 exits silently when it is run through the
-installed `vellora` command. The fix is in 0.3.2, the next release. Update the CLI package once it is out.
+installed `vellora` command. Update to 0.3.2 or newer.
 
 </details>
 

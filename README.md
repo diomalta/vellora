@@ -72,8 +72,6 @@ When vellora meets something it can't draw faithfully, it tells you where. Rende
 VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 11: this CSS feature is outside vellora's document subset; run `vellora fix`
 ```
 
-<sub>The `vellora fix` and `vellora doctor` commands need `@vellora/cli` 0.3.2, the next release; the installed command in 0.3.0 exits without output.</sub>
-
 ## Is it a fit?
 
 **Good fit:** documents you generate from templates you control. Invoices, receipts, statements,
@@ -116,7 +114,7 @@ Known gaps: a multi-column container taller than a page is not split across page
 is not painted ([issue #52](https://github.com/diomalta/vellora/issues/52)). Every loss is listed
 in [How close is vellora to Chrome?](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity),
 and per-feature caveats are in [COMPATIBILITY.md](./COMPATIBILITY.md). To check your own
-templates, run `vellora doctor` (from `@vellora/cli` 0.3.2, the next release).
+templates, run `vellora doctor` (from `@vellora/cli` 0.3.2 or newer).
 
 ## Performance
 

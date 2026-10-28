@@ -31,7 +31,7 @@ const structuredData = {
       applicationSubCategory: "HTML to PDF renderer",
       operatingSystem: "macOS, Linux",
       runtimePlatform: "Node.js >=20",
-      softwareVersion: "0.3.0",
+      softwareVersion: "0.3.2",
       url: SITE_URL,
       downloadUrl: NPM_URL,
       installUrl: NPM_URL,
@@ -127,7 +127,7 @@ const homeFaq = {
     ],
     [
       "Is it production-ready?",
-      "It is young. The current release is 0.3.0, and until 1.0 the API can still change between minor versions, so pin the version you test. Every change is listed in the CHANGELOG, and bugs go to GitHub issues. The same input always gives the same PDF bytes, so snapshot tests are a cheap way to catch surprises when you upgrade. To try it on a template of your own in a few minutes, start with your first PDF, then compare it with the PDF you make today.",
+      "It is young. The current release is 0.3.2, and until 1.0 the API can still change between minor versions, so pin the version you test. Every change is listed in the CHANGELOG, and bugs go to GitHub issues. The same input always gives the same PDF bytes, so snapshot tests are a cheap way to catch surprises when you upgrade. To try it on a template of your own in a few minutes, start with your first PDF, then compare it with the PDF you make today.",
     ],
     [
       "Is it free, and is it safe with customer data?",

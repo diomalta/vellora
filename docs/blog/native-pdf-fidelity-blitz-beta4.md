@@ -87,8 +87,7 @@ vellora doctor invoice.html --pixel-diff --reference-pdf old-output.pdf --out ar
 ```
 
 It writes page images and red difference overlays to `artifacts/visual`. You need poppler's
-`pdftoppm` installed, and `@vellora/cli` 0.3.2 (the next release; the 0.3.0 command exits
-without output). The full set of options is in
+`pdftoppm` installed, and `@vellora/cli` 0.3.2 or newer. The full set of options is in
 [When you need Chrome](/guide/chromium-engine#check-a-template-against-your-old-pdf).
 
 ## Under the hood

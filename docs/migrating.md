@@ -196,8 +196,7 @@ vellora doctor invoice.html --pixel-diff --reference-pdf old-puppeteer-output.pd
 ```
 
 ::: tip
-This needs `@vellora/cli` 0.3.2, the next release (in 0.3.0 the installed `vellora` command exits
-without doing anything), and poppler's `pdftoppm` (`apt install poppler-utils` or
+This needs `@vellora/cli` 0.3.2 or newer and poppler's `pdftoppm` (`apt install poppler-utils` or
 `brew install poppler`).
 :::
 

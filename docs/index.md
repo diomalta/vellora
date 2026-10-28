@@ -183,8 +183,6 @@ your CSS in a `<style>` tag.
 VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 11: this CSS feature is outside vellora's document subset; run `vellora fix`
 ```
 
-<small>`vellora fix` needs `@vellora/cli` 0.3.2, the next release.</small>
-
 The full list lives on [Will my template work?](/compatibility)
 
 ## FAQ
@@ -215,7 +213,7 @@ Very close on the documents we test: on 8 of 9, every word is within 1 mm of Chr
 
 ### Is it production-ready?
 
-It is young. The current release is 0.3.0, and until 1.0 the API can still change between minor
+It is young. The current release is 0.3.2, and until 1.0 the API can still change between minor
 versions, so pin the version you test. Every change is listed in the
 [CHANGELOG](https://github.com/diomalta/vellora/blob/main/CHANGELOG.md), and bugs go to
 [GitHub issues](https://github.com/diomalta/vellora/issues). The same input always gives the same
