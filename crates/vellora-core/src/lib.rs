@@ -41,6 +41,7 @@ mod fonts;
 pub mod layout_dump;
 mod layout_normalize;
 mod layout_unit;
+mod multicol;
 pub mod page_css;
 pub mod pagination;
 pub mod pdf;

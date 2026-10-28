@@ -1340,3 +1340,38 @@ fn balance_text_wrap_skips_what_it_cannot_place_like_chrome() {
     assert_eq!(float_lines, greedy);
     assert_eq!(line_texts(&product_layout(&off)), greedy);
 }
+
+/// Two 20 px black blocks in a `columns: 2` container, 200 px wide.
+const MULTICOL: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0 }
+    #mc { columns: 2; column-gap: 0; width: 200px; }
+    #mc p { margin: 0; height: 20px; background: #000; }
+    </style></head><body><div id="mc"><p></p><p></p></div></body></html>"#;
+
+/// CANARY of `blitz_engine::lay_out_multicol` / `crate::multicol`: blitz-dom 0.3.0-beta.4 and
+/// Taffy 0.15.0 have no multi-column layout (Stylo computes `column-count`, nothing reads it), so
+/// raw Blitz lays a `columns: 2` container out as one block: its blocks are stacked, each the
+/// full 200 px wide. When this fails, Blitz lays columns out itself: delete
+/// `lay_out_multicol`, `crate::multicol` and their call sites, and re-measure WPT css/css-multicol
+/// and css/css-break.
+#[test]
+fn blitz_still_lays_multicol_out_in_one_column() {
+    let blocks = |doc: &LaidOutDoc| -> Vec<(f64, f64, f64)> {
+        doc.boxes
+            .iter()
+            .filter(|b| b.tag.as_deref() == Some("p"))
+            .map(|b| (b.x, b.y, b.width))
+            .collect()
+    };
+    let (raw, _) = raw_layout(MULTICOL);
+    assert_eq!(blocks(&raw), vec![(0.0, 0.0, 200.0), (0.0, 20.0, 200.0)]);
+    // vellora's layout of the same document: two 100 px columns, one block each.
+    let (laid, _) = validate_and_lay_out(
+        MULTICOL.as_bytes(),
+        &RenderOptions::default(),
+        DocumentSyntax::Html,
+        &mut NoObserver,
+    )
+    .expect("lays out");
+    assert_eq!(blocks(&laid), vec![(0.0, 0.0, 100.0), (100.0, 0.0, 100.0)]);
+}

@@ -78,6 +78,18 @@ pub struct LaidOutBox {
     /// element (or after its last child, propagated). Read only by
     /// [`crate::break_css::resolve_break_after`], which moves it onto the next box.
     pub break_after_page: bool,
+    /// A forced column break (`break-before: column`) applies before this element; also set on
+    /// the box after one with `break-after: column`
+    /// ([`crate::break_css::resolve_column_break_after`]). Read only by the multi-column layout
+    /// ([`crate::multicol`], Phase C step 05): outside a multi-column container it has no effect.
+    pub break_before_column: bool,
+    /// `break-after: column` applies after this element (moved onto the next box, see
+    /// [`LaidOutBox::break_before_column`]).
+    pub break_after_column: bool,
+    /// `break-before: avoid` / `break-after: avoid` (or `avoid-column`) applies to this element.
+    /// Read only by the column breaks of [`crate::multicol`] (Phase C step 05).
+    pub break_before_avoid: bool,
+    pub break_after_avoid: bool,
     /// Whether the box is absolutely positioned (`position: absolute | fixed`): out of the
     /// normal flow, so it takes no forced break from the box before it
     /// ([`crate::break_css::resolve_break_after`]).
@@ -99,6 +111,14 @@ pub struct LaidOutBox {
     /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
     /// pagination's oversize-fragment slicer (Phase C step 03).
     pub atomic_inline: bool,
+    /// Whether the box has size containment (`contain: size`, `strict`): monolithic for the
+    /// column breaks of [`crate::multicol`] (Phase C step 05).
+    pub contain_size: bool,
+    /// The box's `orphans` and `widows` (inherited; `None`: the initial value, 2). Set only on
+    /// the boxes of a multi-column container ([`crate::multicol`], Phase C step 05), the only
+    /// reader; the page slicer keeps 2.
+    pub orphans: Option<u32>,
+    pub widows: Option<u32>,
     /// Whether the box clips its content in the block direction (`overflow-y` other than
     /// `visible`). vellora paints overflow unclipped; the oversize-fragment slicer clips the
     /// descendants of such a box to its border box so the overflow makes no pages of its own
@@ -1396,6 +1416,462 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
             }
         });
     }
+}
+
+/// A multi-column container found in the cascade ([`multicol_containers`]), with its column
+/// geometry ([`multicol_geometry`]) and its `column-fill` (read by vellora, see
+/// [`crate::break_css::BreakRules::column_fill`]).
+struct MulticolNode {
+    id: NodeId,
+    fill_auto: bool,
+    /// Its height was sized by its content (`height: auto`) before vellora gave it the balanced
+    /// column height ([`lay_out_multicol`]).
+    auto_height: bool,
+    count: usize,
+    column_width: f64,
+    gap: f64,
+}
+
+/// The content-box width of `node`'s unrounded layout.
+fn content_box_width(node: &blitz_dom::Node) -> f64 {
+    let layout = node.unrounded_layout();
+    f64::from(
+        layout.size.width
+            - layout.border.left
+            - layout.border.right
+            - layout.padding.left
+            - layout.padding.right,
+    )
+    .max(0.0)
+}
+
+/// The column count, width and gap of a multi-column container from its computed style, or
+/// `None` for an element that is not one: `column-count` and `column-width` both `auto`, or a
+/// box that is not a block container (CSS Multi-column Layout 1 §2: flex, grid and table boxes
+/// and plain inlines are not). `available` is the container's content-box width;
+/// `column-gap: normal` is `1em` (§4.1).
+fn multicol_geometry(
+    styles: &style::properties::ComputedValues,
+    available: f64,
+) -> Option<(usize, f64, f64)> {
+    use style::values::generics::column::ColumnCount;
+    use style::values::generics::length::{LengthPercentageOrAuto, LengthPercentageOrNormal};
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    let display = styles.get_box().display;
+    let block_container = matches!(
+        display.inside(),
+        DisplayInside::Flow | DisplayInside::FlowRoot
+    ) && matches!(
+        display.outside(),
+        DisplayOutside::Block | DisplayOutside::Inline
+    ) && !display.is_inline_flow();
+    if !block_container {
+        return None;
+    }
+    let column = styles.get_column();
+    let count = match column.column_count {
+        ColumnCount::Integer(n) => Some(n.0.max(1) as u32),
+        ColumnCount::Auto => None,
+    };
+    let width = match &column.column_width {
+        LengthPercentageOrAuto::LengthPercentage(l) => Some(f64::from(l.0.px())),
+        LengthPercentageOrAuto::Auto => None,
+    };
+    let gap = match &styles.get_position().column_gap {
+        LengthPercentageOrNormal::LengthPercentage(lp) => f64::from(
+            lp.0.resolve(style::values::computed::Length::new(available as f32))
+                .px(),
+        ),
+        LengthPercentageOrNormal::Normal => {
+            f64::from(styles.get_font().font_size.computed_size().px())
+        }
+    };
+    let (count, column_width) = crate::multicol::column_geometry(available, count, width, gap)?;
+    Some((count, column_width, gap))
+}
+
+/// The multi-column containers of the document, outermost only (one inside another is laid out
+/// in one column, a documented limit of [`crate::multicol`]), with their column geometry from
+/// the current layout.
+fn multicol_containers(
+    doc: &BaseDocument,
+    column_fill: &std::collections::HashMap<NodeId, bool>,
+) -> Vec<MulticolNode> {
+    use style::values::generics::length::GenericSize;
+    let mut out = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        let found = node
+            .primary_styles()
+            .filter(|_| node_has_layout_data(node))
+            .and_then(|styles| {
+                let available = content_box_width(node);
+                let (count, column_width, gap) = multicol_geometry(&styles, available)?;
+                let fill_auto = node
+                    .attr(blitz_dom::local_name!("style"))
+                    .and_then(|block| crate::break_css::declares(block).column_fill_auto)
+                    .or_else(|| column_fill.get(&id).copied())
+                    .unwrap_or(false);
+                Some(MulticolNode {
+                    id,
+                    fill_auto,
+                    auto_height: matches!(styles.get_position().height, GenericSize::Auto),
+                    count,
+                    column_width,
+                    gap,
+                })
+            });
+        if let Some(found) = found {
+            out.push(found);
+            continue;
+        }
+        // DOM children in reverse so the stack pops them in document order.
+        for &child in node.children.iter().rev() {
+            stack.push(child);
+        }
+    }
+    out
+}
+
+/// Lay the multi-column containers out one column wide (see [`crate::multicol`]): each
+/// container's content box is narrowed to its column width by moving the difference into its
+/// inline-end padding, so its border box (its background), its padding box (which positions its
+/// absolutely positioned children) and the layout around it are unchanged; a content-sized
+/// (`height: auto`) container then gets its balanced column height
+/// ([`crate::multicol::balanced_height`]), so what follows it is laid out below its columns.
+/// Each step is a computed-style edit and a full re-layout, as [`apply_float_fixups`].
+///
+/// Not a Blitz-bug compensation: Blitz 0.3.0-beta.4 has no multi-column layout (Stylo computes
+/// `column-count` / `column-width`, which blitz-dom and Taffy 0.15.0 never read). CANARY:
+/// `raw_blitz_tests.rs` `blitz_still_lays_multicol_out_in_one_column` fails when Blitz lays
+/// columns out itself; then delete this function, [`crate::multicol`] and their tests.
+fn lay_out_multicol(
+    doc: &mut BaseDocument,
+    column_fill: &std::collections::HashMap<NodeId, bool>,
+    lines: &LineRules,
+) -> Vec<MulticolNode> {
+    use style::values::computed::{Length, LengthPercentage, MaxSize, Size};
+    let px = |v: f64| {
+        style::values::generics::NonNegative(LengthPercentage::new_length(Length::new(v as f32)))
+    };
+    let mut containers = multicol_containers(doc, column_fill);
+    if containers.is_empty() {
+        return containers;
+    }
+    for mc in &mut containers {
+        let Some(node) = doc.get_node(mc.id) else {
+            continue;
+        };
+        let layout = *node.unrounded_layout();
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        let rtl = styles.clone_direction() == style::computed_values::direction::T::Rtl;
+        let available = content_box_width(node);
+        // A shrink-to-fit container (`width: auto` on an absolutely positioned, floated or
+        // inline-block box) was sized to its content's width as one column; its columns are
+        // each that wide (CSS Multi-column Layout 1 §3.4 with the intrinsic sizes of Blink's
+        // multicol: N columns of the content's size, plus the gaps), capped by its containing
+        // block's content box.
+        let shrink_to_fit = matches!(
+            styles.get_position().width,
+            style::values::generics::length::GenericSize::Auto
+        ) && (styles.clone_position().is_absolutely_positioned()
+            || !matches!(styles.clone_float(), style::computed_values::float::T::None)
+            || styles.get_box().display.outside()
+                == style::values::specified::box_::DisplayOutside::Inline);
+        let column_count = match styles.get_column().column_count {
+            style::values::generics::column::ColumnCount::Integer(n) => Some(n.0.max(1) as u32),
+            style::values::generics::column::ColumnCount::Auto => None,
+        };
+        let content = match column_count {
+            Some(n) if shrink_to_fit => {
+                let wanted = f64::from(n) * available + f64::from(n - 1) * mc.gap;
+                let frame = f64::from(layout.size.width) - available;
+                let cap = node
+                    .containing_block()
+                    .and_then(|cb| doc.get_node(cb))
+                    .filter(|cb| node_has_layout_data(cb))
+                    .map_or(f64::INFINITY, |cb| content_box_width(cb) - frame);
+                wanted.min(cap).max(available)
+            }
+            _ => available,
+        };
+        drop(styles);
+        if content != available {
+            if let Some((count, width, gap)) = node
+                .primary_styles()
+                .and_then(|styles| multicol_geometry(&styles, content))
+            {
+                mc.count = count;
+                mc.column_width = width;
+                mc.gap = gap;
+            }
+        }
+        let extra = (content - mc.column_width).max(0.0);
+        let border_box = f64::from(layout.size.width) + (content - available);
+        let end_padding = f64::from(if rtl {
+            layout.padding.left
+        } else {
+            layout.padding.right
+        });
+        let column_width = mc.column_width;
+        mutate_primary_style(doc, mc.id, |values| {
+            let border_sizing = values.get_position().box_sizing
+                == style::computed_values::box_sizing::T::BorderBox;
+            let padding = px(end_padding + extra);
+            if rtl {
+                values.mutate_padding().set_padding_left(padding);
+            } else {
+                values.mutate_padding().set_padding_right(padding);
+            }
+            let width = if border_sizing {
+                border_box
+            } else {
+                column_width
+            };
+            let position = values.mutate_position();
+            position.set_width(Size::LengthPercentage(px(width)));
+            position.set_min_width(Size::Auto);
+            position.set_max_width(MaxSize::None);
+        });
+    }
+    doc.set_incremental_layout(false);
+    doc.resolve(0.0);
+
+    // The balanced height of each content-sized container, from its one-column layout.
+    let balanced: Vec<(NodeId, f64)> = containers
+        .iter()
+        .filter(|mc| mc.auto_height)
+        .filter_map(|mc| {
+            let subtree = walk_subtree(doc, mc.id);
+            let spec = multicol_spec(doc, mc, &subtree, lines)?;
+            Some((
+                mc.id,
+                crate::multicol::balanced_height(&subtree, &spec, mc.fill_auto),
+            ))
+        })
+        .collect();
+    if balanced.is_empty() {
+        return containers;
+    }
+    for &(id, height) in &balanced {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        let layout = *node.unrounded_layout();
+        let frame = f64::from(
+            layout.border.top + layout.border.bottom + layout.padding.top + layout.padding.bottom,
+        );
+        mutate_primary_style(doc, id, |values| {
+            let border_sizing = values.get_position().box_sizing
+                == style::computed_values::box_sizing::T::BorderBox;
+            let h = if border_sizing {
+                height + frame
+            } else {
+                height
+            };
+            values
+                .mutate_position()
+                .set_height(Size::LengthPercentage(px(h)));
+        });
+    }
+    doc.resolve(0.0);
+    containers
+}
+
+/// The laid-out subtree of `id` as the render walk reads it (absolute coordinates, `id` first),
+/// for the balancing of [`lay_out_multicol`]: a throwaway walk, no break rules, no images.
+fn walk_subtree(doc: &BaseDocument, id: NodeId) -> Vec<LaidOutBox> {
+    let mut out = Vec::new();
+    let mut face_cache = std::collections::HashMap::new();
+    let images = std::collections::HashMap::new();
+    let mut img = ImageResolve {
+        images: &images,
+        base_url: None,
+        img_ordinal: std::collections::HashMap::new(),
+        first_unresolved: None,
+    };
+    let breaks = BreakTargets::default();
+    let collapsed = CollapsedBorders::default();
+    let mut sink = WalkSink {
+        out: &mut out,
+        face_cache: &mut face_cache,
+        img: &mut img,
+        breaks: &breaks,
+        origins: std::collections::HashMap::new(),
+        reader_compensations: true,
+        collapsed: &collapsed,
+        tiers: std::collections::HashMap::new(),
+        canvas_source: None,
+    };
+    walk_box(doc, id, 0, &mut sink);
+    out
+}
+
+/// The unrounded absolute x of `id`'s border box: Taffy's `unrounded_layout` locations summed up
+/// its containing-block chain (the chain [`box_origin`] sums the rounded ones of).
+fn unrounded_abs_x(doc: &BaseDocument, id: NodeId) -> f64 {
+    let mut x = 0.0_f64;
+    let mut current = Some(id);
+    while let Some(cur) = current {
+        let Some(n) = doc.get_node(cur) else {
+            break;
+        };
+        if node_has_layout_data(n) {
+            x += f64::from(n.unrounded_layout().location.x);
+        }
+        current = n.containing_block();
+    }
+    x
+}
+
+/// The `orphans` / `widows` declarations of the document
+/// ([`crate::break_css::BreakRules::orphans`], inline `style` included), resolved per element
+/// with inheritance (both inherit).
+#[derive(Default)]
+struct LineRules {
+    orphans: std::collections::HashMap<NodeId, u32>,
+    widows: std::collections::HashMap<NodeId, u32>,
+}
+
+impl LineRules {
+    fn new(base: &BaseDocument, orphans: &[(&str, u32)], widows: &[(&str, u32)]) -> Self {
+        let matched = |rules: &[(&str, u32)]| {
+            let mut out = std::collections::HashMap::new();
+            for (selector, value) in rules {
+                if let Ok(nodes) = base.query_selector_all(selector) {
+                    for node in nodes {
+                        out.insert(node, *value);
+                    }
+                }
+            }
+            out
+        };
+        Self {
+            orphans: matched(orphans),
+            widows: matched(widows),
+        }
+    }
+
+    /// `orphans` (`true`) or `widows` of `id`: its own declaration (inline `style` first), else
+    /// its nearest ancestor's; `None` when nothing declares it (the initial value, 2).
+    fn inherited(&self, doc: &BaseDocument, id: NodeId, orphans: bool) -> Option<u32> {
+        let map = if orphans { &self.orphans } else { &self.widows };
+        let mut current = Some(id);
+        while let Some(cur) = current {
+            let node = doc.get_node(cur)?;
+            let inline = node
+                .attr(blitz_dom::local_name!("style"))
+                .and_then(|block| {
+                    let hints = crate::break_css::declares(block);
+                    if orphans {
+                        hints.orphans
+                    } else {
+                        hints.widows
+                    }
+                });
+            if let Some(value) = inline.or_else(|| map.get(&cur).copied()) {
+                return Some(value);
+            }
+            current = node.parent;
+        }
+        None
+    }
+}
+
+/// Whether `node` is `ancestor` or one of its DOM descendants.
+fn is_dom_descendant(doc: &BaseDocument, node: NodeId, ancestor: NodeId) -> bool {
+    let mut current = Some(node);
+    while let Some(id) = current {
+        if id == ancestor {
+            return true;
+        }
+        current = doc.get_node(id).and_then(|n| n.parent);
+    }
+    false
+}
+
+/// The [`crate::multicol::Multicol`] of a laid-out container: its column geometry, content-box
+/// top and height from Blitz's final layout, the absolutely positioned boxes positioned against
+/// it or an ancestor, and the unrounded edges of its subtree. `boxes` holds the walked container
+/// box (the render walk, or [`walk_subtree`]).
+fn multicol_spec(
+    doc: &BaseDocument,
+    mc: &MulticolNode,
+    boxes: &[LaidOutBox],
+    lines: &LineRules,
+) -> Option<crate::multicol::Multicol> {
+    let node = doc.get_node(mc.id)?;
+    let layout = *node.final_layout();
+    let raw = mc.id.as_u64() as usize;
+    let top = boxes.iter().find(|b| b.node_id == raw)?.y;
+    let content_top = top + f64::from(layout.border.top + layout.padding.top);
+    let height = f64::from(
+        layout.size.height
+            - layout.border.top
+            - layout.border.bottom
+            - layout.padding.top
+            - layout.padding.bottom,
+    )
+    .max(0.0);
+    let rtl = node
+        .primary_styles()
+        .is_some_and(|s| s.clone_direction() == style::computed_values::direction::T::Rtl);
+    let mut positioned_outside = std::collections::HashSet::new();
+    let mut positioned_cb = std::collections::HashMap::new();
+    let mut orphans_widows = std::collections::HashMap::new();
+    let mut unrounded_x = std::collections::HashMap::new();
+    let mut stack = vec![mc.id];
+    while let Some(id) = stack.pop() {
+        let Some(n) = doc.get_node(id) else {
+            continue;
+        };
+        if node_has_layout_data(n) {
+            let x = unrounded_abs_x(doc, id);
+            let w = f64::from(n.unrounded_layout().size.width);
+            unrounded_x.insert(id.as_u64() as usize, (x, x + w));
+        }
+        let declared = (
+            lines.inherited(doc, id, true),
+            lines.inherited(doc, id, false),
+        );
+        if declared != (None, None) {
+            orphans_widows.insert(id.as_u64() as usize, declared);
+        }
+        if id != mc.id && is_out_of_flow(n) {
+            // Positioned against the container or an ancestor of it: not in a column.
+            let in_columns = n
+                .containing_block()
+                .is_some_and(|cb| cb != mc.id && is_dom_descendant(doc, cb, mc.id));
+            if !in_columns {
+                positioned_outside.insert(id.as_u64() as usize);
+            } else if let Some(cb) = n.containing_block() {
+                positioned_cb.insert(id.as_u64() as usize, cb.as_u64() as usize);
+            }
+        }
+        if let Some(children) = n.layout_children.borrow().as_ref() {
+            stack.extend(children.iter().copied());
+        }
+    }
+    Some(crate::multicol::Multicol {
+        node_id: raw,
+        count: mc.count,
+        column_width: mc.column_width,
+        gap: mc.gap,
+        content_top,
+        height,
+        fill_auto: mc.fill_auto,
+        content_sized: mc.auto_height,
+        rtl,
+        positioned_outside,
+        positioned_cb,
+        orphans_widows,
+        unrounded_x,
+    })
 }
 
 /// The grid lines of every compensated cell's rows, from the laid-out cells: a row's top line is
@@ -2721,6 +3197,23 @@ fn resolve_and_walk<O: LayoutObserver>(
         CollapsedBorders::default()
     };
     doc.resolve(0.0);
+    // Multi-column containers (no multi-column layout in Blitz): laid out one column wide, the
+    // content-sized ones given their balanced height (`lay_out_multicol`); the columns are cut
+    // after the walk (`crate::multicol::apply`). Off in the raw-Blitz render.
+    let (multicols, line_rules) = if O::VELLORA_CORRECTIONS {
+        let media_applies = {
+            let device = doc.stylist_device();
+            breaks.media_applies(|query| media_query_matches(device, query))
+        };
+        let (_, _, fill) = breaks.column_rules(&media_applies);
+        let column_fill = matched_column_fill(&doc, &fill);
+        let (orphans, widows) = breaks.orphans_widows(&media_applies);
+        let lines = LineRules::new(&doc, &orphans, &widows);
+        let found = lay_out_multicol(&mut doc, &column_fill, &lines);
+        (found, lines)
+    } else {
+        (Vec::new(), LineRules::default())
+    };
     // Floats Blitz/Taffy let overlap what Chrome moves out of their way (two Blitz bugs, see
     // `float_avoidance_fixups`): read off this layout, written into the computed styles, and
     // laid out once more. Off in the raw-Blitz render.
@@ -2749,11 +3242,17 @@ fn resolve_and_walk<O: LayoutObserver>(
         breaks.media_applies(|query| media_query_matches(device, query))
     };
     let (avoid_inside, page_before, page_after) = breaks.selected(&media_applies);
+    let (column_before, column_after, _) = breaks.column_rules(&media_applies);
+    let (avoid_before, avoid_after) = breaks.avoid_rules(&media_applies);
     let base: &BaseDocument = &doc;
     let break_targets = BreakTargets {
         avoid_inside: matched_nodes(base, &avoid_inside),
         page_before: matched_nodes(base, &page_before),
         page_after: matched_nodes(base, &page_after),
+        column_before: matched_nodes(base, &column_before),
+        column_after: matched_nodes(base, &column_after),
+        avoid_before: matched_nodes(base, &avoid_before),
+        avoid_after: matched_nodes(base, &avoid_after),
         page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
         writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
     };
@@ -2795,6 +3294,15 @@ fn resolve_and_walk<O: LayoutObserver>(
         walk_box(base, root_id, 0, &mut sink);
     }
     crate::break_css::resolve_break_after(&mut boxes);
+    crate::break_css::resolve_column_break_after(&mut boxes);
+    // The columns of every multi-column container (`lay_out_multicol` laid them out as one).
+    if !multicols.is_empty() {
+        let specs: Vec<crate::multicol::Multicol> = multicols
+            .iter()
+            .filter_map(|mc| multicol_spec(base, mc, &boxes, &line_rules))
+            .collect();
+        crate::multicol::apply(&mut boxes, &specs);
+    }
     crate::break_css::resolve_named_page_breaks(&mut boxes);
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
     // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (none in the raw-Blitz render).
@@ -2856,10 +3364,17 @@ struct WalkSink<'a, 'img> {
 
 /// Node ids matched by the stylesheet's fragmentation rules
 /// (see [`crate::break_css`]).
+#[derive(Default)]
 struct BreakTargets {
     avoid_inside: std::collections::HashSet<NodeId>,
     page_before: std::collections::HashSet<NodeId>,
     page_after: std::collections::HashSet<NodeId>,
+    /// `break-before: column` / `break-after: column` from the stylesheet (Phase C step 05).
+    column_before: std::collections::HashSet<NodeId>,
+    column_after: std::collections::HashSet<NodeId>,
+    /// `break-before: avoid` / `break-after: avoid` from the stylesheet (Phase C step 05).
+    avoid_before: std::collections::HashSet<NodeId>,
+    avoid_after: std::collections::HashSet<NodeId>,
     /// The `page` value each matched node gets from the stylesheet (`None` = `auto`).
     page_names: std::collections::HashMap<NodeId, Option<String>>,
     /// The `writing-mode` each matched node gets from the stylesheet (`true` = vertical).
@@ -2877,6 +3392,23 @@ fn matched_writing_modes(
         if let Ok(nodes) = base.query_selector_all(selector) {
             for node in nodes {
                 out.insert(node, *vertical);
+            }
+        }
+    }
+    out
+}
+
+/// The `column-fill` of every node a rule matches (`true` = `auto`; the later rule wins, as
+/// [`matched_page_names`]; an inline `style` wins over every rule, see `multicol_containers`).
+fn matched_column_fill(
+    base: &BaseDocument,
+    rules: &[(&str, bool)],
+) -> std::collections::HashMap<NodeId, bool> {
+    let mut out = std::collections::HashMap::new();
+    for (selector, auto) in rules {
+        if let Ok(nodes) = base.query_selector_all(selector) {
+            for node in nodes {
+                out.insert(node, *auto);
             }
         }
     }
@@ -3410,6 +3942,14 @@ fn push_box(
         // break-after box still takes the break (probe ba-float-next).
         break_after_page: (inline_breaks.page_after || sink.breaks.page_after.contains(&node_id))
             && !floated,
+        break_before_column: inline_breaks.column_before
+            || sink.breaks.column_before.contains(&node_id),
+        break_before_avoid: inline_breaks.avoid_before
+            || sink.breaks.avoid_before.contains(&node_id),
+        break_after_avoid: inline_breaks.avoid_after || sink.breaks.avoid_after.contains(&node_id),
+        break_after_column: (inline_breaks.column_after
+            || sink.breaks.column_after.contains(&node_id))
+            && !floated,
         out_of_flow: node
             .primary_styles()
             .is_some_and(|styles| styles.clone_position().is_absolutely_positioned()),
@@ -3424,6 +3964,13 @@ fn push_box(
             .or_else(|| sink.breaks.page_names.get(&node_id).cloned())
             .flatten(),
         atomic_inline: atomic_inline(node),
+        orphans: None,
+        widows: None,
+        contain_size: node.primary_styles().is_some_and(|styles| {
+            styles
+                .clone_contain()
+                .contains(style::values::computed::Contain::SIZE)
+        }),
         clips_overflow: node.primary_styles().is_some_and(|styles| {
             styles.clone_overflow_y() != style::values::computed::Overflow::Visible
         }),
