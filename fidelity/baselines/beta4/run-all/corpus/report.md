@@ -15,7 +15,7 @@ Criterion IDs, sources and tolerance labels: `fidelity/ACCEPTANCE.md`. Lengths i
 | python | 3.12.13 |
 | pythonPackages | zxing-cpp 3.1.1, pillow 12.3.0, pypdf 6.21.1, pdfminer.six 20260107 |
 | gitHead | dc535e7f9e0a3291a539b3c8597ee03472ad1aaa |
-| command | node fidelity/corpus/render-corpus.mjs --out /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/results/run-all/20261021T054809Z/corpus |
+| command | node fidelity/corpus/render-corpus.mjs --out <worktree>/fidelity/results/run-all/20261021T054809Z/corpus |
 | authority | INDICATIVE (local macOS run; the pinned Linux CI run is authoritative) |
 
 ## Summary (all fixtures and variants, including DIAGNOSTIC)

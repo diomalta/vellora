@@ -12,7 +12,7 @@ Deltas are vellora − Chromium in CSS px. Paths abbreviate `html>body:nth-child
 - os: `darwin 27.0.0 arm64`
 - cpu: `Apple M5 Pro`
 - node: `v22.23.2`
-- command: `node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --label beta4 --dump-repo /tmp/lfix/beta4`
+- command: `node <worktree>/fidelity/layout-diff/run.mjs --label beta4 --dump-repo /tmp/lfix/beta4`
 - repo: `/tmp/lfix/beta4`
 - rustc: `rustc 1.96.0 (ac68faa20 2026-05-25)`
 - git_commit: `f8fb39180b25502305a4b8bfb4c841c302549923`
@@ -20,7 +20,7 @@ Deltas are vellora − Chromium in CSS px. Paths abbreviate `html>body:nth-child
 - blitz: `blitz-0.3.0-beta.4`
 - chrome_path: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
 - chrome_version: `Google Chrome 155.0.8059.85`
-- templating_repo: `/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2`
+- templating_repo: `<worktree>`
 - chrome_user_agent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36`
 - crates: blitz-dom 0.3.0-beta.4, blitz-html 0.3.0-beta.4, blitz-traits 0.3.0-beta.4, krilla 0.8.2, parley 0.12.0, stylo 0.22.0, taffy 0.15.0
 - tools: puppeteer-core 25.15.0

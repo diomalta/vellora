@@ -39,7 +39,7 @@
       }
     ],
     "sourceSummarySha256": "f6a0ba8590ec680d84b0e0fc61f2ca41fe22e9126f538e88fd1360ecb207d407",
-    "extractedBy": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T073259Z --expectations /tmp/s1b/gate-expect.json --compare /Users/diomalta/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/summary.json --out /tmp/s1b/gate-extract"
+    "extractedBy": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T073259Z --expectations /tmp/s1b/gate-expect.json --compare <run-store>/run-all-beta4-20261021T054809Z/summary.json --out /tmp/s1b/gate-extract"
   },
   "environment": {
     "date": "Wed Oct 21 07:32:59 UTC 2026",
@@ -839,7 +839,7 @@
     "note": "fidelity/results/ is gitignored; the run directory is not committed"
   },
   "extraction": {
-    "command": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T073259Z --expectations /tmp/s1b/gate-expect.json --compare /Users/diomalta/.cache/vellora-fidelity/run-all-beta4-20261021T054809Z/summary.json --out /tmp/s1b/gate-extract",
+    "command": "node fidelity/baselines/beta4/extract.mjs --run fidelity/results/run-all/20261021T073259Z --expectations /tmp/s1b/gate-expect.json --compare <run-store>/run-all-beta4-20261021T054809Z/summary.json --out /tmp/s1b/gate-extract",
     "date": "Wed Oct 21 07:40:07 UTC 2026"
   },
   "files": {

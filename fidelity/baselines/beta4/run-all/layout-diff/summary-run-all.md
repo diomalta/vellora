@@ -5,7 +5,7 @@
 > **WARNING — CHECKS FAILED** in receipt (normalize_wrappers_located, normalize_dom_roundtrip, dom_key_alignment); oss-postmark-receipt (bundled_fonts_loaded, platform_fonts_custom, normalize_dom_roundtrip, source_dom_keys_vs_chromium; INPUT PARITY: attribution INVALID). See the checks table below and each fixture's report.
 
 - date: `2026-10-21T06:04:25Z`; blitz: `blitz-0.3.0-beta.4`; commit: `dc535e7f9e0a3291a539b3c8597ee03472ad1aaa` (clean); chrome: `Google Chrome 155.0.8059.85`; node: `v22.23.2`; rustc: `rustc 1.96.0 (ac68faa20 2026-05-25)`
-- command: `node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/layout-diff/run.mjs --fixtures invoice,receipt,boleto,notification,boleto-febraban,danfe,text-stress-ptbr,oss-sparksuite-invoice,oss-postmark-receipt --label run-all --out /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/results/run-all/20261021T054809Z/layout-diff --chrome /Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
+- command: `node <worktree>/fidelity/layout-diff/run.mjs --fixtures invoice,receipt,boleto,notification,boleto-febraban,danfe,text-stress-ptbr,oss-sparksuite-invoice,oss-postmark-receipt --label run-all --out <worktree>/fidelity/results/run-all/20261021T054809Z/layout-diff --chrome /Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
 
 ## Checks
 

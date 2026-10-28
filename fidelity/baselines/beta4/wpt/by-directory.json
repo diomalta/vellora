@@ -3591,7 +3591,7 @@
       "rev": null
     },
     "generated": "Wed Oct 21 05:48:09 UTC 2026",
-    "generatedBy": "node fidelity/wpt/run.mjs --out /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/results/run-all/20261021T054809Z/wpt --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --update-expectations --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'",
+    "generatedBy": "node fidelity/wpt/run.mjs --out <worktree>/fidelity/results/run-all/20261021T054809Z/wpt --expectations fidelity/baselines/wpt/blitz-2003ba5fc2d8.json --update-expectations --chrome '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'",
     "vellora": "dc535e7f9e0a3291a539b3c8597ee03472ad1aaa",
     "inkCheck": "chrome Chrome/155.0.8059.85",
     "tests": 8047,

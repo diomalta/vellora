@@ -12,15 +12,15 @@ Deltas are vellora − Chromium in CSS px. Paths abbreviate `html>body:nth-child
 - os: `darwin 27.0.0 arm64`
 - cpu: `Apple M5 Pro`
 - node: `v22.23.2`
-- command: `node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/layout-diff/run.mjs --label pin --dump-repo fidelity/.cache/pin-src`
-- repo: `/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15/fidelity/.cache/pin-src`
+- command: `node <worktree>/fidelity/layout-diff/run.mjs --label pin --dump-repo fidelity/.cache/pin-src`
+- repo: `<worktree>/fidelity/.cache/pin-src`
 - rustc: `rustc 1.96.0 (ac68faa20 2026-05-25)`
 - git_commit: `2c66544f4c2a7bf44df6f25831a56ccf50d00e82`
 - git_dirty: `clean`
 - blitz: `blitz-0.3.0-alpha.5+2003ba5`
 - chrome_path: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
 - chrome_version: `Google Chrome 155.0.8059.85`
-- templating_repo: `/Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-15`
+- templating_repo: `<worktree>`
 - chrome_user_agent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36`
 - crates: blitz-dom 0.3.0-alpha.5, blitz-html 0.3.0-alpha.5, blitz-traits 0.3.0-alpha.5, krilla 0.8.2, parley 0.10.0, stylo 0.18.0, taffy 0.11.0-experimental-cache-fix.3
 - tools: puppeteer-core 25.15.0

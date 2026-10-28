@@ -5,7 +5,7 @@
 > **WARNING — CHECKS FAILED** in receipt (normalize_wrappers_located, normalize_dom_roundtrip, dom_key_alignment). See the checks table below and each fixture's report.
 
 - date: `2026-10-21T04:35:55Z`; blitz: `blitz-0.3.0-beta.4`; commit: `f8fb39180b25502305a4b8bfb4c841c302549923` (dirty); chrome: `Google Chrome 155.0.8059.85`; node: `v22.23.2`; rustc: `rustc 1.96.0 (ac68faa20 2026-05-25)`
-- command: `node /Users/diomalta/Repositories/vellora/.claude/worktrees/wf_e3d702d1-528-2/fidelity/layout-diff/run.mjs --label beta4 --dump-repo /tmp/lfix/beta4`
+- command: `node <worktree>/fidelity/layout-diff/run.mjs --label beta4 --dump-repo /tmp/lfix/beta4`
 
 ## Checks
 
