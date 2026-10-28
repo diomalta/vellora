@@ -110,17 +110,18 @@ word on the repo's document fixtures. Before is the published package; after is 
 not released.
 
 <!-- fidelity-evidence:readme -->
-> **This run passes the strict merge gate (verdict PASS, --contract). The branch is not merged or released yet:** it is to be merged in vellora vX.Y.Z (placeholder; the release sets the version). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. The released package is vellora@0.2.0.
+> **Released in vellora 0.3.0.** The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
 
-![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Synthetic document data.](./docs/assets/fidelity/danfe-p1.jpg)
+![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](./docs/assets/fidelity/danfe-p1.jpg)
 
-<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
 
 Measured against Chrome for Testing 155.0.8059.85 headless print-to-PDF on 9 document fixtures, comparing the position of every word in each PDF:
 
 - **8 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
 - **0.21 mm or less** median word-position error on every one of the 9 fixtures (largest: danfe). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
 - **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
+- **4,553 of 8,047 WPT reftests** pass through the same pipeline (56.58%), coverage of the CSS test subset the harness runs, not a document-quality score. vellora 0.2.0 (published) engine: 2,578 (32.04%).
 
 Method, the full table with the losses, and how to reproduce it: [Measured fidelity](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity). Raw values: [manifest.json](./docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:readme -->

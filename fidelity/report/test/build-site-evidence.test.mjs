@@ -145,18 +145,20 @@ test("the committed manifest carries the committed oracle's numbers, before and 
   assert.equal(manifest.fixtures.length, FIXTURES.length);
 });
 
-test("the committed manifest is PASS (contract gate report PASS) and still unreleased", () => {
+test("the committed manifest is PASS (contract gate report PASS) and released in 0.3.0", () => {
   assert.equal(manifest.gate.verdict, "PASS");
   assert.equal(manifest.gate.contract, true);
   assert.equal(manifest.status, "PASS");
-  assert.equal(manifest.released, false);
-  assert.equal(manifest.release.version, null);
-  // Not released: the copy carries the version placeholder the release fills, and never a
-  // claim that the branch is merged or released.
+  assert.equal(manifest.released, true);
+  assert.deepEqual(manifest.release, { version: "0.3.0" });
+  assert.equal(manifest.after.label, "vellora 0.3.0");
+  assert.equal(manifest.before.label, "vellora 0.2.0 (published)");
+  assert.match(manifest.commands.regenerate, / --release 0\.3\.0 /);
   const blocks = renderBlocks(manifest, "vitepress");
-  assert.ok(blocks.status.includes(RELEASE_PLACEHOLDER));
-  assert.match(blocks.status, /not merged or released yet/);
-  assert.match(blocks.status, /released package is vellora@0\.2\.0/);
+  assert.ok(!blocks.status.includes(RELEASE_PLACEHOLDER));
+  assert.match(blocks.status, /Released in vellora 0\.3\.0/);
+  assert.doesNotMatch(blocks.status, /not merged|not released|released yet/);
+  assert.match(blocks.status, /Before is vellora@0\.2\.0, the previous release/);
 });
 
 test("every generated docs block is in sync with the committed manifest", () => {

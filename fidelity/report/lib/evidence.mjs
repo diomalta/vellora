@@ -590,6 +590,17 @@ function statusLine(manifest) {
     : "DRAFT: unreleased branch, merge not yet passed. Local macOS: indicative.";
 }
 
+/** The released stamp is too long to share a line with the source, so it gets its own line. */
+const footerExtra = (manifest) => (manifest.released ? 14 : 0);
+
+function chartFooter(manifest, H) {
+  const source = "Source: docs/assets/fidelity/manifest.json";
+  if (!manifest.released)
+    return `<text class="mu" x="20" y="${H - 10}" font-size="10">${esc(`${statusLine(manifest)} ${source}`)}</text>`;
+  return `<text class="mu" x="20" y="${H - 24}" font-size="10">${esc(statusLine(manifest))}</text>
+<text class="mu" x="20" y="${H - 10}" font-size="10">${esc(source)}</text>`;
+}
+
 /** Dumbbell chart, one row per fixture. scale: "log" (mm) or "linear" (percent). */
 function dumbbell(manifest, spec) {
   const W = 760;
@@ -598,7 +609,7 @@ function dumbbell(manifest, spec) {
   const left = 200;
   const right = 160;
   const plotW = W - left - right;
-  const H = top + rowH * manifest.fixtures.length + 56;
+  const H = top + rowH * manifest.fixtures.length + 56 + footerExtra(manifest);
   const x = spec.x(plotW);
   const rows = manifest.fixtures
     .map((f, i) => {
@@ -637,7 +648,7 @@ ${ticks}
 <text class="mu" x="${W - right + 14}" y="${plotTop + 2}" font-size="11">before → after</text>
 ${rows}
 <text class="mu" x="${left + plotW / 2}" y="${plotBottom + 34}" font-size="11" text-anchor="middle">${esc(spec.axisLabel)}</text>
-<text class="mu" x="20" y="${H - 10}" font-size="10">${esc(`${statusLine(manifest)} Source: docs/assets/fidelity/manifest.json`)}</text>
+${chartFooter(manifest, H)}
 </svg>
 `;
 }
@@ -710,7 +721,7 @@ export function chartWpt(manifest) {
   }
   const top = 76;
   const rowH = 40;
-  const H = top + rowH * bars.length + 52;
+  const H = top + rowH * bars.length + 52 + footerExtra(manifest);
   const rows = bars
     .map((b, i) => {
       const y = top + rowH * i;
@@ -742,7 +753,7 @@ export function chartWpt(manifest) {
 ${ticks}
 <line class="axis" x1="${left}" y1="${top - 6}" x2="${left}" y2="${plotBottom}" stroke-width="1"/>
 ${rows}
-<text class="mu" x="20" y="${H - 10}" font-size="10">${esc(`${statusLine(manifest)} Source: docs/assets/fidelity/manifest.json`)}</text>
+${chartFooter(manifest, H)}
 </svg>
 `;
 }
@@ -777,7 +788,7 @@ function attributionLine(f) {
 
 function statusBlock(m, flavor) {
   const text = m.released
-    ? `**Released in vellora ${m.release.version}.** The measured run passed the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). ${m.authority} Before is ${m.before.npm}, the previous release.`
+    ? `${flavor === "github" ? `**Released in vellora ${m.release.version}.** ` : ""}The measured run passed the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). ${m.authority} Before is ${m.before.npm}, the previous release.`
     : m.status === "PASS"
       ? `**This run passes the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). The branch is not merged or released yet:** it is to be merged in vellora ${m.release?.placeholder ?? RELEASE_PLACEHOLDER} (placeholder; the release sets the version). ${m.authority} The released package is ${m.before.npm}.`
       : `**DRAFT. These results are from an unreleased branch that is not merged.** The merge is gated by a strict oracle contract, and this run does not pass it yet (${m.statusReason}). ${m.authority} The released package is ${m.before.npm}.`;
@@ -814,6 +825,13 @@ function heroBlock(m, flavor) {
 <sub>${esc(f.name)}, page 1. Left to right: ${chromeShort(m)} (reference), ${m.before.label}, ${m.after.label}. Median word-position error ${mm(f.before.medianMm)} → ${mm(f.after.medianMm)}; words within 1 mm ${pct(f.before.within1mmPct)} → ${pct(f.after.within1mmPct)}; pages ${f.before.pages} → ${f.after.pages} (Chrome: ${f.chromePages}). Synthetic data.</sub>`;
 }
 
+/** The WPT count as one headline bullet (README): coverage of the subset, not a quality score. */
+function wptHeadline(m) {
+  const a = m.wpt.after.totals;
+  const b = m.wpt.before.totals;
+  return `- **${int(a.pass)} of ${int(a.reftests)} WPT reftests** pass through the same pipeline (${pct2(a.passRate)}), coverage of the CSS test subset the harness runs, not a document-quality score. ${m.before.label} engine: ${int(b.pass)} (${pct2(b.passRate)}).`;
+}
+
 function readmeBlock(m) {
   return [
     statusBlock(m, "github"),
@@ -823,6 +841,7 @@ function readmeBlock(m) {
     `Measured against ${chromeShort(m)} headless print-to-PDF on ${m.fixtures.length} document fixtures, comparing the position of every word in each PDF:`,
     "",
     headlineBlock(m),
+    wptHeadline(m),
     "",
     `Method, the full table with the losses, and how to reproduce it: [Measured fidelity](${DOCS_URL}). Raw values: [manifest.json](./docs/assets/fidelity/manifest.json).`,
   ].join("\n");
