@@ -1,10 +1,10 @@
-// The Phase C ledger-shrink recipe (gate/snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs).
+// The Phase C ledger-shrink recipe (gate/shrink-ledger.mjs).
 // Step-4 verify: its closed[] reason was hard-coded to "Phase C 03 tip (...)", so the c04 shrink
 // labelled its closures as step 03's (relabelled by hand in 3545ce4). The label is now a required
 // parameter; these tests pin that, and the three routes (kept, fixed, vanished).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { shrinkLedger } from "../snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs";
+import { shrinkLedger } from "../shrink-ledger.mjs";
 
 const RUN = "20261028T034745Z";
 const ledger = () => ({

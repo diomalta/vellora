@@ -16,21 +16,25 @@
 // the text used to be hard-coded to "Phase C 03 tip (...)", so the c04 shrink labelled its own
 // closures as step 03's and 3545ce4 had to relabel them by hand; step-4 verify).
 //
-//   node fidelity/gate/snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs --run <run-all dir> \
+//   node fidelity/gate/shrink-ledger.mjs --run <run-all dir> \
 //     --step 12-phase-c-03 --label "Phase C 03 tip (ledger + LayoutUnit + ...)" \
-//     --accept fidelity/gate/snapshots/2026-10-28/c03/accepted.json \
-//     [--ledger fidelity/baselines/port/DEBT.json] --out <DEBT.json>
+//     --accept <step accepted.json> [--ledger fidelity/baselines/port/DEBT.json] \
+//     [--baseline <the run's previous link, default the latest port link>] --out <DEBT.json>
+//
+// Until 2026-10-28 this script lived at gate/snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs
+// (the path the closed[] evidence of the c03..c06 ledgers names) and hard-coded the previous link
+// port/10-integration; the head is the port README's chain head (gate/debt.mjs chainHead).
 import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareSnapshots, snapshotKeys } from "../../../../compare.mjs";
-import { ceilingOf } from "../../../../debt-populate.mjs";
-import { DEBT_FILE, HEAD_GATING_CLASSES } from "../../../../debt.mjs";
-import { chainDeclarations } from "../../../../declarations.mjs";
-import { readAcceptances, readDeclarations } from "../../../../run.mjs";
-import { loadSnapshot } from "../../../../snapshot.mjs";
+import { compareSnapshots, snapshotKeys } from "./compare.mjs";
+import { ceilingOf } from "./debt-populate.mjs";
+import { DEBT_FILE, HEAD_GATING_CLASSES, chainHead } from "./debt.mjs";
+import { PORT_DIR, chainDeclarations, loadLinks } from "./declarations.mjs";
+import { readAcceptances, readDeclarations } from "./run.mjs";
+import { loadSnapshot } from "./snapshot.mjs";
 
-const SCRIPT = "fidelity/gate/snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs";
+const SCRIPT = "fidelity/gate/shrink-ledger.mjs";
 
 /**
  * The shrink itself. Pure: no I/O.
@@ -100,8 +104,6 @@ export function shrinkLedger({ cur, headItems, present, runId, step, label }) {
 }
 
 function main(argv) {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const FIDELITY = resolve(here, "..", "..", "..", "..", "..");
   const val = (n) => (argv.indexOf(n) >= 0 ? argv[argv.indexOf(n) + 1] : undefined);
   const ledgerFile = resolve(val("--ledger") ?? DEBT_FILE);
   const step = val("--step");
@@ -114,14 +116,19 @@ function main(argv) {
   const runDir = resolve(val("--run"));
 
   const cur = JSON.parse(readFileSync(ledgerFile, "utf8"));
-  const headDir = join(FIDELITY, "baselines", "port", "00-start");
+  const headDir = chainHead();
+  const latest = loadLinks()
+    .map((l) => l.step)
+    .sort()
+    .at(-1);
+  const baselineDir = val("--baseline") ? resolve(val("--baseline")) : join(PORT_DIR, latest);
   const run = loadSnapshot(runDir);
   const runId = run.provenance?.runId;
   if (!/^\d{8}T\d{6}Z$/.test(runId ?? "")) throw new Error(`run id not found: ${runId}`);
   const accept = readAcceptances(acceptFile).filter((e) => e.class === "a");
   const carried = chainDeclarations({
     headDir,
-    baselineDir: join(FIDELITY, "baselines", "port", "10-integration"),
+    baselineDir,
     current: readDeclarations(acceptFile),
     step,
   });
