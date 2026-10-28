@@ -59,7 +59,7 @@ vellora 0.3.0 numbers, each from a reproducible run in this repository:
 | Warm render, median / p95 | 19.09 / 23.32 ms | 635.50 / 681.03 ms | [Benchmark run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121) |
 | Cold start | 47.29 ms | 735.01 ms | same run |
 | Memory at 8 concurrent renders | 117.60 MB RSS in Node | 6833.96 MB external browser RSS | same run |
-| External runtime to ship | none | 412.28 MB | same run |
+| External runtime | none | 412.28 MB | same run |
 
 The benchmark ran on pinned Linux CI (AMD EPYC 7763, 4 cores, Node v22.23.4) with a 3-page invoice;
 the Chromium path is vellora's optional `@vellora/engine-chromium`. Puppeteer and Playwright were
