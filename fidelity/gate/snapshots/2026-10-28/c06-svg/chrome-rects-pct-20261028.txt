@@ -1,6 +1,0 @@
-Chrome/155.0.8059.85
-== ~/Repositories/vellora-fidelity-runs/c06-svg/inputs/svg-sizes-pct.html
-svg#a x=8 y=8 w=40 h=150
-svg#b x=8 y=158 w=784 h=150
-svg#c x=8 y=308 w=50 h=100
-svg#d x=8 y=508 w=392 h=150
