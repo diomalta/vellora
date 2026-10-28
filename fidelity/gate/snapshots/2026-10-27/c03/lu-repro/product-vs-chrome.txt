@@ -14,7 +14,7 @@ margin_neg               m0  chrome y   0.000000 h  20.000000 w 800.000000 | bli
 margin_neg               m1  chrome y  16.234375 h  10.000000 w 800.000000 | blitz y    16.2344 h    10.0000 w   793.0000 | dh +0.0000
 height_mm                m0  chrome y   0.000000 h  38.171875 w 800.000000 | blitz y     0.0000 h    38.1719 w   793.0000 | dh +0.0000
 height_mm                m1  chrome y  38.171875 h   1.000000 w 800.000000 | blitz y    38.1719 h     1.0000 w   793.0000 | dh +0.0000
-width_mm                 m0  chrome y   0.000000 h   1.000000 w 279.671875 | blitz y     0.0000 h     1.0000 w   279.6719 | dh +0.0000
+width_mm                 m0  chrome y   0.000000 h   1.000000 w 279.671875 | blitz y     0.0000 h     1.0000 w   279.6851 | dh +0.0000
 minh_mm                  m0  chrome y   0.000000 h  38.171875 w 800.000000 | blitz y     0.0000 h    38.1719 w   793.0000 | dh +0.0000
 minh_mm                  m1  chrome y  38.171875 h   1.000000 w 800.000000 | blitz y    38.1719 h     1.0000 w   793.0000 | dh +0.0000
 width_pct                m0  chrome y   0.000000 h   1.000000 w 266.656250 | blitz y     0.0000 h     1.0000 w   264.3307 | dh +0.0000

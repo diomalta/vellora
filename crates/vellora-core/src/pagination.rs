@@ -1540,6 +1540,34 @@ fn reposition(boxes: &[LaidOutBox], from_top: f64, to_top: f64) -> Vec<LaidOutBo
         .collect()
 }
 
+/// A text baseline on the printed page: the nearest whole CSS px of the PAGE (top margin
+/// included). Chrome prints every baseline there and vellora's layout does not: Blitz/Taffy
+/// place a line's baseline on a whole px of the CONTENT box, which a fractional top page margin
+/// (16mm = 60.4724 px) then moves off the page's px grid. Text only; boxes, borders and images
+/// keep their positions (Chrome paints those at fractional positions). Used for body text
+/// ([`lower_to_display_list`]) and the `@page` margin-box text ([`build_margin_texts`]); the
+/// raw-Blitz render's flat pagination does not snap (Blitz's own placement).
+///
+/// Evidence (CONFIRMED, Phase C step 03, 2026-10-27, Chrome for Testing 155.0.8059.85, PyMuPDF
+/// origins of the reference print): every word baseline of 8 of the 9 measured fixtures is a
+/// whole px of the page (invoice 541/541, text-stress-ptbr 1833/1833, ...), and so is every line
+/// of the repro set `fidelity/gate/snapshots/2026-10-27/c03/baseline-snap/` (plain blocks,
+/// `overflow: hidden`, table cells, a 0.42cm margin, a danfe-like table), including lines whose
+/// layout baseline drifts 0.3 px a block (`pad_16mm`: 71, 87, 102, 118, 134, 149; vellora
+/// before this: 71.47, 87.47, ...; `tests/baseline_snap.rs`). vellora's words sat
+/// frac(margin) = +0.47 px below Chrome's on every 16mm fixture, so a word whose line Taffy
+/// rounded 1 px low ended 1.1 pt (> the 1 pt pdf-probe tolerance) from Chrome. The exception is
+/// danfe, whose Chrome baselines are fractional with glyphs printed ~0.1 % smaller (9.987 vs
+/// 9.996 pt): HYPOTHESIS, Chrome scales that page to fit, after snapping; not modelled.
+///
+/// Where Blink snaps (paint or page-margin rounding) was not read in its source: the rule here
+/// is the measured outcome. Not a Blitz bug (Blitz has no paged output), so there is no raw-Blitz
+/// canary; `tests/baseline_snap.rs` pins Chrome's numbers. Delete this (and those tests) only if
+/// vellora stops targeting Chrome's print geometry.
+fn snap_baseline_to_page_px(y: f64) -> f64 {
+    y.round()
+}
+
 /// Lower a page's positioned boxes into a krilla display list: background fills
 /// for boxes that declare a non-white background (header band etc.) and the
 /// already-positioned text runs. X is offset by the left margin; the page-local
@@ -1589,7 +1617,7 @@ fn lower_to_display_list(
         }
         for mut r in b.text_runs {
             r.origin_x += margin_l;
-            r.origin_y += margin_t;
+            r.origin_y = snap_baseline_to_page_px(r.origin_y + margin_t);
             runs.push(r);
         }
     }
@@ -1726,7 +1754,9 @@ impl<'a> PageGeometry<'a> {
 /// - vertically, the line box is centred in the margin band (the top or bottom page margin), so
 ///   the baseline sits (ascent − descent) / 2 below the band's centre whatever the line height.
 ///
-/// Chrome snaps that baseline to whole device pixels (≤ 1 px); WeasyPrint and vellora do not.
+/// Chrome snaps that baseline to whole device pixels (≤ 1 px), and so does vellora since Phase C
+/// step 03 ([`snap_baseline_to_page_px`]: text-stress-ptbr's "Página n de 7", Chrome 1093 px,
+/// vellora 1092.54 before); WeasyPrint does not.
 /// A document without any shaped body text gets no margin text, as in Chrome (an empty body
 /// prints no footer). Fonts are deduplicated against the body's faces so a face is embedded
 /// once (`tests/pipeline.rs::each_face_is_embedded_exactly_once_across_pages`).
@@ -1780,7 +1810,7 @@ fn build_margin_texts(doc: &LaidOutDoc, pages: &[PageBox]) -> Vec<Vec<(MarginBox
             .into_iter()
             .map(|mut run| {
                 run.origin_x += x0;
-                run.origin_y += y0;
+                run.origin_y = snap_baseline_to_page_px(run.origin_y + y0);
                 run.font_data = shared_face(&run.font_data, &body_faces, &mut faces);
                 run
             })

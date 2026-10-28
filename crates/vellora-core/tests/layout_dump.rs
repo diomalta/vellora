@@ -421,7 +421,9 @@ fn pagination_trace_is_consistent_with_paginate() {
             let dy = offset + page_box.margin_top;
             for id in &ids {
                 for run in &boxes[id].text_runs {
-                    let y = run.origin_y + dy;
+                    // Text baselines land on whole page px when lowered
+                    // (`pagination::snap_baseline_to_page_px`).
+                    let y = (run.origin_y + dy).round();
                     let x = run.origin_x + page_box.margin_left;
                     assert!(
                         page.text_runs.iter().any(|r| (r.origin_y - y).abs() < 1e-6

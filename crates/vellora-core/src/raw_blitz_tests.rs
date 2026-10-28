@@ -126,8 +126,10 @@ fn raw_blitz_render_equals_the_product_render_without_corrections_or_breaks() {
     let product = render(html.as_bytes(), &opts).expect("renders");
     let raw = debug_render_raw_blitz(html.as_bytes(), &opts, false).expect("raw");
     assert_eq!(product, raw);
-    // The XML parse is selectable (here equal to the XHTML render) and deterministic.
-    let xhtml = r#"<html xmlns="http://www.w3.org/1999/xhtml"><body><p>a<br/>b</p></body></html>"#;
+    // The XML parse is selectable (here equal to the XHTML render) and deterministic. A zero
+    // page margin: the product snaps text baselines to whole page px
+    // (`pagination::snap_baseline_to_page_px`), which a fractional default margin would move.
+    let xhtml = r#"<html xmlns="http://www.w3.org/1999/xhtml"><head><style>@page { margin: 0 }</style></head><body><p>a<br/>b</p></body></html>"#;
     let a = debug_render_raw_blitz(xhtml.as_bytes(), &opts, true).expect("raw xml");
     let b = debug_render_raw_blitz(xhtml.as_bytes(), &opts, true).expect("raw xml");
     assert_eq!(a, b);
