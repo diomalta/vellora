@@ -348,6 +348,45 @@ test("the committed ledger (c04 tip shrink): 2 entries, 5 WPT keys, rule iii vs 
   );
 });
 
+// Phase C 05 tip (2026-10-28): DEBT.json re-shrunk from run 20261028T062527Z (phasec/05-tip, step
+// 14-phase-c-05-tip, shrink-ledger.mjs --label): all 5 keys still gate against port/00-start, so no
+// key leaves and only the note grows. The c04 ledger is not frozen again: its entries and closed[]
+// are exactly the ones this test and the c04 test above pin.
+test("the committed ledger (c05 tip shrink): unchanged 2 entries / 5 keys, every key still debt in the c05 contract re-gate", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const prev = loadDebt(LEDGER_C03_TIP);
+  const base = loadDebt(LEDGER_10);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  assert.equal(ledger.closed.length, prev.closed.length + 2);
+  const report = JSON.parse(
+    gunzipSync(
+      readFileSync(
+        resolve(
+          here,
+          "..",
+          "snapshots",
+          "2026-10-28",
+          "c05",
+          "gate-report-c05-tip-contract.json.gz",
+        ),
+      ),
+    ).toString(),
+  );
+  assert.equal(report.step, "14-phase-c-05-tip");
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  for (const e of ledger.entries) {
+    for (const k of e.keys) assert.equal(head.get(k.key)?.class, "debt", k.key);
+  }
+  assert.match(
+    ledger.note,
+    /Phase C 05 tip .*\(step 14-phase-c-05-tip\) from run 20261028T062527Z/,
+  );
+  assert.deepEqual(
+    transitionProblems(base, ledger, { step: "14-phase-c-05-tip", headItems: head }),
+    [],
+  );
+});
+
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {
   const page = "fx|TXT-P1|corpus||criterion#1|pageDelta";
   const ref = "fx|REF-P|oracles:layout|plain|criterion#1|pageDelta";

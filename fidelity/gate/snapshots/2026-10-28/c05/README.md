@@ -1,3 +1,160 @@
+# Phase C 05 tip: merge of the step-05 branches + one gated run (2026-10-28)
+
+Branch `phasec/05-tip` from `phasec/04-verify` 3545ce4. Local macOS (darwin 27.0.0 arm64, macOS
+27.0.1, Apple M5 Pro), Node v22.23.2, rustc 1.96.0, Chrome for Testing 155.0.8059.85, tools image
+`vellora-fidelity-tools:baseline-beta4` (c405e06c), veraPDF image 45b2f7cd, WPT 9d8aceec, Blitz
+crates.io 0.3.0-beta.4. Every number here is INDICATIVE.
+
+The step-05 branch records stay where their workers wrote them: the probe's record is the second
+half of this file (unchanged, from "Phase C 05 probe" on), `float-rule/` and `../c05-multicol/`.
+The probe's acceptance file, committed by it as `c05/accepted.json`, is now
+`accepted-probe.json`. The step's `accepted.json` is built from it (below).
+
+## Merges (each `--no-ff`, in this order)
+
+| branch | tip | what it brings | conflicts |
+|---|---|---|---|
+| `phasec/05-probe` | bf092bb | pin false-pass probe of the last 5 pin (c) items, the hanging-punctuation class-a entry, `shrink-ledger.mjs --label`, the multicol strict-mode record | none |
+| `phasec/05-float-rule` | 5f94e19 | the no-wrap half of `float_avoidance_fixups` follows Chrome 155's rule (orchestrator decision (b)); float-nowrap-8 proposal | none |
+| `phasec/05-multicol` | 8eb9d3c | multi-column layout in vellora (`lay_out_multicol` in blitz_engine.rs, `multicol.rs`, column breaks in `break_css`, COMPATIBILITY.md row) | none (auto-merged `blitz_engine.rs`, `raw_blitz_tests.rs`) |
+
+Not merged: `phasec/05-multicol-reject-proposal` (be7a503, gate-facing, superseded by the
+multicol layout; the probe's section 5 below has its measured effect).
+
+Checks: `npm run build`, `npm test` (cargo 409 passed, vitest 286 passed at a17ee21), `npm run
+lint`, `npm --prefix fidelity test` all green after each merge commit (1014ccb, eebb0ec, a17ee21)
+and at 16fa504.
+
+**Composition check, floats x multicol (CONFIRMED).** The multicol passes run before the float
+fix-ups in `resolve_and_walk`. The float-rule branch's 24 Chrome repros
+(`~/Repositories/vellora-fidelity-runs/c05-float-rule/repro`), rendered with `renderPdf` strict
+by the float-rule build and by the merged build: 24/24 PDFs byte-identical.
+
+## Measured before the run (not gated)
+
+Full WPT `node fidelity/wpt/run.mjs --raw --chrome-from <10-tip>/wpt/results.json --expectations
+none` on a17ee21 (copy `~/Repositories/vellora-fidelity-runs/c05-tip/w1`, run
+20261028T061824Z): **4414** passes (c04 4157). Against the c04 gated run: 265 fail -> pass (exactly
+the multicol branch's 265 gains) and 8 pass -> fail (exactly float-nowrap-7/-8 from float-rule
+plus the multicol branch's 6), nothing else. table-border-007 passes (rawOutcome fail, no ink
+flag), so its class-a entry was dropped from this step's acceptance file (precedent:
+monolithic-overflow-014 at c04).
+
+## accepted.json (step 14-phase-c-05-tip)
+
+13 class-a entries, built by `scripts/build-accepted.py` from `accepted-probe.json` (13: c04's 12
+with the page-name-flex reason text corrected, plus hanging-punctuation-first-002) plus
+`float-rule/accepted-proposed.json` (float-nowrap-8), entries verbatim, minus table-border-007.
+Nothing entered for ruby-003 or the lost css/css-break passes (below). Unused against the
+previous link: 10 (the 2 postmark pairing entries, the 6 css/CSS2/pagination entries,
+hanging-punctuation-first-002 and float-nowrap-8; the last two are used in the pin view).
+
+## The gated run
+
+```sh
+node fidelity/run-all.mjs --gate --main --contract --raw --chrome <Chrome for Testing 155.0.8059.85> \
+  --baseline fidelity/baselines/port/10-integration \
+  --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json \
+  --tools-image vellora-fidelity-tools:baseline-beta4 \
+  --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --step 14-phase-c-05-tip \
+  --out fidelity/results/run-all/c05-tip
+```
+
+- **A first launch was REFUSED (disclosed).** Run 20261028T062149Z on the same commit: this fresh
+  worktree had no `fidelity/.venv` and no `fidelity/wpt` / `fidelity/oracles` node_modules, so
+  3 preflight lines failed, the oracle, pdf-probe, doc-aggregate and paint-probe steps did not
+  run, and the gate REFUSED ("a gated run must not skip them"). There was no verdict. Copy:
+  `~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062149Z-REFUSED-env-incomplete`
+  (the c03 tip had the same kind of refusal). The venv was then installed from the two hash-locked
+  requirements files (its `uv pip freeze` equals the c04 merge worktree's) and the npm packages
+  with `npm ci`. All 11 preflight lines were ok before the run below.
+- **runId 20261028T062527Z**, git 16fa504 (0 dirty), exit 3. Every step ok (23/23): code-checks,
+  wpt (exit 1 = the ratchet against 10-integration, decided by the gate), crashtests 239/239,
+  corpus, oracles-fixtures, oracles-corpus incl. PDF/A-2b qpdf + veraPDF, layout-diff, pdf-probe,
+  pdf-probe-suite, doc-aggregate, paint-probe. Canaries 35/35 detection caught (+8
+  measurement-only). Copy:
+  `~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504`
+  (with `gate-contract/`).
+- WPT 4414 passes; outcomes identical to the pre-run `w1` (0 changes over 8047).
+- PDFs (CONFIRMED by sha256, `c05-tip/tools/pdfcmp.py`): 94 of the 98 vellora PDFs under the run
+  outside `wpt/` (every fixture, corpus, probe and oracle render) are byte-identical to the c04 run
+  copy's. The other 4 are derived canary PDFs
+  (`oracles/fixtures/canaries/pdf-probe/pdf-probe-{ascent,delete-word,off-page,shift-line}.pdf`,
+  mutations of an identical input) differ in bytes; all 43 canary result rows equal c04's.
+  HYPOTHESIS: the mutation writer is not byte-deterministic (c03 -> c04 also changed them).
+- doc-aggregate (`doc-aggregate-c05-tip.json`) and paint-probe (`paint-probe-c05-tip.json`):
+  equal to c04 in every metric on 9/9 (input hashes aside).
+- Ledger: `shrink-ledger.mjs --run <RUN> --step 14-phase-c-05-tip --label "Phase C 05 tip (probe +
+  float-rule + multicol merge)" --accept .../c05/accepted.json --ledger <DEBT.json at 3545ce4>
+  --out fidelity/baselines/port/DEBT.json` -> 2 entries / 5 keys, all kept (still gating against
+  port/00-start), 0 closed, 0 ceilings lowered; only the note grew. Entries and closed[] are
+  deep-equal to the c04 ledger, so it was not frozen again. `debt.mjs check --base
+  .../10-final/DEBT-10-integration.json --report <RUN>/gate/gate-report.json --head-dir
+  fidelity/baselines/port/00-start --run <RUN>`: **0 problems**.
+- Post-hoc contract re-gate (c03/c04 command, `--step 14-phase-c-05-tip`, this directory's
+  accepted.json, the shrunk ledger): exit 3, counts identical to the run's own gate. Reports
+  `gate-report-c05-tip-contract.{json.gz,md}`; the run's own `gate-report-c05-tip-run.json.gz`.
+
+## Exit contract, per condition (post-hoc contract re-gate)
+
+| condition | status | numbers |
+|---|---|---|
+| (1) pin --main: 0 (c) | **NOT MET** | pin (a) 5, (b) 4, (c) **6**, declared 10. 0 fixture words. The 6 are listed below |
+| (2) doc aggregate >= pin per fixture | MET 9/9 | docRegressions 0; table below |
+| (3) pages == Chrome | MET 9/9 | contractPagesFailing 0 |
+| (4) previous-link ratchets | **NOT MET** | vs 10-integration: gating 6 = 5 regressions + ruby-003 (pin-c); head vs 00-start: **FAIL**, 4 head-regressions, debt 5, accepted 5 (c04: head PASS) |
+
+Verdict FAIL, so **no baseline 11-phase-c was written** and `DEBT-BASE.json` was not moved.
+
+**What still blocks, by key.** Chrome for Testing 155 passes all six. None is class a by GATE-A3:
+each old pass is a clean pass (no ink flag, page counts equal), and no evidence shows it false.
+None is in DEBT or in accepted.json.
+
+| key | pin | 10-integration | 00-start | c05 | cause (from the branch records) |
+|---|---|---|---|---|---|
+| `wpt\|css/css-break/ruby-003.html` | pass | fail | fail | fail | needs ruby layout as well as multicol; Blitz has no ruby layout (probe section 1) |
+| `wpt\|css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html` | pass | pass | fail | fail | five forced column breaks at one flow y; the geometric slicer cuts once per y (KNOWN GAP) |
+| `wpt\|css/css-break/svg-with-transform.html` | pass | pass | pass | fail | inline SVG is not painted at render time; the one-column render hid it |
+| `wpt\|css/css-break/table/caption-margin-002.html` | pass | pass | pass | fail | Blitz lays `display: table-caption` out 0x0 (CONFIRMED by walk) |
+| `wpt\|css/css-break/table/caption-margin-005.html` | pass | pass | pass | fail | the same markup in a wrapper (UNVERIFIED by a separate dump) |
+| `wpt\|css/css-break/table/monolithic-overflow-001.tentative.html` | pass | pass | pass | fail | Blitz gives the non-cell child of a `display: table` box a 0x0 layout (CONFIRMED by walk) |
+
+The last five are lost by the multicol merge: the pin view counts all five, the previous link all
+five, the head the four that passed at 00-start. Their old passes came from the one-column layout
+coinciding with Chrome's picture (`../c05-multicol/README.md`). The sixth multicol loss,
+widows-orphans-021, failed at the pin, 00-start and 10-integration, so no view gates it.
+
+Against c04 (pin (c) 5 = 054/055/058, ruby-003, hanging-punctuation-first-002):
+
+- 054/055/058 now pass by rendering (multicol);
+- hanging-punctuation-first-002 is accepted as class a (decision (a));
+- float-nowrap-8 is accepted as class a (decision (b));
+- table-border-007 passes by rendering.
+
+Net: (1) went from 5 to 6 items; (4) went from "MET outside (1)" to 5 previous-link regressions
+plus a head FAIL. WPT went from 4157 to 4414 passes.
+
+## Doc aggregate (`doc-aggregate-c05-tip.json`; equal to c04 in every metric)
+
+| fixture | pages (Chrome) | median mm | <=1 mm share | missing words |
+|---|---|---|---|---|
+| invoice | 3 (3) | 0.1 | 100 % | 0 |
+| receipt | 2 (2) | 0.05 | 100 % | 0 |
+| boleto | 1 (1) | 0.12 | 100 % | 0 |
+| boleto-febraban | 1 (1) | 0.08 | 100 % | 0 |
+| danfe | 1 (1) | 0.21 | 100 % | 0 |
+| notification | 1 (1) | 0.01 | 100 % | 0 |
+| text-stress-ptbr | 7 (7) | 0.02 | 100 % | 0 |
+| oss-postmark-receipt | 2 (2) | 0.13 | 97.2 % | 2 (class-a text-shadow copy) |
+| oss-sparksuite-invoice | 1 (1) | 0 | 100 % | 0 |
+
+Visual comparison (Chrome | pin v0.2.0 | c05 tip): `~/Repositories/vellora-fidelity-runs/visual-compare-c05/out`
+(+ `metrics.json`), from `fidelity/report/visual-compare.mjs` of `docs/fidelity-results` 18da08c
+(`--new-key c05`, pin PDFs `doc-aggregate-20261027/pin-pdfs-v0.2.0`, sha256-checked against the
+pin reference). The fixture PDFs equal c04's, so the c05 images show c04's renders.
+
+---
+
 # Phase C 05 probe: what the last 5 pin (c) items are (2026-10-28)
 
 Branch `phasec/05-probe` from `phasec/04-verify` 3545ce4. No gated run was made in this step. Every
