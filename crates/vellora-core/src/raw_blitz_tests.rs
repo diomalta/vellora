@@ -777,3 +777,281 @@ fn auto_table_compensation_gives_chromes_columns() {
         "vellora {widths:?}, Chrome {chrome:?}"
     );
 }
+
+/// WPT css/CSS2/floats/floats-wrap-bfc-003-left-table.xht without its XHTML wrapper: a 300 px
+/// cell holding a 100x100 left float, then a table (a formatting-context root) whose content is
+/// a 250 px inline-block, which does not fit beside the float.
+const BFC_TABLE_BESIDE_FLOAT: &str = r#"<!DOCTYPE html><html><head><style>
+    table { margin: 0; border-spacing: 0; } td { padding: 0; }
+    span { display: inline-block; vertical-align: bottom; }
+    </style></head><body>
+    <table width="300" style="background: aqua"><tbody><tr><td>
+    <div style="float:left; background:blue; width: 100px; height: 100px"></div>
+    <table style="background: yellow"><tbody><tr><td>
+    <span style="width: 250px; height: 50px; background: purple"></span>
+    </td></tr></tbody></table>
+    </td></tr></tbody></table></body></html>"#;
+
+/// `(x, y)` of the inner table relative to the outer one, and the outer table's height.
+fn bfc_table_geometry(doc: &LaidOutDoc) -> (f64, f64, f64) {
+    let tables: Vec<_> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("table"))
+        .collect();
+    let (outer, inner) = (tables[0], tables[1]);
+    (inner.x - outer.x, inner.y - outer.y, outer.height)
+}
+
+/// CANARY of the first half of `blitz_engine::float_avoidance_fixups`: raw Blitz (Taffy 0.15.0)
+/// still lays the table of [`BFC_TABLE_BESIDE_FLOAT`] out beside the float, at (100, 0) in a
+/// 100 px tall outer table, where Chrome 155 moves it below the float, (0, 100) in a 150 px one.
+#[test]
+fn blitz_still_overlaps_a_wide_table_with_a_float() {
+    let (raw, _) = raw_layout(BFC_TABLE_BESIDE_FLOAT);
+    assert_eq!(
+        bfc_table_geometry(&raw),
+        (100.0, 0.0, 100.0),
+        "\n\nTAFFY CHANGED HOW IT FITS A FORMATTING-CONTEXT ROOT BESIDE A FLOAT. Raw Blitz no \
+         longer puts the BFC_TABLE_BESIDE_FLOAT table at (100, 0) beside the float in a 100 px \
+         outer table (Chrome 155: (0, 100), 150 px), the bug float_avoidance_fixups works \
+         around (taffy 0.15.0 src/compute/block.rs 1297-1309 tests an auto-width box against \
+         the slot's own stretch width, so the first slot always fits). If Blitz now matches \
+         Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs the BFC half of \
+         `float_avoidance_fixups` (`bfc_roots`, `BfcRootBox`, `FloatFixup::Clear`), this canary \
+         and `float_avoidance_moves_a_wide_table_below_the_float`; with the other half gone too, \
+         also the second `resolve` in `resolve_and_walk`. Then re-measure css/CSS2/floats with \
+         fidelity/wpt before trusting either layout.\n"
+    );
+}
+
+/// The compensation against Chrome 155 on [`BFC_TABLE_BESIDE_FLOAT`].
+#[test]
+fn float_avoidance_moves_a_wide_table_below_the_float() {
+    assert_eq!(
+        bfc_table_geometry(&product_layout(BFC_TABLE_BESIDE_FLOAT)),
+        (0.0, 100.0, 150.0)
+    );
+}
+
+/// WPT css/CSS2/floats/float-nowrap-1.html: a 10ch no-wrap line of 35ch, then a 5ch right float.
+const FLOAT_AFTER_NOWRAP_TEXT: &str = r#"<!DOCTYPE html><html><head><style>
+    div { width: 10ch; white-space: nowrap; font-family: monospace; }
+    span { float: right; width: 5ch; height: 5ch; background: blue; }
+    </style></head><body><div>
+    Some text that overflows my parent.
+    <span></span>
+    </div></body></html>"#;
+
+/// The float's top relative to the div's, and the div's (one-line) height.
+fn nowrap_float_geometry(doc: &LaidOutDoc) -> (f64, f64) {
+    let div = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("div"))
+        .expect("div");
+    let span = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("span"))
+        .expect("span");
+    (span.y - div.y, div.height)
+}
+
+/// CANARY of the second half of `blitz_engine::float_avoidance_fixups`: raw Blitz still places
+/// the float of [`FLOAT_AFTER_NOWRAP_TEXT`] at its line's top, over the text, where Chrome 155
+/// places it below the line (its top at the div's one-line height).
+#[test]
+fn blitz_still_places_a_float_over_its_nowrap_line() {
+    let (raw, _) = raw_layout(FLOAT_AFTER_NOWRAP_TEXT);
+    let (float_top, line_height) = nowrap_float_geometry(&raw);
+    assert!(line_height > 0.0);
+    assert_eq!(
+        float_top, 0.0,
+        "\n\nBLITZ CHANGED WHERE IT PLACES A FLOAT AFTER LINE CONTENT. Raw Blitz no longer puts \
+         the FLOAT_AFTER_NOWRAP_TEXT float at its line's top (it is now {float_top} px below \
+         the div's top; Chrome 155: {line_height}, below the line), the bug \
+         float_avoidance_fixups works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         722-765 places a float at `state.line_y()` whatever Parley has put on that line). If \
+         Blitz now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs the no-wrap \
+         half of `float_avoidance_fixups` (`nowrap_lines`, `LineGeometry`, `inline_root_lines`, \
+         `FloatFixup::MarginTop`), this canary and \
+         `float_avoidance_moves_a_float_below_its_nowrap_line`; with the other half gone too, \
+         also the second `resolve` in `resolve_and_walk`. Then re-measure css/CSS2/floats with \
+         fidelity/wpt before trusting either layout.\n"
+    );
+}
+
+/// The compensation against Chrome 155 on [`FLOAT_AFTER_NOWRAP_TEXT`]: the float's top on the
+/// line's bottom.
+#[test]
+fn float_avoidance_moves_a_float_below_its_nowrap_line() {
+    let (float_top, line_height) = nowrap_float_geometry(&product_layout(FLOAT_AFTER_NOWRAP_TEXT));
+    assert!(line_height > 0.0);
+    assert_eq!(float_top, line_height);
+}
+
+/// The no-wrap edit leaves a float that starts its line where Blitz put it (WPT
+/// float-nowrap-1-notref.html, the mismatch reference of float-nowrap-1), and the BFC edit leaves
+/// a formatting-context root that fits beside the float.
+#[test]
+fn float_avoidance_leaves_boxes_that_fit() {
+    let leading = FLOAT_AFTER_NOWRAP_TEXT.replace(
+        "Some text that overflows my parent.\n    <span></span>",
+        "<span></span>\n    Some text that overflows my parent.",
+    );
+    assert_ne!(leading, FLOAT_AFTER_NOWRAP_TEXT);
+    assert_eq!(nowrap_float_geometry(&product_layout(&leading)).0, 0.0);
+    let narrow = BFC_TABLE_BESIDE_FLOAT.replace("width: 250px", "width: 150px");
+    let (x, y, _) = bfc_table_geometry(&product_layout(&narrow));
+    assert_eq!((x, y), (100.0, 0.0));
+}
+
+/// WPT css/CSS2/abspos/between-float-and-text.html: an absolutely positioned green square and a
+/// red float laid out at the same place; Chrome paints the positioned box over the float.
+#[test]
+fn positioned_boxes_paint_over_floats() {
+    let html = r#"<!DOCTYPE html><html><body>
+        <div style="line-height:20px; margin-top:-20px;">&nbsp;
+        <div style="position:absolute; width:200px; height:200px; background:green;"></div>
+        <div style="float:left; margin-top:20px; width:200px; height:200px; background:red;"></div>
+        </div></body></html>"#;
+    let doc = product_layout(html);
+    let tier_of = |color: [u8; 3]| {
+        doc.boxes
+            .iter()
+            .flat_map(|b| &b.visual_rects)
+            .find(|r| r.color == color)
+            .map(|r| (r.tier, r.x, r.y))
+            .expect("rect")
+    };
+    let (green, red) = (tier_of([0, 128, 0]), tier_of([255, 0, 0]));
+    assert_eq!((green.1, green.2), (red.1, red.2), "same place");
+    assert_eq!(green.0, crate::blitz_engine::PAINT_TIER_POSITIONED);
+    assert_eq!(red.0, crate::blitz_engine::PAINT_TIER_FLOAT);
+}
+
+/// Text and a float inside relatively positioned `display: inline` elements (left 100px, then
+/// left 100px + top 10px), each in its own div.
+const RELATIVE_INLINE: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font-family: sans-serif; font-size: 16px; }
+    .rel { position: relative; left: 100px; }
+    </style></head><body>
+    <div id="a"><span class="rel">rel</span></div>
+    <div id="b"><span class="rel" style="top: 10px"><span id="f" style="float: left;
+    width: 50px; height: 20px; background: blue"></span>txt</span></div>
+    </body></html>"#;
+
+/// `(x, y)` of the `rel` run, of the `txt` run and of the float, each relative to its div.
+fn relative_inline_geometry(doc: &LaidOutDoc) -> [(f64, f64); 3] {
+    let divs: Vec<_> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("div"))
+        .collect();
+    let run = |text: &str| {
+        runs_of(doc)
+            .into_iter()
+            .find(|(t, _, _)| t.trim() == text)
+            .unwrap_or_else(|| panic!("{text} run"))
+    };
+    let float = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("span") && b.width == 50.0)
+        .expect("float");
+    let (_, rel_x, rel_y) = run("rel");
+    let (_, txt_x, txt_y) = run("txt");
+    [
+        (rel_x - divs[0].x, rel_y - divs[0].y),
+        (txt_x - divs[1].x, txt_y - divs[1].y),
+        (float.x - divs[1].x, float.y - divs[1].y),
+    ]
+}
+
+/// CANARY of `blitz_engine::inline_ancestor_relative_offset`: raw Blitz still lays the content
+/// of the relatively positioned inline `<span>`s of [`RELATIVE_INLINE`] out where it would be
+/// without the offset: `rel` at x 0, the float at (0, 0) and `txt` right of it (x 50).
+#[test]
+fn blitz_still_ignores_relative_offset_of_inline_elements() {
+    let raw = relative_inline_geometry(&raw_layout(RELATIVE_INLINE).0);
+    let unmoved = [raw[0].0, raw[1].0, raw[2].0, raw[2].1];
+    assert_eq!(
+        unmoved,
+        [0.0, 50.0, 0.0, 0.0],
+        "\n\nBLITZ CHANGED HOW IT LAYS OUT RELATIVELY POSITIONED INLINE ELEMENTS. Raw Blitz no \
+         longer lays the RELATIVE_INLINE text and float out unmoved by their `position: \
+         relative` <span>s (now {raw:?}, relative to each div), the gap \
+         inline_ancestor_relative_offset fills (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         1059-1081 applies `inset_offset` to an atomic inline box's own location only). If \
+         Blitz now moves that content itself, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `inline_ancestor_relative_offset`, `is_out_of_flow`, the `compensate` parameter of \
+         `box_origin` and the relative offset in `read_text_runs`, this canary and \
+         `relative_inline_compensation_moves_text_and_floats`. Then re-measure \
+         css/CSS2/visuren and css/CSS2/normal-flow with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation: every piece of content moves by its spans' offsets (CSS 2.2 §9.4.3).
+#[test]
+fn relative_inline_compensation_moves_text_and_floats() {
+    let raw = relative_inline_geometry(&raw_layout(RELATIVE_INLINE).0);
+    let product = relative_inline_geometry(&product_layout(RELATIVE_INLINE));
+    let moved: Vec<(f64, f64)> = product
+        .iter()
+        .zip(&raw)
+        .map(|(p, r)| (p.0 - r.0, p.1 - r.1))
+        .collect();
+    assert_eq!(moved, vec![(100.0, 0.0), (100.0, 10.0), (100.0, 10.0)]);
+}
+
+/// The second layout of `float_avoidance_fixups` keeps the computed-style compensations made
+/// before the first one: a document with the `collapse_b1` table (collapsed-border compensation
+/// and LayoutUnit snapping) and a float the no-wrap edit moves still gets Chrome's table rows
+/// (`collapsed_border_compensation_gives_chromes_rows`) after the re-layout the float triggers.
+#[test]
+fn float_avoidance_relayout_keeps_the_earlier_style_compensations() {
+    let html = collapse_variant(
+        "table{border-collapse:collapse} td{border:1px solid #000} \
+         .nw{width:10ch;white-space:nowrap;font-family:monospace;line-height:normal} \
+         .nw span{float:right;width:5ch;height:5ch;background:blue}",
+        3,
+    )
+    .replace(
+        "<div>after</div>",
+        "<div>after</div><div class=\"nw\">Some text that overflows my parent. <span></span></div>",
+    );
+    let doc = product_layout(&html);
+    let table = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table");
+    let cells: Vec<(f64, f64)> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .step_by(2)
+        .map(|b| (b.y - table.y, b.height))
+        .collect();
+    assert_eq!(table.height, 112.0, "Chrome's collapse_b1 table height");
+    for ((y, h), (cy, ch)) in cells.iter().zip([(0.5, 37.0), (37.5, 37.0), (74.5, 37.0)]) {
+        assert!(
+            (y - cy).abs() <= 0.5 && (y + h - (cy + ch)).abs() <= 0.5,
+            "{cells:?}"
+        );
+    }
+    // The float edit applied, so the second layout ran.
+    let div = doc
+        .boxes
+        .iter()
+        .rfind(|b| b.tag.as_deref() == Some("div"))
+        .expect("div");
+    let span = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("span"))
+        .expect("float");
+    assert!(div.height > 0.0);
+    assert_eq!(span.y - div.y, div.height, "float below its line");
+}

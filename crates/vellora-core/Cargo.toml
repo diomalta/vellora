@@ -34,7 +34,13 @@ publish = false
 # `libfontconfig` or reads host fonts — that is what makes output deterministic
 # across machines and lets it run on slim/Alpine/Lambda with no system deps.
 base64 = "0.22.1"
-blitz-dom = { version = "=0.3.0-beta.4", default-features = false }
+# `floats` turns on Blitz's float layout (blitz-dom `layout/inline.rs` float placement plus
+# `taffy/float_layout` and `stylo_taffy/floats`). It is NOT in blitz-dom 0.3.0-beta.4's
+# `default` list (its Cargo.toml [features]), and `default-features = false` would drop it
+# anyway, so before Phase C step 04 every `float: left|right` box was laid out as an in-flow
+# block. The shipped main (Blitz git 2003ba5, same feature off) did the same: its WPT float
+# passes were references that degraded identically (fidelity/gate/snapshots/2026-10-28/c04/).
+blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["floats"] }
 blitz-html = { version = "=0.3.0-beta.4", default-features = false }
 blitz-traits = "=0.3.0-beta.4"
 # html5ever, pinned to the exact version blitz-html 0.3.0-beta.4 resolves (its requirement is

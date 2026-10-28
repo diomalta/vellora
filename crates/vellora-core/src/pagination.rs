@@ -770,6 +770,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                     width: rect.width,
                     height: (y1 - y0).max(0.0),
                     color: rect.color,
+                    tier: rect.tier,
                 });
             }
         }
@@ -2248,6 +2249,7 @@ fn lower_to_display_list(
                 width: rect.width,
                 height: rect.height,
                 color: rect.color,
+                tier: rect.tier,
             });
         }
         for border in b.rounded_borders {
@@ -2279,10 +2281,15 @@ fn lower_to_display_list(
 /// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch
 /// horizontally, within [`RECT_MERGE_EPSILON_PX`], into one rect. Rects with a real gap between
 /// them stay apart.
+///
+/// The emitter draws rects in this list's order, so the sort puts each painting-order tier
+/// (`blitz_engine::paint_tier`: in-flow blocks, then floats, then positioned boxes) after the
+/// lower ones, and merges only within a tier.
 fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
     rects.sort_by(|a, b| {
-        a.y.partial_cmp(&b.y)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        a.tier
+            .cmp(&b.tier)
+            .then_with(|| a.y.partial_cmp(&b.y).unwrap_or(std::cmp::Ordering::Equal))
             .then_with(|| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal))
     });
 
@@ -2291,6 +2298,7 @@ fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
         if let Some(prev) = merged.last_mut() {
             let gap = rect.x - (prev.x + prev.width);
             if prev.color == rect.color
+                && prev.tier == rect.tier
                 && (prev.y - rect.y).abs() <= 0.5
                 && (prev.height - rect.height).abs() <= 0.5
                 && (-0.5..=RECT_MERGE_EPSILON_PX).contains(&gap)
@@ -2512,6 +2520,7 @@ mod merge_tests {
             width,
             height: 96.0,
             color: [0, 0, 0],
+            tier: 0,
         }
     }
 
@@ -2520,6 +2529,26 @@ mod merge_tests {
             .iter()
             .map(|r| (r.x, r.width))
             .collect()
+    }
+
+    /// Painting order: every float rect after every in-flow one, every positioned rect after
+    /// both, whatever their positions; touching same-colour rects of different tiers stay apart.
+    #[test]
+    fn rects_paint_tier_by_tier() {
+        let at = |x: f64, tier: u8| FilledRect {
+            tier,
+            ..rect(x, 20.0)
+        };
+        let order: Vec<(u8, f64)> = merge_adjacent_rects(vec![
+            at(0.0, crate::blitz_engine::PAINT_TIER_POSITIONED),
+            at(40.0, 0),
+            at(20.0, crate::blitz_engine::PAINT_TIER_FLOAT),
+            at(60.0, 0),
+        ])
+        .iter()
+        .map(|r| (r.tier, r.x))
+        .collect();
+        assert_eq!(order, vec![(0, 40.0), (1, 20.0), (2, 0.0)]);
     }
 
     #[test]

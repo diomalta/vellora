@@ -130,6 +130,8 @@ pub struct VisualRect {
     pub height: f64,
     /// sRGB color (r,g,b) 0..=255, alpha composited over white.
     pub color: [u8; 3],
+    /// The CSS painting-order layer of the box that paints it ([`paint_tier`]).
+    pub tier: u8,
 }
 
 /// A rounded, uniform border outline in document coordinates.
@@ -367,7 +369,7 @@ pub fn lay_out_margin_texts(
         .map(|id| {
             let id = id?;
             let node = base.get_node(id)?;
-            let (x, y) = box_origin(base, id, &mut origins);
+            let (x, y) = box_origin(base, id, &mut origins, true);
             let mut runs = read_text_runs(base, node, x, y, &mut face_cache, true);
             if runs.is_empty() {
                 return None;
@@ -1005,6 +1007,336 @@ struct CompensatedCell {
     /// `css-tables/height-distribution/td-different-subpixel-padding-in-same-row.html`), so the
     /// cell's own box is not the row. `None` until computed.
     lines: Option<(f64, f64)>,
+}
+
+/// One computed-style edit of [`float_avoidance_fixups`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum FloatFixup {
+    /// `clear` for a block-level formatting-context root laid out beside a float it does not
+    /// fit beside.
+    Clear(style::computed_values::clear::T),
+    /// The new `margin-top` (px) of a float placed over its own no-wrap line.
+    MarginTop(f32),
+}
+
+/// An absolute (document px) rectangle `[x0, y0, x1, y1]`.
+type AbsRect = [f64; 4];
+
+fn overlap(a: AbsRect, b: AbsRect) -> bool {
+    a[2].min(b[2]) - a[0].max(b[0]) > OVERLAP_EPSILON_PX
+        && a[3].min(b[3]) - a[1].max(b[1]) > OVERLAP_EPSILON_PX
+}
+
+/// Overlaps up to this much are rounding, not a misplaced box.
+const OVERLAP_EPSILON_PX: f64 = 0.5;
+
+/// The style edits that move two kinds of box out of a float the way Chrome 155 does, read off a
+/// laid-out document. Each compensates a bug of the crates.io Blitz 0.3.0-beta.4 stack; the
+/// raw-Blitz canaries `blitz_still_overlaps_a_wide_table_with_a_float` and
+/// `blitz_still_places_a_float_over_its_nowrap_line` (`raw_blitz_tests.rs`) fail when it is
+/// fixed, and then the corresponding half of this function, its [`FloatFixup`] variant and the
+/// canary are deleted (both gone: also the second `resolve` in [`resolve_and_walk`]).
+///
+/// 1. A block-level box that establishes an independent formatting context (a table, a
+///    `flow-root`, a flex or grid container, a block with non-visible `overflow`) must not overlap
+///    the margin box of a float of its formatting context; one that does not fit beside the float
+///    moves down (CSS 2.2 §9.5). TAFFY BUG (taffy 0.15.0 `src/compute/block.rs` 1297-1309): the
+///    fit loop tests the box's specified `width` or, for `width: auto`, the slot's own
+///    `stretch_width`, which always fits, so the first slot beside the float is taken whatever
+///    the box's laid-out width. Repro (WPT css/CSS2/floats/floats-wrap-bfc-003-left-table.xht): a
+///    300 px table cell holding a 100x100 left float and a table whose content is a 250 px
+///    inline-block: Taffy puts the inner table at x = 100 beside the float (its 250 px overflow
+///    the cell by 50 px) and the cell is 100 px tall; Chrome puts it below the float, y = 100,
+///    cell 150 px tall. Detected: the box's border box leaves the band its containing block's
+///    content box keeps free of the floats of its formatting context beside it. Edit: `clear`
+///    toward the side(s) of those floats. Inexact when
+///    Chrome would find room beside a later, narrower float on that side (it takes the first slot
+///    that fits; `clear` goes below all of them); no WPT test or fixture measured here does that.
+/// 2. A float may not overlap the inline content of the line box it is placed beside; one that
+///    does not fit beside the content before it goes below that line (CSS 2.2 §9.5.1 rules 6-8).
+///    BLITZ BUG (blitz-dom 0.3.0-beta.4 `src/layout/inline.rs` 722-765): the float is placed at
+///    the current line's top (`min_y = state.line_y()`, 749) in a slot that only avoids other
+///    floats, whatever Parley has already put on that line. Repro (WPT
+///    css/CSS2/floats/float-nowrap-1.html): a 10ch `white-space: nowrap` div with the 35ch text
+///    `Some text that overflows my parent.` and then a 5ch right float: Blitz puts the float at
+///    the line's top (y = 0 in the div), over the text; Chrome puts it below the line (y = 15).
+///    Edit: `margin-top` grown by the distance to the line's bottom, which lays the float's border
+///    box exactly there. Only for inline roots with `text-wrap-mode: nowrap` (`white-space:
+///    nowrap | pre`), only when some glyph run precedes the float on its line (a float that
+///    starts the line keeps it: float-nowrap-1-notref.html) and its margin box overlaps a glyph
+///    run of that line. The grown margin also narrows that line for the content after the
+///    float, which changes nothing on a line that cannot wrap but would re-break a wrapping one
+///    (Chrome does not narrow it), so wrapping lines keep Blitz's placement. Testing every glyph
+///    run of the unbreakable line, not only the ones before the float, is Gecko's rule (the one
+///    float-nowrap-1..8 encode); Chrome 155 keeps the float up when the text before it fits
+///    beside it (so it fails float-nowrap-8, CONFIRMED in this step's WPT Chrome results).
+fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
+    let mut geometry = FloatGeometry::default();
+    let root = base.root_element().id;
+    collect_float_geometry(base, root, root, 0, &mut geometry);
+    let mut fixups = Vec::new();
+    for root in &geometry.bfc_roots {
+        let rect = root.border_rect;
+        // The floats of its formatting context beside its top edge, and the band they leave it
+        // in its containing block. A side without such a float keeps the containing block's
+        // edge, moved out by a negative margin on that side (which lets the border box out of
+        // the containing block, as in Taffy's own fit test). Floats that start lower are not
+        // this bug: Taffy keeps the box in the slot at its top whatever its height (WPT
+        // css/CSS2/floats/new-fc-relayout.html), and `clear` would move it below them, so they
+        // are left alone.
+        let (mut left, mut right) = (false, false);
+        let mut band_x0 = root.container[0] + root.margin_x[0].min(0.0);
+        let mut band_x1 = root.container[1] - root.margin_x[1].min(0.0);
+        let beside = |f: &&FloatBox| {
+            f.bfc == root.bfc
+                && f.margin_rect[1] <= rect[1] + OVERLAP_EPSILON_PX
+                && rect[1] + OVERLAP_EPSILON_PX < f.margin_rect[3]
+        };
+        for float in geometry.floats.iter().filter(beside) {
+            if float.left {
+                left = true;
+                band_x0 = band_x0.max(float.margin_rect[2]);
+            } else {
+                right = true;
+                band_x1 = band_x1.min(float.margin_rect[0]);
+            }
+        }
+        if rect[0] >= band_x0 - OVERLAP_EPSILON_PX && rect[2] <= band_x1 + OVERLAP_EPSILON_PX {
+            continue;
+        }
+        use style::computed_values::clear::T as Clear;
+        let clear = match (left, right) {
+            (true, true) => Clear::Both,
+            (true, false) => Clear::Left,
+            (false, true) => Clear::Right,
+            (false, false) => continue,
+        };
+        fixups.push((root.id, FloatFixup::Clear(clear)));
+    }
+    for float in &geometry.floats {
+        let Some(lines) = float.nowrap_lines.as_ref() else {
+            continue;
+        };
+        let top = float.margin_rect[1];
+        let float_id = float.id.as_u64();
+        let Some((line, at)) = lines.iter().find_map(|line| {
+            let at = line.boxes.iter().find(|b| b.1 == float_id)?.0;
+            Some((line, at))
+        }) else {
+            continue;
+        };
+        // A float that starts its line keeps its place (nothing precedes it there).
+        if !line.runs.iter().any(|run| run.0 < at) {
+            continue;
+        }
+        let line_rect = |run: &(usize, f64, f64)| [run.1, line.top, run.2, line.bottom];
+        if line
+            .runs
+            .iter()
+            .map(line_rect)
+            .any(|run| overlap(run, float.margin_rect))
+        {
+            let grown = float.margin_top + (line.bottom - top);
+            fixups.push((float.id, FloatFixup::MarginTop(grown as f32)));
+        }
+    }
+    fixups
+}
+
+/// What [`float_avoidance_fixups`] reads off the laid-out tree.
+#[derive(Default)]
+struct FloatGeometry {
+    floats: Vec<FloatBox>,
+    bfc_roots: Vec<BfcRootBox>,
+    /// The [`box_origin`] memo.
+    origins: std::collections::HashMap<NodeId, (f64, f64)>,
+}
+
+/// An in-flow block-level box that establishes an independent formatting context.
+struct BfcRootBox {
+    id: NodeId,
+    /// The root of the block formatting context the box is laid out in.
+    bfc: NodeId,
+    border_rect: AbsRect,
+    /// `[x0, x1]` of its containing block's content box.
+    container: [f64; 2],
+    /// Its left and right margins.
+    margin_x: [f64; 2],
+}
+
+struct FloatBox {
+    id: NodeId,
+    /// The root of the block formatting context the float is placed in.
+    bfc: NodeId,
+    left: bool,
+    margin_rect: AbsRect,
+    margin_top: f64,
+    /// The lines of the float's inline root when that root cannot wrap (`None` otherwise, and
+    /// for a float that is not laid out by an inline root).
+    nowrap_lines: Option<Vec<LineGeometry>>,
+}
+
+struct LineGeometry {
+    top: f64,
+    bottom: f64,
+    /// `(item index, x0, x1)` of each glyph run on the line.
+    runs: Vec<(usize, f64, f64)>,
+    /// `(item index, node id)` of each inline box (atomic inline, float, out-of-flow box).
+    boxes: Vec<(usize, u64)>,
+}
+
+fn collect_float_geometry(
+    base: &BaseDocument,
+    id: NodeId,
+    bfc: NodeId,
+    depth: usize,
+    geometry: &mut FloatGeometry,
+) {
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    // The DOM depth is gated before layout (SEC-1); this bounds the walk the same way.
+    if depth > 4096 {
+        return;
+    }
+    let Some(node) = base.get_node(id) else {
+        return;
+    };
+    let parent_inside = node.primary_styles().map(|s| s.clone_display().inside());
+    let content_x_range = if node_has_layout_data(node) {
+        let (x, _) = box_origin(base, id, &mut geometry.origins, false);
+        let l = node.final_layout();
+        let x0 = x + (l.border.left + l.padding.left) as f64;
+        let x1 = x + (l.size.width - l.border.right - l.padding.right) as f64;
+        [x0, x1.max(x0)]
+    } else {
+        [f64::NEG_INFINITY, f64::INFINITY]
+    };
+    let children: Vec<NodeId> = node
+        .layout_children
+        .borrow()
+        .as_ref()
+        .map(|c| c.iter().copied().collect())
+        .unwrap_or_default();
+    for child_id in children {
+        let Some(child) = base.get_node(child_id).filter(|n| node_has_layout_data(n)) else {
+            continue;
+        };
+        let Some(styles) = child.primary_styles() else {
+            collect_float_geometry(base, child_id, bfc, depth + 1, geometry);
+            continue;
+        };
+        let display = styles.clone_display();
+        let floated = !matches!(styles.clone_float(), style::computed_values::float::T::None);
+        let out_of_flow = styles.clone_position().is_absolutely_positioned();
+        let overflow_clips = !matches!(
+            styles.clone_overflow_y(),
+            style::values::computed::Overflow::Visible | style::values::computed::Overflow::Clip
+        );
+        let inside = display.inside();
+        let establishes_bfc = floated
+            || out_of_flow
+            || (inside != DisplayInside::Flow && !child.is_anonymous())
+            || overflow_clips
+            || matches!(
+                parent_inside,
+                Some(DisplayInside::Flex | DisplayInside::Grid)
+            );
+        let (x, y) = box_origin(base, child_id, &mut geometry.origins, false);
+        let layout = child.final_layout();
+        let (w, h) = (layout.size.width as f64, layout.size.height as f64);
+        if floated && !out_of_flow {
+            let m = layout.margin;
+            let left = matches!(styles.clone_float(), style::computed_values::float::T::Left);
+            let nowrap = node.flags.is_inline_root()
+                && node.primary_styles().is_some_and(|s| {
+                    s.clone_text_wrap_mode() == style::computed_values::text_wrap_mode::T::Nowrap
+                });
+            geometry.floats.push(FloatBox {
+                id: child_id,
+                bfc,
+                left,
+                margin_rect: [
+                    x - m.left as f64,
+                    y - m.top as f64,
+                    x + w + m.right as f64,
+                    y + h + m.bottom as f64,
+                ],
+                margin_top: m.top as f64,
+                nowrap_lines: nowrap
+                    .then(|| inline_root_lines(base, node, &mut geometry.origins))
+                    .flatten(),
+            });
+        } else if !out_of_flow
+            && display.outside() == DisplayOutside::Block
+            && !child.is_anonymous()
+            && (inside != DisplayInside::Flow || overflow_clips)
+        {
+            geometry.bfc_roots.push(BfcRootBox {
+                id: child_id,
+                bfc,
+                border_rect: [x, y, x + w, y + h],
+                container: content_x_range,
+                margin_x: [layout.margin.left as f64, layout.margin.right as f64],
+            });
+        }
+        drop(styles);
+        let child_bfc = if establishes_bfc { child_id } else { bfc };
+        collect_float_geometry(base, child_id, child_bfc, depth + 1, geometry);
+    }
+}
+
+/// The line boxes of an inline root, absolute, with their glyph runs' horizontal extents.
+fn inline_root_lines(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    origins: &mut std::collections::HashMap<NodeId, (f64, f64)>,
+) -> Option<Vec<LineGeometry>> {
+    let text = node.data.downcast_element()?.inline_layout_data.as_ref()?;
+    let (x, y) = box_origin(base, node.id, origins, false);
+    let layout = node.final_layout();
+    let content_x = x + (layout.border.left + layout.padding.left) as f64;
+    let content_y = y + (layout.border.top + layout.padding.top) as f64 + text.block_offset as f64;
+    Some(
+        text.layout
+            .lines()
+            .map(|line| {
+                let metrics = line.metrics();
+                let mut runs = Vec::new();
+                let mut boxes = Vec::new();
+                for (at, item) in line.items().enumerate() {
+                    match item {
+                        parley::PositionedLayoutItem::GlyphRun(run) => runs.push((
+                            at,
+                            content_x + run.offset() as f64,
+                            content_x + (run.offset() + run.advance()) as f64,
+                        )),
+                        parley::PositionedLayoutItem::InlineBox(ibox) => boxes.push((at, ibox.id)),
+                    }
+                }
+                LineGeometry {
+                    top: content_y + metrics.block_min_coord as f64,
+                    bottom: content_y + metrics.block_max_coord as f64,
+                    runs,
+                    boxes,
+                }
+            })
+            .collect(),
+    )
+}
+
+fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
+    use style::values::computed::{Length, LengthPercentage, Margin};
+    for &(id, fixup) in fixups {
+        mutate_primary_style(doc, id, |values| match fixup {
+            FloatFixup::Clear(clear) => values.mutate_box().set_clear(clear),
+            FloatFixup::MarginTop(px) => {
+                values
+                    .mutate_margin()
+                    .set_margin_top(Margin::LengthPercentage(LengthPercentage::new_length(
+                        Length::new(px),
+                    )))
+            }
+        });
+    }
 }
 
 /// The grid lines of every compensated cell's rows, from the laid-out cells: a row's top line is
@@ -2046,6 +2378,20 @@ fn resolve_and_walk<O: LayoutObserver>(
         CollapsedBorders::default()
     };
     doc.resolve(0.0);
+    // Floats Blitz/Taffy let overlap what Chrome moves out of their way (two Blitz bugs, see
+    // `float_avoidance_fixups`): read off this layout, written into the computed styles, and
+    // laid out once more. Off in the raw-Blitz render.
+    if O::VELLORA_CORRECTIONS {
+        let fixups = float_avoidance_fixups(&doc);
+        if !fixups.is_empty() {
+            apply_float_fixups(&mut doc, &fixups);
+            // Non-incremental: the edits are invisible to Blitz's damage tracking, so the whole
+            // tree is re-constructed and re-laid out (their styles, edited ones included, are
+            // kept; the style pass has nothing to restyle).
+            doc.set_incremental_layout(false);
+            doc.resolve(0.0);
+        }
+    }
     collapsed_row_lines(&doc, &mut collapsed);
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
@@ -2090,6 +2436,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             origins: std::collections::HashMap::new(),
             reader_compensations: O::VELLORA_CORRECTIONS,
             collapsed: &collapsed,
+            tiers: std::collections::HashMap::new(),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -2142,6 +2489,8 @@ struct WalkSink<'a, 'img> {
     /// The tables and cells [`compensate_collapsed_borders`] re-laid out (empty in the
     /// raw-Blitz render).
     collapsed: &'a CollapsedBorders,
+    /// The [`paint_tier`] memo. Lookup only, like `origins`.
+    tiers: std::collections::HashMap<NodeId, u8>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -2235,7 +2584,7 @@ fn walk_box(base: &BaseDocument, node_id: NodeId, depth: usize, sink: &mut WalkS
     let Some(node) = base.get_node(node_id) else {
         return;
     };
-    let (abs_x, abs_y) = box_origin(base, node_id, &mut sink.origins);
+    let (abs_x, abs_y) = box_origin(base, node_id, &mut sink.origins, sink.reader_compensations);
     push_box(base, node, abs_x, abs_y, depth, sink);
 
     if node.flags.is_table_root() {
@@ -2349,10 +2698,16 @@ fn walk_table_part(
 /// up to the document node. This is Blitz's own `Node::absolute_position(0, 0)`
 /// without scroll offsets (a laid-out document never scrolls here), summed in
 /// `f64` from the root down, memoised per node.
+///
+/// With `compensate` (every render but the raw-Blitz one) each in-flow box also moves by the
+/// `position: relative` offsets of the non-atomic inline elements it sits in
+/// ([`inline_ancestor_relative_offset`], a Blitz gap), and its descendants inherit that through
+/// the memo.
 fn box_origin(
     base: &BaseDocument,
     node_id: NodeId,
     memo: &mut std::collections::HashMap<NodeId, (f64, f64)>,
+    compensate: bool,
 ) -> (f64, f64) {
     let mut chain = Vec::new();
     let mut origin = (0.0, 0.0);
@@ -2372,10 +2727,179 @@ fn box_origin(
         if let Some(node) = base.get_node(id).filter(|n| node_has_layout_data(n)) {
             let location = node.final_layout().location;
             origin = (origin.0 + location.x as f64, origin.1 + location.y as f64);
+            if compensate && !is_out_of_flow(node) {
+                let (dx, dy) =
+                    inline_ancestor_relative_offset(base, node.parent, node.containing_block());
+                origin = (origin.0 + dx, origin.1 + dy);
+            }
         }
         memo.insert(id, origin);
     }
     origin
+}
+
+/// Paint tier of a floated box (and its subtree): CSS 2.2 Appendix E step 5, above the
+/// backgrounds of in-flow, non-positioned blocks (step 4).
+pub const PAINT_TIER_FLOAT: u8 = 1;
+/// Paint tier of a positioned box with `z-index: auto | 0 | positive` (and its subtree):
+/// Appendix E steps 8-9, above floats and in-flow content.
+pub const PAINT_TIER_POSITIONED: u8 = 2;
+
+/// The painting-order layer of `node_id`'s backgrounds and borders (CSS 2.2 Appendix E,
+/// coarsened to three tiers): 0 for in-flow non-positioned boxes, [`PAINT_TIER_FLOAT`] inside a
+/// float, [`PAINT_TIER_POSITIONED`] inside a positioned box whose `z-index` is not negative; the
+/// highest tier of the box and its DOM ancestors, since a float or a positioned box paints its
+/// whole subtree at its own step. The emitter sorts rects by tier first
+/// (`pagination::merge_adjacent_rects`), so a later-tier box paints over an earlier-tier one
+/// wherever they sit; within a tier the existing position order stands (not Appendix E's tree
+/// order, and negative `z-index` and nested stacking contexts are not modelled). Not a Blitz bug
+/// (Blitz's own painter orders by stacking context; vellora's emitter had no order at all), so
+/// no raw canary: `raw_blitz_tests.rs` `positioned_boxes_paint_over_floats` pins it, WPT
+/// css/CSS2/abspos/between-float-and-text.html
+/// measures it.
+fn paint_tier(
+    base: &BaseDocument,
+    node_id: NodeId,
+    memo: &mut std::collections::HashMap<NodeId, u8>,
+) -> u8 {
+    let mut chain = Vec::new();
+    let mut tier = 0;
+    let mut current = Some(node_id);
+    while let Some(id) = current {
+        if let Some(&known) = memo.get(&id) {
+            tier = known;
+            break;
+        }
+        let Some(node) = base.get_node(id) else {
+            break;
+        };
+        chain.push(id);
+        current = node.parent.or_else(|| node.layout_parent.get());
+    }
+    for id in chain.into_iter().rev() {
+        let own = base
+            .get_node(id)
+            .and_then(|n| n.primary_styles())
+            .map_or(0, |styles| {
+                let positioned =
+                    styles.clone_position() != style::computed_values::position::T::Static;
+                let z_negative = match styles.get_position().z_index {
+                    style::values::generics::position::ZIndex::Integer(z) => z < 0,
+                    _ => false,
+                };
+                if positioned && !z_negative {
+                    PAINT_TIER_POSITIONED
+                } else if !matches!(styles.clone_float(), style::computed_values::float::T::None) {
+                    PAINT_TIER_FLOAT
+                } else {
+                    0
+                }
+            });
+        tier = tier.max(own);
+        memo.insert(id, tier);
+    }
+    tier
+}
+
+fn is_out_of_flow(node: &blitz_dom::Node) -> bool {
+    node.primary_styles()
+        .is_some_and(|styles| styles.clone_position().is_absolutely_positioned())
+}
+
+/// The summed `position: relative` offset of the non-atomic inline elements (`display: inline`,
+/// which generate no Blitz layout box) from `start` up its DOM parents, stopping at `stop` (the
+/// box's containing block / the runs' inline root) or at the first element that is not a
+/// non-atomic inline.
+///
+/// BLITZ GAP (blitz-dom 0.3.0-beta.4, crates.io): CSS 2.2 §9.4.3 moves a relatively positioned
+/// box with all its content, and for an inline box that content is its text, its atomic inlines
+/// and its floats. Blitz applies the inset of a relatively positioned box only to that box's own
+/// layout location: `src/layout/inline.rs` 1059-1081 (`inset_offset` of an atomic inline box,
+/// from that box's own `style.inset()`), and taffy 0.15.0's block layout for block boxes. A plain
+/// `display: inline` element is no layout box (its text is Parley glyph runs of the inline root,
+/// its floats and atomic inlines are placed by the inline root, `src/layout/inline.rs` 722-790
+/// and 1047-1081), so nothing moves its content: in
+/// `<div><span style="position:relative; left:100px">x</span></div>` raw Blitz lays `x` out at
+/// the div's content-box left edge, 100 px left of where CSS 2.2 §9.4.3 (and Chrome 155, which
+/// passes the WPT tests below) puts it. Repro: `raw_blitz_tests.rs` `RELATIVE_INLINE`; WPT
+/// css/CSS2/visuren/float-inside-inline-between-blocks-1.html and
+/// css/CSS2/normal-flow/block-in-inline-float-between-001.xht, whose reference floats `bbb` inside
+/// a relative `<span>`: vellora drew it at x = 8 px, 100 px left of the test's (Blitz lays the
+/// test's `<span>`, which holds blocks, out as a block box and moves it).
+/// CANARY: `raw_blitz_tests.rs` `blitz_still_ignores_relative_offset_of_inline_elements` fails
+/// when Blitz moves that content itself; then delete this function, its two call sites
+/// ([`box_origin`]'s `compensate`, [`read_text_runs`]), that canary and
+/// `relative_inline_compensation_moves_text_and_floats`.
+///
+/// Elements with their own Blitz layout box are not walked past: an inline element that contains
+/// blocks becomes a block box in Blitz (its offset is already applied by Taffy), and it is the
+/// containing block of what it holds, so `stop` ends the walk there. `left`/`right` percentages
+/// resolve against `stop`'s content-box width (the containing block of a relatively positioned
+/// inline is its block container); a `top`/`bottom` percentage counts as 0 (UNVERIFIED
+/// ASSUMPTION: Chrome resolves it against a definite block-container height, which no WPT test or
+/// fixture measured here exercises).
+fn inline_ancestor_relative_offset(
+    base: &BaseDocument,
+    start: Option<NodeId>,
+    stop: Option<NodeId>,
+) -> (f64, f64) {
+    use style::values::generics::position::GenericInset;
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    let basis = stop
+        .and_then(|id| base.get_node(id))
+        .filter(|n| node_has_layout_data(n))
+        .map(|n| {
+            let l = n.final_layout();
+            (l.size.width - l.padding.left - l.padding.right - l.border.left - l.border.right)
+                .max(0.0) as f64
+        })
+        .unwrap_or(0.0);
+    let resolve = |inset: &style::values::computed::Inset, basis: f64| match inset {
+        GenericInset::LengthPercentage(lp) => Some(
+            lp.resolve(style::values::computed::Length::new(basis as f32))
+                .px() as f64,
+        ),
+        _ => None,
+    };
+    let mut offset = (0.0, 0.0);
+    let mut current = start;
+    // Bounded like every other upward walk here: the DOM depth is gated (SEC-1).
+    for _ in 0..4096 {
+        let Some(id) = current else { break };
+        if Some(id) == stop {
+            break;
+        }
+        let Some(node) = base.get_node(id) else { break };
+        if node.is_anonymous() || node.data.downcast_element().is_none() {
+            break;
+        }
+        let Some(styles) = node.primary_styles() else {
+            break;
+        };
+        let display = styles.clone_display();
+        if display.outside() != DisplayOutside::Inline || display.inside() != DisplayInside::Flow {
+            break;
+        }
+        if styles.clone_position() == style::computed_values::position::T::Relative {
+            let position = styles.get_position();
+            let rtl = styles.clone_direction() == style::computed_values::direction::T::Rtl;
+            let left = resolve(&position.left, basis);
+            let right = resolve(&position.right, basis).map(|r| -r);
+            let dx = if rtl { right.or(left) } else { left.or(right) };
+            let vertical = |inset: &style::values::computed::Inset| match inset {
+                GenericInset::LengthPercentage(lp) => {
+                    Some(lp.to_length().map_or(0.0, |l| l.px() as f64))
+                }
+                _ => None,
+            };
+            let top = vertical(&position.top);
+            let bottom = vertical(&position.bottom).map(|b| -b);
+            offset.0 += dx.unwrap_or(0.0);
+            offset.1 += top.or(bottom).unwrap_or(0.0);
+        }
+        current = node.parent;
+    }
+    offset
 }
 
 /// Read one box (border-box origin `abs_x`/`abs_y`) into the output list.
@@ -2428,7 +2952,11 @@ fn push_box(
         sink.face_cache,
         sink.reader_compensations,
     );
-    let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let (mut visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let tier = paint_tier(base, node_id, &mut sink.tiers);
+    for rect in &mut visual_rects {
+        rect.tier = tier;
+    }
     let image_runs = resolve_image_runs(
         node,
         content_x,
@@ -2673,6 +3201,7 @@ fn read_visuals(
             width,
             height,
             color,
+            tier: 0,
         });
     }
 
@@ -2696,6 +3225,7 @@ fn read_visuals(
                 width,
                 height,
                 color,
+                tier: 0,
             });
         }
         return (rects, rounded_borders);
@@ -2765,6 +3295,7 @@ fn read_visuals(
                 width,
                 height,
                 color,
+                tier: 0,
             });
         }
     }
@@ -3189,13 +3720,29 @@ fn read_text_runs(
                 continue;
             }
 
+            // The runs of a relatively positioned inline element move with it (a Blitz gap,
+            // see `inline_ancestor_relative_offset`); not in the raw-Blitz render.
+            let (rel_x, rel_y) = if compensate {
+                let brush = base.get_node(style.brush.id);
+                let start = brush.and_then(|b| {
+                    if b.data.downcast_element().is_some() {
+                        Some(b.id)
+                    } else {
+                        b.parent
+                    }
+                });
+                inline_ancestor_relative_offset(base, start, Some(node.id))
+            } else {
+                (0.0, 0.0)
+            };
+
             runs.push(TextRun {
                 text: source.clone(),
                 font_data,
                 font_index,
                 font_size,
-                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
-                origin_y: line_box_top + glyph_run.baseline() as f64,
+                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px + rel_x,
+                origin_y: line_box_top + glyph_run.baseline() as f64 + rel_y,
                 line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
                 line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
                 glyphs,
