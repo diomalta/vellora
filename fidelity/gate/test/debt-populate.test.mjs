@@ -387,6 +387,46 @@ test("the committed ledger (c05 tip shrink): unchanged 2 entries / 5 keys, every
   );
 });
 
+test("the committed ledger (c06 tip shrink): unchanged 2 entries / 5 keys, every key still debt in the c06 contract re-gate", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const prev = loadDebt(LEDGER_C03_TIP);
+  const base = loadDebt(LEDGER_10);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  assert.equal(ledger.closed.length, prev.closed.length + 2);
+  assert.equal(
+    ledger.entries.reduce((n, e) => n + e.keys.length, 0),
+    5,
+  );
+  const report = JSON.parse(
+    gunzipSync(
+      readFileSync(
+        resolve(
+          here,
+          "..",
+          "snapshots",
+          "2026-10-28",
+          "c06",
+          "gate-report-c06-tip-contract.json.gz",
+        ),
+      ),
+    ).toString(),
+  );
+  assert.equal(report.step, "15-phase-c-06-tip");
+  assert.equal(report.verdict, "PASS");
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  for (const e of ledger.entries) {
+    for (const k of e.keys) assert.equal(head.get(k.key)?.class, "debt", k.key);
+  }
+  assert.match(
+    ledger.note,
+    /Phase C 06 tip .*\(step 15-phase-c-06-tip\) from run 20261028T084519Z/,
+  );
+  assert.deepEqual(
+    transitionProblems(base, ledger, { step: "15-phase-c-06-tip", headItems: head }),
+    [],
+  );
+});
+
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {
   const page = "fx|TXT-P1|corpus||criterion#1|pageDelta";
   const ref = "fx|REF-P|oracles:layout|plain|criterion#1|pageDelta";

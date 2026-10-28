@@ -78,7 +78,9 @@ pub struct FilledRect {
     /// `pagination::merge_adjacent_rects` sorts by tier first.
     pub tier: u8,
     /// In the positioned tier, the tree order of the positioned box that paints it
-    /// (`blitz_engine::paint_stack`); `0` otherwise.
+    /// (`blitz_engine::paint_stack`); `0` otherwise. Approximate after the rect merge:
+    /// `pagination::merge_adjacent_rects` may join touching same-colour rects of two positioned
+    /// boxes, and the merged rect keeps the first one's number.
     pub stack: u32,
 }
 

@@ -23,9 +23,13 @@ multi-column containers are byte-identical.
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85
 reference; indicative, not CI): WPT reftest passes in the default suites 4157 -> 4414 (8047
 tests; gated Phase C 05 tip run 20261028T062527Z, which also carries the float rule that loses
-float-nowrap-7/-8; the multi-column branch alone measured 4416); css/css-break 115 -> 371 and css/css-multicol 60 -> 122. Six earlier css/css-break passes
-are now failures. Their one-column renders happened to look like Chrome's (the harness's ink
-check); in columns they expose what vellora or Blitz does not lay out as Chrome does: an inline
-SVG, table captions, a non-cell table child, a float beside a line, and forced breaks between
-items at the same height. They are listed in
-`fidelity/gate/snapshots/2026-10-28/c05-multicol/README.md`.
+float-nowrap-7/-8; the multi-column branch alone measured 4416); css/css-break 115 -> 371 and
+css/css-multicol 60 -> 122. Six earlier css/css-break passes became failures with the columns:
+their one-column renders happened to look like Chrome's (the harness's ink check), and in columns
+they exposed what vellora or Blitz did not lay out as Chrome does (an inline SVG, table captions,
+a non-cell table child, a float beside a line, forced breaks between items at the same height).
+Five of them pass again in this release (inline SVG painting, anonymous table objects and the
+caption wrapper, forced column breaks in document order; gated Phase C 06 tip run
+20261028T084519Z); `css/css-break/widows-orphans-021.html` (the float beside a line) still fails.
+They are listed in `fidelity/gate/snapshots/2026-10-28/c05-multicol/README.md` and
+`fidelity/gate/snapshots/2026-10-28/c06/README.md`.
