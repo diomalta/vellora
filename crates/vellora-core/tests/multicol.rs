@@ -232,3 +232,102 @@ fn an_abspos_in_the_columns_counts_for_the_balancing() {
       <div style="position:relative;"><div style="position:absolute; height:100px;"></div></div></div>"#;
     assert!(approx(height_of(html, G1), 200.0));
 }
+
+/// WPT css/css-break/flexbox/multi-line-row-flex-fragmentation-045: five 20 px items, each on a
+/// flex line of its own in a 20 px column, each with `margin-top: -100px` (so every line is
+/// 0 px tall and all five start at the same flow y) and `break-before: column`. Chrome 155 puts
+/// line k in column k, the preserved negative margin putting each item 100 px above its
+/// column's top: a 100x100 px square, the items at x 8, 28, 48, 68 and 88 px. A cut by flow y
+/// alone cannot separate them (they all start above the break, at the same y).
+#[test]
+fn forced_breaks_at_one_flow_y_each_start_a_column() {
+    let html = r#"<style>#flex { display: flex; flex-wrap: wrap; }
+      #flex > div { margin-top: -100px; height: 100px; width: 20px; break-before: column; }
+      </style><div style="height:100px; width:100px; background:#ff0000; position:absolute; top:200px">
+      <div style="margin-top:100px; width:100px; height:100px; columns:5; column-gap:0; column-fill:auto;">
+      <div id="flex"><div style="background:#008000"></div><div style="background:#008001"></div>
+      <div style="background:#008002"></div><div style="background:#008003"></div>
+      <div style="background:#008004"></div></div></div></div>"#;
+    for k in 0..5u8 {
+        let rects = rects_of(html, [0, 128, k]);
+        assert_eq!(rects.len(), 1, "item {k}: {rects:?}");
+        let (x, y, w, h) = rects[0];
+        assert!(
+            approx(x, 8.0 + 20.0 * f64::from(k))
+                && approx(y, 200.0)
+                && approx(w, 20.0)
+                && approx(h, 100.0),
+            "item {k}: {:?}",
+            rects[0]
+        );
+    }
+}
+
+/// A `break-before: column` on the second item of a row flex line breaks before the whole line
+/// (the break is propagated to the line), and the line that follows stays in that column
+/// (Chrome for Testing 155.0.8059.85, 2026-10-28, client rects; step 06 probe
+/// `p1-line.html`): a at x 8, b and c at x 28 and 38, d at x 28, all 100 px above their
+/// column's top (y 200, the container's content top 300).
+#[test]
+fn a_forced_break_in_flow_order_takes_the_whole_flex_line() {
+    let html = r#"<style>#flex { display: flex; flex-wrap: wrap; } #flex > div { margin-top: -100px; height: 100px; }
+      </style><div style="position:absolute; top:200px; left:8px; width:100px; height:100px">
+      <div style="margin-top:100px; width:100px; height:100px; columns:5; column-gap:0; column-fill:auto">
+      <div id="flex"><div style="width:20px; background:#008000"></div>
+      <div style="width:10px; background:#008001"></div>
+      <div style="width:10px; break-before:column; background:#008002"></div>
+      <div style="width:20px; background:#008003"></div></div></div></div>"#;
+    for (k, x, w) in [
+        (0u8, 8.0, 20.0),
+        (1, 28.0, 10.0),
+        (2, 38.0, 10.0),
+        (3, 28.0, 20.0),
+    ] {
+        let rects = rects_of(html, [0, 128, k]);
+        assert_eq!(rects.len(), 1, "item {k}: {rects:?}");
+        let r = rects[0];
+        assert!(
+            approx(r.0, x) && approx(r.1, 200.0) && approx(r.2, w) && approx(r.3, 100.0),
+            "item {k}: {r:?}"
+        );
+    }
+}
+
+/// Block flow: a `margin-top: -100px` block after a forced column break keeps its margin, 100
+/// px above column 2's top (Chrome for Testing 155.0.8059.85, 2026-10-28, client rects; step 06
+/// probe `p3-block.html`: a 8,200 50x50; b 58,100 50x100).
+#[test]
+fn a_negative_margin_after_a_forced_break_is_kept_in_block_flow() {
+    let html = r#"<div style="position:absolute; top:200px; left:8px; width:100px; height:100px">
+      <div style="width:100px; height:100px; columns:2; column-gap:0; column-fill:auto">
+      <div style="height:50px; background:#008000"></div>
+      <div style="margin-top:-100px; height:100px; break-before:column; background:#008001"></div>
+      </div></div>"#;
+    let (a, b) = (rects_of(html, G1), rects_of(html, G2));
+    assert_eq!((a.len(), b.len()), (1, 1), "{a:?} {b:?}");
+    assert!(
+        approx(a[0].0, 8.0) && approx(a[0].1, 200.0) && approx(a[0].3, 50.0),
+        "{a:?}"
+    );
+    assert!(
+        approx(b[0].0, 58.0) && approx(b[0].1, 100.0) && approx(b[0].3, 100.0),
+        "{b:?}"
+    );
+}
+
+/// Bounded work: 3000 forced breaks at one flow y (the 045 shape) make at most
+/// `MAX_COLUMNS` (1000) columns, the rest staying in the last one, and the render ends.
+#[test]
+fn many_forced_breaks_at_one_flow_y_stop_at_the_column_cap() {
+    let items = "<div></div>".repeat(3000);
+    let html = format!(
+        r#"<style>#flex {{ display: flex; flex-wrap: wrap; }}
+      #flex > div {{ margin-top: -10px; height: 10px; width: 2px; break-before: column; background: #008000; }}
+      </style><div style="margin-top:20px; width:100px; height:10px; columns:50; column-gap:0; column-fill:auto">
+      <div id="flex">{items}</div></div>"#
+    );
+    let rects = rects_of(&html, G1);
+    // Columns 1..50 are on the page (2 px each); the merged green run covers them all.
+    let right = rects.iter().map(|r| r.0 + r.2).fold(0.0, f64::max);
+    assert!(approx(right, 108.0) || right > 108.0, "{rects:?}");
+}

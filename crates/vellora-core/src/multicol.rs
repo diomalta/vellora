@@ -13,8 +13,9 @@
 //!    the container is laid out below the columns;
 //! 2. this module (no Blitz types) cuts that one tall column into columns with the paginator's
 //!    slicer ([`crate::pagination::fragment_columns`]: break points between lines and boxes,
-//!    truncation of the space at a break, forced `break-before/after: column`, `break-before/
-//!    after: avoid`, `orphans` / `widows` as declared, `contain: size` boxes monolithic, sliced
+//!    truncation of the space at a break, forced `break-before/after: column` (also taken in
+//!    document order where a cut by flow y cannot separate the boxes: step 06,
+//!    [`crate::pagination::fragment_columns`]), `break-before/after: avoid`, `orphans` / `widows` as declared, `contain: size` boxes monolithic, sliced
 //!    box decorations) and moves each column into place, side by side, each edge rounded as
 //!    Taffy rounds it ([`apply`]). Absolutely positioned boxes take no part in the breaks: those
 //!    positioned against the container (or above it) stay where Blitz put them; the others are
@@ -29,9 +30,9 @@
 //! Not modelled (documented in COMPATIBILITY.md): `column-span: all` (the spanner stays in the
 //! column flow), `column-rule` (not painted), a multi-column container inside another one (laid
 //! out in one column), a multi-column container that is itself broken across pages (its columns
-//! are fragmented by the paginator as one block), vertical writing modes, and parallel flows
-//! (row flex items, the lines of a column flex container, table cells): one cut for the whole
-//! column, where Chrome breaks each flow on its own.
+//! are fragmented by the paginator as one block), vertical writing modes, and unforced breaks
+//! in parallel flows (row flex items, the lines of a column flex container, table cells): one
+//! cut for the whole column, where Chrome breaks each flow on its own.
 
 use std::collections::{HashMap, HashSet};
 
