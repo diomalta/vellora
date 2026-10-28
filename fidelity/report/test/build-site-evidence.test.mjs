@@ -127,7 +127,7 @@ test("crossCheck reports any metric that differs from the oracle output", () => 
 
 test("the committed manifest carries the committed oracle's numbers, before and after", () => {
   const pin = json("fidelity/baselines/pin/doc-aggregate.json");
-  const after = json("fidelity/gate/snapshots/2026-10-28/c06/doc-aggregate-c06-tip.json");
+  const after = json("fidelity/gate/snapshots/2026-10-28/c07/doc-aggregate-c07-tip.json");
   for (const f of manifest.fixtures) {
     for (const [k, v] of Object.entries(f.before))
       assert.equal(v, pin.fixtures[f.id][k], `${f.id}.before.${k}`);
@@ -310,7 +310,16 @@ test("a PASS gate still lists what each condition lets through", () => {
       counts: { a: 1, b: 1, c: 0, declared: 1 },
       items: [
         { key: "wpt|t/e.html", class: "accepted", pinClass: "a" },
-        { key: "wpt|t/f.html", class: "debt", pinClass: "b" },
+        { key: "wpt|t/f.html", class: "debt", pinClass: "b", after: "fail", rawOutcome: "fail" },
+        {
+          key: "wpt|t/i.html",
+          class: "debt",
+          pinClass: "b",
+          after: "pass",
+          rawOutcome: "fail",
+          detail:
+            "DEBT-x (class b): pass -> pass[ink-displaced-vs-chrome] (clean pass became suspect)",
+        },
         { key: "wpt|t/g.html", class: "declared", pinClass: "declared" },
       ],
     },
@@ -325,7 +334,13 @@ test("a PASS gate still lists what each condition lets through", () => {
   const [c1, , , c4] = gateConditions(report);
   assert.equal(c1.met, true);
   assert.deepEqual(c1.classA, ["wpt|t/e.html"]);
-  assert.deepEqual(c1.classB, ["wpt|t/f.html"]);
+  assert.deepEqual(c1.classB, ["wpt|t/f.html", "wpt|t/i.html"]);
+  assert.deepEqual(c1.classBOutcomes["wpt|t/i.html"], {
+    after: "pass",
+    rawOutcome: "fail",
+    flag: "ink-displaced-vs-chrome",
+  });
+  assert.equal(c1.classBOutcomes["wpt|t/f.html"].flag, null);
   assert.deepEqual(c1.declared, ["wpt|t/g.html"]);
   assert.equal(c4.met, true);
   assert.deepEqual(c4.head.debt, ["wpt|t/f.html"]);
@@ -335,8 +350,10 @@ test("a PASS gate still lists what each condition lets through", () => {
   assert.match(losses, /verdict PASS/);
   assert.match(
     losses,
-    /\(1\) [^\n]*\*\*met\*\*[^\n]*Class a[^\n]*`t\/e\.html`[^\n]*Class b[^\n]*`t\/f\.html`/,
+    /\(1\) [^\n]*\*\*met\*\*[^\n]*not matched on the branch: 3 WPT tests[^\n]*Class a[^\n]*`t\/e\.html`[^\n]*Class b[^\n]*fail on the branch: `t\/f\.html`[^\n]*pass on the branch with a suspect-pass flag[^\n]*`t\/i\.html` \(flag `ink-displaced-vs-chrome`; raw Blitz: fail\)/,
   );
+  // A class-b pass must never be described as a failure.
+  assert.doesNotMatch(losses, /fail on the branch: [^\n.]*`t\/i\.html`/);
   assert.match(losses, /\(1\) [^\n]*1 test that failed before is now rejected/);
   assert.match(
     losses,
@@ -386,14 +403,14 @@ test("the paint block shows before → after against Chrome and marks an over-co
 
 test("the committed manifest's gate and paint numbers are the committed snapshots'", () => {
   const gz = readFileSync(
-    join(REPO, "fidelity/gate/snapshots/2026-10-28/c06/gate-report-c06-tip-contract.json.gz"),
+    join(REPO, "fidelity/gate/snapshots/2026-10-28/c07/gate-report-c07-tip-contract.json.gz"),
   );
   const g = JSON.parse(gunzipSync(gz).toString("utf8"));
   assert.equal(manifest.gate.verdict, g.verdict);
   for (const k of ["gating", "pinA", "pinB", "pinC", "regression", "headGating"])
     assert.equal(manifest.gate.counts[k], g.counts[k] ?? 0, k);
   assert.deepEqual(manifest.gate.conditions, gateConditions(g));
-  const paint = json("fidelity/gate/snapshots/2026-10-28/c06/paint-probe-c06-tip.json");
-  const before = json("fidelity/gate/snapshots/2026-10-28/c06-docs/paint-probe-pin-v0.2.0.json");
+  const paint = json("fidelity/gate/snapshots/2026-10-28/c07/paint-probe-c07-tip.json");
+  const before = json("fidelity/gate/snapshots/2026-10-28/c07-docs/paint-probe-pin-v0.2.0.json");
   assert.deepEqual(manifest.paint, paintSection(paint, before));
 });
