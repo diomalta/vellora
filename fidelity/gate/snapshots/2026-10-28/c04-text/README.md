@@ -40,9 +40,23 @@ equal Chrome's, pixels differ). Use it with `--step 13-phase-c-04-text` (or a su
 
 `accepted-proposed-hanging-punctuation.json` holds a ready class-a entry. Evidence (CONFIRMED,
 2026-10-28): `hanging-punctuation` exists in neither Stylo 0.18.0 (pin) nor 0.22.0; Chrome 155
-fails the test (c03 run `chrome.outcome`); the pin's pass came from drawing U+3000 with no glyph
-and no advance (pin build: down arrow at 51.35 pt in test and reference), while the tip draws it
-with its 1 em advance (arrow at 81.00 pt vs 51.00 pt in the reference). Making the test pass
+fails the test (c03 run `chrome.outcome`); the pin's pass came from dropping a U+3000 that starts a
+line, with or without `hanging-punctuation` (pin build: down arrow at 51.35 pt in test and
+reference; `<div>&#x3000;b</div>` alone also loses the U+3000 at the pin, while mid-line it keeps
+its 1 em advance), whereas the tip keeps it (arrow at 81.00 pt vs 51.00 pt in the reference). Making the test pass
 would mean implementing a property Chrome does not implement, against the "copy Chrome" rule.
 The orchestrator decides whether this enters the step's `accepted.json`; until then the test is
 the one pin (c) item of this scope.
+
+## Found on the way (not changed here): Blitz float layout is compiled out
+
+CONFIRMED: `crates/vellora-core/Cargo.toml` takes `blitz-dom = "=0.3.0-beta.4"` with
+`default-features = false`, and blitz-dom's `floats` feature (`taffy/float_layout`,
+`stylo_taffy/floats`) is not in its `default` list anyway, so vellora has never run Blitz's float
+layout. On the reference of `monolithic-overflow-014-print` (a left float in a `flow-root`), the
+layout dump puts "On the first page" at x 0, y 14 (over the float, not beside it); the paginator
+then prints it on page 4 (how is not isolated: HYPOTHESIS that the slicer places it after the
+oversize float). The test side (an inline-block) is fine, so 014's remaining failure is the float
+side. Enabling `features = ["floats"]` (crates.io crate, no fork) is probably the common cause of
+the floats-family pin (c) items too, but it changes the raw-Blitz baseline and every fixture with
+a float: it needs its own step and gated run.
