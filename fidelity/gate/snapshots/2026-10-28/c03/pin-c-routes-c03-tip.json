@@ -1,0 +1,272 @@
+[
+  {
+    "key": "wpt|css/CSS2/abspos/between-float-and-text.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats-clear/clear-applies-to-009.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats-clear/clear-float-005.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats/float-in-inline-anonymous-block-with-overflow-hidden.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats/float-nowrap-2.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats/float-nowrap-8.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/floats/floats-placement-vertical-001a.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/generated-content/after-content-display-012.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/generated-content/after-content-display-013.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/generated-content/before-content-display-012.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/generated-content/before-content-display-013.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/normal-flow/block-in-inline-float-between-001.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/normal-flow/inline-table-zorder-001.xht",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/CSS2/visuren/float-inside-inline-between-blocks-1.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-054.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-055.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-break/flexbox/multi-line-column-flex-fragmentation-058.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-break/ruby-003.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-page/monolithic-overflow-014-print.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[4, 4]],
+    "rawPageCounts": [[4, 1]],
+    "chromePageCounts": [[4, 4]],
+    "cause": null,
+    "route": "c: raw fails differently (page counts)"
+  },
+  {
+    "key": "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/tab-size/tab-size-integer-001.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/tab-size/tab-size-integer-002.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/tab-size/tab-size-integer-003.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/text-align/text-align-end-006.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/text-justify/text-justify-and-trailing-spaces-003.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1], [1, 1]],
+    "rawPageCounts": [[1, 1], [1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/text-justify/text-justify-and-trailing-spaces-004.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1], [1, 1]],
+    "rawPageCounts": [[1, 1], [1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  },
+  {
+    "key": "wpt|css/css-text/white-space/text-wrap-balance-text-indent-001.html",
+    "outcome": "fail",
+    "rawOutcome": "fail",
+    "pageCounts": [[1, 1]],
+    "rawPageCounts": [[1, 1]],
+    "chromePageCounts": [[1, 1]],
+    "cause": null,
+    "route": "b-provable (raw Blitz fails the same way)"
+  }
+]

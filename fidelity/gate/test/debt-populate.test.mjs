@@ -48,6 +48,9 @@ const LEDGER_10 = resolve(
   "DEBT-10-integration.json",
 );
 const SNAP_C02 = resolve(here, "..", "snapshots", "2026-10-27", "c02");
+const SNAP_C03_TIP = resolve(here, "..", "snapshots", "2026-10-28", "c03");
+// The ledger step's rebuild (15 entries / 187 keys), frozen when the c03 tip shrank DEBT.json.
+const LEDGER_C03_REBUILD = join(SNAP_C03_TIP, "DEBT-c03-ledger-rebuild.json");
 const BASELINES = resolve(here, "..", "..", "baselines");
 
 // The boleto barcode digit of the 10-tip run (layer-vector geometry mapping): N0 28.531 px, P -3.
@@ -202,8 +205,8 @@ test("the 10-integration ledger: 27 entries, 1026 keys, every key passes D7 agai
 // Phase C 02 (2026-10-27): DEBT.json shrunk from run 20261027T231548Z (snapshots/2026-10-27/c02):
 // 10 entries, 180 keys, each a key the 10-integration ledger covered, no ceiling above its old one,
 // every removed key recorded in closed[]; every key passes D7 against the c02 no-ledger re-gate.
-test("the committed ledger (c02 shrink, c03 rebuild): 15 entries, 187 keys, rule iii vs the frozen 10-integration ledger", () => {
-  const ledger = loadDebt(DEBT_FILE);
+test("the c03 ledger-step rebuild (frozen): 15 entries, 187 keys, rule iii vs the frozen 10-integration ledger", () => {
+  const ledger = loadDebt(LEDGER_C03_REBUILD);
   const old = loadDebt(LEDGER_10);
   assert.equal(ledger.entries.length, 15);
   assert.deepEqual(ledgerProblems(ledger), []);
@@ -255,6 +258,46 @@ test("the committed ledger (c02 shrink, c03 rebuild): 15 entries, 187 keys, rule
   // Rule iii against the frozen base on the c02 head items: no problem.
   assert.deepEqual(
     transitionProblems(old, ledger, { step: "11-collapse-comp", headItems: head }),
+    [],
+  );
+});
+
+// Phase C 03 tip (2026-10-28): DEBT.json shrunk from run 20261028T013052Z (phasec/03-tip; the
+// script fidelity/gate/snapshots/2026-10-28/c03/scripts/shrink-ledger.mjs): only the 7 WPT keys
+// of DEBT-10-wpt-1/2/3 still gate against port/00-start; the other 180 keys are fixed and leave
+// with closed[] records of that run's head comparison. Rule iii against the frozen 10-integration
+// base on the run's contract re-gate: no problem.
+test("the committed ledger (c03 tip shrink): 3 entries, 7 WPT keys, rule iii vs the frozen 10-integration ledger", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const prev = loadDebt(LEDGER_C03_REBUILD);
+  const base = loadDebt(LEDGER_10);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  assert.deepEqual(
+    ledger.entries.map((e) => [e.id, e.keys.length]),
+    [
+      ["DEBT-10-wpt-1", 5],
+      ["DEBT-10-wpt-2", 1],
+      ["DEBT-10-wpt-3", 1],
+    ],
+  );
+  const report = JSON.parse(
+    gunzipSync(readFileSync(join(SNAP_C03_TIP, "gate-report-c03-tip-contract.json.gz"))).toString(),
+  );
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  for (const e of ledger.entries) {
+    for (const k of e.keys) assert.equal(head.get(k.key)?.class, "debt", k.key);
+  }
+  const added = ledger.closed.slice(prev.closed.length);
+  assert.deepEqual(ledger.closed.slice(0, prev.closed.length), prev.closed);
+  assert.equal(added.length, 180);
+  for (const c of added) {
+    assert.equal(c.fixed, true, c.key);
+    assert.equal(c.runId, "20261028T013052Z", c.key);
+    assert.equal(c.step, "12-phase-c-03", c.key);
+    assert.ok(!HEAD_GATING_CLASSES.includes(c.headComparison.class), c.key);
+  }
+  assert.deepEqual(
+    transitionProblems(base, ledger, { step: "12-phase-c-03", headItems: head }),
     [],
   );
 });
