@@ -20,7 +20,7 @@ column top, so no break was found and all five items stayed in column 1. The ste
 "parallel flows" was wrong for this case: these are lines one after another that start at the
 same y, not flows side by side.
 
-Chrome 155's client rects (probe `p4-045.html`) put item k in column k, at x 8 + 20k, each 100 px
+Chrome 155's screen-mode client rects (probe `p4-045.html`) put item k in column k, at x 8 + 20k, each 100 px
 above its column top. This is a 100x100 green square over the red box. Two more probes
 (`p1-line.html`, `p3-block.html`) show:
 - a forced break on the second item of a row flex line moves the whole line;
@@ -63,7 +63,7 @@ A first version, in which every forced break moved its followers whole, measured
 css/css-break 371 -> 369 (+045; -column-029, -column-032, -row-044). An intermediate version with
 no record of taken breaks lost column-032: the box whose own break had started column 2 fired again.
 
-New tests (`crates/vellora-core/tests/multicol.rs`) pin Chrome's client rects:
+New tests (`crates/vellora-core/tests/multicol.rs`) pin Chrome's screen-mode client rects:
 - `forced_breaks_at_one_flow_y_each_start_a_column` (045);
 - `a_forced_break_in_flow_order_takes_the_whole_flex_line` (p1);
 - `a_negative_margin_after_a_forced_break_is_kept_in_block_flow` (p3);
@@ -76,6 +76,13 @@ New tests (`crates/vellora-core/tests/multicol.rs`) pin Chrome's client rects:
   column flex container breaking on its own. There is still one cut per column.
 - A break taken in document order inside a multi-line *column* flex container also moves the later
   lines whole (they are parallel flows there). No test in the two directories exercises this.
+- The probes measure screen layout (`getClientRects`), not Chrome's print output. The print
+  evidence is the WPT harness pass of 045.
+- HYPOTHESIS, not measured: the document-order rule only counts *boxes* as content before the
+  line. If the only content before it is the container's own inline text (line boxes owned by an
+  ancestor), it does not fire. The flow-y rule still covers the usual case.
+- Not checked: whether a `break-before: page` version of 045 exists among the `-print` flexbox
+  tests. The page path was not changed.
 - A positive margin after a break below the column top is still dropped. That is the
   pre-step-06 behaviour; it was not re-measured.
 

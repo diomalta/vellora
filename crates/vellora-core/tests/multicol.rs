@@ -265,7 +265,7 @@ fn forced_breaks_at_one_flow_y_each_start_a_column() {
 
 /// A `break-before: column` on the second item of a row flex line breaks before the whole line
 /// (the break is propagated to the line), and the line that follows stays in that column
-/// (Chrome for Testing 155.0.8059.85, 2026-10-28, client rects; step 06 probe
+/// (Chrome for Testing 155.0.8059.85, 2026-10-28, screen-mode client rects; step 06 probe
 /// `p1-line.html`): a at x 8, b and c at x 28 and 38, d at x 28, all 100 px above their
 /// column's top (y 200, the container's content top 300).
 #[test]
@@ -294,7 +294,7 @@ fn a_forced_break_in_flow_order_takes_the_whole_flex_line() {
 }
 
 /// Block flow: a `margin-top: -100px` block after a forced column break keeps its margin, 100
-/// px above column 2's top (Chrome for Testing 155.0.8059.85, 2026-10-28, client rects; step 06
+/// px above column 2's top (Chrome for Testing 155.0.8059.85, 2026-10-28, screen-mode client rects; step 06
 /// probe `p3-block.html`: a 8,200 50x50; b 58,100 50x100).
 #[test]
 fn a_negative_margin_after_a_forced_break_is_kept_in_block_flow() {
