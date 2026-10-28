@@ -1,0 +1,14 @@
+{
+  "step": "13-phase-c-04-text",
+  "note": "PROPOSED class-a acceptance, NOT used by any gated run of this step. Merge it into the step's accepted.json only if the orchestrator decides so (Phase C step 04, branch phasec/04-text). See README.md here.",
+  "acceptedRegressions": [
+    {
+      "key": "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail vs the pin (shipped main). The OLD pass was false: the pin drew no glyph and no advance for U+3000 IDEOGRAPHIC SPACE, so the down arrow sat at the reference's x without anything hanging. Neither engine supports the property: `hanging-punctuation` is absent from Stylo 0.18.0 (the pin's) and 0.22.0 (beta.4's), so the declaration is dropped in both. A 1 em ideographic space that does not hang is what the spec gives without the property, and Chrome 155 (which does not implement hanging-punctuation) fails the test too. The tip lays out U+3000 with its 40 px advance and the arrow 40 px to the right.",
+      "evidence": "(1) grep -rli 'hanging-punctuation|hanging_punctuation' over the cargo registry sources stylo-0.18.0 and stylo-0.22.0: no match (2026-10-28). (2) PyMuPDF 1.28.2 rawdict (vellora-fidelity-runs/c04-text-iter/tools/chars.py, PDFs in c04-text-iter/hp/, rendered by c04-text-iter/tools/hp.sh, 2026-10-28, local macOS): pin build (git archive of main 5810062, Blitz rev 2003ba5, Parley 0.10) test: no U+3000 char, U+2193 at x 51.35 pt; pin reference: U+2193 at x 51.35 pt (equal: the old pass); tip (phasec/04-text) test: U+3000 at x 51.00 pt, U+2193 at x 81.00 pt (+30 pt = 40 px = 1 em of the 40 px font); tip reference: U+2193 at 51.00 pt. (3) run-all-c03-tip-20261028T013052Z wpt/results.json: chrome.outcome fail for this test (Chrome for Testing 155.0.8059.85), rawOutcome fail. Chrome's own glyph positions for this test were not extracted (UNVERIFIED that Chrome places the arrow exactly 40 px right)."
+    }
+  ]
+}
