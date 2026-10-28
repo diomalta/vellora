@@ -2194,3 +2194,74 @@ Re-counted after rules (i) and (ii) (before: b-provable 103, page-scope 89, c 17
   invoice `p2|QTD.#1` and `p3|QTD.#1` dx 1.21 → 4.42 pt (not mapped); invoice p3 `Total#1`, `a#1`,
   `pagar#1`, `R$#14`, `50.724,90#1` dy 1.1 → −1.15 pt (|run − P| 3.52 px > 1.333 px: the vector does
   not describe the PDF). Rule (ii) changed none of these 8.
+
+## `11-phase-c`: baseline 11 written, strict exit contract met (2026-10-28, branch `phasec/06-tip`)
+
+Link `port/11-phase-c`, gated against `port/10-integration` (no baseline was written for Phase C
+steps 01-05: each of their gated runs failed the strict exit contract the user set on 2026-10-27,
+so 10-integration stayed the previous link). Every number is from ONE run, `20261028T084519Z`
+(`phasec/06-tip` 7e6b028, 0 dirty: the Phase C step 06 merge of `phasec/06-svg`,
+`phasec/06-table-anon`, `phasec/06-col-breaks`, `phasec/06-ruby` on `phasec/05-verify` 1ae3508,
+plus the image paint-order fix 2b24dee; Blitz 0.3.0-beta.4 from crates.io), `run-all --gate --main
+--contract --raw`, Chrome for Testing 155.0.8059.85 (`--chrome`), WPT Chrome outcomes
+`--chrome-from` the 10-tip run, tools image `vellora-fidelity-tools:baseline-beta4` (c405e06c).
+Environment: darwin 27.0.0 arm64 (macOS 27.0.1, Apple M5 Pro), Node v22.23.2, rustc 1.96.0,
+PyMuPDF 1.28.2; local macOS, INDICATIVE. `<RUN>` =
+`~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028`.
+Full record (merges, conflicts, the pre-run finding, DET-1, the flagged losses):
+`fidelity/gate/snapshots/2026-10-28/c06/README.md`.
+
+```
+node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run <RUN> \
+  --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from <RUN> \
+  --debt fidelity/baselines/port/DEBT.json --step 15-phase-c-06-tip \
+  --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json \
+  --doc-aggregate <RUN>/doc-aggregate/summary.json --contract --out <scratch>/regate
+# exit 0: PASS
+```
+
+**Baseline source.** Written with `write-baseline.mjs --run <RUN> --name 11-phase-c --root
+fidelity/baselines/port --accept .../c06/accepted.json --attach
+<RUN>/gate-contract/gate-report.md=gate-report-contract-regate.md` straight from the run copy: its
+own `gate/gate-report.json` (the run-all gate, `--contract`, with the step's acceptances and the
+ledger) is already PASS, so no derived copy was needed (10-integration needed one). The post-hoc
+re-gate's counts are identical; its report is attached.
+
+### Strict exit contract (CONFIRMED, post-hoc `--contract` re-gate, exit 0)
+
+| condition | status | numbers |
+|---|---|---|
+| (1) pin `--main`: 0 (c) | MET | pin (a) 5, (b) 4, **(c) 0**, declared 10; merge to main OK; 0 fixture words |
+| (2) doc aggregate >= pin per fixture | MET 9/9 | docRegressions 0 |
+| (3) pages == Chrome | MET 9/9 | invoice 3, receipt 2, boleto 1, boleto-febraban 1, danfe 1, notification 1, text-stress-ptbr 7, postmark 2, sparksuite 1 |
+| (4) previous-link ratchets | MET | vs 10-integration gating 0 (improvement 3469, accepted 3, 42 flagged WPT passes lost, reported); head vs 00-start PASS: gating 0, debt 5, accepted 5, declared 10 |
+
+- pin (a) 5: class-a acceptances float-nowrap-8, page-name-flex-001/002/004,
+  hanging-punctuation-first-002 (`c06/accepted.json`, carried verbatim from c05).
+- pin (b) 4: DEBT keys of the step-10 ledger (raw Blitz fails them the same way): floats-placement-
+  vertical-003, baseline-block-with-overflow-001, flex-fragmented-with-float-descendant-001
+  (`DEBT-10-wpt-1`), zero-width-floats (`DEBT-10-wpt-2`). None of them is among 10-final's 103
+  b-provable pin (c) items (CONFIRMED against `10-final/pin-classification.json`).
+- WPT 4545 passes of 8047 (10-integration 3709, c05 4414; counted from the baselines'
+  `wpt/expectations-blitz-0.3.0-beta.4.json`). Crashtests
+  239/239 ok. Canaries 35/35 caught (+8 measurement-only).
+
+### Ledger and its base
+
+`DEBT.json`: 2 entries / 5 keys (shrunk at each Phase C tip; this step kept 5, closed 0). `debt.mjs
+check --base fidelity/gate/snapshots/2026-10-27/10-final/DEBT-10-integration.json`: 0 problems.
+`DEBT-BASE.json` now names the frozen copy `fidelity/gate/snapshots/2026-10-28/c06/DEBT-c06-tip.json`
+(sha256 c932107e…, step 15-phase-c-06-tip; byte-identical to the committed DEBT.json). Re-gated
+with the moved base: exit 0, counts identical; `debt.mjs check --base <new base>`: 0 problems.
+
+### Known failures that become the floor
+
+- 42 flagged WPT passes lost vs 10-integration (reported, not gating): c05's 27 plus the table
+  branch's 15 (12 CSS2 `*-applies-to-015` whose reference `<img>` without dimensions is not drawn;
+  inline-table-002a, -width-002b, -zorder-003).
+- css/css-break/widows-orphans-021 (lost to multicol at c05; failed at pin, 00-start and
+  10-integration).
+- Not modelled (COMPATIBILITY.md): `column-span`, `column-rule`, nested multicol, multicol across
+  pages, per-parallel-flow unforced breaks; ruby overhang / `ruby-position: under` / `<rtc>`;
+  per-positioned-box rect order and collapsed borders of positioned cells; text painted after
+  every rect.

@@ -1,0 +1,270 @@
+{
+  "counts": {
+    "total": 43,
+    "detection": 35,
+    "caught": 35,
+    "notCaught": 0,
+    "notRun": 0,
+    "measurement": 8
+  },
+  "canaries": [
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: startxref offset shifted by 17 bytes",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: file truncated to 60%",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: trailing %%EOF removed (offsets intact)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "qpdf",
+      "canary": "qpdf: 64 bytes XORed inside the largest FlateDecode stream (offsets intact)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "verapdf",
+      "canary": "veraPDF: PDF/A-2b claim kept, /OutputIntents renamed /OutputIntentz (OutputIntent removed)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "verapdf",
+      "canary": "veraPDF: PDF/A-2b claim kept, /FontFile2 renamed /FontFilf2 (font program not embedded)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdftotext",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdfminer.six",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pymupdf",
+      "canary": "boleto: word \"Recibo\" replaced by \"VELLORACANARY\" in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdftotext",
+      "canary": "invoice: first body \"de\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdfminer.six",
+      "canary": "invoice: first body \"de\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pymupdf",
+      "canary": "invoice: first body \"de\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdftotext",
+      "canary": "invoice: first body \"R$\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pdfminer.six",
+      "canary": "invoice: first body \"R$\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "text/pymupdf",
+      "canary": "invoice: first body \"R$\" deleted in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "U+FB01 written into the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "U+FB01 written into the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "NFD (decomposed) accents in the subject text (vellora)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "copy-paste/pdftotext",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "copy-paste/pdfminer.six",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "copy-paste/pymupdf",
+      "canary": "NFD (decomposed) accents in the subject text (Chrome, measurement)",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-px rendered by vellora",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-px rendered by chrome",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-bad-dv-px rendered by vellora",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-bad-dv-px rendered by chrome",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-0.254mm rendered by vellora",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "barcode",
+      "canary": "itf-valid-0.254mm rendered by chrome",
+      "ran": true,
+      "caught": null
+    },
+    {
+      "oracle": "barcode",
+      "canary": "code128c-valid-px rendered by vellora",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "code128c-valid-px rendered by chrome",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "code128c-bad-cdv-px rendered by vellora",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "barcode",
+      "canary": "code128c-bad-cdv-px rendered by chrome",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "layout-consensus",
+      "canary": "notification: body translated by +6pt in the subject only",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "pdf-probe",
+      "canary": "notification: pdf-probe v2: body translated by +6pt in the subject only (layout-shift-6pt.pdf)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "pdf-probe",
+      "canary": "notification: pdf-probe v2: one word deleted from the subject PDF (PyMuPDF redaction)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "pdf-probe",
+      "canary": "notification: pdf-probe v2: one glyph run of the subject moved 2pt vertically, away from Chrome",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "pdf-probe",
+      "canary": "notification: pdf-probe v2: same glyphs, every subject FontDescriptor /Ascent rewritten (must NOT be flagged)",
+      "ran": true,
+      "caught": true
+    },
+    {
+      "oracle": "pdf-probe",
+      "canary": "notification: pdf-probe v2: one glyph run of the subject moved below the MediaBox (off-page text)",
+      "ran": true,
+      "caught": true
+    }
+  ]
+}

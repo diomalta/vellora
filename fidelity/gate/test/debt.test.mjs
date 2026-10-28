@@ -459,14 +459,17 @@ test("I2: resolveLedgerBase reads DEBT.json at the merge base, else first popula
       .refusal,
     /needs schema/,
   );
-  // The committed pointer names the frozen 10-integration ledger (27 entries, 1026 keys).
+  // The committed pointer names the frozen ledger of port step 11-phase-c (Phase C 06 tip, step
+  // 15-phase-c-06-tip: 2 entries, 5 keys); until Phase C 06 it named the 10-integration ledger
+  // (27 entries, 1026 keys).
   const committed = readBasePointer();
   assert.equal(committed.refusal, undefined);
-  assert.equal(committed.ledger.entries.length, 27);
+  assert.equal(committed.ledger.entries.length, 2);
   assert.equal(
     committed.ledger.entries.reduce((n, e) => n + e.keys.length, 0),
-    1026,
+    5,
   );
+  assert.ok(committed.ledger.closed.length > 0);
   const none = resolveLedgerBase({
     git: () => ({ status: 128, stdout: "", stderr: "fatal: no main" }),
   });

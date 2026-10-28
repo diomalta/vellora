@@ -1,0 +1,1600 @@
+{
+  "schema": "vellora-fidelity/wpt-crashtests/1",
+  "engine": "blitz-0.3.0-beta.4",
+  "blitzDom": {
+    "version": "0.3.0-beta.4",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "rev": null
+  },
+  "vellora": "7e6b028c543423875b8b9ea9f2b26a399401f9b2",
+  "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+  "wptPin": {
+    "expected": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+    "ok": true,
+    "problems": []
+  },
+  "date": "Wed Oct 28 08:47:34 UTC 2026",
+  "node": "v22.23.2",
+  "suites": [
+    "css/CSS2/normal-flow",
+    "css/CSS2/margin-padding-clear",
+    "css/CSS2/box",
+    "css/CSS2/box-display",
+    "css/CSS2/visudet",
+    "css/CSS2/visuren",
+    "css/CSS2/linebox",
+    "css/CSS2/text",
+    "css/CSS2/fonts",
+    "css/CSS2/tables",
+    "css/CSS2/borders",
+    "css/CSS2/backgrounds",
+    "css/CSS2/colors",
+    "css/CSS2/lists",
+    "css/CSS2/generated-content",
+    "css/CSS2/floats",
+    "css/CSS2/floats-clear",
+    "css/CSS2/positioning",
+    "css/CSS2/abspos",
+    "css/CSS2/visufx",
+    "css/CSS2/pagination",
+    "css/css-tables",
+    "css/css-break",
+    "css/css-page",
+    "css/css-text"
+  ],
+  "timeoutMs": 30000,
+  "seconds": 0.1,
+  "counts": {
+    "ok": 239
+  },
+  "results": {
+    "css/CSS2/floats-clear/adjoining-float-new-fc-crash.html": "ok",
+    "css/CSS2/floats-clear/clearance-containing-fragmented-float-crash.html": "ok",
+    "css/CSS2/floats/crashtests/firefox-bug-1904409.html": "ok",
+    "css/CSS2/floats/crashtests/firefox-bug-1904419.html": "ok",
+    "css/CSS2/floats/crashtests/firefox-bug-1904421.html": "ok",
+    "css/CSS2/floats/crashtests/firefox-bug-1904428.html": "ok",
+    "css/CSS2/floats/crashtests/firefox-bug-1906768.html": "ok",
+    "css/CSS2/floats/crashtests/float-append-child.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-1.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-2.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-3.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-4.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-5.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-6.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-7.html": "ok",
+    "css/CSS2/floats/crashtests/float-dynamic-change-8.html": "ok",
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-1-crash.html": "ok",
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-2-crash.html": "ok",
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-3-crash.html": "ok",
+    "css/CSS2/floats/crashtests/huge-width-after-float.html": "ok",
+    "css/CSS2/floats/floats-saturated-position-crash.html": "ok",
+    "css/CSS2/floats/line-pushed-by-floats-crash.html": "ok",
+    "css/CSS2/linebox/crashtests/dir-change-simplifed-crash.html": "ok",
+    "css/CSS2/linebox/crashtests/inline-block-baseline-crash.html": "ok",
+    "css/CSS2/linebox/soft-wrap-opportunity-after-replaced-content-crash.html": "ok",
+    "css/CSS2/linebox/video-needs-layout-crash.html": "ok",
+    "css/CSS2/normal-flow/crashtests/block-in-inline-ax-crash.html": "ok",
+    "css/CSS2/normal-flow/crashtests/block-in-inline-remove-crash.html": "ok",
+    "css/CSS2/text/crashtests/bidi-inline-fragment-oof-crash.html": "ok",
+    "css/CSS2/visudet/crashtests/canvas-huge-min-max-sizes.html": "ok",
+    "css/CSS2/visufx/crashtests/firefox-bug-1996058.html": "ok",
+    "css/css-break/area-crash.html": "ok",
+    "css/css-break/area-in-inline-crash.html": "ok",
+    "css/css-break/auto-overflow-inside-second-abspos-fragment-crash.html": "ok",
+    "css/css-break/block-in-inline-004-crash.html": "ok",
+    "css/css-break/block-in-inline-005-crash.html": "ok",
+    "css/css-break/block-in-inline-006-crash.html": "ok",
+    "css/css-break/block-in-inline-007-crash.html": "ok",
+    "css/css-break/block-in-inline-010-crash.html": "ok",
+    "css/css-break/box-decoration-break-clone-032-crash.html": "ok",
+    "css/css-break/box-decoration-break-clone-035-crash.html": "ok",
+    "css/css-break/box-decoration-break-clone-036-crash.html": "ok",
+    "css/css-break/break-after-in-parallel-flow-crash.html": "ok",
+    "css/css-break/break-after-oof-before-preceding-pushed-float-crash.html": "ok",
+    "css/css-break/break-before-broken-leading-float-001-crash.html": "ok",
+    "css/css-break/break-before-broken-leading-float-002-crash.html": "ok",
+    "css/css-break/break-before-float-after-line-after-floats-crash.html": "ok",
+    "css/css-break/break-before-with-no-fragmentation-crash.html": "ok",
+    "css/css-break/chrome-bug-1283776-000-crash.html": "ok",
+    "css/css-break/chrome-bug-1283776-001-crash.html": "ok",
+    "css/css-break/chrome-bug-1285596-crash.html": "ok",
+    "css/css-break/chrome-bug-1287342-crash.html": "ok",
+    "css/css-break/chrome-bug-1288769-000-crash.html": "ok",
+    "css/css-break/chrome-bug-1288769-001-crash.html": "ok",
+    "css/css-break/chrome-bug-1289999-crash.https.html": "ok",
+    "css/css-break/chrome-bug-1318455-crash.html": "ok",
+    "css/css-break/clear-br-in-size-containment-crash.html": "ok",
+    "css/css-break/clear-float-in-size-containment-crash.html": "ok",
+    "css/css-break/clear-past-float-with-oof-twice-crash.html": "ok",
+    "css/css-break/column-balancing-with-oofs-crash.html": "ok",
+    "css/css-break/empty-fieldset-tall-bottom-padding-crash.html": "ok",
+    "css/css-break/firefox-bug-1693616-001-crash.html": "ok",
+    "css/css-break/firefox-bug-1693616-002-crash.html": "ok",
+    "css/css-break/firefox-bug-1903652-crash.html": "ok",
+    "css/css-break/firefox-bug-2021187-crash.html": "ok",
+    "css/css-break/flex-item-padding-block-in-inline-crash.html": "ok",
+    "css/css-break/flexbox/auto-height-flex-item-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/button-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/fixed-flex-item-inside-abs-flex-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/flexbox-fragmentation-layout-001-crash.html": "ok",
+    "css/css-break/flexbox/float-in-webkit-box-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/image-in-fragmented-flexbox-001-crash.html": "ok",
+    "css/css-break/flexbox/image-in-fragmented-flexbox-002-crash.html": "ok",
+    "css/css-break/flexbox/monolithic-item-in-fragmented-flexbox-crash.html": "ok",
+    "css/css-break/flexbox/quirks-flex-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/slider-in-multicol-crash.html": "ok",
+    "css/css-break/flexbox/small-definite-flex-line-crash.html": "ok",
+    "css/css-break/flexbox/textarea-input-flex-items-in-multicol-crash.html": "ok",
+    "css/css-break/float-011-crash.html": "ok",
+    "css/css-break/float-after-self-collapsing-block-in-inline-crash.html": "ok",
+    "css/css-break/float-in-inline-widows-orphans-crash.html": "ok",
+    "css/css-break/floated-multicol-in-multicol-crash.html": "ok",
+    "css/css-break/fragmentainer-1px-clamping-000-crash.html": "ok",
+    "css/css-break/fragmentainer-1px-clamping-001-crash.html": "ok",
+    "css/css-break/fragmented-empty-contenteditable-crash.html": "ok",
+    "css/css-break/fragmented-float-in-inline-crash.html": "ok",
+    "css/css-break/fragmented-oof-in-inline-crash.html": "ok",
+    "css/css-break/grid/grid-item-oof-crash.html": "ok",
+    "css/css-break/grid/grid-item-placement-crash.html": "ok",
+    "css/css-break/grid/grid-item-placement-multiple-crash.html": "ok",
+    "css/css-break/grid/grid-large-end-border-crash.html": "ok",
+    "css/css-break/grid/grid-nested-columns-crash.html": "ok",
+    "css/css-break/iframe-in-repeated-table-header-crash.html": "ok",
+    "css/css-break/inline-skipping-fragmentainer-003-crash.html": "ok",
+    "css/css-break/inline-skipping-fragmentainer-004-crash.html": "ok",
+    "css/css-break/large-text-node-oof-crash.html": "ok",
+    "css/css-break/line-and-fragmentainer-break-before-float-crash.html": "ok",
+    "css/css-break/max-height-with-margin-pushed-below-fragmentation-line-crash.html": "ok",
+    "css/css-break/nested-fixedpos-in-inline-000-crash.html": "ok",
+    "css/css-break/nested-fixedpos-in-inline-001-crash.html": "ok",
+    "css/css-break/nested-fixedpos-in-inline-002-crash.html": "ok",
+    "css/css-break/nested-fixedpos-in-inline-003-crash.html": "ok",
+    "css/css-break/nested-float-in-multicol-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-001-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-002-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-003-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-004-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-005-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-006-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-007-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanner-and-oof-008-crash.html": "ok",
+    "css/css-break/nested-multicol-with-spanners-and-oofs-crash.html": "ok",
+    "css/css-break/nested-oof-in-multicol-crash.html": "ok",
+    "css/css-break/no-room-for-line-in-first-fragmentainer-crash.html": "ok",
+    "css/css-break/out-of-flow-in-inline-with-negative-offset-crash.html": "ok",
+    "css/css-break/out-of-flow-in-multicolumn-crash.html": "ok",
+    "css/css-break/out-of-flow-in-nested-spanner-multicol-crash.html": "ok",
+    "css/css-break/out-of-flow-in-new-column-crash.html": "ok",
+    "css/css-break/out-of-flow-with-negative-offset-crash.html": "ok",
+    "css/css-break/out-of-order-float-in-inline-crash.html": "ok",
+    "css/css-break/overflow-auto-height-with-bottom-padding-crash.html": "ok",
+    "css/css-break/parallel-flow-trailing-margin-003-crash.html": "ok",
+    "css/css-break/resumed-float-and-inline-block-crash.html": "ok",
+    "css/css-break/table-cell-padding-block-in-inline-crash.html": "ok",
+    "css/css-break/table/bottom-padding-repeated-header-crash.html": "ok",
+    "css/css-break/table/break-before-repeated-footer-instead-of-border-crash.html": "ok",
+    "css/css-break/table/caption-bottom-margin-at-boundary-crash.html": "ok",
+    "css/css-break/table/cell-large-bottom-padding-crash.html": "ok",
+    "css/css-break/table/dynamic-caption-child-change-002-crash.html": "ok",
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-001-crash.html": "ok",
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-002-crash.html": "ok",
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-003-crash.html": "ok",
+    "css/css-break/table/repeated-section/nested-repeated-header-crash.html": "ok",
+    "css/css-break/table/repeated-section/repeated-footer-insufficient-space-crash.html": "ok",
+    "css/css-break/table/repeated-section/special-elements-crash.html": "ok",
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-003-crash.html": "ok",
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-004-crash.html": "ok",
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-005-crash.html": "ok",
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-006-crash.html": "ok",
+    "css/css-break/table/table-in-abspos-multicol-with-nested-meter-crash.html": "ok",
+    "css/css-break/table/table-row-end-border-1-crash.html": "ok",
+    "css/css-break/table/table-row-end-border-2-crash.html": "ok",
+    "css/css-break/table/table-row-end-padding-crash.html": "ok",
+    "css/css-break/table/tall-padding-crash.html": "ok",
+    "css/css-break/table/zero-height-repeated-footer-crash.html": "ok",
+    "css/css-break/uncontained-oof-in-inline-after-break-000-crash.html": "ok",
+    "css/css-break/uncontained-oof-in-inline-after-break-001-crash.html": "ok",
+    "css/css-break/wide-line-after-floats-crash.html": "ok",
+    "css/css-page/crashtests/counter-containment-001.html": "ok",
+    "css/css-page/crashtests/counter-containment-002.html": "ok",
+    "css/css-page/crashtests/match-media-listener-relayout-contained-inline-subtree-print.html": "ok",
+    "css/css-page/crashtests/match-media-listener-relayout-contained-subtree-print.html": "ok",
+    "css/css-page/crashtests/match-media-listener-relayout-inside-fixed-size-overflow-hidden-print.html": "ok",
+    "css/css-page/crashtests/match-media-listener-shrink-content-print.html": "ok",
+    "css/css-page/crashtests/negative-margin-print.html": "ok",
+    "css/css-page/crashtests/percentage-padding-print.html": "ok",
+    "css/css-page/crashtests/root-element-remove-print.html": "ok",
+    "css/css-page/crashtests/tall-inline-block-in-float-in-table-cell-print.html": "ok",
+    "css/css-page/trailing-declaration-crash.html": "ok",
+    "css/css-tables/absolute-crash.html": "ok",
+    "css/css-tables/colspan-zero-crash.html": "ok",
+    "css/css-tables/crashtests/atomic-item-crash.html": "ok",
+    "css/css-tables/crashtests/border-collapse-dynamic-crash.html": "ok",
+    "css/css-tables/crashtests/caption-repaint-crash.html": "ok",
+    "css/css-tables/crashtests/caption-with-multicol-table-cell.html": "ok",
+    "css/css-tables/crashtests/cell-contents-with-negative-outer-size.html": "ok",
+    "css/css-tables/crashtests/col_span_dynamic_crash.html": "ok",
+    "css/css-tables/crashtests/dialog-table-crash.html": "ok",
+    "css/css-tables/crashtests/dynamic-recompute-baseline.html": "ok",
+    "css/css-tables/crashtests/dynamic_col_width_crash.html": "ok",
+    "css/css-tables/crashtests/dynamic_table_layout_crash.html": "ok",
+    "css/css-tables/crashtests/empty-tbody-after-tall-section-crash.html": "ok",
+    "css/css-tables/crashtests/empty_cells_crash.html": "ok",
+    "css/css-tables/crashtests/empty_table_with_cols.html": "ok",
+    "css/css-tables/crashtests/expression_width_crash.html": "ok",
+    "css/css-tables/crashtests/inline-splitting-crash.html": "ok",
+    "css/css-tables/crashtests/large-border-crash.html": "ok",
+    "css/css-tables/crashtests/large-col-widths.html": "ok",
+    "css/css-tables/crashtests/legacy_ng_mix_crash.html": "ok",
+    "css/css-tables/crashtests/move-oof-inside-section-row-with-borders.html": "ok",
+    "css/css-tables/crashtests/negative-section-distribution.html": "ok",
+    "css/css-tables/crashtests/negative_caption_margin.html": "ok",
+    "css/css-tables/crashtests/orthogonal-cell-borders.html": "ok",
+    "css/css-tables/crashtests/orthogonal-cell-crash.html": "ok",
+    "css/css-tables/crashtests/remove-table-column-group.html": "ok",
+    "css/css-tables/crashtests/row-size-distribution-rowspan-sorting.html": "ok",
+    "css/css-tables/crashtests/rtl-replace-cells-with-colspan-crash.html": "ok",
+    "css/css-tables/crashtests/table-column-display-change-chrome-crash.html": "ok",
+    "css/css-tables/crashtests/table-content-size-blending-crash.html": "ok",
+    "css/css-tables/crashtests/textarea-intrinsic-size-crash.html": "ok",
+    "css/css-tables/crashtests/transition-table-row-group-crash.html": "ok",
+    "css/css-tables/crashtests/uninitialized_read_crash.html": "ok",
+    "css/css-tables/crashtests/vertical_percentage_crash.html": "ok",
+    "css/css-tables/crashtests/webkit-background-clip-on-row-crash.html": "ok",
+    "css/css-tables/multicol-table-collapsed-border-crash.html": "ok",
+    "css/css-tables/multicol-table-crash.html": "ok",
+    "css/css-tables/table-caption-after-crash.html": "ok",
+    "css/css-tables/table-collapsed-row-or-column-crash.html": "ok",
+    "css/css-tables/visibility-collapse-colspan-crash.html": "ok",
+    "css/css-tables/visibility-collapse-rowspan-crash.html": "ok",
+    "css/css-text/altering-dom-crash.html": "ok",
+    "css/css-text/crashtests/eol-spaces-bidi-min-content-crash.html": "ok",
+    "css/css-text/crashtests/line-break-float-crash.html": "ok",
+    "css/css-text/crashtests/line-breaker-overflow-crash.html": "ok",
+    "css/css-text/crashtests/overflow-wrap-anywhere-crash.html": "ok",
+    "css/css-text/crashtests/overflow-wrap-anywhere-fractional-width-crash.html": "ok",
+    "css/css-text/crashtests/rendering-rtl-bidi-override-crash.html": "ok",
+    "css/css-text/crashtests/rendering-table-caption-with-list-item-and-svg-crash.html": "ok",
+    "css/css-text/crashtests/rendering-table-caption-with-negative-margins-crash.html": "ok",
+    "css/css-text/crashtests/text-indent-each-line-crash.html": "ok",
+    "css/css-text/crashtests/text-wrap-balance-float-crash.html": "ok",
+    "css/css-text/crashtests/text-wrap-balance-nested-blocks-crash.html": "ok",
+    "css/css-text/crashtests/trailing-space-with-cr-crash.html": "ok",
+    "css/css-text/crashtests/white-space-pre-wrap-chash.html": "ok",
+    "css/css-text/crashtests/word-spacing-large-value.html": "ok",
+    "css/css-text/ellisize-rtl-text-crash.html": "ok",
+    "css/css-text/hyphens/hyphens-auto-and-contenteditable-crash.html": "ok",
+    "css/css-text/hyphens/hyphens-auto-wordbreak-breakall-crash.html": "ok",
+    "css/css-text/overflow-wrap/crashtests/overflow-wrap-leading-floats-crash.html": "ok",
+    "css/css-text/overflow-wrap/overflow-wrap-break-word-long-crash.html": "ok",
+    "css/css-text/overflow-wrap/overflow-wrap-break-word-white-space-crash.html": "ok",
+    "css/css-text/removing-collapsible-crash.html": "ok",
+    "css/css-text/removing-collapsible-spaces-before-float-crash.html": "ok",
+    "css/css-text/shaping/shaping-no-glyphs-crash.html": "ok",
+    "css/css-text/text-align/text-align-inline-end-crash.html": "ok",
+    "css/css-text/text-autospace/crashtests/text-autospace-shape-cache-crash.html": "ok",
+    "css/css-text/text-fit/columns-crash.html": "ok",
+    "css/css-text/text-fit/shrink-consistent-crash.html": "ok",
+    "css/css-text/text-fit/text-box-crash.html": "ok",
+    "css/css-text/text-indent/text-indent-long-line-crash.html": "ok",
+    "css/css-text/text-indent/text-indent-ruby-crash.html": "ok",
+    "css/css-text/text-spacing-trim/crashtests/text-spacing-trim-end-crash.html": "ok",
+    "css/css-text/text-transform/crashtests/first-line-text-transform-crash.html": "ok",
+    "css/css-text/text-wrap-style/crashtests/text-wrap-style-pretty-block-in-inline-crash.html": "ok",
+    "css/css-text/white-space/nowrap-wbr-and-space-crash.html": "ok",
+    "css/css-text/white-space/pre-line-br-with-whitespace-child-crash.html": "ok",
+    "css/css-text/white-space/pre-with-whitespace-crash.html": "ok",
+    "css/css-text/white-space/text-wrap-balance-narrow-crash.html": "ok",
+    "css/css-text/whitespace-followed-by-cham-symbol-crash.html": "ok"
+  },
+  "details": {
+    "css/CSS2/floats-clear/adjoining-float-new-fc-crash.html": {
+      "suite": "css/CSS2/floats-clear",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats-clear/clearance-containing-fragmented-float-crash.html": {
+      "suite": "css/CSS2/floats-clear",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/firefox-bug-1904409.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "durationMs": 25
+    },
+    "css/CSS2/floats/crashtests/firefox-bug-1904419.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:audio",
+      "durationMs": 5
+    },
+    "css/CSS2/floats/crashtests/firefox-bug-1904421.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:form",
+      "durationMs": 6
+    },
+    "css/CSS2/floats/crashtests/firefox-bug-1904428.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:iframe",
+      "durationMs": 6
+    },
+    "css/CSS2/floats/crashtests/firefox-bug-1906768.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:marquee",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-append-child.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:video",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-1.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:select",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-2.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-3.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-4.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-5.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-6.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-7.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-dynamic-change-8.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-1-crash.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-2-crash.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/CSS2/floats/crashtests/float-rewind-parallel-flow-3-crash.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported css:transform",
+      "durationMs": 0
+    },
+    "css/CSS2/floats/crashtests/huge-width-after-float.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/CSS2/floats/floats-saturated-position-crash.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/CSS2/floats/line-pushed-by-floats-crash.html": {
+      "suite": "css/CSS2/floats",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/CSS2/linebox/crashtests/dir-change-simplifed-crash.html": {
+      "suite": "css/CSS2/linebox",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 7
+    },
+    "css/CSS2/linebox/crashtests/inline-block-baseline-crash.html": {
+      "suite": "css/CSS2/linebox",
+      "outcome": "ok",
+      "durationMs": 8
+    },
+    "css/CSS2/linebox/soft-wrap-opportunity-after-replaced-content-crash.html": {
+      "suite": "css/CSS2/linebox",
+      "outcome": "ok",
+      "durationMs": 8
+    },
+    "css/CSS2/linebox/video-needs-layout-crash.html": {
+      "suite": "css/CSS2/linebox",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 6
+    },
+    "css/CSS2/normal-flow/crashtests/block-in-inline-ax-crash.html": {
+      "suite": "css/CSS2/normal-flow",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 8
+    },
+    "css/CSS2/normal-flow/crashtests/block-in-inline-remove-crash.html": {
+      "suite": "css/CSS2/normal-flow",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 8
+    },
+    "css/CSS2/text/crashtests/bidi-inline-fragment-oof-crash.html": {
+      "suite": "css/CSS2/text",
+      "outcome": "ok",
+      "durationMs": 8
+    },
+    "css/CSS2/visudet/crashtests/canvas-huge-min-max-sizes.html": {
+      "suite": "css/CSS2/visudet",
+      "outcome": "ok",
+      "rejected": "unsupported element:canvas",
+      "durationMs": 6
+    },
+    "css/CSS2/visufx/crashtests/firefox-bug-1996058.html": {
+      "suite": "css/CSS2/visufx",
+      "outcome": "ok",
+      "rejected": "render: render error: krilla finish failed: Image(Image(ImageRepr {..}), None, \"no color table available for current frame\")",
+      "durationMs": 20
+    },
+    "css/css-break/area-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/area-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/auto-overflow-inside-second-abspos-fragment-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/block-in-inline-004-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/block-in-inline-005-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/block-in-inline-006-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/block-in-inline-007-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/block-in-inline-010-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/box-decoration-break-clone-032-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 1
+    },
+    "css/css-break/box-decoration-break-clone-035-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/box-decoration-break-clone-036-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/break-after-in-parallel-flow-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/break-after-oof-before-preceding-pushed-float-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/break-before-broken-leading-float-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/break-before-broken-leading-float-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/break-before-float-after-line-after-floats-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/break-before-with-no-fragmentation-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/chrome-bug-1283776-000-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/chrome-bug-1283776-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/chrome-bug-1285596-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 1
+    },
+    "css/css-break/chrome-bug-1287342-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/chrome-bug-1288769-000-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 1
+    },
+    "css/css-break/chrome-bug-1288769-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/chrome-bug-1289999-crash.https.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/chrome-bug-1318455-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/clear-br-in-size-containment-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/clear-float-in-size-containment-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/clear-past-float-with-oof-twice-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/column-balancing-with-oofs-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/empty-fieldset-tall-bottom-padding-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/firefox-bug-1693616-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 2
+    },
+    "css/css-break/firefox-bug-1693616-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 2
+    },
+    "css/css-break/firefox-bug-1903652-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/firefox-bug-2021187-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:transform",
+      "durationMs": 1
+    },
+    "css/css-break/flex-item-padding-block-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/auto-height-flex-item-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/button-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:button",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/fixed-flex-item-inside-abs-flex-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/flexbox-fragmentation-layout-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/float-in-webkit-box-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/image-in-fragmented-flexbox-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported image:unresolved",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/image-in-fragmented-flexbox-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/monolithic-item-in-fragmented-flexbox-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/quirks-flex-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/slider-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:input",
+      "durationMs": 1
+    },
+    "css/css-break/flexbox/small-definite-flex-line-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/flexbox/textarea-input-flex-items-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:textarea",
+      "durationMs": 0
+    },
+    "css/css-break/float-011-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/float-after-self-collapsing-block-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/float-in-inline-widows-orphans-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/floated-multicol-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/fragmentainer-1px-clamping-000-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/fragmentainer-1px-clamping-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/fragmented-empty-contenteditable-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/fragmented-float-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/fragmented-oof-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/grid/grid-item-oof-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 1
+    },
+    "css/css-break/grid/grid-item-placement-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/grid/grid-item-placement-multiple-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/grid/grid-large-end-border-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/grid/grid-nested-columns-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:grid",
+      "durationMs": 0
+    },
+    "css/css-break/iframe-in-repeated-table-header-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:iframe",
+      "durationMs": 0
+    },
+    "css/css-break/inline-skipping-fragmentainer-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/inline-skipping-fragmentainer-004-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/large-text-node-oof-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/line-and-fragmentainer-break-before-float-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/max-height-with-margin-pushed-below-fragmentation-line-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-fixedpos-in-inline-000-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:filter",
+      "durationMs": 0
+    },
+    "css/css-break/nested-fixedpos-in-inline-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:filter",
+      "durationMs": 1
+    },
+    "css/css-break/nested-fixedpos-in-inline-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:filter",
+      "durationMs": 1
+    },
+    "css/css-break/nested-fixedpos-in-inline-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:filter",
+      "durationMs": 1
+    },
+    "css/css-break/nested-float-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 11
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported css:transform",
+      "durationMs": 0
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-004-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-005-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-006-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-007-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanner-and-oof-008-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/nested-multicol-with-spanners-and-oofs-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/nested-oof-in-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/no-room-for-line-in-first-fragmentainer-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:canvas",
+      "durationMs": 0
+    },
+    "css/css-break/out-of-flow-in-inline-with-negative-offset-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/out-of-flow-in-multicolumn-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/out-of-flow-in-nested-spanner-multicol-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/out-of-flow-in-new-column-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/out-of-flow-with-negative-offset-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/out-of-order-float-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/overflow-auto-height-with-bottom-padding-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/parallel-flow-trailing-margin-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/resumed-float-and-inline-block-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table-cell-padding-block-in-inline-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/bottom-padding-repeated-header-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/break-before-repeated-footer-instead-of-border-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/caption-bottom-margin-at-boundary-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/cell-large-bottom-padding-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/dynamic-caption-child-change-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-002-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/border-spacing-taller-than-fragmentainer-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/nested-repeated-header-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/repeated-footer-insufficient-space-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/special-elements-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:input",
+      "durationMs": 0
+    },
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-003-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-004-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-005-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/repeated-section/variable-fragmentainer-size-006-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/table-in-abspos-multicol-with-nested-meter-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/table-row-end-border-1-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/table-row-end-border-2-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-break/table/table-row-end-padding-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/tall-padding-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/table/zero-height-repeated-footer-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/uncontained-oof-in-inline-after-break-000-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-break/uncontained-oof-in-inline-after-break-001-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-break/wide-line-after-floats-crash.html": {
+      "suite": "css/css-break",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/counter-containment-001.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/counter-containment-002.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/match-media-listener-relayout-contained-inline-subtree-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/match-media-listener-relayout-contained-subtree-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-page/crashtests/match-media-listener-relayout-inside-fixed-size-overflow-hidden-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-page/crashtests/match-media-listener-shrink-content-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-page/crashtests/negative-margin-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported css:page-margin-box",
+      "durationMs": 1
+    },
+    "css/css-page/crashtests/percentage-padding-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/root-element-remove-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-page/crashtests/tall-inline-block-in-float-in-table-cell-print.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-page/trailing-declaration-crash.html": {
+      "suite": "css/css-page",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-tables/absolute-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/colspan-zero-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/atomic-item-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:marquee",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/border-collapse-dynamic-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/caption-repaint-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported css:animation",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/caption-with-multicol-table-cell.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/cell-contents-with-negative-outer-size.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 2
+    },
+    "css/css-tables/crashtests/col_span_dynamic_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/dialog-table-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/dynamic-recompute-baseline.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/dynamic_col_width_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/dynamic_table_layout_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/empty-tbody-after-tall-section-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 12
+    },
+    "css/css-tables/crashtests/empty_cells_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/empty_table_with_cols.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/expression_width_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/inline-splitting-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/large-border-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/large-col-widths.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/legacy_ng_mix_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/move-oof-inside-section-row-with-borders.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/negative-section-distribution.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:button",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/negative_caption_margin.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/orthogonal-cell-borders.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/orthogonal-cell-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/remove-table-column-group.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/row-size-distribution-rowspan-sorting.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/rtl-replace-cells-with-colspan-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/table-column-display-change-chrome-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/table-content-size-blending-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/textarea-intrinsic-size-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:textarea",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/transition-table-row-group-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported css:transition",
+      "durationMs": 1
+    },
+    "css/css-tables/crashtests/uninitialized_read_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/vertical_percentage_crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:textarea",
+      "durationMs": 0
+    },
+    "css/css-tables/crashtests/webkit-background-clip-on-row-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/multicol-table-collapsed-border-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 14
+    },
+    "css/css-tables/multicol-table-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-tables/table-caption-after-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:object",
+      "durationMs": 1
+    },
+    "css/css-tables/table-collapsed-row-or-column-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/visibility-collapse-colspan-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-tables/visibility-collapse-rowspan-crash.html": {
+      "suite": "css/css-tables",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-text/altering-dom-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/crashtests/eol-spaces-bidi-min-content-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/line-break-float-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/line-breaker-overflow-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/overflow-wrap-anywhere-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/overflow-wrap-anywhere-fractional-width-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/rendering-rtl-bidi-override-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/crashtests/rendering-table-caption-with-list-item-and-svg-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 11
+    },
+    "css/css-text/crashtests/rendering-table-caption-with-negative-margins-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:input",
+      "durationMs": 2
+    },
+    "css/css-text/crashtests/text-indent-each-line-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/text-wrap-balance-float-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-text/crashtests/text-wrap-balance-nested-blocks-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:input",
+      "durationMs": 2
+    },
+    "css/css-text/crashtests/trailing-space-with-cr-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/crashtests/white-space-pre-wrap-chash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 9
+    },
+    "css/css-text/crashtests/word-spacing-large-value.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:button",
+      "durationMs": 1
+    },
+    "css/css-text/ellisize-rtl-text-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 11
+    },
+    "css/css-text/hyphens/hyphens-auto-and-contenteditable-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/hyphens/hyphens-auto-wordbreak-breakall-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/overflow-wrap/crashtests/overflow-wrap-leading-floats-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/overflow-wrap/overflow-wrap-break-word-long-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/overflow-wrap/overflow-wrap-break-word-white-space-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/removing-collapsible-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:button",
+      "durationMs": 1
+    },
+    "css/css-text/removing-collapsible-spaces-before-float-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:input",
+      "durationMs": 1
+    },
+    "css/css-text/shaping/shaping-no-glyphs-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 2
+    },
+    "css/css-text/text-align/text-align-inline-end-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-text/text-autospace/crashtests/text-autospace-shape-cache-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/text-fit/columns-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/text-fit/shrink-consistent-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/text-fit/text-box-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-text/text-indent/text-indent-long-line-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-text/text-indent/text-indent-ruby-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/text-spacing-trim/crashtests/text-spacing-trim-end-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/text-transform/crashtests/first-line-text-transform-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-text/text-wrap-style/crashtests/text-wrap-style-pretty-block-in-inline-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 0
+    },
+    "css/css-text/white-space/nowrap-wbr-and-space-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/white-space/pre-line-br-with-whitespace-child-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 0
+    },
+    "css/css-text/white-space/pre-with-whitespace-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "rejected": "unsupported element:script",
+      "durationMs": 1
+    },
+    "css/css-text/white-space/text-wrap-balance-narrow-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    },
+    "css/css-text/whitespace-followed-by-cham-symbol-crash.html": {
+      "suite": "css/css-text",
+      "outcome": "ok",
+      "durationMs": 1
+    }
+  }
+}
