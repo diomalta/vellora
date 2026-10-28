@@ -21,8 +21,9 @@ Chrome does yet (see COMPATIBILITY.md). The input HTML is not changed, and docum
 multi-column containers are byte-identical.
 
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85
-reference; indicative, not CI): WPT reftest passes in the default suites 4157 -> 4416 (8047
-tests); css/css-break 115 -> 371 and css/css-multicol 60 -> 122. Six earlier css/css-break passes
+reference; indicative, not CI): WPT reftest passes in the default suites 4157 -> 4414 (8047
+tests; gated Phase C 05 tip run 20261028T062527Z, which also carries the float rule that loses
+float-nowrap-7/-8; the multi-column branch alone measured 4416); css/css-break 115 -> 371 and css/css-multicol 60 -> 122. Six earlier css/css-break passes
 are now failures. Their one-column renders happened to look like Chrome's (the harness's ink
 check); in columns they expose what vellora or Blitz does not lay out as Chrome does: an inline
 SVG, table captions, a non-cell table child, a float beside a line, and forced breaks between

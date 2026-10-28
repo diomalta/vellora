@@ -24,7 +24,10 @@ the host's font list once, which is never used to draw.
 
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85 reference;
 indicative, not CI): css/css-break + css/css-multicol 371 -> 372 passes (1121 tests, only
-`css/css-break/svg-with-transform.html` changed); the WPT crashtests stay 239/239 ok (none of them
+`css/css-break/svg-with-transform.html` changed). In the default suites (8047 tests) the XHTML
+tests whose `<svg:svg>` replaced elements were not drawn before gain passes too: with the image
+paint-order fix of the same release, 43 css/CSS2 reftests (normal-flow, positioning, floats-clear
+`*-replaced-*`) pass that failed, and none is lost. The WPT crashtests stay 239/239 ok (none of them
 renders an SVG); the 9 measured fixtures (no SVG) render byte-identical PDFs. The macOS
 arm64 native addon grows from 20.5 MB to 28.7 MB (the graph now holds two usvg versions: Blitz's
 for layout, krilla-svg's for drawing).
