@@ -108,6 +108,22 @@ reference only because neither side painted what Chrome paints.
 | css/css-page/media-queries-001-print.html | ink-missing-vs-chrome | pass | The body is red unless a print media query on the page size matches. vellora's media-query viewport (the page area of `@page { size: 10in; margin: 2in }`) does not match where Chrome's does. The red canvas is now visible; before, no body background was painted on either side. The fix belongs to media-query evaluation and is not done here: it changes the viewport every document is styled against. |
 | css/css-text/word-space-transform/word-space-transform-018.html | uncovered-glyphs, ink-missing-vs-chrome | fail | `<u>` is now underlined. The test needs `word-space-transform: auto-phrase`, which vellora does not support. The Thai glyphs are not covered by the bundled fonts. The two sides now differ only in the underline's extent. |
 
+The same tests in the committed baselines the merge step's gate compares with (their
+`wpt/expectations-*.json` `results` / `suspectPasses`):
+
+| test | port/10-integration (previous link) | port/00-start (head) | pin |
+|---|---|---|---|
+| background-root-007 | pass, flagged (css-url-resource, ink-missing) | fail | fail |
+| media-queries-001-print | pass, flagged (ink-missing) | pass-blank | pass-blank |
+| word-space-transform-018 | pass, flagged (uncovered-glyphs, ink-missing) | pass, flagged (same) | pass, flagged (same) |
+| root-box-003 | pass-blank | pass-blank | error |
+| root-element-display-none-print | pass (clean) | pass (clean) | error |
+
+None of these is a clean pass lost against any of the three. A lost flagged pass is `reported`
+and does not gate (gate/wpt.mjs). `pass-blank` -> `fail` is not a lost pass. The pin view only
+classes gating items (gate/debt.mjs `applyLedger`). So the merge step needs no acceptance for
+them. root-element-display-none-print stays a clean pass, now with page backgrounds modelled.
+
 css/CSS2/box-display/root-box-003 expects a green page for `html { display: none; background:
 green }`. Chrome prints it blank and fails it. vellora follows Chrome:
 css/css-page/root-element-display-none-print stays a clean pass.
