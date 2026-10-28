@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 422" width="760" height="422" role="img" aria-labelledby="within-1mm-t within-1mm-d">
+<title id="within-1mm-t">Share of words within 1 mm of Chrome's position, per fixture (higher is better)</title>
+<desc id="within-1mm-d">Dumbbell chart, 0 to 100 percent. Invoice: 36.0% to 100.0%; Receipt: 7.9% to 100.0%; Boleto (bank slip): 32.0% to 100.0%; Boleto, FEBRABAN layout: 15.6% to 100.0%; DANFE (NF-e invoice): 8.9% to 100.0%; Notification letter: 86.7% to 100.0%; Long pt-BR text (stress): 1.4% to 100.0%; Postmark receipt (OSS template): 40.0% to 97.2%; Sparksuite simple invoice (OSS template): 0.0% to 100.0%.</desc>
+<style>
+  text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .num{font-variant-numeric:tabular-nums}
+  .bg{fill:#fcfcfb} .t1{fill:#0b0b0b} .t2{fill:#52514e} .mu{fill:#6f6e69}
+  .grid{stroke:#e1e0d9} .axis{stroke:#c3c2b7} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#c3c2b7} .before{stroke:#eb6834;fill:#fcfcfb} .beforeFill{fill:#eb6834}
+  .after{fill:#2a78d6;stroke:#fcfcfb} .afterFill{fill:#2a78d6}
+  @media (prefers-color-scheme: dark){
+  .bg{fill:#1a1a19} .t1{fill:#f0efec} .t2{fill:#c3c2b7} .mu{fill:#a3a29c}
+  .grid{stroke:#2c2c2a} .axis{stroke:#383835} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#383835} .before{stroke:#d95926;fill:#1a1a19} .beforeFill{fill:#d95926}
+  .after{fill:#3987e5;stroke:#1a1a19} .afterFill{fill:#3987e5}}
+</style>
+<rect class="bg" width="760" height="422" rx="8"/>
+<text class="t1" x="20" y="28" font-size="15" font-weight="600">Share of words within 1 mm of Chrome's position, per fixture (higher is better)</text>
+<text class="t2" x="20" y="48" font-size="12">Denominator: every word in Chrome for Testing 155.0.8059.85's PDF; a word vellora does not print counts as a miss.</text>
+<g transform="translate(20,72)">
+  <circle class="before" cx="6" cy="0" r="5" stroke-width="2"/><text class="t2" x="18" y="4" font-size="12">vellora 0.2.0 (published)</text>
+  <circle class="after" cx="226" cy="0" r="5" stroke-width="2"/><text class="t2" x="238" y="4" font-size="12">vellora (unreleased branch)</text>
+</g>
+<line class="grid" x1="200" y1="90" x2="200" y2="366" stroke-width="1"/>
+<text class="mu num" x="200" y="382" font-size="11" text-anchor="middle">0%</text>
+<line class="grid" x1="300" y1="90" x2="300" y2="366" stroke-width="1"/>
+<text class="mu num" x="300" y="382" font-size="11" text-anchor="middle">25%</text>
+<line class="grid" x1="400" y1="90" x2="400" y2="366" stroke-width="1"/>
+<text class="mu num" x="400" y="382" font-size="11" text-anchor="middle">50%</text>
+<line class="grid" x1="500" y1="90" x2="500" y2="366" stroke-width="1"/>
+<text class="mu num" x="500" y="382" font-size="11" text-anchor="middle">75%</text>
+<line class="grid" x1="600" y1="90" x2="600" y2="366" stroke-width="1"/>
+<text class="mu num" x="600" y="382" font-size="11" text-anchor="middle">100%</text>
+<line class="ref" x1="600" y1="90" x2="600" y2="366" stroke-width="1.5"/>
+<text class="t2" x="594" y="92" font-size="11" text-anchor="end">Chrome for Testing 155.0.8059.85 = 100% (reference)</text>
+<text class="mu" x="614" y="92" font-size="11">before → after</text>
+<g>
+  <title>Invoice: vellora 0.2.0 (published) 36.0%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="115" font-size="12" text-anchor="end">Invoice</text>
+  <line class="link" x1="344" y1="111" x2="600" y2="111" stroke-width="2"/>
+  <circle class="before" cx="344" cy="111" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="111" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="115" font-size="12">36.0% → 100.0%</text>
+</g>
+<g>
+  <title>Receipt: vellora 0.2.0 (published) 7.9%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="145" font-size="12" text-anchor="end">Receipt</text>
+  <line class="link" x1="231.6" y1="141" x2="600" y2="141" stroke-width="2"/>
+  <circle class="before" cx="231.6" cy="141" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="141" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="145" font-size="12">7.9% → 100.0%</text>
+</g>
+<g>
+  <title>Boleto (bank slip): vellora 0.2.0 (published) 32.0%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="175" font-size="12" text-anchor="end">Boleto</text>
+  <line class="link" x1="328" y1="171" x2="600" y2="171" stroke-width="2"/>
+  <circle class="before" cx="328" cy="171" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="171" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="175" font-size="12">32.0% → 100.0%</text>
+</g>
+<g>
+  <title>Boleto, FEBRABAN layout: vellora 0.2.0 (published) 15.6%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="205" font-size="12" text-anchor="end">Boleto FEBRABAN</text>
+  <line class="link" x1="262.4" y1="201" x2="600" y2="201" stroke-width="2"/>
+  <circle class="before" cx="262.4" cy="201" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="201" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="205" font-size="12">15.6% → 100.0%</text>
+</g>
+<g>
+  <title>DANFE (NF-e invoice): vellora 0.2.0 (published) 8.9%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="235" font-size="12" text-anchor="end">DANFE</text>
+  <line class="link" x1="235.6" y1="231" x2="600" y2="231" stroke-width="2"/>
+  <circle class="before" cx="235.6" cy="231" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="231" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="235" font-size="12">8.9% → 100.0%</text>
+</g>
+<g>
+  <title>Notification letter: vellora 0.2.0 (published) 86.7%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="265" font-size="12" text-anchor="end">Notification</text>
+  <line class="link" x1="546.8" y1="261" x2="600" y2="261" stroke-width="2"/>
+  <circle class="before" cx="546.8" cy="261" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="261" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="265" font-size="12">86.7% → 100.0%</text>
+</g>
+<g>
+  <title>Long pt-BR text (stress): vellora 0.2.0 (published) 1.4%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="295" font-size="12" text-anchor="end">Long pt-BR text</text>
+  <line class="link" x1="205.6" y1="291" x2="600" y2="291" stroke-width="2"/>
+  <circle class="before" cx="205.6" cy="291" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="291" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="295" font-size="12">1.4% → 100.0%</text>
+</g>
+<g>
+  <title>Postmark receipt (OSS template): vellora 0.2.0 (published) 40.0%, vellora (unreleased branch) 97.2%</title>
+  <text class="t1" x="188" y="325" font-size="12" text-anchor="end">Postmark receipt (OSS)</text>
+  <line class="link" x1="360" y1="321" x2="588.8" y2="321" stroke-width="2"/>
+  <circle class="before" cx="360" cy="321" r="5" stroke-width="2"/>
+  <circle class="after" cx="588.8" cy="321" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="325" font-size="12">40.0% → 97.2%</text>
+</g>
+<g>
+  <title>Sparksuite simple invoice (OSS template): vellora 0.2.0 (published) 0.0%, vellora (unreleased branch) 100.0%</title>
+  <text class="t1" x="188" y="355" font-size="12" text-anchor="end">Sparksuite invoice (OSS)</text>
+  <line class="link" x1="200" y1="351" x2="600" y2="351" stroke-width="2"/>
+  <circle class="before" cx="200" cy="351" r="5" stroke-width="2"/>
+  <circle class="after" cx="600" cy="351" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="355" font-size="12">0.0% → 100.0%</text>
+</g>
+<text class="mu" x="400" y="400" font-size="11" text-anchor="middle">share of Chrome's words whose vellora counterpart is at most 1 mm away</text>
+<text class="mu" x="20" y="412" font-size="10">DRAFT: unreleased branch, merge not yet passed. Local macOS: indicative. Source: docs/assets/fidelity/manifest.json</text>
+</svg>

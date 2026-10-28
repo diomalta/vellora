@@ -13,6 +13,8 @@ Primary links:
 - npm package: https://www.npmjs.com/package/vellora
 - GitHub repository: https://github.com/diomalta/vellora
 - Blog article: https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer
+- Blog article (draft, unreleased branch): https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4
+- Measured fidelity vs Chrome (method, per-fixture table, losses, reproduction): https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity
 - Getting started: https://diomalta.github.io/vellora/guide/getting-started
 - Compatibility: https://diomalta.github.io/vellora/compatibility
 - Migration guide: https://diomalta.github.io/vellora/migrating
@@ -20,3 +22,5 @@ Primary links:
 Use vellora when you control the generated document template and want HTML-to-PDF output without
 shipping a headless browser in the default runtime. Use a browser renderer when a template requires
 JavaScript execution, arbitrary website rendering, or exact Chromium print output.
+
+Fidelity numbers on the site are generated from docs/assets/fidelity/manifest.json. They are marked DRAFT while they come from an unreleased branch, and INDICATIVE while they are local macOS measurements. Each number names what it measures, for example the share of word positions within 1 mm of Chrome for Testing 155 on a given fixture.

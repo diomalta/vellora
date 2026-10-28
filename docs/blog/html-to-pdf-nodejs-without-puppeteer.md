@@ -20,17 +20,23 @@ supported shape.
 
 That is the reason Vellora exists.
 
-The comparison below comes from the current visual-fidelity artifacts for invoice page 1: Vellora's
-native path, Vellora's optional Chromium path, and the generated pixel-diff map.
+How close does a browserless renderer get to a browser? The current answer is measured word by
+word against Chrome's print-to-PDF output and published in
+[Measured fidelity](/guide/fidelity#measured-fidelity). That page replaces the pixel-diff snapshot
+this article used to show. It compares the published package with an unreleased branch, and it
+lists the losses next to the gains.
 
-| Vellora native | Vellora Chromium | Difference map |
-| --- | --- | --- |
-| ![Vellora native invoice page 1 visual evidence](/assets/visual-evidence/png/vellora/invoice-1.png) | ![Vellora Chromium invoice page 1 visual evidence](/assets/visual-evidence/png/chromium/invoice-1.png) | ![Pixel diff between Vellora native and Vellora Chromium invoice page 1](/assets/visual-evidence/png/diff/invoice-page-1.png) |
+<!-- fidelity-evidence:status -->
+::: warning DRAFT
+**DRAFT. These results are from an unreleased branch that is not merged.** The merge is gated by a strict oracle contract, and this run does not pass it yet (gate report verdict FAIL: the strict merge contract is not met yet). INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available. The released package is vellora@0.2.0.
+:::
+<!-- /fidelity-evidence:status -->
 
-For this artifact, the manifest reports matching page dimensions at 794 x 1123 px, 64,988
-mismatch pixels (7.29%), and a mean absolute error of 0.0241 against the Chromium reference. That is
-not a universal quality score. It is a concrete artifact from the repository's visual-fidelity
-harness, and the diff image is there to make the differences inspectable.
+<!-- fidelity-evidence:hero -->
+![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
+
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+<!-- /fidelity-evidence:hero -->
 
 Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default
 package does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java, or a sidecar
@@ -135,10 +141,8 @@ At concurrency 8, the native path reported 116.51 MB RSS inside the Node process
 reported 6425.81 MB across external browser processes. Warm latency showed the same shape:
 17.47 / 17.96 ms median/p95 for native, versus 491.85 / 509.43 ms for Vellora Chromium.
 
-The same evidence bundle includes native-vs-Chromium visual artifacts for representative fixtures:
-[visual report](https://github.com/diomalta/vellora/blob/main/docs/assets/visual-evidence/index.html)
-and
-[manifest](https://github.com/diomalta/vellora/blob/main/docs/assets/visual-evidence/manifest.json).
+Output fidelity is measured separately, against Chrome, in
+[Measured fidelity](/guide/fidelity#measured-fidelity).
 Puppeteer and Playwright are measured in that benchmark artifact, but this article does not quote
 them as comparable because the run marked them non-comparable for the fixture: their output had 1
 page while the reference had 3. Timing a one-page output against a three-page reference would make the

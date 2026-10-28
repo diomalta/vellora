@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 248" width="760" height="248" role="img" aria-labelledby="wpt-t wpt-d">
+<title id="wpt-t">WPT reftests passed (coverage of the CSS test subset, not a quality score)</title>
+<desc id="wpt-d">Bar chart. vellora 0.2.0 · Blitz 0.3.0-alpha.5: 32.04%, 2578 of 8047; unreleased branch · Blitz 0.3.0-beta.4: 54.85%, 4414 of 8047; Chrome for Testing 155 (reference): 90.21%, 7258 of 8046.</desc>
+<style>
+  text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .num{font-variant-numeric:tabular-nums}
+  .bg{fill:#fcfcfb} .t1{fill:#0b0b0b} .t2{fill:#52514e} .mu{fill:#6f6e69}
+  .grid{stroke:#e1e0d9} .axis{stroke:#c3c2b7} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#c3c2b7} .before{stroke:#eb6834;fill:#fcfcfb} .beforeFill{fill:#eb6834}
+  .after{fill:#2a78d6;stroke:#fcfcfb} .afterFill{fill:#2a78d6}
+  @media (prefers-color-scheme: dark){
+  .bg{fill:#1a1a19} .t1{fill:#f0efec} .t2{fill:#c3c2b7} .mu{fill:#a3a29c}
+  .grid{stroke:#2c2c2a} .axis{stroke:#383835} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#383835} .before{stroke:#d95926;fill:#1a1a19} .beforeFill{fill:#d95926}
+  .after{fill:#3987e5;stroke:#1a1a19} .afterFill{fill:#3987e5}}
+</style>
+<rect class="bg" width="760" height="248" rx="8"/>
+<text class="t1" x="20" y="28" font-size="15" font-weight="600">WPT reftests passed (coverage of the CSS test subset, not a quality score)</text>
+<text class="t2" x="20" y="48" font-size="12">WPT 9d8aceec, reftests printed to PDF and compared with the reference page. Chrome does not reach 100% through the same harness.</text>
+<line class="grid" x1="300" y1="70" x2="300" y2="184" stroke-width="1"/>
+<text class="mu num" x="300" y="200" font-size="11" text-anchor="middle">0%</text>
+<line class="grid" x1="377.5" y1="70" x2="377.5" y2="184" stroke-width="1"/>
+<text class="mu num" x="377.5" y="200" font-size="11" text-anchor="middle">25%</text>
+<line class="grid" x1="455" y1="70" x2="455" y2="184" stroke-width="1"/>
+<text class="mu num" x="455" y="200" font-size="11" text-anchor="middle">50%</text>
+<line class="grid" x1="532.5" y1="70" x2="532.5" y2="184" stroke-width="1"/>
+<text class="mu num" x="532.5" y="200" font-size="11" text-anchor="middle">75%</text>
+<line class="grid" x1="610" y1="70" x2="610" y2="184" stroke-width="1"/>
+<text class="mu num" x="610" y="200" font-size="11" text-anchor="middle">100%</text>
+<line class="axis" x1="300" y1="70" x2="300" y2="184" stroke-width="1"/>
+<g>
+  <title>vellora 0.2.0 · Blitz 0.3.0-alpha.5: 2,578 of 8,047 reftests pass (32.04%)</title>
+  <text class="t1" x="288" y="92" font-size="12" text-anchor="end">vellora 0.2.0 · Blitz 0.3.0-alpha.5</text>
+  <path class="beforeFill" d="M300,76 h95.32400000000001 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-95.32400000000001 z"/>
+  <text class="t2 num" x="407.324" y="92" font-size="12">32.04% (2,578 / 8,047)</text>
+</g>
+<g>
+  <title>unreleased branch · Blitz 0.3.0-beta.4: 4,414 of 8,047 reftests pass (54.85%)</title>
+  <text class="t1" x="288" y="132" font-size="12" text-anchor="end">unreleased branch · Blitz 0.3.0-beta.4</text>
+  <path class="afterFill" d="M300,116 h166.035 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-166.035 z"/>
+  <text class="t2 num" x="478.03499999999997" y="132" font-size="12">54.85% (4,414 / 8,047)</text>
+</g>
+<g>
+  <title>Chrome for Testing 155 (reference): 7,258 of 8,046 reftests pass (90.21%)</title>
+  <text class="t1" x="288" y="172" font-size="12" text-anchor="end">Chrome for Testing 155 (reference)</text>
+  <path class="refFill" d="M300,156 h275.65099999999995 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-275.65099999999995 z"/>
+  <text class="t2 num" x="587.651" y="172" font-size="12">90.21% (7,258 / 8,046)</text>
+</g>
+<text class="mu" x="20" y="238" font-size="10">DRAFT: unreleased branch, merge not yet passed. Local macOS: indicative. Source: docs/assets/fidelity/manifest.json</text>
+</svg>
