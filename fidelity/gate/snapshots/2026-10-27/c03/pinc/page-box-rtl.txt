@@ -1,0 +1,82 @@
+# chrome-page-box.mjs --rtl + pdf-geometry.py, Chrome for Testing 155.0.8059.85, local macOS arm64, 2026-10-27 (INDICATIVE)
+== size: A4; margin: 16mm (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 60.703 60.0 733.703 70.0
+   rect (0.0, 0.0, 1.0) 532.703 130.0 733.703 140.0
+   text LEFTxx 60.703 85.0 115.823
+   text RIGHTxx 667.922 105.0 733.698
+   text CENTERxx 356.312 125.0 438.089
+   text TL 715.031 155.0 733.703
+   text TR 398.234 155.0 419.562
+== size: A4; margin: 15mm (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 55.703 57.0 736.703 67.0
+   rect (0.0, 0.0, 1.0) 535.703 127.0 736.703 137.0
+   text LEFTxx 55.703 82.0 110.823
+   text RIGHTxx 670.922 102.0 736.698
+   text CENTERxx 355.312 122.0 437.089
+   text TL 718.031 152.0 736.703
+   text TR 397.5 152.0 418.828
+== size: A4; margin: 10mm (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 36.703 38.0 755.703 48.0
+   rect (0.0, 0.0, 1.0) 554.703 108.0 755.703 118.0
+   text LEFTxx 36.703 63.0 91.823
+   text RIGHTxx 689.922 83.0 755.698
+   text CENTERxx 355.312 103.0 437.089
+   text TL 737.031 133.0 755.703
+   text TR 398.75 133.0 420.078
+== size: A4; margin: 5mm (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 18.703 19.0 774.703 29.0
+   rect (0.0, 0.0, 1.0) 573.703 89.0 774.703 99.0
+   text LEFTxx 18.703 44.0 73.823
+   text RIGHTxx 708.922 64.0 774.698
+   text CENTERxx 355.812 84.0 437.589
+   text TL 756.031 114.0 774.703
+   text TR 400.484 114.0 421.812
+== size: A4; margin: 0.25cm (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 9.703 9.0 784.703 19.0
+   rect (0.0, 0.0, 1.0) 583.703 79.0 784.703 89.0
+   text LEFTxx 9.703 34.0 64.823
+   text RIGHTxx 718.922 54.0 784.698
+   text CENTERxx 356.312 74.0 438.089
+   text TL 766.031 104.0 784.703
+   text TR 401.609 104.0 422.937
+== size: A4; margin: 60.5px (rtl)  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 59.703 61.0 732.703 71.0
+   rect (0.0, 0.0, 1.0) 531.703 131.0 732.703 141.0
+   text LEFTxx 59.703 86.0 114.823
+   text RIGHTxx 666.922 106.0 732.698
+   text CENTERxx 355.312 126.0 437.089
+   text TL 714.031 156.0 732.703
+   text TR 397.234 156.0 418.562
+== size: letter; margin: 10mm (rtl)  pages=1
+  page 1 W=816.000 H=1056.000 px
+   rect (1.0, 0.0, 0.0) 37.0 38.0 778.0 48.0
+   rect (0.0, 0.0, 1.0) 577.0 108.0 778.0 118.0
+   text LEFTxx 37.0 63.0 92.12
+   text RIGHTxx 712.219 83.0 777.995
+   text CENTERxx 366.609 103.0 448.385
+   text TL 759.328 133.0 778.0
+   text TR 410.781 133.0 432.109
+== size: letter; margin: 16mm (rtl)  pages=1
+  page 1 W=816.000 H=1056.000 px
+   rect (1.0, 0.0, 0.0) 60.0 60.0 756.0 70.0
+   rect (0.0, 0.0, 1.0) 555.0 130.0 756.0 140.0
+   text LEFTxx 60.0 85.0 115.12
+   text RIGHTxx 690.219 105.0 755.995
+   text CENTERxx 367.109 125.0 448.885
+   text TL 737.328 155.0 756.0
+   text TR 409.781 155.0 431.109
+== size: 200mm 280mm; margin: 15mm (rtl)  pages=1
+  page 1 W=756.160 H=1058.560 px
+   rect (1.0, 0.0, 0.0) 55.906 57.0 698.906 67.0
+   rect (0.0, 0.0, 1.0) 497.906 127.0 698.906 137.0
+   text LEFTxx 55.906 82.0 111.026
+   text RIGHTxx 633.125 102.0 698.901
+   text CENTERxx 336.516 122.0 418.292
+   text TL 680.234 152.0 698.906
+   text TR 377.438 152.0 398.766

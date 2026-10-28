@@ -45,9 +45,12 @@ rendering.
   attribute-less `<div>`), SERIALIZES the result and lets Blitz re-parse it. The re-parse is not
   always faithful: a `<div>` inside a `<p>` is closed out of it by the HTML parser (see Results,
   receipt).
-- Blitz lays out **one continuous flow** whose viewport is the `@page` **content box**, truncated
-  to whole CSS px: `Viewport::new(content_width_px as u32, content_height_px as u32, 1.0, …)`
-  (e.g. A4 − 2×16 mm = 672.3351 px → 672). Taffy output is rounded (`taffy::round_layout`,
+- Blitz lays out **one continuous flow** whose viewport is the `@page` **content box** in whole
+  CSS px. Width: Chromium's print layout width, `ceil(authored page width − left − right margin)`
+  (`PageBox::layout_content_width`, Phase C step 03; e.g. A4 − 2×16 mm → ceil(672.756) = 673 from
+  the 210 mm basis; until then `content_width_px as u32` of the 594.96 pt MediaBox box, 672);
+  height: `content_height_px as u32`. The page content is placed at Chromium's whole-px origin
+  (`PageBox::content_origin`). Taffy output is rounded (`taffy::round_layout`,
   blitz-dom `resolve.rs:369`), and vellora reads the rounded `final_layout`.
 - Blitz evaluates stylesheets as media **`print`** since port step 07: `blitz_engine` builds
   every document with `DocumentConfig::media_type = print` (Blitz's default, before, was
@@ -297,7 +300,7 @@ with no status or value change vs the beta.4 baseline run `20261021T054809Z`; WP
 ## Chromium side and input parity
 
 - puppeteer-core with an explicit executable; `emulateMediaType('print')`; viewport = the dump's
-  Blitz viewport (same truncated integer width/height, DPR 1); scrollbars hidden (flag + CDP),
+  Blitz viewport (same integer width/height, DPR 1); scrollbars hidden (flag + CDP),
   MEASURED via `documentElement.clientWidth`/`innerWidth`/`innerHeight` (check `viewport_*`).
 - Fonts: the ONE shared `FONT_ALIASES` table of `fidelity/lib/chrome-reference.mjs` (a superset of
   `benchmarks/visual-fidelity.mjs` incl. Helvetica, Nunito Sans, Tahoma; a test fails when a

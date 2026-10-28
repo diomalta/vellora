@@ -1,0 +1,172 @@
+# chrome-page-box.mjs + pdf-geometry.py, Chrome for Testing 155.0.8059.85, local macOS arm64, 2026-10-27 (INDICATIVE)
+== size: A4; margin: 16mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 60.0 60.0 733.0 70.0
+   rect (0.0, 0.0, 1.0) 160.0 130.0 361.0 140.0
+   text LEFTxx 60.0 85.0 115.12
+   text RIGHTxx 667.219 105.0 732.995
+   text CENTERxx 355.609 125.0 437.385
+   text TL 60.0 155.0 78.672
+   text TR 711.672 155.0 733.0
+== size: A4; margin: 15mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 738.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 672.219 102.0 737.995
+   text CENTERxx 356.609 122.0 438.385
+   text TL 57.0 152.0 75.672
+   text TR 716.672 152.0 738.0
+== size: A4; margin: 10mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 38.0 38.0 757.0 48.0
+   rect (0.0, 0.0, 1.0) 138.0 108.0 339.0 118.0
+   text LEFTxx 38.0 63.0 93.12
+   text RIGHTxx 691.219 83.0 756.995
+   text CENTERxx 356.609 103.0 438.385
+   text TL 38.0 133.0 56.672
+   text TR 735.672 133.0 757.0
+== size: A4; margin: 5mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 19.0 19.0 775.0 29.0
+   rect (0.0, 0.0, 1.0) 119.0 89.0 320.0 99.0
+   text LEFTxx 19.0 44.0 74.12
+   text RIGHTxx 709.219 64.0 774.995
+   text CENTERxx 356.109 84.0 437.885
+   text TL 19.0 114.0 37.672
+   text TR 753.672 114.0 775.0
+== size: A4; margin: 2.5mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 9.0 9.0 784.0 19.0
+   rect (0.0, 0.0, 1.0) 109.0 79.0 310.0 89.0
+   text LEFTxx 9.0 34.0 64.12
+   text RIGHTxx 718.219 54.0 783.995
+   text CENTERxx 355.609 74.0 437.385
+   text TL 9.0 104.0 27.672
+   text TR 762.672 104.0 784.0
+== size: A4; margin: 0.42cm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 16.0 16.0 778.0 26.0
+   rect (0.0, 0.0, 1.0) 116.0 86.0 317.0 96.0
+   text LEFTxx 16.0 41.0 71.12
+   text RIGHTxx 712.219 61.0 777.995
+   text CENTERxx 356.109 81.0 437.885
+   text TL 16.0 111.0 34.672
+   text TR 756.672 111.0 778.0
+== size: A4; margin: 60px  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 60.0 60.0 734.0 70.0
+   rect (0.0, 0.0, 1.0) 160.0 130.0 361.0 140.0
+   text LEFTxx 60.0 85.0 115.12
+   text RIGHTxx 668.219 105.0 733.995
+   text CENTERxx 356.109 125.0 437.885
+   text TL 60.0 155.0 78.672
+   text TR 712.672 155.0 734.0
+== size: A4; margin: 60.5px  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 61.0 61.0 734.0 71.0
+   rect (0.0, 0.0, 1.0) 161.0 131.0 362.0 141.0
+   text LEFTxx 61.0 86.0 116.12
+   text RIGHTxx 668.219 106.0 733.995
+   text CENTERxx 356.609 126.0 438.385
+   text TL 61.0 156.0 79.672
+   text TR 712.672 156.0 734.0
+== size: A4; margin: 56.5px  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 738.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 672.219 102.0 737.995
+   text CENTERxx 356.609 122.0 438.385
+   text TL 57.0 152.0 75.672
+   text TR 716.672 152.0 738.0
+== size: A4; margin: 56.7px  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 738.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 672.219 102.0 737.995
+   text CENTERxx 356.609 122.0 438.385
+   text TL 57.0 152.0 75.672
+   text TR 716.672 152.0 738.0
+== size: A4; margin: 57.4px  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 736.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 670.219 102.0 735.995
+   text CENTERxx 355.609 122.0 437.385
+   text TL 57.0 152.0 75.672
+   text TR 714.672 152.0 736.0
+== size: A4; margin: 0  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 0.0 0.0 794.0 10.0
+   rect (0.0, 0.0, 1.0) 100.0 70.0 301.0 80.0
+   text LEFTxx 0.0 25.0 55.12
+   text RIGHTxx 728.219 45.0 793.995
+   text CENTERxx 356.109 65.0 437.885
+   text TL 0.0 95.0 18.672
+   text TR 772.672 95.0 794.0
+== size: 200mm 280mm; margin: 15mm  pages=1
+  page 1 W=756.160 H=1058.560 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 700.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 634.219 102.0 699.995
+   text CENTERxx 337.609 122.0 419.385
+   text TL 57.0 152.0 75.672
+   text TR 678.672 152.0 700.0
+== size: letter; margin: 16mm  pages=1
+  page 1 W=816.000 H=1056.000 px
+   rect (1.0, 0.0, 0.0) 60.0 60.0 756.0 70.0
+   rect (0.0, 0.0, 1.0) 160.0 130.0 361.0 140.0
+   text LEFTxx 60.0 85.0 115.12
+   text RIGHTxx 690.219 105.0 755.995
+   text CENTERxx 367.109 125.0 448.885
+   text TL 60.0 155.0 78.672
+   text TR 734.672 155.0 756.0
+== size: A4 landscape; margin: 15mm  pages=1
+  page 1 W=1122.560 H=793.280 px
+   rect (1.0, 0.0, 0.0) 57.0 57.0 1067.0 67.0
+   rect (0.0, 0.0, 1.0) 157.0 127.0 358.0 137.0
+   text LEFTxx 57.0 82.0 112.12
+   text RIGHTxx 1001.219 102.0 1066.995
+   text CENTERxx 521.109 122.0 602.885
+   text TL 57.0 152.0 75.672
+   text TR 1045.672 152.0 1067.0
+== size: 700.3px 900.6px; margin: 20.4px  pages=1
+  page 1 W=700.160 H=900.160 px
+   rect (1.0, 0.0, 0.0) 20.0 20.0 680.0 30.0
+   rect (0.0, 0.0, 1.0) 120.0 90.0 321.0 100.0
+   text LEFTxx 20.0 45.0 75.12
+   text RIGHTxx 614.219 65.0 679.995
+   text CENTERxx 309.109 85.0 390.885
+   text TL 20.0 115.0 38.672
+   text TR 658.672 115.0 680.0
+== size: A4; margin: 16mm 15mm 18mm 15mm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 57.0 60.0 738.0 70.0
+   rect (0.0, 0.0, 1.0) 157.0 130.0 358.0 140.0
+   text LEFTxx 57.0 85.0 112.12
+   text RIGHTxx 672.219 105.0 737.995
+   text CENTERxx 356.609 125.0 438.385
+   text TL 57.0 155.0 75.672
+   text TR 716.672 155.0 738.0
+== size: A4; margin: 0.42cm 0.25cm 0.2cm 0.25cm  pages=1
+  page 1 W=793.280 H=1122.560 px
+   rect (1.0, 0.0, 0.0) 9.0 16.0 784.0 26.0
+   rect (0.0, 0.0, 1.0) 109.0 86.0 310.0 96.0
+   text LEFTxx 9.0 41.0 64.12
+   text RIGHTxx 718.219 61.0 783.995
+   text CENTERxx 355.609 81.0 437.385
+   text TL 9.0 111.0 27.672
+   text TR 762.672 111.0 784.0
+== size: A5; margin: 10mm  pages=1
+  page 1 W=560.000 H=793.280 px
+   rect (1.0, 0.0, 0.0) 38.0 38.0 522.0 48.0
+   rect (0.0, 0.0, 1.0) 138.0 108.0 339.0 118.0
+   text LEFTxx 38.0 63.0 93.12
+   text RIGHTxx 456.219 83.0 521.995
+   text CENTERxx 239.109 103.0 320.885
+   text TL 38.0 133.0 56.672
+   text TR 500.672 133.0 522.0

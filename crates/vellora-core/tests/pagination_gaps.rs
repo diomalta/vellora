@@ -48,7 +48,7 @@ fn paginate(html: &str) -> pagination::Paginated {
     let laid_out = blitz_engine::validate_then_lay_out(
         html,
         validation::denied_elements(),
-        page_box.content_width(),
+        page_box.layout_content_width(),
         page_box.content_height(),
         &Default::default(),
         None,
@@ -477,8 +477,9 @@ fn an_inline_only_body_draws_its_lines_past_page_1_off_page_known_gap() {
     // Line055 is the first baseline below the 1122.56 px (841.92 pt) page edge.
     assert_eq!(off_page.len(), 66, "Line055-Line120 are off the page");
     assert_eq!(off_page[0].0, "Line055");
-    // 1133 px: the baseline on a whole page px (`pagination::snap_baseline_to_page_px`; 849.60
-    // pt = 1132.8 px before Phase C step 03).
+    // 849.75 pt = 1133 px since Phase C step 03 (849.60 = 1132.8 px before): the content origin
+    // is Chrome's whole-px round(10 mm) = 38 px (`PageBox::content_origin`) and the baseline sits
+    // on a whole page px (`pagination::snap_baseline_to_page_px`).
     assert!((off_page[0].1 - 849.75).abs() < 0.01, "{}", off_page[0].1);
 
     let paragraphs: String = numbered.iter().map(|l| format!("<p>{l}</p>")).collect();

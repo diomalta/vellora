@@ -27,7 +27,7 @@ fn lay_out_like_render(html: &str) -> blitz_engine::LaidOutDoc {
     blitz_engine::validate_then_lay_out(
         html,
         validation::denied_elements(),
-        page_box.content_width(),
+        page_box.layout_content_width(),
         page_box.content_height(),
         &Default::default(),
         None,

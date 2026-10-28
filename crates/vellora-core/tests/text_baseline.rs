@@ -32,7 +32,7 @@ fn lay_out(html: &str) -> blitz_engine::LaidOutDoc {
     blitz_engine::validate_then_lay_out(
         html,
         vellora_core::validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,

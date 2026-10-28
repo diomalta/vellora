@@ -44,6 +44,10 @@ const PX_PER_IN: f64 = 96.0;
 /// who need exact physical dimensions can still specify `size: 210mm 297mm`.
 const A4_W: f64 = 594.96 / 0.75;
 const A4_H: f64 = 841.92 / 0.75;
+/// A4 as CSS lays it out (210 x 297 mm): the basis of Chromium's print layout width for
+/// `size: A4` ([`PageBox::layout_content_width`]), which is not the MediaBox above.
+const A4_CSS_W: f64 = 210.0 * PX_PER_MM;
+const A4_CSS_H: f64 = 297.0 * PX_PER_MM;
 /// US Letter in CSS px (8.5in x 11in).
 const LETTER_W: f64 = 8.5 * PX_PER_IN;
 const LETTER_H: f64 = 11.0 * PX_PER_IN;
@@ -130,6 +134,58 @@ impl PageBox {
     /// Usable content rectangle height (page height minus top/bottom margins).
     pub fn content_height(&self) -> f64 {
         self.height - self.margin_top - self.margin_bottom
+    }
+
+    /// The inline size Chromium's print path lays the document out at: the CSS page width
+    /// minus the left/right margins, rounded UP to a whole CSS px. [`Self::content_width`] stays
+    /// the exact box (the `css:page-varying-width` check compares it); this is the layout
+    /// viewport width.
+    ///
+    /// Measured with Chrome for Testing 155.0.8059.85 `page.pdf({preferCSSPageSize: true})`
+    /// (Phase C step 03, 2026-10-27; `tests/page_geometry.rs` holds the numbers): a full-width
+    /// block's painted rect and right-aligned text end at `round(margin-left) +
+    /// ceil(W - ml - mr)` for 19 page/margin combinations (18 in that test; `size: A5` is not parsed by `apply_size`), e.g. A4 16 mm -> 60 + 673 (exact
+    /// 672.756), A4 15 mm -> 57 + 681 (exact 680.315; 681 only from the 210 mm basis, the
+    /// 793.28 px MediaBox would give 680), letter 16 mm -> 60 + 696, A4 0.25 cm -> 9 + 775.
+    /// Until this step vellora truncated (`as u32`) the exact box: 672 / 680 px, one px narrower
+    /// than Chrome, so right-aligned and centred content sat 1 / 0.5 px left of Chrome's.
+    pub fn layout_content_width(&self) -> f64 {
+        (self.css_width() - self.margin_left - self.margin_right)
+            .max(0.0)
+            .ceil()
+    }
+
+    /// Where Chromium's print path puts the left/top edge of the laid-out content on the page.
+    ///
+    /// Top: the top margin rounded to the nearest whole CSS px (half up). Left, `ltr` root: the
+    /// left margin rounded the same way. `rtl` root: the layout's RIGHT edge sits at
+    /// `W - round(margin-right)` (`W` the authored page width, [`Self::layout_content_width`]),
+    /// so the left edge is that minus the layout width. Same measurement as
+    /// [`Self::layout_content_width`]: ltr 16 mm (60.472 px) -> 60, 15 mm (56.693) -> 57,
+    /// 0.42 cm (15.874) -> 16, 0.25 cm (9.449) -> 9, 60.5 px -> 61, 56.5 px -> 57, 57.4 px -> 57;
+    /// rtl A4 10 mm -> right edge 755.70 (793.70 - 38), left 36.70; rtl letter 16 mm -> 756.
+    /// vellora placed the content at the exact margins, 0.472 px right of and below Chrome's
+    /// for the corpus' 16 mm pages.
+    pub fn content_origin(&self, rtl: bool) -> (f64, f64) {
+        let x = if rtl {
+            self.css_width() - self.margin_right.round() - self.layout_content_width()
+        } else {
+            self.margin_left.round()
+        };
+        (x, self.margin_top.round())
+    }
+
+    /// The authored page width Chromium lays out against: for `size: A4` that is 210 mm
+    /// (793.7008 px), not the 594.96 pt MediaBox `A4_W` the page itself is emitted at.
+    fn css_width(&self) -> f64 {
+        if self.width == A4_W {
+            A4_CSS_W
+        } else if self.width == A4_H {
+            // `size: A4 landscape` swaps the named size.
+            A4_CSS_H
+        } else {
+            self.width
+        }
     }
 
     /// Default A4 with 16mm margins and no running content.

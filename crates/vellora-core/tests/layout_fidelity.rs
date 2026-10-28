@@ -24,7 +24,7 @@ fn lay_out_for_render(html: &str) -> (blitz_engine::LaidOutDoc, page_css::PageBo
     let laid = blitz_engine::validate_then_lay_out(
         html,
         vellora_core::validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &std::collections::HashMap::new(),
         None,
@@ -441,18 +441,17 @@ fn right_aligned_table_text_ends_at_cell_content_edge() {
     );
 }
 
-// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 672 px =
-// the A4 content width at 16 mm margins, 2026-10-21; probe `short_numeric_columns`
-// in fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
-// the four columns are 324.50 / 73.30 / 143.19 / 131.02 px, description ratio 0.483,
-// quantity ratio 0.109. Chrome hands the spare width out in proportion to each
-// column's max-content width; Blitz 0.3.0-beta.4 gives every auto column an equal
-// share (282 / 99 / 150 / 141 px: ratios 0.420 / 0.147). The
-// `auto_table_compact_columns` heuristic narrows the right-aligned columns
-// (336.95 / 84.00 / 131.08 / 119.97: 0.501 / 0.125). This test pins that the
-// column BOXES stay within 0.025 of Chrome's ratios, which raw Blitz misses; it
-// does not claim the heuristic is right: in this table the quantity text ends
-// 22.8 px right of Chrome's with the pass and 17.2 px left of it without.
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, 2026-10-27, Phase C step 03):
+// at Chrome's print layout width for A4 at 16 mm margins, 673 px
+// (`PageBox::layout_content_width`), the four columns are 324.984 / 73.406 / 143.391 /
+// 131.219 px, description ratio 0.483, quantity ratio 0.109: max-content 236.078 / 53.328 /
+// 104.172 / 95.297 (the table at `width: max-content`), each times 673 / 488.875. Chrome hands
+// the spare width out in proportion to each column's max-content width; Blitz 0.3.0-beta.4
+// gives every auto column an equal share (ratios 0.420 / 0.147).
+// `auto_table_compact_columns` now distributes like Chrome from Blitz's own max-content widths
+// (323.83 / 75.21 / 143.78 / 130.18: Blitz measures the letter-spaced "QTD." header 1.3 px
+// wider than Chrome), so the ratios hold within 0.005. (The 2026-10-21 probe, 324.50 / 73.30 /
+// 143.19 / 131.02, was a DOM at the 672 px viewport vellora then used.)
 #[test]
 fn auto_table_keeps_short_numeric_columns_near_chromes_widths() {
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -516,7 +515,7 @@ fn auto_table_keeps_short_numeric_columns_near_chromes_widths() {
     let quantity_ratio = first_row_cells[1].width / row_width;
 
     assert!(
-        (description_ratio - 0.483).abs() <= 0.025,
+        (description_ratio - 0.483).abs() <= 0.005,
         "description column should stay near Chrome's ratio 0.483, got ratio={description_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
@@ -524,7 +523,7 @@ fn auto_table_keeps_short_numeric_columns_near_chromes_widths() {
             .collect::<Vec<_>>()
     );
     assert!(
-        (quantity_ratio - 0.109).abs() <= 0.025,
+        (quantity_ratio - 0.109).abs() <= 0.005,
         "short quantity column should stay near Chrome's ratio 0.109, got ratio={quantity_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
@@ -533,12 +532,12 @@ fn auto_table_keeps_short_numeric_columns_near_chromes_widths() {
     );
 }
 
-// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 672 px,
-// 2026-10-21; probe `invoice_test_fixture` in
-// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json)
-// starts the quantity column of this invoice at 348.23 of 672 px: ratio 0.518.
-// Raw Blitz 0.3.0-beta.4 starts it at 307 (0.457, equal share of the spare width
-// per auto column); `auto_table_compact_columns` moves it to 341.58 (0.508).
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, 2026-10-27, Phase C step 03)
+// starts the quantity column of this invoice at 348.75 of its 673 px print layout width:
+// ratio 0.518 (the 2026-10-21 probe, 348.23 of 672, was a DOM at vellora's old viewport).
+// Raw Blitz 0.3.0-beta.4 starts it at ~307 (0.457, equal share of the spare width per auto
+// column); `auto_table_compact_columns` distributes it in proportion to max-content like
+// Chrome: 347.64 (0.517).
 #[test]
 fn auto_table_starts_invoice_quantity_column_near_chrome() {
     let (laid, _pb) = lay_out_for_render(INVOICE);
@@ -577,7 +576,7 @@ fn auto_table_starts_invoice_quantity_column_near_chrome() {
     let quantity_start_ratio = (first_row_cells[1].x - row_left) / row_width;
 
     assert!(
-        (quantity_start_ratio - 0.518).abs() <= 0.02,
+        (quantity_start_ratio - 0.518).abs() <= 0.005,
         "quantity column should begin near Chrome's ratio 0.518, got ratio={quantity_start_ratio:.3}; cells={:?}",
         first_row_cells
             .iter()
@@ -586,20 +585,16 @@ fn auto_table_starts_invoice_quantity_column_near_chrome() {
     );
 }
 
-// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, viewport 657 px =
-// the A4 content width at 18 mm margins, 2026-10-21; probe `compact_aligned` in
-// fidelity/baselines/port/03-table-passes/attachments/chrome-probes-table-passes.json):
-// columns 344.38 / 68.83 / 107.09 / 136.70 px (in proportion to max-content). In
-// every cell the line sits where its `text-align` puts it in the cell's content
-// box (padding 10 px): right-aligned "40" ends at 403.20 = 413.20 - 10, the
-// centred "UN" is centred on 466.75, the `<th>` "Descricao" (centred by the UA
-// `th` rule) on 172.19, and "R$ 1.300,00" ends at 647.00. vellora's
-// `auto_table_compact_columns` pass gives the columns other widths (a heuristic,
-// see the test above), so this test checks the same relation against vellora's
-// post-pass cells, plus Chrome's absolute 647.00 for the last column, whose right
-// edge both engines share. Before port step 03 the pass moved each cell's text by
-// the left-edge change only: "40" ended at 409.4 instead of 392.0, "UN" sat 7.5 px
-// off centre and the header 16.7 px off.
+// Chrome 155.0.8059.85 (print media, bundled Liberation fonts, 2026-10-27, Phase C step 03):
+// at Chrome's 658 px print layout width (A4, 18 mm margins) the columns are 344.906 / 68.938 /
+// 107.25 / 136.906 px, max-content 233.422 / 46.656 / 72.594 / 92.641 each times 658 /
+// 445.3125 (the 2026-10-21 probe, 344.38 / 68.83 / 107.09 / 136.70, was a DOM at the 657 px
+// viewport vellora then used). In every cell the line sits where its `text-align` puts it in
+// the cell's content box (padding 10 px), and Chrome's PDF ends "R$ 1.300,00" at 715.99 - 68
+// = 648.0. `auto_table_compact_columns` distributes the spare width like Chrome, so the
+// column boxes match within 0.5 px. Before port step 03 the pass moved each cell's text by
+// the left-edge change only: "40" ended at 409.4 instead of 392.0, "UN" sat 7.5 px off centre
+// and the header 16.7 px off.
 #[test]
 fn compact_columns_keep_each_line_where_its_text_align_puts_it() {
     let html = r#"<!DOCTYPE html><html><head><style>
@@ -656,9 +651,22 @@ fn compact_columns_keep_each_line_where_its_text_align_puts_it() {
     }
     let (_, total_right) = span("R$ 1.300,00");
     assert!(
-        (total_right - 647.0).abs() <= 1.0,
-        "last column's value should end where Chrome ends it (647.00), got {total_right:.2}"
+        (total_right - 648.0).abs() <= 1.0,
+        "last column's value should end where Chrome ends it (648.00), got {total_right:.2}"
     );
+    let mut header: Vec<_> = laid
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("th"))
+        .collect();
+    header.sort_by(|a, b| a.x.total_cmp(&b.x));
+    let widths: Vec<f64> = header.iter().map(|b| b.width).collect();
+    for (got, chrome) in widths.iter().zip([344.906, 68.938, 107.25, 136.906]) {
+        assert!(
+            (got - chrome).abs() <= 0.5,
+            "column widths {widths:?} should be Chrome's 344.906 / 68.938 / 107.25 / 136.906"
+        );
+    }
 }
 
 #[test]
@@ -1514,7 +1522,9 @@ fn party_block_table_stays_inside_page_content_box() {
 
     let (laid, pb) = lay_out_for_render(html);
     let paginated = pagination::paginate(&laid, &pb);
-    let content_right = pb.width - pb.margin_right;
+    // Chrome's content box: whole-px origin + whole-px layout width (`PageBox::content_origin`,
+    // `layout_content_width`; Phase C step 03), 68 + 658 = 726 px for 18 mm margins.
+    let content_right = pb.content_origin(false).0 + pb.layout_content_width();
     let border_right = paginated.pages[0]
         .rects
         .iter()

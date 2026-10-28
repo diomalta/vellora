@@ -715,3 +715,65 @@ fn layout_unit_snapping_truncates_border_spacing_to_whole_px() {
         .collect();
     assert_eq!(ys, vec![5.0, 20.0, 35.0]);
 }
+
+/// The auto-table excess repro of `layout_normalize::normalize_auto_table_compact_columns`: a
+/// `width: 100%` auto-layout table of four auto columns on A4 at 18 mm (layout width 658 px).
+/// Chrome 155 (CfT 155.0.8059.85, print media, 2026-10-27): max-content 233.422 / 34.828 /
+/// 39.266 / 92.641 px (the table at `width: max-content`, 400.156 px), columns 383.828 / 57.266
+/// / 64.563 / 152.344 = each times 658 / 400.156; its PDF starts "40" at 461.828 - 68 = 393.83.
+const AUTO_TABLE_EXCESS: &str = "<!DOCTYPE html><html><head><style>@page { size: A4; margin: \
+    18mm } body { margin: 0; font-family: \"Liberation Sans\"; font-size: 10pt } table { width: \
+    100%; border-spacing: 0 } td { padding: 4px 10px }</style></head><body><table><tr><td>Suporte \
+    de fixacao em aluminio A20</td><td>40</td><td>UN</td><td>R$ 1.300,00</td></tr></table>\
+    </body></html>";
+
+fn cell_widths(doc: &LaidOutDoc) -> Vec<f64> {
+    let mut cells: Vec<_> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .collect();
+    cells.sort_by(|a, b| a.x.total_cmp(&b.x));
+    cells.iter().map(|b| b.width).collect()
+}
+
+/// CANARY of `layout_normalize::normalize_auto_table_compact_columns`: raw Blitz still gives
+/// every auto column of [`AUTO_TABLE_EXCESS`] an equal share of the spare width (each column
+/// its max-content width plus the same ~64.5 px) where Chrome 155 shares it in proportion to
+/// max-content (383.828 / 57.266 / 64.563 / 152.344).
+#[test]
+fn blitz_still_shares_auto_table_excess_width_equally() {
+    let (raw, _) = raw_layout(AUTO_TABLE_EXCESS);
+    assert_eq!(
+        cell_widths(&raw),
+        vec![298.0, 99.0, 104.0, 157.0],
+        "\n\nBLITZ CHANGED ITS AUTO TABLE COLUMN DISTRIBUTION. Raw Blitz no longer lays the \
+         AUTO_TABLE_EXCESS repro out at 298 / 99 / 104 / 157 px (an equal share of the spare \
+         width per auto column; Chrome 155: 383.828 / 57.266 / 64.563 / 152.344, in proportion \
+         to max-content), the bug normalize_auto_table_compact_columns works around (blitz-dom \
+         0.3.0-beta.4 src/layout/table.rs 249-255 and 293-297 make every column an `auto` \
+         track; taffy 0.15.0 src/compute/grid/track_sizing.rs 1415-1442 stretches auto tracks \
+         equally). If Blitz now matches Chrome, DELETE the compensation: in \
+         crates/vellora-core/src/layout_normalize.rs `normalize_auto_table_compact_columns` and \
+         `distribute_auto_table_excess` (and the `auto_table_compact_columns` entry of \
+         `LAYOUT_NORMALIZE_PASSES` in src/blitz_engine.rs); in src/blitz_engine.rs \
+         `LaidOutBox::max_content_width`, `cell_max_content_width`, `block_max_content_width`; \
+         this canary and `auto_table_compensation_gives_chromes_columns`. Keep the Chrome-number \
+         tests in tests/layout_fidelity.rs: they must then pass on Blitz's own layout. Then \
+         re-measure with fidelity/layout-diff before trusting either layout.\n"
+    );
+}
+
+/// The compensation against Chrome 155 on [`AUTO_TABLE_EXCESS`]: every column within 0.5 px.
+#[test]
+fn auto_table_compensation_gives_chromes_columns() {
+    let widths = cell_widths(&product_layout(AUTO_TABLE_EXCESS));
+    let chrome = [383.828, 57.266, 64.563, 152.344];
+    assert!(
+        widths
+            .iter()
+            .zip(chrome)
+            .all(|(got, want)| (got - want).abs() <= 0.5),
+        "vellora {widths:?}, Chrome {chrome:?}"
+    );
+}

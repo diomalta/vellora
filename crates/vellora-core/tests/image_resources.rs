@@ -50,7 +50,7 @@ fn first_image_format(
     let laid: LaidOutDoc = blitz_engine::validate_then_lay_out(
         html,
         validation::denied_elements(),
-        pb.content_width(),
+        pb.layout_content_width(),
         pb.content_height(),
         &images,
         base_url,
