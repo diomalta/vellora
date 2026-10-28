@@ -1156,6 +1156,86 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
     }
 }
 
+/// BLITZ BUG COMPENSATION (blitz-dom 0.3.0-beta.4): a `::before`/`::after` with `display:
+/// table-column` or `table-column-group` renders its `content`.
+///
+/// - Spec: CSS 2.1 §17.2.1 rule 1 ("Remove irrelevant boxes"): the children of a `table-column`
+///   box are treated as `display: none`, and so are the non-column children of a
+///   `table-column-group`; outside a table the column is wrapped in an anonymous table, which
+///   paints nothing without cells. So such a pseudo-element shows neither its text nor its
+///   background. Chrome 155 passes WPT `css/CSS2/generated-content/{after,before}-content-display-
+///   {012,013}` (one "Filler text", no red).
+/// - Blitz: `layout/construct.rs` 589-595 (cargo registry source of blitz-dom 0.3.0-beta.4):
+///   internal table displays outside a table "are laid out as flow containers" ("Blitz does not
+///   yet generate anonymous table wrapper boxes"); the pseudo's text node, created by
+///   `flush_pseudo_elements` (same file, 676-735) from the style's `content`, is laid out and
+///   painted. Repro `div:after { content: ". FAIL"; display: table-column-group; font-size: 2em;
+///   background: red }` around "Filler text": raw Blitz lays ". FAIL" out at 32 px next to it;
+///   Chrome draws nothing (the four WPT tests above, raw outcome fail, pin 2003ba5 pass).
+/// - Correction, between the cascade and box construction: such an eager pseudo-element style is
+///   replaced by a copy with `display: none`, so Blitz builds no box for it (equal geometry: the
+///   anonymous table Chrome builds around a lone column is empty). Only pseudo-elements: a real
+///   `<col>`/`<colgroup>` (or any element with those displays) is left to Blitz, which reads
+///   columns inside tables for their widths (`layout/table.rs` 444-505).
+///
+/// WHEN BLITZ FIXES THIS, DELETE this function, its call in [`resolve_and_walk`], the canary
+/// `blitz_still_renders_table_column_pseudo_content` (`src/raw_blitz_tests.rs`), which fails as
+/// soon as raw Blitz stops laying the repro's ". FAIL" out, and the test
+/// `table_column_pseudo_compensation_renders_nothing` there.
+fn hide_table_column_pseudos(doc: &mut BaseDocument) {
+    use style::values::specified::box_::DisplayInside;
+    let is_column = |values: &style::properties::ComputedValues| {
+        matches!(
+            values.clone_display().inside(),
+            DisplayInside::TableColumn | DisplayInside::TableColumnGroup
+        )
+    };
+    let mut ids = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        ids.push(id);
+        stack.extend(node.children.iter().rev().copied());
+    }
+    for id in ids {
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let Some(data) = node.try_stylo_element_data_mut() else {
+            continue;
+        };
+        let Some(mut element) = data.get_mut() else {
+            continue;
+        };
+        let columns: Vec<_> = element
+            .styles
+            .pseudos
+            .as_array()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, style)| {
+                style
+                    .as_ref()
+                    .filter(|s| is_column(s))
+                    .map(|s| (i, s.clone()))
+            })
+            .collect();
+        for (i, old) in columns {
+            let mut values = (*old).clone();
+            values
+                .mutate_box()
+                .set_display(style::values::computed::Display::None);
+            let pseudo = style::selector_parser::PseudoElement::from_eager_index(i);
+            element
+                .styles
+                .pseudos
+                .set(&pseudo, style::servo_arc::Arc::new(values));
+        }
+    }
+}
+
 /// `lp` truncated to 1/64 px when it is a pure length and not on a step already.
 fn snap_lp(
     lp: &style::values::computed::LengthPercentage,
@@ -2041,6 +2121,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
         snap_lengths_to_layout_unit(&mut doc);
+        hide_table_column_pseudos(&mut doc);
         compensate_collapsed_borders(&mut doc)
     } else {
         CollapsedBorders::default()

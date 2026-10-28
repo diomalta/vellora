@@ -777,3 +777,41 @@ fn auto_table_compensation_gives_chromes_columns() {
         "vellora {widths:?}, Chrome {chrome:?}"
     );
 }
+
+/// The table-column pseudo-element repro of `blitz_engine::hide_table_column_pseudos` (WPT
+/// `css/CSS2/generated-content/after-content-display-012.xht` plus a `table-column` `::before`).
+const TABLE_COLUMN_PSEUDOS: &str = r#"<!DOCTYPE html><html><head><style>
+    div::after { background-color: red; color: yellow; content: ". FAIL"; display: table-column-group; font-size: 2em; }
+    span::before { content: "COL"; display: table-column; }
+    </style></head><body><div>Filler text</div><span>x</span></body></html>"#;
+
+/// The text of every text run of a layout.
+fn run_texts(doc: &LaidOutDoc) -> Vec<String> {
+    runs_of(doc).into_iter().map(|(text, _, _)| text).collect()
+}
+
+/// CANARY of `blitz_engine::hide_table_column_pseudos`: raw Blitz still lays out the `content`
+/// of a `::before`/`::after` with `display: table-column(-group)`, which CSS 2.1 §17.2.1 and
+/// Chrome 155 never render.
+#[test]
+fn blitz_still_renders_table_column_pseudo_content() {
+    let (raw, _) = raw_layout(TABLE_COLUMN_PSEUDOS);
+    assert_eq!(
+        run_texts(&raw),
+        ["Filler text", ". FAIL", "x", "COL"],
+        "\n\nBLITZ CHANGED HOW IT BUILDS A `display: table-column(-group)` PSEUDO-ELEMENT: raw \
+         Blitz no longer lays out its `content` (blitz-dom 0.3.0-beta.4 src/layout/construct.rs \
+         589-595 laid internal table displays outside a table out as flow containers). If Blitz \
+         now renders nothing for them, like Chrome 155, DELETE `hide_table_column_pseudos` and \
+         its call in `resolve_and_walk` (crates/vellora-core/src/blitz_engine.rs), this canary \
+         and `table_column_pseudo_compensation_renders_nothing`, then re-run the WPT \
+         generated-content directory.\n"
+    );
+}
+
+/// The compensation: neither pseudo-element is laid out, the rest is untouched.
+#[test]
+fn table_column_pseudo_compensation_renders_nothing() {
+    let doc = product_layout(TABLE_COLUMN_PSEUDOS);
+    assert_eq!(run_texts(&doc), ["Filler text", "x"]);
+}
