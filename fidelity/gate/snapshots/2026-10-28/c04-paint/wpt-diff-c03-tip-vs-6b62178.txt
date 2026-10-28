@@ -1,0 +1,13 @@
+passes 3762 -> 3766 of 8047
+pass->fail 3
+  - css/CSS2/backgrounds/background-root-007.xht fail raw fail chrome fail
+  - css/css-page/media-queries-001-print.html fail raw fail chrome pass
+  - css/css-text/word-space-transform/word-space-transform-018.html fail raw fail chrome fail
+fail->pass 7
+  + css/CSS2/backgrounds/background-body-001.xht
+  + css/CSS2/backgrounds/background-root-001.xht
+  + css/CSS2/normal-flow/min-height-percentage-003.xht
+  + css/CSS2/visudet/height-percentage-003a.xht
+  + css/css-page/basic-pagination-003-print.html
+  + css/css-page/page-box-006-print.html
+  + css/css-page/page-margin-negative-print.tentative.html

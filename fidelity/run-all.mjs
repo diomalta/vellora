@@ -121,6 +121,7 @@ const STEP_IDS = [
   "pdf-probe",
   "pdf-probe-suite",
   "doc-aggregate",
+  "paint-probe",
 ];
 /** Fixtures under fixtures/ that are deliberately not measured, with the reason. */
 const EXCLUDED_FIXTURES = {
@@ -341,6 +342,7 @@ async function main() {
     oraclesCorpus: join(outDir, "oracles", "corpus"),
     layoutDiff: join(outDir, "layout-diff"),
     docAggregate: join(outDir, "doc-aggregate"),
+    paintProbe: join(outDir, "paint-probe"),
   };
   const gate = (id) => {
     if (!selected.includes(id)) return "not selected (--only/--skip)";
@@ -652,6 +654,27 @@ async function main() {
             script: "fidelity/oracles/doc-aggregate.mjs",
             args: ["--run", outDir, "--label", "run-all"],
             outputs: [join(dirs.docAggregate, "summary.json")],
+            logDir,
+          }),
+    );
+  }
+
+  // 5e. Paint probe (Phase C step 04, REPORT-ONLY: no gate rule reads it): per fixture and page,
+  //     Chrome's vs vellora's canvas background, dashed/dotted border segments and underlines,
+  //     from the PDFs pdf-probe wrote (oracles/lib/paint-probe.mjs). Exits 0 whatever it finds.
+  {
+    const why =
+      gate("paint-probe") ??
+      (layoutSummary ? null : "layout-diff wrote no summary (paint-probe compares its PDFs)") ??
+      (venvPython() ? null : `PyMuPDF: ${pythonUnavailableReason()}`);
+    steps.push(
+      why
+        ? notRun("paint-probe", why)
+        : await runNode({
+            id: "paint-probe",
+            script: "fidelity/oracles/paint-probe.mjs",
+            args: ["--run", outDir, "--label", "run-all"],
+            outputs: [join(dirs.paintProbe, "summary.json")],
             logDir,
           }),
     );
