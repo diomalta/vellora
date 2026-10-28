@@ -43,18 +43,27 @@ pub struct PaginationReport {
     pub oversize_hit: bool,
 }
 
-/// Browser-print engines make page-break decisions after fractional layout and
-/// font fallback. Our deterministic bundled font can push a table row a few px
-/// past the content-box bottom even when Chromium keeps the same row on the
-/// page, leaving a visibly under-filled page. Keep this tolerance small and
-/// table-row-only so it absorbs metric drift without pulling another full row.
-///
-/// The same amount (capped by the bottom page margin, so nothing is painted
-/// past the physical page) bounds how far a block may overflow the box that
-/// contains it and still be fitted against that box (`fit_height`); what the
-/// fragment paints must also stay above a drawn `@bottom-center` line
-/// (`band_fit_height`, port step 10).
+/// How far (capped by the bottom page margin, so nothing is painted past the
+/// physical page) a block may overflow the box that contains it and still be
+/// fitted against that box (`fit_height`); what the fragment paints must also
+/// stay above a drawn `@bottom-center` line (`band_fit_height`, port step 10).
+/// It was also the table-row fit tolerance until Phase C step 03 (see
+/// [`TABLE_ROW_FIT_SLACK_PX`]).
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
+/// How far a table row (or a keep-together row group) may end past the content
+/// box and still stay on the page. vellora's boxes are whole px (Taffy rounds
+/// them) where Chrome's are 1/64 px, so a row Chrome ends exactly at the page
+/// end can end up to 0.5 px lower here.
+///
+/// It was 12 px (the shared `TABLE_ROW_BREAK_TOLERANCE_PX`) to absorb the row
+/// drift of Blitz's collapsed-border bug and its unquantised lengths; with both
+/// corrected (`blitz_engine::compensate_collapsed_borders`,
+/// `blitz_engine::snap_lengths_to_layout_unit`) rows have Chrome's pitch, and
+/// 12 px kept text-stress-ptbr's June `<tbody>` (`break-inside: avoid`, ending
+/// 11 px past the content box at 1005 / 994.06 px) on page 3 where Chrome 155
+/// moves it to page 4 (layout-diff + pdf-probe, Phase C step 03, 2026-10-27:
+/// 721 words of pages 3-6 unpaired).
+const TABLE_ROW_FIT_SLACK_PX: f64 = 0.5;
 /// How far apart (px) two same-paint rects of one band may be and still be drawn as ONE rect
 /// by [`merge_adjacent_rects`]: rects that touch (or overlap by up to 0.5 px) within this
 /// sub-pixel epsilon. Chrome paints such rects as one seamless area; drawing them as two leaves an
@@ -499,9 +508,14 @@ pub fn paginate_traced(
                 // `<tfoot>` written first and laid out last), it starts at the
                 // page top instead: the fragment model cannot leave page 1
                 // holding only the offset. A first fragment that does not fit
-                // at the top either keeps the offset (it overflows either way).
+                // at the top either keeps the offset (it overflows either way),
+                // unless that offset is itself past the page end: then it starts
+                // at the page top too, so it is never placed off the page (the
+                // `<tfoot>` guard in `tests/pagination_gaps.rs`, which the 12 px
+                // row fit slack used to satisfy, Phase C step 03).
                 PageStart::Origin
-                    if frag.top + fit_h <= fit_limit || header_h + fit_h > fit_limit =>
+                    if frag.top + fit_h <= fit_limit
+                        || (header_h + fit_h > fit_limit && frag.top < fit_limit) =>
                 {
                     (frag.top.max(header_h), "page-origin")
                 }
@@ -1691,11 +1705,11 @@ impl<'a> PageGeometry<'a> {
     }
 
     /// The height a fragment may take on page `index`: the page's content height, plus the row
-    /// drift tolerance for a table row.
+    /// fit slack ([`TABLE_ROW_FIT_SLACK_PX`]) for a table row.
     fn fit_limit(&mut self, index: usize, is_table_row: bool) -> f64 {
         let usable_h = self.page(index).content_height();
         if is_table_row {
-            usable_h + TABLE_ROW_BREAK_TOLERANCE_PX
+            usable_h + TABLE_ROW_FIT_SLACK_PX
         } else {
             usable_h
         }

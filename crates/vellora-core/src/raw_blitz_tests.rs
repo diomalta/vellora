@@ -605,3 +605,111 @@ fn collapsed_border_compensation_grows_a_cell_past_its_specified_height() {
     let (_, height, _, after) = table_geometry(&doc);
     assert_eq!((height, after), (66.0, 66.0));
 }
+
+/// The LayoutUnit repro of `blitz_engine::snap_lengths_to_layout_unit`: 64 blocks with `block`
+/// as their style, each holding a 10 px box (when `inner`) or the text "Ab", then a `<section>`
+/// marker. 64 makes a 1/64 px difference per block a whole px at the marker, so the
+/// Taffy-rounded boxes show it.
+fn layout_unit_repro(block: &str, inner: bool) -> String {
+    let child = if inner {
+        "<div style=\"height:10px\"></div>"
+    } else {
+        "Ab"
+    };
+    let blocks: String = (0..64)
+        .map(|_| format!("<div style=\"{block}\">{child}</div>"))
+        .collect();
+    format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: A4; margin: 0 }} body {{ margin: 0; \
+         font-family: \"Liberation Sans\"; font-size: 10pt }}</style></head><body>{blocks}\
+         <section>end</section></body></html>"
+    )
+}
+
+fn section_y(doc: &LaidOutDoc) -> f64 {
+    doc.boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("section"))
+        .expect("section box")
+        .y
+}
+
+/// CANARY of the LayoutUnit snapping: raw Blitz still lays `padding: 1mm 0` out unquantised
+/// (17.5591 px a block: the marker after 64 blocks at round(1123.78) = 1124) where Chrome 155
+/// truncates 1mm to 3.765625 px (17.53125 a block, marker at 1122). When this fails, Blitz
+/// quantises lengths itself and the snapping is applied on top of it.
+#[test]
+fn blitz_still_lays_lengths_out_unquantised() {
+    let (raw, _) = raw_layout(&layout_unit_repro("padding:1mm 0", true));
+    assert_eq!(
+        section_y(&raw),
+        1124.0,
+        "\n\nBLITZ CHANGED HOW IT RESOLVES LENGTHS: raw Blitz no longer lays 64 blocks of \
+         `padding: 1mm 0` around 10 px out at 64 x 17.5591 px (marker at 1124). Chrome 155 lays \
+         them out at 64 x 17.53125 = 1122 (1mm truncated to 1/64 px, LayoutUnit). If Blitz now \
+         quantises lengths like Chrome, DELETE the LayoutUnit snapping: in \
+         crates/vellora-core/src/blitz_engine.rs `snap_lengths_to_layout_unit`, \
+         `snap_computed_lengths`, `snap_lp` and its call in `resolve_and_walk`; the module \
+         src/layout_unit.rs (and its `mod` line in lib.rs); this canary and the \
+         `layout_unit_snapping_*` tests in src/raw_blitz_tests.rs. Then re-measure with \
+         fidelity/layout-diff and the repro set fidelity/gate/snapshots/2026-10-27/c03/lu-repro.\n"
+    );
+}
+
+/// The snapping against Chrome 155 (CfT 155.0.8059.85, print media, 2026-10-27; repro set
+/// fidelity/gate/snapshots/2026-10-27/c03/lu-repro): the marker after 64 blocks is at 64 x
+/// Chrome's per-block height, a whole px here; raw Blitz's marker for contrast.
+#[test]
+fn layout_unit_snapping_gives_chromes_lengths() {
+    // (block style, has a 10 px child, Chrome's block pitch, raw Blitz's marker y)
+    let cases: [(&str, bool, f64, f64); 5] = [
+        ("padding:1mm 0", true, 17.53125, 1124.0),
+        ("font-size:8.5pt;line-height:1.35", false, 15.28125, 979.0),
+        ("height:20px;margin-bottom:-1mm", false, 16.234375, 1038.0),
+        ("height:10.1mm", false, 38.171875, 2443.0),
+        ("font-size:11.34px;line-height:1.35", false, 15.3125, 980.0),
+    ];
+    for (block, inner, pitch, raw_y) in cases {
+        let html = layout_unit_repro(block, inner);
+        let product = section_y(&product_layout(&html));
+        assert_eq!(product, 64.0 * pitch, "{block}: product marker");
+        let (raw, _) = raw_layout(&html);
+        assert_eq!(section_y(&raw), raw_y, "{block}: raw Blitz marker");
+    }
+}
+
+/// text-stress-ptbr's `table.extrato` row (`padding: 1mm 1.5mm`, 8.5pt x 1.35, a 0.2mm bottom
+/// border, collapsed): Chrome 155 rows 23.8125 px apart, a 10-row table 238.125 px (raw Blitz
+/// 0.3.0-beta.4 with the collapsed-border compensation: 238.5202); 64 rows end at 64 x 23.8125
+/// = 1524.
+#[test]
+fn layout_unit_snapping_gives_chromes_extrato_row_pitch() {
+    let rows: String = (0..64).map(|i| format!("<tr><td>R{i}</td></tr>")).collect();
+    let html = format!(
+        "<!DOCTYPE html><html><head><style>@page {{ size: A4; margin: 0 }} body {{ margin: 0; \
+         font-family: \"Liberation Sans\"; font-size: 10pt }} table {{ width: 100%; \
+         border-collapse: collapse; table-layout: fixed; font-size: 8.5pt; line-height: 1.35 }} \
+         td {{ border-bottom: 0.2mm solid #ccc; padding: 1mm 1.5mm; vertical-align: top }}\
+         </style></head><body><table>{rows}</table><section>end</section></body></html>"
+    );
+    assert_eq!(section_y(&product_layout(&html)), 1524.0);
+}
+
+/// `border-spacing: 1.5mm` is 5 whole px in Chrome 155 (cells at y 5 / 25 / 45 with 15 px rows;
+/// Blitz keeps a separated cell's `height: 10px` fixed, so its rows are 10 px: the cell-height
+/// bug, outside the snapping's scope); the spacing itself must be 5.
+#[test]
+fn layout_unit_snapping_truncates_border_spacing_to_whole_px() {
+    let html = "<!DOCTYPE html><html><head><style>@page { size: A4; margin: 0 } body { margin: 0; \
+         font-family: \"Liberation Sans\"; font-size: 10pt } table { border-spacing: 1.5mm } td { \
+         padding: 0; height: 10px }</style></head><body><table><tr><td>a</td></tr><tr><td>b</td>\
+         </tr><tr><td>c</td></tr></table></body></html>";
+    let doc = product_layout(html);
+    let ys: Vec<f64> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .map(|b| b.y)
+        .collect();
+    assert_eq!(ys, vec![5.0, 20.0, 35.0]);
+}

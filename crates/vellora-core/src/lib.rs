@@ -39,6 +39,7 @@ mod fonts;
 #[doc(hidden)]
 pub mod layout_dump;
 mod layout_normalize;
+mod layout_unit;
 pub mod page_css;
 pub mod pagination;
 pub mod pdf;
