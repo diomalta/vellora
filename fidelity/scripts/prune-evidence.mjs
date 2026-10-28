@@ -27,6 +27,8 @@
 //                                                 record: README, accepted.json, gate reports)
 //   fidelity/gate/snapshots/<file cited>          every snapshot path docs/assets/fidelity/
 //                                                 manifest.json cites (e.g. paint-probe pin side)
+//                                                 or a published docs page (docs/**/*.md) cites
+//                                                 (e.g. the cross-OS record in guide/fidelity.md)
 // Everything else under the managed roots is DELETED: other port links, other fidelity/baselines/*
 // directories (beta4, beta4-gated, ...), other baselines/wpt files, other gate snapshots, and all
 // of fidelity/layout-diff/snapshots, fidelity/combine/snapshots, fidelity/oracles/reports and
@@ -51,6 +53,7 @@ const SNAPSHOTS = "fidelity/gate/snapshots";
 const BASELINES = "fidelity/baselines";
 const PORT = `${BASELINES}/port`;
 const DOCS_MANIFEST = "docs/assets/fidelity/manifest.json";
+const DOCS_PAGES = "docs";
 
 const toPosix = (p) => p.split(sep).join("/");
 
@@ -107,11 +110,17 @@ export function keepSet(root) {
     if (ledger?.startsWith(`${SNAPSHOTS}/`))
       add(toPosix(dirname(ledger)), "holds the DEBT-BASE.json ledger");
   }
-  const docs = join(root, DOCS_MANIFEST);
-  if (existsSync(docs)) {
-    const text = readFileSync(docs, "utf8");
+  const pages = walk(join(root, DOCS_PAGES))
+    .map((abs) => toPosix(relative(root, abs)))
+    .filter((rel) => rel.endsWith(".md") && !/\/(node_modules|\.vitepress)\//.test(rel))
+    .sort();
+  for (const rel of [DOCS_MANIFEST, ...pages]) {
+    if (!existsSync(join(root, rel))) continue;
+    const text = readFileSync(join(root, rel), "utf8");
     for (const m of text.matchAll(/fidelity\/gate\/snapshots\/[A-Za-z0-9._\/-]+/g)) {
-      if (existsSync(join(root, m[0]))) add(m[0], `cited by ${DOCS_MANIFEST}`);
+      // A citation can end a sentence or name a directory: "…/linux-arm64/." -> "…/linux-arm64".
+      const p = m[0].replace(/[./]+$/, "");
+      if (existsSync(join(root, p))) add(p, `cited by ${rel}`);
     }
   }
   // A path inside a kept directory is not listed on its own (its reason joins the directory's).

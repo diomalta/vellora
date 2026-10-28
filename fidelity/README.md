@@ -146,7 +146,7 @@ keeps `baselines/pin/`, the `baselines/port/` files (`README.md`, `DEBT.json`, `
 `declared-rejections.json`), the chain head, the latest link and the link it was gated against
 (its `manifest.json gate.baseline`), the latest engine's `baselines/wpt/<engine>.json`, the gate
 snapshot directory holding the ledger `DEBT-BASE.json` names, and every snapshot path
-`docs/assets/fidelity/manifest.json` cites; it deletes every other baseline, link and gate
+`docs/assets/fidelity/manifest.json` or a published docs page (`docs/**/*.md`) cites; it deletes every other baseline, link and gate
 snapshot and all of `layout-diff/snapshots/`, `combine/snapshots/`, `oracles/reports/` and
 `upstream-drafts/`. Run it after a new link and its snapshot are committed.
 

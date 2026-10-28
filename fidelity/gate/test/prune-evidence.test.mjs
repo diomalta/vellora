@@ -51,6 +51,12 @@ function plant() {
   put("fidelity/oracles/reports/a.md", "x\n");
   put("fidelity/upstream-drafts/a/README.md", "x\n");
   put("fidelity/gate/compare.mjs", "// tooling, outside the managed roots\n");
+  put(`${S}/2026-01-03/xos/README.md`, "x\n");
+  put(`${S}/2026-01-03/xos/scripts/cmp.py`, "x\n");
+  // A docs page citing a snapshot directory at the end of a sentence keeps the whole directory;
+  // VitePress build output under docs/.vitepress is not a published page source.
+  put("docs/guide/page.md", `Record: \`${S}/2026-01-03/xos/\`. Gone: ${S}/2026-01-01/gone.json.\n`);
+  put("docs/.vitepress/cache/page.md", `${S}/2026-01-01/c1/README.md\n`);
   put("docs/assets/fidelity/manifest.json", {
     paint: `<repo>/${S}/2026-01-02/c2-docs/cited.json`,
     accept: `--accept ${S}/2026-01-02/c2/accepted.json --step x`,
@@ -70,6 +76,7 @@ const KEEP = [
   "fidelity/baselines/wpt/eng-2.json",
   "fidelity/gate/snapshots/2026-01-02/c2",
   "fidelity/gate/snapshots/2026-01-02/c2-docs/cited.json",
+  "fidelity/gate/snapshots/2026-01-03/xos",
 ];
 const DELETE = [
   "fidelity/baselines/beta4/manifest.json",
@@ -85,7 +92,7 @@ const DELETE = [
   "fidelity/upstream-drafts/a/README.md",
 ];
 
-test("keep-latest: pin, port files, chain head, latest link and its gate.baseline, its engine's WPT expectations, the DEBT-BASE snapshot, docs-cited snapshot files", () => {
+test("keep-latest: pin, port files, chain head, latest link and its gate.baseline, its engine's WPT expectations, the DEBT-BASE snapshot, snapshot paths the docs manifest or a docs page cites", () => {
   const root = plant();
   const ks = keepSet(root);
   assert.deepEqual(ks.keep, KEEP);
@@ -94,6 +101,7 @@ test("keep-latest: pin, port files, chain head, latest link and its gate.baselin
   assert.equal(ks.previous, "fidelity/baselines/port/02-b");
   // A path inside a kept directory is folded into it (c2/accepted.json is cited by the docs).
   assert.match(ks.why["fidelity/gate/snapshots/2026-01-02/c2"], /accepted\.json cited by/);
+  assert.equal(ks.why["fidelity/gate/snapshots/2026-01-03/xos"], "cited by docs/guide/page.md");
 });
 
 test("keep-latest deletes everything else under the managed roots, nothing outside them", () => {
@@ -147,6 +155,14 @@ test("on this checkout the keep set holds every input the gate reads by default"
   const docs = readFileSync(join(repo, "docs/assets/fidelity/manifest.json"), "utf8");
   for (const m of docs.matchAll(/fidelity\/gate\/snapshots\/[A-Za-z0-9._/-]+/g)) {
     assert.ok(kept(m[0]), m[0]);
+  }
+  // Every existing snapshot path a published docs page cites (the cross-OS record, for one).
+  for (const rel of ["docs/guide/fidelity.md", "docs/blog/native-pdf-fidelity-blitz-beta4.md"]) {
+    const text = readFileSync(join(repo, rel), "utf8");
+    for (const m of text.matchAll(/fidelity\/gate\/snapshots\/[A-Za-z0-9._/-]+/g)) {
+      const p = m[0].replace(/[./]+$/, "");
+      if (existsSync(join(repo, p))) assert.ok(kept(p), `${rel}: ${p}`);
+    }
   }
   // wpt/run.mjs's default expectations for the engine of the latest link.
   assert.ok(ks.keep.some((k) => k.startsWith("fidelity/baselines/wpt/")));

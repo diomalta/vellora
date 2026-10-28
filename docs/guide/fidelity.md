@@ -215,6 +215,20 @@ The document data is synthetic.
 - Raw values: [manifest.json](https://github.com/diomalta/vellora/blob/main/docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:env -->
 
+### Cross-OS check
+
+The same gated run was repeated on Linux arm64 in a local Docker container (Debian 13, Chrome for
+Testing 155.0.8059.85 linux-arm64, 2026-10-28, run `20261028T113714Z`, on the Phase C 06 tree:
+the strict contract PASS before the step-07 fixes). vellora's PDFs are **byte-identical on macOS
+arm64 and Linux arm64**: 94 of 98 PDFs outside WPT, including all 9 fixtures, the corpus and the
+PDF/A renders; the other 4 are the pdf-probe canary mutations, which also differ between two macOS
+runs. WPT on Linux: 4545 passes of 8047, 0 per-test changes against macOS. The Chrome reference is
+not the same on Linux: words move by up to 0.123 pt, and the `@page` footer is drawn in another
+fallback font (DejaVu Sans instead of Times in three of the four legacy fixtures). The committed baselines were measured with macOS Chrome, so the gate
+refuses the Linux comparison. Gating on Linux needs baselines measured with Linux Chrome (not done
+yet). x86_64 was not measured. Record:
+[`fidelity/gate/snapshots/2026-10-28/linux-arm64`](https://github.com/diomalta/vellora/blob/main/fidelity/gate/snapshots/2026-10-28/linux-arm64/README.md).
+
 ### Reproduce it
 
 The harness is in the repository (`fidelity/`). Its setup is in
@@ -232,7 +246,7 @@ node fidelity/wpt/install-chrome.mjs
 #    strict merge contract, which is the only report that can turn the evidence from DRAFT to PASS.
 #    The run's paint-probe step writes <run>/paint-probe/summary.json (report-only).
 node fidelity/run-all.mjs --gate --main --contract --chrome <Chrome for Testing> \
-  --baseline fidelity/baselines/port/10-integration --wpt-chrome \
+  --baseline fidelity/baselines/port/12-phase-c-final --wpt-chrome \
   --tools-image vellora-fidelity-tools:local --out fidelity/results/run-all/<id>
 
 # 3. The published engine, scored on the same inputs. Build 0.2.0 in a fresh directory: a copied
