@@ -1990,4 +1990,9 @@ fn a_first_line_that_does_not_fit_goes_below_the_float() {
     let (moved, beside) = (at(&laid), at(&raw));
     assert_eq!(moved.1, 0.0);
     assert_eq!(moved.2 - beside.2, 30.0);
+    // A paragraph with a set height is left as Blitz lays it out (Chrome keeps its box; the
+    // grown padding would make it taller).
+    let fixed = FIRST_LINE_BESIDE_FULL_FLOAT.replace("<p>PP", "<p style=\"height: 12px\">PP");
+    assert_ne!(fixed, FIRST_LINE_BESIDE_FULL_FLOAT);
+    assert_eq!(at(&product_layout(&fixed)).1, beside.1);
 }

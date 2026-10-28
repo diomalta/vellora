@@ -66,12 +66,22 @@ first; fix: the no-wrap edit now covers lines that cannot wrap after the float),
 and pre-float-001 (fixes: only floats placed before a block count; `white-space: pre` lines keep
 their place, as in Chrome). Crashtests 239/239 ok.
 
-Ink flags: one new flagged pass, flex-fragmented-with-float-descendant-001 (`bboxShift 426`,
-`missingFrac 0.128`). vellora's test and reference both match Chrome's on-screen layout (4
-column fragments); Chrome's PRINT output of this test shows only the first two columns (the
-overflow columns of a `max-height` multicol go to the next page, which it does not print) and
-draws `outline`, which vellora does not paint. Against the 00-start head this key was a clean
-pass, so the merge step must check whether "clean -> suspect" gates it.
+Ink flags: of the 8 gained passes exactly one is flagged, flex-fragmented-with-float-descendant-001
+(`ink-displaced-vs-chrome`, `bboxShift 426`, `missingFrac 0.128`); break-at-end-container-edge-003
+and pre-wrap-float-001 are clean. vellora's test and reference both match Chrome's on-screen
+layout (`getClientRects`: 4 column fragments, flex item 114 px, the float and the inline-block at
+(489, 41)). Chrome's PRINT output of the test is anomalous: 96 pages, page 1 holding the first
+two columns and 1 px slivers of the column fragments at y = 600, each later page another 1 px
+sliver (`c07-pin-b/flexfrag/chrome-800x600/test.pdf`); vellora prints one page with all four
+columns (overflow columns inline, as on screen) and paints no `outline`.
+
+Diagnostic gate (not a gated run: c06 run copy with this branch's WPT results swapped in,
+`c07-pin-b/diag-c06-fixtures-c07-wpt`, `gate/run.mjs --baseline port/11-phase-c --contract --accept
+c06/accepted.json --step 16-phase-c-07-diag`): exit 0, PASS; pin view (a) 5, (b) 1, (c) 0. The
+remaining (b) item is flex-fragmented-with-float-descendant-001: a clean pass at the pin and at
+the 00-start head, now a flagged pass, "clean pass became suspect", covered by DEBT-10-wpt-1. So
+that key cannot leave the ledger by rule iii's fixed route (its head comparison still gates); the
+other three keys (and floats-placement-vertical-004) no longer appear in the pin view.
 
 ## 9 fixtures
 

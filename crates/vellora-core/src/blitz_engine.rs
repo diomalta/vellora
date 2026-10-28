@@ -1587,7 +1587,7 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
 /// line's advance, its hanging white space left out and its indent in, plus the margin boxes of
 /// the floats on it, summed per side as Blitz does, a `clear` starting a side again). When the
 /// box's used content width is wider than that, Chrome's shrink-to-fit width is that width, so
-/// `max-width` caps it there (the author's `max-width` kept when smaller). Inexact when an
+/// `max-width` caps it there. A box with an author `max-width` is left alone. Inexact when an
 /// atomic inline's max-content width differs from its laid-out width.
 fn float_max_content_caps(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
     use style::values::computed::Overflow;
@@ -1761,7 +1761,8 @@ fn shrink_to_fit(base: &BaseDocument, node: &blitz_dom::Node) -> bool {
 /// pre` line that does not fit beside the float, WPT css/css-text/white-space/pre-float-001.html),
 /// `padding-top` grows by the distance to the first float bottom below which the
 /// piece fits (or below them all). The block's box stays where it is and its content moves down,
-/// as in Chrome (its background covers the same area). Not handled: a later line that does not
+/// as in Chrome (its background covers the same area). Only for a block with `height: auto`, no
+/// `max-height` and a zero `min-height`. Not handled: a later line that does not
 /// fit (Blitz's placement kept), and a first line whose height changes once moved.
 fn narrow_first_line_drops(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
     let mut geometry = FloatGeometry::default();
@@ -1772,9 +1773,21 @@ fn narrow_first_line_drops(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
         let Some(node) = base.get_node(block.id) else {
             continue;
         };
+        // A block whose height is set keeps its box in Chrome (the moved line overflows it),
+        // where the grown padding would make it taller: left alone.
         if node.is_anonymous()
             || !node.primary_styles().is_some_and(|s| {
+                use style::values::generics::length::{GenericMaxSize, GenericSize};
                 s.clone_text_wrap_mode() == style::computed_values::text_wrap_mode::T::Wrap
+                    && matches!(s.clone_height(), GenericSize::Auto)
+                    && matches!(s.clone_max_height(), GenericMaxSize::None)
+                    && match s.clone_min_height() {
+                        GenericSize::Auto => true,
+                        GenericSize::LengthPercentage(lp) => {
+                            lp.0.to_length().is_some_and(|l| l.px() == 0.0)
+                        }
+                        _ => false,
+                    }
             })
         {
             continue;
