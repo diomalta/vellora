@@ -568,14 +568,18 @@ function legend(y, x, manifest) {
 /** Chrome's name with its major version only ("Chrome for Testing 155"). */
 const chromeMajor = (m) => chromeShort(m).replace(/(\d+)\.[\d.]+$/, "$1");
 
+const isMac = (m) => /darwin/.test(m.environment?.os ?? "");
+const measurementKind = (m) =>
+  isMac(m) ? "indicative local macOS measurement" : "indicative local measurement";
+
 /**
  * One-line status for the composites' stamp and the charts' footer. Released:
  * "Released in vellora 0.3.0 · strict merge gate PASS · indicative local macOS measurement
  * (reference: Chrome for Testing 155 on macOS)".
  */
 export function statusStamp(m) {
-  const mac = /darwin/.test(m.environment?.os ?? "");
-  const where = mac ? "indicative local macOS measurement" : "indicative local measurement";
+  const mac = isMac(m);
+  const where = measurementKind(m);
   if (m.released)
     return `Released in vellora ${m.release.version} · strict merge gate PASS · ${where} (reference: ${chromeMajor(m)}${mac ? " on macOS" : ""})`;
   return m.status === "PASS"
@@ -832,11 +836,36 @@ function wptHeadline(m) {
   return `- **${int(a.pass)} of ${int(a.reftests)} WPT reftests** pass through the same pipeline (${pct2(a.passRate)}), coverage of the CSS test subset the harness runs, not a document-quality score. ${m.before.label} engine: ${int(b.pass)} (${pct2(b.passRate)}).`;
 }
 
+/**
+ * README hero: the hero composite and a compact before/after table of the headline values and
+ * the WPT count. The full statement of each value is in the `readme` block.
+ */
+function readmeHeroBlock(m) {
+  const f = m.fixtures.find((x) => x.id === HERO_FIXTURE);
+  const img = m.images.find((i) => i.fixture === HERO_FIXTURE && i.page === 1);
+  const h = m.headline;
+  const n = h.fixtures;
+  const ver = (label) => label.replace(/ \(published\)$/, "");
+  const a = m.wpt.after.totals;
+  const b = m.wpt.before.totals;
+  const of = (x) => `${x} of ${n}`;
+  const alt = `${f.name}, page 1, side by side: ${chromeShort(m)} (reference), ${m.before.label}, ${m.after.label}. Synthetic document data.`;
+  return [
+    ...(img ? [`![${alt}](${assetPath("github", img.file)})`, ""] : []),
+    `| Measured against ${chromeMajor(m)} print-to-PDF, ${n} document fixtures | ${ver(m.before.label)} | ${ver(m.after.label)} |`,
+    "|---|---:|---:|",
+    `| Fixtures with every word within 1 mm of Chrome's position | ${of(h.allWordsWithin1mm.before)} | ${of(h.allWordsWithin1mm.after)} |`,
+    `| Largest per-fixture median word-position error | ${mm(h.worstMedianMm.before.value)} | ${mm(h.worstMedianMm.after.value)} |`,
+    `| Fixtures that print the same number of pages as Chrome | ${of(h.pagesEqualChrome.before)} | ${of(h.pagesEqualChrome.after)} |`,
+    `| WPT reftests passed (CSS subset coverage, not a quality score) | ${int(b.pass)} of ${int(b.reftests)} | ${int(a.pass)} of ${int(a.reftests)} |`,
+    "",
+    `<sub>${m.released ? `Released in vellora ${m.release.version}; ` : `${m.status}, not released; `}${measurementKind(m)}. Source: [manifest.json](./docs/assets/fidelity/manifest.json), method in [Measured fidelity](#measured-fidelity).</sub>`,
+  ].join("\n");
+}
+
 function readmeBlock(m) {
   return [
     statusBlock(m, "github"),
-    "",
-    heroBlock(m, "github"),
     "",
     `Measured against ${chromeShort(m)} headless print-to-PDF on ${m.fixtures.length} document fixtures, comparing the position of every word in each PDF:`,
     "",
@@ -1076,6 +1105,7 @@ export function renderBlocks(m, flavor) {
   return {
     status: statusBlock(m, flavor),
     readme: readmeBlock(m),
+    "readme-hero": readmeHeroBlock(m),
     headline: headlineBlock(m),
     hero: heroBlock(m, flavor),
     charts: chartsBlock(m, flavor),
