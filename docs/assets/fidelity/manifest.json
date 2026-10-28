@@ -1,9 +1,13 @@
 {
   "schema": "vellora-fidelity/site-evidence/1",
-  "status": "DRAFT",
-  "statusReason": "gate report verdict FAIL: the strict merge contract is not met yet",
+  "status": "PASS",
+  "statusReason": "gate report verdict PASS (--contract)",
   "released": false,
-  "authority": "INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available.",
+  "release": {
+    "version": null,
+    "placeholder": "vX.Y.Z"
+  },
+  "authority": "INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs.",
   "reference": {
     "renderer": "Google Chrome for Testing 155.0.8059.85",
     "mode": "headless print-to-PDF (fidelity/lib/chrome-reference.mjs)"
@@ -19,12 +23,12 @@
   },
   "after": {
     "label": "vellora (unreleased branch)",
-    "branch": "phasec/05-tip",
-    "commit": "16fa50467604785e4d8f81efd147dd4f7cc214db",
+    "branch": "phasec/06-tip",
+    "commit": "7e6b028c543423875b8b9ea9f2b26a399401f9b2",
     "blitz": "0.3.0-beta.4, crates.io",
-    "measured": "2026-10-28T06:25:27Z",
-    "runId": "20261028T062527Z",
-    "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --step 14-phase-c-05-tip --out fidelity/results/run-all/c05-tip"
+    "measured": "2026-10-28T08:45:19Z",
+    "runId": "20261028T084519Z",
+    "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json --step 15-phase-c-06-tip --out fidelity/results/run-all/c06-tip"
   },
   "environment": {
     "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
@@ -48,35 +52,54 @@
     "oracle": "fidelity/oracles/doc-aggregate.mjs (lib/doc-aggregate.mjs)"
   },
   "gate": {
-    "verdict": "FAIL",
-    "date": "2026-10-28T06:36:08.682Z",
+    "verdict": "PASS",
+    "date": "2026-10-28T08:55:57.612Z",
     "contract": true,
-    "command": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --debt fidelity/baselines/port/DEBT.json --step 14-phase-c-05-tip --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract",
+    "command": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --debt fidelity/baselines/port/DEBT.json --step 15-phase-c-06-tip --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/gate-contract",
     "counts": {
-      "gating": 6,
+      "gating": 0,
       "pinA": 5,
       "pinB": 4,
-      "pinC": 6,
-      "regression": 5,
-      "pinCGating": 1,
+      "pinC": 0,
+      "regression": 0,
+      "pinCGating": 0,
       "contractPages": 0,
       "contractPagesFailing": 0,
       "docRegressions": 0,
-      "headGating": 4
+      "headGating": 0,
+      "flaggedPassLost": 42
     },
     "conditions": [
       {
         "id": 1,
         "what": "pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt)",
-        "met": false,
-        "count": 6,
-        "items": [
-          "wpt|css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html",
-          "wpt|css/css-break/ruby-003.html",
-          "wpt|css/css-break/svg-with-transform.html",
-          "wpt|css/css-break/table/caption-margin-002.html",
-          "wpt|css/css-break/table/caption-margin-005.html",
-          "wpt|css/css-break/table/monolithic-overflow-001.tentative.html"
+        "met": true,
+        "count": 0,
+        "items": [],
+        "classA": [
+          "wpt|css/CSS2/floats/float-nowrap-8.html",
+          "wpt|css/css-page/page-name-flex-001-print.html",
+          "wpt|css/css-page/page-name-flex-002-print.html",
+          "wpt|css/css-page/page-name-flex-004-print.html",
+          "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html"
+        ],
+        "classB": [
+          "wpt|css/CSS2/floats/floats-placement-vertical-003.xht",
+          "wpt|css/CSS2/floats/zero-width-floats.html",
+          "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html",
+          "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"
+        ],
+        "declared": [
+          "wpt|css/css-page/layers-003-print.html",
+          "wpt|css/css-page/layers-004-print.html",
+          "wpt|css/css-page/page-margin-007-print.html",
+          "wpt|css/css-page/page-size-004-print.html",
+          "wpt|css/css-page/page-size-005-print.html",
+          "wpt|css/css-page/page-size-009-print.html",
+          "wpt|css/css-page/pseudo-first-margin-001-print.html",
+          "wpt|css/css-page/pseudo-first-margin-002-print.html",
+          "wpt|css/css-page/pseudo-first-margin-003-print.html",
+          "wpt|css/css-page/pseudo-first-margin-004-print.html"
         ]
       },
       {
@@ -96,23 +119,26 @@
       {
         "id": 4,
         "what": "step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes",
-        "met": false,
-        "count": 5,
-        "items": [
-          "wpt|css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html",
-          "wpt|css/css-break/svg-with-transform.html",
-          "wpt|css/css-break/table/caption-margin-002.html",
-          "wpt|css/css-break/table/caption-margin-005.html",
-          "wpt|css/css-break/table/monolithic-overflow-001.tentative.html"
-        ],
+        "met": true,
+        "count": 0,
+        "items": [],
         "head": {
-          "verdict": "FAIL",
-          "gating": 4,
-          "items": [
-            "wpt|css/css-break/svg-with-transform.html",
-            "wpt|css/css-break/table/caption-margin-002.html",
-            "wpt|css/css-break/table/caption-margin-005.html",
-            "wpt|css/css-break/table/monolithic-overflow-001.tentative.html"
+          "verdict": "PASS",
+          "gating": 0,
+          "items": [],
+          "debt": [
+            "wpt|css/CSS2/floats/floats-placement-vertical-003.xht",
+            "wpt|css/CSS2/floats/floats-placement-vertical-004.xht",
+            "wpt|css/CSS2/floats/zero-width-floats.html",
+            "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html",
+            "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"
+          ],
+          "accepted": [
+            "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+            "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+            "wpt|css/css-page/page-name-flex-001-print.html",
+            "wpt|css/css-page/page-name-flex-002-print.html",
+            "wpt|css/css-page/page-name-flex-004-print.html"
           ]
         }
       }
@@ -124,7 +150,7 @@
     "method": "fidelity/oracles/py/paint.py (PyMuPDF get_drawings + text spans; docstring)",
     "tool": "pymupdf 1.28.2",
     "after": {
-      "command": "node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c05-tip --label run-all",
+      "command": "node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c06-tip --label run-all",
       "fixtures": {
         "invoice": {
           "pages": 3,
@@ -255,7 +281,7 @@
       }
     },
     "before": {
-      "command": "node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c05/paint-probe-pin-v0.2.0.json",
+      "command": "node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c06/paint-probe-pin-v0.2.0.json",
       "fixtures": {
         "invoice": {
           "pages": 3,
@@ -772,23 +798,23 @@
     },
     "after": {
       "label": "vellora (unreleased branch)",
-      "commit": "16fa50467604785e4d8f81efd147dd4f7cc214db",
+      "commit": "7e6b028c543423875b8b9ea9f2b26a399401f9b2",
       "engine": "blitz-0.3.0-beta.4",
       "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
-      "date": "2026-10-28T06:25:27Z",
+      "date": "2026-10-28T08:45:19Z",
       "chrome": "Google Chrome for Testing 155.0.8059.85",
       "totals": {
         "reftests": 8047,
-        "pass": 4414,
-        "passClean": 3883,
-        "passBlank": 10,
-        "fail": 2745,
+        "pass": 4545,
+        "passClean": 4021,
+        "passBlank": 8,
+        "fail": 2616,
         "unsupported": 877,
         "error": 0,
         "skip": 1,
-        "passRate": 54.85,
-        "passRateEvaluated": 61.57,
-        "passRateClean": 48.25
+        "passRate": 56.48,
+        "passRateEvaluated": 63.4,
+        "passRateClean": 49.97
       }
     },
     "chrome": {
@@ -872,63 +898,63 @@
   ],
   "files": {
     "metrics": {
-      "path": "~/Repositories/vellora-fidelity-runs/docs-c05/visual-compare/metrics.json",
-      "sha256": "6df35a334597b33c9488f25b7795d9758b0da3860117bdeb04be8df778eadd03"
+      "path": "~/Repositories/vellora-fidelity-runs/docs-c06/visual-compare/metrics.json",
+      "sha256": "4dbffdcbfa6590ae18f061b1cc03fbcbc5d220bc60f467a3c95522e1093b2df7"
     },
     "pinDoc": {
       "path": "<repo>/fidelity/baselines/pin/doc-aggregate.json",
       "sha256": "b35a80852fa904cb5609b98c6cb63fc3dfc1edd10007ea502411a7fa65d865b3"
     },
     "runSummary": {
-      "path": "~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/summary.json",
-      "sha256": "a7e90a8f5f77249884d445fec09b69818658d35c233700dc6c31ef74b47f19c1"
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/summary.json",
+      "sha256": "59d6921204b20719435f01f0d9b325118ca4e48fc26ff5e4349393d0d9b39131"
     },
     "runDocAggregate": {
-      "path": "~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/doc-aggregate/summary.json",
-      "sha256": "1926f4947e8616889da02cd59459bbc306feb7b0b264d7863a0bfac5d02d4ba5"
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/doc-aggregate/summary.json",
+      "sha256": "af4a5e31d860798635328151e6663fdbc528725380a3a212902e63ab80b87f2f"
     },
     "wptBefore": {
       "path": "<repo>/fidelity/baselines/pin/wpt/by-directory.json",
       "sha256": "4b2fb04959c2f1c2caed33ffbe3fc94610b21ffcd9f2d801a8f3212b12c65317"
     },
     "wptRun": {
-      "path": "~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/wpt/summary.json",
-      "sha256": "fc762391a551d5125f5d3dca9afb6aae01a3694c32bb6938bdf8cd5c6f8e8ee1"
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/wpt/summary.json",
+      "sha256": "5f52e7d0e08d2ddd8d53403e6f177b974a0cc62bd4815a28424afc5859e961ca"
     },
     "gate": {
-      "path": "~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract/gate-report.json",
-      "sha256": "a27ac5b79072e6e8928b2989fe69c3d22b3424626208d8b6148af881af3ddabd"
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/gate-contract/gate-report.json",
+      "sha256": "cbd8b91ee546ad53762064bf21ea36935894acdde024697e19b37cd6b643edeb"
     },
     "paint": {
-      "path": "~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/paint-probe/summary.json",
-      "sha256": "e06384e3569cb740a12004c85653b4532c3e9f962ed4167f5b24ee6b29a9ad1d"
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/paint-probe/summary.json",
+      "sha256": "bd4f587f66711b61c00d0df3c9c00d76310e3762e4311b388bd96b5e1061f44b"
     },
     "paintBefore": {
-      "path": "<repo>/fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json",
-      "sha256": "1774751129f836537c0459705f1347cd83677ee35237f7e630a1900712bf9b7e"
+      "path": "<repo>/fidelity/gate/snapshots/2026-10-28/c06-docs/paint-probe-pin-v0.2.0.json",
+      "sha256": "bb06d7574067cb908fa2d66a9683801e73a019a6deb6f00fab8c979847686e58"
     },
     "images": {
-      "invoice-p1.jpg": "f6ebe1c4b40955b1e42fc7064c8f35d2953a5db5715414ada9831cd72d6760db",
-      "receipt-p1.jpg": "7e441255a138acd98bfd7d62411bffd2bc54efec8ad0d40df4dcb627de3fcb9e",
-      "boleto-p1.jpg": "34c01c6f92767636fc7d9c864754488d9ecd44a3e16c0a94481dde4ad71f4bf0",
-      "boleto-febraban-p1.jpg": "89d11b23f2bc5855efd3f096a153b9442548a18c47885faaf0a484a7a88283f9",
-      "danfe-p1.jpg": "45e7adc7a7d6a3b9e2a84b7275e9e0634fa98689ab001dd0697f81ff5bc3be44",
-      "danfe-p2.jpg": "d462c1df41c3f5f255f8a45266754213edf2d3510f39392b237b1b5f0930296f",
-      "notification-p1.jpg": "2716c5d8238f0fb61a2f4c66686216d3ff84dbadfb5f9f27b8b6efc3c9bbbbd2",
-      "text-stress-ptbr-p1.jpg": "c063c3da07e02ddf4147633335160135594f5d6081b347126596f0523a56c393",
-      "text-stress-ptbr-p8.jpg": "fa57f8e9336cb92e74c3a0c9292fd968f1bc1c60f04e3be6e0f159f44ac8bf29",
-      "oss-postmark-receipt-p1.jpg": "7f4de632f7b26dc6d90f474f5f2db033233d2ef2278085f15d812aea5d291bd3",
-      "oss-postmark-receipt-p2.jpg": "f836e96c12efcc87ff61a0f450fb859d2c6758d2019e4660b7a7aa25e010b629",
-      "oss-sparksuite-invoice-p1.jpg": "2f21f23db537a303ffb7f6b57d13da6b24c7c7fb7a32efaf5c89a86e6faca70a"
+      "invoice-p1.jpg": "e00f3f6efa437f4d670e20d128c6f99e44e357eba1beb4ffcdf2b4487ad7605a",
+      "receipt-p1.jpg": "f708da206d762f0cea0de317ec05430cc23b2bae2ef12ceeecb2e4d6df045be7",
+      "boleto-p1.jpg": "4f6eb925f3b78966d89389dc2ad89046b0e394438b78b039602fad90ecf1f414",
+      "boleto-febraban-p1.jpg": "666a5bb1b12b8332e151b0897d50ac1ec23d793ef9cb5f833fed681696ae6e7f",
+      "danfe-p1.jpg": "e02c3c9c0bd117dfb9985adf0508ef1365c87d30ece06edb181f96211317c38f",
+      "danfe-p2.jpg": "71764c26b99fdde18e74406d80239b9d6387d89274f09a573245222c537d71d9",
+      "notification-p1.jpg": "1dc1dac7910399115ec48e05797f52cc7ca4265064a27d7a53174ed021bbb8a4",
+      "text-stress-ptbr-p1.jpg": "4055ffd92b86ccab571455f2b395207d2715745b0b40dc056647552661148912",
+      "text-stress-ptbr-p8.jpg": "7300b6e19d50176dc26855f68af7322ee706064aa7e9d672e91f5252868bc1c1",
+      "oss-postmark-receipt-p1.jpg": "aa3fec60bb7ae938f5534b406af732b449aaec732e455a97de7aacb7df7d47ef",
+      "oss-postmark-receipt-p2.jpg": "d922e3bb4950bbc293a36129e4475d3e139a391e718ba3cd521171d4af8c7524",
+      "oss-sparksuite-invoice-p1.jpg": "5685347c853a8e020c0f555f936e07ca1b0a9c29586cc19d97bee5f8f6edcaaa"
     },
     "og": {
       "path": "<repo>/docs/public/fidelity/og.jpg",
-      "sha256": "d149e04f157a283cd207a69afdf137cd2de040f39d085e8c6ea24a99e4ea7b14"
+      "sha256": "1341651589c6662feeaa9d5fc2d2645c0da281692fc1974b4980be30decde077"
     }
   },
   "commands": {
     "images": "node fidelity/report/visual-compare.mjs --run <RUN> --pin-pdfs <doc-aggregate-pin.mjs --pdf-out dir> --out <compare dir> (pdftoppm -r 55), composed by fidelity/report/py/compose.py",
-    "regenerate": "node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c05/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --gate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c05 --update-docs"
+    "regenerate": "node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c06/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --gate ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c06-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c06 --update-docs"
   },
   "headline": {
     "fixtures": 9,

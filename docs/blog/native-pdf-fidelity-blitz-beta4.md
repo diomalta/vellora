@@ -1,14 +1,13 @@
 ---
 title: "Word by word against Chrome: measuring vellora's native PDFs"
-description: How vellora moved its browserless renderer to Blitz 0.3.0-beta.4, built the measurement oracles first, compensated the Blitz layout bugs it found, turned on float layout that the published package never compiled, and measured every word and every dashed border against Chrome.
-draft: true
+description: How vellora moved its browserless renderer to Blitz 0.3.0-beta.4, built the measurement oracles first, compensated the Blitz layout bugs it found, turned on float layout that the published package never compiled, laid out multi-column, ruby and inline SVG itself, and measured every word and every dashed border against Chrome.
 ---
 
 # Word by word against Chrome: measuring vellora's native PDFs
 
 <!-- fidelity-evidence:status -->
-::: warning DRAFT
-**DRAFT. These results are from an unreleased branch that is not merged.** The merge is gated by a strict oracle contract, and this run does not pass it yet (gate report verdict FAIL: the strict merge contract is not met yet). INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available. The released package is vellora@0.2.0.
+::: tip PASS
+**This run passes the strict merge gate (verdict PASS, --contract). The branch is not merged or released yet:** it is to be merged in vellora vX.Y.Z (placeholder; the release sets the version). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. The released package is vellora@0.2.0.
 :::
 <!-- /fidelity-evidence:status -->
 
@@ -31,8 +30,9 @@ also covers the work that moved the numbers, and the parts that are still open.
 - **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
 <!-- /fidelity-evidence:headline -->
 
-"Before" is always the published package, which is what `npm install vellora` gives you today.
-"After" is a branch that has not been merged or released.
+"Before" is always the published package, vellora 0.2.0, which is what `npm install vellora`
+gives you today. "After" is a branch that passes its merge gate on the run measured here, and that
+has not been merged or released yet.
 
 ## Measure first, then change the engine
 
@@ -117,7 +117,10 @@ canaries. Where engines disagree about a float on a no-wrap line, vellora follow
 None of the nine document fixtures uses a float, so their numbers do not change because of this.
 WPT does change. Some of the published package's float "passes" were false: the test and its
 reference page lost their floats the same way and matched by accident. The merge gate classifies
-such a pass as an artefact (class a) only when there is evidence for it.
+such a pass as an artefact (class a) only when there is evidence for it. Not every lost pass is
+an artefact. A few float and line-box tests that the published package passed fail on the branch,
+and raw Blitz fails them the same way. They are recorded in the debt ledger, not fixed, and the
+gate lists them by name under "What is not done".
 
 ## What word positions cannot see
 
@@ -154,22 +157,54 @@ On the DANFE, vellora draws more dash segments than Chrome. Our working explanat
 measured, is that the collapsed-border compensation extends each cell's horizontal edge across the
 column lines, so the end dash of one cell overlaps the first dash of the next.
 
-## Multi-column layout, and what it costs
+## Multi-column, ruby and inline SVG, laid out by vellora
 
-Blitz 0.3.0-beta.4 and its layout engine, Taffy 0.15.0, have no multi-column layout. Stylo
-computes `column-count` and `column-width`, and nothing reads them, so a `columns: 2` box was laid
-out as one column. The branch lays the columns out in vellora, behind the same single Blitz
-module, with a canary that fails once Blitz lays multicol out itself.
+Blitz 0.3.0-beta.4 and its layout engine, Taffy 0.15.0, have no multi-column layout and no ruby
+layout. Stylo computes `column-count` and `column-width`, and nothing reads them, so a
+`columns: 2` box was laid out as one column. Ruby annotations were printed inline, after their
+base text. The branch lays out both in vellora, behind the same single Blitz module, following
+Chrome's print output. A canary fails once Blitz lays multicol out itself.
 
-It fixes the flex-fragmentation tests that needed only columns. A ruby test that needs ruby layout
-as well as columns still fails. The change also loses some fragmentation tests that passed
-before. In those tests the one-column layout happened to produce the same picture as Chrome.
-With real columns, other gaps show: an inline SVG that vellora does not paint, table captions
-that Blitz lays out with zero size, and several forced breaks at one vertical position. The merge
-gate lists them by name below. Whether to keep the multi-column layout and fix those gaps, or
-back it out, is an open decision. Still missing: `column-span: all`, `column-rule`, nested
-multi-column boxes, and a multi-column box longer than one page, which the paginator cuts across
-all columns at once.
+The first multi-column step also lost some fragmentation tests that passed before. In those tests,
+the one-column layout happened to produce the same picture as Chrome. With real columns, other
+gaps showed. The next step fixed each of them by rendering, not by declaring them out of scope:
+
+- **Inline SVG is drawn.** The strict gate accepted inline `<svg>` but drew nothing for it. Blitz
+  now lays it out as a replaced box, and vellora draws it as PDF vector content (krilla-svg).
+  Shapes, paths, gradients, clipping, masks and transforms are vectors, and `<text>` is selectable
+  text set in the bundled fonts or the `fonts` option's faces. SVG filters are drawn as images.
+- **Table captions and anonymous table boxes.** Blitz drops a table's captions and every child of
+  a table or row that is not a row or a cell. vellora now builds the boxes that CSS 2.2 §17.2.1 and §17.4
+  calls for before layout.
+- **Forced column breaks** are taken in document order, so several forced breaks at one vertical
+  position each start a new column.
+- **Ruby layout.** Each annotation sits over its base, on the base's em box, as in Chrome.
+
+Drawing SVG exposed one more bug in vellora's own painter. It drew every image of a page after
+every background, so a later positioned box never covered an image. Images are now painted in
+their CSS painting-order layer (CSS 2.2 Appendix E). Five WPT tests had passed only because the
+SVG they draw was not drawn at all, and they pass again with the fix.
+
+What this costs, and what is still missing:
+
+- **A bigger addon.** The dependency graph now holds two versions of usvg, Blitz's for layout and
+  krilla-svg's for drawing. The release notes for inline SVG
+  ([`.changeset/inline-svg-native.md`](https://github.com/diomalta/vellora/blob/main/.changeset/inline-svg-native.md))
+  record the size of the macOS arm64 addon before and after, measured once on a local build.
+- **Host fonts can reach SVG layout.** The first inline SVG of a process loads the host's font list
+  once (Blitz's own SVG parse), and vellora never draws with it. In two cases, an SVG without a
+  `viewBox` gets its box size from its content, with `<text>` measured in host fonts. The two cases
+  are a percentage `height` inside a percentage-height parent, and `box-sizing: border-box` with a
+  percentage padding. In those cases the box size can differ from one host to another.
+  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md) lists both.
+- **Ruby adds an element.** vellora wraps each ruby base in a `vellora-ruby-base` element before
+  the cascade. Your HTML is not changed, but a selector such as `ruby > b` no longer matches a
+  `<b>` inside a base. How often that matters in real documents has not been measured. Ruby
+  overhang, `ruby-align`, `ruby-position: under`, `<rtc>` and nested ruby are not implemented.
+- **Multi-column gaps.** `column-span: all` and `column-rule` are not implemented, and neither is
+  a multi-column box inside another one. A multi-column box longer than one page is cut across
+  all its columns at once. One fragmentation test that the columns exposed, with a float beside a
+  line, still fails. It failed in the published package too.
 
 ## Results
 
@@ -199,12 +234,12 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 
 <!-- fidelity-evidence:losses -->
 - **oss-postmark-receipt: 97.2% of words within 1 mm** (vellora 0.2.0 (published): 40.0%); p90 error 0.14 mm.
-- **WPT:** 4,414 of 8,047 reftests pass (54.85%); 3,883 (48.25%) pass without any suspect-pass flag. 2,745 still fail and 877 are rejected as outside the strict subset.
-- **Merge gate: verdict FAIL** on this run (strict contract, --contract), 6 gating items. The branch does not merge until every condition is met.
-  - (1) pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt): **NOT met**. 6 items worse than the published package that the gate cannot classify yet: `css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html`, `css/css-break/ruby-003.html`, `css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`. Classified: 5 class a, 4 class b.
+- **WPT:** 4,545 of 8,047 reftests pass (56.48%); 4,021 (49.97%) pass without any suspect-pass flag. 2,616 still fail and 877 are rejected as outside the strict subset.
+- **Merge gate: verdict PASS** on this run (strict contract, --contract), 0 gating items. Every condition is met. What each condition still lets through is listed with it.
+  - (1) pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: provable Blitz debt): **met**. Passed with the published engine and fail on the branch: 9 WPT tests. Class a (the old pass was false, or Chrome fails it too): `css/CSS2/floats/float-nowrap-8.html`, `css/css-page/page-name-flex-001-print.html`, `css/css-page/page-name-flex-002-print.html`, `css/css-page/page-name-flex-004-print.html`, `css/css-text/hanging-punctuation/hanging-punctuation-first-002.html`. Class b (raw Blitz fails it the same way; recorded in the debt ledger, not fixed): `css/CSS2/floats/floats-placement-vertical-003.xht`, `css/CSS2/floats/zero-width-floats.html`, `css/CSS2/linebox/baseline-block-with-overflow-001.html`, `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html`. 10 tests that failed before are now rejected by the strict subset.
   - (2) every fixture's median error and share within 1 mm at least as good as the published package's: **met**.
   - (3) every fixture's page count equal to Chrome's: **met**.
-  - (4) step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes: **NOT met**. 5 regressions against the previous gated step: `css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html`, `css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`. Head view: FAIL, 4 items (`css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`).
+  - (4) step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes: **met**. Head view: PASS; 5 tests carried in the debt ledger (`css/CSS2/floats/floats-placement-vertical-003.xht`, `css/CSS2/floats/floats-placement-vertical-004.xht`, `css/CSS2/floats/zero-width-floats.html`, `css/CSS2/linebox/baseline-block-with-overflow-001.html`, `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html`); 5 items accepted as class a, with the evidence in the acceptance file. 42 suspect passes (ink-flagged: test and reference both missing content Chrome draws) lost against the previous step: reported, not gated.
 <!-- /fidelity-evidence:losses -->
 
 The postmark receipt's missing words are a known pair. Chrome's PDF draws the masthead text twice,
@@ -223,11 +258,11 @@ WPT reftests passed through the vellora pipeline, printed to PDF and compared wi
 | | Blitz 0.3.0-alpha.5 engine of vellora 0.2.0 (baseline commit with layout instrumentation) | vellora (unreleased branch) (Blitz 0.3.0-beta.4, crates.io) | Chrome/155.0.8059.85 through the same harness |
 |---|---:|---:|---:|
 | Reftests | 8,047 | 8,047 | 8,046 |
-| Pass | 2,578 (32.04%) | 4,414 (54.85%) | 7,258 (90.21%) |
-| Pass without suspect-pass flags | 1,988 (24.70%) | 3,883 (48.25%) | 7,258 (90.21%) |
+| Pass | 2,578 (32.04%) | 4,545 (56.48%) | 7,258 (90.21%) |
+| Pass without suspect-pass flags | 1,988 (24.70%) | 4,021 (49.97%) | 7,258 (90.21%) |
 | Unsupported (rejected by the strict subset) | 869 | 877 | 0 |
 
-Commits: 2c66544 (2026-10-21T05:41:54Z), 16fa504 (2026-10-28T06:25:27Z); WPT `9d8aceec`. Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from). The 0.2.0 column was measured on a baseline commit that adds layout instrumentation to the 0.2.0 engine; its render-path equivalence to the tag is not separately verified.
+Commits: 2c66544 (2026-10-21T05:41:54Z), 7e6b028 (2026-10-28T08:45:19Z); WPT `9d8aceec`. Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from). The 0.2.0 column was measured on a baseline commit that adds layout instrumentation to the 0.2.0 engine; its render-path equivalence to the tag is not separately verified.
 <!-- /fidelity-evidence:wpt -->
 
 The WPT number shows how much of the CSS test subset now renders the way the reference page does.
@@ -237,31 +272,40 @@ strict subset. Read it as coverage. The document fixtures above are the measure 
 ## Why it is not released yet
 
 The branch merges only when a strict oracle contract passes on one gated run. Four conditions
-must all hold. No measured item may be worse than in the published package unless the gate can
-classify it, and such items must be fixed, not parked in the debt ledger. Every fixture's median error
-and share within 1 mm must be at least as good as the published package's. Every fixture's page
-count must equal Chrome's. The step-to-step ratchet must pass. This run does not pass yet, which is why every
-number here is marked as a draft. When the contract passes, the same generator rebuilds this page
-from that gated run, and from Linux CI once that runs the harness.
+must all hold:
+
+1. No measured item may be worse than in the published package unless the gate classifies it with
+   evidence. Class a means the old pass was false. Class b means raw Blitz fails it the same way,
+   and it goes in the debt ledger, with a ceiling that may only go down.
+2. Every fixture's median error and share within 1 mm must be at least as good as the published
+   package's.
+3. Every fixture's page count must equal Chrome's.
+4. The step-to-step ratchet must pass.
+
+The run measured here passes all four. The gate's own list of what it still lets through is under
+"What is not done" above. Passing the gate is not a release. The branch still goes through review
+and merge, and then a release, which will set the version in the status note at the top. The
+numbers are local macOS measurements. The authoritative run is pinned Linux CI, which does not
+run the harness yet. When it does, this page is rebuilt from that run by the same generator.
 
 ## Reproduce it
 
-Everything above is generated from one manifest by a committed script. Prose like this paragraph
-carries no measured value. The method, the full commands and the environment are in
+Every table, chart, list of results and status note above is generated from one manifest by a
+committed script, and the prose carries no measured value of its own. The method, the full commands and the environment are in
 [Measured fidelity](/guide/fidelity#measured-fidelity).
 
 <!-- fidelity-evidence:env -->
-- Status: **DRAFT** (gate report verdict FAIL: the strict merge contract is not met yet). INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available.
+- Status: **PASS** (gate report verdict PASS (--contract)). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs.
 - Reference: Google Chrome for Testing 155.0.8059.85, headless print-to-PDF (fidelity/lib/chrome-reference.mjs).
 - Before: vellora 0.2.0 (published), tag `v0.2.0`, commit `5810062`, Blitz 0.3.0-alpha.5 line, git 2003ba5. Scored 2026-10-27T22:36:58.971Z.
-- After: vellora (unreleased branch) `phasec/05-tip`, commit `16fa504`, Blitz 0.3.0-beta.4, crates.io. Run `20261028T062527Z` (2026-10-28T06:25:27Z).
+- After: vellora (unreleased branch) `phasec/06-tip`, commit `7e6b028`, Blitz 0.3.0-beta.4, crates.io. Run `20261028T084519Z` (2026-10-28T08:45:19Z).
 - Environment: darwin 27.0.0 arm64 (macOS 27.0.1), Apple M5 Pro, Node v22.23.2, rustc 1.96.0 (ac68faa20 2026-05-25), PyMuPDF 1.28.2, pdftoppm version 26.06.0.
 - Word positions: fidelity/oracles/py/words.py (PyMuPDF rawdict: pen origin x, baseline y); pairing: k-th occurrence of a text key in reading order (page, baseline, x) ↔ k-th in Chrome's; quantiles: nearest rank over paired words (ceil(q*n)-th smallest).
-- Run command: `node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --step 14-phase-c-05-tip --out fidelity/results/run-all/c05-tip`
-- Gate: `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --debt fidelity/baselines/port/DEBT.json --step 14-phase-c-05-tip --accept fidelity/gate/snapshots/2026-10-28/c05/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract` → FAIL (2026-10-28T06:36:08.682Z).
-- Paint probe (report-only): `node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c05-tip --label run-all`; published package: `node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c05/paint-probe-pin-v0.2.0.json`.
+- Run command: `node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json --step 15-phase-c-06-tip --out fidelity/results/run-all/c06-tip`
+- Gate: `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --debt fidelity/baselines/port/DEBT.json --step 15-phase-c-06-tip --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/gate-contract` → PASS (2026-10-28T08:55:57.612Z).
+- Paint probe (report-only): `node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c06-tip --label run-all`; published package: `node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c06/paint-probe-pin-v0.2.0.json`.
 - Page images: `node fidelity/report/visual-compare.mjs --run <RUN> --pin-pdfs <doc-aggregate-pin.mjs --pdf-out dir> --out <compare dir> (pdftoppm -r 55), composed by fidelity/report/py/compose.py`
-- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c05/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504 --gate ~/Repositories/vellora-fidelity-runs/run-all-c05-tip-20261028T062527Z-blitz-0.3.0-beta.4-vellora-16fa504/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c05 --update-docs`
+- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c06/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --gate ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c06-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c06 --update-docs`
 - Raw values: [manifest.json](https://github.com/diomalta/vellora/blob/main/docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:env -->
 

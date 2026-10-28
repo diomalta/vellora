@@ -98,7 +98,7 @@ const pageDescriptions: Record<string, string> = {
   "blog/html-to-pdf-nodejs-without-puppeteer.md":
     "Why vellora uses a native browserless default for generated document HTML in Node.js, where it fits, and when to keep a browser renderer.",
   "blog/native-pdf-fidelity-blitz-beta4.md":
-    "Draft: how vellora moved to Blitz 0.3.0-beta.4, built measurement oracles first, compensated a table layout bug, and measured every word against Chrome.",
+    "How vellora moved to Blitz 0.3.0-beta.4, built measurement oracles first, compensated Blitz layout bugs, laid out multi-column, ruby and inline SVG itself, and measured every word against Chrome.",
 };
 
 function canonicalUrl(relativePath: string): string {
@@ -192,7 +192,7 @@ export default defineConfig({
               link: "/blog/html-to-pdf-nodejs-without-puppeteer",
             },
             {
-              text: "Word by word against Chrome (draft)",
+              text: "Word by word against Chrome",
               link: "/blog/native-pdf-fidelity-blitz-beta4",
             },
           ],

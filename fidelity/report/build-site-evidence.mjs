@@ -76,7 +76,7 @@ function composeSpec(manifest, compareDir, outDir, ogOut) {
   const chrome = manifest.reference.renderer.replace(/^Google /, "");
   const stamp =
     manifest.status === "PASS"
-      ? "Gated run · indicative local measurement"
+      ? "Merge gate PASS · not merged or released yet · indicative local measurement"
       : "DRAFT · unreleased branch, not merged · indicative local measurement";
   const items = [];
   const images = [];

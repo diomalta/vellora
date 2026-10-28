@@ -124,6 +124,12 @@ const WPT_KEYS = [
 ];
 const pickWpt = (t) => Object.fromEntries(WPT_KEYS.filter((k) => k in t).map((k) => [k, t[k]]));
 
+/**
+ * Version placeholder for the copy of a PASS run. The branch is not merged or released when the
+ * evidence is generated; the release replaces this token (and sets `released`) when it ships.
+ */
+export const RELEASE_PLACEHOLDER = "vX.Y.Z";
+
 /** "DRAFT" unless a gate report with verdict PASS is supplied. */
 export function evidenceStatus(gate) {
   return gate && gate.verdict === "PASS" ? "PASS" : "DRAFT";
@@ -173,6 +179,10 @@ export function gateConditions(gate) {
       met: pinC === 0,
       count: pinC,
       items: ids(gate.pin?.items, (i) => i.pinClass === "c"),
+      // What the condition lets through, shown as losses even when it is met.
+      classA: ids(gate.pin?.items, (i) => i.pinClass === "a"),
+      classB: ids(gate.pin?.items, (i) => i.pinClass === "b"),
+      declared: ids(gate.pin?.items, (i) => i.pinClass === "declared"),
     },
     {
       id: 2,
@@ -194,7 +204,13 @@ export function gateConditions(gate) {
       met: regressions.length === 0 && (c.regression ?? 0) === 0 && headVerdict !== "FAIL",
       count: c.regression ?? 0,
       items: regressions,
-      head: { verdict: headVerdict, gating: c.headGating ?? headGating.length, items: headGating },
+      head: {
+        verdict: headVerdict,
+        gating: c.headGating ?? headGating.length,
+        items: headGating,
+        debt: ids(gate.head?.items, (i) => i.class === "debt"),
+        accepted: ids(gate.head?.items, (i) => i.class === "accepted"),
+      },
     },
   ];
 }
@@ -291,8 +307,11 @@ export function buildManifest(inputs) {
           ? `gate report verdict ${gate.verdict}: the strict merge contract is not met yet`
           : "no gate report supplied",
     released: false,
+    release: { version: null, placeholder: RELEASE_PLACEHOLDER },
     authority: /darwin/.test(env.os ?? "")
-      ? "INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available."
+      ? status === "PASS"
+        ? "INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs."
+        : "INDICATIVE: local macOS measurement. Public numbers will be regenerated from the final gated run, and from Linux CI when available."
       : (env.authority ?? "UNSPECIFIED"),
     reference: {
       renderer: env.chrome?.version ?? "UNKNOWN",
@@ -352,6 +371,7 @@ export function buildManifest(inputs) {
             contractPagesFailing: gate.counts?.contractPagesFailing ?? 0,
             docRegressions: gate.counts?.docRegressions ?? 0,
             headGating: gate.counts?.headGating ?? 0,
+            flaggedPassLost: gate.counts?.flaggedPassLost ?? 0,
           },
           conditions: gateConditions(gate),
         }
@@ -432,7 +452,7 @@ export const mm = (v) => `${v.toFixed(2)} mm`;
 export const pct = (v) => `${v.toFixed(1)}%`;
 export const pct2 = (v) => `${v.toFixed(2)}%`;
 const int = (v) => v.toLocaleString("en-US");
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const plural = (n, w, many = `${w}s`) => `${n} ${n === 1 ? w : many}`;
 const esc = (s) =>
   String(s)
     .replace(/&/g, "&amp;")
@@ -503,7 +523,7 @@ function legend(y, x, manifest) {
 
 function statusLine(manifest) {
   return manifest.status === "PASS"
-    ? "Gated run (verdict PASS). Local macOS: indicative."
+    ? "Strict merge gate PASS. Not merged or released yet. Local macOS: indicative."
     : "DRAFT: unreleased branch, merge not yet passed. Local macOS: indicative.";
 }
 
@@ -695,9 +715,10 @@ function attributionLine(f) {
 function statusBlock(m, flavor) {
   const text =
     m.status === "PASS"
-      ? `Measured on a gated run (gate verdict PASS). ${m.authority}`
+      ? `**This run passes the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). The branch is not merged or released yet:** it is to be merged in vellora ${m.release?.placeholder ?? RELEASE_PLACEHOLDER} (placeholder; the release sets the version). ${m.authority} The released package is ${m.before.npm}.`
       : `**DRAFT. These results are from an unreleased branch that is not merged.** The merge is gated by a strict oracle contract, and this run does not pass it yet (${m.statusReason}). ${m.authority} The released package is ${m.before.npm}.`;
-  return flavor === "github" ? `> ${text}` : `::: warning ${m.status}\n${text}\n:::`;
+  const kind = m.status === "PASS" ? "tip" : "warning";
+  return flavor === "github" ? `> ${text}` : `::: ${kind} ${m.status}\n${text}\n:::`;
 }
 
 function headlineBlock(m) {
@@ -789,9 +810,8 @@ function lossesBlock(m) {
   items.push(
     `**WPT:** ${int(w.after.totals.pass)} of ${int(w.after.totals.reftests)} reftests pass (${pct2(w.after.totals.passRate)}); ${int(w.after.totals.passClean)} (${pct2(w.after.totals.passRateClean)}) pass without any suspect-pass flag. ${int(w.after.totals.fail)} still fail and ${int(w.after.totals.unsupported)} are rejected as outside the strict subset.`,
   );
-  if (m.gate && m.gate.verdict !== "PASS") {
-    items.push(gateLines(m.gate));
-  }
+  // Always listed: on PASS the gate lines name what the contract lets through.
+  if (m.gate) items.push(gateLines(m.gate));
   return items.map((i) => `- ${i}`).join("\n");
 }
 
@@ -799,24 +819,42 @@ const testIds = (list) => list.map((k) => `\`${k.replace(/^wpt\|/, "")}\``).join
 
 /** The merge gate's verdict, one sub-item per strict-contract condition. */
 function gateLines(g) {
-  const head = `**Merge gate: verdict ${g.verdict}** on this run${g.contract ? " (strict contract, --contract)" : ""}, ${plural(g.counts.gating, "gating item")}. The branch does not merge until every condition is met.`;
+  const pass = g.verdict === "PASS";
+  const head = `**Merge gate: verdict ${g.verdict}** on this run${g.contract ? " (strict contract, --contract)" : ""}, ${plural(g.counts.gating, "gating item")}. ${pass ? "Every condition is met. What each condition still lets through is listed with it." : "The branch does not merge until every condition is met."}`;
   if (!g.conditions) return head;
   const sub = g.conditions.map((c) => {
     const state = c.met ? "met" : "NOT met";
     let detail = "";
-    if (c.id === 1 && !c.met) {
-      detail = ` ${plural(c.count, "item")} worse than the published package that the gate cannot classify yet${c.items.length ? `: ${testIds(c.items)}` : ""}. Classified: ${int(g.counts.pinA)} class a, ${int(g.counts.pinB)} class b.`;
+    if (c.id === 1) {
+      const open = c.met
+        ? ""
+        : ` ${plural(c.count, "item")} worse than the published package that the gate cannot classify yet${c.items.length ? `: ${testIds(c.items)}` : ""}.`;
+      const a = c.classA ?? [];
+      const b = c.classB ?? [];
+      const classified =
+        a.length || b.length
+          ? ` Passed with the published engine and fail on the branch: ${plural(a.length + b.length, "WPT test")}.${a.length ? ` Class a (the old pass was false, or Chrome fails it too): ${testIds(a)}.` : ""}${b.length ? ` Class b (raw Blitz fails it the same way; recorded in the debt ledger, not fixed): ${testIds(b)}.` : ""}`
+          : ` Classified: ${int(g.counts.pinA)} class a, ${int(g.counts.pinB)} class b.`;
+      const declared = c.declared?.length
+        ? ` ${plural(c.declared.length, "test")} that failed before ${c.declared.length === 1 ? "is" : "are"} now rejected by the strict subset.`
+        : "";
+      detail = `${open}${classified}${declared}`;
     }
     if ((c.id === 2 || c.id === 3) && !c.met) detail = ` ${plural(c.count, "fixture")} failing.`;
-    if (c.id === 4 && !c.met) {
+    if (c.id === 4) {
       const r = c.count
         ? ` ${plural(c.count, "regression")} against the previous gated step${c.items.length ? `: ${testIds(c.items)}` : ""}.`
         : "";
       const h =
         c.head?.verdict === "FAIL"
           ? ` Head view: FAIL, ${plural(c.head.gating, "item")}${c.head.items.length ? ` (${testIds(c.head.items)})` : ""}.`
-          : "";
-      detail = `${r}${h}`;
+          : c.head?.verdict
+            ? ` Head view: ${c.head.verdict}${c.head.debt?.length ? `; ${plural(c.head.debt.length, "test")} carried in the debt ledger (${testIds(c.head.debt)})` : ""}${c.head.accepted?.length ? `; ${plural(c.head.accepted.length, "item")} accepted as class a, with the evidence in the acceptance file` : ""}.`
+            : "";
+      const flagged = g.counts.flaggedPassLost
+        ? ` ${plural(g.counts.flaggedPassLost, "suspect pass", "suspect passes")} (ink-flagged: test and reference both missing content Chrome draws) lost against the previous step: reported, not gated.`
+        : "";
+      detail = `${r}${h}${flagged}`;
     }
     return `  - (${c.id}) ${c.what}: **${state}**.${detail}`;
   });

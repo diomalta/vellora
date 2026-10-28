@@ -12,6 +12,7 @@ import { pagesToShow } from "../build-site-evidence.mjs";
 import {
   DOC_FILES,
   FIXTURES,
+  RELEASE_PLACEHOLDER,
   applyBlocks,
   buildManifest,
   checkDocs,
@@ -126,7 +127,7 @@ test("crossCheck reports any metric that differs from the oracle output", () => 
 
 test("the committed manifest carries the committed oracle's numbers, before and after", () => {
   const pin = json("fidelity/baselines/pin/doc-aggregate.json");
-  const after = json("fidelity/gate/snapshots/2026-10-28/c05/doc-aggregate-c05-tip.json");
+  const after = json("fidelity/gate/snapshots/2026-10-28/c06/doc-aggregate-c06-tip.json");
   for (const f of manifest.fixtures) {
     for (const [k, v] of Object.entries(f.before))
       assert.equal(v, pin.fixtures[f.id][k], `${f.id}.before.${k}`);
@@ -142,10 +143,18 @@ test("the committed manifest carries the committed oracle's numbers, before and 
   assert.equal(manifest.fixtures.length, FIXTURES.length);
 });
 
-test("the committed manifest is DRAFT while the committed contract gate report is not PASS", () => {
-  assert.equal(manifest.gate.verdict, "FAIL");
-  assert.equal(manifest.status, "DRAFT");
+test("the committed manifest is PASS (contract gate report PASS) and still unreleased", () => {
+  assert.equal(manifest.gate.verdict, "PASS");
+  assert.equal(manifest.gate.contract, true);
+  assert.equal(manifest.status, "PASS");
   assert.equal(manifest.released, false);
+  assert.equal(manifest.release.version, null);
+  // Not released: the copy carries the version placeholder the release fills, and never a
+  // claim that the branch is merged or released.
+  const blocks = renderBlocks(manifest, "vitepress");
+  assert.ok(blocks.status.includes(RELEASE_PLACEHOLDER));
+  assert.match(blocks.status, /not merged or released yet/);
+  assert.match(blocks.status, /released package is vellora@0\.2\.0/);
 });
 
 test("every generated docs block is in sync with the committed manifest", () => {
@@ -292,6 +301,51 @@ test("gate conditions: met/not met per condition, with the ids that hold it open
   assert.ok(clean.every((c) => c.met));
 });
 
+test("a PASS gate still lists what each condition lets through", () => {
+  const report = gateReport({
+    verdict: "PASS",
+    counts: { gating: 0, pinA: 1, pinB: 1, pinC: 0, flaggedPassLost: 3 },
+    items: [{ key: "wpt|t/d.html", class: "improvement", gating: false }],
+    pin: {
+      counts: { a: 1, b: 1, c: 0, declared: 1 },
+      items: [
+        { key: "wpt|t/e.html", class: "accepted", pinClass: "a" },
+        { key: "wpt|t/f.html", class: "debt", pinClass: "b" },
+        { key: "wpt|t/g.html", class: "declared", pinClass: "declared" },
+      ],
+    },
+    head: {
+      verdict: "PASS",
+      items: [
+        { key: "wpt|t/f.html", class: "debt", gating: false },
+        { key: "wpt|t/h.html", class: "accepted", gating: false },
+      ],
+    },
+  });
+  const [c1, , , c4] = gateConditions(report);
+  assert.equal(c1.met, true);
+  assert.deepEqual(c1.classA, ["wpt|t/e.html"]);
+  assert.deepEqual(c1.classB, ["wpt|t/f.html"]);
+  assert.deepEqual(c1.declared, ["wpt|t/g.html"]);
+  assert.equal(c4.met, true);
+  assert.deepEqual(c4.head.debt, ["wpt|t/f.html"]);
+  const mf = synthetic(report);
+  assert.equal(mf.status, "PASS");
+  const losses = renderBlocks(mf, "vitepress").losses;
+  assert.match(losses, /verdict PASS/);
+  assert.match(
+    losses,
+    /\(1\) [^\n]*\*\*met\*\*[^\n]*Class a[^\n]*`t\/e\.html`[^\n]*Class b[^\n]*`t\/f\.html`/,
+  );
+  assert.match(losses, /\(1\) [^\n]*1 test that failed before is now rejected/);
+  assert.match(
+    losses,
+    /\(4\) [^\n]*Head view: PASS; 1 test carried in the debt ledger \(`t\/f\.html`\)/,
+  );
+  assert.match(losses, /3 suspect passes/);
+  assert.doesNotMatch(losses, /undefined|NaN/);
+});
+
 test("the paint block shows before → after against Chrome and marks an over-count", () => {
   const fx = (dash, ul, canvas = [], flags = []) => ({
     pages: 1,
@@ -332,14 +386,14 @@ test("the paint block shows before → after against Chrome and marks an over-co
 
 test("the committed manifest's gate and paint numbers are the committed snapshots'", () => {
   const gz = readFileSync(
-    join(REPO, "fidelity/gate/snapshots/2026-10-28/c05/gate-report-c05-tip-contract.json.gz"),
+    join(REPO, "fidelity/gate/snapshots/2026-10-28/c06/gate-report-c06-tip-contract.json.gz"),
   );
   const g = JSON.parse(gunzipSync(gz).toString("utf8"));
   assert.equal(manifest.gate.verdict, g.verdict);
   for (const k of ["gating", "pinA", "pinB", "pinC", "regression", "headGating"])
     assert.equal(manifest.gate.counts[k], g.counts[k] ?? 0, k);
   assert.deepEqual(manifest.gate.conditions, gateConditions(g));
-  const paint = json("fidelity/gate/snapshots/2026-10-28/c05/paint-probe-c05-tip.json");
-  const before = json("fidelity/gate/snapshots/2026-10-28/c05-docs/paint-probe-pin-v0.2.0.json");
+  const paint = json("fidelity/gate/snapshots/2026-10-28/c06/paint-probe-c06-tip.json");
+  const before = json("fidelity/gate/snapshots/2026-10-28/c06-docs/paint-probe-pin-v0.2.0.json");
   assert.deepEqual(manifest.paint, paintSection(paint, before));
 });
