@@ -125,10 +125,34 @@ const WPT_KEYS = [
 const pickWpt = (t) => Object.fromEntries(WPT_KEYS.filter((k) => k in t).map((k) => [k, t[k]]));
 
 /**
- * Version placeholder for the copy of a PASS run. The branch is not merged or released when the
- * evidence is generated; the release replaces this token (and sets `released`) when it ships.
+ * Version placeholder for the copy of a PASS run that is not released yet. A release regenerates
+ * the evidence with `release: "<version>"` (build-site-evidence.mjs --release), which sets
+ * `released: true` and `release.version` and drops the placeholder.
  */
 export const RELEASE_PLACEHOLDER = "vX.Y.Z";
+
+/** A release version as stored in the manifest: semver without a leading "v". */
+export const RELEASE_VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
+
+/**
+ * Validate a release version for a gate report. Throws unless the version is semver (no leading
+ * "v") and the gate report's verdict is PASS: evidence is never stamped released without it.
+ */
+export function assertReleasable(version, gate) {
+  if (!RELEASE_VERSION_RE.test(String(version)))
+    throw new Error(`--release ${version}: expected a semver version without "v", e.g. 0.3.0`);
+  if (evidenceStatus(gate) !== "PASS")
+    throw new Error(
+      `--release ${version} refused: the gate report verdict is ${gate ? gate.verdict : "missing (no --gate)"}, not PASS`,
+    );
+}
+
+/** The measured subject: "vellora 0.3.0" once released, else the unreleased branch. */
+export const afterLabel = (release) =>
+  release ? `vellora ${release}` : "vellora (unreleased branch)";
+
+/** Short inline name of the measured subject, for prose ("in 0.3.0" / "on the branch"). */
+const onSubject = (m) => (m.released ? `in ${m.release.version}` : "on the branch");
 
 /** "DRAFT" unless a gate report with verdict PASS is supplied. */
 export function evidenceStatus(gate) {
@@ -291,6 +315,8 @@ export function paintSection(after, before) {
  */
 export function buildManifest(inputs) {
   const { metrics, pinKey, newKey, pinDoc, runSummary, wptRun, wptBefore, gate } = inputs;
+  const release = inputs.release ?? null;
+  if (release !== null) assertReleasable(release, gate);
   const env = runSummary.environment ?? {};
   const fixtures = FIXTURES.map((f) => {
     const before = metrics[f.id]?.[pinKey];
@@ -323,8 +349,9 @@ export function buildManifest(inputs) {
         : gate
           ? `gate report verdict ${gate.verdict}: the strict merge contract is not met yet`
           : "no gate report supplied",
-    released: false,
-    release: { version: null, placeholder: RELEASE_PLACEHOLDER },
+    released: release !== null,
+    release:
+      release !== null ? { version: release } : { version: null, placeholder: RELEASE_PLACEHOLDER },
     authority: /darwin/.test(env.os ?? "")
       ? status === "PASS"
         ? "INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs."
@@ -344,7 +371,7 @@ export function buildManifest(inputs) {
       command: pinDoc.command,
     },
     after: {
-      label: "vellora (unreleased branch)",
+      label: afterLabel(release),
       branch: env.git?.branch,
       commit: env.git?.head,
       blitz: `${env.blitz?.version ?? "?"}, crates.io`,
@@ -409,7 +436,7 @@ export function buildManifest(inputs) {
         totals: pickWpt(wptBefore.totals),
       },
       after: {
-        label: "vellora (unreleased branch)",
+        label: afterLabel(release),
         commit: wptAfter.velloraCommit,
         engine: wptAfter.engineId,
         wptCommit: wptAfter.wptCommit,
@@ -538,7 +565,26 @@ function legend(y, x, manifest) {
 </g>`;
 }
 
+/** Chrome's name with its major version only ("Chrome for Testing 155"). */
+const chromeMajor = (m) => chromeShort(m).replace(/(\d+)\.[\d.]+$/, "$1");
+
+/**
+ * One-line status for the composites' stamp and the charts' footer. Released:
+ * "Released in vellora 0.3.0 · strict merge gate PASS · indicative local macOS measurement
+ * (reference: Chrome for Testing 155 on macOS)".
+ */
+export function statusStamp(m) {
+  const mac = /darwin/.test(m.environment?.os ?? "");
+  const where = mac ? "indicative local macOS measurement" : "indicative local measurement";
+  if (m.released)
+    return `Released in vellora ${m.release.version} · strict merge gate PASS · ${where} (reference: ${chromeMajor(m)}${mac ? " on macOS" : ""})`;
+  return m.status === "PASS"
+    ? "Merge gate PASS · not merged or released yet · indicative local measurement"
+    : "DRAFT · unreleased branch, not merged · indicative local measurement";
+}
+
 function statusLine(manifest) {
+  if (manifest.released) return `${statusStamp(manifest)}.`;
   return manifest.status === "PASS"
     ? "Strict merge gate PASS. Not merged or released yet. Local macOS: indicative."
     : "DRAFT: unreleased branch, merge not yet passed. Local macOS: indicative.";
@@ -651,14 +697,14 @@ export function chartWpt(manifest) {
     },
     {
       cls: "afterFill",
-      label: `unreleased branch · Blitz ${manifest.after.blitz.split(",")[0]}`,
+      label: `${manifest.released ? manifest.after.label : "unreleased branch"} · Blitz ${manifest.after.blitz.split(",")[0]}`,
       t: manifest.wpt.after.totals,
     },
   ];
   if (manifest.wpt.chrome) {
     bars.push({
       cls: "refFill",
-      label: `${chromeShort(manifest).replace(/(\d+)\.[\d.]+$/, "$1")} (reference)`,
+      label: `${chromeMajor(manifest)} (reference)`,
       t: manifest.wpt.chrome.totals,
     });
   }
@@ -730,12 +776,14 @@ function attributionLine(f) {
 }
 
 function statusBlock(m, flavor) {
-  const text =
-    m.status === "PASS"
+  const text = m.released
+    ? `**Released in vellora ${m.release.version}.** The measured run passed the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). ${m.authority} Before is ${m.before.npm}, the previous release.`
+    : m.status === "PASS"
       ? `**This run passes the strict merge gate (verdict PASS${m.gate?.contract ? ", --contract" : ""}). The branch is not merged or released yet:** it is to be merged in vellora ${m.release?.placeholder ?? RELEASE_PLACEHOLDER} (placeholder; the release sets the version). ${m.authority} The released package is ${m.before.npm}.`
       : `**DRAFT. These results are from an unreleased branch that is not merged.** The merge is gated by a strict oracle contract, and this run does not pass it yet (${m.statusReason}). ${m.authority} The released package is ${m.before.npm}.`;
   const kind = m.status === "PASS" ? "tip" : "warning";
-  return flavor === "github" ? `> ${text}` : `::: ${kind} ${m.status}\n${text}\n:::`;
+  const title = m.released ? `Released in vellora ${m.release.version}` : m.status;
+  return flavor === "github" ? `> ${text}` : `::: ${kind} ${title}\n${text}\n:::`;
 }
 
 function headlineBlock(m) {
@@ -781,8 +829,7 @@ function readmeBlock(m) {
 }
 
 function tableBlock(m) {
-  const head =
-    "| Fixture | Chrome words | Median error (mm) | p90 error (mm) | Words within 1 mm | Chrome words unpaired | Pages: 0.2.0 / branch / Chrome |\n|---|---:|---:|---:|---:|---:|---:|";
+  const head = `| Fixture | Chrome words | Median error (mm) | p90 error (mm) | Words within 1 mm | Chrome words unpaired | Pages: 0.2.0 / ${m.released ? m.release.version : "branch"} / Chrome |\n|---|---:|---:|---:|---:|---:|---:|`;
   const arrow = (a, b, f) => `${f(a)} → ${f(b)}`;
   const n2 = (v) => v.toFixed(2);
   const rows = m.fixtures.map((f) => {
@@ -806,7 +853,7 @@ function lossesBlock(m) {
     const b = f.before;
     if (a.pages !== f.chromePages) {
       items.push(
-        `**${f.id}: ${plural(a.pages, "page")}, Chrome prints ${f.chromePages}.** ${a.missingWords} of Chrome's ${f.chromeWords} words have no counterpart in vellora's PDF (${m.before.label}: ${b.missingWords}). ${PAGE_CAUSES[f.id] ?? "Cause not yet attributed."} Not fixed on this branch.`,
+        `**${f.id}: ${plural(a.pages, "page")}, Chrome prints ${f.chromePages}.** ${a.missingWords} of Chrome's ${f.chromeWords} words have no counterpart in vellora's PDF (${m.before.label}: ${b.missingWords}). ${PAGE_CAUSES[f.id] ?? "Cause not yet attributed."} Not fixed ${m.released ? `in ${m.release.version}` : "on this branch"}.`,
       );
     }
     if (a.within1mmPct < 100 && a.pages === f.chromePages) {
@@ -828,15 +875,16 @@ function lossesBlock(m) {
     `**WPT:** ${int(w.after.totals.pass)} of ${int(w.after.totals.reftests)} reftests pass (${pct2(w.after.totals.passRate)}); ${int(w.after.totals.passClean)} (${pct2(w.after.totals.passRateClean)}) pass without any suspect-pass flag. ${int(w.after.totals.fail)} still fail and ${int(w.after.totals.unsupported)} are rejected as outside the strict subset.`,
   );
   // Always listed: on PASS the gate lines name what the contract lets through.
-  if (m.gate) items.push(gateLines(m.gate));
+  if (m.gate) items.push(gateLines(m.gate, m));
   return items.map((i) => `- ${i}`).join("\n");
 }
 
 const testIds = (list) => list.map((k) => `\`${k.replace(/^wpt\|/, "")}\``).join(", ");
 
 /** The merge gate's verdict, one sub-item per strict-contract condition. */
-function gateLines(g) {
+function gateLines(g, m) {
   const pass = g.verdict === "PASS";
+  const on = onSubject(m);
   const head = `**Merge gate: verdict ${g.verdict}** on this run${g.contract ? " (strict contract, --contract)" : ""}, ${plural(g.counts.gating, "gating item")}. ${pass ? "Every condition is met. What each condition still lets through is listed with it." : "The branch does not merge until every condition is met."}`;
   if (!g.conditions) return head;
   const sub = g.conditions.map((c) => {
@@ -858,11 +906,11 @@ function gateLines(g) {
         return `${testIds([id])} (${flag}${raw})`;
       };
       const classB = b.length
-        ? ` Class b (recorded in the debt ledger, not fixed):${bFail.length ? ` fail on the branch: ${testIds(bFail)}.` : ""}${bPass.length ? ` pass on the branch with a suspect-pass flag, which the gate scores as worse than the published package's clean pass: ${bPass.map(flaggedPass).join(", ")}.` : ""}`
+        ? ` Class b (recorded in the debt ledger, not fixed):${bFail.length ? ` fail ${on}: ${testIds(bFail)}.` : ""}${bPass.length ? ` pass ${on} with a suspect-pass flag, which the gate scores as worse than the published package's clean pass: ${bPass.map(flaggedPass).join(", ")}.` : ""}`
         : "";
       const classified =
         a.length || b.length
-          ? ` Passed with the published engine and not matched on the branch: ${plural(a.length + b.length, "WPT test")}.${a.length ? ` Class a (the old pass was false, or Chrome fails it too): ${testIds(a)}.` : ""}${classB}`
+          ? ` Passed with the published engine and not matched ${on}: ${plural(a.length + b.length, "WPT test")}.${a.length ? ` Class a (the old pass was false, or Chrome fails it too): ${testIds(a)}.` : ""}${classB}`
           : ` Classified: ${int(g.counts.pinA)} class a, ${int(g.counts.pinB)} class b.`;
       const declared = c.declared?.length
         ? ` ${plural(c.declared.length, "test")} that failed before ${c.declared.length === 1 ? "is" : "are"} now rejected by the strict subset.`
@@ -987,7 +1035,7 @@ function envBlock(m) {
     `- Status: **${m.status}** (${m.statusReason}). ${m.authority}`,
     `- Reference: ${m.reference.renderer}, ${m.reference.mode}.`,
     `- Before: ${m.before.label}, tag \`${m.before.tag}\`, commit \`${m.before.commit.slice(0, 7)}\`, Blitz ${m.before.blitz}. Scored ${m.before.measured}.`,
-    `- After: ${m.after.label} \`${m.after.branch}\`, commit \`${m.after.commit.slice(0, 7)}\`, Blitz ${m.after.blitz}. Run \`${m.after.runId}\` (${m.after.measured}).`,
+    `- After: ${m.after.label}${m.released ? ", measured on" : ""} \`${m.after.branch}\`, commit \`${m.after.commit.slice(0, 7)}\`, Blitz ${m.after.blitz}. Run \`${m.after.runId}\` (${m.after.measured}).`,
     `- Environment: ${e.os}, ${e.cpu}, Node ${e.node}, ${e.rustc}, PyMuPDF ${e.pymupdf}, ${e.poppler}.`,
     `- Word positions: ${m.method.extractor}; pairing: ${String(m.method.pairing).replace("<->", "↔")}; quantiles: ${m.method.quantiles}.`,
     `- Run command: \`${m.after.command}\``,

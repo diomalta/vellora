@@ -17,6 +17,9 @@
 //     [--out docs/assets/fidelity] [--og docs/public/fidelity/og.jpg]
 //     [--python <python with Pillow>]        default fidelity/.venv/bin/python, else python3
 //     [--update-docs]                         rewrite the generated blocks of DOC_FILES
+//     [--release <version>]                   stamp the evidence "Released in vellora <version>"
+//                                             (manifest released: true, release.version); refused
+//                                             unless --gate is given and its verdict is PASS
 //
 //   node fidelity/report/build-site-evidence.mjs --check
 //     exit 1 when a DOC_FILES block differs from the committed manifest (no inputs needed).
@@ -36,6 +39,7 @@ import {
   FIXTURES,
   HERO_FIXTURE,
   applyBlocks,
+  assertReleasable,
   buildManifest,
   checkDocs,
   crossCheck,
@@ -44,6 +48,7 @@ import {
   pct,
   renderBlocks,
   renderCharts,
+  statusStamp,
 } from "./lib/evidence.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -74,10 +79,7 @@ export function pagesToShow(before, after, chromePages) {
 
 function composeSpec(manifest, compareDir, outDir, ogOut) {
   const chrome = manifest.reference.renderer.replace(/^Google /, "");
-  const stamp =
-    manifest.status === "PASS"
-      ? "Merge gate PASS · not merged or released yet · indicative local measurement"
-      : "DRAFT · unreleased branch, not merged · indicative local measurement";
+  const stamp = statusStamp(manifest);
   const items = [];
   const images = [];
   for (const f of manifest.fixtures) {
@@ -165,6 +167,7 @@ function main() {
       paint: { type: "string" },
       "paint-before": { type: "string" },
       python: { type: "string" },
+      release: { type: "string" },
       "update-docs": { type: "boolean", default: false },
       check: { type: "boolean", default: false },
     },
@@ -185,6 +188,9 @@ function main() {
   }
 
   if (!a.compare || !a.run) throw new Error("--compare and --run are required (or --check)");
+  const gate = a.gate ? readJson(a.gate) : null;
+  // Released evidence needs a PASS gate report; refuse before any input is read or file written.
+  if (a.release !== undefined) assertReleasable(a.release, gate);
   const metricsPath = join(a.compare, "metrics.json");
   const metrics = readJson(metricsPath);
   const pinDoc = readJson(a["pin-doc"]);
@@ -192,7 +198,6 @@ function main() {
   const wptRunPath = join(a.run, "wpt", "summary.json");
   const wptRun = existsSync(wptRunPath) ? readJson(wptRunPath) : null;
   const wptBefore = readJson(a["wpt-before"]);
-  const gate = a.gate ? readJson(a.gate) : null;
   // Report-only paint probe: the run's own step, and optionally the published package's PDFs
   // probed against the same Chrome PDFs (paint-probe.mjs --run <run> --subject <pin pdfs>).
   const paintPath = a.paint ?? join(a.run, "paint-probe", "summary.json");
@@ -223,7 +228,7 @@ function main() {
     ...(paintBefore ? { paintBefore: fileEntry(a["paint-before"]) } : {}),
   };
   const regenerate = portable(
-    `node fidelity/report/build-site-evidence.mjs --compare ${resolve(a.compare)} --run ${resolve(a.run)}${a.gate ? ` --gate ${resolve(a.gate)}` : ""}${a.paint ? ` --paint ${resolve(a.paint)}` : ""}${paintBefore ? ` --paint-before ${resolve(a["paint-before"])}` : ""} --pin-key ${a["pin-key"]} --new-key ${a["new-key"]} --update-docs`,
+    `node fidelity/report/build-site-evidence.mjs --compare ${resolve(a.compare)} --run ${resolve(a.run)}${a.gate ? ` --gate ${resolve(a.gate)}` : ""}${a.paint ? ` --paint ${resolve(a.paint)}` : ""}${paintBefore ? ` --paint-before ${resolve(a["paint-before"])}` : ""} --pin-key ${a["pin-key"]} --new-key ${a["new-key"]}${a.release ? ` --release ${a.release}` : ""} --update-docs`,
     REPO_ROOT,
   );
   const commands = {
@@ -248,6 +253,7 @@ function main() {
     paintBefore,
     files,
     commands,
+    release: a.release ?? null,
   });
   const { spec, images } = composeSpec(draft, a.compare, a.out, a.og);
   const specPath = join(tmpdir(), `vellora-site-evidence-${process.pid}.json`);
