@@ -449,38 +449,66 @@ fn the_overflow_allowance_never_reaches_a_drawn_footer() {
 }
 
 #[test]
-fn an_inline_only_body_draws_its_lines_past_page_1_off_page_known_gap() {
-    // KNOWN GAP (review of port step 08, pinned at step 09): a body whose in-flow content is all
-    // inline is one block fragment (the body is the inline root, see `build_fragments`), so its
-    // lines past page 1 are emitted below the page edge: in the PDF, never visible, silently.
-    // Chrome 155 paginates by line: 3 pages, Line001-052 / Line053-104 / Line105-120 (probe
-    // g_inline_body). With the same lines as <p>s vellora prints Chrome's 3 pages (g_p_body).
-    // A fix that fragments inline content by line box must update this test.
+fn an_inline_only_body_is_cut_between_its_line_boxes_like_chrome() {
+    // A body whose in-flow content is all inline is one block fragment (the body is the inline
+    // root, see `build_fragments`). Until Phase C step 03 it was placed whole: Line055-Line120
+    // were emitted below the 841.92 pt page edge (66 runs, in the PDF but never visible). The
+    // oversize-fragment slicer (`pagination::slice_oversize`) now cuts it between line boxes:
+    // Chrome 155's 3 pages, Line001-052 / Line053-104 / Line105-120 (probe g_inline_body), the
+    // same pages vellora prints for the lines as <p>s (g_p_body). Each line exactly once.
     let page = "@page { size: A4; margin: 10mm; }";
     let numbered: Vec<String> = (1..=120).map(|i| format!("Line{i:03}")).collect();
     let inline = paginate(&doc(&format!("{page} {BASE}"), &numbered.join("<br>")));
-    assert_eq!(inline.report.page_count, 1, "Chrome prints 3 pages");
-    let page_1 = &inline.pages[0];
-    // The runs of one inline root share its source string; each covers its glyphs' range.
-    let line_of = |run: &vellora_core::blitz_engine::TextRun| {
-        let start = run.glyphs.iter().map(|g| g.text_start).min().unwrap_or(0);
-        let end = run.glyphs.iter().map(|g| g.text_end).max().unwrap_or(0);
-        run.text[start..end].trim().to_string()
+    assert_eq!(inline.report.page_count, 3, "Chrome prints 3 pages");
+    let runs: usize = inline.pages.iter().map(|p| p.text_runs.len()).sum();
+    assert_eq!(runs, 120, "every line is emitted once");
+    for page in &inline.pages {
+        for run in &page.text_runs {
+            assert!(
+                (0.0..=page.height_px).contains(&run.origin_y),
+                "{} off its page at {}",
+                run.text,
+                run.origin_y
+            );
+        }
+    }
+    // The runs of one inline root share its source string: find a line by its glyph range.
+    let page_of = |text: &str| {
+        let hits: Vec<(usize, f64)> = inline
+            .pages
+            .iter()
+            .enumerate()
+            .flat_map(|(i, page)| {
+                page.text_runs.iter().filter_map(move |run| {
+                    let start = run.glyphs.iter().map(|g| g.text_start).min()?;
+                    let end = run.glyphs.iter().map(|g| g.text_end).max()?;
+                    (run.text[start..end].trim() == text).then_some((i, run.origin_y))
+                })
+            })
+            .collect();
+        assert_eq!(hits.len(), 1, "{text:?} once: {hits:?}");
+        hits[0]
     };
-    let off_page: Vec<(String, f64)> = page_1
-        .text_runs
-        .iter()
-        .filter(|run| run.origin_y > page_1.height_px)
-        .map(|run| (line_of(run), run.origin_y * 0.75))
-        .collect();
-    assert_eq!(page_1.text_runs.len(), 120, "every line is emitted");
-    // Line055 is the first baseline below the 1122.56 px (841.92 pt) page edge.
-    assert_eq!(off_page.len(), 66, "Line055-Line120 are off the page");
-    assert_eq!(off_page[0].0, "Line055");
-    // 849.75 pt = 1133 px since Phase C step 03 (849.60 = 1132.8 px before): the content origin
-    // is Chrome's whole-px round(10 mm) = 38 px (`PageBox::content_origin`) and the baseline sits
-    // on a whole page px (`pagination::snap_baseline_to_page_px`).
-    assert!((off_page[0].1 - 849.75).abs() < 0.01, "{}", off_page[0].1);
+    for (text, page_index) in [
+        ("Line052", 0),
+        ("Line053", 1),
+        ("Line104", 1),
+        ("Line105", 2),
+        ("Line120", 2),
+    ] {
+        assert_eq!(page_of(text).0, page_index, "{text}");
+    }
+    // A continuation starts at the page top: Line053 sits where Line001 sits on page 1.
+    assert_px(
+        page_of("Line053").1,
+        page_of("Line001").1,
+        "Line053 at the page-2 top",
+    );
+    assert_px(
+        page_of("Line105").1,
+        page_of("Line001").1,
+        "Line105 at the page-3 top",
+    );
 
     let paragraphs: String = numbered.iter().map(|l| format!("<p>{l}</p>")).collect();
     let blocks = paginate(&doc(&format!("{page} {BASE}"), &paragraphs));

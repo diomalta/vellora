@@ -65,6 +65,12 @@ const BR_BODY: &str = "<body><p>Thanks for using Product.<br>The Product team</p
 
 /// The render path's gate, layout and pagination.
 fn paginate(html: &str) -> pagination::Paginated {
+    let (laid_out, page_box) = lay_out(html);
+    pagination::paginate(&laid_out, &page_box)
+}
+
+/// The render path's gate and continuous layout (before pagination), with the `@page` box.
+fn lay_out(html: &str) -> (blitz_engine::LaidOutDoc, page_css::PageBox) {
     validation::validate_css(html).expect("in the subset");
     let page_box = page_css::parse_page_box(html);
     let laid_out = blitz_engine::validate_then_lay_out(
@@ -78,7 +84,7 @@ fn paginate(html: &str) -> pagination::Paginated {
     )
     .ok()
     .expect("lays out");
-    pagination::paginate(&laid_out, &page_box)
+    (laid_out, page_box)
 }
 
 /// Every drawn run of page 1 as (source text it covers, x pt, baseline pt).
@@ -233,21 +239,17 @@ fn postmark_receipt_emits_the_text_after_each_br() {
     // template's first line is an XHTML 1.0 Transitional doctype, so blitz-html parsed it as XML
     // and dropped the text after its three `<br>`. The step-07 parse is reproduced in
     // `src/lib.rs` `step07_parser_loses_the_postmark_text_after_br_and_the_html_parse_emits_it`.
-    // "Emits": the text is in the PDF; two of the three lines are below the page edge (the known
-    // gap below). Before port step 09 this test was named "draws" and checked existence only.
+    // "Emits": the text is in the PDF. Until Phase C step 03 two of the three lines were below the
+    // page edge (the oversize layout table, see the test below); now all three are visible.
+    // Before port step 09 this test was named "draws" and checked existence only.
     let runs = emitted(&paginate(POSTMARK));
     for text in ["The [Product Name] team", "1234 Street Rd.", "Suite 1234"] {
         assert!(
-            runs.iter().any(|(_, t, ..)| t == text),
-            "{text:?} not emitted: {runs:?}"
+            runs.iter().any(|(_, t, .., on_page)| t == text && *on_page),
+            "{text:?} not drawn on a page: {runs:?}"
         );
     }
-    // Visible: the first line after a <br>, and all three "[Product Name]" occurrences.
-    assert!(
-        runs.iter()
-            .any(|(_, t, .., on_page)| t == "The [Product Name] team" && *on_page),
-        "{runs:?}"
-    );
+    // Visible: all three "[Product Name]" occurrences.
     let product_name: Vec<bool> = runs
         .iter()
         .filter(|(_, t, ..)| t.contains("[Product Name]"))
@@ -257,29 +259,46 @@ fn postmark_receipt_emits_the_text_after_each_br() {
 }
 
 #[test]
-fn postmark_receipt_draws_its_layout_table_tail_off_page_known_gap() {
-    // KNOWN GAP (port step 08 finding, pinned at step 09): the template's body is one layout
-    // table taller than a page. vellora places it whole on page 1 (an `oversize-block`), so its
-    // tail is emitted below the 841.92 pt page edge: in the PDF, never visible. Chrome 155
-    // breaks the table: 2 pages, "1234 Street Rd." and "Suite 1234" on page 2 at baselines
-    // 225.75 and 241.50 pt (probe g_postmark_raw, fidelity/baselines/port/09-review-fixes).
-    // A fix that fragments the table must update this test. Port step 10-spark: the template's
-    // 12 `cellspacing="0"` tables no longer keep Blitz's UA 2 px border-spacing (tail up 33.0
-    // pt, 1038.60 -> 1005.60) and its `cellpadding="0"` cells no longer keep the UA 1 px padding
-    // (up 12.0 pt more, -> 993.60). Its continuous layout is now Chrome's: layout-diff N0 dy of
-    // "1234 Street Rd." +0.33 px (+66.3 px at 10-crates). Still below the page edge.
+fn postmark_receipt_breaks_its_layout_table_onto_page_2_like_chrome() {
+    // The template's body is one layout table taller than a page. Until Phase C step 03 vellora
+    // placed it whole on page 1 (an `oversize-block`), so its tail was emitted below the 841.92 pt
+    // page edge (port step 08 finding, pinned at step 09 as a known gap: "1234 Street Rd." at
+    // 993.60 pt). The oversize-fragment slicer (`pagination::slice_oversize`) now cuts it where
+    // Chrome 155 does: between "Download as PDF" (the last thing that fits, page 1 at 763.50 pt
+    // in the raw template) and the `table.body-sub`, which starts page 2 with its border and
+    // padding. Chrome baselines from probe g_postmark_raw (2026-10-27): "Need" 65.25,
+    // "1234 Street Rd." 225.75, "Suite 1234" 241.50 pt on page 2; vellora is 0.15 pt above each.
     let p = paginate(POSTMARK);
-    assert_eq!(p.pages.len(), 1, "Chrome prints 2 pages");
+    assert_eq!(p.pages.len(), 2, "Chrome prints 2 pages");
     let runs = emitted(&p);
-    for (text, at_pt) in [("1234 Street Rd.", 993.60), ("Suite 1234", 1009.35)] {
-        let (page, _, _, y, on_page) = runs
-            .iter()
-            .find(|(_, t, ..)| t == text)
-            .unwrap_or_else(|| panic!("{text:?} emitted"));
-        assert_eq!(*page, 0, "{text}");
-        assert!(!on_page, "{text} is below the page edge");
-        assert!((y - at_pt).abs() <= 0.75, "{text} baseline {y:.2} pt");
+    assert!(
+        runs.iter().all(|(.., on_page)| *on_page),
+        "every run on its page: {runs:?}"
+    );
+    for (text, page, at_pt) in [
+        ("Download as PDF", 0, 763.50),
+        ("1234 Street Rd.", 1, 225.75),
+        ("Suite 1234", 1, 241.50),
+    ] {
+        let hits: Vec<_> = runs.iter().filter(|(_, t, ..)| t == text).collect();
+        assert_eq!(hits.len(), 1, "{text:?} exactly once: {hits:?}");
+        let (on, _, _, y, _) = hits[0];
+        assert_eq!(*on, page, "{text}");
+        assert!(
+            (y - at_pt).abs() <= TOL_PT,
+            "{text} baseline {y:.2} pt, Chrome {at_pt}"
+        );
     }
+    // Cut, not copied: the same runs as one continuous page would carry.
+    let total: usize = p.pages.iter().map(|page| page.text_runs.len()).sum();
+    let (laid_out, _) = lay_out(POSTMARK);
+    let flow: usize = laid_out
+        .boxes
+        .iter()
+        .flat_map(|b| b.text_runs.iter())
+        .filter(|r| !r.glyphs.is_empty())
+        .count();
+    assert_eq!(total, flow, "every run placed exactly once");
 }
 
 #[test]
