@@ -144,7 +144,7 @@ impl PageBox {
     /// Measured with Chrome for Testing 155.0.8059.85 `page.pdf({preferCSSPageSize: true})`
     /// (Phase C step 03, 2026-10-27; `tests/page_geometry.rs` holds the numbers): a full-width
     /// block's painted rect and right-aligned text end at `round(margin-left) +
-    /// ceil(W - ml - mr)` for 19 page/margin combinations, e.g. A4 16 mm -> 60 + 673 (exact
+    /// ceil(W - ml - mr)` for 19 page/margin combinations (18 in that test; `size: A5` is not parsed by `apply_size`), e.g. A4 16 mm -> 60 + 673 (exact
     /// 672.756), A4 15 mm -> 57 + 681 (exact 680.315; 681 only from the 210 mm basis, the
     /// 793.28 px MediaBox would give 680), letter 16 mm -> 60 + 696, A4 0.25 cm -> 9 + 775.
     /// Until this step vellora truncated (`as u32`) the exact box: 672 / 680 px, one px narrower

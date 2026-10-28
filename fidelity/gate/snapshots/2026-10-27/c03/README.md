@@ -70,7 +70,7 @@ Durable copy: `~/Repositories/vellora-fidelity-runs/run-all-c03-pinc-20261028T00
 | doc aggregate condition 2 | MET 9/9 | MET 9/9 (`doc-aggregate-c03.json`) |
 | condition 3 (pages) | 8/9 | 8/9 (oss-postmark-receipt 1 vs 2) |
 | WPT | 46.84 % | 46.84 %; per test identical to c02-tip (0 lost, 0 gained); 17 flagged passes lost vs 10-integration (unchanged) |
-| canaries | 35/35, gate 29/29 | 35/35 detection |
+| canaries | 35/35, gate 29/29 | 35/35 detection, gate (GATE-K2) 29/29 caught |
 
 Doc aggregate medians (mm) c02-tip -> c03: invoice 0.19 -> 0.23 (<=1 mm 93.2 -> 100 %), receipt
 0.15 -> 0.10, boleto 0.39 -> 0.26, notification 0.17 -> 0.01, boleto-febraban 0.07 -> 0.07, danfe 0.26
@@ -102,3 +102,11 @@ DANFE-M1 (task d): at c02 already PASS (`L 2.498 T 4.191 R 2.074 B 3.09`, 1 page
   passes 12 of them: re-check on a Blitz bump before compensating. Product WORSE than raw (vellora-
   owned worsening, cause not located): between-float-and-text (79536 vs 8940 px: the paginator moves
   the negative-margin float and the abspos box), float-nowrap-2/8 (~2x), floats-placement-vertical-004.
+
+## Iteration evidence (not gated)
+
+`~/Repositories/vellora-fidelity-runs/c03-iterations/`: scratch scripts and logs, layout-diff summaries, the
+gate-rule preview (`eval-probe-iterations.txt`: the gate's own `comparePdfProbe` over the 9 fixtures vs pin;
+pin pdf-probe gating 254 at c02-tip -> 127 after step 1 -> 16 after step 2), the local full WPT run that caught
+`baseline-empty-cell-001`, the baseline-offset probe (`bl/`: 103 of 108 cases equal to Chrome) and the sparksuite
+DOM@679/681 vs PDF comparison (`spark.py`).
