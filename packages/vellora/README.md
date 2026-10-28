@@ -8,9 +8,9 @@
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
 You write the document as HTML and CSS, the way you already would for Puppeteer. vellora lays it
-out with a native engine compiled into a Node addon and gives you the PDF bytes back. There is
-nothing to download at runtime, no browser process to launch or keep warm, and the same input
-always produces the same PDF, byte for byte.
+out inside your Node process and gives you the PDF bytes back. There is
+nothing to download at runtime, no browser process to launch or keep warm, and on the same
+platform the same input produces the same PDF, byte for byte.
 
 ![An invoice rendered by vellora 0.3.0: header with invoice number and dates, issuer and recipient blocks, and a table of line items with prices in BRL](https://raw.githubusercontent.com/diomalta/vellora/main/docs/public/assets/npm/invoice-hero.png)
 
@@ -25,8 +25,8 @@ statements, reports, bank slips, notifications, contracts.
 |---|---|
 | You control the HTML template | You render arbitrary pages from the web |
 | You want a small, fast container without Chromium | The page needs JavaScript to build its content |
-| You run on serverless or tight memory limits | You depend on CSS grid, transforms or animations |
-| You need the same PDF bytes for the same input | You need pixel-exact Chrome output everywhere |
+| You have tight memory limits: about 118 MB peak for the whole Node process with 8 renders at once in our benchmark | You depend on CSS grid, transforms or animations |
+| You need the same PDF bytes for the same input | You need Chrome's exact print output |
 
 When one template does need Chrome, you can route only that template to the optional
 [`@vellora/engine-chromium`](https://www.npmjs.com/package/@vellora/engine-chromium) and keep
@@ -86,20 +86,27 @@ writeFileSync("invoice.pdf", pdf); // pdf is a Uint8Array
 
 The page size and margins come from your CSS (`@page`). Templating is built in:
 `{{ value }}` with dotted paths, `{% for %}`, `{% if %}`, and the `currency`, `number` and
-`date` helpers. Every value is HTML-escaped.
+`date` helpers. Every value is HTML-escaped. Templating always runs, so a literal `{{` or `{%` in
+pre-rendered HTML is read as template syntax.
+
+Put your CSS in a `<style>` tag or `style=""`. vellora loads nothing from the network:
+`<link rel="stylesheet">` and `@import` are ignored, and images and fonts are passed in as bytes
+(see `images` and `fonts` below).
 
 ## What you get
 
 - **Real document layout.** Tables that span pages with the header repeated on each page, page
   numbers (`counter(page)` / `counter(pages)`), page breaks (`break-before`, `break-inside: avoid`),
   floats, multi-column text, inline SVG drawn as vectors, images and your own fonts.
-- **Fast and light.** A warm render of a 3-page invoice takes about 19 ms, and the whole process
-  peaks at 118 MB with 8 renders in parallel. The same invoice through Chromium takes about
-  636 ms and its browser processes use about 6.8 GB ([numbers below](#performance)).
-- **Close to Chrome.** In 8 of 9 test documents, every word lands within 1 mm of where Chrome
-  prints it ([how it's measured](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity)).
-- **Same input, same bytes.** No clock, no randomness, no fonts borrowed from the host. Golden-file
-  tests and caching just work.
+- **Fast and light.** A warm render of a 3-page invoice takes about 19 ms, and the whole Node
+  process peaks at about 118 MB with 8 renders in parallel ([numbers below](#performance)).
+- **Close to Chrome.** In 8 of the 9 documents we test, every word lands within 1 mm of where
+  Chrome prints it. We measured this ourselves on a Mac against Chrome for Testing 155
+  ([how it's measured](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity)).
+- **Same input, same bytes.** No clock, no randomness, no fonts borrowed from the host: the same
+  bundled fonts on every machine. On one platform, snapshot tests and caching work without special handling. Across
+  machines, macOS arm64 and Linux arm64 produced identical bytes in our check on a pre-release
+  tree; x86_64 was not measured.
 - **Errors instead of silent surprises.** If a template uses something vellora can't render
   faithfully, it fails before writing a PDF and tells you where:
 
@@ -110,14 +117,16 @@ The page size and margins come from your CSS (`@page`). Templating is built in:
     await renderPdf(`<div style="transform: rotate(5deg)">x</div>`);
   } catch (err) {
     if (err instanceof VelloraUnsupportedError) {
-      console.log(err.feature, err.line, err.col); // "css:transform" 1 25
+      console.log(err.feature, err.line, err.col); // "css:transform" 1 13
       console.log(err.hint); // "this CSS feature is outside vellora's document subset; run `vellora fix`"
     }
   }
   ```
 
-  Pass `strict: false` if you'd rather have vellora apply its automatic fixes (from
-  [`@vellora/lint`](https://www.npmjs.com/package/@vellora/lint)) and render anyway.
+  Pass `strict: false` to have vellora apply its automatic fixes (from
+  [`@vellora/lint`](https://www.npmjs.com/package/@vellora/lint)) first. These cover grid or flex
+  on a table cell, images without a size, inline SVG and broken markup. Other constructs, like
+  `transform`, are still rejected.
 
 ## How close to Chrome?
 
@@ -128,8 +137,7 @@ previous vellora release, and the current one.
 
 ![Share of words within 1 mm of Chrome for each test document, vellora 0.2.0 compared with 0.3.0](https://raw.githubusercontent.com/diomalta/vellora/main/docs/assets/fidelity/within-1mm.svg)
 
-These are local measurements on macOS against Chrome for Testing 155. The full method, every
-document and the cases where vellora still loses are in the
+The full method, every document and the cases where vellora still loses are in the
 [fidelity report](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity).
 
 ## API at a glance
@@ -168,22 +176,32 @@ path. Useful options:
 
 ## Performance
 
-[Resource Benchmarks run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121),
-pinned Linux CI (AMD EPYC 7763, 4 cores, Node 22.23.4), `v0.3.0`, 3-page invoice. Memory is the
-peak with 8 renders at once; warm timings are over 50 renders.
+A warm 3-page invoice renders in about 19 ms, with no browser to download. Measured on a 4-core
+GitHub Actions Linux runner with vellora 0.3.0
+([run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121)).
 
-| Path | Install size | Extra runtime | Peak memory @8 | Cold start | Warm median / p95 |
+<details>
+<summary>About these numbers</summary>
+
+AMD EPYC 7763, 4 cores, Node v22.23.4, built from the v0.3.0 commit. Memory is the peak with 8
+renders at once; warm timings are over 50 renders. The Chromium row is vellora's optional
+Chromium engine, which launches Chromium for each render. The two memory figures are sampled
+differently, and summing memory across browser processes counts shared memory more than once.
+
+</details>
+
+| Path | Install size | Extra runtime | Peak memory @8 | Cold start | Warm median / slowest 1 in 20 |
 |---|---:|---:|---:|---:|---:|
 | `vellora` (native) | 39.7 MB | none | 117.6 MB (inside Node) | 47 ms | 19.1 / 23.3 ms |
-| `vellora` + Chromium engine | 39.7 MB | 412.3 MB browser | 6,834 MB (browser processes) | 735 ms | 635.5 / 681.0 ms |
+| `vellora` + optional Chromium engine (launched per render) | 39.7 MB | 412.3 MB browser | 6,834 MB (summed across browser processes) | 735 ms | 635.5 / 681.0 ms |
 
 Method and raw artifacts: [benchmarks/](https://github.com/diomalta/vellora/tree/main/benchmarks).
 
 ## Limits worth knowing
 
 vellora is not a browser. It does not run JavaScript, does not fetch URLs, and covers a documented
-subset of HTML and CSS. CSS grid and flexbox are partial (tables are the reliable choice for
-layout); `transform`, `filter`, animations, forms and `<canvas>` are rejected. The complete list is
+subset of HTML and CSS. Flexbox is partial (tables are the reliable choice for layout); CSS
+grid, `transform`, `filter`, animations, forms and `<canvas>` are rejected. The complete list is
 in [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).
 
 vellora is pre-1.0: the API works and is tested, but a minor version can still bring a breaking
@@ -205,7 +223,7 @@ change. Read the [release notes](https://github.com/diomalta/vellora/releases) b
   [rendering invoices](https://diomalta.github.io/vellora/guide/invoices)
 - [Images](https://diomalta.github.io/vellora/guide/images), [fonts](https://diomalta.github.io/vellora/guide/fonts),
   [streaming](https://diomalta.github.io/vellora/guide/streaming), [PDF/A](https://diomalta.github.io/vellora/guide/pdfa)
-- [Switching from Puppeteer or wkhtmltopdf](https://diomalta.github.io/vellora/migrating)
+- [Switching from Puppeteer](https://diomalta.github.io/vellora/migrating)
 - [HTML to PDF in Node.js without Puppeteer](https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer)
 
 Found a template that renders wrong? [Open an issue](https://github.com/diomalta/vellora/issues)

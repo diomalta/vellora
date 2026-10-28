@@ -18,7 +18,7 @@ const pageImages: Record<string, { url: string; alt: string }> = {
   "guide/fidelity.md": FIDELITY_OG_IMAGE,
 };
 const DEFAULT_DESCRIPTION =
-  "HTML to PDF for Node.js with a native no-browser renderer, strict document HTML subset, PDF/A, fonts, images, and optional Chromium fidelity routing.";
+  "Turn HTML invoices, receipts and statements into PDFs inside Node.js. No Chromium, no Puppeteer, no browser to install. PDF/A-2b, bundled fonts.";
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
@@ -26,12 +26,12 @@ const structuredData = {
       "@type": "SoftwareApplication",
       "@id": `${SITE_URL}#software`,
       name: "vellora",
-      alternateName: "Vellora HTML to PDF",
+      alternateName: "vellora HTML to PDF",
       applicationCategory: "DeveloperApplication",
       applicationSubCategory: "HTML to PDF renderer",
       operatingSystem: "macOS, Linux",
       runtimePlatform: "Node.js >=20",
-      softwareVersion: "0.3.0",
+      softwareVersion: "0.3.2",
       url: SITE_URL,
       downloadUrl: NPM_URL,
       installUrl: NPM_URL,
@@ -72,9 +72,9 @@ const structuredData = {
 
 const pageDescriptions: Record<string, string> = {
   "index.md":
-    "HTML to PDF for Node.js without Puppeteer or Chromium: vellora renders invoices, receipts and reports in-process to deterministic PDFs, measured word by word against Chrome.",
+    "HTML to PDF for Node.js without Puppeteer or Chromium. Turn the HTML templates you already have into invoice, receipt and statement PDFs with one function call, inside your Node process.",
   "guide/getting-started.md":
-    "Install vellora and render the first HTML to PDF document in Node.js without a Rust toolchain, Chromium, Python, or Java.",
+    "Install vellora and turn an HTML template into your first PDF in Node.js in three steps. No Chromium, Rust toolchain, Python or Java needed.",
   "guide/invoices.md":
     "Build invoice PDFs with vellora templating, tables, currency formatting, @page rules, and repeated table headers.",
   "guide/images.md":
@@ -84,44 +84,54 @@ const pageDescriptions: Record<string, string> = {
   "guide/fonts.md":
     "Render deterministic PDFs with bundled fonts or caller-supplied TTF/OTF bytes through vellora's fonts option.",
   "guide/fidelity.md":
-    "Measured fidelity of vellora's native PDFs against Chrome print-to-PDF, word by word, and when to route a template through the optional Chromium engine.",
+    "How close vellora's PDFs are to Chrome's print-to-PDF, measured word by word on nine test documents, with side-by-side pictures and the cases that still differ.",
+  "guide/chromium-engine.md":
+    "When a template needs Chrome's exact print output: route just that template through vellora's optional Chromium engine and keep everything else browser-free.",
   "guide/pdfa.md": "Generate PDF/A-2b archival documents with vellora's native renderer.",
   "guide/concurrency.md":
     "Render many HTML documents to PDF with bounded concurrency using vellora's renderPdfBatch API.",
   "compatibility.md":
-    "Understand vellora's strict HTML/CSS subset, supported document features, and unsupported browser-only constructs.",
+    "Will your HTML template work with vellora? What renders, what works with limits, and what is rejected with a line and column instead of a broken PDF.",
   "migrating.md":
-    "Switch HTML to PDF workflows from Puppeteer or wkhtmltopdf to vellora's native renderer, with Chromium opt-in for specific templates.",
+    "Switch your HTML to PDF code from Puppeteer or wkhtmltopdf to vellora: a side-by-side translation, what to check first, and how to compare against your old PDFs.",
   "recipes.md":
-    "Runnable vellora HTML to PDF recipes for invoices, receipts, boletos, notifications, PDF/A, fonts, streaming, and fidelity checks.",
+    "Example HTML to PDF documents made with vellora: invoices, receipts, bank slips and letters, with the code to render each one.",
   "blog/index.md":
     "Practical notes on HTML to PDF rendering, browserless document generation, and vellora's native Node.js workflow.",
   "blog/html-to-pdf-nodejs-without-puppeteer.md":
-    "Why vellora uses a native browserless default for generated document HTML in Node.js, where it fits, and when to keep a browser renderer.",
+    "Why we print PDFs without a browser: what keeping headless Chrome around costs a Node.js invoice service, what vellora does instead, and when a browser is still the right tool.",
   "blog/native-pdf-fidelity-blitz-beta4.md":
-    "How vellora moved to Blitz 0.3.0-beta.4, built measurement oracles first, compensated Blitz layout bugs, laid out multi-column, ruby and inline SVG itself, and measured every word against Chrome.",
+    "Engineering note: how we measured vellora against Chrome word by word on nine documents, the layout bugs we found along the way, and how we fixed them.",
 };
 
-// Mirrors the visible "FAQ" section of docs/index.md; keep the two in sync.
+// Mirrors the visible "FAQ" section of docs/index.md word for word; keep the two in sync.
 const homeFaq = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   mainEntity: [
     [
-      "Is vellora a Puppeteer alternative?",
-      "For generated document HTML, yes: invoices, receipts, statements, boletos, reports and notifications whose markup you control. vellora renders them to PDF in-process, with no headless browser. For arbitrary web pages, JavaScript-driven templates or exact Chromium output, keep a browser renderer, or route only those templates through vellora's optional Chromium engine.",
+      "Does vellora need Chrome or Puppeteer?",
+      "No. vellora installs from npm with its renderer already built for your platform, and it runs inside your Node process. There is no browser to download, launch or keep running. If one template truly needs Chrome’s output, you can opt that template into an optional Chromium engine; nothing else changes.",
     ],
     [
-      "Does vellora need Chromium, Puppeteer or Playwright installed?",
-      'No. The default renderer is a native Node.js addon (Rust, napi-rs) with prebuilt binaries for macOS and Linux on x64 and arm64. Chromium is only used if you opt into engine: "chromium" or engine: "auto".',
+      "Which platforms does it run on?",
+      "macOS on Apple Silicon and Intel, and Linux on x64 and arm64 with glibc, which covers Debian and Ubuntu images such as node:22-slim. There are no Windows or Alpine/musl builds. It needs Node 20 or newer.",
     ],
     [
-      "How close is the output to Chrome's PDF?",
-      "On the repository's 9 document fixtures, 8 have every word within 1 mm of Chrome for Testing 155's print-to-PDF position and all 9 have the same page count.",
+      "Will my template work?",
+      "If it is a document you control, such as an invoice, receipt, statement or letter, there is a good chance. Put your CSS in a <style> tag, pass images and fonts as bytes, and avoid CSS grid, transforms and animations. Anything unsupported fails with the line and column instead of printing something wrong.",
     ],
     [
-      "What happens with HTML vellora does not support?",
-      "In strict mode (the default) it is rejected before any PDF is written, with an error naming the feature, line, column and a hint.",
+      "How close is the output to Chrome?",
+      "Very close on the documents we test: on 8 of 9, every word is within 1 mm of Chrome’s position. See all nine on the How close to Chrome? page.",
+    ],
+    [
+      "Is it production-ready?",
+      "It is young. The current release is 0.3.2, and until 1.0 the API can still change between minor versions, so pin the version you test. Every change is listed in the CHANGELOG, and bugs go to GitHub issues. The same input always gives the same PDF bytes, so snapshot tests are a cheap way to catch surprises when you upgrade. To try it on a template of your own in a few minutes, start with your first PDF, then compare it with the PDF you make today.",
+    ],
+    [
+      "Is it free, and is it safe with customer data?",
+      "It is free and MIT licensed. Rendering happens inside your own process and vellora makes no network requests: images and fonts come in as bytes you pass. There is no browser to sandbox or patch, and <script> tags are rejected before anything is rendered.",
     ],
   ].map(([name, text]) => ({
     "@type": "Question",
@@ -129,6 +139,43 @@ const homeFaq = {
     acceptedAnswer: { "@type": "Answer", text },
   })),
 };
+
+// One sidebar shared by the guide, the root doc pages and the API reference, so no doc page is a dead end.
+const docsSidebar = [
+  {
+    text: "Start here",
+    items: [
+      { text: "Your first PDF in three steps", link: "/guide/getting-started" },
+      { text: "Switching from Puppeteer", link: "/migrating" },
+      { text: "Will my template work?", link: "/compatibility" },
+      { text: "How close to Chrome?", link: "/guide/fidelity" },
+    ],
+  },
+  {
+    text: "Build",
+    items: [
+      { text: "Invoices", link: "/guide/invoices" },
+      { text: "Logos & images", link: "/guide/images" },
+      { text: "Fonts", link: "/guide/fonts" },
+      { text: "Serve PDFs over HTTP", link: "/guide/streaming" },
+      { text: "Bulk rendering", link: "/guide/concurrency" },
+      { text: "PDF/A archiving", link: "/guide/pdfa" },
+      { text: "When you need Chrome", link: "/guide/chromium-engine" },
+      { text: "Examples", link: "/recipes" },
+    ],
+  },
+  {
+    text: "Reference",
+    items: [
+      { text: "API reference", link: "/reference/" },
+      { text: "Full compatibility matrix", link: `${REPOSITORY_URL}/blob/main/COMPATIBILITY.md` },
+      {
+        text: "Engineering note: measuring vellora against Chrome",
+        link: "/blog/native-pdf-fidelity-blitz-beta4",
+      },
+    ],
+  },
+];
 
 function canonicalUrl(relativePath: string): string {
   const route = relativePath
@@ -207,11 +254,11 @@ export default defineConfig({
   themeConfig: {
     // Top navigation is capped at 3–5 entries (Diataxis); deeper structure lives in the sidebar.
     nav: [
-      { text: "Guide", link: "/guide/getting-started" },
+      { text: "Get started", link: "/guide/getting-started" },
+      { text: "Switching from Puppeteer", link: "/migrating" },
+      { text: "Will my template work?", link: "/compatibility" },
+      { text: "Examples", link: "/recipes" },
       { text: "Blog", link: "/blog/" },
-      { text: "Reference", link: "/reference/" },
-      { text: "Compatibility", link: "/compatibility" },
-      { text: "Switching", link: "/migrating" },
     ],
     sidebar: {
       "/blog/": [
@@ -220,48 +267,25 @@ export default defineConfig({
           items: [
             { text: "Overview", link: "/blog/" },
             {
-              text: "HTML to PDF without Puppeteer",
+              text: "Why we print PDFs without a browser",
               link: "/blog/html-to-pdf-nodejs-without-puppeteer",
             },
             {
-              text: "Word by word against Chrome",
+              text: "Engineering note: measuring vellora against Chrome, word by word",
               link: "/blog/native-pdf-fidelity-blitz-beta4",
             },
           ],
         },
       ],
-      "/guide/": [
-        {
-          text: "Getting Started",
-          items: [{ text: "Install & first PDF", link: "/guide/getting-started" }],
-        },
-        {
-          text: "Guides",
-          items: [
-            { text: "Invoices", link: "/guide/invoices" },
-            { text: "Streaming", link: "/guide/streaming" },
-            { text: "Fonts", link: "/guide/fonts" },
-            { text: "Images", link: "/guide/images" },
-            { text: "Rendering fidelity", link: "/guide/fidelity" },
-            { text: "PDF/A", link: "/guide/pdfa" },
-            { text: "Concurrency", link: "/guide/concurrency" },
-          ],
-        },
-        {
-          text: "More",
-          items: [
-            { text: "Recipes", link: "/recipes" },
-            { text: "Compatibility", link: "/compatibility" },
-            { text: "Switching", link: "/migrating" },
-          ],
-        },
-      ],
-      "/reference/": [
-        {
-          text: "API Reference",
-          items: [{ text: "Overview", link: "/reference/" }],
-        },
-      ],
+      "/guide/": docsSidebar,
+      "/migrating": docsSidebar,
+      "/compatibility": docsSidebar,
+      "/recipes": docsSidebar,
+      "/reference/": docsSidebar,
+    },
+    footer: {
+      message: "MIT licensed. Free and open source.",
+      copyright: `<a href="${NPM_URL}">npm</a> · <a href="${REPOSITORY_URL}">GitHub</a> · <a href="${BASE_PATH}reference/">API reference</a> · <a href="${REPOSITORY_URL}/blob/main/CHANGELOG.md">CHANGELOG</a>`,
     },
     search: docsearch,
     socialLinks: [{ icon: "github", link: REPOSITORY_URL }],

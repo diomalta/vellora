@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "suite": "vellora-html-pdf-benchmark",
+  "baseline": {
+    "name": "invoice",
+    "fixture": "fixtures/invoice",
+    "referencePages": 3
+  },
+  "config": {
+    "concurrency": 8,
+    "warmRuns": 50,
+    "warmupRuns": 5
+  },
+  "env": {
+    "runDate": "2026-10-28T12:33:40.104Z",
+    "cpuModel": "AMD EPYC 7763 64-Core Processor",
+    "cores": 4,
+    "totalRamBytes": 16760340480,
+    "os": "linux 7.0.0-1017-azure",
+    "arch": "x64",
+    "container": false,
+    "authoritative": true,
+    "authority": "pinned-linux-ci",
+    "indicativeOnly": false,
+    "nodeVersion": "v22.23.4",
+    "toolVersions": [
+      {
+        "id": "vellora",
+        "label": "vellora",
+        "pinnedVersion": "0.1.0-alpha.0",
+        "runtimeVersion": "0.1.0-alpha.0"
+      },
+      {
+        "id": "vellora-chromium",
+        "label": "Vellora Chromium (environment)",
+        "pinnedVersion": "0.1.0-alpha.0",
+        "runtimeVersion": "0.1.0-alpha.0 + 0.1.0-alpha.0"
+      },
+      {
+        "id": "puppeteer",
+        "label": "Puppeteer",
+        "pinnedVersion": "23.6.0",
+        "runtimeVersion": "23.6.0"
+      },
+      {
+        "id": "playwright",
+        "label": "Playwright",
+        "pinnedVersion": "1.48.2",
+        "runtimeVersion": "1.48.2"
+      },
+      {
+        "id": "gotenberg",
+        "label": "Gotenberg",
+        "pinnedVersion": "8.11.1",
+        "runtimeVersion": null
+      },
+      {
+        "id": "weasyprint",
+        "label": "WeasyPrint",
+        "pinnedVersion": "62.3",
+        "runtimeVersion": null
+      }
+    ]
+  },
+  "externalReference": {
+    "source": "pdf4.dev",
+    "claim": "~3ms warm render",
+    "status": "UNVERIFIED — vendor benchmark with a known subprocess-per-render flaw; not a trusted datum",
+    "comparedAgainst": "vellora warm distribution only"
+  },
+  "records": [
+    {
+      "id": "vellora",
+      "label": "vellora",
+      "kind": "in-process",
+      "isSubject": true,
+      "pinnedVersion": "0.1.0-alpha.0",
+      "declaredMode": "in-process (public vellora API, no worker/browser)",
+      "comparable": true,
+      "packageFootprint": {
+        "tarballBytes": 98760,
+        "unpackedBytes": 533192,
+        "runtimeDependencyCount": 13,
+        "packages": [
+          {
+            "name": "vellora",
+            "tarballBytes": 35191,
+            "unpackedBytes": 125751
+          },
+          {
+            "name": "@vellora/native",
+            "tarballBytes": 41254,
+            "unpackedBytes": 333039
+          },
+          {
+            "name": "@vellora/lint",
+            "tarballBytes": 22315,
+            "unpackedBytes": 74402
+          }
+        ],
+        "freshInstall": {
+          "installedBytes": 39723330,
+          "packageCount": 3,
+          "includesCurrentNativePrebuild": true,
+          "method": "fresh npm install from local package tarballs plus current-platform prebuild tarball",
+          "notes": [],
+          "na": false
+        },
+        "nativeAddon": {
+          "bytes": 33771272,
+          "tag": "linux-x64-gnu",
+          "path": "/home/runner/work/vellora/vellora/packages/native/vellora.linux-x64-gnu.node",
+          "source": "local-build",
+          "na": false
+        },
+        "na": false
+      },
+      "version": "0.1.0-alpha.0",
+      "mode": "in-process (public vellora API, no worker/browser)",
+      "externalRuntime": {
+        "bytes": null,
+        "na": true,
+        "reason": "vellora does not expose an external runtime binary"
+      },
+      "coldStartMs": 47.288360999999895,
+      "pages": 3,
+      "contentStatus": "inconclusive",
+      "outputSizeBytes": 44797,
+      "imageSize": {
+        "bytes": null,
+        "na": true,
+        "reason": "vellora is not represented by a standalone service container image in this benchmark"
+      },
+      "warm": {
+        "count": 50,
+        "medianMs": 19.087271000000328,
+        "p95Ms": 23.32400299999972,
+        "minMs_notHeadline": 18.1991450000005,
+        "maxMs": 24.25365899999997
+      },
+      "throughputPerSec": 51.370439945961515,
+      "rss": {
+        "peakRssBytes": 117596160,
+        "na": false,
+        "concurrency": 8
+      },
+      "externalRss": {
+        "peakRssBytes": null,
+        "na": true,
+        "concurrency": 8,
+        "reason": "vellora does not expose an external RSS sampler"
+      }
+    },
+    {
+      "id": "vellora-chromium",
+      "label": "Vellora Chromium (environment)",
+      "kind": "browser-subprocess",
+      "isSubject": false,
+      "pinnedVersion": "0.1.0-alpha.0",
+      "declaredMode": "direct Chrome/Chromium executable per render; executable supplied by environment",
+      "comparable": true,
+      "packageFootprint": {
+        "tarballBytes": 104318,
+        "unpackedBytes": 551248,
+        "runtimeDependencyCount": 14,
+        "packages": [
+          {
+            "name": "vellora",
+            "tarballBytes": 35191,
+            "unpackedBytes": 125751
+          },
+          {
+            "name": "@vellora/native",
+            "tarballBytes": 41254,
+            "unpackedBytes": 333039
+          },
+          {
+            "name": "@vellora/lint",
+            "tarballBytes": 22315,
+            "unpackedBytes": 74402
+          },
+          {
+            "name": "@vellora/engine-chromium",
+            "tarballBytes": 5558,
+            "unpackedBytes": 18056
+          }
+        ],
+        "freshInstall": {
+          "installedBytes": 39741815,
+          "packageCount": 4,
+          "includesCurrentNativePrebuild": true,
+          "method": "fresh npm install from local package tarballs plus current-platform prebuild tarball",
+          "notes": [],
+          "na": false
+        },
+        "nativeAddon": {
+          "bytes": 33771272,
+          "tag": "linux-x64-gnu",
+          "path": "/home/runner/work/vellora/vellora/packages/native/vellora.linux-x64-gnu.node",
+          "source": "local-build",
+          "na": false
+        },
+        "na": false
+      },
+      "version": "0.1.0-alpha.0 + 0.1.0-alpha.0",
+      "mode": "Vellora optional environment-Chromium engine (direct Chrome/Chromium executable per render)",
+      "externalRuntime": {
+        "kind": "chromium-executable",
+        "executablePath": "/home/runner/.cache/ms-playwright/chromium-1140/chrome-linux/chrome",
+        "version": "Chromium 130.0.6723.31",
+        "bytes": 412281840,
+        "versionNa": false,
+        "sizeNa": false,
+        "na": false
+      },
+      "coldStartMs": 735.0117770000015,
+      "pages": 3,
+      "contentStatus": "inconclusive",
+      "outputSizeBytes": 156189,
+      "imageSize": {
+        "bytes": null,
+        "na": true,
+        "reason": "vellora-chromium is not represented by a standalone service container image in this benchmark"
+      },
+      "warm": {
+        "count": 50,
+        "medianMs": 635.4992160000002,
+        "p95Ms": 681.0279349999983,
+        "minMs_notHeadline": 605.9428409999964,
+        "maxMs": 1355.9830040000015
+      },
+      "throughputPerSec": 1.5384054520802708,
+      "rss": {
+        "peakRssBytes": null,
+        "na": true,
+        "concurrency": 8,
+        "reason": "vellora-chromium memory lives outside this Node process. TODO(CI): sample browser/service/worker RSS during the concurrent burst."
+      },
+      "externalRss": {
+        "peakRssBytes": 6833963008,
+        "na": false,
+        "concurrency": 8,
+        "processKind": "chromium-subprocess"
+      }
+    },
+    {
+      "id": "puppeteer",
+      "label": "Puppeteer",
+      "kind": "browser",
+      "isSubject": false,
+      "pinnedVersion": "23.6.0",
+      "declaredMode": "one Chromium launched once, reused across warm renders",
+      "comparable": false,
+      "packageFootprint": {
+        "tarballBytes": null,
+        "unpackedBytes": null,
+        "runtimeDependencyCount": null,
+        "na": true,
+        "reason": "puppeteer is not a Vellora npm package tier; package footprint is not measured here"
+      },
+      "version": "23.6.0",
+      "mode": "one Chromium launched once, reused across warm renders",
+      "externalRuntime": {
+        "bytes": null,
+        "na": true,
+        "reason": "puppeteer does not expose an external runtime binary"
+      },
+      "coldStartMs": 896.6872659999935,
+      "pages": 1,
+      "contentStatus": "inconclusive",
+      "notComparableReason": "page count 1 != reference 3"
+    },
+    {
+      "id": "playwright",
+      "label": "Playwright",
+      "kind": "browser",
+      "isSubject": false,
+      "pinnedVersion": "1.48.2",
+      "declaredMode": "one Chromium launched once, reused across warm renders",
+      "comparable": false,
+      "packageFootprint": {
+        "tarballBytes": null,
+        "unpackedBytes": null,
+        "runtimeDependencyCount": null,
+        "na": true,
+        "reason": "playwright is not a Vellora npm package tier; package footprint is not measured here"
+      },
+      "version": "1.48.2",
+      "mode": "one Chromium launched once, reused across warm renders",
+      "externalRuntime": {
+        "bytes": null,
+        "na": true,
+        "reason": "playwright does not expose an external runtime binary"
+      },
+      "coldStartMs": 592.4199319999971,
+      "pages": 1,
+      "contentStatus": "inconclusive",
+      "notComparableReason": "page count 1 != reference 3"
+    },
+    {
+      "id": "gotenberg",
+      "label": "Gotenberg",
+      "kind": "http-service",
+      "isSubject": false,
+      "pinnedVersion": "8.11.1",
+      "declaredMode": "standing HTTP service (Chromium pool inside the container)",
+      "comparable": false,
+      "packageFootprint": {
+        "tarballBytes": null,
+        "unpackedBytes": null,
+        "runtimeDependencyCount": null,
+        "na": true,
+        "reason": "gotenberg is not a Vellora npm package tier; package footprint is not measured here"
+      },
+      "pending": true,
+      "error": "Gotenberg service not reachable at http://localhost:3000. Start it with: docker run --rm -p 3000:3000 gotenberg/gotenberg:8.11.1. Underlying: fetch failed",
+      "notComparableReason": "adapter pending (tool not installed / render path not landed)"
+    },
+    {
+      "id": "weasyprint",
+      "label": "WeasyPrint",
+      "kind": "worker-subprocess",
+      "isSubject": false,
+      "pinnedVersion": "62.3",
+      "declaredMode": "in-process inside a warm long-lived Python worker (NOT subprocess-per-render)",
+      "comparable": false,
+      "packageFootprint": {
+        "tarballBytes": null,
+        "unpackedBytes": null,
+        "runtimeDependencyCount": null,
+        "na": true,
+        "reason": "weasyprint is not a Vellora npm package tier; package footprint is not measured here"
+      },
+      "pending": true,
+      "error": "WeasyPrint worker unavailable (pip install weasyprint==62.3). Underlying: No module named 'weasyprint'",
+      "notComparableReason": "adapter pending (tool not installed / render path not landed)"
+    }
+  ]
+}

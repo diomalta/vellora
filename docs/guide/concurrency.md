@@ -1,26 +1,26 @@
-# Concurrency
+# Bulk rendering
 
-vellora renders **in-process** through a native addon — there is no subprocess and no headless browser to pool. `renderPdf` returns a `Promise<Uint8Array>`, so rendering many documents is ordinary async JavaScript.
+With a headless browser, rendering a lot of PDFs means running a pool of browser processes,
+limiting how many pages are open, and restarting the ones that grow or hang. With vellora each
+render is a promise. You render many documents with ordinary async code and choose how many run at
+once.
 
-## Render many documents
-
-Render concurrently with `Promise.all`:
+## A handful of documents
 
 ```js
 import { renderPdf } from "vellora";
-
-const invoices = [/* ...data objects... */];
 
 const pdfs = await Promise.all(
   invoices.map((data) => renderPdf(template, data)),
 );
 ```
 
-Each call is independent and produces its own `Uint8Array`.
+Each call is independent and resolves to its own `Uint8Array`.
 
-## Bounding concurrency
+## A large batch
 
-Unbounded `Promise.all` over a very large batch will start every render at once. For large batches, use `renderPdfBatch` to cap the number of active renders while preserving the input order:
+`Promise.all` starts every render at the same time. For hundreds or thousands of documents, use
+`renderPdfBatch` to cap how many run at once. Results come back in the same order as the input:
 
 ```js
 import { renderPdfBatch } from "vellora";
@@ -31,8 +31,27 @@ const pdfs = await renderPdfBatch(
 );
 ```
 
-If `concurrency` is omitted, vellora uses `4`. The value must be a positive safe integer.
+Leave out `concurrency` and vellora runs 4 at a time. The value must be a positive whole number;
+anything else throws `VelloraInputError`. Each item can also carry its own `opts` (images, fonts,
+metadata).
 
-## Determinism under concurrency
+<StatTiles :items="[{ value: 'about 118 MB', label: 'memory with 8 renders at once', note: 'the whole Node process, 3-page invoice' }]" footnote="vellora 0.3.0, one benchmark run on a 4-core GitHub Actions Linux runner. Peak memory of the whole Node process." />
 
-Rendering is deterministic: the same `(html, data, opts)` always yields byte-identical output regardless of how many renders run alongside it. Concurrent calls do not share mutable state that would change each other's results.
+## Same bytes, however many run together
+
+A document rendered alongside others produces exactly the same PDF bytes as when it is rendered
+alone. Renders share no state that could change each other's output.
+
+<details>
+<summary>Details</summary>
+
+- **If one document fails**, `renderPdfBatch` rejects with that error. Renders already running are
+  allowed to finish, and no new ones are started.
+- **The same-bytes guarantee is tested**: a test in `packages/native/test/render.test.ts` renders
+  documents (one of them multi-page) concurrently and sequentially and compares the bytes.
+
+</details>
+
+## Next step
+
+[Serve your PDFs over HTTP →](/guide/streaming)

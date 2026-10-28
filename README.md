@@ -1,17 +1,101 @@
 # vellora
 
-**HTML to PDF for Node.js, rendered natively in your process. No browser to install or launch.**
+**HTML to PDF in Node.js. No Chromium. No Puppeteer.**
 
 [![CI](https://github.com/diomalta/vellora/actions/workflows/ci.yml/badge.svg)](https://github.com/diomalta/vellora/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora)
 ![license: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![node: >=20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 ![status: 0.x](https://img.shields.io/badge/status-0.x%20pre--1.0-blue)
-[![npm](https://img.shields.io/npm/v/vellora)](https://www.npmjs.com/package/vellora)
 
-vellora turns the HTML your application generates (invoices, receipts, statements, boletos,
-notices) into PDF through a native napi-rs addon. The default path installs no Puppeteer,
-Playwright, Chromium or sidecar service. An optional Chromium engine is there for the templates
-that need browser print output.
+Turn the HTML templates you already have (invoices, receipts, statements) into PDFs with one
+function call inside Node.js. No browser to install, launch, sandbox or patch.
+
+<table>
+  <tr>
+    <th>Chrome print-to-PDF</th>
+    <th>vellora 0.3.0</th>
+  </tr>
+  <tr>
+    <td><img src="./docs/public/compare/oss-sparksuite-invoice-chrome.jpg" width="400" alt="Page 1 of an open-source invoice template printed to PDF by Chrome for Testing 155"></td>
+    <td><img src="./docs/public/compare/oss-sparksuite-invoice-vellora.jpg" width="400" alt="Page 1 of the same invoice template rendered to PDF by vellora 0.3.0, with no browser"></td>
+  </tr>
+</table>
+
+<sub>Same HTML, two PDFs: an open-source invoice template, page 1. Left: Chrome for Testing 155. Right: vellora 0.3.0, with no browser installed.</sub>
+
+## Install
+
+```bash
+npm install vellora
+```
+
+Prebuilt for macOS (arm64, x64) and Linux with glibc (x64, arm64), on Node.js 20 or later. No
+Rust, Python, Chromium or system fonts needed. No Windows or Alpine/musl builds.
+
+## Your first PDF
+
+```js
+import { writeFileSync } from "node:fs";
+import { renderPdf } from "vellora";
+
+const html = "<h1>Receipt for {{ name }}</h1><p>Total: {{ total | currency('USD') }}</p>";
+const pdf = await renderPdf(html, { name: "Ada", total: 42 });
+writeFileSync("receipt.pdf", pdf);
+```
+
+`renderPdf` returns the PDF as a `Uint8Array`. Your HTML is always treated as a template
+(`{{ value }}`, `{% if %}`, `{% for %}`, and `currency`, `number` and `date` helpers), so a literal
+`{{` or `{%` in pre-rendered HTML is read as template syntax. Put CSS in a `<style>` tag or
+`style=""`: vellora loads nothing from the network, so `<link rel="stylesheet">` and `@import` are
+ignored, and images and fonts are passed in as bytes.
+
+## Why not just use Puppeteer?
+
+Printing a PDF with Puppeteer means shipping and looking after a browser:
+
+| The browser way | With vellora |
+|---|---|
+| A Chromium download in every image, plus the shared libraries it needs | One npm package with a prebuilt native addon: a 39.72 MB fresh install |
+| Sandbox flags and launch errors in Docker | Nothing to launch: the PDF is laid out inside your Node process |
+| A browser process to keep warm, restart and patch | One async call; a warm 3-page invoice renders in about 19 ms |
+| Fonts that change between your laptop and the server | The same bundled fonts on every machine; no surprise font swaps |
+| CSS it can't handle shows up as a broken PDF | Unsupported CSS fails before any PDF is written, with the line and column |
+
+The timings and sizes come from our benchmark on a GitHub Actions Linux runner; see
+[Performance](#performance).
+
+When vellora meets something it can't draw faithfully, it tells you where. Rendering
+`<p style="transform: rotate(5deg)">Total</p>` throws:
+
+```text
+VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 11: this CSS feature is outside vellora's document subset; run `vellora fix`
+```
+
+## Is it a fit?
+
+**Good fit:** documents you generate from templates you control. Invoices, receipts, statements,
+reports, letters, notices, bank slips. Tables that span pages with a repeated header, page
+numbers, inline SVG, your own fonts and images, PDF/A-2b for archiving.
+
+**Works with limits:** `display: flex` is partial (tables are the reliable choice for layout).
+Floats and multi-column text work, with documented edge cases; a multi-column container taller
+than a page is not split across pages.
+
+**Not a fit:** arbitrary web pages, pages that need JavaScript to build their content, CSS grid,
+transforms, animations, forms and `<canvas>`. vellora rejects those instead of guessing. For the
+few templates that need them, the optional [Chromium engine](#when-to-use-the-optional-chromium-engine)
+renders through Chrome while everything else stays native.
+
+Not sure about your template? [Will my template work?](https://diomalta.github.io/vellora/compatibility)
+walks through it.
+
+## Measured fidelity
+
+We measure how close vellora's PDF lands to Chrome's print-to-PDF for the same HTML, word by
+word, on the documents we test. Most of them match closely; one is not perfect yet. The picture
+below shows the same page three times. Left: Chrome. Middle: our previous release. Right:
+vellora 0.3.0.
 
 <!-- fidelity-evidence:readme-hero -->
 ![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](./docs/assets/fidelity/danfe-p1.jpg)
@@ -26,96 +110,32 @@ that need browser print output.
 <sub>Released in vellora 0.3.0; indicative local macOS measurement. Source: [manifest.json](./docs/assets/fidelity/manifest.json), method in [Measured fidelity](#measured-fidelity).</sub>
 <!-- /fidelity-evidence:readme-hero -->
 
-## Why vellora
-
-- **In-process and native.** `renderPdf()` lays out and writes the PDF inside your Node.js
-  process: Blitz for layout, krilla for PDF output, behind one async call on the libuv thread
-  pool. There is no browser to install, launch, keep warm or patch.
-- **Deterministic bytes.** The same input gives a byte-identical PDF. There is no wall clock (an
-  omitted creation date is a fixed constant), no randomness and no host-font fallback. In a
-  cross-OS check of the fidelity harness on a pre-release 0.3.0 tree, the PDFs were
-  byte-identical on macOS arm64 and Linux arm64, including all 9 document fixtures and the PDF/A
-  renders; x86_64 was not part of that check
-  ([Cross-OS check](https://diomalta.github.io/vellora/guide/fidelity#cross-os-check)).
-- **Strict mode rejects instead of mis-rendering.** By default, input outside the documented
-  subset (scripts, form controls, `transform`, `display: grid`, unsupported `@page` margin boxes,
-  and so on) is rejected before any PDF is written, with a `VelloraUnsupportedError` that carries
-  `feature`, `line`, `col` and a `hint`. Strict mode never changes your HTML; `{ strict: false }`
-  opts into the dev-time fixers instead.
-
-## Install
-
-```bash
-npm install vellora
-```
-
-Prebuilt native addons are published for macOS arm64 and x64, and Linux glibc x64 and arm64. No
-Rust toolchain is needed. musl/Alpine and Windows prebuilds are not published yet. vellora
-requires Node.js 20 or later.
-
-## Quick start
-
-```ts
-import { renderPdf } from "vellora";
-
-const pdf = await renderPdf(invoiceHtml, data, {
-  metadata: { title: "Invoice INV-2026-00417", creationDate: "2026-06-23T00:00:00.000Z" },
-  strict: true,
-});
-```
-
-`invoiceHtml` is a template: `{{ value }}`, `{% if %}`, `{% for %}` and the `currency`, `number`
-and `date` helpers are filled from `data` before rendering. The result is a `Uint8Array`. See
-[Getting started](https://diomalta.github.io/vellora/guide/getting-started) for a complete first
-PDF.
-
-## What's new in 0.3.0
-
-- The native renderer runs on Blitz 0.3.0-beta.4 from crates.io, without a fork. Its output is
-  measured word by word against Chrome for Testing 155, and the release was gated by a strict
-  oracle contract.
-- Floats are laid out. 0.2.0 compiled Blitz without its `floats` feature, so floats rendered as
-  in-flow blocks.
-- Multi-column layout, ruby annotations, `break-after` / `break-before`, and tables fragmented
-  across pages.
-- Table captions and anonymous table boxes.
-- Inline `<svg>` drawn natively as PDF vectors. External `<image>` sources are rejected, and SVG
-  layout never reads host fonts.
-- Painting: the canvas background fills every page, and dashed and dotted borders and link
-  underlines are drawn.
-- Compensations for documented Blitz bugs, each with a code comment and a canary test so it can
-  be removed when Blitz fixes the bug.
-
-The cost: inline SVG support makes the native addon larger (see [Performance](#performance)).
-Full notes: [GitHub Release v0.3.0](https://github.com/diomalta/vellora/releases/tag/v0.3.0).
-
-## Measured fidelity
-
-How close the native PDF lands to Chrome's print-to-PDF output for the same HTML, measured word by
-word on the repo's document fixtures. Before is vellora 0.2.0; after is vellora 0.3.0. The block
-below is generated from [manifest.json](./docs/assets/fidelity/manifest.json) by
-`fidelity/report/build-site-evidence.mjs`, so it cannot drift from the measurement.
-
-<!-- fidelity-evidence:readme -->
-> **Released in vellora 0.3.0.** The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
-
-Measured against Chrome for Testing 155.0.8059.85 headless print-to-PDF on 9 document fixtures, comparing the position of every word in each PDF:
-
-- **8 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
-- **0.21 mm or less** median word-position error on every one of the 9 fixtures (largest: danfe). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
-- **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
-- **4,553 of 8,047 WPT reftests** pass through the same pipeline (56.58%), coverage of the CSS test subset the harness runs, not a document-quality score. vellora 0.2.0 (published) engine: 2,578 (32.04%).
-
-Method, the full table with the losses, and how to reproduce it: [Measured fidelity](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity). Raw values: [manifest.json](./docs/assets/fidelity/manifest.json).
-<!-- /fidelity-evidence:readme -->
-
 Known gaps: a multi-column container taller than a page is not split across pages, and `outline`
-is not painted ([issue #48](https://github.com/diomalta/vellora/issues/48)). That gap is also why
-the merge gate carries one WPT test as recorded debt: 0.2.0 passed
-`flex-fragmented-with-float-descendant-001` cleanly, and 0.3.0 passes it with a suspect-pass flag.
-Every loss the gate let through is listed in
-[Measured fidelity](https://diomalta.github.io/vellora/guide/fidelity#losses-and-open-items), and
-the per-feature caveats are in [COMPATIBILITY.md](./COMPATIBILITY.md).
+is not painted ([issue #52](https://github.com/diomalta/vellora/issues/52)). Every loss is listed
+in [How close is vellora to Chrome?](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity),
+and per-feature caveats are in [COMPATIBILITY.md](./COMPATIBILITY.md). To check your own
+templates, run `vellora doctor` (from `@vellora/cli` 0.3.2 or newer).
+
+## Performance
+
+A warm render of a 3-page invoice takes 19.09 ms at the median and 23.32 ms for the slowest 1 in
+20 renders. With 8 renders at once, the whole Node process peaks at 117.60 MB of memory.
+
+| Path | Fresh install | Native addon (linux-x64-gnu) | Browser binary | Memory @8 concurrent | Cold start | Warm median / slowest 1 in 20 |
+|---|---:|---:|---:|---:|---:|---:|
+| `vellora` (native, default) | 39.72 MB | 33.77 MB | none | 117.60 MB (whole Node process) | 47.29 ms | 19.09 / 23.32 ms |
+| vellora's optional Chromium engine (launches Chromium per render) | 39.74 MB | 33.77 MB | 412.28 MB | 6833.96 MB (summed across Chromium processes) | 735.01 ms | 635.50 / 681.03 ms |
+
+<sub>GitHub Actions Linux runner (AMD EPYC 7763, 4 cores, Node v22.23.4), [run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121), built from the v0.3.0 commit; warm timings over 50 renders. The two memory figures are sampled differently, and summing memory across browser processes counts shared memory more than once.</sub>
+
+<details>
+<summary>More about these numbers</summary>
+
+Puppeteer and Playwright were measured too but are not quoted: the run marks them not comparable
+for this fixture (page count 1 instead of 3). Install size grew in 0.3.0; the release notes
+attribute it to inline SVG support. Method and harness: [benchmarks/](./benchmarks/).
+
+</details>
 
 ## Supported HTML and CSS
 
@@ -125,7 +145,8 @@ generated reference is [COMPATIBILITY.md](./COMPATIBILITY.md); in short:
 - Block and inline text, headings and lists; tables, including repeated `<thead>` across pages,
   table captions and anonymous table boxes.
 - `@page` size and margins, `counter(page)` / `counter(pages)`, running headers and footers in
-  `@top-center` and `@bottom-center`, `@page :first` / `:left` / `:right`, named pages.
+  `@top-center` and `@bottom-center`, `@page :first` / `:left` / `:right`, named pages (page breaks only; named `@page` rules are not
+  applied yet).
 - `break-inside: avoid`, `break-before` and `break-after` (and the legacy `page-break-*` forms).
 - Floats, multi-column layout (`columns`, `column-count`, `column-width`, `column-gap`,
   `column-fill`) and ruby annotations, each with the partial-support caveats listed in
@@ -136,17 +157,22 @@ generated reference is [COMPATIBILITY.md](./COMPATIBILITY.md); in short:
 - Selectable text with embedded font subsets, document metadata, and PDF/A-2b output.
 - `display: flex` is accepted but partial; prefer tables for layout you rely on.
 
-Rejected by the strict gate: JavaScript and `<script>`, form controls, `<canvas>`, media,
+Rejected by default (strict mode): JavaScript and `<script>`, form controls, `<canvas>`, media,
 `<iframe>` / `<object>` / `<embed>`, `transform`, `filter`, `animation`, `transition`,
-`display: grid` (`vellora fix` converts the common table-cell case), and `@page` margin boxes other than top-center and
-bottom-center. The renderer never fetches network assets: pass image and font bytes in.
+`display: grid` (`vellora fix` converts the common table-cell case), and `@page` margin boxes
+other than top-center and bottom-center. Strict mode never changes your HTML; `{ strict: false }`
+applies the automatic fixes from `@vellora/lint` before rendering.
+
+The same input gives the same PDF bytes on the same platform: no clock (an omitted creation date
+is a fixed constant), no randomness, no host fonts. In our cross-OS check on a pre-release 0.3.0
+tree, macOS arm64 and Linux arm64 produced identical bytes; x86_64 was not measured.
 
 ## When to use the optional Chromium engine
 
-Use `engine: "chromium"` for a template that needs something the native subset does not draw, such
-as JavaScript, CSS grid layout, transforms or arbitrary web pages, or whose PDF must come from
-Chrome's own print path. It launches a Chrome/Chromium executable you provide, with headless print-to-PDF,
-and does not depend on Puppeteer or Playwright.
+Use `engine: "chromium"` for a template that needs something vellora does not draw, such as
+JavaScript, CSS grid, transforms or arbitrary web pages, or whose PDF must come from Chrome's own
+print path. It launches a Chrome/Chromium executable you provide, with headless print-to-PDF, and
+does not depend on Puppeteer or Playwright.
 
 ```bash
 npm install vellora @vellora/engine-chromium
@@ -161,30 +187,7 @@ const pdf = await renderPdf(html, data, {
 
 `engine: "auto"` routes each template by a committed `vellora.fidelity.json` policy, so one
 service can keep most templates native and send the rest to Chromium. See
-[Rendering fidelity and engine strategy](https://diomalta.github.io/vellora/guide/fidelity).
-
-## Performance
-
-From [Resource Benchmarks run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121)
-on pinned Linux CI (marked authoritative by the harness), built from the `v0.3.0` commit
-`c40b3c2`: AMD EPYC 7763, 4 cores, Linux x64, Node v22.23.4, 2026-10-28. The fixture is the
-3-page invoice; RSS is the peak at 8 concurrent renders, and warm timings are over 50 renders.
-
-| Path | Fresh install | Native addon (linux-x64-gnu) | External runtime | Peak RSS @8 | External RSS @8 | Cold start | Warm median / p95 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Native `vellora` | 39.72 MB | 33.77 MB | N/A | 117.60 MB | N/A | 47.29 ms | 19.09 / 23.32 ms |
-| Vellora Chromium | 39.74 MB | 33.77 MB | 412.28 MB | N/A | 6833.96 MB | 735.01 ms | 635.50 / 681.03 ms |
-
-Install size grew. The figures this README quoted before,
-[run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627) (commit `050979c`,
-2026-06-27, Node v22.23.0, 4 cores, pinned Linux CI), were a 28.93 MB fresh install and a warm
-median / p95 of 17.47 / 17.96 ms for the native path. That run's artifact has expired, so its addon
-size cannot be compared here; the 0.3.0 release notes attribute the addon growth to inline SVG
-support.
-
-Puppeteer and Playwright are in the benchmark artifact but are not quoted here: the run marks them
-non-comparable for this fixture (`page count 1 != reference 3`). Method and harness:
-[benchmarks/](./benchmarks/).
+[When you need Chrome](https://diomalta.github.io/vellora/guide/chromium-engine).
 
 ## Using from CommonJS
 
@@ -200,25 +203,41 @@ older Node versions, use `await import("vellora")` instead. In CommonJS:
 - Node 22.12 prints a harmless `ExperimentalWarning` on `require()` of an ES module; later 22.x
   releases do not.
 
-## Packages
+## Under the hood
+
+`renderPdf()` lays out and writes the PDF inside your Node.js process: Blitz for layout, krilla
+for PDF output, behind one async call on the libuv thread pool, through a napi-rs addon. Details
+in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 | Package | Purpose |
 |---|---|
 | `vellora` | Public API (`renderPdf`, `renderPdfBatch`, `renderPdfToStream`), templating, orchestration |
-| `@vellora/native` | Loads the prebuilt napi addon for the host platform |
+| `@vellora/native` | The prebuilt native renderer for your platform. Installed for you. |
 | `@vellora/lint` | Dev-time `diagnose()` and `fix()`; never on the strict render path |
 | `@vellora/cli` | `vellora render`, `lint`, `fix`, `doctor` and `fidelity` |
 | `@vellora/engine-chromium` | Optional browser engine using a host-supplied Chrome/Chromium |
 
+## What's new in 0.3.0
+
+Floats, multi-column layout, ruby annotations, `break-before` / `break-after`, tables split
+across pages with captions, inline `<svg>` drawn as PDF vectors, page backgrounds and dashed or
+dotted borders. The layout engine underneath (Blitz) moved to its 0.3.0-beta.4 release. Full
+notes: [GitHub Release v0.3.0](https://github.com/diomalta/vellora/releases/tag/v0.3.0) and
+[CHANGELOG.md](./CHANGELOG.md).
+
 ## Docs
 
 - [Docs site](https://diomalta.github.io/vellora/)
-- [Getting started](https://diomalta.github.io/vellora/guide/getting-started)
-- [Rendering fidelity and engine strategy](https://diomalta.github.io/vellora/guide/fidelity)
-- Blog: [Word by word against Chrome: measuring vellora's native PDFs](https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4)
+- [Your first PDF in three steps](https://diomalta.github.io/vellora/guide/getting-started)
+- [Switching from Puppeteer](https://diomalta.github.io/vellora/migrating)
+- [Will my template work?](https://diomalta.github.io/vellora/compatibility)
+- [How close is vellora to Chrome?](https://diomalta.github.io/vellora/guide/fidelity)
+- [Examples](https://diomalta.github.io/vellora/recipes)
 - Blog: [HTML to PDF in Node.js without Puppeteer or Chromium](https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer)
 - [COMPATIBILITY.md](./COMPATIBILITY.md) · [ARCHITECTURE.md](./ARCHITECTURE.md) ·
   [benchmarks/](./benchmarks/) · [RELEASING.md](./RELEASING.md) · [SECURITY.md](./SECURITY.md)
+
+**Next step:** [render your first PDF in three steps](https://diomalta.github.io/vellora/guide/getting-started).
 
 ## License
 

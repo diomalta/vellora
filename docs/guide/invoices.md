@@ -1,10 +1,21 @@
 # Invoices
 
-Invoices are vellora's canonical use case: a table of line items, currency and date formatting, and a total. This guide shows the templating features you'll lean on.
+An invoice is a template plus data. You write the HTML once, pass each customer's data, and get a
+PDF back. When the line items run long, they flow onto more pages: the table header repeats at the
+top of each page and the footer counts "Page 2 of 2" for you.
+
+<div style="max-width: 600px; margin: 0 auto;">
+
+<CompareSlider before="/examples/invoice-guide-1.png" after="/examples/invoice-guide-2.png" before-label="Page 1" after-label="Page 2" alt="the invoice from the example below. Both pages start with the same Item, Qty, Unit price and Total header; page 2 ends with the bold Total due $7,680.00 row; the footers read Page 1 of 2 and Page 2 of 2" caption="Drag to compare the two pages of the PDF the example below writes, rendered by vellora 0.3.0. The table header repeats and the footer counts the pages." />
+
+</div>
+
+How it works: put the column headings in a `<thead>`, and put the counter in the page footer with
+`@page { @bottom-center { content: "Page " counter(page) " of " counter(pages); } }`.
+Put page headers in `@top-center` and footers in `@bottom-center`. vellora rejects the other slots,
+such as `@top-left`.
 
 ## Template + data
-
-vellora's templating runs before render. You write the document once and bind a plain data object to it.
 
 ```js
 import { writeFileSync } from "node:fs";
@@ -14,12 +25,21 @@ const template = `<!DOCTYPE html>
 <html>
   <head>
     <style>
-      @page { size: A4; margin: 18mm; }
-      @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); } }
+      @page {
+        size: A4;
+        margin: 18mm 18mm 22mm;
+        @bottom-center {
+          content: "Page " counter(page) " of " counter(pages);
+          font-family: sans-serif;
+          font-size: 10px;
+          color: #666;
+        }
+      }
       body { font-family: sans-serif; color: #1a1a1a; font-size: 12px; }
       h1 { font-size: 22px; margin: 0 0 4px; }
       table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-      thead th { text-align: left; border-bottom: 2px solid #1a1a1a; padding: 6px 4px; }
+      thead th { text-align: left; padding: 6px 4px; }
+      thead th { border-bottom: 2px solid #1a1a1a; }
       tbody td { border-bottom: 1px solid #ddd; padding: 6px 4px; }
       .right { text-align: right; }
       .total td { border-top: 2px solid #1a1a1a; font-weight: bold; }
@@ -27,7 +47,10 @@ const template = `<!DOCTYPE html>
   </head>
   <body>
     <h1>{{ seller.name }}</h1>
-    <p>Invoice {{ invoice.number }} · Issued {{ invoice.date | date("DD/MM/YYYY") }}</p>
+    <p>
+      Invoice {{ invoice.number }} ·
+      Issued {{ invoice.date | date("MMMM D, YYYY") }}
+    </p>
     <p>Bill to: <strong>{{ customer.name }}</strong><br/>{{ customer.address }}</p>
 
     <table>
@@ -59,10 +82,12 @@ const template = `<!DOCTYPE html>
   </body>
 </html>`;
 
-const items = [
-  { name: "Aluminum bracket A20", qty: 40, unitPrice: 32.5, total: 1300 },
-  { name: "Hex bolt M8 (box of 100)", qty: 25, unitPrice: 18.9, total: 472.5 },
-];
+// 60 line items: enough to flow onto a second page. Use your real items here.
+const items = Array.from({ length: 60 }, (_, i) => {
+  const qty = (i % 5) + 1;
+  const unitPrice = 12.5 + i;
+  return { name: `Part #${1000 + i}`, qty, unitPrice, total: qty * unitPrice };
+});
 
 const data = {
   seller: { name: "Acme Components" },
@@ -70,25 +95,42 @@ const data = {
   invoice: { number: "INV-2026-00417", date: "2026-06-23" },
   items,
   total: items.reduce((sum, i) => sum + i.total, 0),
-  note: "Payment due within 15 days. Sample document — fictional data.",
+  note: "Payment due within 15 days. Sample document with fictional data.",
 };
 
 const pdf = await renderPdf(template, data, {
-  metadata: { title: "Invoice INV-2026-00417", creationDate: "2026-06-23T00:00:00.000Z" },
+  metadata: { title: "Invoice INV-2026-00417" },
 });
 
 writeFileSync("invoice.pdf", pdf);
 ```
 
-## Templating features used here
+The data travels separately from the template, and every value is HTML-escaped on the way in, so a
+customer name like `<b>Ada</b>` prints as text instead of becoming markup.
 
-- **<code v-pre>{{ var }}</code>** — interpolation with dotted paths (`invoice.number`). All output is HTML-escaped.
-- **`{% for item in items %}…{% endfor %}`** — loops over arrays.
-- **`{% if note %}…{% endif %}`** — conditionals.
-- **`| currency("USD")`**, **`| date("DD/MM/YYYY")`**, **`| number`** — format helpers.
+## Templating used here
 
-## Pagination
+- **<code v-pre>{{ var }}</code>**: fills in a value; dotted paths such as `invoice.number` work.
+- **`{% for item in items %}…{% endfor %}`**: repeats a block for each item in an array.
+- **`{% if note %}…{% endif %}`**: shows a block only when the value is set (`{% else %}` works too).
+- **`| currency("USD")`**, **`| date("MMMM D, YYYY")`**, **`| number`**: formatting helpers. They
+  give the same output on every machine, whatever its locale or time zone.
 
-When a line-item list is long enough to span pages, the `<thead>` repeats at the top of each page automatically, and `@page` paged-media rules (margins, `@bottom-center` page counters) are honored. See [Compatibility](/compatibility) for the supported subset.
+## How fast is it?
 
-A complete, runnable version of this example lives in the repository at [`examples/render-invoice.ts`](https://github.com/diomalta/vellora/blob/main/examples/render-invoice.ts).
+Our benchmark document is a 3-page invoice built the same way: about 19 ms per render once the
+process is warm.
+
+Measured on a 4-core GitHub Actions Linux runner with vellora 0.3.0.
+
+<details>
+<summary>About this number</summary>
+
+Median warm render of a 3-page invoice on a GitHub Actions Linux runner (AMD EPYC 7763, 4 cores,
+Node v22.23.4), run 40687532121, built from the v0.3.0 commit.
+
+</details>
+
+## Next step
+
+[Add your logo →](/guide/images)

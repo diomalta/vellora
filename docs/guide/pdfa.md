@@ -1,45 +1,51 @@
-# PDF/A
+# PDF/A archiving
 
-vellora supports `PDF/A-2b` output for archive-oriented business documents.
+PDF/A-2b is the ISO profile for long-term archiving that many document-retention policies ask for.
+With vellora it is one option.
 
-## What PDF/A is
+## Turn it on
 
-PDF/A is an ISO-standardized subset of PDF for long-term archiving. A PDF/A
-file is intended to be self-contained: fonts, color information, metadata, and
-the resources needed to reproduce the document should travel with the file.
-
-## Current behavior
-
-Use the `pdfa` render option:
-
-```ts
+```js
+import { writeFileSync } from "node:fs";
 import { renderPdf } from "vellora";
 
-const pdf = await renderPdf(invoiceHtml, data, {
+const html = `<!DOCTYPE html>
+<html>
+  <body style="font-family: sans-serif">
+    <h1>Invoice {{ number }}</h1>
+  </body>
+</html>`;
+
+const pdf = await renderPdf(html, { number: "INV-2026-00417" }, {
   pdfa: "PDF/A-2b",
-  metadata: {
-    title: "Invoice INV-2026-00417",
-    creationDate: "2026-06-23T00:00:00.000Z"
-  }
+  metadata: { title: "Invoice INV-2026-00417", creationDate: "2026-06-23" },
 });
+
+writeFileSync("archive.pdf", pdf);
 ```
 
-When `pdfa: "PDF/A-2b"` is set, vellora configures the native PDF emitter for
-PDF/A-2b. If the emitter reports a conformance failure, `renderPdf` rejects with
-`VelloraConformanceError`; vellora does not silently fall back to a regular PDF.
+A PDF/A file has to carry everything needed to display it, fonts and metadata included, so it
+doesn't depend on the machine that opens it later. Give it a `title` so archives can index it.
 
-## Supported profile
+## You get a valid file or an error
 
-Only `PDF/A-2b` is supported today. Other profiles are intentionally still
-planned:
+If vellora can't produce a valid PDF/A-2b file for your document, `renderPdf` rejects with
+`VelloraConformanceError`. It never quietly hands you a regular PDF instead.
 
-- `PDF/A-2u` and `PDF/A-2a`
-- `PDF/A-3b` for attachments such as source XML
-- `PDF/A-4`
-- PDF/UA and tagged PDF
+If your process requires a specific validator, run it on the output in CI as well (veraPDF is a
+common choice).
 
-## Validation
+## What it isn't
 
-vellora validates through the configured native emitter. Compliance-sensitive
-workflows should also validate final artifacts with the validator required by
-their organization, such as a CI-only veraPDF check.
+Only `PDF/A-2b` is supported. Asking for another profile throws `VelloraInputError`.
+
+- Not PDF/A-2u, PDF/A-2a, PDF/A-3b or PDF/A-4.
+- Not PDF/UA or tagged (accessible) PDF.
+- Not for Factur-X / ZUGFeRD e-invoices: those are
+  [built on PDF/A-3](https://fnfe-mpe.org/factur-x/factur-x_en/), which vellora doesn't produce.
+
+The other PDF/A profiles and PDF/UA are planned; none of them is available today.
+
+## Next step
+
+[Render many PDFs at once →](/guide/concurrency)
