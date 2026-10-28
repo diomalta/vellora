@@ -4563,10 +4563,11 @@ pub(crate) fn find_external_svg_image(base: &BaseDocument) -> Option<UnresolvedI
         };
         // Every element of the tag counts, as in `count_tag_in_document` and the source locator.
         counts[slot] += 1;
-        let ns: &str = &el.name.ns;
-        if ns != SVG_NS {
-            continue;
-        }
+        // Any namespace: Blitz parses every element named `svg` as an SVG (blitz-dom
+        // `layout/construct.rs:460`, by tag name only) and usvg accepts elements without a
+        // namespace (usvg 0.48.1 `parser/svgtree/parse.rs:139`), so in the fidelity-only XML parse
+        // an `<svg>` without `xmlns` would still have its images resolved. In the HTML parse an
+        // `<image>` outside SVG is already an `<img>`, so nothing else is caught.
         let external = el.attrs().iter().any(|attr| {
             let name: &str = &attr.name.local;
             name == "href"

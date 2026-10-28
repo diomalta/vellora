@@ -56,7 +56,12 @@ time is not what Chrome does (Chrome prints SVG as vector content with selectabl
   filesystem (the canary writes a PNG to a temp file and finds it in Blitz's tree). Such a source
   now rejects as `image:unresolved`, on the parsed DOM, before Blitz builds any box (Blitz parses
   SVGs only in `resolve`, CONFIRMED by the second canary and by source: `resolve.rs:99` is the
-  only caller of `collect_layout_children`).
+  only caller of `collect_layout_children`). The gate matches `image`/`feImage` in any namespace:
+  Blitz treats any element named `svg` as an SVG, so in the fidelity-only XML parse an `<svg>`
+  without `xmlns` (no namespace) was reachable; `the_svg_image_gate_covers_an_xml_svg_without_a_namespace`
+  rendered `Ok` with an SVG-namespace-only check and is rejected now.
+- New crates (Cargo.lock vs 1ae3508, `cargo tree -f "{p} {l}"`): 19 crate versions, all
+  MIT / Apache-2.0 dual or single, except tiny-skia 0.12.0 (BSD-3-Clause). No `-sys` crate.
 - `svg.rs`, `pdf.rs`: vellora serializes the SVG from the DOM (root sized to the content box,
   `currentColor` and the inherited `font-family`/`font-size` resolved), parses it with usvg 0.47
   and its own options (bundled then caller fonts only; `data:`-only image resolver) and draws it

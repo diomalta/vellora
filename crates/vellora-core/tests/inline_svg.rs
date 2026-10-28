@@ -2,7 +2,7 @@
 //! PDF vector content (`src/svg.rs`, krilla-svg) into its content box; any SVG image source that
 //! is not a `data:` URL is rejected before Blitz parses the SVG (`image:unresolved`).
 
-use vellora_core::{render, PdfAProfile, RenderOptions, VelloraError};
+use vellora_core::{debug_render_xhtml, render, PdfAProfile, RenderOptions, VelloraError};
 
 fn opts() -> RenderOptions {
     RenderOptions {
@@ -190,4 +190,18 @@ fn an_html_image_element_is_an_img() {
     let d = rejection(r#"<image src="a.png" style="width:10px;height:10px">"#);
     assert_eq!(d.feature, "image:unresolved");
     assert!(d.hint.starts_with("<img>"), "{}", d.hint);
+}
+
+/// The gate in the fidelity-only XML parse (`debug_render_xhtml`): an `<svg>` without `xmlns` is
+/// in no namespace there, Blitz still parses it as an SVG (it matches the tag name only), so its
+/// non-data: image source is rejected too.
+#[test]
+fn the_svg_image_gate_covers_an_xml_svg_without_a_namespace() {
+    let xhtml = r#"<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><body>
+        <svg width="10" height="10"><image href="/etc/hosts" width="10" height="10"/></svg>
+        </body></html>"#;
+    match debug_render_xhtml(xhtml.as_bytes(), &opts()) {
+        Err(VelloraError::Unsupported(d)) => assert_eq!(d.feature, "image:unresolved"),
+        other => panic!("expected image:unresolved, got {other:?}"),
+    }
 }
