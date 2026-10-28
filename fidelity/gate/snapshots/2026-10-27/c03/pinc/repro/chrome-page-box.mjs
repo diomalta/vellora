@@ -12,7 +12,7 @@ import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../..");
+const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../../../..");
 const require = createRequire(resolve(REPO, "fidelity/package.json"));
 const puppeteer = require("puppeteer-core");
 const ref = await import(resolve(REPO, "fidelity/lib/chrome-reference.mjs"));

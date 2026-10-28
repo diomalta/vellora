@@ -7,7 +7,7 @@ import {
   launchReferenceChrome,
   referenceHtml,
   withPrintPage,
-} from "../../../../../lib/chrome-reference.mjs";
+} from "../../../../../../lib/chrome-reference.mjs";
 import { VARIANTS } from "./variants.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));

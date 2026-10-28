@@ -19,14 +19,14 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareSnapshots } from "../../../../compare.mjs";
-import { freshId, ledgerIds } from "../../../../debt-populate.mjs";
-import { DEBT_FILE, HEAD_GATING_CLASSES } from "../../../../debt.mjs";
-import { chainDeclarations } from "../../../../declarations.mjs";
-import { loadSnapshot } from "../../../../snapshot.mjs";
+import { compareSnapshots } from "../../../../../compare.mjs";
+import { freshId, ledgerIds } from "../../../../../debt-populate.mjs";
+import { DEBT_FILE, HEAD_GATING_CLASSES } from "../../../../../debt.mjs";
+import { chainDeclarations } from "../../../../../declarations.mjs";
+import { loadSnapshot } from "../../../../../snapshot.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const FIDELITY = resolve(here, "..", "..", "..", "..", "..");
+const FIDELITY = resolve(here, "..", "..", "..", "..", "..", "..");
 const argv = process.argv.slice(2);
 const val = (n) => (argv.indexOf(n) >= 0 ? argv[argv.indexOf(n) + 1] : undefined);
 const ledgerFile = resolve(val("--ledger") ?? DEBT_FILE);

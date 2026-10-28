@@ -12,7 +12,7 @@ import {
   launchReferenceChrome,
   printPdf,
   referenceHtml,
-} from "../../../../../lib/chrome-reference.mjs";
+} from "../../../../../../lib/chrome-reference.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const words = join(here, "..", "..", "..", "..", "..", "oracles", "py", "words.py");
