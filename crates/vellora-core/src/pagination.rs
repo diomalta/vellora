@@ -230,6 +230,24 @@ struct TableHeader {
     /// at the top of a continuation page and puts the row the same distance
     /// below it (`tests/pagination_gaps.rs`, f1).
     height: f64,
+    /// The band's own block size (its rows, without the spacing below it): what decides
+    /// whether it repeats at all ([`header_repeats`]).
+    own_height: f64,
+}
+
+/// Whether a table's header band repeats on the pages its body continues on, and so is placed
+/// with the table's first body row instead of on its own: Chrome 155.0.8059.85 repeats a
+/// `<thead>` only when its block size is at most a quarter of the page's content height.
+/// Measured (probes `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/thead-repeat*.py`, 2026-10-28):
+/// on a 192 px content box a 48 px header repeats and a 49 px one does not; on a 480 px box 120 px repeats and
+/// 121 px does not; a 40 px header with `border-spacing: 0 10px` (band 50 px) repeats, so the
+/// spacing is not counted. A header that does not repeat is an ordinary fragment of the flow:
+/// a forced break after it (`thead { page-break-after: always }`, WPT
+/// css/CSS2/pagination/rowgroup-page-break-inside-avoid-5-print-ref.html) starts the body on
+/// the next page, as in Chrome; a repeating header keeps the break inert (Chrome prints the
+/// 20 px header probe with `page-break-after: always` on one page). Phase C step 04.
+fn header_repeats(header: &TableHeader, page_content_height: f64) -> bool {
+    header.own_height <= page_content_height / 4.0 + 1e-6
 }
 
 /// How the current (still empty) page began; decides where its first
@@ -304,12 +322,25 @@ pub fn paginate_traced(
 
     let mut queue: VecDeque<Fragment> = fragments.into();
     while let Some(mut frag) = queue.pop_front() {
-        if frag.is_thead {
-            // The header is emitted inline as part of its table's first page and
-            // re-injected on continuations; skip standalone placement here.
+        // The header of the page the fragment is tried on, when it repeats there
+        // ([`header_repeats`]); a header that does not repeat is never injected.
+        let page_content_height = geometry.page(page_slices.len()).content_height();
+        let repeating = |table_id: Option<usize>| {
+            table_id
+                .and_then(|table_id| headers.get(&table_id))
+                .filter(|header| header_repeats(header, page_content_height))
+        };
+        if frag.is_thead && repeating(frag.table_id).is_some() {
+            // A repeating header is emitted inline as part of its table's first page and
+            // re-injected on continuations; skip standalone placement here. One that does
+            // not repeat is placed where it is in the flow, like a row.
             continue;
         }
-        let table_header = frag.table_id.and_then(|table_id| headers.get(&table_id));
+        let table_header = if frag.is_thead {
+            None
+        } else {
+            repeating(frag.table_id)
+        };
         let is_table_row = frag.is_row();
         // The fit limit of the page the fragment is tried on (re-read after every page break).
         let mut fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
@@ -939,6 +970,7 @@ fn collect_table_headers(fragments: &[Fragment], out: &mut HashMap<usize, TableH
                 boxes: fragment.boxes.clone(),
                 top,
                 height: (band_bottom - top).max(0.0),
+                own_height: (bottom - top).max(0.0),
             },
         );
     }
@@ -1090,22 +1122,46 @@ fn finalize_fragments(fragments: &mut Vec<Fragment>) {
         }
     }
     let mut carried_break: Option<CollapsedMargin> = None;
-    fragments.retain_mut(|fragment| {
-        if !fragment_has_renderables(fragment) {
+    // The last dropped element a carried break went through (see below).
+    let mut carrier: Option<Fragment> = None;
+    let mut kept = Vec::with_capacity(fragments.len());
+    for mut fragment in fragments.drain(..) {
+        if !fragment_has_renderables(&fragment) {
             if fragment.break_before || carried_break.is_some() {
                 let margin = carried_break
                     .unwrap_or_default()
-                    .collapse(dropped_margin(fragment));
+                    .collapse(dropped_margin(&fragment));
                 carried_break = Some(margin);
+                carrier = Some(fragment);
             }
-            return false;
+            continue;
         }
         if let Some(margin) = carried_break.take() {
+            carrier = None;
             fragment.break_before = true;
             fragment.break_margin = fragment.break_margin.collapse(margin);
         }
-        true
-    });
+        kept.push(fragment);
+    }
+    // A forced break that no later content takes still starts a page when an element follows
+    // it: Chrome 155 prints `<div style="break-after: page">…</div><div></div>` (an empty block
+    // after the break) on 2 pages (WPT css/css-break/zero-height-page-break-001-print.html), and
+    // prints no trailing page when nothing follows the break (Phase C step 04 probes
+    // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`). The empty element is kept,
+    // with the break.
+    if let (Some(margin), Some(mut fragment)) = (carried_break, carrier) {
+        let element = fragment
+            .boxes
+            .first()
+            .and_then(|root| root.tag.as_deref())
+            .is_some_and(is_renderable_flow_tag);
+        if element {
+            fragment.break_before = true;
+            fragment.break_margin = margin;
+            kept.push(fragment);
+        }
+    }
+    *fragments = kept;
 }
 
 /// Adjoining vertical margins collapsed into one (CSS 2.2 §8.3.1): "the
@@ -1419,9 +1475,21 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
     // Group boxes by their nearest enclosing <tr>/<thead>.
     let mut j = 0;
     let mut pending_break_before = false;
+    // The rows of a `<tfoot>`, emitted after every other part: Blitz lays the footer out at the
+    // table bottom wherever it is written (CSS 2.2 §17.2: a footer row group is displayed after
+    // all other rows), so in flow order its rows come last. Before Phase C step 04 they were
+    // emitted in DOM order, so a `<tfoot>` written first opened page 1 on its own and the body
+    // followed it (WPT css/CSS2/pagination/rowgroup-page-break-inside-avoid-4: Chrome 155 prints
+    // the footer under the body on the last page).
+    let mut footer: Vec<Fragment> = Vec::new();
     while j < subtree.len() {
         let b = &subtree[j];
         match b.tag.as_deref() {
+            Some("tfoot") => {
+                let end = subtree_end(subtree, j);
+                emit_table_parts(&subtree[j + 1..end], table, &mut footer);
+                j = end;
+            }
             Some(tag @ ("thead" | "tr")) => {
                 let end = subtree_end(subtree, j);
                 let group = &subtree[j..end];
@@ -1482,6 +1550,17 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
                         slices: 0,
                     });
                 } else {
+                    // A group of one row is that row: it keeps the group's `avoid`, so an
+                    // oversize row starts on a fresh page before it is cut (`slice_oversize`),
+                    // as Chrome 155 moves the `break-inside: avoid` `<tbody>` of WPT
+                    // css/CSS2/pagination/rowgroup-page-break-inside-avoid-4/5 past the
+                    // header to page 2 (Phase C step 04; until then a group of one row lost
+                    // its `avoid` and was cut right under the header).
+                    for row in &mut rows {
+                        if let Some(root) = row.boxes.first_mut() {
+                            root.break_inside_avoid = true;
+                        }
+                    }
                     out.append(&mut rows);
                 }
                 j = end;
@@ -1505,6 +1584,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
             }
         }
     }
+    out.append(&mut footer);
 }
 
 // ---------------------------------------------------------------------------------------------

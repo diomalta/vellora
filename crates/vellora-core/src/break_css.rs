@@ -1,6 +1,6 @@
 //! Focused reader for the CSS Fragmentation properties the paginator honours:
-//! `break-inside: avoid` and `break-before: page`, plus their legacy
-//! `page-break-inside` / `page-break-before` aliases.
+//! `break-inside: avoid`, `break-before: page` and `break-after: page`, plus their
+//! legacy `page-break-inside` / `page-break-before` / `page-break-after` aliases.
 //!
 //! Stylo only implements these longhands for the Gecko engine (`engine =
 //! "gecko"` in its `longhands.toml`), so the Servo-mode style system Blitz uses
@@ -29,6 +29,8 @@ pub struct BreakRules {
     pub avoid_inside: Vec<BreakRule>,
     /// Selector lists declaring a forced break before the element.
     pub page_before: Vec<BreakRule>,
+    /// Selector lists declaring a forced break after the element (Phase C step 04).
+    pub page_after: Vec<BreakRule>,
     /// Every `@media` block a rule was read in, in the order they open (an
     /// enclosing block comes before the blocks inside it).
     pub media: Vec<MediaBlock>,
@@ -50,7 +52,7 @@ pub struct MediaBlock {
 }
 
 impl BreakRules {
-    /// The selector lists (`avoid_inside`, `page_before`) of the rules whose
+    /// The selector lists (`avoid_inside`, `page_before`, `page_after`) of the rules whose
     /// every enclosing `@media` block matches, `matches` evaluating one media
     /// query list. Each distinct query text is evaluated once, and a block
     /// inside a block that does not match is not evaluated (linear in the
@@ -58,7 +60,7 @@ impl BreakRules {
     pub fn applicable<'a>(
         &'a self,
         mut matches: impl FnMut(&str) -> bool,
-    ) -> (Vec<&'a str>, Vec<&'a str>) {
+    ) -> (Vec<&'a str>, Vec<&'a str>, Vec<&'a str>) {
         let mut by_query: std::collections::HashMap<&str, bool> = std::collections::HashMap::new();
         let mut applies: Vec<bool> = Vec::with_capacity(self.media.len());
         for block in &self.media {
@@ -77,7 +79,11 @@ impl BreakRules {
                 .map(|rule| rule.selector.as_str())
                 .collect()
         };
-        (select(&self.avoid_inside), select(&self.page_before))
+        (
+            select(&self.avoid_inside),
+            select(&self.page_before),
+            select(&self.page_after),
+        )
     }
 }
 
@@ -86,6 +92,75 @@ impl BreakRules {
 pub struct BreakHints {
     pub avoid_inside: bool,
     pub page_before: bool,
+    pub page_after: bool,
+}
+
+/// Turn every forced break AFTER a box into a forced break BEFORE the box that follows it, the
+/// form the paginator reads (`LaidOutBox::break_before_page`). CSS Fragmentation 3 §3.1: a
+/// `break-after` value applies to the break between the box and its next sibling, and §4.1 (class
+/// A break points): a forced break on the last child propagates to its parent's break after, so
+/// the break lands before the parent's next sibling. A forced break after the last box of the
+/// document makes no page (Chrome 155 prints no trailing blank page for
+/// `<p style="page-break-after: always">` as the body's last child).
+///
+/// `boxes` is the walk's depth-ordered pre-order list (a box's descendants follow it with a
+/// greater `depth`). The list is read back to front, so a child's propagated break reaches its
+/// parent before the parent is visited. Linear: each box is visited once, its parent comes from
+/// one forward pass and the next-sibling index is remembered per depth.
+pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
+    if !boxes.iter().any(|b| b.break_after_page) {
+        return;
+    }
+    let mut stack: Vec<usize> = Vec::new();
+    let parent: Vec<Option<usize>> = (0..boxes.len())
+        .map(|i| {
+            while stack
+                .last()
+                .is_some_and(|&j| boxes[j].depth >= boxes[i].depth)
+            {
+                stack.pop();
+            }
+            let parent = stack.last().copied();
+            stack.push(i);
+            parent
+        })
+        .collect();
+    // next_at[d]: index of the box at depth d that follows the box being visited, at the same
+    // depth and within the same parent (reset when the walk climbs above depth d).
+    let mut next_at: Vec<Option<usize>> = Vec::new();
+    for i in (0..boxes.len()).rev() {
+        let depth = boxes[i].depth;
+        if next_at.len() <= depth {
+            next_at.resize(depth + 1, None);
+        }
+        // Boxes deeper than this one belong to its subtree (or to an earlier sibling's, already
+        // left): they are no siblings of anything visited from here on.
+        next_at.truncate(depth + 1);
+        let next = next_at[depth];
+        // CSS Fragmentation 3 §3.1: the break properties apply to block-level boxes in the
+        // normal flow. An inline-level (atomic inline) or absolutely positioned box neither
+        // forces a break nor takes one: Chrome 155 prints `One <span style="display:
+        // inline-block; break-after: page">IB</span> Two` on one page, and keeps an absolutely
+        // positioned sibling after a `break-after: page` box on the box's page (probes
+        // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`, 2026-10-28).
+        let in_flow = !boxes[i].out_of_flow && !boxes[i].atomic_inline;
+        if !in_flow {
+            boxes[i].break_after_page = false;
+            continue;
+        }
+        if boxes[i].break_after_page {
+            match next {
+                Some(j) => boxes[j].break_before_page = true,
+                None => {
+                    // Last child: propagate to the parent (the nearest earlier box one level up).
+                    if let Some(parent) = parent[i] {
+                        boxes[parent].break_after_page = true;
+                    }
+                }
+            }
+        }
+        next_at[depth] = Some(i);
+    }
 }
 
 /// Collect the break rules declared in the document's `<style>` elements.
@@ -102,7 +177,13 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
                 });
             }
             if hints.page_before {
-                rules.page_before.push(BreakRule { selector, media });
+                rules.page_before.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                });
+            }
+            if hints.page_after {
+                rules.page_after.push(BreakRule { selector, media });
             }
         }
     }
@@ -133,6 +214,18 @@ pub fn declares(block: &str) -> BreakHints {
             }
             "page-break-before" => {
                 hints.page_before = matches!(value, "always" | "left" | "right");
+            }
+            // The same values as `break-before` (CSS Fragmentation 3 §3.1; the legacy alias maps
+            // `always` to `page`, §3.4). Chrome 155 starts the next sibling on a new page for
+            // `page-break-after: always` (WPT css/CSS2/pagination reference files).
+            "break-after" => {
+                hints.page_after = matches!(
+                    value,
+                    "page" | "always" | "left" | "right" | "recto" | "verso"
+                );
+            }
+            "page-break-after" => {
+                hints.page_after = matches!(value, "always" | "left" | "right");
             }
             _ => {}
         }
@@ -295,7 +388,8 @@ mod tests {
     /// only (`page_css::media_matches`, the evaluator of port step 07): the parse-level tests
     /// below use it; the render path evaluates with Stylo (`blitz_engine`).
     fn by_type(rules: &BreakRules) -> (Vec<&str>, Vec<&str>) {
-        rules.applicable(crate::page_css::media_matches)
+        let (avoid, before, _) = rules.applicable(crate::page_css::media_matches);
+        (avoid, before)
     }
 
     #[test]
@@ -495,6 +589,21 @@ mod tests {
             ".c { content: \"/*\" } .pb { break-before: page } /* .x { break-before: page } */",
         ));
         assert_eq!(by_type(&rules).1, vec![".pb"]);
+    }
+
+    #[test]
+    fn collects_break_after_and_its_legacy_alias() {
+        let rules = parse_break_rules(&page(
+            ".a { break-after: page } .b { page-break-after: always } \
+             .c { break-after: avoid } .d { page-break-after: auto } \
+             @media screen { .s { break-after: page } } .e { break-after: page; break-after: auto }",
+        ));
+        let (_, before, after) = rules.applicable(crate::page_css::media_matches);
+        assert!(before.is_empty());
+        assert_eq!(after, vec![".a", ".b"]);
+        assert!(declares("PAGE-BREAK-AFTER: Always").page_after);
+        assert!(!declares("break-after: column").page_after);
+        assert!(!declares("page-break-after: always").page_before);
     }
 
     #[test]

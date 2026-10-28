@@ -71,8 +71,17 @@ pub struct LaidOutBox {
     /// to this element, from a `<style>` rule or its inline `style`.
     pub break_inside_avoid: bool,
     /// A forced page break (`break-before: page`, `page-break-before: always`)
-    /// applies before this element.
+    /// applies before this element; also set on the box that follows one with a forced break
+    /// after it ([`crate::break_css::resolve_break_after`], Phase C step 04).
     pub break_before_page: bool,
+    /// A forced page break (`break-after: page`, `page-break-after: always`) applies after this
+    /// element (or after its last child, propagated). Read only by
+    /// [`crate::break_css::resolve_break_after`], which moves it onto the next box.
+    pub break_after_page: bool,
+    /// Whether the box is absolutely positioned (`position: absolute | fixed`): out of the
+    /// normal flow, so it takes no forced break from the box before it
+    /// ([`crate::break_css::resolve_break_after`]).
+    pub out_of_flow: bool,
     /// Whether this box is an atomic inline-level box (`inline-block`, `inline-flex`,
     /// `inline-grid`, `inline-table`): it sits in one line box of its parent and is monolithic
     /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
@@ -2050,7 +2059,7 @@ fn resolve_and_walk<O: LayoutObserver>(
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
     // the device that just styled the document, matches (port step 09).
-    let (avoid_inside, page_before) = {
+    let (avoid_inside, page_before, page_after) = {
         let device = doc.stylist_device();
         breaks.applicable(|query| media_query_matches(device, query))
     };
@@ -2058,6 +2067,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let break_targets = BreakTargets {
         avoid_inside: matched_nodes(base, &avoid_inside),
         page_before: matched_nodes(base, &page_before),
+        page_after: matched_nodes(base, &page_after),
     };
     let mut boxes = Vec::new();
     // Resolves each <img> source to bytes during the walk and records the first
@@ -2093,6 +2103,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         };
         walk_box(base, root_id, 0, &mut sink);
     }
+    crate::break_css::resolve_break_after(&mut boxes);
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
     // Post-layout corrections, in `LAYOUT_NORMALIZE_PASSES` order (none in the raw-Blitz render).
     if O::VELLORA_CORRECTIONS {
@@ -2149,6 +2160,7 @@ struct WalkSink<'a, 'img> {
 struct BreakTargets {
     avoid_inside: std::collections::HashSet<NodeId>,
     page_before: std::collections::HashSet<NodeId>,
+    page_after: std::collections::HashSet<NodeId>,
 }
 
 /// Resolve each selector list with Stylo's selector matching. A selector Stylo
@@ -2466,6 +2478,10 @@ fn push_box(
         break_inside_avoid: inline_breaks.avoid_inside
             || sink.breaks.avoid_inside.contains(&node_id),
         break_before_page: inline_breaks.page_before || sink.breaks.page_before.contains(&node_id),
+        break_after_page: inline_breaks.page_after || sink.breaks.page_after.contains(&node_id),
+        out_of_flow: node
+            .primary_styles()
+            .is_some_and(|styles| styles.clone_position().is_absolutely_positioned()),
         atomic_inline: atomic_inline(node),
         clips_overflow: node.primary_styles().is_some_and(|styles| {
             styles.clone_overflow_y() != style::values::computed::Overflow::Visible
