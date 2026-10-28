@@ -2,22 +2,36 @@
 //!
 //! Blitz 0.3.0-beta.4 / Taffy 0.15.0 have no multi-column layout: a `columns` / `column-count` /
 //! `column-width` container is laid out as one block, its content running the full width (Stylo
-//! computes the properties, nothing reads them). vellora lays the container out in two parts:
+//! computes the properties, nothing reads them; raw-Blitz canary `raw_blitz_tests.rs`
+//! `blitz_still_lays_multicol_out_in_one_column`). vellora lays the container out in two parts:
 //!
 //! 1. `blitz_engine` (the only Blitz contact) narrows the container's content box to one column
-//!    width before layout ([`column_geometry`] decides the column count and width, §3.4), so
-//!    Blitz lays the content out as one tall column, and, for a container whose height Blitz
-//!    would size to its content, gives it the balanced column height ([`balanced_height`]) so
-//!    what follows the container is laid out below the columns;
+//!    width before layout ([`column_geometry`] decides the column count and width, §3.4; a
+//!    shrink-to-fit container is first widened to N columns of its content's width), so Blitz
+//!    lays the content out as one tall column, and, for a container whose height Blitz would size
+//!    to its content, gives it the balanced column height ([`balanced_height`]) so what follows
+//!    the container is laid out below the columns;
 //! 2. this module (no Blitz types) cuts that one tall column into columns with the paginator's
-//!    slicer ([`crate::pagination::fragment_columns`]: break points, truncation of the space at
-//!    a break, forced `break-before: column`, sliced box decorations) and moves each column into
-//!    place, side by side ([`apply`]).
+//!    slicer ([`crate::pagination::fragment_columns`]: break points between lines and boxes,
+//!    truncation of the space at a break, forced `break-before/after: column`, `break-before/
+//!    after: avoid`, `orphans` / `widows` as declared, `contain: size` boxes monolithic, sliced
+//!    box decorations) and moves each column into place, side by side, each edge rounded as
+//!    Taffy rounds it ([`apply`]). Absolutely positioned boxes take no part in the breaks: those
+//!    positioned against the container (or above it) stay where Blitz put them; the others are
+//!    placed in their containing block's column fragments.
+//!
+//! Balancing ([`balance`]) is the least column height (to 1/64 px) at which the content takes at
+//! most N columns without overflowing one, never less than its tallest unbreakable piece.
+//!
+//! Every map here (`HashMap` / `HashSet`) is lookup-only: no output order depends on iterating
+//! one (DET-1).
 //!
 //! Not modelled (documented in COMPATIBILITY.md): `column-span: all` (the spanner stays in the
 //! column flow), `column-rule` (not painted), a multi-column container inside another one (laid
 //! out in one column), a multi-column container that is itself broken across pages (its columns
-//! are fragmented by the paginator as one block), and vertical writing modes.
+//! are fragmented by the paginator as one block), vertical writing modes, and parallel flows
+//! (row flex items, the lines of a column flex container, table cells): one cut for the whole
+//! column, where Chrome breaks each flow on its own.
 
 use std::collections::{HashMap, HashSet};
 
@@ -103,11 +117,16 @@ pub(crate) struct Multicol {
 /// every box that flows in its columns, in order. The boxes left out (the container and the
 /// [`Multicol::positioned_outside`] subtrees) are returned apart, and so are the absolutely
 /// positioned subtrees whose containing block is inside the columns: they take no part in the
-/// column breaks (they are out of flow) and go to the column their top falls in ([`apply`]).
-fn split_flow(
-    subtree: &[LaidOutBox],
-    mc: &Multicol,
-) -> (Vec<LaidOutBox>, Vec<LaidOutBox>, Vec<Vec<LaidOutBox>>) {
+/// column breaks (they are out of flow) and are placed in their containing block's fragments
+/// ([`apply`]). They do count for the balancing: `balanced` is the flow with them in place.
+struct Split {
+    flow: Vec<LaidOutBox>,
+    balanced: Vec<LaidOutBox>,
+    kept: Vec<LaidOutBox>,
+    positioned: Vec<Vec<LaidOutBox>>,
+}
+
+fn split_flow(subtree: &[LaidOutBox], mc: &Multicol) -> Split {
     // The container's own line boxes (an inline root's text) flow in its columns too.
     let mut root = subtree[0].clone();
     root.visual_rects.clear();
@@ -121,6 +140,7 @@ fn split_flow(
         root.widows = widows;
     }
     let mut flow = vec![root];
+    let mut balanced = flow.clone();
     let mut kept = Vec::new();
     let mut positioned: Vec<Vec<LaidOutBox>> = Vec::new();
     // The depth of the out-of-flow subtree being copied, and whether it stays outside.
@@ -131,6 +151,7 @@ fn split_flow(
                 kept.push(b.clone());
             } else if let Some(last) = positioned.last_mut() {
                 last.push(b.clone());
+                balanced.push(b.clone());
             }
             continue;
         }
@@ -143,6 +164,7 @@ fn split_flow(
         if b.out_of_flow {
             inside = Some((b.depth, false));
             positioned.push(vec![b.clone()]);
+            balanced.push(b.clone());
             continue;
         }
         let mut b = b.clone();
@@ -150,21 +172,29 @@ fn split_flow(
             b.orphans = orphans;
             b.widows = widows;
         }
+        balanced.push(b.clone());
         flow.push(b);
     }
-    let lines = flow[0]
-        .text_runs
-        .iter()
-        .map(|run| run.origin_y + run.line_below)
-        .chain(flow[0].image_runs.iter().map(|img| img.y + img.height));
-    let bottom = flow
-        .iter()
-        .skip(1)
-        .map(|b| b.y + b.height)
-        .chain(lines)
-        .fold(mc.content_top, f64::max);
-    flow[0].height = bottom - mc.content_top;
-    (flow, kept, positioned)
+    for list in [&mut flow, &mut balanced] {
+        let lines = list[0]
+            .text_runs
+            .iter()
+            .map(|run| run.origin_y + run.line_below)
+            .chain(list[0].image_runs.iter().map(|img| img.y + img.height));
+        let bottom = list
+            .iter()
+            .skip(1)
+            .map(|b| b.y + b.height)
+            .chain(lines)
+            .fold(mc.content_top, f64::max);
+        list[0].height = bottom - mc.content_top;
+    }
+    Split {
+        flow,
+        balanced,
+        kept,
+        positioned,
+    }
 }
 
 /// The column height of a `column-fill: balance` container: the least height (to 1/64 px) at
@@ -210,11 +240,14 @@ fn balance(flow: &[LaidOutBox], top: f64, count: usize, limit: Option<f64>) -> f
 /// its content in the first column (Chrome 155: WPT css/css-break/widows-orphans-017, "an
 /// auto-height multicolumn container with column-fill: auto" fills one column).
 pub(crate) fn balanced_height(subtree: &[LaidOutBox], mc: &Multicol, fill_auto: bool) -> f64 {
-    let (flow, _, _) = split_flow(subtree, mc);
+    let split = split_flow(subtree, mc);
     if fill_auto {
-        return flow[0].height.max(0.0);
+        return split.flow[0].height.max(0.0);
     }
-    balance(&flow, mc.content_top, mc.count, None)
+    // Absolutely positioned boxes in the columns count (Chrome 155 makes a two-column
+    // container 200 px tall for two 100 px blocks and a 100 px abspos after them, WPT
+    // css/css-break/out-of-flow-in-multicolumn-094).
+    balance(&split.balanced, mc.content_top, mc.count, None)
 }
 
 /// Lay every multi-column container of `boxes` out in columns (see the module comment). Each
@@ -235,11 +268,16 @@ pub(crate) fn apply(boxes: &mut Vec<LaidOutBox>, containers: &[Multicol]) {
         };
         let end = subtree_end(boxes, i);
         let subtree = &boxes[i..end];
-        let (flow, kept, positioned) = split_flow(subtree, mc);
+        let Split {
+            flow,
+            balanced,
+            kept,
+            positioned,
+        } = split_flow(subtree, mc);
         let height = if mc.fill_auto {
             mc.height
         } else {
-            balance(&flow, mc.content_top, mc.count, Some(mc.height))
+            balance(&balanced, mc.content_top, mc.count, Some(mc.height))
         };
         let pieces = fragment_columns(flow, mc.content_top, height);
         let tops: Vec<f64> = pieces.iter().map(|p| p.flow_top).collect();

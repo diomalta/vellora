@@ -183,3 +183,52 @@ fn column_fill_auto_with_an_auto_height_fills_one_column() {
     let xs: Vec<f64> = runs.iter().map(|(_, x, _)| *x).collect();
     assert!(xs.windows(2).all(|w| approx(w[0], w[1])), "{runs:?}");
 }
+
+/// The height of the one rect of `color` on page 1.
+fn height_of(html: &str, color: [u8; 3]) -> f64 {
+    let rects = rects_of(html, color);
+    assert_eq!(rects.len(), 1, "{rects:?}");
+    rects[0].3
+}
+
+/// WPT css/css-break/flexbox/multi-line-row-flex-fragmentation-037: `break-before: avoid` on an
+/// item forbids the break before its row flex line, so the balanced columns are 100 px tall
+/// (lines 25 + 50 + 25 in column 1, the last 50 px line in column 2), not 75.
+#[test]
+fn break_before_avoid_moves_the_balanced_break() {
+    let html = r#"<style>#flex { display: flex; flex-wrap: wrap; } #flex > div { width: 50px; }</style>
+      <div style="width: 100px; columns: 2; column-gap: 0; background: #008000;"><div id="flex">
+      <div style="height: 25px;"></div><div style="height: 50px;"></div>
+      <div style="height: 5px; width: 25px;"></div>
+      <div style="height: 25px; width: 25px; break-before: avoid;"></div>
+      <div style="height: 50px;"></div></div></div>"#;
+    assert!(approx(height_of(html, G1), 100.0));
+    let without = html.replace("break-before: avoid;", "");
+    assert!(approx(height_of(&without, G1), 75.0));
+}
+
+/// WPT css/css-break/monolithic-overflow-002.tentative: a `contain: size` box is monolithic, so
+/// its 100 px green parent stays whole in the 60 px first column (nothing goes to column 2).
+#[test]
+fn a_contain_size_box_is_not_broken_across_columns() {
+    let html = r#"<div style="width:100px; height:100px;"><div style="columns:1; column-fill:auto; height:60px;">
+      <div style="height:100px; background:#008000;"><div style="contain:size; height:100px;"></div></div>
+      </div></div>"#;
+    let rects = rects_of(html, G1);
+    assert_eq!(rects.len(), 1, "{rects:?}");
+    assert!(
+        approx(rects[0].0, 8.0) && approx(rects[0].3, 100.0),
+        "{rects:?}"
+    );
+}
+
+/// WPT css/css-break/out-of-flow-in-multicolumn-094: an absolutely positioned box in the columns
+/// counts for the balancing: two 100 px blocks and a 100 px abspos after them balance to 200 px
+/// columns.
+#[test]
+fn an_abspos_in_the_columns_counts_for_the_balancing() {
+    let html = r#"<div style="width:200px; columns:2; background:#008000;">
+      <div style="contain:size; height:100px;"></div><div style="contain:size; height:100px;"></div>
+      <div style="position:relative;"><div style="position:absolute; height:100px;"></div></div></div>"#;
+    assert!(approx(height_of(html, G1), 200.0));
+}

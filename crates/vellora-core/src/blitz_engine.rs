@@ -86,6 +86,10 @@ pub struct LaidOutBox {
     /// `break-after: column` applies after this element (moved onto the next box, see
     /// [`LaidOutBox::break_before_column`]).
     pub break_after_column: bool,
+    /// `break-before: avoid` / `break-after: avoid` (or `avoid-column`) applies to this element.
+    /// Read only by the column breaks of [`crate::multicol`] (Phase C step 05).
+    pub break_before_avoid: bool,
+    pub break_after_avoid: bool,
     /// Whether the box is absolutely positioned (`position: absolute | fixed`): out of the
     /// normal flow, so it takes no forced break from the box before it
     /// ([`crate::break_css::resolve_break_after`]).
@@ -3226,6 +3230,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     };
     let (avoid_inside, page_before, page_after) = breaks.selected(&media_applies);
     let (column_before, column_after, _) = breaks.column_rules(&media_applies);
+    let (avoid_before, avoid_after) = breaks.avoid_rules(&media_applies);
     let base: &BaseDocument = &doc;
     let break_targets = BreakTargets {
         avoid_inside: matched_nodes(base, &avoid_inside),
@@ -3233,6 +3238,8 @@ fn resolve_and_walk<O: LayoutObserver>(
         page_after: matched_nodes(base, &page_after),
         column_before: matched_nodes(base, &column_before),
         column_after: matched_nodes(base, &column_after),
+        avoid_before: matched_nodes(base, &avoid_before),
+        avoid_after: matched_nodes(base, &avoid_after),
         page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
         writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
     };
@@ -3352,6 +3359,9 @@ struct BreakTargets {
     /// `break-before: column` / `break-after: column` from the stylesheet (Phase C step 05).
     column_before: std::collections::HashSet<NodeId>,
     column_after: std::collections::HashSet<NodeId>,
+    /// `break-before: avoid` / `break-after: avoid` from the stylesheet (Phase C step 05).
+    avoid_before: std::collections::HashSet<NodeId>,
+    avoid_after: std::collections::HashSet<NodeId>,
     /// The `page` value each matched node gets from the stylesheet (`None` = `auto`).
     page_names: std::collections::HashMap<NodeId, Option<String>>,
     /// The `writing-mode` each matched node gets from the stylesheet (`true` = vertical).
@@ -3921,6 +3931,9 @@ fn push_box(
             && !floated,
         break_before_column: inline_breaks.column_before
             || sink.breaks.column_before.contains(&node_id),
+        break_before_avoid: inline_breaks.avoid_before
+            || sink.breaks.avoid_before.contains(&node_id),
+        break_after_avoid: inline_breaks.avoid_after || sink.breaks.avoid_after.contains(&node_id),
         break_after_column: (inline_breaks.column_after
             || sink.breaks.column_after.contains(&node_id))
             && !floated,

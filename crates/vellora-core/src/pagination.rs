@@ -1873,6 +1873,8 @@ fn find_cut(
         .filter(|&top| top <= end + CUT_EPSILON_PX)
         .fold(end, f64::min);
     let holds_forced = |i: usize| (i + 1..ends[i]).any(|j| forced(j).is_some());
+    // Whether a `break-before/after: avoid` moved the cut (step 2b, columns only).
+    let mut avoid_moved = false;
     // Every step only moves the cut up, to a position of one of the items or boxes: bounded.
     for _ in 0..(4 * (items.len() + boxes.len()) + 8) {
         let before = cut;
@@ -1913,6 +1915,53 @@ fn find_cut(
                 cut = cut.min(lines[0].top);
             } else if below < widows {
                 cut = cut.min(lines[lines.len() - widows].top);
+            }
+        }
+        // 2b. Columns: no break between two boxes where `break-after: avoid` on the one above
+        // or `break-before: avoid` on the one below forbids it (an item's avoid applies to its
+        // row flex line, whose items start together; Chrome 155: WPT css/css-break/flexbox/
+        // multi-line-row-flex-fragmentation-037/038). The cut moves up to the top of the boxes
+        // that end right above the break, the previous break point. Relaxed with orphans and
+        // widows. Parallel flows (the lines of a multi-line column flex container) share the
+        // one cut, so an avoid in one line also moves the others (KNOWN GAP).
+        if column && orphans_widows {
+            let next = (1..boxes.len())
+                .map(|i| box_span(boxes, i))
+                .filter(|&(top, bottom)| bottom > top && top >= cut - CUT_EPSILON_PX)
+                .map(|(top, _)| top)
+                .reduce(f64::min);
+            let above: Vec<usize> = (1..boxes.len())
+                .filter(|&i| {
+                    let (top, bottom) = box_span(boxes, i);
+                    bottom > top
+                        && top > start + CUT_EPSILON_PX
+                        && bottom <= cut + CUT_EPSILON_PX
+                        && next.is_none_or(|n| bottom <= n + CUT_EPSILON_PX)
+                })
+                .collect();
+            let before_avoided = next.is_some_and(|n| {
+                (1..boxes.len()).any(|i| {
+                    boxes[i].break_before_avoid
+                        && (box_span(boxes, i).0 - n).abs() <= CUT_EPSILON_PX
+                })
+            });
+            let last_bottom = above.iter().map(|&i| box_span(boxes, i).1).reduce(f64::max);
+            let ends_last = |i: usize| {
+                last_bottom.is_some_and(|b| (box_span(boxes, i).1 - b).abs() <= CUT_EPSILON_PX)
+            };
+            let after_avoided = above
+                .iter()
+                .any(|&i| boxes[i].break_after_avoid && ends_last(i));
+            if before_avoided || after_avoided {
+                if let Some(top) = above
+                    .iter()
+                    .filter(|&&i| ends_last(i))
+                    .map(|&i| box_span(boxes, i).0)
+                    .reduce(f64::min)
+                {
+                    cut = cut.min(top);
+                    avoid_moved = true;
+                }
             }
         }
         // 3. Break before a box that would keep only its border and padding above the cut, and
@@ -1982,10 +2031,13 @@ fn find_cut(
     let content_above = items
         .iter()
         .any(|it| it.bottom <= cut + CUT_EPSILON_PX && it.top >= start - CUT_EPSILON_PX)
-        || boxes
-            .iter()
-            .skip(1)
-            .any(|b| paints(b) && b.height > 0.0 && b.y + b.height <= cut + CUT_EPSILON_PX);
+        || boxes.iter().skip(1).any(|b| {
+            // A break an avoid moved here is a break between two boxes: it leaves the box
+            // above it, painted or not.
+            (paints(b) || (avoid_moved && b.y >= start - CUT_EPSILON_PX))
+                && b.height > 0.0
+                && b.y + b.height <= cut + CUT_EPSILON_PX
+        });
     (cut > start + CUT_EPSILON_PX && content_above).then_some(cut)
 }
 
@@ -1995,7 +2047,16 @@ fn find_cut(
 /// continuation starts with the repeated `<thead>` bands of the tables the cut goes through
 /// ([`repeat_sliced_headers`]); everything below the cut moves down by their height and the
 /// sliced boxes grow by it.
-fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Fragment>) {
+///
+/// `keep_empty`: keep a continuation that paints nothing (a column of a multi-column container,
+/// whose empty boxes still take room in the balancing; a page that would print nothing is not
+/// made).
+fn split_fragment(
+    frag: &Fragment,
+    cut: f64,
+    end: f64,
+    keep_empty: bool,
+) -> (Fragment, Option<Fragment>) {
     let parent = parents(&frag.boxes);
     let n = frag.boxes.len();
     let repeated = repeat_sliced_headers(&frag.boxes, cut);
@@ -2101,7 +2162,7 @@ fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Frag
         slices: frag.slices,
     };
     let mut rest_boxes: Vec<LaidOutBox> = rest.into_iter().flatten().collect();
-    if !rest_boxes.iter().any(paints) {
+    if !keep_empty && !rest_boxes.iter().any(paints) {
         return (head, None);
     }
     // Each repeated band goes right after its table's box: the table's first part, where a
@@ -2248,7 +2309,7 @@ fn slice_oversize(
     if cut <= frag.top + CUT_EPSILON_PX {
         return SliceOutcome::Whole;
     }
-    match split_fragment(frag, cut, end) {
+    match split_fragment(frag, cut, end, false) {
         (head, Some(rest)) => SliceOutcome::Cut(Box::new(head), Box::new(rest)),
         (_, None) => SliceOutcome::Whole,
     }
@@ -2271,8 +2332,11 @@ impl ColumnPiece {
     /// images (a box cut by the column's end was stretched to it). More than the column height
     /// when something monolithic overflows the column.
     pub(crate) fn extent(&self) -> f64 {
+        // An empty zero-height box (a structural ancestor kept for the tree shape, which
+        // `split_fragment` puts at the cut) takes no room.
         self.boxes
             .iter()
+            .filter(|b| b.height > 0.0 || paints(b))
             .flat_map(|b| {
                 let runs = b.text_runs.iter().map(|r| run_line_span(r).1);
                 let images = b.image_runs.iter().map(|img| img.y + img.height);
@@ -2361,7 +2425,7 @@ pub(crate) fn fragment_columns(
         if cut <= start + CUT_EPSILON_PX {
             break;
         }
-        match split_fragment(&frag, cut, end) {
+        match split_fragment(&frag, cut, end, true) {
             (head, Some(rest)) => {
                 pieces.push(ColumnPiece {
                     boxes: head.boxes,
@@ -2406,7 +2470,7 @@ pub(crate) fn split_boxes_at(
         members: Vec::new(),
         slices: 0,
     };
-    let (head, rest) = split_fragment(&frag, cut, cut);
+    let (head, rest) = split_fragment(&frag, cut, cut, false);
     (head.boxes, rest.map(|r| r.boxes))
 }
 

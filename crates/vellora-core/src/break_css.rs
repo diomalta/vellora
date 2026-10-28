@@ -46,6 +46,11 @@ pub struct BreakRules {
     /// multi-column container has no effect.
     pub column_before: Vec<BreakRule>,
     pub column_after: Vec<BreakRule>,
+    /// Selector lists declaring `break-before: avoid` / `break-after: avoid` (or
+    /// `avoid-column`): read by the multi-column layout's column breaks only (Phase C step 05;
+    /// the page breaks do not read them).
+    pub avoid_before: Vec<BreakRule>,
+    pub avoid_after: Vec<BreakRule>,
     /// Selector lists declaring `column-fill`, in source order, with whether the value is `auto`
     /// (`false`: `balance` / `balance-all`). Stylo parses `column-fill` for Gecko only
     /// (stylo 0.22.0 `properties/longhands.toml` `[column-fill] engine = "gecko"`), so the
@@ -166,6 +171,14 @@ impl BreakRules {
                 .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
                 .map(|(rule, auto)| (rule.selector.as_str(), *auto))
                 .collect(),
+        )
+    }
+
+    /// The `(avoid_before, avoid_after)` selector lists whose `@media` blocks apply.
+    pub fn avoid_rules<'a>(&'a self, applies: &[bool]) -> (Vec<&'a str>, Vec<&'a str>) {
+        (
+            select_rules(&self.avoid_before, applies),
+            select_rules(&self.avoid_after, applies),
         )
     }
 
@@ -291,6 +304,9 @@ pub struct BreakHints {
     /// `break-before: column` / `break-after: column` (Phase C step 05, [`crate::multicol`]).
     pub column_before: bool,
     pub column_after: bool,
+    /// `break-before: avoid | avoid-column` / `break-after: avoid | avoid-column`.
+    pub avoid_before: bool,
+    pub avoid_after: bool,
     /// `column-fill`: `Some(true)` for `auto`, `Some(false)` for `balance` / `balance-all`,
     /// `None` when not declared (or a CSS-wide keyword: the initial value is `balance`).
     pub column_fill_auto: Option<bool>,
@@ -547,6 +563,8 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
             for (flag, list) in [
                 (hints.column_before, &mut rules.column_before),
                 (hints.column_after, &mut rules.column_after),
+                (hints.avoid_before, &mut rules.avoid_before),
+                (hints.avoid_after, &mut rules.avoid_after),
             ] {
                 if flag {
                     list.push(BreakRule {
@@ -622,6 +640,7 @@ pub fn declares(block: &str) -> BreakHints {
                     "page" | "always" | "left" | "right" | "recto" | "verso"
                 );
                 hints.column_before = value == "column";
+                hints.avoid_before = matches!(value, "avoid" | "avoid-column");
             }
             "page-break-before" => {
                 hints.page_before = matches!(value, "always" | "left" | "right");
@@ -650,6 +669,7 @@ pub fn declares(block: &str) -> BreakHints {
                     "page" | "always" | "left" | "right" | "recto" | "verso"
                 );
                 hints.column_after = value == "column";
+                hints.avoid_after = matches!(value, "avoid" | "avoid-column");
             }
             "orphans" | "widows" => {
                 let n = value.parse::<u32>().ok().filter(|&n| n >= 1);
