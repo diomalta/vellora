@@ -40,6 +40,23 @@ pub struct BreakRules {
     /// Selector lists declaring the `page` property (CSS Page 3 §4.1, named pages), in source
     /// order, with the declared name (`None` for `auto`). Phase C step 04.
     pub page_names: Vec<(BreakRule, Option<String>)>,
+    /// Selector lists declaring a forced column break before / after the element
+    /// (`break-before: column`, `break-after: column`; CSS Fragmentation 3 §3.1). Read by the
+    /// multi-column layout ([`crate::multicol`], Phase C step 05) only: a column break outside a
+    /// multi-column container has no effect.
+    pub column_before: Vec<BreakRule>,
+    pub column_after: Vec<BreakRule>,
+    /// Selector lists declaring `column-fill`, in source order, with whether the value is `auto`
+    /// (`false`: `balance` / `balance-all`). Stylo parses `column-fill` for Gecko only
+    /// (stylo 0.22.0 `properties/longhands.toml` `[column-fill] engine = "gecko"`), so the
+    /// multi-column layout reads it from here (Phase C step 05).
+    pub column_fill: Vec<(BreakRule, bool)>,
+    /// Selector lists declaring `orphans` / `widows` (a positive integer), in source order.
+    /// Stylo does not implement either property (stylo 0.22.0 lists them in
+    /// `properties/counted_unknown_properties.py`); the multi-column layout reads them from here
+    /// (Phase C step 05). Both inherit.
+    pub orphans: Vec<(BreakRule, u32)>,
+    pub widows: Vec<(BreakRule, u32)>,
     /// Selector lists declaring `writing-mode`, in source order, with whether it is vertical.
     /// Stylo computes `writing-mode` only behind the `layout.writing-mode.enabled` pref
     /// (stylo 0.22.0 `properties/longhands.toml` `[writing-mode] servo_pref`), off in Blitz, so
@@ -50,6 +67,9 @@ pub struct BreakRules {
     /// enclosing block comes before the blocks inside it).
     pub media: Vec<MediaBlock>,
 }
+
+/// Selector lists with the value each one declares, in source order.
+pub type Valued<'a, T> = Vec<(&'a str, T)>;
 
 /// One rule's selector list and the innermost `@media` block it sits in.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,6 +150,36 @@ impl BreakRules {
             .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
             .map(|(rule, vertical)| (rule.selector.as_str(), *vertical))
             .collect()
+    }
+
+    /// The `(column_before, column_after)` selector lists and the `column-fill` declarations
+    /// (`(selector, auto)`, source order) whose `@media` blocks apply.
+    pub fn column_rules<'a>(
+        &'a self,
+        applies: &[bool],
+    ) -> (Vec<&'a str>, Vec<&'a str>, Vec<(&'a str, bool)>) {
+        (
+            select_rules(&self.column_before, applies),
+            select_rules(&self.column_after, applies),
+            self.column_fill
+                .iter()
+                .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
+                .map(|(rule, auto)| (rule.selector.as_str(), *auto))
+                .collect(),
+        )
+    }
+
+    /// The `(orphans, widows)` declarations whose `@media` blocks apply, in source order:
+    /// `(selector, value)`.
+    pub fn orphans_widows<'a>(&'a self, applies: &[bool]) -> (Valued<'a, u32>, Valued<'a, u32>) {
+        let select = |rules: &'a [(BreakRule, u32)]| -> Vec<(&'a str, u32)> {
+            rules
+                .iter()
+                .filter(|(rule, _)| rule.media.is_none_or(|block| applies[block]))
+                .map(|(rule, value)| (rule.selector.as_str(), *value))
+                .collect()
+        };
+        (select(&self.orphans), select(&self.widows))
     }
 
     /// The `page` declarations whose `@media` blocks apply, in source order: `(selector, name)`,
@@ -238,6 +288,16 @@ pub struct BreakHints {
     /// style to `auto`); `None`: neither property.
     pub wrap_balance: Option<bool>,
     pub page_after: bool,
+    /// `break-before: column` / `break-after: column` (Phase C step 05, [`crate::multicol`]).
+    pub column_before: bool,
+    pub column_after: bool,
+    /// `column-fill`: `Some(true)` for `auto`, `Some(false)` for `balance` / `balance-all`,
+    /// `None` when not declared (or a CSS-wide keyword: the initial value is `balance`).
+    pub column_fill_auto: Option<bool>,
+    /// `orphans` / `widows`: the declared positive integer, `None` when not declared (or not
+    /// valid).
+    pub orphans: Option<u32>,
+    pub widows: Option<u32>,
 }
 
 /// Turn every forced break AFTER a box into a forced break BEFORE the box that follows it, the
@@ -260,7 +320,32 @@ pub struct BreakHints {
 /// parent before the parent is visited. Each box is visited once, its parent comes from one
 /// forward pass and its next in-flow sibling is remembered per depth.
 pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
-    if !boxes.iter().any(|b| b.break_after_page) {
+    propagate_break_after(
+        boxes,
+        |b| &mut b.break_after_page,
+        |b| &mut b.break_before_page,
+    );
+}
+
+/// [`resolve_break_after`] for forced COLUMN breaks (`break-after: column` onto the next box's
+/// `break_before_column`, Phase C step 05): the same propagation rules (CSS Fragmentation 3
+/// §3.1 and §4.1 apply to every fragmentation context alike). Read by [`crate::multicol`].
+pub fn resolve_column_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
+    propagate_break_after(
+        boxes,
+        |b| &mut b.break_after_column,
+        |b| &mut b.break_before_column,
+    );
+}
+
+/// The propagation of [`resolve_break_after`], over the `after` / `before` flags of one kind of
+/// forced break.
+fn propagate_break_after(
+    boxes: &mut [crate::blitz_engine::LaidOutBox],
+    after: fn(&mut crate::blitz_engine::LaidOutBox) -> &mut bool,
+    before: fn(&mut crate::blitz_engine::LaidOutBox) -> &mut bool,
+) {
+    if !boxes.iter_mut().any(|b| *after(b)) {
         return;
     }
     let mut stack: Vec<usize> = Vec::new();
@@ -304,21 +389,21 @@ pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
         // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`, 2026-10-28).
         let in_flow = !boxes[i].out_of_flow && !boxes[i].atomic_inline;
         if !in_flow {
-            boxes[i].break_after_page = false;
+            *after(&mut boxes[i]) = false;
             continue;
         }
         next_sibling[i] = next;
-        if boxes[i].break_after_page {
+        if *after(&mut boxes[i]) {
             let mut target = next;
             while let Some(j) = target.filter(|&j| beside(&boxes[i], &boxes[j])) {
                 target = next_sibling[j];
             }
             match target {
-                Some(j) => boxes[j].break_before_page = true,
+                Some(j) => *before(&mut boxes[j]) = true,
                 None => {
                     // Last child: propagate to the parent (the nearest earlier box one level up).
                     if let Some(parent) = parent[i] {
-                        boxes[parent].break_after_page = true;
+                        *after(&mut boxes[parent]) = true;
                     }
                 }
             }
@@ -459,6 +544,44 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
                     media,
                 });
             }
+            for (flag, list) in [
+                (hints.column_before, &mut rules.column_before),
+                (hints.column_after, &mut rules.column_after),
+            ] {
+                if flag {
+                    list.push(BreakRule {
+                        selector: selector.clone(),
+                        media,
+                    });
+                }
+            }
+            if let Some(n) = hints.orphans {
+                rules.orphans.push((
+                    BreakRule {
+                        selector: selector.clone(),
+                        media,
+                    },
+                    n,
+                ));
+            }
+            if let Some(n) = hints.widows {
+                rules.widows.push((
+                    BreakRule {
+                        selector: selector.clone(),
+                        media,
+                    },
+                    n,
+                ));
+            }
+            if let Some(auto) = hints.column_fill_auto {
+                rules.column_fill.push((
+                    BreakRule {
+                        selector: selector.clone(),
+                        media,
+                    },
+                    auto,
+                ));
+            }
             if let Some(vertical) = declared_writing_mode(&body) {
                 rules.writing_modes.push((
                     BreakRule {
@@ -498,6 +621,7 @@ pub fn declares(block: &str) -> BreakHints {
                     value,
                     "page" | "always" | "left" | "right" | "recto" | "verso"
                 );
+                hints.column_before = value == "column";
             }
             "page-break-before" => {
                 hints.page_before = matches!(value, "always" | "left" | "right");
@@ -525,6 +649,22 @@ pub fn declares(block: &str) -> BreakHints {
                     value,
                     "page" | "always" | "left" | "right" | "recto" | "verso"
                 );
+                hints.column_after = value == "column";
+            }
+            "orphans" | "widows" => {
+                let n = value.parse::<u32>().ok().filter(|&n| n >= 1);
+                if prop == "orphans" {
+                    hints.orphans = n;
+                } else {
+                    hints.widows = n;
+                }
+            }
+            "column-fill" => {
+                hints.column_fill_auto = match value {
+                    "auto" => Some(true),
+                    "balance" | "balance-all" => Some(false),
+                    _ => None,
+                };
             }
             "page-break-after" => {
                 hints.page_after = matches!(value, "always" | "left" | "right");
@@ -953,5 +1093,32 @@ mod tests {
         assert_eq!((balance, unbalance), (vec!["p", "h1"], vec![".x"]));
         let (balance, _) = rules.applicable_wrap(|_| false);
         assert_eq!(balance, vec!["p"]);
+    }
+
+    #[test]
+    fn column_breaks_fill_and_line_limits_are_read() {
+        let hints = declares("break-before: column; break-after: COLUMN; column-fill: auto");
+        assert!(hints.column_before && hints.column_after && !hints.page_before);
+        assert_eq!(hints.column_fill_auto, Some(true));
+        assert_eq!(
+            declares("column-fill: balance-all").column_fill_auto,
+            Some(false)
+        );
+        assert_eq!(declares("column-fill: inherit").column_fill_auto, None);
+        // A column break is not a page break, and the last declaration wins.
+        assert!(!declares("break-before: column").page_before);
+        assert!(!declares("break-before: column; break-before: page").column_before);
+        let hints = declares("orphans: 3; widows: 1");
+        assert_eq!((hints.orphans, hints.widows), (Some(3), Some(1)));
+        assert_eq!(declares("orphans: 0; widows: x").orphans, None);
+        let rules = parse_break_rules(
+            "<style>.a { break-before: column } .b { break-after: column } \
+             .c { column-fill: auto } .d { widows: 4 } @media screen { .e { orphans: 5 } }</style>",
+        );
+        let (before, after, fill) = rules.column_rules(&rules.media_applies(|_| true));
+        assert_eq!((before, after), (vec![".a"], vec![".b"]));
+        assert_eq!(fill, vec![(".c", true)]);
+        let (orphans, widows) = rules.orphans_widows(&rules.media_applies(|_| false));
+        assert_eq!((orphans, widows), (vec![], vec![(".d", 4)]));
     }
 }

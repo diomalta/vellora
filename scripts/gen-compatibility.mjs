@@ -214,6 +214,12 @@ const allowedRows = [
     note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex/grid-in-td`) can convert common table-cell cases.",
   },
   {
+    feature:
+      "Multi-column layout (`columns`, `column-count`, `column-width`, `column-gap`, `column-fill`)",
+    status: "Partial",
+    note: "Laid out by vellora (Blitz has no multi-column layout). The column count and width follow CSS Multi-column §3.4 (`column-gap: normal` is `1em`). Content is broken between columns at the paginator's break points: between lines and boxes, never inside a line, an image, an `inline-block`, a `contain: size` box or a `break-inside: avoid` box that fits a column. `break-before: column` / `break-after: column` force a column break, and the space at a break is truncated (a flex `row-gap` too). `column-fill: balance` (the default) balances the columns; `column-fill: auto` fills columns of a fixed height in order, continuing in overflow columns, and a content-sized `column-fill: auto` container keeps one column. `orphans` / `widows` are read for column breaks (pages still use 2). Absolutely positioned boxes are positioned against their containing block (in its column fragments when it is inside the columns). Not implemented: `column-span: all` (the spanner stays in the column flow), `column-rule` (not painted), a multi-column container inside another one (laid out in one column), a multi-column container broken across pages (its columns are cut as one block), vertical writing modes, `break-before` / `break-after: avoid`, and separate breaks per parallel flow (row flex items, table cells: one break line for all).",
+  },
+  {
     feature: "Inline SVG (`<svg>`)",
     status: "Dev-time-fixable",
     note: "Not handled at render time; `@vellora/lint.fix()` rule `inline-svg` rasterizes it to PNG. The CLI `vellora fix` wraps the same rule.",

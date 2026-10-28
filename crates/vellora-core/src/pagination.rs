@@ -1844,7 +1844,19 @@ fn paints(b: &LaidOutBox) -> bool {
 
 /// The flow y to cut `boxes` at so the first part ends by `end` (see the section comment), or
 /// `None` when no break point at or below `start` leaves content above it.
-fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> Option<f64> {
+///
+/// `column`: the fragmentainer is a column of a multi-column container ([`fragment_columns`]),
+/// where a forced column break (`break-before: column`) ends it too; a page breaks only at a
+/// forced page break. `orphans_widows`: honour orphans and widows (step 2); off, the rules are
+/// relaxed (CSS Fragmentation 3 §4.4: when no break point satisfies them they are dropped).
+fn find_cut(
+    boxes: &[LaidOutBox],
+    items: &[SliceItem],
+    start: f64,
+    end: f64,
+    column: bool,
+    orphans_widows: bool,
+) -> Option<f64> {
     let ends: Vec<usize> = (0..boxes.len()).map(|i| subtree_end(boxes, i)).collect();
     // A forced break inside the fragment (`break-before: page` on a box below its top, a `<tr>`
     // of a thead-less table included) that comes before the page end is where the page ends: it
@@ -1853,7 +1865,8 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
     // css/CSS2/pagination/rowgroup-page-break-inside-avoid-8).
     let forced = |i: usize| {
         let top = box_span(boxes, i).0;
-        (i > 0 && boxes[i].break_before_page && top > start + CUT_EPSILON_PX).then_some(top)
+        let forced = boxes[i].break_before_page || (column && boxes[i].break_before_column);
+        (i > 0 && forced && top > start + CUT_EPSILON_PX).then_some(top)
     };
     let mut cut = (0..boxes.len())
         .filter_map(forced)
@@ -1873,7 +1886,11 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
             cut = top;
         }
         // 2. Orphans and widows of every paragraph the cut splits.
-        for owner in items.iter().filter(|it| it.line).map(|it| it.owner) {
+        for owner in items
+            .iter()
+            .filter(|it| it.line && orphans_widows)
+            .map(|it| it.owner)
+        {
             let mut lines: Vec<&SliceItem> = items
                 .iter()
                 .filter(|it| it.line && it.owner == owner)
@@ -1887,10 +1904,15 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
             if above == 0 || below == 0 {
                 continue;
             }
-            if above < ORPHANS || lines.len() < ORPHANS + WIDOWS {
+            let (orphans, widows) = if column {
+                line_limits(&boxes[owner])
+            } else {
+                (ORPHANS, WIDOWS)
+            };
+            if above < orphans || lines.len() < orphans + widows {
                 cut = cut.min(lines[0].top);
-            } else if below < WIDOWS {
-                cut = cut.min(lines[lines.len() - WIDOWS].top);
+            } else if below < widows {
+                cut = cut.min(lines[lines.len() - widows].top);
             }
         }
         // 3. Break before a box that would keep only its border and padding above the cut, and
@@ -2216,7 +2238,7 @@ fn slice_oversize(
         frag
     };
     let items = slice_items(&frag.boxes, content_height);
-    let cut = match find_cut(&frag.boxes, &items, frag.top, end) {
+    let cut = match find_cut(&frag.boxes, &items, frag.top, end, false, true) {
         Some(cut) => cut,
         None if !page_empty => return SliceOutcome::NextPage,
         // Nothing fits whole on an empty page: cut at the page end (what straddles it stays
@@ -2230,6 +2252,258 @@ fn slice_oversize(
         (head, Some(rest)) => SliceOutcome::Cut(Box::new(head), Box::new(rest)),
         (_, None) => SliceOutcome::Whole,
     }
+}
+
+/// At most this many columns per multi-column container ([`fragment_columns`]): past it the
+/// rest of the content stays in the last column (bounded work, as [`MAX_SLICES_PER_FRAGMENT`]).
+pub(crate) const MAX_COLUMNS: usize = 1000;
+
+/// One column of a multi-column container ([`fragment_columns`]): its boxes, still in flow
+/// coordinates, and the flow y its top starts at (the column's content maps flow y to
+/// `y - flow_top` below the container's content-box top).
+pub(crate) struct ColumnPiece {
+    pub boxes: Vec<LaidOutBox>,
+    pub flow_top: f64,
+}
+
+impl ColumnPiece {
+    /// How far below `flow_top` the column's content reaches: its boxes, line boxes and
+    /// images (a box cut by the column's end was stretched to it). More than the column height
+    /// when something monolithic overflows the column.
+    pub(crate) fn extent(&self) -> f64 {
+        self.boxes
+            .iter()
+            .flat_map(|b| {
+                let runs = b.text_runs.iter().map(|r| run_line_span(r).1);
+                let images = b.image_runs.iter().map(|img| img.y + img.height);
+                std::iter::once(b.y + b.height).chain(runs).chain(images)
+            })
+            .fold(self.flow_top, f64::max)
+            - self.flow_top
+    }
+}
+
+/// Cut the content of a multi-column container into columns `column_height` tall (CSS
+/// Multi-column Layout 1 §8, CSS Fragmentation 3; Phase C step 05, [`crate::multicol`]), with the
+/// oversize-fragment slicer of the paginator ([`find_cut`], [`split_fragment`]): the same break
+/// points (between lines and boxes, never through a line, an image, an atomic inline, or a
+/// `break-inside: avoid` box that fits a column), the same truncation of the space at an
+/// unforced break (the next column starts with the next box: CSS Fragmentation 3 §5.2, which
+/// also suppresses a flex `row-gap` at a break, csswg-drafts#11520), the same forced breaks
+/// (`break-before: column` or `page`) and the same `box-decoration-break: slice` of a box cut by
+/// a break (its first part stretched to the column end).
+///
+/// `boxes` is the depth-ordered flow of the container, its first box a stand-in for the
+/// container (no paint of its own; it is never cut away). `top` is the flow y of the first
+/// column's top. Returns at least one column; past [`MAX_COLUMNS`] the rest stays in the last.
+pub(crate) fn fragment_columns(
+    boxes: Vec<LaidOutBox>,
+    top: f64,
+    column_height: f64,
+) -> Vec<ColumnPiece> {
+    let bottom = boxes.iter().map(|b| b.y + b.height).fold(top, f64::max);
+    let mut frag = Fragment {
+        boxes,
+        top,
+        bottom,
+        contained_bottom: bottom,
+        break_margin: CollapsedMargin::default(),
+        table_id: None,
+        is_thead: false,
+        break_before: false,
+        members: Vec::new(),
+        slices: 0,
+    };
+    let column_height = column_height.max(0.0);
+    let mut pieces = Vec::new();
+    loop {
+        let start = frag.top;
+        let end = start + column_height;
+        let forced_inside = frag.boxes.iter().skip(1).any(|b| {
+            (b.break_before_page || b.break_before_column)
+                && b.y > start + CUT_EPSILON_PX
+                && b.y < frag.bottom
+        });
+        let fits = frag.bottom <= end + CUT_EPSILON_PX && !forced_inside;
+        if fits || pieces.len() + 1 >= MAX_COLUMNS {
+            break;
+        }
+        let items = column_items(&frag.boxes, column_height);
+        // A forced break (`break-before: column` or `page`) in this column ends it there,
+        // whatever lies above it. Otherwise the slicer's latest break point; when none keeps
+        // orphans and widows they are relaxed (Chrome 155 balances seven one-line `<br>` lines
+        // of four columns 2-2-2-1); when there is none at all, monolithic content that starts
+        // the column stays in it whole, overflowing it (Chrome 155: a 100 px `contain: size`
+        // box in a 60 px column, WPT css/css-break/monolithic-overflow-002.tentative), and
+        // anything else is cut at the column end.
+        let forced = frag
+            .boxes
+            .iter()
+            .skip(1)
+            .filter(|b| {
+                (b.break_before_page || b.break_before_column)
+                    && b.y > start + CUT_EPSILON_PX
+                    && b.y <= end + CUT_EPSILON_PX
+            })
+            .map(|b| b.y)
+            .reduce(f64::min);
+        let cut = forced
+            .or_else(|| find_cut(&frag.boxes, &items, start, end, true, true))
+            .or_else(|| find_cut(&frag.boxes, &items, start, end, true, false))
+            .or_else(|| {
+                items
+                    .iter()
+                    .filter(|it| it.top <= start + CUT_EPSILON_PX && it.bottom > end)
+                    .map(|it| it.bottom)
+                    .reduce(f64::max)
+            })
+            .unwrap_or(end);
+        if cut <= start + CUT_EPSILON_PX {
+            break;
+        }
+        match split_fragment(&frag, cut, end) {
+            (head, Some(rest)) => {
+                pieces.push(ColumnPiece {
+                    boxes: head.boxes,
+                    flow_top: start,
+                });
+                frag = rest;
+            }
+            (head, None) => {
+                frag = head;
+                break;
+            }
+        }
+    }
+    pieces.push(ColumnPiece {
+        flow_top: frag.top,
+        boxes: frag.boxes,
+    });
+    pieces
+}
+
+/// `boxes` (depth-ordered, the first one its root) cut at flow y `cut` with
+/// [`split_fragment`]'s slice of the boxes it goes through: the part above the cut, and the part
+/// from the cut down (`None` when nothing of it paints there). For the absolutely positioned
+/// boxes of a multi-column container ([`crate::multicol`]).
+pub(crate) fn split_boxes_at(
+    boxes: Vec<LaidOutBox>,
+    cut: f64,
+) -> (Vec<LaidOutBox>, Option<Vec<LaidOutBox>>) {
+    let (top, bottom) = span(&boxes);
+    if bottom <= cut + ROUNDING_TAIL_PX || top >= cut {
+        return (boxes, None);
+    }
+    let frag = Fragment {
+        boxes,
+        top,
+        bottom,
+        contained_bottom: bottom,
+        break_margin: CollapsedMargin::default(),
+        table_id: None,
+        is_thead: false,
+        break_before: false,
+        members: Vec::new(),
+        slices: 0,
+    };
+    let (head, rest) = split_fragment(&frag, cut, cut);
+    (head.boxes, rest.map(|r| r.boxes))
+}
+
+/// The `orphans` and `widows` a column break honours in box `b`'s lines: its declared values
+/// (read for the boxes of a multi-column container, [`crate::multicol`]), else the initial 2.
+fn line_limits(b: &LaidOutBox) -> (usize, usize) {
+    (
+        b.orphans.map_or(ORPHANS, |n| n as usize),
+        b.widows.map_or(WIDOWS, |n| n as usize),
+    )
+}
+
+/// The monolithic spans of a column's flow ([`slice_items`]), plus every `contain: size` box
+/// whatever its height (CSS Contain 2 §3.1: its size does not depend on its content, and Chrome
+/// 155 never breaks inside one: WPT css/css-break/monolithic-overflow-001/002.tentative), unless
+/// it sits in a parallel flow (a box beside a sibling, a row flex item): Chrome breaks each
+/// parallel flow on its own (WPT css/css-break/flexbox/single-line-row-flex-fragmentation-010:
+/// the item beside a monolithic one is not pushed down), which one cut for the whole column
+/// cannot do; there the cut goes through it, as before.
+fn column_items(boxes: &[LaidOutBox], column_height: f64) -> Vec<SliceItem> {
+    let mut items = slice_items(boxes, column_height);
+    let parent = parents(boxes);
+    let beside = |a: &LaidOutBox, b: &LaidOutBox| {
+        const EPS: f64 = 0.5;
+        a.y < b.y + b.height - EPS
+            && b.y < a.y + a.height - EPS
+            && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+    };
+    let in_parallel_flow = |i: usize| {
+        let mut a = Some(i);
+        while let Some(j) = a {
+            let Some(p) = parent[j] else {
+                break;
+            };
+            if (p + 1..subtree_end(boxes, p))
+                .filter(|&k| parent[k] == Some(p) && k != j)
+                .any(|k| beside(&boxes[j], &boxes[k]))
+            {
+                return true;
+            }
+            a = Some(p);
+        }
+        false
+    };
+    items.extend(
+        boxes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, b)| b.contain_size && b.height > 0.0 && !in_parallel_flow(i))
+            .map(|(i, b)| SliceItem {
+                top: b.y,
+                bottom: b.y + b.height,
+                owner: i,
+                line: false,
+            }),
+    );
+    items
+}
+
+/// The tallest content of a column's flow that no column break can go through: a monolithic
+/// span ([`column_items`]), or the lines of a paragraph that orphans and widows keep together
+/// (its first `orphans` lines, its last `widows` ([`line_limits`]), the whole paragraph when it has fewer than
+/// both). A balanced column is never shorter (Blink's column balancer starts from the tallest
+/// unbreakable block size; Chrome 155 balances two 2-line paragraphs of a 4-column container
+/// 2 + 2 with `widows: 2`, WPT css/css-break/widows-orphans-002).
+pub(crate) fn tallest_unbreakable(boxes: &[LaidOutBox]) -> f64 {
+    let items = column_items(boxes, f64::INFINITY);
+    let mut tallest = items
+        .iter()
+        .filter(|it| !it.line)
+        .map(|it| it.bottom - it.top)
+        .fold(0.0, f64::max);
+    let mut owners: Vec<usize> = items
+        .iter()
+        .filter(|it| it.line)
+        .map(|it| it.owner)
+        .collect();
+    owners.sort_unstable();
+    owners.dedup();
+    for owner in owners {
+        let mut lines: Vec<&SliceItem> = items
+            .iter()
+            .filter(|it| it.line && it.owner == owner)
+            .collect();
+        lines.sort_by(|a, b| a.top.total_cmp(&b.top));
+        let n = lines.len();
+        let (orphans, widows) = line_limits(&boxes[owner]);
+        let run = |from: usize, to: usize| lines[to - 1].bottom - lines[from].top;
+        let kept = if n < orphans + widows {
+            run(0, n)
+        } else {
+            run(0, orphans.min(n)).max(run(n - widows.min(n), n))
+        };
+        tallest = tallest.max(kept);
+    }
+    tallest
 }
 
 /// Index just past the subtree rooted at `start` in the flat document-order box
