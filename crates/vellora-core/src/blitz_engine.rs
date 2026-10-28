@@ -1168,8 +1168,11 @@ const OVERLAP_EPSILON_PX: f64 = 0.5;
 ///    the line's top (y = 0 in the div), over the text; Chrome puts it below the line (y = 15).
 ///    Edit: `margin-top` grown by the distance to the line's bottom, which lays the float's border
 ///    box exactly there. Only for inline roots with `text-wrap-mode: nowrap` (`white-space:
-///    nowrap | pre`), and only when the float's margin box overlaps a glyph run that precedes
-///    the float on its line. That is Chrome 155's rule: the float stays on the line when the
+///    nowrap | pre`), or lines that end their paragraph (or at a forced break) and have no wrap
+///    opportunity after the float (Phase C step 07: an unbreakable word or a `nowrap` span after
+///    it, WPT css/CSS2/text/white-space-processing-048.xht and css/CSS2/floats/float-nowrap-3.html,
+///    whose references [`trailing_float_wraps`] lays out), and only when the float's margin box
+///    overlaps a glyph run that precedes the float on its line. That is Chrome 155's rule: the float stays on the line when the
 ///    content before it plus its margin box fit in the line's free width, whatever follows it.
 ///    Measured in Chrome for Testing 155.0.8059.85 (2026-10-28, 10ch nowrap div, ch 9.633 px):
 ///    `Some <float 5ch>text that overflows my parent.` (WPT float-nowrap-8) keeps the float at
@@ -1183,8 +1186,8 @@ const OVERLAP_EPSILON_PX: f64 = 0.5;
 ///    space out (measured on the same repros). Gecko's rule tests every glyph run of
 ///    the unbreakable line (float-nowrap-1..8 encode it), so vellora fails float-nowrap-7 and -8
 ///    exactly as Chrome 155 does. The grown margin also narrows that line for the content after
-///    the float, which changes nothing on a line that cannot wrap but would re-break a wrapping
-///    one (Chrome does not narrow it), so wrapping lines keep Blitz's placement. Not handled
+///    the float, which changes nothing on a line that cannot wrap after the float but would
+///    re-break one that can (Chrome does not narrow it), so those lines keep Blitz's placement. Not handled
 ///    (same before and after this rule): a LEFT float that does not fit. Blitz shifts the whole
 ///    line, the text before the float included, right of the float at the line's top, so no run
 ///    overlaps it; Chrome 155 puts it below the line with the text at x = 0 (`Some text
@@ -1234,7 +1237,7 @@ fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
         fixups.push((root.id, FloatFixup::Clear(clear)));
     }
     for float in &geometry.floats {
-        let Some(lines) = float.nowrap_lines.as_ref() else {
+        let Some(lines) = float.lines.as_ref() else {
             continue;
         };
         let top = float.margin_rect[1];
@@ -1247,13 +1250,21 @@ fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
         };
         // Chrome's rule: only the glyph runs before the float on its line count. A float that
         // starts its line has none and keeps its place; text after the float may run under it.
-        let line_rect = |run: &(usize, f64, f64)| [run.1, line.top, run.2, line.bottom];
-        if line
-            .runs
-            .iter()
-            .filter(|run| run.0 < at)
-            .map(line_rect)
-            .any(|run| overlap(run, float.margin_rect))
+        let line_rect = |run: &LineRun| [run.x0, line.top, run.x1, line.bottom];
+        // On a line that can wrap, only when nothing after the float can: no wrap opportunity
+        // in the runs after it, and the line ends its paragraph or at a forced break, so the
+        // edit cannot re-break the line (WPT css/CSS2/text/white-space-processing-048.xht,
+        // css/CSS2/floats/float-nowrap-3.html: a right float inside an inline, before the rest
+        // of an unbreakable word or of a `nowrap` span; Chrome 155 puts it below the line).
+        let unbreakable_after = float.root_nowrap
+            || (line.ends_paragraph && !line.runs.iter().any(|run| run.at > at && run.breakable));
+        if unbreakable_after
+            && line
+                .runs
+                .iter()
+                .filter(|run| run.at < at)
+                .map(line_rect)
+                .any(|run| overlap(run, float.margin_rect))
         {
             let grown = float.margin_top + (line.bottom - top);
             fixups.push((float.id, FloatFixup::MarginTop(grown as f32)));
@@ -1290,16 +1301,30 @@ struct FloatBox {
     left: bool,
     margin_rect: AbsRect,
     margin_top: f64,
-    /// The lines of the float's inline root when that root cannot wrap (`None` otherwise, and
-    /// for a float that is not laid out by an inline root).
-    nowrap_lines: Option<Vec<LineGeometry>>,
+    /// The lines of the float's inline root (`None` for a float that is not laid out by one).
+    lines: Option<Vec<LineGeometry>>,
+    /// Whether that inline root cannot wrap (`text-wrap-mode: nowrap`).
+    root_nowrap: bool,
+}
+
+/// A glyph run of a [`LineGeometry`].
+struct LineRun {
+    /// Its item index on the line.
+    at: usize,
+    x0: f64,
+    x1: f64,
+    /// It has a soft wrap opportunity before its last non-white-space character: collapsible
+    /// or preserved-breakable white space in a run whose `text-wrap-mode` is `wrap`.
+    breakable: bool,
 }
 
 struct LineGeometry {
     top: f64,
     bottom: f64,
-    /// `(item index, x0, x1)` of each glyph run on the line.
-    runs: Vec<(usize, f64, f64)>,
+    /// Each glyph run on the line.
+    runs: Vec<LineRun>,
+    /// The line ends its paragraph (the inline content, or a forced break).
+    ends_paragraph: bool,
     /// `(item index, node id)` of each inline box (atomic inline, float, out-of-flow box).
     boxes: Vec<(usize, u64)>,
 }
@@ -1380,9 +1405,12 @@ fn collect_float_geometry(
                     y + h + m.bottom as f64,
                 ],
                 margin_top: m.top as f64,
-                nowrap_lines: nowrap
+                lines: node
+                    .flags
+                    .is_inline_root()
                     .then(|| inline_root_lines(base, node, &mut geometry.origins))
                     .flatten(),
+                root_nowrap: nowrap,
             });
         } else if !out_of_flow
             && display.outside() == DisplayOutside::Block
@@ -1423,11 +1451,12 @@ fn inline_root_lines(
                 let mut boxes = Vec::new();
                 for (at, item) in line.items().enumerate() {
                     match item {
-                        parley::PositionedLayoutItem::GlyphRun(run) => runs.push((
+                        parley::PositionedLayoutItem::GlyphRun(run) => runs.push(LineRun {
                             at,
-                            content_x + run.offset() as f64,
-                            content_x + (run.offset() + run.advance()) as f64,
-                        )),
+                            x0: content_x + run.offset() as f64,
+                            x1: content_x + (run.offset() + run.advance()) as f64,
+                            breakable: run_breakable(base, &text.text, &run),
+                        }),
                         parley::PositionedLayoutItem::InlineBox(ibox) => boxes.push((at, ibox.id)),
                     }
                 }
@@ -1436,10 +1465,32 @@ fn inline_root_lines(
                     bottom: content_y + metrics.block_max_coord as f64,
                     runs,
                     boxes,
+                    ends_paragraph: matches!(
+                        line.break_reason(),
+                        parley::BreakReason::Explicit | parley::BreakReason::None
+                    ),
                 }
             })
             .collect(),
     )
+}
+
+/// [`LineRun::breakable`] of a positioned glyph run of an inline root whose text is `source`.
+fn run_breakable(
+    base: &BaseDocument,
+    source: &str,
+    run: &parley::GlyphRun<'_, blitz_dom::node::TextBrush>,
+) -> bool {
+    let wraps = base
+        .get_node(run.style().brush.id)
+        .and_then(|n| n.primary_styles())
+        .is_some_and(|s| {
+            s.clone_text_wrap_mode() == style::computed_values::text_wrap_mode::T::Wrap
+        });
+    wraps
+        && source
+            .get(run.run().text_range())
+            .is_some_and(|text| text.trim_end().contains(char::is_whitespace))
 }
 
 fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
@@ -1455,6 +1506,242 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
                     )))
             }
         });
+    }
+}
+
+/// Local name of the element [`trailing_float_wraps`] moves the trailing floats of a line into.
+const FLOAT_RUN_TAG: &str = "vellora-float-run";
+
+/// The floats to move below their line, read off a laid-out document: `(parent, first float)`
+/// for each run of trailing floats, in the order found. Compensates a BLITZ BUG of the crates.io
+/// Blitz 0.3.0-beta.4 stack; the raw-Blitz canary `blitz_still_places_a_float_beside_a_line_it_does_not_fit`
+/// (`raw_blitz_tests.rs`) fails when it is fixed, and then this function, [`FLOAT_RUN_TAG`],
+/// [`wrap_trailing_floats`], their call in [`resolve_and_walk`], the canary and the
+/// `trailing_floats_*` tests are deleted.
+///
+/// A float that does not fit beside the content already on its line goes below that line
+/// (CSS 2.2 §9.5.1 rules 6-8 and §9.5: the float is placed as high as possible but not beside a
+/// line it does not fit on). BLITZ BUG (blitz-dom 0.3.0-beta.4 `src/layout/inline.rs` 722-765):
+/// the float is placed at the current line's top (`min_y = state.line_y()`, 749) in a slot that
+/// only avoids other floats; Parley's `advance` (the content before the float, parley 0.12.0
+/// `src/layout/line_break.rs` 1079-1083) is not used, and the line is then moved beside the float
+/// (`set_line_x`, 757-760), the content before the float with it. Repro (WPT
+/// css/CSS2/floats/floats-placement-vertical-003.xht, font-size 5px, body 100 px wide): `H` then a
+/// 100x100 left float: Blitz puts the float at the line's top (y = 8) and `H` at x = 108, past the
+/// body; Chrome for Testing 155.0.8059.85 (2026-10-28) puts the float below the line (y = 14) and
+/// `H` at x = 8. A right float is placed over the text (`HHH` + a 95 px right float in 100 px:
+/// Blitz y = 8, Chrome y = 20), and so is a float after the last line of a wrapped paragraph.
+///
+/// Edit: when nothing in-flow follows the float in its inline formatting context (only white
+/// space, comments and other floats until its end), every child of the float's parent BEFORE the
+/// float moves into a new `display: block` element, the parent's first child (styled by
+/// [`anonymous_element`]: inherited properties only, so the moved content keeps its line layout:
+/// `text-align`, `line-height`, `white-space` and the fonts are inherited). The parent then has a
+/// block-level child, and Blitz lays each of its floats out as a block-level box after the
+/// preceding block (blitz-dom 0.3.0-beta.4 `src/layout/construct.rs` 840-848 pushes a float as a
+/// block-level child of a container that has block children), that is at the bottom of the
+/// float's line, which is the last one; the floats after it go below it too (CSS 2.2 §9.5.1 rule
+/// 5): the layout Chrome gives. Floats before it stay in the moved inline content, at their
+/// line's top. "Fits" is Chrome's test: the content before the float on its line (its trailing
+/// collapsible white space left out) plus the float's margin box is not wider than the line's
+/// room beside the earlier floats of the formatting context. A float that starts its line is
+/// left alone (it always stays there, measured). Not handled (Blitz's placement kept): a float
+/// followed by in-flow content on its line (Chrome keeps that content on the line and the float
+/// below it: `H <100px float> tx`, Chrome `tx` at x = 20 on line 1, float y = 20) unless the
+/// no-wrap edit of [`float_avoidance_fixups`] applies, a float inside an inline element, a
+/// float followed by an absolutely positioned box, and a parent with a `::before` / `::after`
+/// box (it would be split from the moved content). The floats the no-wrap edit moves keep it.
+fn trailing_float_wraps(
+    base: &BaseDocument,
+    skip: &std::collections::HashSet<NodeId>,
+) -> Vec<(NodeId, NodeId)> {
+    use style::computed_values::white_space_collapse::T as Collapse;
+    let mut geometry = FloatGeometry::default();
+    let root = base.root_element().id;
+    collect_float_geometry(base, root, root, 0, &mut geometry);
+    let mut wraps = Vec::new();
+    let mut taken = std::collections::HashSet::new();
+    for (index, float) in geometry.floats.iter().enumerate() {
+        if skip.contains(&float.id) || taken.contains(&float.id) {
+            continue;
+        }
+        let Some(root_id) = float_inline_root(base, float.id) else {
+            continue;
+        };
+        let parent = root_id;
+        let Some(root_node) = base.get_node(root_id) else {
+            continue;
+        };
+        let Some(text) = root_node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        else {
+            continue;
+        };
+        let collapses = root_node
+            .primary_styles()
+            .is_some_and(|s| s.clone_white_space_collapse() == Collapse::Collapse);
+        let float_id = float.id.as_u64();
+        let Some((line, at)) = text.layout.lines().find_map(|line| {
+            let at = line.items().position(
+                |item| matches!(item, parley::PositionedLayoutItem::InlineBox(b) if b.id == float_id),
+            )?;
+            Some((line, at))
+        }) else {
+            continue;
+        };
+        // The content before the float on its line.
+        let (mut width, mut trailing) = (0.0f64, 0.0f64);
+        for item in line.items().take(at) {
+            match item {
+                parley::PositionedLayoutItem::GlyphRun(glyph_run) => {
+                    for cluster in glyph_run.run().clusters() {
+                        let advance = f64::from(cluster.advance());
+                        width += advance;
+                        let space = text.text.get(cluster.text_range()).is_some_and(|s| {
+                            !s.is_empty() && s.chars().all(|c| matches!(c, ' ' | '\t' | '\n'))
+                        });
+                        trailing = if space && collapses {
+                            trailing + advance
+                        } else {
+                            0.0
+                        };
+                    }
+                }
+                parley::PositionedLayoutItem::InlineBox(ibox) => {
+                    if ibox.kind == parley::InlineBoxKind::InFlow {
+                        width += f64::from(ibox.width);
+                        trailing = 0.0;
+                    }
+                }
+            }
+        }
+        let before = width - trailing;
+        if before <= OVERLAP_EPSILON_PX {
+            continue;
+        }
+        // The line's room at its top beside the floats placed before this one.
+        let (_, top) = box_origin(base, root_id, &mut std::collections::HashMap::new(), false);
+        let layout = root_node.final_layout();
+        let line_top = top
+            + f64::from(layout.border.top + layout.padding.top + text.block_offset)
+            + f64::from(line.metrics().block_min_coord);
+        let (rx, _) = box_origin(base, root_id, &mut std::collections::HashMap::new(), false);
+        let mut x0 = rx + f64::from(layout.border.left + layout.padding.left);
+        let mut x1 = rx + f64::from(layout.size.width - layout.border.right - layout.padding.right);
+        for earlier in &geometry.floats[..index] {
+            if earlier.bfc != float.bfc
+                || !(earlier.margin_rect[1] <= line_top + OVERLAP_EPSILON_PX
+                    && line_top + OVERLAP_EPSILON_PX < earlier.margin_rect[3])
+            {
+                continue;
+            }
+            if earlier.left {
+                x0 = x0.max(earlier.margin_rect[2]);
+            } else {
+                x1 = x1.min(earlier.margin_rect[0]);
+            }
+        }
+        let float_width = float.margin_rect[2] - float.margin_rect[0];
+        if before + float_width <= (x1 - x0) + OVERLAP_EPSILON_PX {
+            continue;
+        }
+        let Some(run) = trailing_float_run(base, parent, float.id) else {
+            continue;
+        };
+        taken.extend(run.iter().copied());
+        wraps.push((parent, float.id));
+    }
+    wraps
+}
+
+/// The DOM parent of float `id` when that parent is the inline formatting context root the
+/// float is laid out in (has it among its inline boxes) and has no `::before` / `::after` box.
+/// In a block container with block-level children Blitz never lays a float out inline (its
+/// anonymous-block split pushes every float as a block-level child, blitz-dom 0.3.0-beta.4
+/// `src/layout/construct.rs` 840-848).
+fn float_inline_root(base: &BaseDocument, id: NodeId) -> Option<NodeId> {
+    let parent = base.get_node(id)?.parent?;
+    let node = base.get_node(parent)?;
+    if node.before().is_some() || node.after().is_some() {
+        return None;
+    }
+    node.data
+        .downcast_element()
+        .and_then(|el| el.inline_layout_data.as_ref())
+        .is_some_and(|t| t.layout.inline_boxes().any(|b| b.id == id.as_u64()))
+        .then_some(parent)
+}
+
+/// `float` and the DOM siblings after it that [`trailing_float_wraps`] moves with it, or `None`
+/// when in-flow content follows it in its inline formatting context.
+fn trailing_float_run(base: &BaseDocument, parent: NodeId, float: NodeId) -> Option<Vec<NodeId>> {
+    use style::values::specified::box_::DisplayOutside;
+    let children = &base.get_node(parent)?.children;
+    let start = children.iter().position(|&c| c == float)?;
+    let mut run = Vec::new();
+    for &id in &children[start..] {
+        let node = base.get_node(id)?;
+        match &node.data {
+            NodeData::Text(t) if t.content.chars().all(char::is_whitespace) => run.push(id),
+            NodeData::Comment { .. } => run.push(id),
+            NodeData::Element(_) => {
+                let styles = node.primary_styles()?;
+                if styles.clone_position().is_absolutely_positioned() {
+                    return None;
+                }
+                let display = styles.clone_display();
+                if display == style::values::computed::Display::None
+                    || !matches!(styles.clone_float(), style::computed_values::float::T::None)
+                {
+                    run.push(id);
+                } else if display.outside() == DisplayOutside::Block {
+                    break;
+                } else {
+                    return None;
+                }
+            }
+            _ => return None,
+        }
+    }
+    Some(run)
+}
+
+/// For each run [`trailing_float_wraps`] found, moves the children of its parent before the run
+/// into a new [`FLOAT_RUN_TAG`] block, their parent's first child: the run's floats become
+/// block-level children after it.
+fn wrap_trailing_floats(doc: &mut BaseDocument, wraps: &[(NodeId, NodeId)]) {
+    for &(parent, float) in wraps {
+        if trailing_float_run(doc, parent, float).is_none() {
+            continue;
+        }
+        let Some(before) = doc.get_node(parent).and_then(|n| {
+            let at = n.children.iter().position(|&c| c == float)?;
+            Some(n.children[..at].to_vec())
+        }) else {
+            continue;
+        };
+        let Some(wrapper) = anonymous_element(
+            doc,
+            parent,
+            blitz_dom::LocalName::from(FLOAT_RUN_TAG),
+            style::values::computed::Display::Block,
+        ) else {
+            continue;
+        };
+        for &id in &before {
+            if let Some(node) = doc.get_node_mut(id) {
+                node.parent = Some(wrapper);
+            }
+        }
+        if let Some(node) = doc.get_node_mut(wrapper) {
+            node.children = before.iter().copied().collect();
+        }
+        if let Some(node) = doc.get_node_mut(parent) {
+            node.children
+                .splice(0..before.len(), std::iter::once(wrapper));
+        }
     }
 }
 
@@ -4385,8 +4672,12 @@ fn resolve_and_walk<O: LayoutObserver>(
     // laid out once more. Off in the raw-Blitz render.
     if O::VELLORA_CORRECTIONS {
         let fixups = float_avoidance_fixups(&doc);
-        if !fixups.is_empty() {
+        // Floats the no-wrap fix-up already moves keep that edit.
+        let edited: std::collections::HashSet<NodeId> = fixups.iter().map(|f| f.0).collect();
+        let wraps = trailing_float_wraps(&doc, &edited);
+        if !fixups.is_empty() || !wraps.is_empty() {
             apply_float_fixups(&mut doc, &fixups);
+            wrap_trailing_floats(&mut doc, &wraps);
             // Non-incremental: the edits are invisible to Blitz's damage tracking, so the whole
             // tree is re-constructed and re-laid out (their styles, edited ones included, are
             // kept; the style pass has nothing to restyle).

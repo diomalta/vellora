@@ -874,7 +874,7 @@ fn blitz_still_places_a_float_over_its_nowrap_line() {
          float_avoidance_fixups works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
          722-765 places a float at `state.line_y()` whatever Parley has put on that line). If \
          Blitz now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs the no-wrap \
-         half of `float_avoidance_fixups` (`nowrap_lines`, `LineGeometry`, `inline_root_lines`, \
+         half of `float_avoidance_fixups` (`FloatBox::lines`, `root_nowrap`, `LineGeometry`, `LineRun`, `run_breakable`, `inline_root_lines`, \
          `FloatFixup::MarginTop`), this canary and \
          `float_avoidance_moves_a_float_below_its_nowrap_line`; with the other half gone too, \
          also the second `resolve` in `resolve_and_walk`. KEEP \
@@ -1746,4 +1746,88 @@ fn inline_block_baseline_matches_chrome() {
         .expect("SS box");
     assert_eq!(run_y(&laid, "YY"), sc.y + sc.height + 10.0);
     assert_eq!(run_y(&laid, "ZZ") - run_y(&laid, "EE"), 10.0);
+}
+
+/// Floats after the last content of a line (the repros of
+/// `blitz_engine::trailing_float_wraps`), one block per case, 12 px lines: a 100 px left float
+/// that does not fit beside `H`; a 50 px one that fits, then a 90 px one that does not; a 95 px
+/// right float that does not fit beside `HHH`; and a 30 px right float inside a span after 18 px
+/// of text in 40 px, before the rest of an unbreakable word (WPT css/CSS2/text/white-space-processing-048.xht).
+const TRAILING_FLOATS: &str = r#"<!DOCTYPE html><html><head><style>
+    body { width: 100px; font: 10px/12px monospace; }
+    .s { height: 30px; }
+    </style></head><body>
+    <div id="a">H <div class="s" style="float: left; width: 100px"></div></div>
+    <div id="b" style="clear: both">H <div class="s" style="float: left; width: 50px"></div><div class="s" style="float: left; width: 90px"></div></div>
+    <div id="c" style="clear: both">HHH <div class="s" style="float: right; width: 95px"></div> </div>
+    <div id="d" style="clear: both; width: 40px"><span>XXX<span class="s" style="float: right; width: 30px"></span>XXX</span></div>
+    </body></html>"#;
+
+/// `(float top - its block's top, H's x - the block's x)` of the float of [`TRAILING_FLOATS`]
+/// that is `width` px wide; `block` is the id of its block.
+fn trailing_float_geometry(doc: &LaidOutDoc, block: &str, width: f64) -> (f64, f64) {
+    let div = |id: &str| {
+        let at = TRAILING_FLOATS.find(&format!("id=\"{id}\"")).expect("id");
+        let nth = TRAILING_FLOATS[..at].matches("<div").count() - 1;
+        doc.boxes
+            .iter()
+            .filter(|b| b.tag.as_deref() == Some("div"))
+            .nth(nth)
+            .expect("block")
+    };
+    let block_box = div(block);
+    let float = doc
+        .boxes
+        .iter()
+        .find(|b| b.width == width && b.height == 30.0)
+        .unwrap_or_else(|| panic!("{width} px float"));
+    let first_run_x = block_box
+        .text_runs
+        .first()
+        .map(|r| r.origin_x)
+        .or_else(|| {
+            runs_of(doc)
+                .into_iter()
+                .find(|r| r.2 > block_box.y && r.2 < block_box.y + 20.0)
+                .map(|r| r.1)
+        })
+        .unwrap_or(block_box.x);
+    (float.y - block_box.y, first_run_x - block_box.x)
+}
+
+/// CANARY of `blitz_engine::trailing_float_wraps`: raw Blitz still places a float that does not
+/// fit beside its line's content at the line's top and moves the line right of it (Chrome 155:
+/// below the line, the line where it was).
+#[test]
+fn blitz_still_places_a_float_beside_a_line_it_does_not_fit() {
+    let (raw, _) = raw_layout(TRAILING_FLOATS);
+    let (top, h_x) = trailing_float_geometry(&raw, "a", 100.0);
+    assert_eq!(
+        (top, h_x),
+        (0.0, 100.0),
+        "\n\nBLITZ CHANGED WHERE IT PLACES A FLOAT THAT DOES NOT FIT ITS LINE. Raw Blitz no longer \
+         puts TRAILING_FLOATS's 100 px float at its line's top with `H` moved right of it (float \
+         top {top} px below its block, H at x + {h_x}; Chrome 155: 12, 0), the bug \
+         trailing_float_wraps works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         722-765). If Blitz now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `trailing_float_wraps`, `float_inline_root`, `trailing_float_run`, \
+         `wrap_trailing_floats`, `FLOAT_RUN_TAG` and their call in `resolve_and_walk`, this \
+         canary and `trailing_floats_go_below_their_line`; then re-measure css/CSS2/floats with \
+         fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28, c07-pin-b/fl in the
+/// run store): a trailing float that does not fit goes below its line (`H` stays at the block's
+/// left edge), one that fits stays at the line's top beside the content, and the floats after
+/// one that does not fit go below the line too; the right float before the rest of an
+/// unbreakable word goes below its line (the no-wrap edit of `float_avoidance_fixups`).
+#[test]
+fn trailing_floats_go_below_their_line() {
+    let laid = product_layout(TRAILING_FLOATS);
+    assert_eq!(trailing_float_geometry(&laid, "a", 100.0), (12.0, 0.0));
+    assert_eq!(trailing_float_geometry(&laid, "b", 50.0).0, 0.0);
+    assert_eq!(trailing_float_geometry(&laid, "b", 90.0).0, 30.0);
+    assert_eq!(trailing_float_geometry(&laid, "c", 95.0).0, 12.0);
+    assert_eq!(trailing_float_geometry(&laid, "d", 30.0).0, 12.0);
 }
