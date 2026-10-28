@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 248" width="760" height="248" role="img" aria-labelledby="wpt-t wpt-d">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 262" width="760" height="262" role="img" aria-labelledby="wpt-t wpt-d">
 <title id="wpt-t">WPT reftests passed (coverage of the CSS test subset, not a quality score)</title>
-<desc id="wpt-d">Bar chart. vellora 0.2.0 · Blitz 0.3.0-alpha.5: 32.04%, 2578 of 8047; unreleased branch · Blitz 0.3.0-beta.4: 56.58%, 4553 of 8047; Chrome for Testing 155 (reference): 90.21%, 7258 of 8046.</desc>
+<desc id="wpt-d">Bar chart. vellora 0.2.0 · Blitz 0.3.0-alpha.5: 32.04%, 2578 of 8047; vellora 0.3.0 · Blitz 0.3.0-beta.4: 56.58%, 4553 of 8047; Chrome for Testing 155 (reference): 90.21%, 7258 of 8046.</desc>
 <style>
   text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
   .num{font-variant-numeric:tabular-nums}
@@ -14,7 +14,7 @@
   .link{stroke:#383835} .before{stroke:#d95926;fill:#1a1a19} .beforeFill{fill:#d95926}
   .after{fill:#3987e5;stroke:#1a1a19} .afterFill{fill:#3987e5}}
 </style>
-<rect class="bg" width="760" height="248" rx="8"/>
+<rect class="bg" width="760" height="262" rx="8"/>
 <text class="t1" x="20" y="28" font-size="15" font-weight="600">WPT reftests passed (coverage of the CSS test subset, not a quality score)</text>
 <text class="t2" x="20" y="48" font-size="12">WPT 9d8aceec, reftests printed to PDF and compared with the reference page. Chrome does not reach 100% through the same harness.</text>
 <line class="grid" x1="300" y1="70" x2="300" y2="184" stroke-width="1"/>
@@ -35,8 +35,8 @@
   <text class="t2 num" x="407.324" y="92" font-size="12">32.04% (2,578 / 8,047)</text>
 </g>
 <g>
-  <title>unreleased branch · Blitz 0.3.0-beta.4: 4,553 of 8,047 reftests pass (56.58%)</title>
-  <text class="t1" x="288" y="132" font-size="12" text-anchor="end">unreleased branch · Blitz 0.3.0-beta.4</text>
+  <title>vellora 0.3.0 · Blitz 0.3.0-beta.4: 4,553 of 8,047 reftests pass (56.58%)</title>
+  <text class="t1" x="288" y="132" font-size="12" text-anchor="end">vellora 0.3.0 · Blitz 0.3.0-beta.4</text>
   <path class="afterFill" d="M300,116 h171.398 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-171.398 z"/>
   <text class="t2 num" x="483.398" y="132" font-size="12">56.58% (4,553 / 8,047)</text>
 </g>
@@ -46,5 +46,6 @@
   <path class="refFill" d="M300,156 h275.65099999999995 a4,4 0 0 1 4,4 v16 a4,4 0 0 1 -4,4 h-275.65099999999995 z"/>
   <text class="t2 num" x="587.651" y="172" font-size="12">90.21% (7,258 / 8,046)</text>
 </g>
-<text class="mu" x="20" y="238" font-size="10">Strict merge gate PASS. Not merged or released yet. Local macOS: indicative. Source: docs/assets/fidelity/manifest.json</text>
+<text class="mu" x="20" y="238" font-size="10">Released in vellora 0.3.0 · strict merge gate PASS · indicative local macOS measurement (reference: Chrome for Testing 155 on macOS).</text>
+<text class="mu" x="20" y="252" font-size="10">Source: docs/assets/fidelity/manifest.json</text>
 </svg>

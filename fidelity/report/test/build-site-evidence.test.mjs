@@ -2,6 +2,7 @@
 // outputs, chart accessibility, image hygiene, and that every generated docs block is in sync
 // with the committed manifest (no hand-typed numbers can drift).
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -22,6 +23,7 @@ import {
   paintSection,
   renderBlocks,
   renderCharts,
+  statusStamp,
 } from "../lib/evidence.mjs";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -143,18 +145,20 @@ test("the committed manifest carries the committed oracle's numbers, before and 
   assert.equal(manifest.fixtures.length, FIXTURES.length);
 });
 
-test("the committed manifest is PASS (contract gate report PASS) and still unreleased", () => {
+test("the committed manifest is PASS (contract gate report PASS) and released in 0.3.0", () => {
   assert.equal(manifest.gate.verdict, "PASS");
   assert.equal(manifest.gate.contract, true);
   assert.equal(manifest.status, "PASS");
-  assert.equal(manifest.released, false);
-  assert.equal(manifest.release.version, null);
-  // Not released: the copy carries the version placeholder the release fills, and never a
-  // claim that the branch is merged or released.
+  assert.equal(manifest.released, true);
+  assert.deepEqual(manifest.release, { version: "0.3.0" });
+  assert.equal(manifest.after.label, "vellora 0.3.0");
+  assert.equal(manifest.before.label, "vellora 0.2.0 (published)");
+  assert.match(manifest.commands.regenerate, / --release 0\.3\.0 /);
   const blocks = renderBlocks(manifest, "vitepress");
-  assert.ok(blocks.status.includes(RELEASE_PLACEHOLDER));
-  assert.match(blocks.status, /not merged or released yet/);
-  assert.match(blocks.status, /released package is vellora@0\.2\.0/);
+  assert.ok(!blocks.status.includes(RELEASE_PLACEHOLDER));
+  assert.match(blocks.status, /Released in vellora 0\.3\.0/);
+  assert.doesNotMatch(blocks.status, /not merged|not released|released yet/);
+  assert.match(blocks.status, /Before is vellora@0\.2\.0, the previous release/);
 });
 
 test("every generated docs block is in sync with the committed manifest", () => {
@@ -361,6 +365,94 @@ test("a PASS gate still lists what each condition lets through", () => {
   );
   assert.match(losses, /3 suspect passes/);
   assert.doesNotMatch(losses, /undefined|NaN/);
+});
+
+const passWithDebt = () =>
+  gateReport({
+    verdict: "PASS",
+    counts: { gating: 0, pinA: 1, pinB: 2, pinC: 0 },
+    items: [],
+    pin: {
+      counts: { a: 1, b: 2, c: 0 },
+      items: [
+        { key: "wpt|t/e.html", class: "accepted", pinClass: "a" },
+        { key: "wpt|t/f.html", class: "debt", pinClass: "b", after: "fail", rawOutcome: "fail" },
+        {
+          key: "wpt|t/i.html",
+          class: "debt",
+          pinClass: "b",
+          after: "pass",
+          rawOutcome: "fail",
+          detail: "DEBT-x (class b): pass -> pass[ink-displaced-vs-chrome]",
+        },
+      ],
+    },
+    head: { verdict: "PASS", items: [] },
+  });
+
+test("--release is refused unless the gate verdict is PASS, and needs a plain semver", () => {
+  assert.throws(() => synthetic(null, { release: "0.3.0" }), /refused[^\n]*missing/);
+  for (const verdict of ["FAIL", "REFUSED"])
+    assert.throws(
+      () => synthetic({ verdict, counts: {} }, { release: "0.3.0" }),
+      new RegExp(`refused[^\\n]*${verdict}, not PASS`),
+    );
+  for (const bad of ["v0.3.0", "0.3", "latest", ""])
+    assert.throws(() => synthetic(passWithDebt(), { release: bad }), /semver/);
+  assert.doesNotThrow(() => synthetic(passWithDebt(), { release: "0.3.0-beta.1" }));
+});
+
+test("the CLI refuses --release without a PASS gate before reading any input", () => {
+  const cli = join(REPO, "fidelity/report/build-site-evidence.mjs");
+  const r = spawnSync(
+    process.execPath,
+    [cli, "--compare", "/nonexistent/compare", "--run", "/nonexistent/run", "--release", "0.3.0"],
+    { encoding: "utf8" },
+  );
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /--release 0\.3\.0 refused/);
+});
+
+test("released evidence names the version everywhere and drops every unreleased claim", () => {
+  const unreleased = synthetic(passWithDebt());
+  assert.equal(unreleased.released, false);
+  const mf = synthetic(passWithDebt(), { release: "0.3.0" });
+  assert.equal(mf.status, "PASS");
+  assert.equal(mf.released, true);
+  assert.deepEqual(mf.release, { version: "0.3.0" });
+  assert.equal(mf.after.label, "vellora 0.3.0");
+  assert.equal(mf.wpt.after.label, "vellora 0.3.0");
+  assert.equal(mf.before.label, "vellora 0.2.0 (published)");
+  // The numbers do not depend on the release flag.
+  assert.deepEqual(mf.fixtures, unreleased.fixtures);
+  assert.deepEqual(mf.headline, unreleased.headline);
+  assert.deepEqual(mf.gate, unreleased.gate);
+  assert.deepEqual(mf.wpt.after.totals, unreleased.wpt.after.totals);
+  assert.equal(
+    statusStamp(mf),
+    "Released in vellora 0.3.0 · strict merge gate PASS · indicative local macOS measurement (reference: Chrome for Testing 1 on macOS)",
+  );
+  const unreleasedClaims =
+    /unreleased|not merged|not released|released yet|vX\.Y\.Z|placeholder|released package is|on the branch|on this branch|\/ branch \//i;
+  for (const flavor of ["github", "vitepress"]) {
+    const blocks = renderBlocks(mf, flavor);
+    for (const [name, text] of Object.entries(blocks))
+      assert.doesNotMatch(text, unreleasedClaims, `${flavor} block ${name}`);
+    assert.match(blocks.status, /Released in vellora 0\.3\.0/);
+    assert.match(blocks.status, /Before is vellora@0\.2\.0, the previous release/);
+    assert.match(blocks.status, /verdict PASS/);
+    assert.match(blocks.table, /Pages: 0\.2\.0 \/ 0\.3\.0 \/ Chrome/);
+    assert.match(
+      blocks.losses,
+      /not matched in 0\.3\.0[^\n]*fail in 0\.3\.0: `t\/f\.html`[^\n]*pass in 0\.3\.0 with a suspect-pass flag/,
+    );
+  }
+  assert.match(renderBlocks(mf, "vitepress").status, /^::: tip Released in vellora 0\.3\.0\n/);
+  for (const [name, svg] of Object.entries(renderCharts(mf))) {
+    assert.match(svg, /Released in vellora 0\.3\.0 · strict merge gate PASS/, name);
+    assert.doesNotMatch(svg, /unreleased|Not merged/i, name);
+  }
+  assert.match(renderCharts(mf)["wpt-pass-rate.svg"], /vellora 0\.3\.0 · Blitz/);
 });
 
 test("the paint block shows before → after against Chrome and marks an over-count", () => {

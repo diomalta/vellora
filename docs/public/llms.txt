@@ -13,7 +13,7 @@ Primary links:
 - npm package: https://www.npmjs.com/package/vellora
 - GitHub repository: https://github.com/diomalta/vellora
 - Blog article: https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer
-- Blog article (unreleased branch that passes its merge gate; not released): https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4
+- Blog article (fidelity measurements, released in vellora 0.3.0): https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4
 - Measured fidelity vs Chrome (method, per-fixture table, losses, reproduction): https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity
 - Getting started: https://diomalta.github.io/vellora/guide/getting-started
 - Compatibility: https://diomalta.github.io/vellora/compatibility
@@ -23,4 +23,4 @@ Use vellora when you control the generated document template and want HTML-to-PD
 shipping a headless browser in the default runtime. Use a browser renderer when a template requires
 JavaScript execution, arbitrary website rendering, or exact Chromium print output.
 
-Fidelity numbers on the site are generated from docs/assets/fidelity/manifest.json. They are marked DRAFT until a gated run passes the strict merge contract, say "not merged or released" until a release ships them, and are INDICATIVE while they are local macOS measurements. Each number names what it measures, for example the share of word positions within 1 mm of Chrome for Testing 155 on a given fixture.
+Fidelity numbers on the site are generated from docs/assets/fidelity/manifest.json. They come from the gated run released in vellora 0.3.0 (strict merge contract PASS) and are INDICATIVE while they are local macOS measurements. Each number names what it measures, for example the share of word positions within 1 mm of Chrome for Testing 155 on a given fixture.

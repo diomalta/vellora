@@ -23,19 +23,19 @@ That is the reason Vellora exists.
 How close does a browserless renderer get to a browser? The current answer is measured word by
 word against Chrome's print-to-PDF output and published in
 [Measured fidelity](/guide/fidelity#measured-fidelity). That page replaces the pixel-diff snapshot
-this article used to show. It compares the published package with an unreleased branch, and it
-lists the losses next to the gains.
+this article used to show. It compares vellora 0.2.0 with vellora 0.3.0, and it lists the losses
+next to the gains.
 
 <!-- fidelity-evidence:status -->
-::: tip PASS
-**This run passes the strict merge gate (verdict PASS, --contract). The branch is not merged or released yet:** it is to be merged in vellora vX.Y.Z (placeholder; the release sets the version). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. The released package is vellora@0.2.0.
+::: tip Released in vellora 0.3.0
+The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
 :::
 <!-- /fidelity-evidence:status -->
 
 <!-- fidelity-evidence:hero -->
-![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
+![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
 
-<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
 <!-- /fidelity-evidence:hero -->
 
 Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default

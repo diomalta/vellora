@@ -29,14 +29,16 @@ For migration work, keep your current browser-generated PDF as the reference unt
 ## Measured fidelity
 
 This section measures how close the native PDF lands to Chrome's print-to-PDF output for the same
-HTML. It compares the published package with an unreleased branch. Every number on this page is
-generated from one manifest,
+HTML. It compares vellora 0.2.0, the previous release, with vellora 0.3.0. The 0.3.0 numbers were
+measured on commit `aa41259`, whose `crates/`, `packages/`, `Cargo.toml` and `Cargo.lock` are
+identical to the `v0.3.0` release commit `c40b3c2` (`git diff --stat aa41259 c40b3c2 -- crates
+packages Cargo.toml Cargo.lock` is empty). Every number on this page is generated from one manifest,
 [`docs/assets/fidelity/manifest.json`](https://github.com/diomalta/vellora/blob/main/docs/assets/fidelity/manifest.json).
 The tables are rewritten by the generator, so they cannot drift from it.
 
 <!-- fidelity-evidence:status -->
-::: tip PASS
-**This run passes the strict merge gate (verdict PASS, --contract). The branch is not merged or released yet:** it is to be merged in vellora vX.Y.Z (placeholder; the release sets the version). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. The released package is vellora@0.2.0.
+::: tip Released in vellora 0.3.0
+The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
 :::
 <!-- /fidelity-evidence:status -->
 
@@ -76,15 +78,15 @@ The tables are rewritten by the generator, so they cannot drift from it.
 <!-- /fidelity-evidence:headline -->
 
 <!-- fidelity-evidence:charts -->
-![Median word-position error per fixture, vellora 0.2.0 (published) vs vellora (unreleased branch), log scale](/assets/fidelity/median-mm.svg)
+![Median word-position error per fixture, vellora 0.2.0 (published) vs vellora 0.3.0, log scale](/assets/fidelity/median-mm.svg)
 
-![Share of words within 1 mm of Chrome per fixture, vellora 0.2.0 (published) vs vellora (unreleased branch)](/assets/fidelity/within-1mm.svg)
+![Share of words within 1 mm of Chrome per fixture, vellora 0.2.0 (published) vs vellora 0.3.0](/assets/fidelity/within-1mm.svg)
 <!-- /fidelity-evidence:charts -->
 
 <!-- fidelity-evidence:table -->
-Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Reference: Chrome for Testing 155.0.8059.85.
+Each cell reads vellora 0.2.0 (published) → vellora 0.3.0. Reference: Chrome for Testing 155.0.8059.85.
 
-| Fixture | Chrome words | Median error (mm) | p90 error (mm) | Words within 1 mm | Chrome words unpaired | Pages: 0.2.0 / branch / Chrome |
+| Fixture | Chrome words | Median error (mm) | p90 error (mm) | Words within 1 mm | Chrome words unpaired | Pages: 0.2.0 / 0.3.0 / Chrome |
 |---|---:|---:|---:|---:|---:|---:|
 | Invoice (`invoice`) | 541 | 1.46 → 0.10 | 1.73 → 0.28 | 36.0% → 100.0% | 0 → 0 | 3 / 3 / 3 |
 | Receipt (`receipt`) | 151 | 5.18 → 0.05 | 77.00 → 0.11 | 7.9% → 100.0% | 0 → 0 | 2 / 2 / 2 |
@@ -103,7 +105,7 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 - **oss-postmark-receipt: 97.2% of words within 1 mm** (vellora 0.2.0 (published): 40.0%); p90 error 0.14 mm.
 - **WPT:** 4,553 of 8,047 reftests pass (56.58%); 4,028 (50.06%) pass without any suspect-pass flag. 2,608 still fail and 877 are rejected as outside the strict subset.
 - **Merge gate: verdict PASS** on this run (strict contract, --contract), 0 gating items. Every condition is met. What each condition still lets through is listed with it.
-  - (1) pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: carried in the debt ledger): **met**. Passed with the published engine and not matched on the branch: 6 WPT tests. Class a (the old pass was false, or Chrome fails it too): `css/CSS2/floats/float-nowrap-8.html`, `css/css-page/page-name-flex-001-print.html`, `css/css-page/page-name-flex-002-print.html`, `css/css-page/page-name-flex-004-print.html`, `css/css-text/hanging-punctuation/hanging-punctuation-first-002.html`. Class b (recorded in the debt ledger, not fixed): pass on the branch with a suspect-pass flag, which the gate scores as worse than the published package's clean pass: `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html` (flag `ink-displaced-vs-chrome`; raw Blitz: fail). 10 tests that failed before are now rejected by the strict subset.
+  - (1) pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: carried in the debt ledger): **met**. Passed with the published engine and not matched in 0.3.0: 6 WPT tests. Class a (the old pass was false, or Chrome fails it too): `css/CSS2/floats/float-nowrap-8.html`, `css/css-page/page-name-flex-001-print.html`, `css/css-page/page-name-flex-002-print.html`, `css/css-page/page-name-flex-004-print.html`, `css/css-text/hanging-punctuation/hanging-punctuation-first-002.html`. Class b (recorded in the debt ledger, not fixed): pass in 0.3.0 with a suspect-pass flag, which the gate scores as worse than the published package's clean pass: `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html` (flag `ink-displaced-vs-chrome`; raw Blitz: fail). 10 tests that failed before are now rejected by the strict subset.
   - (2) every fixture's median error and share within 1 mm at least as good as the published package's: **met**.
   - (3) every fixture's page count equal to Chrome's: **met**.
   - (4) step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes: **met**. Head view: PASS; 1 test carried in the debt ledger (`css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html`); 5 items accepted as class a, with the evidence in the acceptance file.
@@ -112,13 +114,13 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 ### WPT subset coverage
 
 <!-- fidelity-evidence:wpt-chart -->
-![WPT reftests passed: vellora 0.2.0 (published) engine, vellora (unreleased branch), Chrome reference](/assets/fidelity/wpt-pass-rate.svg)
+![WPT reftests passed: vellora 0.2.0 (published) engine, vellora 0.3.0, Chrome reference](/assets/fidelity/wpt-pass-rate.svg)
 <!-- /fidelity-evidence:wpt-chart -->
 
 <!-- fidelity-evidence:wpt -->
 WPT reftests passed through the vellora pipeline, printed to PDF and compared with the reference page: coverage of the CSS test subset the harness runs, not a document-quality score.
 
-| | Blitz 0.3.0-alpha.5 engine of vellora 0.2.0 (baseline commit with layout instrumentation) | vellora (unreleased branch) (Blitz 0.3.0-beta.4, crates.io) | Chrome/155.0.8059.85 through the same harness |
+| | Blitz 0.3.0-alpha.5 engine of vellora 0.2.0 (baseline commit with layout instrumentation) | vellora 0.3.0 (Blitz 0.3.0-beta.4, crates.io) | Chrome/155.0.8059.85 through the same harness |
 |---|---:|---:|---:|
 | Reftests | 8,047 | 8,047 | 8,046 |
 | Pass | 2,578 (32.04%) | 4,553 (56.58%) | 7,258 (90.21%) |
@@ -131,7 +133,7 @@ Commits: 2c66544 (2026-10-21T05:41:54Z), aa41259 (2026-10-28T11:07:50Z); WPT `9d
 ### Paint
 
 <!-- fidelity-evidence:paint -->
-Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it. Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Both are probed against this run's Chrome PDFs (the published package's PDFs through `paint-probe.mjs --subject`; the generator checks that Chrome's side of both probes agrees).
+Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it. Each cell reads vellora 0.2.0 (published) → vellora 0.3.0. Both are probed against this run's Chrome PDFs (the published package's PDFs through `paint-probe.mjs --subject`; the generator checks that Chrome's side of both probes agrees).
 
 | Fixture | Dashed/dotted border segments, vellora / Chrome | Underlines, vellora / Chrome | Pages whose canvas colour differs from Chrome's | Probe flags |
 |---|---:|---:|---:|---:|
@@ -145,55 +147,55 @@ The other 5 fixtures have no dashed borders, underlines or canvas colour in eith
 
 ### Page by page
 
-Each image shows Chrome (the reference) on the left, the published package in the middle and the
-unreleased branch on the right. Page 1 is shown for every fixture. Any page that exists in only
+Each image shows Chrome (the reference) on the left, vellora 0.2.0 in the middle and vellora 0.3.0
+on the right. Page 1 is shown for every fixture. Any page that exists in only
 some of the three PDFs is also shown, with an explicit "no page" placeholder where a PDF has none.
 The document data is synthetic.
 
 <!-- fidelity-evidence:gallery -->
 #### Invoice
 
-![Invoice, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/invoice-p1.jpg)
+![Invoice, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/invoice-p1.jpg)
 
 #### Receipt
 
-![Receipt, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/receipt-p1.jpg)
+![Receipt, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/receipt-p1.jpg)
 
 #### Boleto (bank slip)
 
-![Boleto (bank slip), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/boleto-p1.jpg)
+![Boleto (bank slip), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/boleto-p1.jpg)
 
 #### Boleto, FEBRABAN layout
 
-![Boleto, FEBRABAN layout, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/boleto-febraban-p1.jpg)
+![Boleto, FEBRABAN layout, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/boleto-febraban-p1.jpg)
 
 #### DANFE (NF-e invoice)
 
-![DANFE (NF-e invoice), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/danfe-p1.jpg)
+![DANFE (NF-e invoice), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/danfe-p1.jpg)
 
-![DANFE (NF-e invoice), page 2: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/danfe-p2.jpg)
+![DANFE (NF-e invoice), page 2: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/danfe-p2.jpg)
 
 #### Notification letter
 
-![Notification letter, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/notification-p1.jpg)
+![Notification letter, page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/notification-p1.jpg)
 
 #### Long pt-BR text (stress)
 
-![Long pt-BR text (stress), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/text-stress-ptbr-p1.jpg)
+![Long pt-BR text (stress), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/text-stress-ptbr-p1.jpg)
 
-![Long pt-BR text (stress), page 8: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/text-stress-ptbr-p8.jpg)
+![Long pt-BR text (stress), page 8: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/text-stress-ptbr-p8.jpg)
 
 #### Postmark receipt (OSS template)
 
-![Postmark receipt (OSS template), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/oss-postmark-receipt-p1.jpg)
+![Postmark receipt (OSS template), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/oss-postmark-receipt-p1.jpg)
 
-![Postmark receipt (OSS template), page 2: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/oss-postmark-receipt-p2.jpg)
+![Postmark receipt (OSS template), page 2: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/oss-postmark-receipt-p2.jpg)
 
 <sub>Postmark receipt (OSS template) is adapted from [ActiveCampaign/postmark-templates](https://github.com/ActiveCampaign/postmark-templates) (commit `fa73527`), MIT licence, Copyright (c) 2015 Wildbit; see [NOTICE](https://github.com/diomalta/vellora/blob/main/fixtures/oss-postmark-receipt/NOTICE.md).</sub>
 
 #### Sparksuite simple invoice (OSS template)
 
-![Sparksuite simple invoice (OSS template), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora (unreleased branch)](/assets/fidelity/oss-sparksuite-invoice-p1.jpg)
+![Sparksuite simple invoice (OSS template), page 1: Chrome for Testing 155.0.8059.85, vellora 0.2.0 (published), vellora 0.3.0](/assets/fidelity/oss-sparksuite-invoice-p1.jpg)
 
 <sub>Sparksuite simple invoice (OSS template) is adapted from [sparksuite/simple-html-invoice-template](https://github.com/sparksuite/simple-html-invoice-template) (commit `7d74fe3`), MIT licence, Copyright (c) 2021 Sparksuite; see [NOTICE](https://github.com/diomalta/vellora/blob/main/fixtures/oss-sparksuite-invoice/NOTICE.md).</sub>
 <!-- /fidelity-evidence:gallery -->
@@ -204,14 +206,14 @@ The document data is synthetic.
 - Status: **PASS** (gate report verdict PASS (--contract)). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs.
 - Reference: Google Chrome for Testing 155.0.8059.85, headless print-to-PDF (fidelity/lib/chrome-reference.mjs).
 - Before: vellora 0.2.0 (published), tag `v0.2.0`, commit `5810062`, Blitz 0.3.0-alpha.5 line, git 2003ba5. Scored 2026-10-27T22:36:58.971Z.
-- After: vellora (unreleased branch) `phasec/07-tip`, commit `aa41259`, Blitz 0.3.0-beta.4, crates.io. Run `20261028T110750Z` (2026-10-28T11:07:50Z).
+- After: vellora 0.3.0, measured on `phasec/07-tip`, commit `aa41259`, Blitz 0.3.0-beta.4, crates.io. Run `20261028T110750Z` (2026-10-28T11:07:50Z).
 - Environment: darwin 27.0.0 arm64 (macOS 27.0.1), Apple M5 Pro, Node v22.23.2, rustc 1.96.0 (ac68faa20 2026-05-25), PyMuPDF 1.28.2, pdftoppm version 26.06.0.
 - Word positions: fidelity/oracles/py/words.py (PyMuPDF rawdict: pen origin x, baseline y); pairing: k-th occurrence of a text key in reading order (page, baseline, x) ↔ k-th in Chrome's; quantiles: nearest rank over paired words (ceil(q*n)-th smallest).
 - Run command: `node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/11-phase-c --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --step 16-phase-c-07-tip --out fidelity/results/run-all/c07-tip`
 - Gate: `node fidelity/gate/run.mjs --baseline fidelity/baselines/port/11-phase-c --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --debt fidelity/baselines/port/DEBT.json --step 16-phase-c-07-tip --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/c07-tip/regate-contract` → PASS (2026-10-28T11:19:27.811Z).
 - Paint probe (report-only): `node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c07-tip --label run-all`; published package: `node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c07/paint-probe-pin-v0.2.0.json`.
 - Page images: `node fidelity/report/visual-compare.mjs --run <RUN> --pin-pdfs <doc-aggregate-pin.mjs --pdf-out dir> --out <compare dir> (pdftoppm -r 55), composed by fidelity/report/py/compose.py`
-- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c07/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --gate ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c07-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c07 --update-docs`
+- This page: `node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c07/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --gate ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c07-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c07 --release 0.3.0 --update-docs`
 - Raw values: [manifest.json](https://github.com/diomalta/vellora/blob/main/docs/assets/fidelity/manifest.json).
 <!-- /fidelity-evidence:env -->
 
