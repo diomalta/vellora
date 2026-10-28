@@ -1,7 +1,7 @@
 // Minimal LayoutUnit repro set: each variant one document; measured elements carry ids.
 const head = (css) =>
   `<!DOCTYPE html><html><head><style>@page{size:A4;margin:0}body{margin:0;font-family:"Liberation Sans";font-size:10pt}${css}</style></head><body>`;
-const tail = `</body></html>`;
+const tail = "</body></html>";
 const blk = (id, style, inner = "") => `<div id="${id}" style="${style}">${inner}</div>`;
 const rows = (n) =>
   Array.from({ length: n }, (_, i) => `<tr><td id="c${i}">R${i}</td></tr>`).join("");
@@ -14,7 +14,8 @@ export const VARIANTS = {
     tail,
   pad_pt: head("") + blk("m0", "padding:1pt 0;", blk("i0", "height:10px")) + tail,
   pad_left_mm: head("") + blk("m0", "padding-left:1mm;", blk("i0", "height:10px")) + tail,
-  margin_mm: head("") + blk("m0", "height:10px;margin-bottom:1mm") + blk("m1", "height:10px") + tail,
+  margin_mm:
+    head("") + blk("m0", "height:10px;margin-bottom:1mm") + blk("m1", "height:10px") + tail,
   margin_neg:
     head("") + blk("m0", "height:20px;margin-bottom:-1mm") + blk("m1", "height:10px") + tail,
   height_mm: head("") + blk("m0", "height:10.1mm") + blk("m1", "height:1px") + tail,
@@ -41,23 +42,14 @@ export const VARIANTS = {
   border_04mm: head("") + blk("m0", "border-top:0.4mm solid;height:10px") + tail,
   border_15mm: head("") + blk("m0", "border-top:1.5mm solid;height:10px") + tail,
   border_1_5px: head("") + blk("m0", "border-top:1.5px solid;height:10px") + tail,
-  td_sep:
-    head("table{border-spacing:0}td{padding:1mm 1.5mm;font-size:8.5pt;line-height:1.35}") +
-    `<table id="m0">${rows(3)}</table>` +
-    tail,
-  td_extrato:
-    head(
-      "table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt;line-height:1.35}td{border-bottom:0.2mm solid #ccc;padding:1mm 1.5mm;vertical-align:top}",
-    ) +
-    `<table id="m0">${rows(10)}</table>` +
-    tail,
+  td_sep: `${head("table{border-spacing:0}td{padding:1mm 1.5mm;font-size:8.5pt;line-height:1.35}")}<table id="m0">${rows(3)}</table>${tail}`,
+  td_extrato: `${head(
+    "table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt;line-height:1.35}td{border-bottom:0.2mm solid #ccc;padding:1mm 1.5mm;vertical-align:top}",
+  )}<table id="m0">${rows(10)}</table>${tail}`,
   fs_round: head("") + blk("m0", "font-size:11.34px;line-height:1.35", "Ab") + tail,
   fs_round_pct: head("") + blk("m0", "font-size:11.34px;line-height:135%", "Ab") + tail,
   fs_round_normal: head("") + blk("m0", "font-size:11.34px", "Ab") + tail,
-  spacing_mm:
-    head("table{border-spacing:1.5mm}td{padding:0;height:10px}") +
-    `<table id="m0">${rows(3)}</table>` +
-    tail,
+  spacing_mm: `${head("table{border-spacing:1.5mm}td{padding:0;height:10px}")}<table id="m0">${rows(3)}</table>${tail}`,
   gap_mm:
     head("") +
     blk(
@@ -78,7 +70,8 @@ export const VARIANTS = {
     tail,
   calc_mix:
     head("") + blk("m0", "width:100px", blk("m1", "padding-top:calc(1mm + 1%);height:0")) + tail,
-  em_pad: head("") + blk("m0", "font-size:8.5pt;padding-top:0.5em", blk("i0", "height:10px")) + tail,
+  em_pad:
+    head("") + blk("m0", "font-size:8.5pt;padding-top:0.5em", blk("i0", "height:10px")) + tail,
   page_margin_mm:
     '<!DOCTYPE html><html><head><style>@page{size:A4;margin:16mm 15mm}body{margin:0;font-family:"Liberation Sans";font-size:10pt}</style></head><body><div id="m0" style="height:10px"></div></body></html>',
 };
