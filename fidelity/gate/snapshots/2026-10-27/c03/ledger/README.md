@@ -57,7 +57,7 @@ for other keys (for example, DEBT-10-danfe-1 then held the keys of the old DEBT-
 node fidelity/gate/run.mjs --baseline fidelity/baselines/port/10-integration --run <RUN> \
   --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from <RUN> \
   --debt fidelity/baselines/port/DEBT.json --step 11-collapse-comp \
-  --accept fidelity/gate/snapshots/2026-10-27/c03/accepted.json \
+  --accept fidelity/gate/snapshots/2026-10-27/c03/ledger/accepted.json \
   --doc-aggregate <RUN>/doc-aggregate/summary.json --contract --out <out>    # exit 3
 ```
 

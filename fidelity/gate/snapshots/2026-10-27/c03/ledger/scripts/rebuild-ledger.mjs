@@ -13,7 +13,7 @@
 //      of the head comparison (port/00-start vs the recording run, gate/compare.mjs, the head's
 //      carried declarations); class "none" = no item.
 //
-//   node fidelity/gate/snapshots/2026-10-27/c03/scripts/rebuild-ledger.mjs \
+//   node fidelity/gate/snapshots/2026-10-27/c03/ledger/scripts/rebuild-ledger.mjs \
 //     --run <run-all-c02-20261027T231548Z copy> [--ledger fidelity/baselines/port/DEBT.json] \
 //     [--base <frozen 10-integration ledger>] --out fidelity/baselines/port/DEBT.json
 import { readFileSync, writeFileSync } from "node:fs";
@@ -120,7 +120,7 @@ for (const c of cur.closed) {
       : { class: "none", before: null, after: null },
   });
 }
-const note = `${cur.note} Rebuilt 2026-10-27 at Phase C 03 (phasec/03-ledger) to pass rule iii against the frozen 10-integration ledger (baselines/port/DEBT-BASE.json): kept keys carry their 10-integration entry ids again (step 02 had renumbered DEBT-10-* ids onto other keys), the 9 keys that were listed scope keys of DEBT-10-text-stress-ptbr-page-scope take fresh DEBT-11-* ids, the 7 WPT keys of DEBT-10-wpt-1/2/3 that step 02 closed while still failing are restored with their old ceilings, and each of the other ${closed.length} closed[] records carries fixed: true, its run id and its head comparison (port/00-start vs run ${runId}). Built by fidelity/gate/snapshots/2026-10-27/c03/scripts/rebuild-ledger.mjs.`;
+const note = `${cur.note} Rebuilt 2026-10-27 at Phase C 03 (phasec/03-ledger) to pass rule iii against the frozen 10-integration ledger (baselines/port/DEBT-BASE.json): kept keys carry their 10-integration entry ids again (step 02 had renumbered DEBT-10-* ids onto other keys), the 9 keys that were listed scope keys of DEBT-10-text-stress-ptbr-page-scope take fresh DEBT-11-* ids, the 7 WPT keys of DEBT-10-wpt-1/2/3 that step 02 closed while still failing are restored with their old ceilings, and each of the other ${closed.length} closed[] records carries fixed: true, its run id and its head comparison (port/00-start vs run ${runId}). Built by fidelity/gate/snapshots/2026-10-27/c03/ledger/scripts/rebuild-ledger.mjs.`;
 const out = { ...cur, note, entries, closed };
 writeFileSync(resolve(val("--out")), `${JSON.stringify(out, null, 2)}\n`);
 const nk = entries.reduce((s, e) => s + e.keys.length, 0);
