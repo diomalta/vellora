@@ -227,6 +227,26 @@ const allowedRows = [
     note: "A face is reachable only by its intrinsic embedded family name — the `@font-face` model (a caller-declared alias decoupled from the font's own name), resolving `@font-face` `src` URLs from the document CSS, weight/style overrides, variable-font axis selection, and font-subsetting configuration are not provided.",
   },
   {
+    feature: "Floats placed after text on a line",
+    status: "Partial",
+    note: "A float that does not fit beside the text before it on its line goes below that line, as in Chrome. This works when nothing but white space or other floats follows it in its paragraph, or when the text after it on that line cannot wrap. Not handled: a float with wrapping text after it on its line, or one inside an inline element with in-flow content after it. Such a float stays at the top of its line, so a left float pushes the text before it right and a right float covers it.",
+  },
+  {
+    feature: "Lines and shrink-to-fit widths beside floats",
+    status: "Partial",
+    note: "A block whose first line has no room for its first word beside the floats before it starts that line below them, as in Chrome, when its text can wrap. A later line with no room still overflows past the float. A shrink-to-fit box (a float, an inline-block, an absolutely positioned box, a row flex item) holding floats on several forced lines is as wide as its widest line, as in Chrome.",
+  },
+  {
+    feature: "Boxes with negative margins beside zero-width floats",
+    status: "Partial",
+    note: "A box that starts its own formatting context (`overflow: hidden`, `flow-root`, a table) is placed past a zero-width float at its container's edge with its negative margin applied, as in Chrome. Not handled: zero-width floats on both sides, which still stop both margins. Also not handled: a float wider than 0 that starts below the box's top; the box is not narrowed to avoid it, as Chrome would.",
+  },
+  {
+    feature: "`display: inline-block` baseline",
+    status: "Partial",
+    note: "An inline-block sits on the baseline of its last line, as in Chrome, also when its content is block-level (Blitz used the first line there; vellora corrects it). The search goes back from the last in-flow child, skipping floats, absolutely positioned boxes, empty blocks and tables. A block with `overflow: hidden` / `scroll` / `auto` counts with its bottom margin edge. Not modelled: an inline-block whose last block-level child is a flex or grid container keeps Blitz's first-line placement (Chrome uses that container's first line), and `vertical-align: sub` / `super` keep the first line.",
+  },
+  {
     feature: "`display: flex`",
     status: "Partial",
     note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex/grid-in-td`) can convert common table-cell cases.",

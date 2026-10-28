@@ -874,7 +874,7 @@ fn blitz_still_places_a_float_over_its_nowrap_line() {
          float_avoidance_fixups works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
          722-765 places a float at `state.line_y()` whatever Parley has put on that line). If \
          Blitz now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs the no-wrap \
-         half of `float_avoidance_fixups` (`nowrap_lines`, `LineGeometry`, `inline_root_lines`, \
+         half of `float_avoidance_fixups` (`FloatBox::lines`, `root_nowrap`, `LineGeometry`, `LineRun`, `run_breakable`, `inline_root_lines`, \
          `FloatFixup::MarginTop`), this canary and \
          `float_avoidance_moves_a_float_below_its_nowrap_line`; with the other half gone too, \
          also the second `resolve` in `resolve_and_walk`. KEEP \
@@ -1780,4 +1780,316 @@ fn blitz_still_lays_ruby_text_out_inline() {
         "{:?}",
         runs_of(&laid)
     );
+}
+
+/// An inline-block of two block-level lines, then text on its line (the repro of
+/// `blitz_engine::inline_block_baseline_shifts`); one whose last child is a scroll container
+/// with a bottom margin; one with an author raise.
+const INLINE_BLOCK_TWO_LINES: &str = r#"<!DOCTYPE html><html><head><style>
+    body { font: 16px/20px sans-serif; }
+    p { margin: 0; }
+    .ib { display: inline-block; }
+    #sc { overflow: hidden; height: 30px; margin-bottom: 10px; }
+    </style></head><body>
+    <div><span class="ib"><p>AA</p><p>BB</p></span> XX</div>
+    <div><span class="ib"><div>CC</div><div id="sc">SS</div></span> YY</div>
+    <div><span class="ib" style="vertical-align: 10px"><p>DD</p><p>EE</p></span> ZZ</div>
+    </body></html>"#;
+
+/// The baseline y of the run whose trimmed text is `text`.
+fn run_y(doc: &LaidOutDoc, text: &str) -> f64 {
+    runs_of(doc)
+        .into_iter()
+        .find(|r| r.0.trim() == text)
+        .unwrap_or_else(|| panic!("{text} in {:?}", runs_of(doc)))
+        .2
+}
+
+/// CANARY of `blitz_engine::inline_block_baseline_shifts`: raw Blitz still aligns an
+/// inline-block of block-level lines on its FIRST line (Taffy's block layout reports only a first
+/// baseline), where Chrome 155 uses its last.
+#[test]
+fn blitz_still_aligns_an_inline_block_on_its_first_line() {
+    let (raw, _) = raw_layout(INLINE_BLOCK_TWO_LINES);
+    let (aa, bb, xx) = (run_y(&raw, "AA"), run_y(&raw, "BB"), run_y(&raw, "XX"));
+    assert_eq!(bb - aa, 20.0);
+    assert_eq!(
+        xx, aa,
+        "\n\nBLITZ CHANGED THE BASELINE OF AN INLINE-BLOCK OF BLOCKS. Raw Blitz no longer puts the \
+         text after INLINE_BLOCK_TWO_LINES's first inline-block on its first line (XX at y = \
+         {xx}, AA {aa}, BB {bb}; Chrome 155: on BB's line), the bug \
+         inline_block_baseline_shifts works around (taffy 0.15.0 src/compute/block.rs 758 \
+         `Baselines::from_first`, blitz-dom 0.3.0-beta.4 src/layout/inline.rs 449-451). If Blitz \
+         now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `inline_block_baseline_shifts`, `inline_block_raise`, `chrome_last_baseline`, \
+         `apply_baseline_shifts`, `INLINE_BLOCK_BASELINE_ROUNDS`, `BASELINE_EPSILON_PX` and their \
+         loop in `resolve_and_walk`, this canary and `inline_block_baseline_matches_chrome`; then \
+         re-measure css/CSS2/linebox and css/CSS2/visudet with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28,
+/// c07-pin-b/baseline v1/v2/v7 in the run store): the text after the inline-block on its LAST
+/// line; after one whose last child is a scroll container, on that child's bottom margin edge;
+/// an author raise kept on top of the corrected baseline.
+#[test]
+fn inline_block_baseline_matches_chrome() {
+    let laid = product_layout(INLINE_BLOCK_TWO_LINES);
+    assert_eq!(run_y(&laid, "XX"), run_y(&laid, "BB"));
+    let sc = laid
+        .boxes
+        .iter()
+        .find(|b| b.text_runs.iter().any(|r| r.text.trim() == "SS"))
+        .expect("SS box");
+    assert_eq!(run_y(&laid, "YY"), sc.y + sc.height + 10.0);
+    assert_eq!(run_y(&laid, "ZZ") - run_y(&laid, "EE"), 10.0);
+}
+
+/// Floats after the last content of a line (the repros of
+/// `blitz_engine::trailing_float_wraps`), one block per case, 12 px lines: a 100 px left float
+/// that does not fit beside `H`; a 50 px one that fits, then a 90 px one that does not; a 95 px
+/// right float that does not fit beside `HHH`; and a 30 px right float inside a span after 18 px
+/// of text in 40 px, before the rest of an unbreakable word (WPT css/CSS2/text/white-space-processing-048.xht).
+const TRAILING_FLOATS: &str = r#"<!DOCTYPE html><html><head><style>
+    body { width: 100px; font: 10px/12px monospace; }
+    .s { height: 30px; }
+    </style></head><body>
+    <div id="a">H <div class="s" style="float: left; width: 100px"></div></div>
+    <div id="b" style="clear: both">H <div class="s" style="float: left; width: 50px"></div><div class="s" style="float: left; width: 90px"></div></div>
+    <div id="c" style="clear: both">HHH <div class="s" style="float: right; width: 95px"></div> </div>
+    <div id="d" style="clear: both; width: 40px"><span>XXX<span class="s" style="float: right; width: 30px"></span>XXX</span></div>
+    </body></html>"#;
+
+/// `(float top - its block's top, H's x - the block's x)` of the float of [`TRAILING_FLOATS`]
+/// that is `width` px wide; `block` is the id of its block.
+fn trailing_float_geometry(doc: &LaidOutDoc, block: &str, width: f64) -> (f64, f64) {
+    let div = |id: &str| {
+        let at = TRAILING_FLOATS.find(&format!("id=\"{id}\"")).expect("id");
+        let nth = TRAILING_FLOATS[..at].matches("<div").count() - 1;
+        doc.boxes
+            .iter()
+            .filter(|b| b.tag.as_deref() == Some("div"))
+            .nth(nth)
+            .expect("block")
+    };
+    let block_box = div(block);
+    let float = doc
+        .boxes
+        .iter()
+        .find(|b| b.width == width && b.height == 30.0)
+        .unwrap_or_else(|| panic!("{width} px float"));
+    let first_run_x = block_box
+        .text_runs
+        .first()
+        .map(|r| r.origin_x)
+        .or_else(|| {
+            runs_of(doc)
+                .into_iter()
+                .find(|r| r.2 > block_box.y && r.2 < block_box.y + 20.0)
+                .map(|r| r.1)
+        })
+        .unwrap_or(block_box.x);
+    (float.y - block_box.y, first_run_x - block_box.x)
+}
+
+/// CANARY of `blitz_engine::trailing_float_wraps`: raw Blitz still places a float that does not
+/// fit beside its line's content at the line's top and moves the line right of it (Chrome 155:
+/// below the line, the line where it was).
+#[test]
+fn blitz_still_places_a_float_beside_a_line_it_does_not_fit() {
+    let (raw, _) = raw_layout(TRAILING_FLOATS);
+    let (top, h_x) = trailing_float_geometry(&raw, "a", 100.0);
+    assert_eq!(
+        (top, h_x),
+        (0.0, 100.0),
+        "\n\nBLITZ CHANGED WHERE IT PLACES A FLOAT THAT DOES NOT FIT ITS LINE. Raw Blitz no longer \
+         puts TRAILING_FLOATS's 100 px float at its line's top with `H` moved right of it (float \
+         top {top} px below its block, H at x + {h_x}; Chrome 155: 12, 0), the bug \
+         trailing_float_wraps works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         722-765). If Blitz now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `trailing_float_wraps`, `float_inline_root`, `trailing_float_run`, \
+         `wrap_trailing_floats`, `FLOAT_RUN_TAG` and their call in `resolve_and_walk`, this \
+         canary and `trailing_floats_go_below_their_line`; then re-measure css/CSS2/floats with \
+         fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28, c07-pin-b/fl in the
+/// run store): a trailing float that does not fit goes below its line (`H` stays at the block's
+/// left edge), one that fits stays at the line's top beside the content, and the floats after
+/// one that does not fit go below the line too; the right float before the rest of an
+/// unbreakable word goes below its line (the no-wrap edit of `float_avoidance_fixups`).
+#[test]
+fn trailing_floats_go_below_their_line() {
+    let laid = product_layout(TRAILING_FLOATS);
+    assert_eq!(trailing_float_geometry(&laid, "a", 100.0), (12.0, 0.0));
+    assert_eq!(trailing_float_geometry(&laid, "b", 50.0).0, 0.0);
+    assert_eq!(trailing_float_geometry(&laid, "b", 90.0).0, 30.0);
+    assert_eq!(trailing_float_geometry(&laid, "c", 95.0).0, 12.0);
+    assert_eq!(trailing_float_geometry(&laid, "d", 30.0).0, 12.0);
+}
+
+/// Formatting-context roots with negative margins beside zero-width floats (the repro of
+/// `blitz_engine::zero_width_float_margins`, WPT css/CSS2/floats/zero-width-floats.html): a
+/// 100 px block at x = 50 with a 0x50 left float, a 0x150 right float (`clear: left`) and a
+/// 100 px tall `overflow: hidden` box with `margin: 0 -50px` holding text; then a 0x50 right
+/// float beside a 70 px tall one with the same margins.
+const ZERO_WIDTH_FLOATS: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font: 10px/12px monospace; }
+    .c { margin-left: 50px; width: 100px; clear: both; }
+    .g { overflow: hidden; margin: 0 -50px; }
+    </style></head><body>
+    <div class="c"><div style="float: left; width: 0; height: 50px"></div><div style="float: right; clear: left; width: 0; height: 150px"></div><div class="g" style="height: 100px">IN</div></div>
+    <div class="c"><div style="float: right; width: 0; height: 50px"></div><div class="g" style="height: 70px"></div></div>
+    </body></html>"#;
+
+/// `(x, width)` of the `overflow: hidden` box of [`ZERO_WIDTH_FLOATS`] that is `height` px tall
+/// (the last such box: its block is as tall).
+fn zero_width_root(doc: &LaidOutDoc, height: f64) -> (f64, f64) {
+    let b = doc
+        .boxes
+        .iter()
+        .rev()
+        .find(|b| b.height == height && b.width > 0.0)
+        .unwrap_or_else(|| panic!("{height} px root"));
+    (b.x, b.width)
+}
+
+/// CANARY of `blitz_engine::zero_width_float_margins`: Taffy still clamps a formatting-context
+/// root's negative margin at a zero-width float on the content edge (Chrome 155 applies it).
+#[test]
+fn blitz_still_clamps_a_negative_margin_at_a_zero_width_float() {
+    let (raw, _) = raw_layout(ZERO_WIDTH_FLOATS);
+    let (x, width) = zero_width_root(&raw, 100.0);
+    assert_eq!(
+        (x, width),
+        (50.0, 150.0),
+        "\n\nTAFFY CHANGED HOW A ZERO-WIDTH FLOAT CLAMPS A NEGATIVE MARGIN. Raw Blitz no longer lays \
+         ZERO_WIDTH_FLOATS's first `overflow: hidden` box out at x = 50, 150 px wide (now x = {x}, \
+         {width} px; Chrome 155: x = 0, 200 px), the bug zero_width_float_margins works around \
+         (taffy 0.15.0 src/compute/float.rs 516-518 and 711-727). If Taffy now matches Chrome, \
+         DELETE in crates/vellora-core/src/blitz_engine.rs `zero_width_float_margins`, \
+         `ZeroWidthFloatEdit`, the `zero_width` margin edit and the `shifted` origins in \
+         `resolve_and_walk`, this canary and `zero_width_floats_do_not_clamp_negative_margins`; \
+         then re-measure css/CSS2/floats with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28, c07-pin-b/zw z1/z8 in
+/// the run store): both margins apply, the box's text moves with it.
+#[test]
+fn zero_width_floats_do_not_clamp_negative_margins() {
+    let laid = product_layout(ZERO_WIDTH_FLOATS);
+    assert_eq!(zero_width_root(&laid, 100.0), (0.0, 200.0));
+    assert_eq!(zero_width_root(&laid, 70.0), (0.0, 200.0));
+    let text = runs_of(&laid)
+        .into_iter()
+        .find(|r| r.0.trim() == "IN")
+        .expect("IN");
+    assert_eq!(text.1, 0.0);
+}
+
+/// A row flex item (4 px borders) holding a 106 px float, a `<br>` and a 100 px float (the
+/// repro of `blitz_engine::float_max_content_caps`, WPT
+/// css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html).
+const FLOATS_ON_TWO_LINES: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font: 10px/12px monospace; }
+    .f { float: left; height: 20px; }
+    </style></head><body>
+    <div style="display: flex; width: 300px"><div style="border: 4px solid">
+    <div class="f" style="width: 106px"></div><br><div class="f" style="width: 100px"></div>
+    </div></div>
+    </body></html>"#;
+
+/// The border-box width of [`FLOATS_ON_TWO_LINES`]'s flex item.
+fn two_line_item_width(doc: &LaidOutDoc) -> f64 {
+    doc.boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("div"))
+        .nth(1)
+        .expect("flex item")
+        .width
+}
+
+/// CANARY of `blitz_engine::float_max_content_caps`: Blitz still sums the floats of every line
+/// into an inline formatting context's max-content width (Chrome 155: the widest line).
+#[test]
+fn blitz_still_sums_floats_across_forced_line_breaks() {
+    let (raw, _) = raw_layout(FLOATS_ON_TWO_LINES);
+    let width = two_line_item_width(&raw);
+    assert_eq!(
+        width, 214.0,
+        "\n\nBLITZ CHANGED THE MAX-CONTENT WIDTH OF FLOATS ON SEVERAL LINES. Raw Blitz no longer sizes \
+         FLOATS_ON_TWO_LINES's flex item 214 px wide (now {width}; Chrome 155: 114), the bug \
+         float_max_content_caps works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         538-582, 595). If Blitz now matches Chrome, DELETE in \
+         crates/vellora-core/src/blitz_engine.rs `float_max_content_caps`, `shrink_to_fit`, \
+         `FloatFixup::MaxWidth` and its call in `resolve_and_walk`, this canary and \
+         `float_max_content_is_per_line`; then re-measure css/css-break and css/CSS2/floats with \
+         fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28): the item is as wide
+/// as its widest line, the 106 px float plus its borders.
+#[test]
+fn float_max_content_is_per_line() {
+    assert_eq!(
+        two_line_item_width(&product_layout(FLOATS_ON_TWO_LINES)),
+        114.0
+    );
+}
+
+/// A 100 px block holding a 100x30 left float and then a paragraph (the repro of
+/// `blitz_engine::narrow_first_line_drops`; c07-pin-b/fl f7 in the run store).
+const FIRST_LINE_BESIDE_FULL_FLOAT: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; width: 100px; font: 10px/12px monospace; }
+    p { margin: 0; }
+    </style></head><body>
+    <div style="float: left; width: 100px; height: 30px"></div><p>PP</p>
+    </body></html>"#;
+
+/// CANARY of `blitz_engine::narrow_first_line_drops`: Blitz still lays a first line out in a
+/// slot with no room beside a float (Chrome 155 moves it below the float).
+#[test]
+fn blitz_still_lays_a_first_line_out_in_no_room_beside_a_float() {
+    let (raw, _) = raw_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let run = runs_of(&raw)
+        .into_iter()
+        .find(|r| r.0.trim() == "PP")
+        .expect("PP");
+    assert_eq!(
+        run.1, 100.0,
+        "\n\nBLITZ CHANGED WHERE IT PUTS A LINE WITH NO ROOM BESIDE A FLOAT. Raw Blitz no longer puts \
+         FIRST_LINE_BESIDE_FULL_FLOAT's `PP` at x = 100 beside the float (now {:?}; Chrome 155: \
+         x = 0, below the float), the bug narrow_first_line_drops works around (blitz-dom \
+         0.3.0-beta.4 src/layout/inline.rs 678-685, 699-711). If Blitz now matches Chrome, DELETE \
+         in crates/vellora-core/src/blitz_engine.rs `narrow_first_line_drops`, `LineRootBox`, \
+         `FloatGeometry::line_roots`, `FloatFixup::PaddingTop` and its call in \
+         `resolve_and_walk`, this canary and `a_first_line_that_does_not_fit_goes_below_the_float`; \
+         then re-measure css/css-break, css/css-text and css/CSS2/floats with fidelity/wpt.\n",
+        (run.1, run.2)
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28): `PP` at x = 0, on
+/// the line below the float (its baseline in the 12 px line from y = 30).
+#[test]
+fn a_first_line_that_does_not_fit_goes_below_the_float() {
+    let laid = product_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let (raw, _) = raw_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let at = |doc: &LaidOutDoc| {
+        runs_of(doc)
+            .into_iter()
+            .find(|r| r.0.trim() == "PP")
+            .expect("PP")
+    };
+    let (moved, beside) = (at(&laid), at(&raw));
+    assert_eq!(moved.1, 0.0);
+    assert_eq!(moved.2 - beside.2, 30.0);
+    // A paragraph with a set height is left as Blitz lays it out (Chrome keeps its box; the
+    // grown padding would make it taller).
+    let fixed = FIRST_LINE_BESIDE_FULL_FLOAT.replace("<p>PP", "<p style=\"height: 12px\">PP");
+    assert_ne!(fixed, FIRST_LINE_BESIDE_FULL_FLOAT);
+    assert_eq!(at(&product_layout(&fixed)).1, beside.1);
 }
