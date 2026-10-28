@@ -1,6 +1,6 @@
-import json,sys
+import json,os,sys
 fx=sys.argv[1]
-base='/Users/diomalta/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/%s/run-all/diff.json'%fx
+base=os.path.expanduser('~/Repositories/')+'vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/%s/run-all/diff.json'%fx
 x=json.load(open(base))
 bs=sorted(x['boxes'],key=lambda b:(b['chrome']['y'],len(b['path'])))
 thr=float(sys.argv[2]) if len(sys.argv)>2 else -1
