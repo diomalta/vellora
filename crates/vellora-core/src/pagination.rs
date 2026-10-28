@@ -832,6 +832,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                     height: (y1 - y0).max(0.0),
                     color: rect.color,
                     tier: rect.tier,
+                    stack: rect.stack,
                 });
             }
         }
@@ -2947,6 +2948,7 @@ fn lower_to_display_list(
                 height: rect.height,
                 color: rect.color,
                 tier: rect.tier,
+                stack: rect.stack,
             });
         }
         for border in b.rounded_borders {
@@ -3064,6 +3066,7 @@ fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, doc: &LaidOutDoc) {
             height: page.height,
             color,
             tier: 0,
+            stack: 0,
         });
     }
     let (x0, y0, x1, y1) = page.page_area();
@@ -3075,6 +3078,7 @@ fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, doc: &LaidOutDoc) {
             height: y1 - y0,
             color,
             tier: 0,
+            stack: 0,
         });
     }
     rects.splice(0..0, under);
@@ -3323,6 +3327,7 @@ mod merge_tests {
             height: 96.0,
             color: [0, 0, 0],
             tier: 0,
+            stack: 0,
         }
     }
 

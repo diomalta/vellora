@@ -179,6 +179,9 @@ pub struct VisualRect {
     pub color: [u8; 3],
     /// The CSS painting-order layer of the box that paints it ([`paint_tier`]).
     pub tier: u8,
+    /// [`paint_stack`]: in [`PAINT_TIER_POSITIONED`], the tree order of the positioned box it
+    /// paints with (`0` outside that tier).
+    pub stack: u32,
 }
 
 /// A rounded, uniform border outline in document coordinates.
@@ -218,6 +221,12 @@ pub struct ImageRun {
     /// [`ImageFormat::Svg`] only: the parsed SVG ([`crate::svg::parse`]), sized to this run's
     /// box (the serialized root carries `width`/`height` equal to it).
     pub svg: Option<std::sync::Arc<usvg::Tree>>,
+    /// The painting-order layer and positioned-box order of the box it is the content of
+    /// ([`paint_tier`], [`paint_stack`]): the emitter draws an image over the rects of its own
+    /// layer (and, in the positioned layer, of the positioned boxes before it in tree order) and
+    /// under the later ones (`pdf::emit`).
+    pub tier: u8,
+    pub stack: u32,
 }
 
 /// A shaped run of text (one Parley run within one line), with the glyphs and
@@ -2070,6 +2079,7 @@ fn walk_subtree(doc: &BaseDocument, id: NodeId) -> Vec<LaidOutBox> {
         reader_compensations: true,
         collapsed: &collapsed,
         tiers: std::collections::HashMap::new(),
+        stacks: std::collections::HashMap::new(),
         canvas_source: None,
         svg_fonts: None,
         line_spans: std::collections::HashMap::new(),
@@ -4183,6 +4193,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             reader_compensations: O::VELLORA_CORRECTIONS,
             collapsed: &collapsed,
             tiers: std::collections::HashMap::new(),
+            stacks: std::collections::HashMap::new(),
             canvas_source: canvas.map(|(id, _)| id),
             svg_fonts: Some(&svg_fonts),
             line_spans: std::collections::HashMap::new(),
@@ -4254,6 +4265,9 @@ struct WalkSink<'a, 'img> {
     collapsed: &'a CollapsedBorders,
     /// The [`paint_tier`] memo. Lookup only, like `origins`.
     tiers: std::collections::HashMap<NodeId, u8>,
+    /// [`paint_stack`]'s record: each positioned box of [`PAINT_TIER_POSITIONED`] walked so far,
+    /// numbered from 1 in walk (tree) order. Lookup only, like `origins`.
+    stacks: std::collections::HashMap<NodeId, u32>,
     /// The element whose background is the canvas background ([`canvas_background`]); its
     /// own box paints no background.
     canvas_source: Option<NodeId>,
@@ -4720,6 +4734,54 @@ fn paint_tier(
     tier
 }
 
+/// The order, within [`PAINT_TIER_POSITIONED`], of the positioned box `node` paints with: CSS 2.2
+/// Appendix E step 8 paints the positioned descendants of a stacking context (`z-index: auto |
+/// 0`) in tree order, each one whole (its backgrounds, then its content) as if it were a
+/// stacking context, so a later positioned box paints over an earlier one and over its images,
+/// wherever they sit. `tier` is `node`'s [`paint_tier`]; `0` outside the positioned tier. A
+/// positioned box of the tier gets the next number when the walk (tree order, ancestors first)
+/// reaches it; any other box paints with its nearest such ancestor. Positive `z-index` order
+/// and nested stacking contexts are not modelled (as in [`paint_tier`]).
+///
+/// Measured: Chrome for Testing 155.0.8059.85 (2026-10-28) passes WPT
+/// css/CSS2/positioning/absolute-replaced-width-003a/b/c (an absolutely positioned red inline
+/// `<svg>` under a later absolutely positioned green box) and
+/// css/CSS2/normal-flow/inline-replaced-width-009 / inline-block-replaced-width-008 (an in-flow
+/// red `<svg>` under a later `position: relative` green box). With inline SVG painted (Phase C
+/// step 06) vellora failed all five, drawing every image after every rect of the page. Not a
+/// Blitz bug (the display list is vellora's painter), so no raw canary: `tests/paint_order.rs`.
+fn paint_stack(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    tier: u8,
+    stacks: &mut std::collections::HashMap<NodeId, u32>,
+) -> u32 {
+    if tier != PAINT_TIER_POSITIONED {
+        return 0;
+    }
+    let own = node.primary_styles().is_some_and(|styles| {
+        styles.clone_position() != style::computed_values::position::T::Static
+            && !matches!(
+                styles.get_position().z_index,
+                style::values::generics::position::ZIndex::Integer(z) if z < 0
+            )
+    });
+    if own {
+        let next = stacks.len() as u32 + 1;
+        return *stacks.entry(node.id).or_insert(next);
+    }
+    let mut current = node.parent.or_else(|| node.layout_parent.get());
+    while let Some(id) = current {
+        if let Some(&n) = stacks.get(&id) {
+            return n;
+        }
+        current = base
+            .get_node(id)
+            .and_then(|n| n.parent.or_else(|| n.layout_parent.get()));
+    }
+    0
+}
+
 fn is_out_of_flow(node: &blitz_dom::Node) -> bool {
     node.primary_styles()
         .is_some_and(|styles| styles.clone_position().is_absolutely_positioned())
@@ -4879,8 +4941,10 @@ fn push_box(
         sink.canvas_source == Some(node_id),
     );
     let tier = paint_tier(base, node_id, &mut sink.tiers);
+    let stack = paint_stack(base, node, tier, &mut sink.stacks);
     for rect in &mut visual_rects {
         rect.tier = tier;
+        rect.stack = stack;
     }
     let mut image_runs = resolve_image_runs(
         node,
@@ -4899,6 +4963,10 @@ fn push_box(
         content_height,
         sink.svg_fonts,
     ));
+    for image in &mut image_runs {
+        image.tier = tier;
+        image.stack = stack;
+    }
 
     let moved = sink.breaks.moved_to_wrapper.contains(&node_id);
     let inline_breaks = node
@@ -5282,6 +5350,7 @@ fn read_visuals(
             height,
             color,
             tier: 0,
+            stack: 0,
         });
     }
 
@@ -5306,6 +5375,7 @@ fn read_visuals(
                 height,
                 color,
                 tier: 0,
+                stack: 0,
             });
         }
         return (rects, rounded_borders);
@@ -5385,6 +5455,7 @@ fn read_visuals(
                     height,
                     color,
                     tier: 0,
+                    stack: 0,
                 });
             }
         }
@@ -5790,6 +5861,8 @@ fn inline_svg_run(
         format: ImageFormat::Svg,
         data: std::sync::Arc::new(data),
         svg,
+        tier: 0,
+        stack: 0,
     })
 }
 
@@ -6039,6 +6112,8 @@ fn resolve_image_runs(
             format,
             data: std::sync::Arc::new(data),
             svg: None,
+            tier: 0,
+            stack: 0,
         }];
     }
     // A `data:` URL that failed to parse (unsupported MIME, non-base64, or corrupt
@@ -6078,6 +6153,8 @@ fn resolve_image_runs(
         format,
         data: std::sync::Arc::new(bytes.clone()),
         svg: None,
+        tier: 0,
+        stack: 0,
     }]
 }
 

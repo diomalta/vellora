@@ -77,6 +77,9 @@ pub struct FilledRect {
     /// Painting-order layer (`blitz_engine::paint_tier`): rects are drawn in list order, which
     /// `pagination::merge_adjacent_rects` sorts by tier first.
     pub tier: u8,
+    /// In the positioned tier, the tree order of the positioned box that paints it
+    /// (`blitz_engine::paint_stack`); `0` otherwise.
+    pub stack: u32,
 }
 
 /// A rounded rectangle outline drawn with a PDF stroke.
@@ -160,13 +163,16 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
         let mut krilla_page = document.start_page_with(settings);
         let mut surface = krilla_page.surface();
 
-        // Background rects first (painted under text).
-        for r in &page.rects {
-            draw_rect(&mut surface, r);
-        }
-
-        for image in &page.images {
-            draw_image_run(&mut surface, image)?;
+        // Background rects first (painted under text), each image right after the rects of its
+        // painting-order layer ([`paint_key`]): over the in-flow blocks and floats, under the
+        // positioned boxes; in the positioned layer, over the earlier positioned boxes in tree
+        // order and under the later ones. With no positioned rect on the page every image comes
+        // after every rect, as before.
+        for item in paint_sequence(page) {
+            match item {
+                PaintItem::Rect(i) => draw_rect(&mut surface, &page.rects[i]),
+                PaintItem::Image(i) => draw_image_run(&mut surface, &page.images[i])?,
+            }
         }
 
         for s in &page.rounded_strokes {
@@ -281,6 +287,69 @@ fn cached_font(
         Font::new(bytes.into(), index).ok_or_else(|| format!("krilla could not load {ctx}"))?;
     cache.insert(key, font.clone());
     Ok(font)
+}
+
+/// Painting-order key of a rect or an image (`image`): the in-flow blocks and floats
+/// (`(0, 0)`), then the images of those layers (`(1, 0)`), then each positioned box in tree
+/// order (`(2, stack)`, `blitz_engine::paint_stack`). CSS 2.2 Appendix E steps 4-8, coarsened
+/// like `blitz_engine::paint_tier`: in-flow text still paints after every rect.
+fn paint_key(tier: u8, stack: u32, image: bool) -> (u8, u32) {
+    if tier == crate::blitz_engine::PAINT_TIER_POSITIONED {
+        (2, stack)
+    } else {
+        (u8::from(image), 0)
+    }
+}
+
+fn image_key(image: &ImageRun) -> (u8, u32) {
+    paint_key(image.tier, image.stack, true)
+}
+
+/// One background rect or image of a page, by index into [`PdfPage::rects`] / [`PdfPage::images`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PaintItem {
+    Rect(usize),
+    Image(usize),
+}
+
+/// The order [`emit`] draws a page's rects and images in: the rects in list order (their
+/// painting order, `pagination::paint_ordered_rects`; within the positioned tier that is
+/// position order, not tree order), each image right after the LAST rect whose [`paint_key`]
+/// is at most its own (so its own box's background and every earlier layer stay under it),
+/// images at one spot in list order. An image therefore goes under the positioned boxes that
+/// follow it in tree order unless a rect of its own or an earlier layer comes after theirs in
+/// the list. With no positioned rect on the page every image follows every rect, as before
+/// Phase C step 06.
+pub fn paint_sequence(page: &PdfPage) -> Vec<PaintItem> {
+    let keys: Vec<(u8, u32)> = page
+        .rects
+        .iter()
+        .map(|r| paint_key(r.tier, r.stack, false))
+        .collect();
+    // (rects drawn before the image, image index), stably sorted.
+    let mut images: Vec<(usize, usize)> = page
+        .images
+        .iter()
+        .enumerate()
+        .map(|(i, image)| {
+            let key = image_key(image);
+            let after = keys.iter().rposition(|k| *k <= key).map_or(0, |at| at + 1);
+            (after, i)
+        })
+        .collect();
+    images.sort_by_key(|&(after, _)| after);
+    let mut out = Vec::with_capacity(keys.len() + images.len());
+    let mut next = 0;
+    for i in 0..=keys.len() {
+        while next < images.len() && images[next].0 == i {
+            out.push(PaintItem::Image(images[next].1));
+            next += 1;
+        }
+        if i < keys.len() {
+            out.push(PaintItem::Rect(i));
+        }
+    }
+    out
 }
 
 fn draw_rect(surface: &mut krilla::surface::Surface, r: &FilledRect) {
@@ -497,6 +566,7 @@ fn decoration_rects<'a>(
                 height: d.height,
                 color: d.color,
                 tier: 0,
+                stack: 0,
             };
             if let Some(prev) = out.last_mut().filter(|p| {
                 p.color == rect.color
