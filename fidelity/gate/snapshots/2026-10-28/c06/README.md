@@ -33,7 +33,9 @@ the c05 run, every change was predicted by the union of the four branch records 
 table branch's 95, 045, ruby's 6, svg-with-transform; losses: the table branch's 15 flagged
 passes) except **43 CSS2 changes that no branch had measured** (`c06-tip/tools/union.py`,
 `pre-default-union.txt`): XHTML tests whose replaced element is `<svg:svg>`. The svg branch had
-searched for `<svg` and run css/css-break + css/css-multicol only. Inline SVG drawn gained 38 of
+reported svg-with-transform as the only reftest of the 8047 with an inline `<svg>` and had run
+css/css-break + css/css-multicol only (how it searched is not recorded; HYPOTHESIS: a search for
+`<svg`, which a prefixed `<svg:svg>` does not match). Inline SVG drawn gained 38 of
 them and lost 5 that were CLEAN passes of 10-integration (fail at the pin and at 00-start), so they
 would have gated condition (4):
 
@@ -179,5 +181,11 @@ UNVERIFIED). They are candidates for a class-a entry; none was written.
 
 ## After the run
 
-The record commit adds one doc sentence to `pdf::FilledRect::stack` (comment only; the gated
-source is 7e6b028).
+- The record commit (6d64367) adds one doc sentence to `pdf::FilledRect::stack` (comment only; the
+  gated source is 7e6b028).
+- The contract passed, so **baseline `port/11-phase-c` was written** from the run copy as-is
+  (bfc73b0; its own gate report is already PASS with `--contract`) and **`DEBT-BASE.json` now names
+  the frozen `c06/DEBT-c06-tip.json`** (byte-identical to `DEBT.json`). Re-gate with the moved
+  base: exit 0, counts identical; `debt.mjs check --base c06/DEBT-c06-tip.json`: 0 problems. The
+  run against the new baseline itself: exit 0, gating 0, unchanged 18400. Write-up: port README
+  section `11-phase-c` (`fidelity/baselines/port/README.md`).
