@@ -124,11 +124,11 @@ Self-tests: `gate/test/` (synthetic regression, synthetic accepted regression, e
 real canary on committed data: the chain head `baselines/port/00-start` (the beta.4 bump) against
 `baselines/pin` must flag notification REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT
 clean-pass regressions; every kept baseline must pass its sha256 integrity check; the latest link
-`port/11-phase-c` must PASS against `port/10-integration` with exactly its 3 class-a acceptances
-(and FAIL on exactly those 3 without them), with the link-to-link counts of its `manifest.json`
+`port/12-phase-c-final` must PASS against `port/11-phase-c` (8 improvements, nothing gating even
+without its 13 carried class-a acceptances), with the link-to-link counts of its `manifest.json`
 (`committed-canary.test.mjs`), and, evaluated in process with the committed `DEBT.json`, its
-`DEBT-BASE.json` base and `--main`, give the c06 contract re-gate's head (gating 0, debt 5,
-accepted 5, declared 10) and pin ((a) 5, (b) 4, (c) 0) counts (`head-chain.test.mjs`); the Phase
+`DEBT-BASE.json` base and `--main`, give the c07 contract re-gate's head (gating 0, debt 1,
+accepted 5, declared 10) and pin ((a) 5, (b) 1, (c) 0) counts (`head-chain.test.mjs`); the Phase
 A baseline `pin`, which predates the layout-diff allowlist, is classified with its frozen copy
 `layout-diff/expected-check-failures-phase-a.json`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).

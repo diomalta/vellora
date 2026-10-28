@@ -297,7 +297,7 @@ test("lost text: newly off-page text and newly missing tokens are c; the off-pag
 test("chainLabels reads every kept link's acceptedRegressions labels", () => {
   const real = chainLabels(resolve(here, "..", "..", "baselines", "port"));
   const flex = real.get("wpt|css/css-page/page-name-flex-001-print.html") ?? [];
-  assert.ok(flex.some((h) => h.link === "11-phase-c" && h.label === "wpt-false-pass"));
+  assert.ok(flex.some((h) => h.link === "12-phase-c-final" && h.label === "wpt-false-pass"));
   for (const hist of real.values()) {
     for (const h of hist) assert.match(h.link, /^\d{2}-[a-z0-9-]+$/);
   }
