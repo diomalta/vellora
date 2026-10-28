@@ -3240,10 +3240,15 @@ fn read_text_runs(
             0.0
         };
         let mut inline_advance_adjust_px = -line_padding_right_px;
+        let mut line_runs: Vec<(TextRun, bool)> = Vec::new();
+        let mut line_has_inline_box = false;
         for item in line.items() {
             let glyph_run = match item {
                 parley::PositionedLayoutItem::GlyphRun(gr) => gr,
-                _ => continue,
+                parley::PositionedLayoutItem::InlineBox(_) => {
+                    line_has_inline_box = true;
+                    continue;
+                }
             };
             let run = glyph_run.run();
             let font = run.font();
@@ -3270,23 +3275,242 @@ fn read_text_runs(
                 continue;
             }
 
-            runs.push(TextRun {
-                text: source.clone(),
-                font_data,
-                font_index,
-                font_size,
-                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
-                origin_y: line_box_top + glyph_run.baseline() as f64,
-                line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
-                line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
-                glyphs,
-                color,
-            });
+            line_runs.push((
+                TextRun {
+                    text: source.clone(),
+                    font_data,
+                    font_index,
+                    font_size,
+                    origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
+                    origin_y: line_box_top + glyph_run.baseline() as f64,
+                    line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0)
+                        as f64,
+                    line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0)
+                        as f64,
+                    glyphs,
+                    color,
+                },
+                run.is_rtl(),
+            ));
             inline_advance_adjust_px += padding_right_px;
         }
+        if compensate && layout.is_rtl() && !line_has_inline_box {
+            rtl_line_end_whitespace(node, &source, &line, &mut line_runs);
+        }
+        runs.extend(line_runs.into_iter().map(|(run, _)| run));
     }
 
     runs
+}
+
+/// BLITZ BUG COMPENSATION (parley 0.12.0, Blitz 0.3.0-beta.4's text engine): in a right-to-left
+/// paragraph, white space that ends a line inside a left-to-right run stays at that run's visual
+/// right end and does not hang.
+///
+/// - Spec: UAX #9 rule L1 resets white space at the end of each LINE to the paragraph level, so
+///   in an rtl paragraph it sits at the visual left end of the line; CSS Text 3 §4.1.3 then hangs
+///   it (collapsible spaces are removed; `pre-wrap` spaces hang, conditionally before a forced
+///   break; `pre`/`break-spaces` keep it). UAX #9 P1 ends a paragraph at a forced break, so a
+///   no-break space right before a `<br>` resolves to the paragraph direction too (N1/N2 with
+///   `eos`). Chrome 155 does both (WPT `css/css-text/text-align/text-align-end-006.html`,
+///   `css/css-text/text-justify/text-justify-and-trailing-spaces-003/004.html` pass in Chrome).
+/// - Parley: `layout/line_break.rs` 1896-1902 and `layout/data.rs` 497-500 (cargo registry source
+///   of parley 0.12.0): "We don't currently apply UAX #9 L1 (resetting trailing whitespace to
+///   paragraph level)"; trailing white space only hangs when its run is at the paragraph level.
+///   parley_engine 0.12.0 `bidi.rs` 52-150 resolves the whole inline text as ONE paragraph (L1
+///   only before a separator inside it), so the no-break space before `\n` takes the level of the
+///   ltr text after the break. Repros: `REF REF REF REF REF REF REF REF` (25 px Ahem, 300 px,
+///   `direction: rtl`, ltr letters): Parley puts the line's space at x 275..300, letters 0..275,
+///   Chrome letters 25..300; `XX XX ` (20 px monospace, 7ch = 84 px, rtl, `pre-wrap`,
+///   justify): Parley stretches both spaces by 6 px (letters at 0 / 42), Chrome hangs the
+///   trailing space at -12 and stretches the inner one to 36 px (letters at 0 / 60).
+/// - Correction, per line of an rtl inline root without inline boxes, when the line's logically
+///   last characters are spaces/tabs (or no-break spaces before a forced break or the end of the
+///   text) inside a NON-rtl run: those glyphs move to the visual left end of the line; spaces and
+///   tabs hang as above; the line is re-aligned the way Parley aligns an rtl line with that
+///   hanging advance (`layout/alignment.rs` 69-146: offset `-hang`, then right / center / left
+///   share of the free space, right-aligned on overflow, justification spread over the word
+///   separators that do not hang). Off in the raw-Blitz render (`compensate`).
+///
+/// WHEN PARLEY APPLIES L1 PER LINE (and P1 at forced breaks), DELETE this function, its call and
+/// the `line_runs` rtl flags in [`read_text_runs`], the canary
+/// `blitz_still_keeps_rtl_line_end_space_in_its_ltr_run` (`src/raw_blitz_tests.rs`) and the
+/// `rtl_line_end_whitespace_*` tests there.
+fn rtl_line_end_whitespace<B: parley::Brush>(
+    node: &blitz_dom::Node,
+    source: &str,
+    line: &parley::Line<'_, B>,
+    runs: &mut Vec<(TextRun, bool)>,
+) {
+    use style::computed_values::white_space_collapse::T as Collapse;
+    use style::values::specified::TextAlignKeyword as Align;
+    let Some(styles) = node.primary_styles() else {
+        return;
+    };
+    let metrics = line.metrics();
+    if metrics.hanging_advance != 0.0 {
+        return;
+    }
+    let break_reason = line.break_reason();
+    let ends_paragraph = matches!(
+        break_reason,
+        parley::BreakReason::Explicit | parley::BreakReason::None
+    );
+    // The logically last characters of the line, after its forced break if any.
+    let range = line.text_range();
+    let Some(text) = source.get(range.clone()) else {
+        return;
+    };
+    let body = text.trim_end_matches(['\n', '\r', '\u{2028}', '\u{2029}']);
+    let body_end = range.start + body.len();
+    let trail_start = range.start
+        + body
+            .trim_end_matches(|c: char| c == ' ' || c == '\t' || (ends_paragraph && c == '\u{a0}'))
+            .len();
+    if trail_start == body_end {
+        return;
+    }
+    let in_trail = |g: &Glyph| g.text_start >= trail_start && g.text_end <= body_end;
+    if runs
+        .iter()
+        .any(|(run, rtl)| *rtl && run.glyphs.iter().any(in_trail))
+    {
+        return; // Parley already resolved it to the paragraph level.
+    }
+    let Some(owner) = runs
+        .iter()
+        .position(|(run, _)| run.glyphs.iter().any(in_trail))
+    else {
+        return;
+    };
+    // The spaces/tabs after the last no-break space hang (CSS Text 3 §4.1.3).
+    let hang_start = trail_start
+        + source[trail_start..body_end]
+            .trim_end_matches([' ', '\t'])
+            .len();
+    let is_separator = |run: &TextRun, g: &Glyph| {
+        matches!(run.text.get(g.text_start..g.text_end), Some(" " | "\u{a0}"))
+    };
+    let is_hanging = |g: &Glyph| g.text_start >= hang_start && g.text_end <= body_end;
+
+    let collapse = styles.clone_white_space_collapse();
+    let wraps = matches!(
+        styles.clone_text_wrap_mode(),
+        style::computed_values::text_wrap_mode::T::Wrap
+    );
+    let avail = f64::from(metrics.inline_max_coord - metrics.inline_min_coord - metrics.indent);
+    let natural_advance = f64::from(metrics.advance);
+
+    // Parley's justification of this line (`alignment.rs` 126-144), to recover natural advances.
+    let last_line = ends_paragraph;
+    let align = styles.clone_text_align();
+    let align_last = styles.clone_text_align_last();
+    use style::values::specified::TextAlignLast as Last;
+    let line_align = if last_line {
+        match align_last {
+            Last::Auto if align == Align::Justify => Align::Start,
+            Last::Auto => align,
+            Last::Start => Align::Start,
+            Last::End => Align::End,
+            Last::Left => Align::Left,
+            Last::Right => Align::Right,
+            Last::Center => Align::Center,
+            Last::Justify => Align::Justify,
+        }
+    } else {
+        align
+    };
+    let free = avail - natural_advance;
+    let separators: usize = runs
+        .iter()
+        .map(|(run, _)| run.glyphs.iter().filter(|g| is_separator(run, g)).count())
+        .sum();
+    let old_extra = if line_align == Align::Justify && free > 0.0 && separators > 0 {
+        free / separators as f64
+    } else {
+        0.0
+    };
+    let natural = |run: &TextRun, g: &Glyph| {
+        f64::from(g.advance) - if is_separator(run, g) { old_extra } else { 0.0 }
+    };
+
+    let hang_natural: f64 = runs[owner]
+        .0
+        .glyphs
+        .iter()
+        .filter(|g| is_hanging(g))
+        .map(|g| natural(&runs[owner].0, g))
+        .sum();
+    let hang = match collapse {
+        Collapse::Collapse | Collapse::PreserveBreaks => hang_natural,
+        Collapse::Preserve if wraps && !ends_paragraph => hang_natural,
+        Collapse::Preserve if wraps => hang_natural.min((natural_advance - avail).max(0.0)),
+        _ => 0.0,
+    };
+    // Parley's rtl alignment with that hanging advance (`alignment.rs` 69-146).
+    let new_free = avail - natural_advance + hang;
+    let hanging_separators = runs[owner]
+        .0
+        .glyphs
+        .iter()
+        .filter(|g| hang > 0.0 && is_hanging(g) && is_separator(&runs[owner].0, g))
+        .count();
+    let mut new_extra = 0.0;
+    let offset = -hang
+        + if new_free <= 0.0 {
+            new_free
+        } else {
+            match line_align {
+                Align::Justify if separators > hanging_separators => {
+                    new_extra = new_free / (separators - hanging_separators) as f64;
+                    0.0
+                }
+                Align::Left | Align::MozLeft | Align::End => 0.0,
+                Align::Center | Align::MozCenter => new_free * 0.5,
+                _ => new_free,
+            }
+        };
+
+    // Line start in absolute coordinates, then every run re-placed in visual order with the
+    // moved white space first; gaps between runs (vellora's inline padding) are kept.
+    let Some(first_x) = runs.first().map(|(run, _)| run.origin_x) else {
+        return;
+    };
+    let mut line_x = first_x - f64::from(metrics.offset) + offset;
+    let run_width = |run: &TextRun| run.glyphs.iter().map(|g| f64::from(g.advance)).sum::<f64>();
+    let gaps: Vec<f64> = runs
+        .windows(2)
+        .map(|w| w[1].0.origin_x - (w[0].0.origin_x + run_width(&w[0].0)))
+        .collect();
+    let mut moved = runs[owner].0.clone();
+    moved.glyphs.retain(|g| in_trail(g));
+    runs[owner].0.glyphs.retain(|g| !in_trail(g));
+    let restretch = |run: &mut TextRun, hanging_ok: bool| {
+        let text = run.text.clone();
+        for g in &mut run.glyphs {
+            if matches!(text.get(g.text_start..g.text_end), Some(" " | "\u{a0}")) {
+                let extra = if hanging_ok && hang > 0.0 && is_hanging(g) {
+                    0.0
+                } else {
+                    new_extra
+                };
+                g.advance = (f64::from(g.advance) - old_extra + extra) as f32;
+            }
+        }
+    };
+    restretch(&mut moved, true);
+    moved.origin_x = line_x;
+    line_x += run_width(&moved);
+    for (i, (run, _)) in runs.iter_mut().enumerate() {
+        if i > 0 {
+            line_x += gaps[i - 1];
+        }
+        restretch(run, false);
+        run.origin_x = line_x;
+        line_x += run_width(run);
+    }
+    runs.retain(|(run, _)| !run.glyphs.is_empty());
+    runs.insert(0, (moved, false));
 }
 
 /// Glyph-run -> line-run cluster key: `(run index, text range start, text range end)`.

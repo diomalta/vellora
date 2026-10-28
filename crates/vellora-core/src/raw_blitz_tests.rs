@@ -815,3 +815,90 @@ fn table_column_pseudo_compensation_renders_nothing() {
     let doc = product_layout(TABLE_COLUMN_PSEUDOS);
     assert_eq!(run_texts(&doc), ["Filler text", "x"]);
 }
+
+/// The rtl line-end white-space repros of `blitz_engine::rtl_line_end_whitespace`, both with ltr
+/// letters in an rtl block (Liberation Mono, 0.6 em advances): a right-aligned line that breaks
+/// after a space (25 px: 15 px a character, 300 px = 20 characters, so the first line is
+/// "REF REF REF REF REF " with its space), and the `pre-wrap` justified line of WPT
+/// `css/css-text/text-justify/text-justify-and-trailing-spaces-003.html` (20 px: 12.002 px a
+/// character, `width: 7ch`).
+const RTL_LINE_END_RIGHT: &str = r#"<!DOCTYPE html><html><body style="margin: 0">
+    <div style="direction: rtl; width: 20ch; font: 25px/1 'Liberation Mono'">REF REF REF REF REF REF</div>
+    </body></html>"#;
+const RTL_LINE_END_JUSTIFY: &str = r#"<!DOCTYPE html><html><body style="margin: 0">
+    <div style="width: 7ch; font: 20px 'Liberation Mono'; margin-left: 20px; direction: rtl; white-space: pre-wrap; text-align: justify"><span>XX XX </span><span>XXX</span></div>
+    </body></html>"#;
+
+/// `(text, x)` of the runs of the first line (the smallest baseline) of a layout.
+fn first_line(doc: &LaidOutDoc) -> Vec<(String, f64)> {
+    let runs = runs_of(doc);
+    let y = runs.iter().map(|r| r.2).fold(f64::INFINITY, f64::min);
+    let mut line: Vec<(String, f64)> = runs
+        .into_iter()
+        .filter(|r| (r.2 - y).abs() < 1e-6)
+        .map(|(text, x, _)| (text, (x * 1000.0).round() / 1000.0))
+        .collect();
+    line.sort_by(|a, b| a.1.total_cmp(&b.1));
+    line
+}
+
+/// CANARY of `blitz_engine::rtl_line_end_whitespace`: raw Blitz (Parley 0.12) still keeps the
+/// space that ends an rtl line inside its ltr run, at the run's right end and not hanging.
+#[test]
+fn blitz_still_keeps_rtl_line_end_space_in_its_ltr_run() {
+    let right = first_line(&raw_layout(RTL_LINE_END_RIGHT).0);
+    let justify = first_line(&raw_layout(RTL_LINE_END_JUSTIFY).0);
+    assert_eq!(
+        (right, justify),
+        (
+            vec![("REF REF REF REF REF ".to_string(), 0.0)],
+            vec![("XX XX ".to_string(), 20.0)]
+        ),
+        "\n\nPARLEY CHANGED HOW IT ENDS AN RTL LINE: the space that ends the line no longer stays \
+         in its ltr run at the run's right end (parley 0.12.0 src/layout/line_break.rs 1896-1902 \
+         and src/layout/data.rs 497-500: UAX #9 L1 is not applied per line). If Parley now \
+         applies L1 (and P1 at forced breaks) like Chrome 155, DELETE `rtl_line_end_whitespace`, \
+         its call and the `line_runs` rtl flags in `read_text_runs` \
+         (crates/vellora-core/src/blitz_engine.rs), this canary and the \
+         `rtl_line_end_whitespace_*` tests, then re-run the WPT css-text directory.\n"
+    );
+}
+
+/// The compensation, right-aligned (`start` in rtl): the space moves to the left end and hangs,
+/// the letters end at the right edge (Chrome 155 on the WPT `text-align-end-ref-006` page:
+/// letters at 25..300 of the 300 px line, its trailing space not drawn inside).
+#[test]
+fn rtl_line_end_whitespace_right_aligned_hangs_on_the_left() {
+    assert_eq!(
+        first_line(&product_layout(RTL_LINE_END_RIGHT)),
+        [
+            (" ".to_string(), 0.0),
+            ("REF REF REF REF REF".to_string(), 15.002)
+        ]
+    );
+}
+
+/// The compensation, justified: the trailing space hangs left of the line (x 8 = 20 - 12) and
+/// the one separator left takes all the free space (36.006 px), so the letters sit at both edges
+/// like Chrome 155 (WPT `text-justify-and-trailing-spaces-003`: "XX" at 20..44 and 80..104).
+#[test]
+fn rtl_line_end_whitespace_justified_spreads_over_the_inner_separator() {
+    let doc = product_layout(RTL_LINE_END_JUSTIFY);
+    assert_eq!(
+        first_line(&doc),
+        [(" ".to_string(), 7.998), ("XX XX".to_string(), 20.0)]
+    );
+    let inner = doc
+        .boxes
+        .iter()
+        .flat_map(|b| &b.text_runs)
+        .find(|r| r.glyphs.len() == 5)
+        .and_then(|r| {
+            r.glyphs
+                .iter()
+                .find(|g| &r.text[g.text_start..g.text_end] == " ")
+        })
+        .map(|g| g.advance)
+        .expect("the inner space of \"XX XX\"");
+    assert!((inner - 36.006).abs() < 0.01, "inner separator {inner}");
+}
