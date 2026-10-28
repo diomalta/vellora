@@ -73,6 +73,9 @@ pub struct FilledRect {
     pub width: f64,
     pub height: f64,
     pub color: [u8; 3],
+    /// Painting-order layer (`blitz_engine::paint_tier`): rects are drawn in list order, which
+    /// `pagination::merge_adjacent_rects` sorts by tier first.
+    pub tier: u8,
 }
 
 /// A rounded rectangle outline drawn with a PDF stroke.

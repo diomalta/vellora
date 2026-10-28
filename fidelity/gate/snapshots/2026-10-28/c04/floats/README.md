@@ -88,3 +88,17 @@ the box walk's origins and to each glyph run. Canary
 Full WPT vs section 2: 4054 -> 4059, pass->fail 0, fail->pass block-in-inline-float-between-001,
 float-inside-inline-between-blocks-1, floats-153, vertical-align-negative-leading-001,
 position-relative-033. 46 PDFs byte-identical to c03-tip (no fixture has a positioned element).
+
+## 4. Painting order (commit "paint tiers")
+
+Not a Blitz bug: vellora's emitter drew every background rect in (y, x) order, so of two boxes
+at the same place the later one in the document won (between-float-and-text: the red float over
+the green absolutely positioned square, Chrome the reverse, CSS 2.2 Appendix E steps 4/5/8).
+`blitz_engine::paint_tier` gives each rect the tier of its box and DOM ancestors (0 in-flow, 1
+float, 2 positioned with non-negative z-index) and `merge_adjacent_rects` sorts by tier first.
+Tests: `positioned_boxes_paint_over_floats`, `rects_paint_tier_by_tier`.
+
+Full WPT vs section 3: 4059 -> 4076, fail->pass 21 (between-float-and-text, 7 floats-clear, 4
+positioning, 4 table-visual-layout-026a-d, ...), pass->fail 4: floats-clear-multicol-002/003 and
+-balancing-002/003, which fail at the pin, 00-start, 10-integration and c03-tip (multicol is not
+implemented) and passed only in this step's intermediate runs. 46 PDFs byte-identical.

@@ -907,6 +907,30 @@ fn float_avoidance_leaves_boxes_that_fit() {
     assert_eq!((x, y), (100.0, 0.0));
 }
 
+/// WPT css/CSS2/abspos/between-float-and-text.html: an absolutely positioned green square and a
+/// red float laid out at the same place; Chrome paints the positioned box over the float.
+#[test]
+fn positioned_boxes_paint_over_floats() {
+    let html = r#"<!DOCTYPE html><html><body>
+        <div style="line-height:20px; margin-top:-20px;">&nbsp;
+        <div style="position:absolute; width:200px; height:200px; background:green;"></div>
+        <div style="float:left; margin-top:20px; width:200px; height:200px; background:red;"></div>
+        </div></body></html>"#;
+    let doc = product_layout(html);
+    let tier_of = |color: [u8; 3]| {
+        doc.boxes
+            .iter()
+            .flat_map(|b| &b.visual_rects)
+            .find(|r| r.color == color)
+            .map(|r| (r.tier, r.x, r.y))
+            .expect("rect")
+    };
+    let (green, red) = (tier_of([0, 128, 0]), tier_of([255, 0, 0]));
+    assert_eq!((green.1, green.2), (red.1, red.2), "same place");
+    assert_eq!(green.0, crate::blitz_engine::PAINT_TIER_POSITIONED);
+    assert_eq!(red.0, crate::blitz_engine::PAINT_TIER_FLOAT);
+}
+
 /// Text and a float inside relatively positioned `display: inline` elements (left 100px, then
 /// left 100px + top 10px), each in its own div.
 const RELATIVE_INLINE: &str = r#"<!DOCTYPE html><html><head><style>

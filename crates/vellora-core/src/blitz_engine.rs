@@ -130,6 +130,8 @@ pub struct VisualRect {
     pub height: f64,
     /// sRGB color (r,g,b) 0..=255, alpha composited over white.
     pub color: [u8; 3],
+    /// The CSS painting-order layer of the box that paints it ([`paint_tier`]).
+    pub tier: u8,
 }
 
 /// A rounded, uniform border outline in document coordinates.
@@ -2434,6 +2436,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             origins: std::collections::HashMap::new(),
             reader_compensations: O::VELLORA_CORRECTIONS,
             collapsed: &collapsed,
+            tiers: std::collections::HashMap::new(),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -2486,6 +2489,8 @@ struct WalkSink<'a, 'img> {
     /// The tables and cells [`compensate_collapsed_borders`] re-laid out (empty in the
     /// raw-Blitz render).
     collapsed: &'a CollapsedBorders,
+    /// The [`paint_tier`] memo. Lookup only, like `origins`.
+    tiers: std::collections::HashMap<NodeId, u8>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -2733,6 +2738,69 @@ fn box_origin(
     origin
 }
 
+/// Paint tier of a floated box (and its subtree): CSS 2.2 Appendix E step 5, above the
+/// backgrounds of in-flow, non-positioned blocks (step 4).
+pub const PAINT_TIER_FLOAT: u8 = 1;
+/// Paint tier of a positioned box with `z-index: auto | 0 | positive` (and its subtree):
+/// Appendix E steps 8-9, above floats and in-flow content.
+pub const PAINT_TIER_POSITIONED: u8 = 2;
+
+/// The painting-order layer of `node_id`'s backgrounds and borders (CSS 2.2 Appendix E,
+/// coarsened to three tiers): 0 for in-flow non-positioned boxes, [`PAINT_TIER_FLOAT`] inside a
+/// float, [`PAINT_TIER_POSITIONED`] inside a positioned box whose `z-index` is not negative; the
+/// highest tier of the box and its DOM ancestors, since a float or a positioned box paints its
+/// whole subtree at its own step. The emitter sorts rects by tier first
+/// (`pagination::merge_adjacent_rects`), so a later-tier box paints over an earlier-tier one
+/// wherever they sit; within a tier the existing position order stands (not Appendix E's tree
+/// order, and negative `z-index` and nested stacking contexts are not modelled). Not a Blitz bug
+/// (Blitz's own painter orders by stacking context; vellora's emitter had no order at all), so
+/// no raw canary: `raw_blitz_tests.rs` `positioned_boxes_paint_over_floats` pins it, WPT
+/// css/CSS2/abspos/between-float-and-text.html
+/// measures it.
+fn paint_tier(
+    base: &BaseDocument,
+    node_id: NodeId,
+    memo: &mut std::collections::HashMap<NodeId, u8>,
+) -> u8 {
+    let mut chain = Vec::new();
+    let mut tier = 0;
+    let mut current = Some(node_id);
+    while let Some(id) = current {
+        if let Some(&known) = memo.get(&id) {
+            tier = known;
+            break;
+        }
+        let Some(node) = base.get_node(id) else {
+            break;
+        };
+        chain.push(id);
+        current = node.parent.or_else(|| node.layout_parent.get());
+    }
+    for id in chain.into_iter().rev() {
+        let own = base
+            .get_node(id)
+            .and_then(|n| n.primary_styles())
+            .map_or(0, |styles| {
+                let positioned =
+                    styles.clone_position() != style::computed_values::position::T::Static;
+                let z_negative = match styles.get_position().z_index {
+                    style::values::generics::position::ZIndex::Integer(z) => z < 0,
+                    _ => false,
+                };
+                if positioned && !z_negative {
+                    PAINT_TIER_POSITIONED
+                } else if !matches!(styles.clone_float(), style::computed_values::float::T::None) {
+                    PAINT_TIER_FLOAT
+                } else {
+                    0
+                }
+            });
+        tier = tier.max(own);
+        memo.insert(id, tier);
+    }
+    tier
+}
+
 fn is_out_of_flow(node: &blitz_dom::Node) -> bool {
     node.primary_styles()
         .is_some_and(|styles| styles.clone_position().is_absolutely_positioned())
@@ -2884,7 +2952,11 @@ fn push_box(
         sink.face_cache,
         sink.reader_compensations,
     );
-    let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let (mut visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let tier = paint_tier(base, node_id, &mut sink.tiers);
+    for rect in &mut visual_rects {
+        rect.tier = tier;
+    }
     let image_runs = resolve_image_runs(
         node,
         content_x,
@@ -3129,6 +3201,7 @@ fn read_visuals(
             width,
             height,
             color,
+            tier: 0,
         });
     }
 
@@ -3152,6 +3225,7 @@ fn read_visuals(
                 width,
                 height,
                 color,
+                tier: 0,
             });
         }
         return (rects, rounded_borders);
@@ -3221,6 +3295,7 @@ fn read_visuals(
                 width,
                 height,
                 color,
+                tier: 0,
             });
         }
     }
