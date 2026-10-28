@@ -1,26 +1,66 @@
 # vellora
 
-> HTML to PDF for Node.js, native and browserless by default.
+> HTML to PDF in Node.js. No Chromium. No Puppeteer.
 
-vellora renders generated HTML documents such as invoices, receipts, statements, boletos, reports,
-and notifications to deterministic PDFs from Node.js. The default renderer runs in-process through a
-napi-rs native addon and does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java,
-or a sidecar service.
+vellora turns the HTML templates you already have (invoices, receipts, statements, reports,
+letters, notices, bank slips) into PDFs with one function call inside Node.js. There is no browser
+to install, launch, sandbox or patch: the default renderer lays out the document and writes the
+PDF inside the Node process, through a prebuilt native addon. It does not install Puppeteer,
+Playwright, Chromium, wkhtmltopdf, Python, Java or a sidecar service.
 
-Primary links:
+Quick start (npm install vellora; Node.js 20 or later):
 
-- Docs: https://diomalta.github.io/vellora/
+    import { writeFileSync } from "node:fs";
+    import { renderPdf } from "vellora";
+
+    const html = "<h1>Receipt for {{ name }}</h1><p>Total: {{ total | currency('USD') }}</p>";
+    const pdf = await renderPdf(html, { name: "Ada", total: 42 });
+    writeFileSync("receipt.pdf", pdf);
+
+Pages:
+
+- Home: https://diomalta.github.io/vellora/
+- Your first PDF in three steps: https://diomalta.github.io/vellora/guide/getting-started
+- Switching from Puppeteer (or wkhtmltopdf): https://diomalta.github.io/vellora/migrating
+- Will my template work?: https://diomalta.github.io/vellora/compatibility
+- How close to Chrome? (measured fidelity, method, losses): https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity
+- When you need Chrome (the optional Chromium engine and engine: "auto"): https://diomalta.github.io/vellora/guide/chromium-engine
+- Examples: https://diomalta.github.io/vellora/recipes
+- Blog: Why we print PDFs without a browser: https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer
+- Blog: Engineering note, measuring vellora against Chrome word by word: https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4
+- Full compatibility matrix: https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md
 - npm package: https://www.npmjs.com/package/vellora
 - GitHub repository: https://github.com/diomalta/vellora
-- Blog article: https://diomalta.github.io/vellora/blog/html-to-pdf-nodejs-without-puppeteer
-- Blog article (fidelity measurements, released in vellora 0.3.0): https://diomalta.github.io/vellora/blog/native-pdf-fidelity-blitz-beta4
-- Measured fidelity vs Chrome (method, per-fixture table, losses, reproduction): https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity
-- Getting started: https://diomalta.github.io/vellora/guide/getting-started
-- Compatibility: https://diomalta.github.io/vellora/compatibility
-- Migration guide: https://diomalta.github.io/vellora/migrating
 
-Use vellora when you control the generated document template and want HTML-to-PDF output without
-shipping a headless browser in the default runtime. Use a browser renderer when a template requires
-JavaScript execution, arbitrary website rendering, or exact Chromium print output.
+Good fit: documents generated from templates you control. Tables that span pages with a repeated
+header, page numbers, inline SVG, supplied fonts and images, and PDF/A-2b output.
 
-Fidelity numbers on the site are generated from docs/assets/fidelity/manifest.json. They come from the gated run released in vellora 0.3.0 (strict merge contract PASS) and are INDICATIVE while they are local macOS measurements. Each number names what it measures, for example the share of word positions within 1 mm of Chrome for Testing 155 on a given fixture.
+Works with limits: display: flex is partial; tables are the reliable choice for layout. Floats and
+multi-column text work, with documented edge cases; a multi-column container taller than a page is
+not split across pages.
+
+Not supported (rejected with the feature name, line and column, before any PDF is written):
+JavaScript, CSS grid, transform, filter, animations, transitions, form controls and <canvas>.
+Arbitrary web pages are out of scope. For templates that need these, the optional Chromium engine
+(engine: "chromium") renders through a Chrome/Chromium executable you provide.
+
+Things to know:
+
+- Templating always runs, so a literal {{ or {% in pre-rendered HTML is read as template syntax.
+- vellora loads nothing from the network. Put CSS in a <style> tag or style=""; <link
+  rel="stylesheet"> and @import are ignored. Images and fonts are passed in as bytes.
+- Prebuilt for macOS arm64/x64 and Linux glibc x64/arm64. No Windows or Alpine/musl builds.
+- Same input, same PDF bytes on the same platform. macOS arm64 and Linux arm64 produced identical
+  bytes in a check on a pre-release tree; x86_64 was not measured.
+
+Performance (GitHub Actions Linux runner, AMD EPYC 7763, 4 cores, Node v22.23.4, run 40687532121,
+built from the v0.3.0 commit; 3-page invoice): warm render median 19.09 ms, p95 23.32 ms; cold
+start 47.29 ms; 117.60 MB peak memory for the whole Node process with 8 concurrent renders;
+39.72 MB fresh install. Puppeteer and Playwright were measured but marked not comparable for this
+fixture, so no numbers are published for them.
+
+Fidelity: in 8 of the 9 documents we test, every word lands within 1 mm of its position in Chrome's
+print-to-PDF; all 9 print the same number of pages as Chrome. This is an indicative measurement,
+made locally on macOS against Chrome for Testing 155; the pinned Linux CI run is not wired yet.
+Numbers come from docs/assets/fidelity/manifest.json in the repository. They describe the test
+documents, not every template; check your own with vellora doctor.

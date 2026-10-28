@@ -104,5 +104,36 @@
         "pdfSha256": "e2e55877fd746a3ac6eab849d662ce0796235f1f0d06db8cc154209683af4686"
       }
     ]
+  },
+  "snippets": {
+    "renderer": "vellora@0.3.0 (published npm package)",
+    "images": [
+      {
+        "image": "docs/public/examples/first-pdf.png",
+        "snippet": "docs/guide/getting-started.md (first js block, run unchanged)",
+        "page": 1,
+        "cropTopPx": 420,
+        "pdfSha256": "8d61d6d89d1266c3e89bcae6a3878d36078221109b81338194bd6f157a62bd80"
+      },
+      {
+        "image": "docs/public/examples/invoice-guide-1.png",
+        "snippet": "docs/guide/invoices.md (first js block, run unchanged)",
+        "page": 1,
+        "pdfSha256": "46c2c2740e2514386b47c19672c0e647d0602774246019ca99a76beb0f0bc2e0"
+      },
+      {
+        "image": "docs/public/examples/invoice-guide-2.png",
+        "snippet": "docs/guide/invoices.md (first js block, run unchanged)",
+        "page": 2,
+        "pdfSha256": "46c2c2740e2514386b47c19672c0e647d0602774246019ca99a76beb0f0bc2e0"
+      },
+      {
+        "image": "docs/public/examples/invoice-guide-hero.png",
+        "snippet": "docs/guide/invoices.md (first js block, run unchanged)",
+        "page": 1,
+        "cropTopPx": 720,
+        "pdfSha256": "46c2c2740e2514386b47c19672c0e647d0602774246019ca99a76beb0f0bc2e0"
+      }
+    ]
   }
 }

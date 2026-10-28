@@ -1,20 +1,23 @@
 ---
-title: "Word by word against Chrome: measuring vellora's native PDFs"
-description: How vellora moved its browserless renderer to Blitz 0.3.0-beta.4, built the measurement oracles first, compensated the Blitz layout bugs it found, turned on float layout that the published package never compiled, laid out multi-column, ruby and inline SVG itself, and measured every word and every dashed border against Chrome.
+title: "Engineering note: measuring vellora against Chrome, word by word"
+description: How close does a browserless renderer get to Chrome? vellora printed the same HTML both ways, measured every word on real-world document types with made-up data, fixed what it found, and published the misses.
 ---
 
-# Word by word against Chrome: measuring vellora's native PDFs
+# Engineering note: measuring vellora against Chrome, word by word
 
-<!-- fidelity-evidence:status -->
-::: tip Released in vellora 0.3.0
-The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
-:::
-<!-- /fidelity-evidence:status -->
+If you're replacing Chrome for invoices, the first question is whether the PDF still looks the same.
+Here is the answer, with pictures, and how we got there.
 
-vellora renders generated document HTML (invoices, receipts, boletos, notices) to PDF inside the
-Node.js process, with no browser. The obvious question about a renderer like that is how far its
-output lands from what Chrome prints for the same HTML. This post answers it with measurements. It
-also covers the work that moved the numbers, and the parts that are still open.
+## What we measured
+
+We print the same HTML twice, once with Chrome and once with vellora. Then we find every word in
+both PDFs, pair each word with its twin, and measure how far apart they land, in millimetres. We
+also count pages. The test set covers real-world document types, filled with made-up data:
+invoices, receipts, Brazilian bank slips (boletos), a DANFE (a Brazilian invoice printout), a
+letter and a long Portuguese text, plus two popular open-source templates.
+
+Here is the DANFE, the hardest of them. Same HTML in all three columns. Left: Chrome. Middle: our
+previous release. Right: vellora 0.3.0.
 
 <!-- fidelity-evidence:hero -->
 ![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
@@ -30,11 +33,70 @@ also covers the work that moved the numbers, and the parts that are still open.
 - **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
 <!-- /fidelity-evidence:headline -->
 
-"Before" is always vellora 0.2.0, the previous release; "the published package" below means
-0.2.0. "After" is vellora 0.3.0, released on 2026-10-28. Its numbers were measured on commit
-`aa41259`, whose engine and package code is identical to the `v0.3.0` release commit `c40b3c2`.
+Here is every document, before and after. The first chart is error (lower is better), the second is
+the share of words that land within 1 mm of Chrome (higher is better).
 
-## Measure first, then change the engine
+<!-- fidelity-evidence:charts -->
+![Median word-position error per fixture, vellora 0.2.0 (published) vs vellora 0.3.0, log scale](/assets/fidelity/median-mm.svg)
+
+![Share of words within 1 mm of Chrome per fixture, vellora 0.2.0 (published) vs vellora 0.3.0](/assets/fidelity/within-1mm.svg)
+<!-- /fidelity-evidence:charts -->
+
+## What is still open
+
+One document is not perfect yet: Postmark's receipt template, where nearly all of its words are
+within 1 mm. Chrome draws a text shadow on its header, and vellora draws no text shadows, so a pair of words has
+no match; a few other words land more than 1 mm away. Some layout features are
+still missing too, mostly around multi-column text that runs past a page. The details are under
+"Under the hood" below.
+
+We measured these on a Mac against Chrome for Testing 155. Check your own template before you rely
+on them.
+
+<!-- fidelity-evidence:status -->
+::: tip Released in vellora 0.3.0
+The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
+:::
+<!-- /fidelity-evidence:status -->
+
+## The bugs we fixed, in plain words
+
+Measuring found things we would not have seen by eye:
+
+- **Tables grew taller row by row.** Bordered tables with collapsed borders came out a little too
+  tall on every row, so the error grew down the page.
+- **Dashed lines were missing.** Dashed and dotted borders, like the cut line on a bank slip, were
+  drawn solid.
+- **Underlines were missing.** Link underlines and strike-through lines were not drawn at all.
+- **Page backgrounds were missing.** A background colour on the page itself was never painted.
+- **Floats were ignored.** Boxes set to `float: left` or `float: right` were laid out as ordinary
+  blocks.
+- **Extra pages.** Some documents printed a different number of pages than Chrome.
+
+The loop was always the same. Measure the gap against Chrome. Trace it to the layer that caused it.
+Fix it there, with a test that fails if the fix stops working. Then measure everything again, and
+keep the change only if nothing got worse.
+
+## Try it on your template
+
+Our documents are not yours. To see how your own template comes out, compare it with the PDF you
+make today:
+
+```sh
+vellora doctor invoice.html --pixel-diff --reference-pdf old-output.pdf --out artifacts
+```
+
+It writes page images and red difference overlays to `artifacts/visual`. You need poppler's
+`pdftoppm` installed, and `@vellora/cli` 0.3.2 (the next release; the 0.3.0 command exits
+without output). The full set of options is in
+[When you need Chrome](/guide/chromium-engine#check-a-template-against-your-old-pdf).
+
+## Under the hood
+
+Everything below is for readers who want the engine details: what changed, why, and how the release
+was checked. Links to the code and evidence are collected under [Sources](#sources) at the end.
+
+### How we measure
 
 A screenshot that looks right proves little. Two PDFs can look the same at thumbnail size while a
 table sits a few millimetres lower on every page, and a pixel diff mixes layout errors with
@@ -54,21 +116,23 @@ anti-aliasing and font hinting. So before changing the engine, we built the inst
   ledger records known differences with a ceiling that may only go down. Each oracle has canaries:
   planted bugs that it must catch.
 
-The rest of the work was judged by these instruments, not by eye.
+We judged every later change with these instruments, not by eye.
 
-## Blitz 0.3.0-beta.4, from crates.io
+"Before" is always vellora 0.2.0, the previous release; "the published package" below means
+0.2.0. "After" is vellora 0.3.0, released on 2026-10-28. Its numbers were measured on commit
+`aa41259`, whose engine and package code is identical to the `v0.3.0` release commit `c40b3c2`.
 
-vellora lays out HTML with [Blitz](https://github.com/DioxusLabs/blitz), and the published package
-uses a git revision of Blitz's 0.3.0-alpha.5 line. vellora 0.3.0 moves to the 0.3.0-beta.4 release
-from crates.io, with no fork, and ports vellora's own layout layers to it. All Blitz access stays
-behind one module of vellora, so an upstream change is contained in one file.
+### Blitz 0.3.0-beta.4, from crates.io
 
-The upgrade alone did not fix boleto or notification: the snapshot of that step
-([`tip-10-integration.doc-aggregate.json`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-27/02-doc-oracle/tip-10-integration.doc-aggregate.json),
-in the evidence archive: tag `fidelity-archive-2026-10-28`, commit `b5c9546`) shows both below the
-published package. The layout diff showed why.
+vellora lays out HTML with Blitz, and the published package uses a git revision of Blitz's
+0.3.0-alpha.5 line. vellora 0.3.0 moves to the 0.3.0-beta.4 release from crates.io, with no fork,
+and ports vellora's own layout layers to it. All Blitz access stays behind one module of vellora,
+so an upstream change is contained in one file.
 
-## The bug: bordered collapsed tables grew row by row
+The upgrade alone did not fix boleto or notification: the snapshot of that step shows both below
+the published package (see Sources). The layout diff showed why.
+
+### Bordered collapsed tables grew row by row
 
 On documents with bordered `border-collapse: collapse` tables, the error grew down the page.
 Boletos, the DANFE and the long text fixture were the worst. The layout diff pointed at table rows
@@ -77,10 +141,8 @@ and nothing else: text and line boxes matched, and every height error was in a t
 A minimal repro confirmed it. In Blitz 0.3.0-beta.4, a collapsed-border cell is measured with its
 own full borders, and then the collapsed border is added again as the grid gap. Each row comes out
 taller than Chrome's by twice the border width, and every table adds its rows' error to everything
-below it. The cause is in `blitz-dom`'s table layout (`layout/table.rs`). The repro and the source analysis are in
-[`fidelity/upstream-drafts/blitz-collapsed-cell-border-measure`](https://github.com/diomalta/vellora/tree/fidelity-archive-2026-10-28/fidelity/upstream-drafts/blitz-collapsed-cell-border-measure)
-(evidence archive, tag `fidelity-archive-2026-10-28`, commit `b5c9546`), written up as an upstream
-report that has not been filed yet.
+below it. The cause is in `blitz-dom`'s table layout (`layout/table.rs`). The repro and the source
+analysis are written up as an upstream report that has not been filed yet (see Sources).
 
 vellora now compensates for the bug. The compensation never edits your HTML (strict mode still
 passes it through unchanged). After the CSS cascade and before layout, it changes the computed
@@ -101,16 +163,14 @@ does. Each compensation has a code comment that names the crate version and the 
 a raw-Blitz canary test (`crates/vellora-core/src/raw_blitz_tests.rs`) that fails once Blitz
 changes the behaviour.
 
-## Floats were never laid out
+### Floats were never laid out
 
 Not every difference was a Blitz bug. Blitz's float layout is an opt-in cargo feature:
 `floats = ["taffy/float_layout", "stylo_taffy/floats"]` in `blitz-dom`'s `Cargo.toml`, and it is
 not in the default feature list. vellora 0.2.0 depends on Blitz git revision 2003ba5 with
 `default-features = false` and no extra features. Blitz's float code was therefore never
 compiled, and every `float: left` or `float: right` box was laid out as an ordinary in-flow
-block. The step that found this is recorded in
-[`fidelity/gate/snapshots/2026-10-28/c04/floats/README.md`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-28/c04/floats/README.md)
-(evidence archive, tag `fidelity-archive-2026-10-28`, commit `b5c9546`).
+block. The step that found this is recorded in the evidence archive (see Sources).
 
 vellora 0.3.0 turns the feature on. That is a crates.io feature switch, not a fork. It also exposed
 two bugs in the crates.io stack. One is in Taffy's fit test for a box placed next to a float. The
@@ -138,7 +198,7 @@ The fourth, `flex-fragmented-with-float-descendant-001`, now passes its reftest,
 flags the pass, because vellora's ink lands away from Chrome's (see "Multi-column gaps" below). It
 stays in the debt ledger, and the gate lists it under "What is not done".
 
-## What word positions cannot see
+### What word positions cannot see
 
 The word-position oracle reads text. A PDF can place every word exactly and still differ from
 Chrome's in paint. Three paint gaps were found by looking at the pages, and all three were in
@@ -173,7 +233,7 @@ On the DANFE, vellora draws more dash segments than Chrome. Our working explanat
 measured, is that the collapsed-border compensation extends each cell's horizontal edge across the
 column lines, so the end dash of one cell overlaps the first dash of the next.
 
-## Multi-column, ruby and inline SVG, laid out by vellora
+### Multi-column, ruby and inline SVG, laid out by vellora
 
 Blitz 0.3.0-beta.4 and its layout engine, Taffy 0.15.0, have no multi-column layout and no ruby
 layout. Stylo computes `column-count` and `column-width`, and nothing reads them, so a
@@ -204,18 +264,16 @@ SVG they draw was not drawn at all, and they pass again with the fix.
 What this costs, and what is still missing:
 
 - **A bigger addon.** The dependency graph now holds two versions of usvg, Blitz's for layout and
-  krilla-svg's for drawing. The release notes for inline SVG
-  ([`.changeset/inline-svg-native.md`](https://github.com/diomalta/vellora/blob/main/.changeset/inline-svg-native.md))
-  record the size of the macOS arm64 addon before and after, measured on a local build. It is
-  the main cost of inline SVG support.
+  krilla-svg's for drawing. The release notes for inline SVG record the size of the macOS arm64
+  addon before and after, measured on a local build (see Sources). It is the main cost of inline
+  SVG support.
 - **No host fonts in SVG layout.** Blitz's own SVG parse loads the host's font list, and for an
   SVG without a `viewBox` it can size the box from the SVG's `<text>`, measured in host fonts. So
   the same document could lay out differently on two machines. vellora's render path no longer
   runs that parse. It sizes each inline `<svg>` from its own `width`, `height`, `viewBox` and
   `preserveAspectRatio` attributes and its CSS, never from its content, as Chrome does. Its
   `<text>` is set only in the bundled fonts and the `fonts` option's faces. One sizing case of a
-  `viewBox`-less SVG with a percentage height is not modelled yet;
-  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md) describes it.
+  `viewBox`-less SVG with a percentage height is not modelled yet; COMPATIBILITY.md describes it.
 - **Ruby adds an element.** vellora wraps each ruby base in a `vellora-ruby-base` element before
   the cascade. Your HTML is not changed, but a selector such as `ruby > b` no longer matches a
   `<b>` inside a base. How often that matters in real documents has not been measured. Ruby
@@ -227,17 +285,11 @@ What this costs, and what is still missing:
   them out on screen. That is why `flex-fragmented-with-float-descendant-001` is flagged. The
   harness compares only page 1 of this screen-mode test, and there vellora's ink covers more
   columns than Chrome's. vellora also does not paint `outline`, which that test uses. Both gaps
-  are tracked in [issue #48](https://github.com/diomalta/vellora/issues/48).
+  are tracked in issue #52 (see Sources).
   One fragmentation test that the columns exposed, with a float beside a line
   (`widows-orphans-021`), still fails. It failed in the published package too.
 
-## Results
-
-<!-- fidelity-evidence:charts -->
-![Median word-position error per fixture, vellora 0.2.0 (published) vs vellora 0.3.0, log scale](/assets/fidelity/median-mm.svg)
-
-![Share of words within 1 mm of Chrome per fixture, vellora 0.2.0 (published) vs vellora 0.3.0](/assets/fidelity/within-1mm.svg)
-<!-- /fidelity-evidence:charts -->
+### Every document, in numbers
 
 <!-- fidelity-evidence:table -->
 Each cell reads vellora 0.2.0 (published) → vellora 0.3.0. Reference: Chrome for Testing 155.0.8059.85.
@@ -255,7 +307,7 @@ Each cell reads vellora 0.2.0 (published) → vellora 0.3.0. Reference: Chrome f
 | Sparksuite simple invoice (OSS template) (`oss-sparksuite-invoice`) | 46 | 9.87 → 0.00 | 10.95 → 0.00 | 0.0% → 100.0% | 0 → 0 | 1 / 1 / 1 |
 <!-- /fidelity-evidence:table -->
 
-## What is not done
+### What is not done
 
 <!-- fidelity-evidence:losses -->
 - **oss-postmark-receipt: 97.2% of words within 1 mm** (vellora 0.2.0 (published): 40.0%); p90 error 0.14 mm.
@@ -271,7 +323,7 @@ The postmark receipt's missing words are a known pair. Chrome's PDF draws the ma
 because of a `text-shadow` copy, and vellora draws no text shadow. The gate records that pair as
 an oracle artefact.
 
-## WPT: coverage, not a score
+### WPT: coverage, not a score
 
 <!-- fidelity-evidence:wpt-chart -->
 ![WPT reftests passed: vellora 0.2.0 (published) engine, vellora 0.3.0, Chrome reference](/assets/fidelity/wpt-pass-rate.svg)
@@ -294,7 +346,7 @@ The WPT number shows how much of the CSS test subset now renders the way the ref
 Many of those tests exercise features no invoice uses. Others are rejected on purpose by vellora's
 strict subset. Read it as coverage. The document fixtures above are the measure of document output.
 
-## How the release was gated
+### How the release was gated
 
 vellora 0.3.0 was merged only after a strict oracle contract passed on one gated run. Four
 conditions must all hold:
@@ -315,18 +367,17 @@ One test that the published package passed is shipped as recorded debt:
 gate counts it as class b because it is still a debt-ledger key. That ledger entry was written
 when raw Blitz and the product failed the test the same way. They no longer do: the product now
 passes and raw Blitz still fails. The remaining gap is in vellora's own multi-column layer, which
-does not split overflowing columns across print pages. The fix is tracked in
-[issue #48](https://github.com/diomalta/vellora/issues/48). No document fixture uses multi-column
-layout.
+does not split overflowing columns across print pages. The fix is tracked in issue #52. No
+document fixture uses multi-column layout.
 
 The numbers are local macOS measurements. The authoritative run is pinned Linux CI, which does not
 run the harness yet. When it does, this page is rebuilt from that run by the same generator.
 
-## Reproduce it
+### Reproduce it
 
 Every table, chart, list of results and status note above is generated from one manifest by a
-committed script, and the prose carries no measured value of its own. The method, the full commands and the environment are in
-[Measured fidelity](/guide/fidelity#measured-fidelity).
+committed script, and the prose carries no measured value of its own. The method, the full commands
+and the environment are in [How close to Chrome?](/guide/fidelity#measured-fidelity).
 
 <!-- fidelity-evidence:env -->
 - Status: **PASS** (gate report verdict PASS (--contract)). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs.
@@ -350,5 +401,23 @@ Two fixtures are adapted open-source templates:
 - Sparksuite simple invoice (OSS template) is adapted from [sparksuite/simple-html-invoice-template](https://github.com/sparksuite/simple-html-invoice-template) (commit `7d74fe3`), MIT licence, Copyright (c) 2021 Sparksuite; see [NOTICE](https://github.com/diomalta/vellora/blob/main/fixtures/oss-sparksuite-invoice/NOTICE.md).
 <!-- /fidelity-evidence:attribution -->
 
-If you have a document template that should fit vellora and does not, open an issue on
-[GitHub](https://github.com/diomalta/vellora) with the smallest case that shows it.
+### Sources
+
+Evidence archive: tag `fidelity-archive-2026-10-28`, commit `b5c9546`.
+
+- [Blitz](https://github.com/DioxusLabs/blitz), the HTML layout engine vellora builds on.
+- Blitz 0.3.0-beta.4 upgrade step, before the table fix:
+  [`tip-10-integration.doc-aggregate.json`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-27/02-doc-oracle/tip-10-integration.doc-aggregate.json).
+- Collapsed-border repro and draft upstream report:
+  [`fidelity/upstream-drafts/blitz-collapsed-cell-border-measure`](https://github.com/diomalta/vellora/tree/fidelity-archive-2026-10-28/fidelity/upstream-drafts/blitz-collapsed-cell-border-measure).
+- The step that found the missing float feature:
+  [`fidelity/gate/snapshots/2026-10-28/c04/floats/README.md`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-28/c04/floats/README.md).
+- Inline SVG release notes, with the addon size before and after:
+  [`.changeset/inline-svg-native.md`](https://github.com/diomalta/vellora/blob/main/.changeset/inline-svg-native.md).
+- The SVG sizing case not modelled yet:
+  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).
+- Multi-column page splitting and `outline`:
+  [issue #52](https://github.com/diomalta/vellora/issues/52). The earlier
+  [issue #48](https://github.com/diomalta/vellora/issues/48) was closed as recorded debt.
+- If you have a document template that should fit vellora and does not, open an issue on
+  [GitHub](https://github.com/diomalta/vellora) with the smallest case that shows it.

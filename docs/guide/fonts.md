@@ -1,41 +1,78 @@
 # Fonts
 
-vellora renders text with a set of **bundled** faces (Liberation Sans/Serif/Mono + DejaVu Sans) and never consults the host machine's installed fonts — that is what makes output deterministic and free of any system font dependency. To use your own typeface, pass its bytes through the `fonts` option.
+vellora uses the same bundled fonts on every machine and never reads fonts installed on the host,
+so there are no surprise font swaps between your laptop and your server.
 
-## Bundled families
+## Without any setup
 
-Without any configuration, the CSS generics resolve to the bundled faces:
+The CSS generic families map to bundled fonts:
 
-- `font-family: sans-serif` → Liberation Sans (DejaVu Sans fallback for broad glyph coverage)
-- `font-family: serif` → Liberation Serif
-- `font-family: monospace` → Liberation Mono
+| You write | You get |
+|---|---|
+| `font-family: sans-serif` | Liberation Sans (DejaVu Sans fills in characters it lacks) |
+| `font-family: serif` | Liberation Serif |
+| `font-family: monospace` | Liberation Mono |
 
-These are metrically compatible with Arial / Times New Roman / Courier, so most document HTML renders as expected with no `fonts` option at all.
+Liberation fonts have the same character widths as Arial, Times New Roman and Courier New, so text in
+templates written for those fonts takes up the same space.
 
-## Custom fonts
+## Your brand font
 
-`fonts` is a `Uint8Array[]` of raw font-face bytes (TTF/OTF). Each face registers into the font context and becomes reachable from your document's CSS by its **intrinsic embedded family name** — the family/weight/style are read from the font's own metadata, so you reference it with the exact name the font ships with:
+Read the font files and pass the bytes in `fonts`. Then use the font's own family name in CSS:
 
 ```js
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { renderPdf } from "vellora";
 
-const inter = new Uint8Array(readFileSync("./Inter-Regular.ttf"));
-const interBold = new Uint8Array(readFileSync("./Inter-Bold.ttf"));
+const html = `<!DOCTYPE html>
+<html>
+  <body style="font-family: 'Inter', sans-serif">
+    <h1>Hello, {{ name }}</h1>
+    <p>Set in your brand font.</p>
+  </body>
+</html>`;
 
-const html = `<p style="font-family: 'Inter'">Hello</p>`;
-const pdf = await renderPdf(html, data, { fonts: [inter, interBold] });
+const pdf = await renderPdf(html, { name: "Ada" }, {
+  fonts: [
+    readFileSync("./fonts/Inter-Regular.ttf"),
+    readFileSync("./fonts/Inter-Bold.ttf"),
+  ],
+});
+
+writeFileSync("branded.pdf", pdf);
 ```
 
-Each weight/style is its own face — supply the regular and bold (and italic) files you need; the engine selects the best match per `font-weight` / `font-style`.
+Each weight and style is its own file. Pass the regular, bold and italic files you use, and vellora
+picks the closest match for each `font-weight` and `font-style`. TTF and OTF both work.
 
-## Rules and guarantees
+::: tip Coming from @font-face?
+vellora doesn't load `@font-face` rules or their `src` URLs, and it doesn't let you rename a font.
+Pass the bytes in `fonts` and write the name the font file itself declares. If the name doesn't
+match, the text falls back to the bundled font without an error. To see a font's name, open it in
+your system's font viewer, or on a machine with fontconfig run:
 
-- **Reference a face by its real embedded family name.** A `font-family` that matches no registered face simply falls back to the bundled generic (not an error). If your text doesn't pick up the custom face, check the family name the font actually ships with.
-- **Custom faces never override the generics.** `font-family: sans-serif` always stays bundled; a custom face is reached only by an explicit `font-family: "<embedded name>"`.
-- **No host/system fonts, no I/O.** Registration draws only on the bytes you pass — no network or filesystem access — so identical inputs (including identical `fonts` bytes) produce byte-identical PDFs. An unreferenced face leaves output unchanged.
-- **Invalid input is rejected, not ignored.** A non-`Uint8Array` entry rejects with `VelloraInputError`; bytes that are not a parseable font reject with a `font:invalid` diagnostic (`VelloraUnsupportedError`), naming the offending index.
+```sh
+fc-scan --format "%{family}\n" Inter-Regular.ttf
+```
+:::
 
-## Not supported
+## Errors
 
-A face is reachable only by its intrinsic family name. The `@font-face` model (a caller-declared alias decoupled from the font's own name), resolving `@font-face` `src` URLs from document CSS, explicit weight/style overrides, variable-font axis selection, and font-subsetting configuration are out of scope.
+- A `fonts` entry that isn't a `Uint8Array` (a `Buffer` is fine) throws `VelloraInputError`.
+- Bytes that aren't a font throw `VelloraUnsupportedError` with `feature: "font:invalid"`, naming the
+  position in the array, for example `fonts[0]`.
+
+<details>
+<summary>Rules and limits</summary>
+
+- Your fonts never replace the generic families: `sans-serif` always means the bundled font. Your
+  font is used only where CSS names it.
+- A font you pass but never reference leaves the PDF unchanged.
+- Not supported: `@font-face` aliases, loading font URLs from CSS, overriding a font's weight or
+  style, choosing variable-font axes, and font-subsetting options.
+
+</details>
+
+## Next step
+
+[Make an archival PDF/A file →](/guide/pdfa)

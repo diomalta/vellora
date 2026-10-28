@@ -1,0 +1,92 @@
+/* Light polish on top of the VitePress default theme. No layout overrides. */
+
+.VPHome .VPHero .tagline {
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+@media (min-width: 640px) {
+  .VPHome .VPHero .tagline {
+    font-size: 22px;
+  }
+}
+
+.VPHome .VPHero .actions {
+  padding-top: 28px;
+}
+
+.VPHome .VPHero .image-src {
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+/* The hero picture is a real PDF page: show it large enough to read, with its provenance. */
+.VPHome .VPHero .image-container {
+  width: min(340px, 86vw);
+  height: auto;
+  aspect-ratio: 900 / 720;
+}
+.VPHome .VPHero .image-container .image-src {
+  max-width: 100%;
+  max-height: 100%;
+}
+.VPHome .VPHero .image-container::after {
+  content: "Rendered by vellora 0.3.0";
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(17, 17, 20, 0.78);
+}
+.VPHome .VPHero .image-bg {
+  display: none;
+}
+
+/* On narrow screens the headline and buttons come first; the picture follows them. */
+@media (max-width: 959px) {
+  .VPHome .VPHero .main {
+    order: 1;
+  }
+  .VPHome .VPHero .image {
+    order: 2;
+    margin: 32px 0 0;
+  }
+}
+
+/* Below 640px the page picture is too small to read, so the hero is text only. */
+@media (max-width: 639px) {
+  .VPHome .VPHero .image {
+    display: none;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHome .VPHero .image-container {
+    width: min(480px, 100%);
+  }
+}
+
+/* Error messages are long single lines: wrap them instead of hiding the end behind a scrollbar. */
+.vp-doc div.language-txt pre,
+.vp-doc div.language-txt code,
+.vp-doc div.language-text pre,
+.vp-doc div.language-text code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.vp-doc details {
+  margin: 16px 0;
+}
+
+/* Generated captions use <sub>; keep them on the normal baseline and line height. */
+.vp-doc sub {
+  vertical-align: baseline;
+  line-height: inherit;
+}

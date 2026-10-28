@@ -1,58 +1,70 @@
 ---
 title: HTML to PDF in Node.js without Puppeteer or Chromium
-description: Why Vellora uses a native browserless default for generated document HTML in Node.js, where it fits, and when to keep a browser renderer.
+description: Your invoice service shouldn't need a web browser. What it costs to keep one, what vellora does instead, how close the output gets to Chrome, and where it stops.
 ---
 
-# HTML to PDF in Node.js without Puppeteer or Chromium
+# Why we print PDFs without a browser
 
-Puppeteer is good software. Playwright is good software. Chromium is a good browser.
+Puppeteer, Playwright and Chromium are good tools. But think about the last time your invoice PDFs broke. Maybe the Docker image grew because Chrome
+needed a list of system libraries. Maybe the first request after a deploy took seconds while a
+browser started. Maybe the month-end batch ran out of memory, or left a few Chrome processes running
+after it finished.
 
-The problem starts when a document pipeline quietly becomes a browser operations problem. You want to
-turn an invoice template into a PDF. Now your deploy has to think about browser downloads, system
-libraries, launch behavior, container size, cold starts, process cleanup, and memory under
-concurrency.
+Sound familiar?
 
-That trade-off can be worth it when the input is really a web page. It feels stranger when the input
-is controlled document HTML: invoices, receipts, statements, boletos, reports, notices. These
-templates usually come from your own code. They do not need JavaScript execution. They need pagination,
-fonts, images, page numbers, selectable text, and predictable failure when the template leaves the
-supported shape.
+<PainChips :items="['Chrome won’t start in Docker', '--no-sandbox flags', 'Zombie Chrome processes', 'Fonts that change on the server', 'Slow first request after deploy']" />
 
-That is the reason Vellora exists.
+That is how a document pipeline quietly becomes a browser operations problem. You wanted to turn an
+invoice template into a PDF. Now your deploy has to care about browser downloads, sandbox flags,
+cold starts, process cleanup and memory under load.
 
-How close does a browserless renderer get to a browser? The current answer is measured word by
-word against Chrome's print-to-PDF output and published in
-[Measured fidelity](/guide/fidelity#measured-fidelity). That page replaces the pixel-diff snapshot
-this article used to show. It compares vellora 0.2.0 with vellora 0.3.0, and it lists the losses
-next to the gains.
+## The idea: a renderer made for documents
 
-<!-- fidelity-evidence:status -->
-::: tip Released in vellora 0.3.0
-The measured run passed the strict merge gate (verdict PASS, --contract). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. Before is vellora@0.2.0, the previous release.
-:::
-<!-- /fidelity-evidence:status -->
+A browser is built to run any web page. An invoice is not any web page. It comes from your own code,
+it runs no JavaScript, and it needs a short list of things: page size and margins, tables that
+continue across pages, page numbers, fonts, images, text you can select and copy. And when something
+in the template can't be printed correctly, it should fail loudly instead of shipping a broken PDF.
 
-<!-- fidelity-evidence:hero -->
-![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
+So we built vellora around that list. It turns HTML into a PDF inside your Node process. There is no
+browser to download, launch, sandbox or patch.
 
-<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
-<!-- /fidelity-evidence:hero -->
+Use the smallest renderer that fits the document. For an invoice, that is not a browser.
 
-Vellora is an HTML-to-PDF renderer for Node.js with a native, in-process default path. The default
-package does not install Puppeteer, Playwright, Chromium, wkhtmltopdf, Python, Java, or a sidecar
-service. You pass generated document HTML and data to `renderPdf`, and you get PDF bytes back from
-the same Node process.
+## The code
 
-Under the hood, the native path is a Rust renderer exposed to Node.js through a napi-rs addon. The
-public API stays JavaScript; the rendering work does not require launching a browser process.
+Here is vellora next to the honest Puppeteer version, with one shared browser:
 
-If you already render HTML with your own templating stack, you can pass that final HTML directly. The
-`data` argument is optional; Vellora's built-in templating is there when you want the document
-renderer and template binding in the same package.
+::: code-group
 
-```sh
-npm install vellora
+```js [vellora]
+import { renderPdf } from "vellora";
+
+export async function toPdf(html) {
+  // HTML from your own templates, or use the built-in {{ }} templating
+  return renderPdf(html);
+}
 ```
+
+```js [Puppeteer]
+import puppeteer from "puppeteer";
+
+const browser = await puppeteer.launch(); // one browser, shared
+
+export async function toPdf(html) {
+  const page = await browser.newPage();
+  try {
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    return await page.pdf({ format: "A4", printBackground: true });
+  } finally {
+    await page.close();
+  }
+}
+```
+
+:::
+
+If you don't have a template engine yet, vellora brings a small one, with loops, conditions and
+currency, number and date helpers:
 
 ```js
 import { writeFileSync } from "node:fs";
@@ -80,117 +92,116 @@ const pdf = await renderPdf(html, {
 writeFileSync("invoice.pdf", pdf);
 ```
 
-## Why not just use Puppeteer?
+## Does it look the same?
 
-Sometimes you should.
+This is the first question anyone asks, so here is a real page. It is Postmark's open-source receipt
+template. Both sides come from the same HTML: one printed by Chrome, one by vellora. Drag the handle
+to compare.
 
-If your template depends on JavaScript, arbitrary website CSS, browser layout quirks, or exact
-Chromium print output, a browser renderer is the honest tool. Vellora is not trying to be a browser
-clone.
+<CompareSlider
+  before="/compare/oss-postmark-receipt-chrome.jpg"
+  after="/compare/oss-postmark-receipt-vellora.jpg"
+  before-label="Chrome"
+  after-label="vellora"
+  alt="Postmark receipt template, page 1"
+  caption="Postmark receipt template, page 1, same HTML on both sides. This is the one document we test that is not perfect yet: nearly all of its words land within 1 mm of Chrome’s. A couple of the misses are a text shadow Chrome draws on the header; vellora does not draw text shadows."
+/>
 
-The native path is for a narrower case: generated documents whose markup you control. That narrower
-case is still large. Billing, finance, logistics, healthcare, legal operations, and internal tools
-all produce document HTML that looks much more like a print template than like a live web app.
+We check 9 documents word by word and publish the misses with the results. We measured it
+ourselves on a Mac, so check your own templates too. [How close to Chrome?](/guide/fidelity) has
+every document side by side.
 
-For that kind of input, carrying a full browser through every runtime can be unnecessary weight.
+<details>
+<summary>For engineers: a harder document, before and after</summary>
 
-## What changes when the renderer is native?
+Same HTML in all three columns. Left: Chrome. Middle: our previous release. Right: vellora 0.3.0.
+The document is a DANFE, the printed form of a Brazilian electronic invoice, full of small bordered
+boxes that make any drift easy to see.
 
-The main change is where the contract lives.
+<!-- fidelity-evidence:hero -->
+![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Synthetic document data.](/assets/fidelity/danfe-p1.jpg)
 
-A browser renderer accepts the web platform and tries to print whatever page you give it. Vellora
-starts from the opposite side. It defines a documented HTML/CSS subset for generated documents and
-rejects unsupported input in strict mode instead of silently producing a wrong PDF.
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora 0.3.0. Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+<!-- /fidelity-evidence:hero -->
 
-That can feel less magical. It is also easier to reason about.
+</details>
 
-- The default path launches no browser process.
-- The renderer validates the template against the documented [compatibility table](/compatibility).
-- Optional built-in templating handles interpolation, loops, conditionals, and formatting helpers.
-- Document features such as `@page`, page counters, repeated table headers, images, custom fonts, and
-  PDF/A-2b are part of the current shipped surface.
-- If a template needs browser print fidelity, you can route that template through the optional
-  [Chromium engine](/guide/fidelity) instead of moving every document onto the browser path.
+## The numbers
 
-The point is not "browser bad, native good." The point is choosing the smallest renderer that matches
-the document.
+These come from one benchmark run on a GitHub Actions Linux runner, rendering the same 3-page
+invoice. Shorter is better. The grey bar is vellora's optional Chromium engine, which starts Chrome
+for every PDF, so it mostly shows the cost of starting a browser.
 
-## What the current data says
+<BarChart
+  title="Cost of starting Chrome for each PDF"
+  unit="ms"
+  :bars="[{ label: 'vellora', value: 19.09, highlight: true }, { label: 'vellora’s Chromium engine (Chromium 130, launched per render)', value: 635.5 }]"
+  footnote="Median time per PDF over 50 renders, after the first one."
+/>
 
-The repository has a pinned resource benchmark run for the native path and Vellora's optional
-Chromium path. This is a snapshot from CI, not a universal promise for every host or template. It is
-useful because it keeps the discussion concrete.
+<BarChart
+  title="Memory with 8 renders at once"
+  unit="MB"
+  :bars="[{ label: 'vellora', value: 117.6, highlight: true }, { label: 'vellora’s Chromium engine (Chromium 130, launched per render)', value: 6833.96 }]"
+  footnote="vellora: the whole Node process. Chromium: summed across its processes, which counts shared memory more than once. Read it as a difference in kind, not an exact ratio."
+/>
 
-Source: [Resource Benchmarks run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121)
-on pinned Linux CI, built from the `v0.3.0` commit `c40b3c2`: AMD EPYC 7763, 4 cores, Linux x64,
-Node v22.23.4, 2026-10-28. The fixture is the 3-page invoice; RSS is the peak at 8 concurrent
-renders, and warm timings are over 50 renders.
+There is also what you install. vellora's npm install was 39.72 MB, and that is all it needs. The
+Chromium engine's npm install was about the same, but it also needs a 412.28 MB Chromium 130 browser
+on the machine.
 
-The benchmark separates package footprint from external runtime. Fresh install measures the npm
-package footprint, which is why the native and Chromium package installs look almost identical. The
-browser cost shows up separately: the Chromium path needs a 412.28 MB external runtime that the
-native path does not carry.
+<details>
+<summary>About these numbers</summary>
 
-Memory is split the same way. The native path runs in-process, so its relevant number is RSS inside
-Node. The Chromium path runs browser work out-of-process, so the relevant number is external RSS.
+- GitHub Actions Linux runner (AMD EPYC 7763, 4 cores, Node v22.23.4), run
+  [40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121), built from the
+  v0.3.0 commit (`c40b3c2`) on 2026-10-28. The package version printed in the results is the
+  workspace label `0.1.0-alpha.0`; the code is the v0.3.0 tag. A verbatim copy of the results is
+  committed in the repository under `benchmarks/results/run-40687532121/`.
+- Workload: the 3-page invoice fixture. Warm timings are over 50 renders. Memory is the peak with
+  8 renders running at once.
+- Slowest 1 in 20 renders: 23.32 ms for vellora, 681.03 ms for the Chromium engine. First render
+  after start: 47.29 ms for vellora, 735.01 ms for the Chromium engine.
+- vellora's memory is the whole Node process, including the benchmark harness. The Chromium figure
+  is summed across the Chromium processes. They are sampled differently, and the sum overcounts
+  memory the processes share.
+- The harness checks page counts but does not check the content of each PDF (its content status is
+  "inconclusive").
+- Puppeteer 23.6.0 and Playwright 1.48.2 were measured in the same run with a shared browser, but
+  their PDF came out 1 page where the reference has 3, so the timing isn't a fair comparison and we
+  do not quote or chart them.
+- Not everything got better. The previous run we quoted (28302742627, before 0.3.0) measured a
+  28.93 MB install and a 17.47 ms warm median. The 0.3.0 install is larger; the release notes
+  attribute the growth to inline SVG support.
 
-| Path | Fresh install | External runtime | RSS @8 | External RSS @8 | Cold start | Warm median / p95 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Native `vellora` | 39.72 MB | N/A | 117.60 MB | N/A | 47.29 ms | 19.09 / 23.32 ms |
-| Vellora Chromium | 39.74 MB | 412.28 MB | N/A | 6833.96 MB | 735.01 ms | 635.50 / 681.03 ms |
+</details>
 
-At concurrency 8, the native path reported 117.60 MB RSS inside the Node process. The Chromium path
-reported 6833.96 MB across external browser processes. Latency showed the same shape: a 47.29 ms
-cold start and 19.09 / 23.32 ms warm median/p95 for native, versus 735.01 ms and
-635.50 / 681.03 ms for Vellora Chromium.
+## Where it stops
 
-Not everything moved in the native path's favor. The previous snapshot this article quoted,
-[run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627) (2026-06-27,
-before 0.3.0), measured a 28.93 MB fresh install and a 17.47 / 17.96 ms warm median/p95. The 0.3.0
-install is larger; the release notes attribute the addon growth to inline SVG support.
+vellora is not a browser, and it does not try to be one. It prints the HTML that documents use, and
+it says no to the rest. When a template uses something outside that set, the render fails with the
+line and column instead of returning a PDF that is almost right:
 
-Output fidelity is measured separately, against Chrome, in
-[Measured fidelity](/guide/fidelity#measured-fidelity).
-Puppeteer and Playwright are measured in that benchmark artifact, but this article does not quote
-them as comparable because the run marked them non-comparable for the fixture: their output had 1
-page while the reference had 3. Timing a one-page output against a three-page reference would make the
-comparison look cleaner than it is.
+```txt
+VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 13: this CSS feature is outside vellora's document subset; run `vellora fix`
+```
 
-## Where Vellora fits
+That is on purpose. A financial document that renders "almost right" can be worse than a document
+that fails loudly.
 
-Use the native path when the template is generated by your application and can stay inside Vellora's
-document subset:
+<FitCheck
+  :works="['Invoices, receipts, statements and letters built from HTML you control', 'Tables whose header repeats on every page', 'Page size, margins, and Page X of Y headers and footers', 'Images and fonts passed in as bytes', 'The same bundled fonts on every machine', 'Same input, same PDF bytes', 'PDF/A-2b for archiving']"
+  :limits="['CSS must live in a <style> tag or style attribute: <link> stylesheets and @import are ignored', 'Literal {{ or {% in your HTML is read as template syntax', 'Flexbox works in part; tables are the reliable layout', 'Prebuilt for macOS and glibc Linux (Debian, Ubuntu, node:22-slim)']"
+  :unsupported="['JavaScript in the page', 'CSS grid and transforms (rejected with line and column)', 'Loading anything from the network', 'Windows and Alpine/musl']"
+/>
 
-- invoices with repeated table headers
-- receipts and point-of-sale summaries
-- statements and account reports
-- boletos and payment notices
-- legal or operational notifications
-- internal reports that need deterministic PDF output
+If your template needs a real browser, keep one for that template. vellora's optional Chromium
+engine lets you route just those templates to Chrome and keep everything else native.
 
-The sweet spot is not arbitrary HTML. It is document HTML.
+## Try it
 
-## Where this breaks
+```sh
+npm install vellora
+```
 
-Vellora's native renderer does not execute scripts. It does not fetch remote assets from inside the
-document. It does not promise full CSS grid/flex/browser parity. It is strict by default because a
-financial document that renders "almost right" can be worse than a document that fails loudly.
-
-If your acceptance criterion is "matches my current Puppeteer PDF exactly," keep that browser output
-as a reference and compare it before switching. The [migration guide](/migrating) walks through that
-process, including how to keep Chromium available only for templates that actually need it.
-
-## How to try it
-
-Start with the [getting started guide](/guide/getting-started). It renders a first PDF from Node.js
-and explains what `renderPdf` expects.
-
-Then check the [compatibility reference](/compatibility) before moving a real template. If your
-template needs images or fonts, the [images](/guide/images) and [fonts](/guide/fonts) guides show the
-explicit byte-based APIs. If you are migrating from Puppeteer or wkhtmltopdf, read
-[Switching from wkhtmltopdf / Puppeteer](/migrating) before deleting your old path.
-
-The package is on [npm](https://www.npmjs.com/package/vellora), and the source is on
-[GitHub](https://github.com/diomalta/vellora). If you have a document template that should fit this
-model and does not, open an issue with the smallest representative case. That is the most useful
-feedback this project can get.
+[Your first PDF in three steps →](/guide/getting-started)

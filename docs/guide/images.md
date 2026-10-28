@@ -1,20 +1,9 @@
-# Images
+# Logos & images
 
-vellora renders images from bytes you provide. It never fetches remote image URLs during native
-rendering, which keeps output deterministic and avoids hidden network egress from document content.
+Read the file, pass its bytes in `images`, and point `<img src>` at the same key:
 
-## Supported sources
-
-- Inline `data:image/...;base64,...` URLs for PNG, JPEG, GIF, and WebP.
-- An `images` map keyed by the `<img src>` string.
-- A relative `<img src>` normalized against `baseUrl` before the lookup.
-
-The image format is detected from the bytes, not from the file extension or map key.
-
-## Pass image bytes
-
-```ts
-import { readFileSync } from "node:fs";
+```js
+import { readFileSync, writeFileSync } from "node:fs";
 import { renderPdf } from "vellora";
 
 const html = `<!DOCTYPE html>
@@ -22,60 +11,107 @@ const html = `<!DOCTYPE html>
   <head>
     <style>
       @page { size: A4; margin: 18mm; }
-      img.logo { width: 96px; height: 32px; }
+      body { font-family: sans-serif; }
+      img.logo { width: 120px; height: 40px; }
     </style>
   </head>
   <body>
-    <img class="logo" src="assets/logo.png" alt="Acme logo" />
-    <h1>Invoice {{ invoice.number }}</h1>
+    <img class="logo" src="logo.png" alt="Acme logo" />
+    <h1>Invoice {{ number }}</h1>
   </body>
 </html>`;
 
-const pdf = await renderPdf(html, data, {
+const pdf = await renderPdf(html, { number: "INV-0042" }, {
   images: {
-    "assets/logo.png": new Uint8Array(readFileSync("./assets/logo.png")),
+    "logo.png": readFileSync("./assets/logo.png"),
+  },
+});
+
+writeFileSync("with-logo.pdf", pdf);
+```
+
+The key is the exact `src` string. PNG, JPEG, GIF and WebP work, and the format is read from the
+bytes, not from the file name.
+
+::: warning Give every image a width and a height
+In vellora 0.3.0 an `<img>` needs both, as `width` / `height` attributes or in CSS (for example
+`width: 120px; height: 40px`). An image with only a width (or `height: auto`), or with no size at all, is
+left out of the PDF without an error. Use the image's own aspect ratio to pick the height.
+:::
+
+## Why not just use a URL?
+
+vellora makes no network requests while it renders. A template can't leak data to a third-party
+server, a slow CDN can't hang your render, and the same bytes give the same PDF every time.
+
+If your logo lives on a CDN, download it yourself and pass the bytes, keyed by the URL in the
+template:
+
+```js
+const html = `<img src="https://cdn.example.com/brand/logo.png" width="120" height="40" />`;
+
+const res = await fetch("https://cdn.example.com/brand/logo.png");
+if (!res.ok) throw new Error(`logo download failed: ${res.status}`);
+const logo = new Uint8Array(await res.arrayBuffer());
+
+const pdf = await renderPdf(html, {}, {
+  images: { "https://cdn.example.com/brand/logo.png": logo },
+});
+```
+
+Fetch once and reuse the bytes across renders, or cache them however you already cache assets.
+
+Small images can also go inline as `data:image/png;base64,...` URLs, with no `images` entry.
+
+## Templates with relative paths: `baseUrl`
+
+If the template says `src="logo.png"` but your asset store keys files by full URL, set `baseUrl`.
+vellora joins the two to find the key (`https://assets.example.com/invoice/logo.png`). It never
+downloads anything from that address.
+
+```js
+const pdf = await renderPdf(html, data, {
+  baseUrl: "https://assets.example.com/invoice/",
+  images: {
+    "https://assets.example.com/invoice/logo.png": logoBytes,
   },
 });
 ```
 
-## Use baseUrl for relative sources
+## When an image is missing
 
-If your template uses relative paths but your asset registry stores absolute URLs, pass `baseUrl`:
+If an `<img>` would be drawn but no bytes match its `src`, the render stops instead of leaving a
+blank box:
 
-```ts
-const pdf = await renderPdf(html, data, {
-  baseUrl: "https://assets.example.test/templates/invoice/",
-  images: {
-    "https://assets.example.test/templates/invoice/logo.png": logoBytes,
-  },
-});
+```txt
+VelloraUnsupportedError: Unsupported construct "image:unresolved" at line 2, column 1:
+<img> source could not be resolved: no matching `images` entry for its `src` — supply the bytes
+via the `images` render option (optionally with `baseUrl`)
 ```
 
-`baseUrl` only normalizes lookup keys. vellora does not fetch that URL.
+`err.feature` is `"image:unresolved"`, and `err.line` / `err.col` point at the `<img>`.
 
-## CLI usage
+## Not supported
 
-The CLI uses `--image key=path`:
+- Downloading `http(s)://` images during the render. Pass the bytes instead.
+- SVG files as `<img>` sources or `images` entries. Inline `<svg>` elements are drawn as vector
+  graphics; an `<image>` inside one must use a `data:` URL. Details in
+  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).
+
+<details>
+<summary>Using the CLI</summary>
+
+`vellora render` takes one `--image key=path` flag per asset:
 
 ```sh
 vellora render templates/invoice.html \
   --data templates/invoice.json \
-  --image assets/logo.png=assets/logo.png \
+  --image logo.png=assets/logo.png \
   --out out/invoice.pdf
 ```
 
-Use multiple `--image` flags when a document has multiple assets.
+</details>
 
-## Failure mode
+## Next step
 
-A renderable `<img>` whose source does not resolve rejects with `VelloraUnsupportedError` and
-`feature: "image:unresolved"`. Hidden images that do not produce layout output are ignored.
-
-## Not supported
-
-- Native remote fetching of `https://...` image URLs.
-- SVG files as `<img>` sources (`images` entries must be PNG, JPEG, GIF or WebP). Inline `<svg>`
-  elements are rendered natively as vector content; an `<image>` inside one must use a `data:`
-  URL (any other source rejects with `image:unresolved`). See COMPATIBILITY.md, "Inline SVG".
-  `vellora fix` / `@vellora/lint.fix()` can still rasterize an inline SVG to a PNG when a raster
-  image is wanted.
+[Use your brand font →](/guide/fonts)
