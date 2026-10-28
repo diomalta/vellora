@@ -64,7 +64,18 @@ const g = evaluateGate({
   main: true,
 });
 
-test("the committed DEBT.json is a debt/2 ledger of 1 entry / 1 key, byte-identical to its frozen rule-iii base", () => {
+// A ledger without its prose (each entry's owner.component and evidence): issue #48 corrected
+// DEBT-10-wpt-1's evidence text after the base was frozen, and prose is not a rule-iii field.
+const withoutProse = (file) => {
+  const l = JSON.parse(readFileSync(file, "utf8"));
+  const entries = l.entries.map(({ evidence, owner: { component, ...owner }, ...e }) => ({
+    ...e,
+    owner,
+  }));
+  return { ...l, entries };
+};
+
+test("the committed DEBT.json is a debt/2 ledger of 1 entry / 1 key, its frozen rule-iii base but for prose", () => {
   const l = loadDebt(DEBT_FILE);
   assert.equal(l.schema, "vellora-fidelity/debt/2");
   assert.equal(l.migratedFrom, undefined);
@@ -73,7 +84,7 @@ test("the committed DEBT.json is a debt/2 ledger of 1 entry / 1 key, byte-identi
     [["DEBT-10-wpt-1", 1]],
   );
   assert.equal(pointer.step, STEP);
-  assert.equal(readFileSync(DEBT_FILE, "utf8"), readFileSync(join(repo, pointer.ledger), "utf8"));
+  assert.deepEqual(withoutProse(DEBT_FILE), withoutProse(join(repo, pointer.ledger)));
   // The gate's own resolution with main lacking a DEBT.json (stubbed git): the pointer's frozen
   // ledger, sha256-checked, no refusal.
   const git = (args) =>
