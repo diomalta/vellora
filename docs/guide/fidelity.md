@@ -62,6 +62,10 @@ The tables are rewritten by the generator, so they cannot drift from it.
   not a document-quality score, and Chrome itself does not pass every test through this harness.
 - **Oracle.** `fidelity/oracles/doc-aggregate.mjs` is the committed document-level oracle. The
   same numbers feed the merge gate's strict exit contract.
+- **Paint probe (report-only).** `fidelity/oracles/paint-probe.mjs` reads the vector paint of both
+  PDFs: dashed and dotted border segments, text-decoration underlines, and the colour of the page
+  canvas. It never gates. Word positions cannot see paint, so this is where a solid border that
+  should be dashed, or a missing link underline, shows up.
 
 ### Results
 
@@ -123,6 +127,21 @@ WPT reftests passed through the vellora pipeline, printed to PDF and compared wi
 
 Commits: 2c66544 (2026-10-21T05:41:54Z), 16fa504 (2026-10-28T06:25:27Z); WPT `9d8aceec`. Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from). The 0.2.0 column was measured on a baseline commit that adds layout instrumentation to the 0.2.0 engine; its render-path equivalence to the tag is not separately verified.
 <!-- /fidelity-evidence:wpt -->
+
+### Paint
+
+<!-- fidelity-evidence:paint -->
+Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it. Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Both are probed against this run's Chrome PDFs (the published package's PDFs through `paint-probe.mjs --subject`; the generator checks that Chrome's side of both probes agrees).
+
+| Fixture | Dashed/dotted border segments, vellora / Chrome | Underlines, vellora / Chrome | Pages whose canvas colour differs from Chrome's | Probe flags |
+|---|---:|---:|---:|---:|
+| Boleto (bank slip) (`boleto`) | 0 / 135 → 135 / 135 | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| Boleto, FEBRABAN layout (`boleto-febraban`) | 0 / 152 → 152 / 152 | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| DANFE (NF-e invoice) (`danfe`) | 0 / 2,052 → 2,111 / 2,052 (59 more than Chrome) | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| Postmark receipt (OSS template) (`oss-postmark-receipt`) | 0 / 136 → 136 / 136 | 0 / 5 → 5 / 5 | pages 1, 2 → none | canvas, dashes-missing, underlines-missing → none |
+
+The other 5 fixtures have no dashed borders, underlines or canvas colour in either PDF. A count equal to Chrome's says the segments exist, not that each one sits where Chrome's does. Method: fidelity/oracles/py/paint.py (PyMuPDF get_drawings + text spans; docstring); pymupdf 1.28.2.
+<!-- /fidelity-evidence:paint -->
 
 ### Page by page
 
@@ -211,7 +230,8 @@ node fidelity/wpt/install-chrome.mjs
 #    --wpt-chrome runs Chrome's WPT outcomes live; --chrome-from <earlier run>/wpt/results.json
 #    reuses them (same WPT commit and comparison settings). --contract makes the gate report the
 #    strict merge contract, which is the only report that can turn the evidence from DRAFT to PASS.
-node fidelity/run-all.mjs --gate --contract --chrome <Chrome for Testing> \
+#    The run's paint-probe step writes <run>/paint-probe/summary.json (report-only).
+node fidelity/run-all.mjs --gate --main --contract --chrome <Chrome for Testing> \
   --baseline fidelity/baselines/port/10-integration --wpt-chrome \
   --tools-image vellora-fidelity-tools:local --out fidelity/results/run-all/<id>
 
@@ -223,13 +243,17 @@ node fidelity/oracles/doc-aggregate-pin.mjs --engine /tmp/vellora-0.2.0 \
   --engine-commit 5810062cd8a30d3721d3ffbf17c08bf01e4dc364 \
   --engine-blitz 2003ba5fc2d8931da9213ef26a813b0d24c83ca6 \
   --run fidelity/results/run-all/<id> --pdf-out /tmp/pin-pdfs --out /tmp/pin-doc.json
+# The published engine's paint, probed against the same run's Chrome PDFs.
+node fidelity/oracles/paint-probe.mjs --run fidelity/results/run-all/<id> \
+  --subject /tmp/pin-pdfs --label pin-v0.2.0 --out /tmp/pin-paint.json
 
 # 4. Page images, then this page's charts, tables and manifest.
 node fidelity/report/visual-compare.mjs --run fidelity/results/run-all/<id> \
   --pin-pdfs /tmp/pin-pdfs --pin-doc /tmp/pin-doc.json --out /tmp/visual-compare
 node fidelity/report/build-site-evidence.mjs --compare /tmp/visual-compare \
   --run fidelity/results/run-all/<id> --pin-doc /tmp/pin-doc.json \
-  --gate fidelity/results/run-all/<id>/gate/gate-report.json --update-docs
+  --gate fidelity/results/run-all/<id>/gate/gate-report.json \
+  --paint-before /tmp/pin-paint.json --update-docs
 node fidelity/report/build-site-evidence.mjs --check
 ```
 

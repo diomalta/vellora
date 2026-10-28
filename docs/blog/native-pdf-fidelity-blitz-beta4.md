@@ -1,6 +1,6 @@
 ---
 title: "Word by word against Chrome: measuring vellora's native PDFs"
-description: How vellora moved its browserless renderer to Blitz 0.3.0-beta.4, built the measurement oracles first, found and compensated a table layout bug, and measured every word against Chrome.
+description: How vellora moved its browserless renderer to Blitz 0.3.0-beta.4, built the measurement oracles first, compensated the Blitz layout bugs it found, turned on float layout that the published package never compiled, and measured every word and every dashed border against Chrome.
 draft: true
 ---
 
@@ -92,6 +92,85 @@ It is a workaround, and the code says so. The comment on `compensate_collapsed_b
 bug. A canary test renders the repro through raw Blitz and fails as soon as Blitz stops producing
 the extra height, so nobody has to remember to check.
 
+The same rule covers the smaller compensations that followed. One example: Chrome lays boxes out
+in fixed-point units of 1/64 px (LayoutUnit), and Blitz lays them out in floating point, so a long
+document drifts by fractions of a pixel per row. vellora now rounds those lengths the way Chrome
+does. Each compensation has a code comment that names the crate version and the source lines, and
+a raw-Blitz canary test (`crates/vellora-core/src/raw_blitz_tests.rs`) that fails once Blitz
+changes the behaviour.
+
+## Floats were never laid out
+
+Not every difference was a Blitz bug. Blitz's float layout is an opt-in cargo feature:
+`floats = ["taffy/float_layout", "stylo_taffy/floats"]` in `blitz-dom`'s `Cargo.toml`, and it is
+not in the default feature list. vellora 0.2.0 depends on Blitz git revision 2003ba5 with
+`default-features = false` and no extra features. Blitz's float code was therefore never
+compiled, and every `float: left` or `float: right` box was laid out as an ordinary in-flow
+block. The step that found this is recorded in
+[`fidelity/gate/snapshots/2026-10-28/c04/floats/README.md`](https://github.com/diomalta/vellora/blob/main/fidelity/gate/snapshots/2026-10-28/c04/floats/README.md).
+
+The branch turns the feature on. That is a crates.io feature switch, not a fork. It also exposed
+two bugs in the crates.io stack. One is in Taffy's fit test for a box placed next to a float. The
+other is in where Blitz places a float on a line that cannot wrap. Both are compensated, with
+canaries. Where engines disagree about a float on a no-wrap line, vellora follows Chrome.
+
+None of the nine document fixtures uses a float, so their numbers do not change because of this.
+WPT does change. Some of the published package's float "passes" were false: the test and its
+reference page lost their floats the same way and matched by accident. The merge gate classifies
+such a pass as an artefact (class a) only when there is evidence for it.
+
+## What word positions cannot see
+
+The word-position oracle reads text. A PDF can place every word exactly and still differ from
+Chrome's in paint. Three paint gaps were found by looking at the pages, and all three were in
+vellora's own painter, not in Blitz:
+
+- **The page canvas.** A background colour on `html` or `body` was never painted. Chrome fills the
+  page area of every page with it. vellora now does too, and `@page { background }` covers the
+  whole page box, as in Chrome.
+- **Dashed and dotted borders** were drawn solid. They are now drawn as segments, with dash
+  lengths and gaps fitted to each side the way Chrome fits them.
+- **Text decorations** (`text-decoration`: link underlines, overlines, line-through) were not
+  drawn at all. They are now drawn on the decorating box's baseline, with Chrome's thickness rule.
+
+A report-only paint probe now counts these in both PDFs. No gate rule reads it. A count equal to
+Chrome's shows that the segments exist. It does not show that each one sits exactly where Chrome
+puts it.
+
+<!-- fidelity-evidence:paint -->
+Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it. Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Both are probed against this run's Chrome PDFs (the published package's PDFs through `paint-probe.mjs --subject`; the generator checks that Chrome's side of both probes agrees).
+
+| Fixture | Dashed/dotted border segments, vellora / Chrome | Underlines, vellora / Chrome | Pages whose canvas colour differs from Chrome's | Probe flags |
+|---|---:|---:|---:|---:|
+| Boleto (bank slip) (`boleto`) | 0 / 135 → 135 / 135 | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| Boleto, FEBRABAN layout (`boleto-febraban`) | 0 / 152 → 152 / 152 | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| DANFE (NF-e invoice) (`danfe`) | 0 / 2,052 → 2,111 / 2,052 (59 more than Chrome) | 0 / 0 → 0 / 0 | none → none | dashes-missing → none |
+| Postmark receipt (OSS template) (`oss-postmark-receipt`) | 0 / 136 → 136 / 136 | 0 / 5 → 5 / 5 | pages 1, 2 → none | canvas, dashes-missing, underlines-missing → none |
+
+The other 5 fixtures have no dashed borders, underlines or canvas colour in either PDF. A count equal to Chrome's says the segments exist, not that each one sits where Chrome's does. Method: fidelity/oracles/py/paint.py (PyMuPDF get_drawings + text spans; docstring); pymupdf 1.28.2.
+<!-- /fidelity-evidence:paint -->
+
+On the DANFE, vellora draws more dash segments than Chrome. Our working explanation, not yet
+measured, is that the collapsed-border compensation extends each cell's horizontal edge across the
+column lines, so the end dash of one cell overlaps the first dash of the next.
+
+## Multi-column layout, and what it costs
+
+Blitz 0.3.0-beta.4 and its layout engine, Taffy 0.15.0, have no multi-column layout. Stylo
+computes `column-count` and `column-width`, and nothing reads them, so a `columns: 2` box was laid
+out as one column. The branch lays the columns out in vellora, behind the same single Blitz
+module, with a canary that fails once Blitz lays multicol out itself.
+
+It fixes the flex-fragmentation tests that needed only columns. A ruby test that needs ruby layout
+as well as columns still fails. The change also loses some fragmentation tests that passed
+before. In those tests the one-column layout happened to produce the same picture as Chrome.
+With real columns, other gaps show: an inline SVG that vellora does not paint, table captions
+that Blitz lays out with zero size, and several forced breaks at one vertical position. The merge
+gate lists them by name below. Whether to keep the multi-column layout and fix those gaps, or
+back it out, is an open decision. Still missing: `column-span: all`, `column-rule`, nested
+multi-column boxes, and a multi-column box longer than one page, which the paginator cuts across
+all columns at once.
+
 ## Results
 
 <!-- fidelity-evidence:charts -->
@@ -128,10 +207,9 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
   - (4) step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes: **NOT met**. 5 regressions against the previous gated step: `css/css-break/flexbox/multi-line-row-flex-fragmentation-045.html`, `css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`. Head view: FAIL, 4 items (`css/css-break/svg-with-transform.html`, `css/css-break/table/caption-margin-002.html`, `css/css-break/table/caption-margin-005.html`, `css/css-break/table/monolithic-overflow-001.tentative.html`).
 <!-- /fidelity-evidence:losses -->
 
-There is also a smaller residual on the long text fixture. Its table rows are each a fraction of a
-pixel taller than Chrome's. Part of that is confirmed: Chrome rounds lengths down to 1/64 px
-(LayoutUnit), and Blitz does not. It stays inside 1 mm here, but the gate's step-to-step ratchet
-still flags it, so it is the next measured step and not a footnote.
+The postmark receipt's missing words are a known pair. Chrome's PDF draws the masthead text twice,
+because of a `text-shadow` copy, and vellora draws no text shadow. The gate records that pair as
+an oracle artefact.
 
 ## WPT: coverage, not a score
 
