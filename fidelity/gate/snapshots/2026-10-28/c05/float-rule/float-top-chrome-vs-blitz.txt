@@ -1,0 +1,25 @@
+repro               chrome    raw    c04    c05  c05==chrome
+fit-nosp.html         0.00    0.0   20.0    0.0  True
+fit-sp.html           0.00    0.0   20.0    0.0  True
+left-fit.html         0.00    0.0    0.0    0.0  True
+left-fit10.html       0.00    0.0    nan    0.0  True
+left-over.html       20.00    0.0    0.0    0.0  False
+margin-over.html     20.00    0.0   20.0   20.0  True
+margin.html           0.00    0.0   20.0    0.0  True
+n1.html              20.00    0.0   20.0   20.0  True
+n2.html              20.00    0.0   20.0   20.0  True
+n7.html               0.00    0.0   20.0    0.0  True
+n8.html               0.00    0.0   20.0    0.0  True
+nbsp6.html           20.00    0.0    nan   20.0  True
+over1.html           20.00    0.0   20.0   20.0  True
+pre-fit.html          0.00    0.0   20.0    0.0  True
+pre-over.html        20.00    0.0   20.0   20.0  True
+pre-sp6.html         20.00    0.0    nan   20.0  True
+second-line.html     20.00   20.0   40.0   20.0  True
+short-fits.html       0.00    0.0    0.0    0.0  True
+two-floats.html       0.00    0.0   20.0    0.0  True
+wide-first.html       0.00    0.0    nan    0.0  True
+wide-right-nosp.html    0.00    0.0   20.0    0.0  True
+wide-right.html       0.00    0.0   20.0    0.0  True
+c05 float top == Chrome: 21/22
+c04 float top == Chrome: 7 / 18
