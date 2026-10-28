@@ -63,8 +63,12 @@ after run reuses the before run's Chrome outcomes (`--chrome-from`):
 **The step-5 targets (`run.mjs css/css-break --filter ...`):**
 
 - multi-line-column-flex-fragmentation-054, -055 and -058 pass, with no ink flags;
-- ruby-003 still fails. It needs ruby layout as well as multicol (c05-probe section 1). Blitz
-  lays `<rt>` out inline, so the strut gap between the two lines stays.
+- ruby-003 still fails. It needs ruby layout as well as multicol (c05-probe section 1). The
+  tip's render keeps a 4 px strut gap between the two inline-blocks (c05-probe). HYPOTHESIS:
+  Blitz lays `<rt>` out as a plain inline; its UA stylesheet was not read.
+- multi-line-column-flex-fragmentation-060 and table/table-border-007 pass now. The step-4 notes
+  listed both as needing multicol. The class-a acceptance that `c04/accepted.json` /
+  `c05/accepted.json` carry for table-border-007 has nothing left to accept.
 
 **Fixtures.** `c03-verify-det/det.mjs` (layout_dump) re-rendered the 9 layout-diff fixtures of
 the c04 run copy. All 9 PDFs are byte-identical to the c04 run copy's `vellora.pdf` (CONFIRMED).
@@ -86,8 +90,16 @@ No fixture uses multicol.
 
 ### Default suites: 6, all css/css-break
 
-None is class a under GATE-A3: in each, the c04 render matched Chrome's test render (c04
-`inkCheck` missingFrac 0.008 or less, no flag) and Chrome passes. Each old pass came from the
+None is class a under GATE-A3. Chrome passes each. In each, the c04 pass was clean
+(CONFIRMED from the c04 run copy's `inkCheck`):
+
+- candidate ink within 0.8 % of Chrome's oracle ink (missingFrac 0.005-0.008);
+- bbox shift 1 px;
+- no `ink-missing-vs-chrome` / `ink-displaced-vs-chrome` flag (`fidelity/wpt/lib/report.mjs`:
+  missingFrac >= 0.5).
+
+The ink check is coarse (ink count and bbox), not a pixel comparison of the c04 render with
+Chrome's. Nothing shows the old passes to be false. Each old pass came from the
 one-column layout coinciding with Chrome's picture. Each now fails because of something the
 columns expose, not because of a wrong column.
 
@@ -134,6 +146,8 @@ All of these are also in COMPATIBILITY.md.
 - `column-rule` (not painted).
 - Nested multi-column containers.
 - Vertical writing modes.
+- RTL column order (right to left) is implemented, but no test or measurement covers it
+  (UNVERIFIED).
 - Parallel flows: row-flex items, the lines of a column flex container and table cells share
   one break line, where Chrome breaks each on its own.
 - A multi-column container longer than a page: the paginator cuts it as one block, across all
@@ -144,6 +158,14 @@ All of these are also in COMPATIBILITY.md.
 
 Every `HashMap` / `HashSet` the multicol code adds is lookup-only. No output order depends on
 iterating one.
+
+CONFIRMED on multicol input: 5 documents were rendered twice in two separate node processes
+(`probe/det2.sh` in the run store). All 5 PDFs were byte-identical. The documents:
+
+- the two balancing probes (block paragraphs, `<br>` lines);
+- WPT multi-line-column-flex-fragmentation-058;
+- WPT out-of-flow-in-multicolumn-094;
+- WPT multi-line-row-flex-fragmentation-037.
 
 ## Commands
 

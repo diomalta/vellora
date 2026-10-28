@@ -23,7 +23,8 @@ multi-column containers are byte-identical.
 Measured on the repo's fidelity harness (local macOS, Chrome for Testing 155.0.8059.85
 reference; indicative, not CI): WPT reftest passes in the default suites 4157 -> 4416 (8047
 tests); css/css-break 115 -> 371 and css/css-multicol 60 -> 122. Six earlier css/css-break passes
-are now failures; the old renders matched Chrome's by coincidence (one column of content that
-Blitz does not lay out as Chrome does: an inline SVG, table captions, a non-cell table child, a
-float beside a line, and forced breaks between items at the same height), listed in
+are now failures. Their one-column renders happened to look like Chrome's (the harness's ink
+check); in columns they expose what vellora or Blitz does not lay out as Chrome does: an inline
+SVG, table captions, a non-cell table child, a float beside a line, and forced breaks between
+items at the same height. They are listed in
 `fidelity/gate/snapshots/2026-10-28/c05-multicol/README.md`.
