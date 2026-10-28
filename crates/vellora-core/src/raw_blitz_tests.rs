@@ -1004,3 +1004,54 @@ fn relative_inline_compensation_moves_text_and_floats() {
         .collect();
     assert_eq!(moved, vec![(100.0, 0.0), (100.0, 10.0), (100.0, 10.0)]);
 }
+
+/// The second layout of `float_avoidance_fixups` keeps the computed-style compensations made
+/// before the first one: a document with the `collapse_b1` table (collapsed-border compensation
+/// and LayoutUnit snapping) and a float the no-wrap edit moves still gets Chrome's table rows
+/// (`collapsed_border_compensation_gives_chromes_rows`) after the re-layout the float triggers.
+#[test]
+fn float_avoidance_relayout_keeps_the_earlier_style_compensations() {
+    let html = collapse_variant(
+        "table{border-collapse:collapse} td{border:1px solid #000} \
+         .nw{width:10ch;white-space:nowrap;font-family:monospace;line-height:normal} \
+         .nw span{float:right;width:5ch;height:5ch;background:blue}",
+        3,
+    )
+    .replace(
+        "<div>after</div>",
+        "<div>after</div><div class=\"nw\">Some text that overflows my parent. <span></span></div>",
+    );
+    let doc = product_layout(&html);
+    let table = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("table"))
+        .expect("table");
+    let cells: Vec<(f64, f64)> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("td"))
+        .step_by(2)
+        .map(|b| (b.y - table.y, b.height))
+        .collect();
+    assert_eq!(table.height, 112.0, "Chrome's collapse_b1 table height");
+    for ((y, h), (cy, ch)) in cells.iter().zip([(0.5, 37.0), (37.5, 37.0), (74.5, 37.0)]) {
+        assert!(
+            (y - cy).abs() <= 0.5 && (y + h - (cy + ch)).abs() <= 0.5,
+            "{cells:?}"
+        );
+    }
+    // The float edit applied, so the second layout ran.
+    let div = doc
+        .boxes
+        .iter()
+        .rfind(|b| b.tag.as_deref() == Some("div"))
+        .expect("div");
+    let span = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("span"))
+        .expect("float");
+    assert!(div.height > 0.0);
+    assert_eq!(span.y - div.y, div.height, "float below its line");
+}
