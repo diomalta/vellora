@@ -137,12 +137,12 @@ async function main() {
         includeInline,
         top,
       });
-      const lost = model.page.content_width - dump.viewport.width_px;
+      const gained = dump.viewport.width_px - model.page.content_width;
       const dejavu = Object.entries(model.faces)
         .filter(([face]) => face.startsWith("DejaVu"))
         .reduce((n, [, c]) => n + c, 0);
       const parity = [
-        `@page content box ${model.page.content_width} × ${model.page.content_height} CSS px → Blitz viewport ${dump.viewport.width_px} × ${dump.viewport.height_px} (\`as u32\` truncation in resolve_and_walk drops ${Math.round(lost * 1e4) / 1e4} px of inline size; a KNOWN INPUT divergence vs Chromium print, not an engine difference). Chromium MEASURED: documentElement.clientWidth ${probes.clientWidth}, innerWidth ${probes.innerWidth}, innerHeight ${probes.innerHeight} — ${probes.clientWidth === dump.viewport.width_px && probes.innerWidth === dump.viewport.width_px && probes.innerHeight === dump.viewport.height_px ? "MATCH" : "MISMATCH: the engines laid out different viewports; attribution INVALID (check viewport_width/viewport_height)"}.`,
+        `@page content box ${model.page.content_width} × ${model.page.content_height} CSS px → Blitz viewport ${dump.viewport.width_px} × ${dump.viewport.height_px} (width: Chromium's print layout width, ceil(authored page width - left - right margins), \`PageBox::layout_content_width\` since Phase C step 03, ${Math.round(gained * 1e4) / 1e4} px over the exact box; height: \`as u32\` truncation of the content height). Chromium MEASURED: documentElement.clientWidth ${probes.clientWidth}, innerWidth ${probes.innerWidth}, innerHeight ${probes.innerHeight} — ${probes.clientWidth === dump.viewport.width_px && probes.innerWidth === dump.viewport.width_px && probes.innerHeight === dump.viewport.height_px ? "MATCH" : "MISMATCH: the engines laid out different viewports; attribution INVALID (check viewport_width/viewport_height)"}.`,
         `Media: Blitz evaluates stylesheets as \`${model.mediaType}\` (the DocumentConfig::media_type blitz_engine builds every document with: print since port step 07, Blitz's default screen before). Chromium emulates \`print\` (matchMedia('print') = ${probes.printMedia}). Fixture contains @media rules: ${/@media/i.test(prepared.nativeHtml) ? (model.mediaType === "print" ? "YES — both engines evaluate them for print (media features: vellora against the @page content box, Chromium against its own print page)" : "YES — media-dependent rules differ") : "no (media type is inert here)"}.`,
         `Fonts: Chromium loaded ${probes.fonts.join("; ") || "(none)"} from the bundled files (sha256 in env.fonts_sha256). vellora runs by face: ${Object.entries(
           model.faces,
