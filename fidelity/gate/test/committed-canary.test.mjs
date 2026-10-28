@@ -1,13 +1,17 @@
-// REAL canary on committed data (no render, deterministic): the Phase A beta.4 baseline taken as
-// the "run" against the pin baseline MUST be flagged for the two regressions the status-only
-// ratchet missed (notification REF-W 3.60 -> 8.54 mm, invoice REF-W 2.44 -> 3.91 mm) and for the
-// WPT clean-pass regressions; and beta.4 against itself must show no regression.
+// REAL canary on committed data (no render, deterministic): the chain head port/00-start (the
+// Blitz 0.3.0-beta.4 bump plus the whitespace-test and reader fixes) taken as the "run" against
+// the pin baseline (the published v0.2.0 at Blitz 2003ba5) MUST be flagged for the regressions
+// the old status-only ratchet missed (notification REF-W 3.60 -> 8.54 mm, invoice REF-W 2.44 ->
+// 3.91 mm) and for the 53 WPT clean-pass regressions; a baseline against itself shows none. And
+// the latest port link must reproduce its own committed gate verdict against the link it was
+// gated with.
 //
-// pdf-probe history: every link was gated with pdf-probe semantics 1 (pdftotext bbox tops, k-th
-// occurrence pairs) and its acceptedRegressions name v1 keys. Since the v2 re-score
-// (gate/rescore-pdf-probe.mjs) the gated section is v2 and the v1 one is kept under
-// attachments/pdf-probe-v1/ (beta4: layout-diff-ab/). The historical verdicts below are reproduced
-// on the v1 sections (`v1(...)`); the v2 facts of the chain are asserted at the end.
+// Kept set (2026-10-28 prune, fidelity/scripts/prune-evidence.mjs --keep-latest): pin, the chain
+// head, the latest link and the link it was gated against. Until then this file also replayed
+// beta4 / beta4-gated and every intermediate link 01..09 (each PASS against its predecessor with
+// exactly its acceptedRegressions, the v2 pdf-probe re-score of the chain, the EXT-2 token set on
+// 08 vs 07); those checks were deleted with their baselines. They live, with the data, at the
+// local tag fidelity-archive-2026-10-28 (b5c95460eebedcc86a6dce3c0e262a940b0a8c27).
 import assert from "node:assert/strict";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
@@ -16,767 +20,138 @@ import { compareSnapshots } from "../compare.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
 
 const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
-const pin = loadBaselineDir(join(baselines, "pin"));
-const beta4 = loadBaselineDir(join(baselines, "beta4"));
+const load = (...parts) => loadBaselineDir(join(baselines, ...parts));
+const pin = load("pin");
+const head = load("port", "00-start");
+const s10 = load("port", "10-integration");
+const s11 = load("port", "11-phase-c");
 const item = (r, key) => r.items.find((i) => i.key === key);
-/** A baseline with the pdf-probe section it was gated with (semantics 1, history). */
-// History: the sections each link was gated with when it was written (pdf-probe v1, no backfilled
-// EXT-2 token lists).
-const v1 = (...parts) =>
-  loadBaselineDir(join(baselines, ...parts), { pdfProbe: "v1", ext2Tokens: false });
 
 test("committed baselines pass their manifest sha256 integrity check", () => {
-  assert.equal(pin.integrity.ok, true, pin.integrity.problems.join("; "));
-  assert.equal(beta4.integrity.ok, true, beta4.integrity.problems.join("; "));
+  for (const [name, b, n] of [
+    ["pin", pin, 24],
+    ["port/00-start", head, 42],
+    ["port/10-integration", s10, 65],
+    ["port/11-phase-c", s11, 65],
+  ]) {
+    assert.equal(b.integrity.ok, true, `${name}: ${b.integrity.problems.join("; ")}`);
+    assert.equal(b.integrity.checked, n, name);
+  }
 });
 
-test("beta4-gated (gate schema) round-trips: vs the Phase A beta4 baseline only the red cargo test gates", () => {
-  const gated = loadBaselineDir(join(baselines, "beta4-gated"));
-  assert.equal(gated.integrity.ok, true, gated.integrity.problems.join("; "));
-  assert.equal(gated.source.schema, "vellora-fidelity/baseline/2");
-  assert.ok(gated.pdfProbe && Object.keys(gated.pdfProbe).length === 9);
-  assert.equal(Object.keys(gated.crashtests.results).length, 239);
-  const r = compareSnapshots(beta4, gated);
-  assert.equal(r.items.filter((x) => x.class === "regression" || x.class === "removed").length, 0);
-  assert.deepEqual(
-    r.items.filter((x) => x.gating).map((x) => x.key),
-    ["code|cargo-test"],
-  );
-  assert.equal(item(r, "danfe|DANFE-B1|oracles:barcode|plain|criterion#1").class, "newly-measured");
-});
-
-test("beta.4 vs pin: REF-W regressions of notification and invoice are flagged with before/after", () => {
-  const r = compareSnapshots(pin, beta4);
+test("pin vs the chain head: REF-W regressions of notification and invoice are flagged with before/after", () => {
+  const r = compareSnapshots(pin, head);
   assert.equal(r.verdict, "FAIL");
   const n = item(r, "notification|REF-W|oracles:layout|plain|criterion#1|maxMm");
   assert.deepEqual([n.class, n.gating, n.before, n.after], ["regression", true, 3.6, 8.54]);
-  const np = item(r, "notification|REF-W|oracles:layout|plain|criterion#1|p95Mm");
-  assert.deepEqual([np.before, np.after], [3.48, 8.42]);
   const i = item(r, "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm");
   assert.deepEqual([i.class, i.gating, i.before, i.after], ["regression", true, 2.44, 3.91]);
-  // The status of both rows stayed FAIL -> FAIL: the old status-only ratchet was blind to this.
+  // The status of the row stayed FAIL -> FAIL: the old status-only ratchet was blind to this.
   assert.equal(item(r, "notification|REF-W|oracles:layout|plain|criterion#1"), undefined);
 });
 
-test("beta.4 vs pin: 53 WPT clean-pass regressions gate, 111 flagged-pass regressions are only reported", () => {
-  const r = compareSnapshots(pin, beta4);
+test("pin vs the chain head: 53 WPT clean-pass regressions gate, flagged-pass regressions are only reported", () => {
+  const r = compareSnapshots(pin, head);
   const wpt = r.items.filter((x) => x.check === "wpt");
   assert.equal(wpt.filter((x) => x.class === "regression" && x.gating).length, 53);
-  assert.equal(wpt.filter((x) => x.class === "reported" && !x.gating).length, 111);
-  // Same numbers the Phase A wpt/run.mjs ratchet recorded in the beta.4 manifest.
-  assert.equal(beta4.manifest.wpt.ratchetCounts.regressionsOfCleanPasses, 53);
-  assert.equal(beta4.manifest.wpt.ratchetCounts.regressionsOfFlaggedPasses, 111);
+  assert.equal(wpt.filter((x) => x.class === "reported" && !x.gating).length, 102);
 });
 
-test("beta.4 vs pin: text-extraction and DANFE losses are value regressions too", () => {
-  const r = compareSnapshots(pin, beta4);
+test("pin vs the chain head: text-extraction and DANFE losses are value regressions too", () => {
+  const r = compareSnapshots(pin, head);
   const x = item(r, "boleto-febraban|BOL-X1|corpus||criterion#1|found");
   assert.deepEqual([x.class, x.before, x.after], ["regression", 13, 11]);
   assert.equal(item(r, "danfe|DANFE-F11|corpus||criterion#1").class, "regression");
   assert.equal(item(r, "danfe|DANFE-B3|corpus||criterion#1").class, "improvement");
 });
 
-test("beta.4 vs beta.4: no regression; the only gating items are the 2 postmark font-parity checks the shared alias table fixes", () => {
-  const r = compareSnapshots(beta4, beta4);
-  assert.equal(r.items.filter((x) => x.class === "regression" || x.class === "removed").length, 0);
+test("a baseline against itself: no gating item", () => {
+  for (const b of [head, s11]) {
+    const r = compareSnapshots(b, b);
+    assert.equal(r.verdict, "PASS");
+    assert.deepEqual(
+      r.items.filter((x) => x.gating),
+      [],
+    );
+  }
+});
+
+test("port/00-start (head of the port chain, baselines/port/README.md) was written from a PASS, not --force", () => {
+  assert.equal(head.source.schema, "vellora-fidelity/baseline/2");
+  assert.equal(head.manifest.gate.verdict, "PASS");
+  assert.equal(head.manifest.gate.writtenDespiteVerdict, false);
+  // Its own previous link (beta4-gated) was pruned; the PASS is the recorded verdict.
+  assert.equal(head.manifest.gate.baseline, "fidelity/baselines/beta4-gated");
+  assert.deepEqual(head.manifest.acceptedRegressions, []);
+  assert.equal(Object.keys(head.crashtests.results).length, 239);
+  assert.ok(head.codeChecks.length === 4 && head.codeChecks.every((c) => c.status === "pass"));
+});
+
+test("port/11-phase-c reproduces its committed gate vs port/10-integration: PASS only with its 3 class-a acceptances", () => {
+  const g = s11.manifest.gate;
+  assert.equal(g.verdict, "PASS");
+  assert.equal(g.writtenDespiteVerdict, false);
+  assert.equal(g.baseline, "fidelity/baselines/port/10-integration");
+  assert.equal(s10.manifest.gate.writtenDespiteVerdict, false);
+  assert.equal(s11.manifest.acceptedRegressions.length, 13);
+  assert.ok(s11.manifest.acceptedRegressions.every((e) => e.class === "a"));
+  assert.equal(Object.keys(s11.crashtests.results).length, 239);
+  assert.ok(s11.codeChecks.length === 4 && s11.codeChecks.every((c) => c.status === "pass"));
+
+  const r = compareSnapshots(s10, s11, { accept: s11.manifest.acceptedRegressions });
+  assert.equal(r.verdict, "PASS");
+  const counts = {};
+  for (const i of r.items) counts[i.class] = (counts[i.class] ?? 0) + 1;
+  // The link-to-link classes of the committed gate (the head/pin/doc counts need the run).
+  for (const k of ["improvement", "newly-measured", "reported", "changed", "accepted"]) {
+    assert.equal(counts[k], g.counts[k], k);
+  }
+  assert.equal(counts["within-tolerance"], g.counts["within-tolerance"]);
+  assert.equal(r.items.filter((x) => x.gating).length, g.counts.gating);
+  assert.equal(g.counts.gating, 0);
   assert.deepEqual(
     r.items
-      .filter((x) => x.gating)
+      .filter((x) => x.class === "accepted")
       .map((x) => x.key)
       .sort(),
     [
-      "layout-diff|oss-postmark-receipt|bundled_fonts_loaded",
-      "layout-diff|oss-postmark-receipt|platform_fonts_custom",
+      "wpt|css/css-page/page-name-flex-001-print.html",
+      "wpt|css/css-page/page-name-flex-002-print.html",
+      "wpt|css/css-page/page-name-flex-004-print.html",
     ],
   );
+  // Without them exactly those 3 gate.
+  const bare = compareSnapshots(s10, s11);
+  assert.equal(bare.verdict, "FAIL");
+  assert.equal(bare.items.filter((x) => x.gating).length, 3);
 });
 
-test("port/00-start (head of the port chain, baselines/port/README.md) passes vs beta4-gated", () => {
-  const start = loadBaselineDir(join(baselines, "port", "00-start"));
-  assert.equal(start.integrity.ok, true, start.integrity.problems.join("; "));
-  assert.equal(start.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(start.manifest.gate.verdict, "PASS");
-  assert.equal(start.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(start.manifest.gate.baseline, "fidelity/baselines/beta4-gated");
-  assert.deepEqual(start.manifest.acceptedRegressions, []);
-  assert.equal(Object.keys(start.crashtests.results).length, 239);
-  assert.ok(start.codeChecks.length === 4 && start.codeChecks.every((c) => c.status === "pass"));
-  const r = compareSnapshots(loadBaselineDir(join(baselines, "beta4-gated")), start);
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The only change: 13 WPT css-text tests fail -> pass (phaseb/text-hook's reader fix).
-  const improved = r.items.filter((x) => x.class === "improvement");
-  assert.equal(improved.length, 13);
-  assert.ok(improved.every((x) => x.key.startsWith("wpt|css/css-text/")));
-});
-
-test("port/01-pagination-gaps passes vs port/00-start only with its acceptedRegressions (v1 pdf-probe)", () => {
-  const start = v1("port", "00-start");
-  const step = v1("port", "01-pagination-gaps");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/00-start");
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const accept = step.manifest.acceptedRegressions;
-  assert.equal(accept.length, 150);
-  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
-  // Without the acceptances the same comparison gates exactly the 150 accepted items...
-  const raw = compareSnapshots(start, step);
-  assert.equal(raw.verdict, "FAIL");
-  assert.deepEqual(
-    raw.items
-      .filter((x) => x.gating)
-      .map((x) => x.key)
-      .sort(),
-    accept.map((e) => e.key).sort(),
-  );
-  // ...and with them it passes.
-  const r = compareSnapshots(start, step, { accept });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The step's target: the notification's bottom text (Phase A: -8.54 mm).
-  const let1 = item(r, "notification|LET-1|oracles:layout|plain|criterion#1|worstMm");
-  assert.deepEqual([let1.class, let1.before, let1.after], ["improvement", 8.54, 0.75]);
-  const refw = item(r, "notification|REF-W|oracles:layout|plain|criterion#1|maxMm");
-  assert.deepEqual([refw.class, refw.before, refw.after], ["improvement", 8.54, 1.63]);
-});
-
-test("port/02-delete-noop-passes passes vs port/01-pagination-gaps with no acceptedRegressions", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "01-pagination-gaps"));
-  const step = loadBaselineDir(join(baselines, "port", "02-delete-noop-passes"));
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/01-pagination-gaps");
-  assert.deepEqual(step.manifest.acceptedRegressions, []);
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const r = compareSnapshots(prev, step);
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The only change: 3 WPT margin-collapse tests fail -> clean pass (the removed
-  // vertical_margin_collapse pass collapsed margins Blitz had already collapsed).
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.class !== "unchanged")
-      .map((x) => `${x.class} ${x.key}`)
-      .sort(),
-    [
-      "improvement wpt|css/CSS2/box-display/multiple-block-in-inlines-margins-collapse.html",
-      "improvement wpt|css/CSS2/margin-padding-clear/margin-collapse-101.xht",
-      "improvement wpt|css/CSS2/margin-padding-clear/margin-collapse-105.xht",
-    ],
-  );
-});
-
-test("port/03-table-passes passes vs port/02-delete-noop-passes only with its acceptedRegressions (v1 pdf-probe)", () => {
-  const prev = v1("port", "02-delete-noop-passes");
-  const step = v1("port", "03-table-passes");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/02-delete-noop-passes");
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const accept = step.manifest.acceptedRegressions;
-  assert.equal(accept.length, 40);
-  assert.ok(accept.every((e) => e.key.startsWith("pdf-probe|") && e.reason && e.evidence));
-  // 16 occurrence-pairing artefacts and 24 DANFE words the deleted fixed_table_widths pass had
-  // placed near Chrome by coincidence (labels and evidence: manifest.json, baselines/port/README.md).
-  const labels = {};
-  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
-  assert.deepEqual(labels, {
-    "pdf-probe-pairing-artefact": 16,
-    "coincidental-match-of-wrong-geometry": 24,
-  });
-  // Without the acceptances the same comparison gates exactly the 40 accepted items...
-  const raw = compareSnapshots(prev, step);
-  assert.equal(raw.verdict, "FAIL");
-  assert.deepEqual(
-    raw.items
-      .filter((x) => x.gating)
-      .map((x) => x.key)
-      .sort(),
-    accept.map((e) => e.key).sort(),
-  );
-  // ...and with them it passes.
-  const r = compareSnapshots(prev, step, { accept });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The step's targets: invoice price columns, DANFE and boleto-febraban grids.
-  const inv = item(r, "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm");
-  assert.deepEqual([inv.class, inv.before, inv.after], ["improvement", 3.91, 2.81]);
-  const bol = item(r, "boleto-febraban|BOL-X1|corpus||criterion#1|found");
-  assert.deepEqual([bol.class, bol.before, bol.after], ["improvement", 11, 16]);
-  const danfe = item(r, "danfe|DANFE-X1|corpus||criterion#1|found");
-  assert.deepEqual([danfe.class, danfe.before, danfe.after], ["improvement", 22, 26]);
-  const wpt = item(r, "wpt|css/CSS2/tables/fixed-table-layout-026.xht");
-  assert.deepEqual([wpt.class, wpt.before, wpt.after], ["improvement", "fail", "pass"]);
-});
-
-test("port/04-block-offset passes vs port/03-table-passes only with its acceptedRegressions (v1 pdf-probe)", () => {
-  const prev = v1("port", "03-table-passes");
-  const step = v1("port", "04-block-offset");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/03-table-passes");
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const accept = step.manifest.acceptedRegressions;
-  assert.equal(accept.length, 2587);
-  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
-  // 709 oracle artefacts (literal GATE-A1 fit) and 1861 words + 17 value/status rows whose old value
-  // was two errors cancelling (the removed 3 pt PDF raise vs raw Blitz box drift); labels and
-  // evidence: manifest.json, attachments/accepted-evidence.json, baselines/port/README.md.
-  const labels = {};
-  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
-  assert.deepEqual(labels, {
-    "compensating-drift": 689,
-    "misplaced-word-uniform-shift": 1189,
-    "pdf-probe-ascent-artefact": 697,
-    "pdf-probe-pairing-artefact": 11,
-    "wpt-subpixel-raster-artefact": 1,
-  });
-  // Without the acceptances the same comparison gates exactly the 2587 accepted items...
-  const raw = compareSnapshots(prev, step);
-  assert.equal(raw.verdict, "FAIL");
-  assert.deepEqual(
-    raw.items
-      .filter((x) => x.gating)
-      .map((x) => x.key)
-      .sort(),
-    accept.map((e) => e.key).sort(),
-  );
-  // ...and with them it passes.
-  const r = compareSnapshots(prev, step, { accept });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The step's targets: Ahem line boxes, invoice/boleto cell text; LET-1 is an accepted regression.
-  const ahem = item(r, "wpt|css/CSS2/linebox/line-height-002.xht");
-  assert.deepEqual([ahem.class, ahem.before, ahem.after], ["improvement", "fail", "pass"]);
-  const inv = item(r, "invoice|REF-W|oracles:layout|plain|criterion#1|maxMm");
-  assert.deepEqual([inv.class, inv.before, inv.after], ["improvement", 2.81, 2.53]);
-  const bol = item(r, "boleto-febraban|REF-W|oracles:layout|plain|criterion#1|maxMm");
-  assert.deepEqual([bol.class, bol.before, bol.after], ["improvement", 7.94, 2.31]);
-  const let1 = item(r, "notification|LET-1|oracles:layout|plain|criterion#1|worstMm");
-  assert.deepEqual([let1.class, let1.before, let1.after], ["accepted", 0.75, 1.81]);
-});
-
-test("port/05-walk-rewrite passes vs port/04-block-offset only with its acceptedRegressions (v1 pdf-probe)", () => {
-  const prev = v1("port", "04-block-offset");
-  const step = v1("port", "05-walk-rewrite");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/04-block-offset");
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const accept = step.manifest.acceptedRegressions;
-  assert.equal(accept.length, 18);
-  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
-  // 6 WPT false passes (literal GATE-A1 fit) and 12 items html_normalize's DOM rewrite had
-  // compensated (3 float WPT tests, 9 postmark text rows); evidence: manifest.json,
-  // attachments/accepted-evidence.json, baselines/port/README.md.
-  const labels = {};
-  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
-  assert.deepEqual(labels, { "html-normalize-compensation": 12, "wpt-false-pass": 6 });
-  // Without the acceptances the same comparison gates exactly the 18 accepted items...
-  const raw = compareSnapshots(prev, step);
-  assert.equal(raw.verdict, "FAIL");
-  assert.deepEqual(
-    raw.items
-      .filter((x) => x.gating)
-      .map((x) => x.key)
-      .sort(),
-    accept.map((e) => e.key).sort(),
-  );
-  // ...and with them it passes.
-  const r = compareSnapshots(prev, step, { accept });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  // The step's targets: the receipt's hoisted <p class="thanks"> content, block ::before,
-  // abspos on its containing block, anonymous boxes.
-  const rec = item(r, "receipt|REF-W|oracles:layout|plain|criterion#1|maxMm");
-  assert.deepEqual([rec.class, rec.before, rec.after], ["improvement", 101.22, 1.37]);
-  for (const t of [
-    "css/CSS2/generated-content/before-inheritable-001.xht",
-    "css/CSS2/positioning/abspos-containing-block-001.xht",
-    "css/CSS2/box-display/anonymous-box-generation-001.xht",
+test("every kept link carries a v2 pdf-probe section; a v1 baseline against a v2 snapshot is REFUSED", () => {
+  for (const [name, b] of [
+    ["pin", pin],
+    ["port/00-start", head],
+    ["port/10-integration", s10],
+    ["port/11-phase-c", s11],
   ]) {
-    const w = item(r, `wpt|${t}`);
-    assert.deepEqual([w.class, w.before, w.after], ["improvement", "fail", "pass"], t);
-  }
-});
-
-// The 10 WPT tests step 06 moved fail -> unsupported with its new strict-gate rejection
-// css:page-varying-width (cause.feature in the step-06 run's wpt/results.json, run copy
-// run-all-06-page-rules-20261021T153752Z; listed in baselines/port/README.md). The rule of its
-// time compared them as non-gating "changed"; since D5 they gate unless declared.
-const STEP06_REJECTED = [
-  "css/css-page/layers-003-print.html",
-  "css/css-page/layers-004-print.html",
-  "css/css-page/page-margin-007-print.html",
-  "css/css-page/page-size-004-print.html",
-  "css/css-page/page-size-005-print.html",
-  "css/css-page/page-size-009-print.html",
-  "css/css-page/pseudo-first-margin-001-print.html",
-  "css/css-page/pseudo-first-margin-002-print.html",
-  "css/css-page/pseudo-first-margin-003-print.html",
-  "css/css-page/pseudo-first-margin-004-print.html",
-];
-
-test("port/06-page-rules passes vs port/05-walk-rewrite only with its acceptedRegressions (v1 pdf-probe) and, since D5, a declaration of its 10 new rejections", () => {
-  const prev = v1("port", "05-walk-rewrite");
-  const step = v1("port", "06-page-rules");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/05-walk-rewrite");
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  const accept = step.manifest.acceptedRegressions;
-  assert.equal(accept.length, 13);
-  assert.ok(accept.every((e) => e.key && e.after !== undefined && e.reason && e.evidence));
-  // Both labels fit GATE-A1's literal wording: 12 pdf-probe occurrence-pairing artefacts
-  // (text-stress-ptbr: vellora's footer "de" paired with a Chrome body "de") and 1 WPT false
-  // pass (page-size-015: test and reference both lost their page size); evidence:
-  // manifest.json, attachments/accepted-evidence.json, baselines/port/README.md.
-  const labels = {};
-  for (const e of accept) labels[e.label] = (labels[e.label] ?? 0) + 1;
-  assert.deepEqual(labels, { "pdf-probe-pairing-artefact": 12, "wpt-false-pass": 1 });
-  const rejected = STEP06_REJECTED.map((t) => `wpt|${t}`);
-  // Without the acceptances the same comparison gates exactly the 13 accepted items and, since
-  // D5, the 10 new strict-gate rejections (fail -> unsupported, "changed" under the old rule)...
-  const raw = compareSnapshots(prev, step);
-  assert.equal(raw.verdict, "FAIL");
-  assert.deepEqual(
-    raw.items
-      .filter((x) => x.gating)
-      .map((x) => x.key)
-      .sort(),
-    [...accept.map((e) => e.key), ...rejected].sort(),
-  );
-  // ...with the acceptances only the 10 rejections gate (06's manifest predates
-  // declaredRejections; committed expectations carry no feature, so the tests are listed)...
-  const withAccept = compareSnapshots(prev, step, { accept });
-  assert.equal(withAccept.verdict, "FAIL");
-  const gatingNow = withAccept.items.filter((x) => x.gating);
-  assert.deepEqual(gatingNow.map((x) => x.key).sort(), rejected);
-  assert.ok(gatingNow.every((x) => x.class === "rejection" && x.before === "fail"));
-  // ...and with the declaration the step would have needed, it passes.
-  const declared = [
-    {
-      feature: "css:page-varying-width",
-      reason: "step 06 rejects :first/:left/:right rules that give pages different content widths",
-      evidence: "wpt/results.json cause.feature of the step-06 run; baselines/port/README.md",
-      tests: STEP06_REJECTED,
-    },
-  ];
-  const r = compareSnapshots(prev, step, { accept, declared });
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.items.filter((x) => x.gating).length, 0);
-  assert.equal(r.items.filter((x) => x.class === "declared").length, 10);
-  // A declaration of another feature covers nothing.
-  const wrong = compareSnapshots(prev, step, {
-    accept,
-    declared: [{ ...declared[0], feature: "css:grid", tests: undefined }],
-  });
-  assert.equal(wrong.items.filter((x) => x.gating).length, 10);
-  assert.equal(wrong.unusedDeclarations.length, 1);
-  // The step's targets: the notification footer is drawn (EXT-2 per extractor), the footers
-  // sit where Chrome prints them (boleto REF-W max was its footer "1"), page-size-006 (:first).
-  for (const [key, before, after] of [
-    ["notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pdfminer.six", 2, 3],
-    ["notification|EXT-2|oracles:text|plain|criterion#1|statusRank.pymupdf", 2, 3],
-    ["receipt|EXT-2|oracles:text|plain|criterion#1", "WARN", "PASS"],
-    ["boleto|REF-W|oracles:layout|plain|criterion#1|maxMm", 4.64, 2.62],
-    ["receipt|REF-W|oracles:layout|plain|criterion#1|maxMm", 1.37, 0.77],
-    ["wpt|css/css-page/page-size-006-print.html", "fail", "pass"],
-  ]) {
-    const x = item(r, key);
-    assert.deepEqual([x.class, x.before, x.after], ["improvement", before, after], key);
-  }
-});
-
-test("port/07-media-print passes vs port/06-page-rules with no acceptedRegressions and no change", () => {
-  const prev = loadBaselineDir(join(baselines, "port", "06-page-rules"));
-  const step = loadBaselineDir(join(baselines, "port", "07-media-print"));
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/06-page-rules");
-  assert.deepEqual(step.manifest.acceptedRegressions, []);
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  // Styling for print changes which @media rules cascade; no corpus document or WPT reftest
-  // has a print/screen rule that applies at its page size, so every compared value is
-  // unchanged and the 38 vellora PDFs are byte-identical to step 06's
-  // (attachments/pdf-identity-vs-06-page-rules.json). The behaviour is covered by
-  // crates/vellora-core/tests/media_print.rs (Chrome 155 probes).
-  const r = compareSnapshots(prev, step);
-  assert.equal(r.verdict, "PASS");
-  assert.deepEqual(
-    r.items.filter((x) => x.class !== "unchanged").map((x) => `${x.class} ${x.key}`),
-    [],
-  );
-});
-
-test("port/08-html-parse passes vs port/07-media-print with no acceptedRegressions; the postmark text is back (v1 pdf-probe)", () => {
-  const prev = v1("port", "07-media-print");
-  const step = v1("port", "08-html-parse");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/07-media-print");
-  assert.deepEqual(step.manifest.acceptedRegressions, []);
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  // Every document is parsed as HTML. oss-postmark-receipt (XHTML 1.0 Transitional doctype) was
-  // parsed as XML by blitz-html's sniffing from step 05 to 07 and lost the text after its three
-  // <br>; that is what step 05 accepted as 9 'html-normalize-compensation' rows, retired here.
-  // Without acceptances the comparison passes, and its only non-unchanged items are those 9
-  // rows coming back plus the pdf-probe pairing change ("Download as PDF" now lies below the
-  // page edge of vellora's single page, as at step 04; "The [Product Name] team" pairs again).
-  const r = compareSnapshots(prev, step);
-  assert.equal(r.verdict, "PASS");
-  const pm = "oss-postmark-receipt";
-  const expected = [
-    [`${pm}|INV-X1|corpus||criterion#1`, "FAIL", "PASS"],
-    [`${pm}|INV-X2|corpus||criterion#1`, "FAIL", "PASS"],
-    [`${pm}|INV-X1|corpus||criterion#1|found`, 5, 6],
-    [`${pm}|INV-X2|corpus||criterion#1|found.pdftotext`, 5, 6],
-    [`${pm}|INV-X2|corpus||criterion#1|found.pypdf`, 5, 6],
-    [`${pm}|INV-X2|corpus||criterion#1|found.pdfminer`, 5, 6],
-    // Back to their step-04 values: 38, 2, 40.
-    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pdftotext`, 39, 38],
-    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pdfminer.six`, 11, 2],
-    [`${pm}|EXT-2|oracles:text|plain|criterion#1|missing.pymupdf`, 41, 40],
-  ];
-  for (const [key, before, after] of expected) {
-    const x = item(r, key);
-    assert.deepEqual([x.class, x.before, x.after], ["improvement", before, after], key);
-  }
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.class !== "unchanged")
-      .map((x) => `${x.class} ${x.key}`)
-      .sort(),
-    [...expected.map(([k]) => `improvement ${k}`), `changed pdf-probe|${pm}|unpaired`].sort(),
-  );
-  // No WPT outcome moves: the harness keeps an XML parse for the nodes WPT serves as XML.
-  assert.equal(r.items.filter((x) => x.check === "wpt" && x.class !== "unchanged").length, 0);
-  // Against step 04 (before the XML parse cost text) no postmark value differs at all: its
-  // three PDFs are byte-identical to step 04's (attachments/pdf-identity-vs-07-media-print.json).
-  const s04 = v1("port", "04-block-offset");
-  const r04 = compareSnapshots(s04, step);
-  assert.deepEqual(
-    r04.items.filter((x) => x.key.includes(pm) && x.class !== "unchanged").map((x) => x.key),
-    [],
-  );
-});
-
-test("port/09-review-fixes passes vs port/08-html-parse with no acceptedRegressions and no change (v1 pdf-probe)", () => {
-  const prev = v1("port", "08-html-parse");
-  const step = v1("port", "09-review-fixes");
-  assert.equal(step.integrity.ok, true, step.integrity.problems.join("; "));
-  assert.equal(step.source.schema, "vellora-fidelity/baseline/2");
-  assert.equal(step.manifest.gate.verdict, "PASS");
-  assert.equal(step.manifest.gate.writtenDespiteVerdict, false);
-  assert.equal(step.manifest.gate.baseline, "fidelity/baselines/port/08-html-parse");
-  assert.deepEqual(step.manifest.acceptedRegressions, []);
-  assert.equal(step.provenance.git.dirtyEntries, 0);
-  assert.equal(Object.keys(step.crashtests.results).length, 239);
-  assert.ok(step.codeChecks.length === 4 && step.codeChecks.every((c) => c.status === "pass"));
-  // The six review fixes (no recursion before the depth gate, signed margins after a forced
-  // break, Stylo-evaluated break-* media queries, RTL inline padding, forced-break fit, test
-  // accuracy) change no corpus document or WPT reftest: every compared value is unchanged and
-  // the 47 vellora PDFs are byte-identical to step 08's
-  // (attachments/pdf-identity-vs-08-html-parse.json). The behaviour is covered by Chrome 155
-  // probes in crates/vellora-core/tests (attachments/chrome-probes-review-fixes.json).
-  const r = compareSnapshots(prev, step);
-  assert.equal(r.verdict, "PASS");
-  assert.equal(r.counts.gating, 0);
-  assert.deepEqual(
-    r.items.filter((x) => x.class !== "unchanged").map((x) => `${x.class} ${x.key}`),
-    [],
-  );
-});
-
-// ---- pdf-probe v2 (semantics 2) on the re-scored chain --------------------------------------
-
-const CHAIN = [
-  "pin",
-  "beta4",
-  "beta4-gated",
-  "port/00-start",
-  "port/01-pagination-gaps",
-  "port/02-delete-noop-passes",
-  "port/03-table-passes",
-  "port/04-block-offset",
-  "port/05-walk-rewrite",
-  "port/06-page-rules",
-  "port/07-media-print",
-  "port/08-html-parse",
-  "port/09-review-fixes",
-];
-const cur = (link) => loadBaselineDir(join(baselines, ...link.split("/")));
-
-test("every committed link carries a v2 pdf-probe section re-scored from its own run's PDFs (or documented stand-ins)", () => {
-  for (const link of CHAIN) {
-    const b = cur(link);
-    assert.equal(b.integrity.ok, true, `${link}: ${b.integrity.problems.join("; ")}`);
-    const m = b.manifest.pdfProbeRescore;
-    assert.equal(m.semantics, 2, link);
     assert.ok(
-      Object.values(b.pdfProbe).every((s) => s.semantics === 2),
-      link,
+      Object.keys(b.pdfProbe).length >= 9 &&
+        Object.values(b.pdfProbe).every((s) => s.semantics === 2),
+      name,
     );
-    // The run's own v1 probe re-compacts to the committed v1 section: same PDFs (pin had none).
-    const want = link === "pin" ? "baseline has no v1 section" : "identical";
-    assert.ok(
-      Object.values(m.v1Identity).every((x) => x === want),
-      `${link}: ${JSON.stringify(m.v1Identity)}`,
-    );
-    assert.equal(m.source.matchesManifestSource, link !== "beta4", link);
   }
-  // Missing inputs are recorded, never silently dropped. The pin run kept invoice + notification
-  // only; the other 7 pairs come from an --inputs mapping (2026-10-22): vellora re-rendered by the
-  // pdf-probe producer (layout_dump) built from the pin source, which reproduces the run's invoice
-  // and notification PDFs byte for byte, paired with the chain's Chrome PDFs (same reference).
-  // beta4's A/B PDFs were not kept, so beta4-gated's stand in (evidence in the manifest).
-  const pin = cur("pin");
-  const pm = pin.manifest.pdfProbeRescore;
-  assert.deepEqual(pm.missing, []);
-  assert.deepEqual(pm.v2Fixtures, Object.keys(pin.pdfProbe).sort());
-  assert.equal(pm.v2Fixtures.length, 9);
-  const mapped = Object.entries(pm.inputs)
-    .filter(([, x]) => x.source === "inputMap")
-    .map(([f]) => f);
-  assert.deepEqual(mapped, [
-    "boleto",
-    "boleto-febraban",
-    "danfe",
-    "oss-postmark-receipt",
-    "oss-sparksuite-invoice",
-    "receipt",
-    "text-stress-ptbr",
-  ]);
-  assert.deepEqual(Object.keys(pm.inputMap.fixtures), mapped);
-  assert.equal(pm.inputs.invoice.vellora.path, "layout-diff/invoice/run-all/vellora.pdf");
-  for (const fx of ["invoice", "notification"]) {
-    const rep = pm.inputMap.renderer.reproduces[fx];
-    assert.equal(rep.vellora, rep.pinRunCopy, fx);
-    assert.equal(rep.vellora, pm.inputs[fx].vellora.sha256, fx);
-  }
-  for (const fx of mapped) {
-    const e = pm.inputMap.fixtures[fx];
-    assert.equal(e.vellora.sha256, pm.inputs[fx].vellora.sha256, fx);
-    assert.equal(e.chrome.sha256, pm.inputs[fx].chrome.sha256, fx);
-    // The pin's pair keys name the same Chrome words as the chain's (else the view is REFUSED).
-    assert.equal(e.chrome.equalsChainReference, true, fx);
+  // The pair keys name Chrome words: the pin's must be the chain's (else the pin view is REFUSED).
+  for (const fx of Object.keys(pin.pdfProbe)) {
     assert.equal(
       pin.pdfProbe[fx].reference.chromeWordsSha256,
-      cur("port/00-start").pdfProbe[fx].reference.chromeWordsSha256,
+      head.pdfProbe[fx].reference.chromeWordsSha256,
       fx,
     );
   }
-  // Off-page backfill of the complete pin (2026-10-22): every section carries offPage, from the
-  // same PDFs the re-score measured (the run's pair, or the same --inputs mapping by sha256).
-  const ob = pin.manifest.offPageBackfill;
-  assert.equal(ob.inputMap.sha256, pm.inputMap.sha256);
-  assert.deepEqual(Object.keys(ob.inputs).sort(), pm.v2Fixtures);
-  for (const fx of pm.v2Fixtures) {
-    assert.ok(pin.pdfProbe[fx].offPage, fx);
-    assert.equal(ob.inputs[fx].vellora.sha256, pm.inputs[fx].vellora.sha256, fx);
-    assert.equal(ob.inputs[fx].chrome.sha256, pm.inputs[fx].chrome.sha256, fx);
-    assert.equal(ob.inputs[fx].source === "inputMap", mapped.includes(fx), fx);
-  }
-  assert.deepEqual(
-    Object.fromEntries(
-      Object.entries(ob.inputs)
-        .filter(([, x]) => x.offPage.vellora || x.offPage.chrome)
-        .map(([fx, x]) => [fx, x.offPage]),
-    ),
-    {
-      "boleto-febraban": { vellora: 6, chrome: 0 },
-      "oss-postmark-receipt": { vellora: 37, chrome: 0 },
-    },
-  );
-  assert.match(cur("beta4").manifest.pdfProbeRescore.source.substitute, /no run copy kept/);
-  assert.deepEqual(Object.keys(cur("beta4").pdfProbe), [
-    "boleto",
-    "invoice",
-    "notification",
-    "receipt",
-  ]);
-});
-
-test("a v1 baseline against a v2 snapshot is REFUSED (pdf-probe semantics differ)", () => {
-  const r = compareSnapshots(v1("port", "06-page-rules"), cur("port/07-media-print"));
+  const v1 = loadBaselineDir(join(baselines, "port", "00-start"), {
+    pdfProbe: "v1",
+    ext2Tokens: false,
+  });
+  const r = compareSnapshots(v1, s11);
   assert.equal(r.verdict, "REFUSED");
   assert.match(r.refusals.join("; "), /pdf-probe semantics differ: baseline 1, run 2/);
-});
-
-test("v2: links whose vellora PDFs equal the previous link's show no pdf-probe item at all", () => {
-  // 00-start = beta4-gated, 02 = 01, 07 = 06, 09 = 08 (byte-identical vellora PDFs; Chrome's PyMuPDF
-  // words are identical across every run): no Chrome or extractor jitter reaches the section.
-  for (const [prev, link] of [
-    ["beta4-gated", "port/00-start"],
-    ["port/01-pagination-gaps", "port/02-delete-noop-passes"],
-    ["port/06-page-rules", "port/07-media-print"],
-    ["port/08-html-parse", "port/09-review-fixes"],
-  ]) {
-    const r = compareSnapshots(cur(prev), cur(link));
-    assert.deepEqual(
-      r.items.filter((x) => x.check === "pdf-probe"),
-      [],
-      link,
-    );
-  }
-});
-
-test("v2 re-judges the chain: gating pdf-probe items per link vs the previous link", () => {
-  // With each link's own (v1-era) acceptedRegressions applied: their pdf-probe keys match no v2
-  // key, every other accepted item still matches, so what gates is exactly the v2 pdf-probe debt.
-  // I1 (2026-10-22): a word that crosses Chrome to more than 1 pt on the other side gates, so
-  // 01 / 03 / 04 gate 168 / 230 / 1632 (55 / 84 / 1403 before I1).
-  const expected = {
-    "port/01-pagination-gaps": 168,
-    "port/03-table-passes": 230,
-    "port/04-block-offset": 1632,
-    "port/05-walk-rewrite": 6,
-    "port/06-page-rules": 0,
-    // The off-page rule (2026-10-22): 08's 7 newly off-page postmark words ("Download as PDF",
-    // "1234 Street Rd. Suite 1234"), which the page-word pairing read as an improvement.
-    "port/08-html-parse": 7,
-    "port/09-review-fixes": 0,
-  };
-  for (const [link, n] of Object.entries(expected)) {
-    const step = cur(link);
-    const r = compareSnapshots(cur(CHAIN[CHAIN.indexOf(link) - 1]), step, {
-      accept: step.manifest.acceptedRegressions,
-    });
-    assert.equal(r.items.filter((x) => x.gating && x.check === "pdf-probe").length, n, link);
-    // Outside pdf-probe only step 06's 10 undeclared rejections gate (D5) and, with the EXT-2
-    // missing-token set ratchet (2026-10-22), 08's 3 newly missing pdftotext tokens.
-    const other = r.items.filter((x) => x.gating && x.check !== "pdf-probe");
-    const tokens = other.filter((x) => x.key.includes("|missingTokens."));
-    assert.equal(other.length - tokens.length, link === "port/06-page-rules" ? 10 : 0, link);
-    assert.equal(tokens.length, link === "port/08-html-parse" ? 3 : 0, link);
-    assert.ok(
-      other.every((x) => x.class === "rejection" || tokens.includes(x)),
-      link,
-    );
-  }
-});
-
-test("v2 gates the step-05 text loss v1 only reported (D3): postmark's 'The [Product Name] team'", () => {
-  const r = compareSnapshots(cur("port/04-block-offset"), cur("port/05-walk-rewrite"));
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.gating && x.key.startsWith("pdf-probe|oss-postmark-receipt|"))
-      .map((x) => x.key)
-      .sort(),
-    [
-      "pdf-probe|oss-postmark-receipt|p1|Name]#3|pairing",
-      "pdf-probe|oss-postmark-receipt|p1|The#1|pairing",
-      "pdf-probe|oss-postmark-receipt|p1|[Product#4|pairing",
-      "pdf-probe|oss-postmark-receipt|p1|team#2|pairing",
-      "pdf-probe|oss-postmark-receipt|unpaired-chrome",
-      "pdf-probe|oss-postmark-receipt|unpaired-vellora",
-    ],
-  );
-  const c = item(r, "pdf-probe|oss-postmark-receipt|unpaired-chrome");
-  assert.deepEqual([c.before, c.after], [42, 46]);
-  // v1 saw the same change as a non-gating "changed" item.
-  const old = compareSnapshots(v1("port", "04-block-offset"), v1("port", "05-walk-rewrite"));
-  const u = item(old, "pdf-probe|oss-postmark-receipt|unpaired");
-  assert.deepEqual([u.class, u.gating], ["changed", false]);
-});
-
-test("EXT-2 missing-token set (2026-10-22): 08 vs 07 gates the 3 tokens that left the page, which the count ratchet missed", () => {
-  // pdftotext missing 39 -> 38 read as an improvement, but "Download", "as" and a second "PDF"
-  // are newly missing while 4 others came back (INTEGRATION-TODO item 2). PyMuPDF's 07 list is
-  // the report's first 40 of 41, so it falls back to the count ratchet (not comparable).
-  const r = compareSnapshots(cur("port/07-media-print"), cur("port/08-html-parse"));
-  const row = "oss-postmark-receipt|EXT-2|oracles:text|plain|criterion#1";
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.key.includes("|missingTokens."))
-      .map((x) => [x.key.slice(row.length + 1), x.before, x.after, x.class, x.gating]),
-    [
-      ["missingTokens.pdftotext|Download", 0, 1, "regression", true],
-      ["missingTokens.pdftotext|as", 0, 1, "regression", true],
-      ["missingTokens.pdftotext|PDF", 1, 2, "regression", true],
-    ],
-  );
-  assert.equal(r.counts.missingTokensNotComparable, 1);
-  assert.deepEqual(
-    [item(r, `${row}|missing.pdftotext`).class, item(r, `${row}|missing.pdftotext`).after],
-    ["improvement", 38],
-  );
-  // The same comparison without the backfilled lists (history) passes: the hole.
-  assert.equal(
-    compareSnapshots(v1("port", "07-media-print"), v1("port", "08-html-parse")).verdict,
-    "PASS",
-  );
-  // 09 vs 08: identical lists, nothing.
-  const r09 = compareSnapshots(cur("port/08-html-parse"), cur("port/09-review-fixes"));
-  assert.equal(r09.items.filter((x) => x.key.includes("|missingTokens.")).length, 0);
-  assert.equal(r09.counts.missingTokensNotComparable, 0);
-});
-
-test("v2 of 08 vs 07: postmark's 'The [Product Name] team' pairs again; nothing gates in pdf-probe", () => {
-  // The step-05 loss v2 gates (above) is undone by the HTML-only parse. unpaired-vellora 3 -> 0
-  // reads as an improvement, but its 3 words ("Download as PDF") are not gone: they now lie
-  // below the page edge of vellora's single page (README 08-html-parse), where the v2 word list
-  // does not see them. An off-page word is not gated yet (INTEGRATION-TODO item 2).
-  const step = cur("port/08-html-parse");
-  const r = compareSnapshots(cur("port/07-media-print"), step, {
-    accept: step.manifest.acceptedRegressions,
-  });
-  const pm = "pdf-probe|oss-postmark-receipt";
-  // Only the 3 EXT-2 tokens above and the 7 off-page words gate: "Download as PDF" moved from
-  // the page to below it (unpaired-vellora 3 -> 0 is not an improvement), and "1234 Street Rd.
-  // Suite 1234", lost by the XML parse since step 05, came back below the page edge.
-  assert.equal(r.counts.gating, 10);
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.gating && !x.key.includes("|missingTokens."))
-      .map((x) => `${x.key.slice(pm.length + 1)} ${x.before} -> ${x.after}`),
-    [
-      "off-page|Download 0 -> 1",
-      "off-page|as 0 -> 1",
-      "off-page|PDF 1 -> 2",
-      "off-page|1234 0 -> 2",
-      "off-page|Street 0 -> 1",
-      "off-page|Rd. 0 -> 1",
-      "off-page|Suite 0 -> 1",
-    ],
-  );
-  assert.deepEqual(
-    r.items
-      .filter((x) => x.check === "pdf-probe" && !x.key.includes("|off-page"))
-      .map((x) => `${x.class} ${x.key} ${x.before} -> ${x.after}`)
-      .sort(),
-    [
-      `improvement ${pm}|unpaired-chrome 46 -> 42`,
-      `improvement ${pm}|unpaired-vellora 3 -> 0`,
-      `newly-measured ${pm}|p1|Name]#3|pairing unpaired -> dx 0.97 dy 35.1`,
-      `newly-measured ${pm}|p1|The#1|pairing unpaired -> dx 0.97 dy 35.1`,
-      `newly-measured ${pm}|p1|[Product#4|pairing unpaired -> dx 0.97 dy 35.1`,
-      `newly-measured ${pm}|p1|team#2|pairing unpaired -> dx 0.97 dy 35.1`,
-    ].sort(),
-  );
 });

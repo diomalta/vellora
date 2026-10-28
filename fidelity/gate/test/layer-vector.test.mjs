@@ -3,12 +3,10 @@
 // (the run-level P-vs-final-pass numbers that correct the step-04 README claim). No Python needed;
 // the run copies under ~/.cache/vellora-fidelity are used only when present.
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
-import { compactProbeV2 } from "../../layout-diff/lib/pdf-probe-v2.mjs";
 import { relaxedB } from "../debt.mjs";
 import {
   PACK_DIR,
@@ -25,23 +23,14 @@ import {
   stepsOf,
 } from "../layer-vector.mjs";
 
-const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
 const notification = loadPack(join(PACK_DIR, "notification-07.layer-vector-pack.json.gz"));
 const receipt = loadPack(join(PACK_DIR, "receipt-04.layer-vector-pack.json.gz"));
 const w07 = packWordVectors(notification);
 
-test("the notification pack is the step-07 link: its v2 probe equals the committed section", () => {
-  const committed = JSON.parse(
-    readFileSync(
-      join(baselines, "port", "07-media-print", "pdf-probe", "notification.json"),
-      "utf8",
-    ),
-  );
-  // The pack predates the off-page record (2026-10-22 backfill, gate/backfill-off-page.mjs): the
-  // committed section adds it (notification draws no text off the page) and is otherwise equal.
-  const { offPage, ...rest } = committed;
-  assert.deepEqual(offPage, { vellora: [], chrome: [] });
-  assert.deepEqual(compactProbeV2(w07.probe), rest);
+// The pack was built from the step-07 run (source.run names its run copy). Until the 2026-10-28
+// prune a test also checked that its v2 probe equals port/07-media-print's committed section; that
+// link was removed (local tag fidelity-archive-2026-10-28, b5c9546), so only the source is checked.
+test("the notification pack names the step-07 run it was built from", () => {
   assert.equal(notification.source.fixture, "notification");
   assert.match(notification.source.run, /run-all-07-media-print-20261021T162148Z$/);
 });

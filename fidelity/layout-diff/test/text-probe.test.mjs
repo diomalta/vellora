@@ -1,14 +1,11 @@
 // text-probe.mjs helpers: the Chrome-side input rewrite, collapsed-whitespace handling, visual
 // lines and the per-run x comparison, each shown to catch a planted defect (a dropped space, a
-// shifted run). Plus the committed 2026-10-21 evidence (Chrome 155.0.8059.85, macOS, INDICATIVE).
+// shifted run). The check of the committed 2026-10-21 text-probe evidence (layout-diff/snapshots/
+// 2026-10-21/text-probe/) was deleted with that snapshot on 2026-10-28 (local tag
+// fidelity-archive-2026-10-28, b5c9546).
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { chromeHtmlFor, collapse, renderedChar, runXDeltas, visualLines } from "../text-probe.mjs";
-
-const here = dirname(fileURLToPath(import.meta.url));
 
 test("chromeHtmlFor rewrites only the sans-serif generic and injects the fonts into <head>", () => {
   const html =
@@ -61,49 +58,4 @@ test("runXDeltas locates each run in Chrome's line and measures x/right; a shift
   assert.equal(shifted[1].dx, 4);
   const missing = runXDeltas(chrome, [{ text: "Gamma", x: 0, advance: 10, baseline: 19 }]);
   assert.equal(missing[0].chrome_x, null);
-});
-
-test("2026-10-21 evidence: Chrome renders every probe space; the reader's padded-root shift", () => {
-  const before = JSON.parse(
-    readFileSync(
-      join(here, "..", "snapshots", "2026-10-21", "text-probe", "text-probe.before-fix.json"),
-      "utf8",
-    ),
-  );
-  const byId = Object.fromEntries(before.probes.map((p) => [p.id, p]));
-  for (const p of before.probes) {
-    assert.equal(p.agreement.lines_equal, true, p.id);
-    assert.equal(p.agreement.pdftotext_equal, true, p.id);
-  }
-  const mixed = byId["mixed-weight"];
-  assert.deepEqual(
-    mixed.chrome.lines.map((l) => l.text),
-    ["Acme Widgets Comércio LTDA — CNPJ 12.345.678/0001-90"],
-  );
-  assert.equal(mixed.agreement.run_x[1].chrome_x, 187.703);
-  // After the read_text_runs fix (run_padding_right_px): every run of every probe is within
-  // 0.05 px of Chrome's x and right edge.
-  const after = JSON.parse(
-    readFileSync(
-      join(here, "..", "snapshots", "2026-10-21", "text-probe", "text-probe.json"),
-      "utf8",
-    ),
-  );
-  for (const p of after.probes) {
-    assert.equal(p.agreement.lines_equal, true, p.id);
-    assert.equal(p.agreement.runs_located_in_chrome, p.agreement.runs, p.id);
-    assert.ok(p.agreement.max_abs_dx <= 0.05, `${p.id} dx ${p.agreement.max_abs_dx}`);
-    assert.ok(p.agreement.max_abs_dright <= 0.05, `${p.id} dright ${p.agreement.max_abs_dright}`);
-  }
-  // Before the fix: a run after text styled by the padded inline root itself is
-  // shifted by the root's padding-right (td 4 px; block 10 px on a right-aligned line).
-  const bad = byId.whitespace.agreement.run_x.filter((r) => Math.abs(r.dx) > 0.5);
-  assert.deepEqual(
-    bad.map((r) => [r.text, r.dx]),
-    [
-      ["Beta", 3.994],
-      ["Total ", -3.99],
-      ["Total ", -9.99],
-    ],
-  );
 });

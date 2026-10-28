@@ -13,7 +13,7 @@ import { loadBaselineDir } from "../snapshot.mjs";
 import { wptRoute } from "../wpt-route.mjs";
 
 const baselines = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "baselines");
-const step07 = loadBaselineDir(join(baselines, "port", "07-media-print"));
+const seed = loadBaselineDir(join(baselines, "port", "00-start"));
 const PASSES = [
   "auto_table_compact_columns",
   "painted_table_cell_text_baselines",
@@ -22,8 +22,8 @@ const PASSES = [
 
 const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caught]));
 
-test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
-  for (const run of [step07, null]) {
+test("every gate canary is caught on the committed chain head port/00-start (real seeds) and on synthetic seeds", () => {
+  for (const run of [seed, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
     assert.equal(rows.length, 32);
     assert.ok(
@@ -32,8 +32,9 @@ test("every gate canary is caught on the committed 07 baseline (real seeds) and 
     );
     assert.deepEqual(gateCanaryItems(rows), []);
   }
-  // The real seeds are real: a word, a failing WPT test, a flagged pass, a verdict row of 07.
-  const rows = runGateCanaries({ run: step07, passes: PASSES });
+  // The real seeds are real: a word, a failing WPT test, a flagged pass, a verdict row of the
+  // head (port/00-start; until 2026-10-28 the seeds came from port/07-media-print, pruned).
+  const rows = runGateCanaries({ run: seed, passes: PASSES });
   assert.match(rows[0].mustReport, /^real word /);
   assert.match(rows[1].mustReport, /^real test /);
   assert.match(rows[2].mustReport, /^real row /);
@@ -45,7 +46,7 @@ test("a comparator that hides within-tolerance worsening (the D4 hole) leaves th
     const r = compareSnapshots(b, a, o);
     return { ...r, items: r.items.filter((i) => i.class !== "within-tolerance") };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: hiding }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: hiding }));
   assert.equal(c["head ratchet: |dy| +0.6 pt per step over two steps"], false);
 });
 
@@ -61,7 +62,7 @@ test("a comparator that treats fail -> unsupported as 'changed' (the D5 hole) le
       ),
     };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: old }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: old }));
   assert.equal(c["WPT fail -> unsupported (new strict-gate rejection)"], false);
   assert.equal(c["head ratchet: |dy| +0.6 pt per step over two steps"], true);
 });
@@ -71,7 +72,7 @@ test("a comparator that does not count flagged-pass losses (D6) leaves its canar
     const r = compareSnapshots(b, a, o);
     return { ...r, counts: { ...r.counts, flaggedPassLost: 0 } };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, compare: uncounted }));
+  const c = caughtBy(runGateCanaries({ run: seed, compare: uncounted }));
   assert.equal(c["WPT flagged pass lost"], false);
 });
 
@@ -86,20 +87,20 @@ test("a ledger that ignores ceilings, compensators, transitions, owners, collaps
     };
   };
   const noRegate = (hr, l, o) => applyLedger(hr, l, { ...o, passes: null });
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: noCeiling }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, apply: noCeiling }));
   assert.equal(c1["DEBT rules i/ii: uncovered, within ceiling, beyond ceiling"], false);
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: noRegate }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, apply: noRegate }));
   assert.equal(c2["DEBT rule v: compensator pass deleted"], false);
   const c3 = caughtBy(
     runGateCanaries({
-      run: step07,
+      run: seed,
       transition: (o, n, x) => transitionProblems(o, n, x).filter((p) => !/ceiling/.test(p)),
     }),
   );
   assert.equal(c3["DEBT rule iii: ceiling raised, entry added, entry dropped early"], false);
   const c4 = caughtBy(
     runGateCanaries({
-      run: step07,
+      run: seed,
       ledgerCheck: (l, o) => ledgerProblems(l, o).filter((p) => !/closesAt|rule vi/.test(p)),
     }),
   );
@@ -107,7 +108,7 @@ test("a ledger that ignores ceilings, compensators, transitions, owners, collaps
   assert.equal(c4["DEBT rule vi: displaced words not collapsed"], false);
   const c5 = caughtBy(
     runGateCanaries({
-      run: step07,
+      run: seed,
       relaxed: (e) => relaxedB(e).filter((p) => !/\|run\||\|P\|/.test(p)),
     }),
   );
@@ -148,7 +149,7 @@ test("a comparator that scores pdf-probe words by |after| - |before| only (the I
       counts: { ...r.counts, withinToleranceBetter: 1 },
     };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: magnitudeOnly }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: magnitudeOnly }));
   assert.equal(c["pdf-probe: a word crosses Chrome (I1)"], false);
   // The sign-agnostic formula (|moved| > tol and |after| > tol) gates the same-side control.
   const signAgnostic = (b, a, o) => {
@@ -165,26 +166,26 @@ test("a comparator that scores pdf-probe words by |after| - |before| only (the I
       ),
     };
   };
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: signAgnostic }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: signAgnostic }));
   assert.equal(c2["pdf-probe: a word crosses Chrome (I1)"], false);
 });
 
 test("a gate that skips rule iii without --debt-base (the I2 hole) leaves its canary uncaught", () => {
   // The pre-I2 behaviour: no --debt-base, no base ledger, rule iii never runs.
   const skip = () => ({ ledger: undefined, source: null, refusal: null });
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, resolveBase: skip }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, resolveBase: skip }));
   assert.equal(c["DEBT rule iii without --debt-base (I2)"], false);
 });
 
 test("a ledger transition without GATE-D7 (the I3 hole: a ceiling of 99 passed) leaves its canary uncaught", () => {
   const noD7 = (o, n, x) => transitionProblems(o, n, x).filter((m) => !/GATE-D7/.test(m));
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noD7 }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: noD7 }));
   assert.equal(c["GATE-D7: new ledger key tied to the measured value (I3)"], false);
 });
 
 test("a head comparison that sees only the current step's declarations (the I4 hole) leaves its canary uncaught", () => {
   const currentOnly = ({ current = [] }) => current;
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, carry: currentOnly }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, carry: currentOnly }));
   assert.equal(c["declared rejection carried to the head comparison (I4)"], false);
 });
 
@@ -193,7 +194,7 @@ test("a comparator that ratchets only the COUNT of missing tokens (the step-08 h
     const r = compareSnapshots(b, a, o);
     return { ...r, items: r.items.filter((i) => !i.key.includes("|missingTokens.")) };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: countOnly }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: countOnly }));
   assert.equal(c["EXT-2 missing-token set: one token swapped for another"], false);
 });
 
@@ -202,7 +203,7 @@ test("a comparator blind to off-page words (the step-08 hole) leaves the off-pag
     const r = compareSnapshots(b, a, o);
     return { ...r, items: r.items.filter((i) => !/\|off-page/.test(i.key)) };
   };
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, compare: blind }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, compare: blind }));
   assert.equal(c["pdf-probe: a word moved below the page (off-page)"], false);
 });
 
@@ -211,11 +212,11 @@ test("a WPT route that ignores the raw-Blitz outcome, or trusts a missing one, l
     const r = wptRoute({ ...item, rawOutcome: null }, o);
     return r?.route === "c" ? { ...r, route: "c" } : r;
   };
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: ignoreRaw }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, route: ignoreRaw }));
   assert.equal(c1["WPT pass -> fail route (GATE-A3)"], false);
   const trustMissing = (item, o) =>
     wptRoute({ ...item, rawOutcome: item.rawOutcome ?? item.after }, o);
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, route: trustMissing }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, route: trustMissing }));
   assert.equal(c2["WPT pass -> fail route (GATE-A3)"], false);
 });
 
@@ -232,7 +233,7 @@ test("a listed page scope that ignores the run's page delta, covers page 1, or s
       })),
       { ...o, pageValues: null },
     );
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: unbound }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, apply: unbound }));
   assert.equal(c1[name], false);
   // A scope that also lists the page-1 word hides it.
   const p1 = "pdf-probe|canary|p1|Canary#1|dy";
@@ -245,11 +246,11 @@ test("a listed page scope that ignores the run's page delta, covers page 1, or s
       })),
       o,
     );
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, apply: allPages }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, apply: allPages }));
   assert.equal(c2[name], false);
   // A D7 that does not tie the page metric to the snapshots (a moved metric or slack passes).
   const looseD7 = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/pageDelta/.test(p));
-  const c3 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: looseD7 }));
+  const c3 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: looseD7 }));
   assert.equal(c3[name], false);
 });
 
@@ -258,12 +259,12 @@ test("a listed page scope that binds a moved page metric or starts at page 1 lea
   // The pre-fix D7 (verify 10-final): a moved page metric entered through d7KeyProblems alone.
   const movedOk = (o, n, x) =>
     transitionProblems(o, n, x).filter((p) => !/the page metric is a head item/.test(p));
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: movedOk }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: movedOk }));
   assert.equal(c1[name], false);
   // The pre-fix shape check: any fromPage.
   const anyFrom = (l, o) =>
     ledgerProblems(l, o).filter((p) => !/a listed page scope starts at a page >= 2/.test(p));
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, ledgerCheck: anyFrom }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, ledgerCheck: anyFrom }));
   assert.equal(c2[name], false);
 });
 
@@ -271,15 +272,15 @@ test("a relaxed (b) rule without |P| <= |N0| + step, without |run| <= |N0| + run
   const name = "rule (ii): shared run tolerance on a DANFE-L1 position-mm vector";
   const noP = (e) => relaxedB(e).filter((p) => !/\|P\|/.test(p));
   const noRun = (e) => relaxedB(e).filter((p) => !/\|run\|/.test(p));
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: noP }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, relaxed: noP }));
   assert.equal(c1[name], false);
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: noRun }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, relaxed: noRun }));
   assert.equal(c2[name], false);
   // The pre-rule-(ii) position-mm run tolerance (0.5 px) refuses DANFE-L1d as measured.
   const beyondOld = (k) =>
     k.tolClass === "position-mm" && Math.abs(k.layerVector.run) > Math.abs(k.layerVector.N0) + 0.5;
   const old = (e) => [...relaxedB(e), ...(e.keys.some(beyondOld) ? ["|run| beyond 0.5 px"] : [])];
-  const c3 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, relaxed: old }));
+  const c3 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, relaxed: old }));
   assert.equal(c3[name], false);
 });
 
@@ -296,7 +297,7 @@ test("an uncaught gate canary becomes an absolute failure item", () => {
 // Phase C 03 (2026-10-27): rule iii removals and ids (verify phasec/02 finding 1).
 test("a transition that removes a still-failing key leaves its canary uncaught", () => {
   const lax = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/still fails/.test(p));
-  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: lax }));
+  const c = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: lax }));
   assert.equal(c["DEBT rule iii: a still-failing key removed"], false);
   assert.equal(c["DEBT rule iii: a fixed key removed with evidence"], true);
 });
@@ -306,10 +307,10 @@ test("a transition that refuses every fixed removal, or accepts one without its 
     ...transitionProblems(o, n, x),
     ...(n?.closed ?? []).filter((r) => r.fixed).map((r) => `${r.id} ${r.key}: only a vanished key`),
   ];
-  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: old }));
+  const c1 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: old }));
   assert.equal(c1["DEBT rule iii: a fixed key removed with evidence"], false);
   const noRunId = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/runId/.test(p));
-  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noRunId }));
+  const c2 = caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: noRunId }));
   assert.equal(c2["DEBT rule iii: a fixed key removed with evidence"], false);
 });
 
@@ -318,13 +319,13 @@ test("a ledger that allows a reused id, a re-entered closed key or a lost closed
   for (const re of [/id reused/, /append-only/]) {
     const lax = (o, n, x) => transitionProblems(o, n, x).filter((p) => !re.test(p));
     assert.equal(
-      caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: lax }))[name],
+      caughtBy(runGateCanaries({ run: seed, passes: PASSES, transition: lax }))[name],
       false,
     );
   }
   const reenter = (l, o) => ledgerProblems(l, o).filter((p) => !/re-enters/.test(p));
   assert.equal(
-    caughtBy(runGateCanaries({ run: step07, passes: PASSES, ledgerCheck: reenter }))[name],
+    caughtBy(runGateCanaries({ run: seed, passes: PASSES, ledgerCheck: reenter }))[name],
     false,
   );
 });

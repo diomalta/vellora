@@ -1,11 +1,12 @@
 // Candidate classes of uncovered head / pin items (gate/ledger-candidates.mjs classify) on planted
-// items, one per rule, and the committed part-7 snapshot's totals.
+// items, one per rule. The chain labels are planted too: the four below are the acceptedRegressions
+// labels of port links 01, 04 and 05 as committed (verbatim link/label; those links and the
+// part-7 snapshot whose totals this file also checked were pruned on 2026-10-28 and live at the
+// local tag fidelity-archive-2026-10-28, b5c9546); chainLabels itself is checked on the kept chain.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { gunzipSync } from "node:zlib";
 import {
   chainLabels,
   classify,
@@ -15,7 +16,24 @@ import {
 } from "../ledger-candidates.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const labels = chainLabels(resolve(here, "..", "..", "baselines", "port"));
+const labels = new Map([
+  [
+    "wpt|css/CSS2/linebox/line-height-006.xht",
+    [{ link: "01-pagination-gaps", label: "wpt-false-pass-rect-merge" }],
+  ],
+  [
+    "wpt|css/CSS2/floats/zero-width-floats.html",
+    [{ link: "01-pagination-gaps", label: "wpt-two-errors-cancelling" }],
+  ],
+  [
+    "oss-postmark-receipt|INV-X1|corpus||criterion#1|found",
+    [{ link: "05-walk-rewrite", label: "html-normalize-compensation" }],
+  ],
+  [
+    "danfe|DANFE-L1a|corpus||criterion#1|posErrMm",
+    [{ link: "04-block-offset", label: "compensating-drift" }],
+  ],
+]);
 const section = (pages, unpairedVellora = []) => ({ pages, unpairedVellora });
 const vec = (N0, run, extra = {}) => ({ unit: "px", N0, B0: N0, L0: N0, P: N0, run, ...extra });
 const word = (v, page = 1) => ({
@@ -276,24 +294,11 @@ test("lost text: newly off-page text and newly missing tokens are c; the off-pag
   assert.doesNotMatch(count.why, /XML/);
 });
 
-test("the committed part-7 snapshot: 985 head items and 213 pin items, every one classed", () => {
-  const snap = JSON.parse(
-    gunzipSync(
-      readFileSync(
-        resolve(here, "..", "snapshots", "2026-10-21", "ledger", "ledger-candidates.json.gz"),
-      ),
-    ).toString("utf8"),
-  );
-  for (const [name, total] of [
-    ["head", 985],
-    ["pin", 213],
-  ]) {
-    const s = snap.sections[name];
-    assert.equal(s.total, total, name);
-    assert.equal(
-      Object.values(s.byCandidate).reduce((a, b) => a + b, 0),
-      total,
-      name,
-    );
+test("chainLabels reads every kept link's acceptedRegressions labels", () => {
+  const real = chainLabels(resolve(here, "..", "..", "baselines", "port"));
+  const flex = real.get("wpt|css/css-page/page-name-flex-001-print.html") ?? [];
+  assert.ok(flex.some((h) => h.link === "11-phase-c" && h.label === "wpt-false-pass"));
+  for (const hist of real.values()) {
+    for (const h of hist) assert.match(h.link, /^\d{2}-[a-z0-9-]+$/);
   }
 });

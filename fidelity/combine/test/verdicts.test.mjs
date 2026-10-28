@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 import { mergePins, parsePins, portable, requirementFiles } from "../env.mjs";
 import {
   FONT_PARITY_CHECKS,
@@ -275,11 +276,14 @@ test("WPT: per-directory rows, pin -> WPT-1, ratchet -> WPT-2 (regression, not-r
 });
 
 test("layout-diff rows from the committed 2026-10-21 snapshot: attribution, not verdicts", () => {
+  // The invoice and receipt rows of layout-diff/snapshots/2026-10-21/summary-pin.json, verbatim
+  // (the snapshot was pruned on 2026-10-28; see the fixture's note).
   const snap = JSON.parse(
-    readFileSync(
-      join(repoRoot, "fidelity/layout-diff/snapshots/2026-10-21/summary-pin.json"),
-      "utf8",
-    ),
+    gunzipSync(
+      readFileSync(
+        join(repoRoot, "fidelity/combine/test/data/layout-diff-summary-pin-2026-10-21.json.gz"),
+      ),
+    ).toString("utf8"),
   );
   const row = (id) => snap.fixtures.find((f) => f.fixture === id);
   const invoice = fromLayoutDiffRow(row("invoice"));

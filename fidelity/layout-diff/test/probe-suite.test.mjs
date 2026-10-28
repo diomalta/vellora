@@ -1,39 +1,32 @@
 // The probe fixture suite (layout-diff/probes/, run by probe-suite.mjs as run-all step
 // pdf-probe-suite): its committed data, its fixture names, and how the gate reads its rows.
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { compareSnapshots } from "../../gate/compare.mjs";
 import { loadRunDir } from "../../gate/snapshot.mjs";
 import { compactProbeV2, probeResultV2 } from "../lib/pdf-probe-v2.mjs";
 import { DEFAULT_SUITE, loadSuite, probeFixture } from "../probe-suite.mjs";
 
-const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-const attachment = JSON.parse(
-  readFileSync(
-    join(
-      repo,
-      "fidelity/baselines/port/09-review-fixes/attachments/chrome-probes-review-fixes.json",
-    ),
-    "utf8",
-  ),
-);
+// The suite's source: port/09-review-fixes/attachments/chrome-probes-review-fixes.json (pruned
+// 2026-10-28 with that link; it lives at the local tag fidelity-archive-2026-10-28, b5c9546).
+// sha256 of JSON.stringify(Object.entries(attachment.probes).map(([id, p]) => [id, p.html,
+// p.targets])) over that file: the suite must still be its 37 probes, ids, HTML and targets
+// verbatim, in order.
+const ATTACHMENT_PROBES_SHA256 = "1c83eefbb4d44b003a96a1f8c5151ba1a15b14bb156745bed25cdb887bf56745";
 
 test("the committed suite is step 09's 37 Chrome probes, HTML verbatim, deterministic names", () => {
   const suite = loadSuite(DEFAULT_SUITE);
   assert.equal(suite.name, "review-fixes-09");
   assert.equal(suite.probes.length, 37);
-  assert.deepEqual(
-    suite.probes.map((p) => p.id),
-    Object.keys(attachment.probes),
+  const list = suite.probes.map((p) => [p.id, p.html, p.targets]);
+  assert.equal(
+    createHash("sha256").update(JSON.stringify(list)).digest("hex"),
+    ATTACHMENT_PROBES_SHA256,
   );
-  for (const p of suite.probes) {
-    assert.equal(p.html, attachment.probes[p.id].html, p.id);
-    assert.equal(p.targets, attachment.probes[p.id].targets, p.id);
-  }
   assert.equal(probeFixture("f5_table_partial"), "probe-f5_table_partial");
 });
 
