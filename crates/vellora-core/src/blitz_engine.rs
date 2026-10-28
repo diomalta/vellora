@@ -195,9 +195,12 @@ pub enum ImageFormat {
     Jpeg,
     Gif,
     Webp,
+    /// An inline `<svg>` element's content ([`ImageRun::svg`]); `data` holds the serialized
+    /// source it was parsed from ([`inline_svg_source`]).
+    Svg,
 }
 
-/// A raster image in document coordinates.
+/// An image in document coordinates: a raster `<img>`, or an inline `<svg>` drawn as vectors.
 #[derive(Debug, Clone)]
 pub struct ImageRun {
     pub x: f64,
@@ -206,6 +209,9 @@ pub struct ImageRun {
     pub height: f64,
     pub format: ImageFormat,
     pub data: std::sync::Arc<Vec<u8>>,
+    /// [`ImageFormat::Svg`] only: the parsed SVG ([`crate::svg::parse`]), sized to this run's
+    /// box (the serialized root carries `width`/`height` equal to it).
+    pub svg: Option<std::sync::Arc<usvg::Tree>>,
 }
 
 /// A shaped run of text (one Parley run within one line), with the glyphs and
@@ -457,13 +463,25 @@ pub fn lay_out_margin_texts(
 /// A renderable `<img>` whose `src` could not be resolved to supported image
 /// bytes. Mirrors [`DeniedElement`] so the source locator can pinpoint it.
 pub struct UnresolvedImage {
-    /// 1-based ordinal of this `<img>` among all `<img>` in document order.
+    /// The element's tag as the source spells it, lowercased: `"img"`, or `"image"` /
+    /// `"feimage"` for an inline SVG's image source ([`find_external_svg_image`]).
+    pub tag: &'static str,
+    /// 1-based ordinal of this element among all elements of `tag` in document order.
     pub occurrence: usize,
     /// Total `<img>` count in the parsed DOM (locator degrades to `None` on a
     /// source/DOM count mismatch, exactly like [`DeniedElement::dom_total`]).
     pub dom_total: usize,
     /// Why resolution failed (folded into the diagnostic hint).
     pub reason: &'static str,
+}
+
+/// Why the gate on the parsed document refused it, before Blitz built any box.
+pub enum GateRejection {
+    /// An element outside the subset (`element:<tag>`).
+    Element(DeniedElement),
+    /// An inline SVG image source that is not a `data:` URL ([`find_external_svg_image`],
+    /// `image:unresolved`).
+    Image(UnresolvedImage),
 }
 
 /// A denied element located during the immutable validation walk.
@@ -1707,6 +1725,7 @@ fn walk_subtree(doc: &BaseDocument, id: NodeId) -> Vec<LaidOutBox> {
         collapsed: &collapsed,
         tiers: std::collections::HashMap::new(),
         canvas_source: None,
+        svg_fonts: None,
     };
     walk_box(doc, id, 0, &mut sink);
     out
@@ -3007,6 +3026,7 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
         A4_HEIGHT_PX,
         &std::collections::HashMap::new(),
         None,
+        &[],
         &breaks,
         font_ctx,
         &mut NoObserver,
@@ -3030,7 +3050,7 @@ pub fn validate_then_lay_out(
     images: &std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&str>,
     fonts: &[Vec<u8>],
-) -> Result<LaidOutDoc, DeniedElement> {
+) -> Result<LaidOutDoc, GateRejection> {
     validate_then_lay_out_observed(
         html,
         denied,
@@ -3060,7 +3080,7 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     fonts: &[Vec<u8>],
     syntax: DocumentSyntax,
     observer: &mut O,
-) -> Result<LaidOutDoc, DeniedElement> {
+) -> Result<LaidOutDoc, GateRejection> {
     let breaks = crate::break_css::parse_break_rules(html);
     let font_ctx = crate::fonts::build_font_context(fonts);
     let doc = build_document_with(
@@ -3072,7 +3092,12 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     // Validate and lay out the same Blitz parse: one tree shared by validation
     // and layout.
     if let Some(found) = find_denied_in_document(&doc, denied) {
-        return Err(found);
+        return Err(GateRejection::Element(found));
+    }
+    // Before `resolve`: Blitz parses each inline SVG while it builds the boxes, and that parse
+    // reads a non-`data:` image source from the host filesystem.
+    if let Some(found) = find_external_svg_image(&doc) {
+        return Err(GateRejection::Image(found));
     }
     Ok(resolve_and_walk(
         doc,
@@ -3080,6 +3105,7 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
         content_height_px,
         images,
         base_url,
+        fonts,
         &breaks,
         font_ctx,
         observer,
@@ -3168,6 +3194,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     content_height_px: f64,
     images: &std::collections::HashMap<String, Vec<u8>>,
     base_url: Option<&str>,
+    fonts: &[Vec<u8>],
     breaks: &crate::break_css::BreakRules,
     font_ctx: parley::FontContext,
     observer: &mut O,
@@ -3191,6 +3218,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
         snap_lengths_to_layout_unit(&mut doc);
+        size_svgs_like_chrome(&mut doc);
         hide_table_column_pseudos(&mut doc);
         compensate_collapsed_borders(&mut doc)
     } else {
@@ -3276,6 +3304,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
     let canvas = canvas_background(base);
+    let svg_fonts = SvgFonts::new(fonts);
     // Scope the sink so its `&mut` borrows of `boxes`/`img_resolve` are released
     // before the post-walk normalize passes (which re-borrow `boxes`) and before
     // we read `img_resolve.first_unresolved` below.
@@ -3290,6 +3319,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             collapsed: &collapsed,
             tiers: std::collections::HashMap::new(),
             canvas_source: canvas.map(|(id, _)| id),
+            svg_fonts: Some(&svg_fonts),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -3321,6 +3351,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         img_resolve
             .first_unresolved
             .map(|(occurrence, reason)| UnresolvedImage {
+                tag: "img",
                 occurrence,
                 dom_total: count_tag_in_document(base, "img"),
                 reason,
@@ -3360,6 +3391,9 @@ struct WalkSink<'a, 'img> {
     /// The element whose background is the canvas background ([`canvas_background`]); its
     /// own box paints no background.
     canvas_source: Option<NodeId>,
+    /// The fonts inline SVGs are parsed with ([`inline_svg_run`]); `None` in a throwaway walk
+    /// ([`walk_subtree`]), which records each SVG's box without parsing it.
+    svg_fonts: Option<&'a SvgFonts<'a>>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -3896,7 +3930,7 @@ fn push_box(
     for rect in &mut visual_rects {
         rect.tier = tier;
     }
-    let image_runs = resolve_image_runs(
+    let mut image_runs = resolve_image_runs(
         node,
         content_x,
         content_y,
@@ -3904,6 +3938,15 @@ fn push_box(
         content_height,
         sink.img,
     );
+    image_runs.extend(inline_svg_run(
+        base,
+        node,
+        content_x,
+        content_y,
+        content_width,
+        content_height,
+        sink.svg_fonts,
+    ));
 
     let inline_breaks = node
         .attr(blitz_dom::local_name!("style"))
@@ -4454,6 +4497,438 @@ fn absolute_color_to_srgb(color: style::color::AbsoluteColor) -> Option<[u8; 3]>
     Some([channel(comps[0]), channel(comps[1]), channel(comps[2])])
 }
 
+/// The SVG namespace html5ever puts the elements of an inline `<svg>` in.
+const SVG_NS: &str = "http://www.w3.org/2000/svg";
+
+/// Whether `node` is an element in the SVG namespace named `local` (ASCII case-insensitive).
+fn is_svg_element(node: &blitz_dom::Node, local: &str) -> bool {
+    node.data.downcast_element().is_some_and(|el| {
+        let name: &str = &el.name.local;
+        let ns: &str = &el.name.ns;
+        ns == SVG_NS && name.eq_ignore_ascii_case(local)
+    })
+}
+
+/// SECURITY GATE for inline SVG (Phase C step 06). Blitz 0.3.0-beta.4 parses every inline
+/// `<svg>` with usvg 0.48.1 while it builds the boxes (blitz-dom `layout/construct.rs:460-477`,
+/// `util.rs:157-164` `parse_svg_image`), with `usvg::Options { ..Default::default() }`, whose
+/// image resolver reads any non-`data:` `href` of an `<image>` or `<feImage>` as a path on the
+/// HOST filesystem, relative to the process's working directory when no `resources_dir` is set
+/// (usvg 0.48.1 `parser/image.rs:85-114` `default_string_resolver`, `parser/options.rs:130-135`
+/// `get_abs_path`; `parser/image.rs:288-302` and `parser/filter.rs:860` call it). Input HTML
+/// could make the renderer read `/etc/hosts` or block on a FIFO. vellora cannot hand Blitz other
+/// options, so any such source is rejected here, on the parsed DOM before `resolve`, as an
+/// unresolved image (`image:unresolved`, the same rejection as an `<img>` whose source does not
+/// resolve). vellora's own parse of the SVG ([`crate::svg::parse`]) resolves nothing either.
+///
+/// Accepted: no `href`, an empty `href` (usvg checks the path `""`, which never exists), and an
+/// `href` that the `data-url` crate usvg uses parses as a data: URL (usvg then decodes it and
+/// never falls through to the path resolver, even when the payload is bad). Images inside a
+/// data: URL SVG are not checked: usvg parses nested SVGs with a resolver that loads no string
+/// `href` (usvg 0.48.1 `parser/mod.rs:130-140`).
+///
+/// The first offending element in DOM order is returned, located like an `<img>`
+/// ([`UnresolvedImage::tag`]).
+///
+/// WHEN BLITZ LETS CALLERS SET THE SVG PARSE OPTIONS (or stops resolving paths), DELETE: this
+/// function, its call in [`validate_then_lay_out_observed`], the `image`/`feimage` branch of
+/// `validation::image_diagnostic`, and the canary
+/// `blitz_still_reads_svg_image_sources_from_the_host` (`src/raw_blitz_tests.rs`); then resolve
+/// these sources from the caller's `images` like an `<img>`.
+pub(crate) fn find_external_svg_image(base: &BaseDocument) -> Option<UnresolvedImage> {
+    let mut counts = [0usize; 2];
+    let mut stack = vec![base.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        stack.extend(node.children.iter().rev().copied());
+        let Some(el) = node.data.downcast_element() else {
+            continue;
+        };
+        let local: &str = &el.name.local;
+        let (tag, slot) = if local.eq_ignore_ascii_case("image") {
+            ("image", 0)
+        } else if local.eq_ignore_ascii_case("feimage") {
+            ("feimage", 1)
+        } else {
+            continue;
+        };
+        // Every element of the tag counts, as in `count_tag_in_document` and the source locator.
+        counts[slot] += 1;
+        let ns: &str = &el.name.ns;
+        if ns != SVG_NS {
+            continue;
+        }
+        let external = el.attrs().iter().any(|attr| {
+            let name: &str = &attr.name.local;
+            name == "href"
+                && !attr.value.is_empty()
+                && data_url::DataUrl::process(&attr.value).is_err()
+        });
+        if external {
+            return Some(UnresolvedImage {
+                tag,
+                occurrence: counts[slot],
+                dom_total: count_tag_in_document(base, tag),
+                reason: "an inline SVG image source must be a data: URL — vellora never reads \
+                         SVG image sources from the filesystem or the network, nor from the \
+                         `images` option",
+            });
+        }
+    }
+    None
+}
+
+/// Whether an `<svg>` declares a `viewBox` Blitz parses as one (four numbers, width and height
+/// positive: blitz-dom 0.3.0-beta.4 `node/svg.rs:40-52`), which gives it an intrinsic aspect
+/// ratio.
+fn svg_has_view_box(node: &blitz_dom::Node) -> bool {
+    let Some(el) = node.data.downcast_element() else {
+        return false;
+    };
+    let Some(attr) = el.attrs().iter().find(|attr| {
+        let name: &str = &attr.name.local;
+        name == "viewBox"
+    }) else {
+        return false;
+    };
+    let numbers: Vec<f64> = attr
+        .value
+        .split(|c: char| c.is_ascii_whitespace() || c == ',')
+        .filter(|t| !t.is_empty())
+        .map(|t| t.parse::<f64>())
+        .collect::<Result<_, _>>()
+        .unwrap_or_default();
+    numbers.len() == 4
+        && numbers[2] > 0.0
+        && numbers[3] > 0.0
+        && numbers.iter().all(|n| n.is_finite())
+}
+
+/// BLITZ BUG COMPENSATION (blitz-dom 0.3.0-beta.4, `svg` feature): the size of an inline `<svg>`
+/// that declares no `viewBox`.
+///
+/// Such an SVG has no intrinsic aspect ratio, and no intrinsic size along an axis whose
+/// `width`/`height` attribute is absent, so a `width: auto` box is 300 px wide and a
+/// `height: auto` box 150 px tall (CSS 2.2 §10.3.2 and §10.6.2, the replaced-element default
+/// object size; Chrome 155: `<svg><rect width="25" height="50"/></svg>` lays out 300x150,
+/// `<svg width="40">` 40x150, `<svg style="width:60px">` 60x150, measured 2026-10-28 with
+/// `c06-svg/scripts/chrome-rects.mjs`). Blitz instead uses usvg's resolved tree size, and always
+/// reports an aspect ratio (blitz-dom `layout/mod.rs:407-430`, `node/svg.rs:197-205`): usvg sizes
+/// an SVG without `viewBox` whose width or height is absent or a percentage to the bounding box
+/// of its content (usvg 0.48.1 `parser/converter.rs:523-605`, `calculate_svg_bbox`), so Blitz
+/// lays those three out 25x50, 40x100 and 60x120. The bounding box includes `<text>` measured
+/// with the HOST fonts Blitz's usvg parse loads (blitz-dom `util.rs:42-50` `FONT_DB`), so the
+/// uncompensated size is not even host-independent.
+///
+/// What is changed, on the computed style after the cascade and before layout: for every `<svg>`
+/// (SVG namespace) without a valid `viewBox` ([`svg_has_view_box`]), a `width: auto` becomes
+/// `300px` and a `height: auto` `150px`, plus the padding and border for `box-sizing:
+/// border-box` (left `auto` when that padding is a percentage). A percentage `height` of an
+/// in-flow SVG whose parent has `height: auto` is `auto` (CSS 2.2 §10.5) and gets the 150 px too
+/// (Chrome: `<svg width="40" height="10%">` is 40x150, Blitz 40x10; `<svg width="100%"
+/// height="100%">` holding a `<text>` is 784x150, Blitz takes the height from the text's box).
+/// `min-*`/`max-*` still apply, as in Chrome. Not modelled: a percentage height against any other
+/// indefinite containing block (a flex item, a percentage-height parent, an absolutely positioned
+/// SVG's containing block), which Blitz keeps resolving through usvg's tree size; and flex/grid
+/// stretching of an SVG's auto size, which a fixed length turns off.
+///
+/// WHEN THIS GOES, DELETE: this function, its call in [`resolve_and_walk`], and the canary
+/// `blitz_still_sizes_an_svg_without_viewbox_to_its_content` (`src/raw_blitz_tests.rs`), which
+/// fails as soon as raw Blitz lays `<svg><rect width="25" height="50"/></svg>` out at Chrome's
+/// 300x150; keep the `inline_svg_*` size tests there (they hold Chrome's numbers).
+fn size_svgs_like_chrome(doc: &mut BaseDocument) {
+    use style::values::computed::{Length, LengthPercentage, Size};
+    let mut edits: Vec<(NodeId, Option<f32>, Option<f32>)> = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        stack.extend(node.children.iter().copied());
+        if !is_svg_element(node, "svg") || svg_has_view_box(node) {
+            continue;
+        }
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        let position = styles.get_position();
+        let border_box = position.box_sizing == style::computed_values::box_sizing::T::BorderBox;
+        // The padding plus border of one axis, `None` when a padding is a percentage.
+        let frame = |padding: [&style::values::computed::NonNegativeLengthPercentage; 2],
+                     border: [&style::values::computed::BorderSideWidth; 2]| {
+            if !border_box {
+                return Some(0.0);
+            }
+            let mut sum = 0.0f32;
+            for p in padding {
+                sum += p.0.to_length()?.px();
+            }
+            for b in border {
+                sum += b.0.to_f32_px();
+            }
+            Some(sum)
+        };
+        let pad = styles.get_padding();
+        let border = styles.get_border();
+        let width = matches!(position.width, Size::Auto)
+            .then(|| {
+                frame(
+                    [&pad.padding_left, &pad.padding_right],
+                    [&border.border_left_width, &border.border_right_width],
+                )
+            })
+            .flatten()
+            .map(|frame| 300.0 + frame);
+        // A percentage height against a containing block whose height depends on its content
+        // computes to `auto` (CSS 2.2 §10.5): an in-flow SVG whose parent has `height: auto`.
+        let indefinite_percentage = matches!(&position.height, Size::LengthPercentage(lp) if lp.0.has_percentage())
+            && !styles.clone_position().is_absolutely_positioned()
+            && node
+                .parent
+                .and_then(|p| doc.get_node(p))
+                .and_then(|p| p.primary_styles())
+                .is_some_and(|p| matches!(p.get_position().height, Size::Auto));
+        let height = (matches!(position.height, Size::Auto) || indefinite_percentage)
+            .then(|| {
+                frame(
+                    [&pad.padding_top, &pad.padding_bottom],
+                    [&border.border_top_width, &border.border_bottom_width],
+                )
+            })
+            .flatten()
+            .map(|frame| 150.0 + frame);
+        if width.is_some() || height.is_some() {
+            edits.push((id, width, height));
+        }
+    }
+    let px = |v: f32| {
+        Size::LengthPercentage(style::values::generics::NonNegative(
+            LengthPercentage::new_length(Length::new(v)),
+        ))
+    };
+    for (id, width, height) in edits {
+        mutate_primary_style(doc, id, |values| {
+            let position = values.mutate_position();
+            if let Some(w) = width {
+                position.set_width(px(w));
+            }
+            if let Some(h) = height {
+                position.set_height(px(h));
+            }
+        });
+    }
+}
+
+/// The font database of the inline SVGs of one render ([`crate::svg::font_db`] over the
+/// caller's `fonts`), built on the first SVG only.
+struct SvgFonts<'a> {
+    custom: &'a [Vec<u8>],
+    db: std::cell::OnceCell<std::sync::Arc<usvg::fontdb::Database>>,
+}
+
+impl<'a> SvgFonts<'a> {
+    fn new(custom: &'a [Vec<u8>]) -> Self {
+        Self {
+            custom,
+            db: std::cell::OnceCell::new(),
+        }
+    }
+
+    fn db(&self) -> std::sync::Arc<usvg::fontdb::Database> {
+        self.db
+            .get_or_init(|| crate::svg::font_db(self.custom))
+            .clone()
+    }
+}
+
+/// The image run of an inline `<svg>` that Blitz laid out as a replaced box (its subtree parsed:
+/// `ImageData::Svg`), drawn into the content box (`x`, `y`, `width`, `height`): the SVG's
+/// viewport, as in Chrome. `fonts` `None` (a throwaway walk) records the box only. An SVG
+/// with an empty box, or that usvg cannot parse, draws nothing.
+fn inline_svg_run(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    x: f64,
+    y: f64,
+    width: f64,
+    height: f64,
+    fonts: Option<&SvgFonts>,
+) -> Option<ImageRun> {
+    use blitz_dom::node::{ImageData, SpecialElementData};
+    let el = node.element_data()?;
+    let SpecialElementData::Image(data) = &el.special_data else {
+        return None;
+    };
+    if !matches!(**data, ImageData::Svg(_)) || !is_svg_element(node, "svg") {
+        return None;
+    }
+    if !(width > 0.0 && height > 0.0 && width.is_finite() && height.is_finite()) {
+        return None;
+    }
+    let (data, svg) = match fonts {
+        Some(fonts) => {
+            let source = inline_svg_source(base, node, width, height);
+            let tree = crate::svg::parse(&source, fonts.db())?;
+            (source.into_bytes(), Some(tree))
+        }
+        None => (Vec::new(), None),
+    };
+    Some(ImageRun {
+        x,
+        y,
+        width,
+        height,
+        format: ImageFormat::Svg,
+        data: std::sync::Arc::new(data),
+        svg,
+    })
+}
+
+/// An inline `<svg>` element serialized as a standalone SVG document for usvg, from the parsed
+/// DOM (never from the input bytes): the elements, attributes and text of its subtree, in DOM
+/// order, with
+///
+/// - `width`/`height` on the root replaced by the laid-out content box (`width`, `height`, CSS
+///   px), which is the SVG viewport (a `viewBox` then maps into it with its
+///   `preserveAspectRatio`; without one, user units are px, unscaled, as in Chrome);
+/// - `xmlns` / `xmlns:xlink` declared on the root when the source does not;
+/// - `font-family` / `font-size` on the root from the `<svg>` element's computed style when the
+///   root does not set them (SVG text inherits them from the HTML, as in Chrome);
+/// - every `currentColor` in an attribute value replaced by that element's computed `color`
+///   (what Blitz's own serializer does, blitz-dom `node/serialize.rs:101-113`, `svg_source`,
+///   which is crate-private).
+///
+/// Comments are dropped. Not carried over: author CSS of the HTML document that targets SVG
+/// elements (e.g. `svg rect { fill: red }` in a page `<style>`); only the SVG's own attributes,
+/// `style` attributes and `<style>` elements reach usvg.
+pub(crate) fn inline_svg_source(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    width: f64,
+    height: f64,
+) -> String {
+    let mut out = String::new();
+    write_svg_node(base, node, true, width, height, &mut out);
+    out
+}
+
+fn write_svg_node(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    root: bool,
+    width: f64,
+    height: f64,
+    out: &mut String,
+) {
+    use style_traits::ToCss as _;
+    match &node.data {
+        NodeData::Text(text) => escape_xml(&text.content, false, out),
+        NodeData::Element(el) => {
+            let name: &str = &el.name.local;
+            out.push('<');
+            out.push_str(name);
+            let styles = node.primary_styles();
+            let color = styles
+                .as_ref()
+                .map(|styles| styles.clone_color().to_css_string());
+            let has = |wanted: &str| {
+                el.attrs().iter().any(|attr| {
+                    let local: &str = &attr.name.local;
+                    attr_name(&attr.name) == wanted || (wanted == "xmlns" && local == "xmlns")
+                })
+            };
+            if root {
+                if !has("xmlns") {
+                    out.push_str(" xmlns=\"");
+                    out.push_str(SVG_NS);
+                    out.push('"');
+                }
+                if !has("xmlns:xlink") {
+                    out.push_str(" xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
+                }
+                out.push_str(&format!(" width=\"{width}\" height=\"{height}\""));
+                if let Some(styles) = styles.as_ref() {
+                    let font = styles.get_font();
+                    if !has("font-family") {
+                        out.push_str(" font-family=\"");
+                        escape_xml(&font.font_family.to_css_string(), true, out);
+                        out.push('"');
+                    }
+                    if !has("font-size") {
+                        out.push_str(&format!(
+                            " font-size=\"{}\"",
+                            font.font_size.computed_size().px()
+                        ));
+                    }
+                }
+            }
+            for attr in el.attrs() {
+                let full = attr_name(&attr.name);
+                if root && (full == "width" || full == "height") {
+                    continue;
+                }
+                out.push(' ');
+                out.push_str(&full);
+                out.push_str("=\"");
+                match &color {
+                    Some(color) if attr.value.contains("currentColor") => {
+                        escape_xml(&attr.value.replace("currentColor", color), true, out)
+                    }
+                    _ => escape_xml(&attr.value, true, out),
+                }
+                out.push('"');
+            }
+            drop(styles);
+            if node.children.is_empty() {
+                out.push_str("/>");
+                return;
+            }
+            out.push('>');
+            for &child in &node.children {
+                if let Some(child) = base.get_node(child) {
+                    write_svg_node(base, child, false, width, height, out);
+                }
+            }
+            out.push_str("</");
+            out.push_str(name);
+            out.push('>');
+        }
+        _ => {}
+    }
+}
+
+/// An attribute's serialized name: `xlink:` / `xml:` / `xmlns:` prefixes for those namespaces,
+/// the bare local name otherwise (the HTML fragment serialization's rule).
+fn attr_name(name: &html5ever::QualName) -> String {
+    let local: &str = &name.local;
+    let ns: &str = &name.ns;
+    match ns {
+        "http://www.w3.org/1999/xlink" => format!("xlink:{local}"),
+        "http://www.w3.org/XML/1998/namespace" => format!("xml:{local}"),
+        "http://www.w3.org/2000/xmlns/" if local == "xmlns" => local.to_string(),
+        "http://www.w3.org/2000/xmlns/" => format!("xmlns:{local}"),
+        _ => local.to_string(),
+    }
+}
+
+/// Escape `text` for XML character data (`attr` false) or a double-quoted attribute value.
+fn escape_xml(text: &str, attr: bool, out: &mut String) {
+    for c in text.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' if attr => out.push_str("&quot;"),
+            '\n' if attr => out.push_str("&#10;"),
+            '\t' if attr => out.push_str("&#9;"),
+            '\r' => out.push_str("&#13;"),
+            c => out.push(c),
+        }
+    }
+}
+
 /// Image-source resolution state threaded through the layout walk. Holds the
 /// caller's `images` map + optional `base_url`, the DOM ordinal of every `<img>`
 /// (for the source locator), and records the FIRST renderable-but-unresolved
@@ -4556,6 +5031,7 @@ fn resolve_image_runs(
             height,
             format,
             data: std::sync::Arc::new(data),
+            svg: None,
         }];
     }
     // A `data:` URL that failed to parse (unsupported MIME, non-base64, or corrupt
@@ -4594,6 +5070,7 @@ fn resolve_image_runs(
         height,
         format,
         data: std::sync::Arc::new(bytes.clone()),
+        svg: None,
     }]
 }
 
@@ -5518,6 +5995,37 @@ fn capture_raw_runs(
             });
         }
     }
+}
+
+/// Test only (the raw-Blitz canary of [`find_external_svg_image`]): `html` parsed and laid out by
+/// Blitz with NO vellora gate or correction, and, for each `<svg>` Blitz parsed into
+/// `ImageData::Svg` (DOM order), whether Blitz's own usvg tree holds any node.
+#[cfg(test)]
+pub(crate) fn raw_blitz_svg_trees_have_content(html: &str) -> Vec<bool> {
+    use blitz_dom::node::{ImageData, SpecialElementData};
+    let mut doc = build_document_with(
+        html,
+        crate::fonts::build_font_context(&[]),
+        DocumentSyntax::Html,
+        Some(layout_viewport(800.0, 600.0).0),
+    );
+    doc.resolve(0.0);
+    let mut found = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        stack.extend(node.children.iter().rev().copied());
+        if let Some(el) = node.element_data() {
+            if let SpecialElementData::Image(data) = &el.special_data {
+                if let ImageData::Svg(svg) = &**data {
+                    found.push(svg.tree.root().has_children());
+                }
+            }
+        }
+    }
+    found
 }
 
 #[cfg(test)]

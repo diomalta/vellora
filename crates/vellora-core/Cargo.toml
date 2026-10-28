@@ -40,7 +40,17 @@ base64 = "0.22.1"
 # anyway, so before Phase C step 04 every `float: left|right` box was laid out as an in-flow
 # block. The shipped main (Blitz git 2003ba5, same feature off) did the same: its WPT float
 # passes were references that degraded identically (fidelity/gate/snapshots/2026-10-28/c04/).
-blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["floats"] }
+# `svg` (Phase C step 06) makes Blitz lay an inline `<svg>` out as a replaced box (blitz-dom
+# `layout/construct.rs` parses its subtree with usvg 0.48 into `ImageData::Svg`); without it the
+# `<svg>` was a 0x0 inline box whose children were laid out as unknown inline elements. vellora
+# paints the SVG itself (`src/svg.rs`, krilla-svg). Side effects of Blitz's usvg parse: it loads
+# the HOST font list once per process (blitz-dom `util.rs` `FONT_DB`, `load_system_fonts`) for
+# Blitz's own tree, which vellora never paints, and whose text-dependent size it overrides for a
+# `viewBox`-less SVG of `auto` size (`blitz_engine::size_svgs_like_chrome`, which lists the
+# percentage case it does not cover); and it resolves an `<image href>` against the
+# host filesystem (usvg 0.48 `default_string_resolver`), which is why the render gate rejects any
+# non-`data:` SVG image source before Blitz parses an SVG (`blitz_engine::find_external_svg_image`).
+blitz-dom ={ version = "=0.3.0-beta.4", default-features = false, features = ["floats", "svg"] }
 blitz-html = { version = "=0.3.0-beta.4", default-features = false }
 blitz-traits = "=0.3.0-beta.4"
 # html5ever, pinned to the exact version blitz-html 0.3.0-beta.4 resolves (its requirement is
@@ -63,6 +73,15 @@ style_traits = { package = "stylo_traits", version = "=0.22.0" }
 
 # --- krilla: paginated display list -> PDF ---
 krilla = "0.8.2"
+# Inline `<svg>` painting (Phase C step 06, `src/svg.rs`): krilla-svg draws a usvg tree as PDF
+# vector content (paths, gradients, embedded text; filters rasterized). krilla-svg 0.8.1 is the
+# release for krilla 0.8.x and pins usvg ^0.47, so the graph holds usvg 0.47 (ours, painted) next
+# to Blitz's 0.48 (layout only); the two never exchange types.
+krilla-svg = "=0.8.1"
+usvg = "=0.47.0"
+# The data: URL parser usvg uses (Cargo.lock holds one data-url, 0.3.2): the render gate accepts
+# an SVG `<image href>` only when usvg would decode it as a data: URL.
+data-url = "=0.3.2"
 
 # WHATWG URL join, used ONLY to normalize a relative <img> `src` against an
 # optional `baseUrl` into the lookup key for the caller-supplied `images` map.

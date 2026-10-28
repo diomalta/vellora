@@ -221,8 +221,18 @@ pub fn element_diagnostic(found: &blitz_engine::DeniedElement, html: &str) -> Di
 /// failure (it depends on the caller's `images`/`baseUrl`), so it has no
 /// `@vellora/lint` counterpart — lint sees only the HTML, not the supplied bytes,
 /// so there is nothing to keep in sync in `RULE_ID_TO_CORE_FEATURE`.
+///
+/// The same feature covers an inline SVG's `<image>` / `<feImage>` whose `href` is not a `data:`
+/// URL ([`blitz_engine::find_external_svg_image`], `tag` `image` / `feimage`): its source is not
+/// resolved either (never from the host filesystem, never from `images`), and it is rejected for
+/// the same reason an unresolved `<img>` is, rather than drawn without its picture.
 pub fn image_diagnostic(found: &blitz_engine::UnresolvedImage, html: &str) -> Diagnostic {
-    let (line, col) = locate_tag(html, "img", found.occurrence, found.dom_total);
+    let (line, col) = locate_tag(html, found.tag, found.occurrence, found.dom_total);
+    let element = match found.tag {
+        "img" => "<img>",
+        "image" => "<svg> <image>",
+        _ => "<svg> <feImage>",
+    };
     Diagnostic {
         feature: "image:unresolved".to_string(),
         // `reason` carries the full, case-specific guidance (a missing map entry, a
@@ -231,7 +241,7 @@ pub fn image_diagnostic(found: &blitz_engine::UnresolvedImage, html: &str) -> Di
         // misdirect (e.g. telling a data:-URL author to "supply via images").
         line,
         col,
-        hint: format!("<img> source could not be resolved: {}", found.reason),
+        hint: format!("{element} source could not be resolved: {}", found.reason),
     }
 }
 

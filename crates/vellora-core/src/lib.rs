@@ -47,6 +47,7 @@ pub mod pagination;
 pub mod pdf;
 #[cfg(test)]
 mod raw_blitz_tests;
+mod svg;
 mod text_decoration;
 pub mod validation;
 
@@ -290,7 +291,14 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
         syntax,
         observer,
     )
-    .map_err(|found| VelloraError::Unsupported(validation::element_diagnostic(&found, html)))?;
+    .map_err(|rejection| {
+        VelloraError::Unsupported(match rejection {
+            blitz_engine::GateRejection::Element(found) => {
+                validation::element_diagnostic(&found, html)
+            }
+            blitz_engine::GateRejection::Image(found) => validation::image_diagnostic(&found, html),
+        })
+    })?;
 
     // Reject a renderable <img> whose source could not be resolved to image
     // bytes (missing `images` entry, remote/unknown-scheme URL, or unsupported

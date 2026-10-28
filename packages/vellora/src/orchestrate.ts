@@ -34,6 +34,9 @@ import type {
  */
 const RULE_ID_TO_CORE_FEATURE: Record<RuleId, string> = {
   "script-element": "element:script",
+  // `inline-svg` is a `warning` since the core paints inline SVG natively (Phase C step 06): it is
+  // never surfaced as an error, and the core gate never emits `element:svg`. Kept for the
+  // `Record<RuleId, …>` totality.
   "inline-svg": "element:svg",
   "css-animation": "css:animation",
   "page-margin-box": "css:page-margin-box",

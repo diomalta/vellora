@@ -19,8 +19,14 @@ const RESVG_OPTIONS = {
 
 const SVG_NS = 'xmlns="http://www.w3.org/2000/svg"';
 
+/**
+ * Since the native renderer paints inline SVG as PDF vector content (vellora-core `svg.rs`), this
+ * rule is a `warning`, not a subset violation: the codemod stays available for templates that want
+ * a raster `<img>` instead (it loses selectable SVG text and vector sharpness), and best-effort mode
+ * still runs it. The core gate never emits `element:svg`.
+ */
 const SUGGESTED_FIX =
-  "Rasterize the inline <svg> to a PNG and reference it via an <img> with a data: URI, or provide the asset as a bundled raster image. SVG is outside the static PDF subset.";
+  "Optional: the native renderer draws inline <svg> as vector content. Rasterize it to a PNG <img> with a data: URI only if a raster image is wanted (SVG text is then no longer selectable).";
 
 /** resvg requires a namespaced root; parse5 may serialize an inline `<svg>` without `xmlns`. */
 function ensureSvgNamespace(svgMarkup: string): string {
@@ -34,7 +40,7 @@ function ensureSvgNamespace(svgMarkup: string): string {
  * Rasterize an inline `<svg>` to a PNG data URI. Returns `null` (not throws) when resvg cannot
  * render the SVG (malformed XML, an unsupported feature, or text needing a font while
  * `loadSystemFonts: false` is pinned), so one bad SVG leaves itself unconverted rather than crashing
- * the whole document — the strict re-detect then reports it as a located diagnostic.
+ * the whole document — the re-detect then reports it (a warning) and the native renderer draws it.
  */
 function rasterizeToDataUri(svgMarkup: string): string | null {
   try {
@@ -47,7 +53,7 @@ function rasterizeToDataUri(svgMarkup: string): string | null {
 
 export const inlineSvgRule: Rule = {
   id: "inline-svg",
-  severity: "error",
+  severity: "warning",
   autoFixable: true,
   detect(doc): Detection[] {
     const detections: Detection[] = [];
@@ -62,8 +68,8 @@ export const inlineSvgRule: Rule = {
     const svgMarkup = serializeElement(svg);
     const dataUri = rasterizeToDataUri(svgMarkup);
     if (dataUri === null) {
-      // resvg could not render this SVG; leave it unconverted so the re-detect surfaces a located
-      // diagnostic instead of the whole render crashing on one bad element.
+      // resvg could not render this SVG; leave it unconverted (the re-detect reports it as a warning and
+      // the native renderer draws it) instead of the whole render crashing on one bad element.
       return;
     }
     convertSvgToImg(svg, dataUri);

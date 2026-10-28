@@ -19,6 +19,7 @@ use krilla::page::PageSettings;
 use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, GlyphId, KrillaGlyph};
 use krilla::{Document, SerializeSettings};
+use krilla_svg::{SurfaceExt as _, SvgSettings};
 
 use crate::blitz_engine::{ImageFormat, ImageRun, TextRun};
 
@@ -378,20 +379,32 @@ fn draw_image_run(surface: &mut krilla::surface::Surface, run: &ImageRun) -> Res
         return Ok(());
     }
 
-    let bytes: Vec<u8> = (*run.data).clone();
-    let image = match run.format {
-        ImageFormat::Png => Image::from_png(bytes.into(), false),
-        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
-        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
-        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
-    }
-    .map_err(|e| format!("could not decode embedded image: {e}"))?;
     let size = Size::from_wh(
         (run.width * PX_TO_PT) as f32,
         (run.height * PX_TO_PT) as f32,
     )
     .ok_or_else(|| "invalid image size".to_string())?;
     let transform = Transform::from_translate(content_x_pt(run.x), content_y_pt(run.y));
+    // An inline <svg>: its usvg tree, sized to the run's box in CSS px, drawn as PDF vector
+    // content scaled to the box in pt and clipped to it (krilla-svg `draw_svg` clips to the tree
+    // size: the outer SVG's `overflow: hidden` of the UA sheet).
+    if run.format == ImageFormat::Svg {
+        if let Some(tree) = &run.svg {
+            surface.push_transform(&transform);
+            surface.draw_svg(tree, size, SvgSettings::default());
+            surface.pop();
+        }
+        return Ok(());
+    }
+    let bytes: Vec<u8> = (*run.data).clone();
+    let image = match run.format {
+        ImageFormat::Png => Image::from_png(bytes.into(), false),
+        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
+        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
+        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
+        ImageFormat::Svg => unreachable!("handled above"),
+    }
+    .map_err(|e| format!("could not decode embedded image: {e}"))?;
     surface.push_transform(&transform);
     surface.draw_image(image, size);
     surface.pop();
