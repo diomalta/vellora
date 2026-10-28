@@ -53,6 +53,11 @@ pub struct LaidOutBox {
     /// `collect_table_cells`); we keep the hint so the post-walk table pass can
     /// preserve browser-like column proportions.
     pub width_pct_hint: Option<f64>,
+    /// Table cells only: Blitz's own max-content inline size of the cell's border box
+    /// ([`cell_max_content_width`]), `None` for non-cells and for cells whose content it does
+    /// not cover (a specified width, a nested table, a replaced or flex/grid box). Read by the
+    /// auto-table column pass (`layout_normalize::normalize_auto_table_compact_columns`).
+    pub max_content_width: Option<f64>,
     /// Whether this box is a table with `table-layout: fixed`.
     pub table_layout_fixed: bool,
     /// Whether this box computes `border-collapse: collapse`.
@@ -2133,6 +2138,7 @@ fn push_box(
         margin_top: layout.margin.top as f64,
         margin_bottom: layout.margin.bottom as f64,
         width_pct_hint: width_percentage_hint(node),
+        max_content_width: cell_max_content_width(node, base),
         table_layout_fixed: table_layout_fixed(node),
         // The authored value: a compensated table computes `separate` now.
         table_border_collapse: table_border_collapse(node)
@@ -2172,6 +2178,88 @@ fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
         },
         _ => None,
     }
+}
+
+/// The max-content inline size of a table cell's border box, measured the way Blitz measures
+/// it when it sizes the table's column tracks (blitz-dom 0.3.0-beta.4 `layout/inline.rs`
+/// 496-508: an inline root's max-content is Parley's `calculate_content_widths().max` plus its
+/// padding and border; a block container's is the largest in-flow child contribution, the
+/// child's max-content plus its horizontal margins, plus its own padding and border). `None`
+/// for non-cells and for any content this does not model, so the column pass leaves that
+/// table alone: a specified (non-`auto`) width anywhere in the cell, a nested table, a
+/// replaced element, a flex or grid container, a float or an out-of-flow box.
+fn cell_max_content_width(node: &blitz_dom::Node, base: &BaseDocument) -> Option<f64> {
+    let display = node.primary_styles()?.clone_display();
+    if display.inside() != style::values::specified::box_::DisplayInside::TableCell {
+        return None;
+    }
+    block_max_content_width(base, node, 0)
+}
+
+fn block_max_content_width(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    depth: usize,
+) -> Option<f64> {
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    // The cell's own subtree only; a deep tree is not a cell this pass needs.
+    if depth > 32 || !node_has_layout_data(node) {
+        return None;
+    }
+    let styles = node.primary_styles()?;
+    let position = styles.get_position();
+    if !position.clone_width().is_auto() {
+        return None;
+    }
+    let display = styles.clone_display();
+    // Blitz's anonymous block boxes carry their inline content's style (`display: inline`)
+    // but are block boxes.
+    if depth > 0
+        && !node.is_anonymous()
+        && (display.outside() != DisplayOutside::Block
+            || !matches!(
+                display.inside(),
+                DisplayInside::Flow | DisplayInside::FlowRoot
+            ))
+    {
+        return None;
+    }
+    if !matches!(styles.clone_float(), style::computed_values::float::T::None)
+        || !matches!(
+            styles.clone_position(),
+            style::computed_values::position::T::Static
+                | style::computed_values::position::T::Relative
+        )
+    {
+        return None;
+    }
+    drop(styles);
+    let layout = node.final_layout();
+    let frame =
+        (layout.padding.left + layout.padding.right + layout.border.left + layout.border.right)
+            as f64;
+    if node.flags.is_inline_root() {
+        let text = node.data.downcast_element()?.inline_layout_data.as_ref()?;
+        // Inline boxes (inline-block, images) size by their own algorithm: not modelled.
+        if text.layout.inline_boxes().next().is_some() {
+            return None;
+        }
+        return Some(f64::from(text.layout.calculate_content_widths().max) + frame);
+    }
+    let children: Vec<NodeId> = node
+        .layout_children
+        .borrow()
+        .as_ref()
+        .map(|c| c.iter().copied().collect())
+        .unwrap_or_default();
+    let mut widest = 0.0_f64;
+    for child in children {
+        let child = base.get_node(child)?;
+        let contribution = block_max_content_width(base, child, depth + 1)?;
+        let margin = child.final_layout().margin;
+        widest = widest.max(contribution + (margin.left + margin.right) as f64);
+    }
+    Some(widest + frame)
 }
 
 fn table_layout_fixed(node: &blitz_dom::Node) -> bool {

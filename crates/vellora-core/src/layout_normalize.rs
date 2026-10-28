@@ -4,7 +4,7 @@
 //! computed layout. Keeping them outside `blitz_engine` prevents browser-compat
 //! policy from crowding the module that owns upstream Blitz contact.
 
-use crate::blitz_engine::{InlineAlign, LaidOutBox, VisualRect};
+use crate::blitz_engine::{LaidOutBox, VisualRect};
 
 // `normalize_painted_table_cell_text_baselines` (a constant 2 px raise of the text of painted
 // table rows, a corpus compensator for raw Blitz's collapsed-row drift) was retired in Phase C
@@ -32,29 +32,55 @@ pub(crate) fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
     }
 }
 
+/// Hand an auto-layout table's spare width to its columns in proportion to their max-content
+/// widths, as Chrome does, instead of Blitz's equal share per column.
+///
+/// BLITZ BUG COMPENSATION (Phase C step 03, 2026-10-27; delete when Blitz fixes it, see below).
+/// Blitz 0.3.0-beta.4 lays a `table-layout: auto` table out as a CSS grid whose every column
+/// track is `auto` (blitz-dom 0.3.0-beta.4 `src/layout/table.rs` 249-255: percentage columns
+/// become `auto`; 293-297: `remaining_column` is `auto` unless the layout is fixed), and Taffy
+/// 0.15.0's "stretch auto tracks" step then splits the free space EQUALLY between auto tracks
+/// (taffy 0.15.0 `src/compute/grid/track_sizing.rs` 1415-1442, `extra_space_per_auto_track =
+/// free_space / num_auto_tracks`). Browsers distribute a table's excess width over its auto
+/// columns in proportion to their max-content widths (CSS Tables 3 "distributing excess width
+/// to columns"; Chrome's `TableLayoutAlgorithmAuto` / LayoutNG table column distribution).
+/// Repro (Chrome for Testing 155.0.8059.85, local macOS, 2026-10-27; `fidelity/gate/snapshots/
+/// 2026-10-27/c03/`): the invoice items table (`width: 100%`, 673 px, four auto columns) has
+/// max-content widths 267.922 / 53.328 / 104.172 / 95.297 px (the same table with `width:
+/// max-content`); Chrome lays it out at 346.266 / 68.922 / 134.625 / 123.188 = each times
+/// 673 / 520.719; raw Blitz at 306 / 92 / 142 / 133 = each plus ~38 px (152.3 / 4). The canary
+/// `raw_blitz_tests::blitz_still_shares_auto_table_excess_width_equally` asserts Blitz's
+/// numbers and fails when Blitz distributes like Chrome.
+///
+/// Scope: only when every column is wider than its max-content width in Blitz's layout (the
+/// excess case: no cell wraps a line, so moving and resizing the laid-out cells is exact) and
+/// every cell's max-content width is known ([`LaidOutBox::max_content_width`]: no specified
+/// widths, no nested tables, no inline boxes); every row has one cell per column; no colspan,
+/// no percentage width (that is [`normalize_table_percent_widths`]); not `table-layout: fixed`.
+/// The gaps between cells (`border-spacing`) are kept.
+///
+/// Until this step this pass was a heuristic (`compact_columns`: right-aligned columns at 1.25 x
+/// their text width, the rest scaled), which put the invoice's QTD. column 6 px right of Chrome
+/// at the 673 px layout width (24 px right of raw Blitz's -17.9). The layer keeps its historical
+/// name `auto_table_compact_columns` (fidelity tooling keys on it).
+///
+/// WHEN BLITZ FIXES IT: delete this pass (and its `LAYOUT_NORMALIZE_PASSES` entry),
+/// `LaidOutBox::max_content_width` with `blitz_engine::cell_max_content_width` /
+/// `block_max_content_width`, and the canary; keep `tests/layout_fidelity.rs`'s Chrome-number
+/// table tests, which must then pass on Blitz's own layout.
 pub(crate) fn normalize_auto_table_compact_columns(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
+    for i in 0..boxes.len() {
         if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
             let end = subtree_end_by_depth(boxes, i);
-            normalize_auto_table_compact_columns_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
+            distribute_auto_table_excess(boxes, i, end);
         }
     }
 }
 
-fn normalize_auto_table_compact_columns_in_range(
-    boxes: &mut [LaidOutBox],
-    table_idx: usize,
-    end: usize,
-) {
+fn distribute_auto_table_excess(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
     let table_depth = boxes[table_idx].depth;
     let mut rows: Vec<Vec<usize>> = Vec::new();
-    let mut column_count = 0usize;
     let mut i = table_idx + 1;
-
     while i < end {
         match boxes[i].tag.as_deref() {
             Some("table") if boxes[i].depth > table_depth => {
@@ -63,138 +89,75 @@ fn normalize_auto_table_compact_columns_in_range(
             Some("tr") => {
                 let row_end = subtree_end_by_depth(boxes, i).min(end);
                 let cell_depth = boxes[i].depth + 1;
-                let cells: Vec<usize> = (i + 1..row_end)
+                let mut cells: Vec<usize> = (i + 1..row_end)
                     .filter(|idx| {
                         boxes[*idx].depth == cell_depth
                             && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
                     })
                     .collect();
-                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
-                column_count = column_count.max(row_columns);
+                cells.sort_by(|a, b| boxes[*a].x.total_cmp(&boxes[*b].x));
                 rows.push(cells);
                 i = row_end;
             }
             _ => i += 1,
         }
     }
-
-    if column_count < 3
-        || rows.is_empty()
-        || rows
-            .iter()
-            .flatten()
-            .any(|idx| boxes[*idx].colspan != 1 || boxes[*idx].width_pct_hint.is_some())
+    let Some(columns) = rows.first().map(Vec::len) else {
+        return;
+    };
+    if columns < 2
+        || rows.iter().any(|row| row.len() != columns)
+        || rows.iter().flatten().any(|idx| {
+            let b = &boxes[*idx];
+            b.colspan != 1 || b.width_pct_hint.is_some() || b.max_content_width.is_none()
+        })
     {
         return;
     }
-
-    let mut row_left = f64::INFINITY;
-    let mut row_right = f64::NEG_INFINITY;
-    for row in &rows {
-        if row.len() != column_count {
-            return;
-        }
-        for &idx in row {
-            row_left = row_left.min(boxes[idx].x);
-            row_right = row_right.max(boxes[idx].x + boxes[idx].width);
-        }
-    }
-    let row_width = row_right - row_left;
-    if !row_width.is_finite() || row_width <= 0.0 {
+    // Column geometry from the first row; every row must agree (one grid).
+    let first = &rows[0];
+    let lefts: Vec<f64> = first.iter().map(|idx| boxes[*idx].x).collect();
+    let widths: Vec<f64> = first.iter().map(|idx| boxes[*idx].width).collect();
+    if rows.iter().any(|row| {
+        row.iter().enumerate().any(|(c, idx)| {
+            (boxes[*idx].x - lefts[c]).abs() > 0.5 || (boxes[*idx].width - widths[c]).abs() > 0.5
+        })
+    }) {
         return;
     }
-
-    let mut compact = vec![false; column_count];
-    let mut min_widths = vec![0.0; column_count];
-    let mut current_widths = vec![0.0; column_count];
+    let mut max_content = vec![0.0_f64; columns];
     for row in &rows {
-        for (column, &idx) in row.iter().enumerate() {
-            current_widths[column] = f64::max(current_widths[column], boxes[idx].width);
-            compact[column] |= boxes[idx].text_align == InlineAlign::Right;
-            min_widths[column] = f64::max(min_widths[column], intrinsic_cell_width(&boxes[idx]));
+        for (c, idx) in row.iter().enumerate() {
+            max_content[c] = max_content[c].max(boxes[*idx].max_content_width.unwrap_or(0.0));
         }
     }
-
-    let compact_count = compact.iter().filter(|&&is_compact| is_compact).count();
-    if compact_count == 0 || compact_count == column_count {
+    // The excess case only: Blitz gave every column at least its max-content width.
+    if (0..columns).any(|c| widths[c] + 0.5 < max_content[c]) {
         return;
     }
-
-    let mut target_widths = current_widths.clone();
-    let mut compact_total = 0.0;
-    let compact_floor = row_width / (column_count as f64 * 2.0);
-    for column in 0..column_count {
-        if compact[column] {
-            let target = (min_widths[column] * 1.25)
-                .max(compact_floor)
-                .min(current_widths[column])
-                .max(min_widths[column]);
-            target_widths[column] = target;
-            compact_total += target;
-        }
+    let total_max: f64 = max_content.iter().sum();
+    let total_width: f64 = widths.iter().sum();
+    let excess = total_width - total_max;
+    if total_max <= 0.0 || excess <= 0.5 {
+        return;
     }
-
-    let flexible_columns: Vec<usize> = (0..column_count)
-        .filter(|column| !compact[*column])
+    let targets: Vec<f64> = max_content
+        .iter()
+        .map(|m| m + excess * m / total_max)
         .collect();
-    let flexible_total = row_width - compact_total;
-    if flexible_total <= 0.0 || flexible_columns.is_empty() {
-        return;
-    }
-    let current_flexible_total: f64 = flexible_columns
-        .iter()
-        .map(|column| current_widths[*column])
-        .sum();
-    for &column in &flexible_columns {
-        target_widths[column] = if current_flexible_total > 0.0 {
-            flexible_total * (current_widths[column] / current_flexible_total)
-        } else {
-            flexible_total / flexible_columns.len() as f64
-        };
-    }
-
+    let gaps: Vec<f64> = (1..columns)
+        .map(|c| lefts[c] - (lefts[c - 1] + widths[c - 1]))
+        .collect();
     for row in rows {
-        let mut cursor = row_left;
-        for (column, idx) in row.into_iter().enumerate() {
-            adjust_subtree_inline_geometry(boxes, idx, cursor, target_widths[column]);
-            cursor += target_widths[column];
+        let mut cursor = lefts[0];
+        for (c, idx) in row.into_iter().enumerate() {
+            if c > 0 {
+                cursor += gaps[c - 1];
+            }
+            adjust_subtree_inline_geometry(boxes, idx, cursor, targets[c]);
+            cursor += targets[c];
         }
     }
-}
-
-fn intrinsic_cell_width(cell: &LaidOutBox) -> f64 {
-    let text_width = cell
-        .text_runs
-        .iter()
-        .map(text_run_width)
-        .fold(0.0_f64, f64::max);
-    if text_width <= 0.0 {
-        return cell.width;
-    }
-
-    let left_gap = cell
-        .text_runs
-        .iter()
-        .map(|run| run.origin_x - cell.x)
-        .filter(|gap| gap.is_finite() && *gap >= 0.0)
-        .fold(f64::INFINITY, f64::min);
-    let right_gap = cell
-        .text_runs
-        .iter()
-        .map(|run| cell.x + cell.width - (run.origin_x + text_run_width(run)))
-        .filter(|gap| gap.is_finite() && *gap >= 0.0)
-        .fold(f64::INFINITY, f64::min);
-    let padding = if cell.text_align == InlineAlign::Right {
-        right_gap
-    } else {
-        left_gap
-    };
-    let padding = if padding.is_finite() { padding } else { 0.0 };
-    text_width + padding * 2.0
-}
-
-fn text_run_width(run: &crate::blitz_engine::TextRun) -> f64 {
-    run.glyphs.iter().map(|glyph| glyph.advance as f64).sum()
 }
 
 fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
