@@ -1509,6 +1509,128 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
     }
 }
 
+/// One edit of [`zero_width_float_margins`]: the box, its new left and right margins (px; `None`
+/// keeps one), and the horizontal shift (px) the walk applies to it and its subtree.
+type ZeroWidthFloatEdit = (NodeId, [Option<f32>; 2], f64);
+
+/// The margin edits and shifts that place a formatting-context root beside zero-width floats as
+/// Chrome 155 does, read off a laid-out document. Compensates a TAFFY BUG of the crates.io Blitz
+/// 0.3.0-beta.4 stack; the raw-Blitz canary `blitz_still_clamps_a_negative_margin_at_a_zero_width_float`
+/// (`raw_blitz_tests.rs`) fails when it is fixed, and then this function,
+/// [`ZeroWidthFloatEdit`], their use in [`resolve_and_walk`] (the margin edit and the walk's
+/// `shifted` origins), the canary and `zero_width_floats_do_not_clamp_negative_margins` are
+/// deleted.
+///
+/// A block-level box that establishes a formatting context is placed in a layout opportunity
+/// beside the floats; Blink's test for "beside a float" is whether the opportunity's edge moved
+/// in from the containing block's content edge (`LayoutNewFormattingContext` in Chromium
+/// `third_party/blink/renderer/core/layout/block_layout_algorithm.cc`: `has_floats_on_line_left =
+/// opportunity.rect.LineStartOffset() != origin_offset.line_offset`; only then are negative
+/// margins clamped to 0), so a zero-width float at the content edge changes nothing and the
+/// box's negative margins apply. TAFFY BUG (taffy 0.15.0 `src/compute/float.rs` 516-518 records a
+/// zero-width float in the segments it spans, `has_float[slot] = true`, deliberately, and
+/// `find_bfc_slot` 711-727 then clamps a negative margin on that side at the float's edge). Repro
+/// (WPT css/CSS2/floats/zero-width-floats.html): a 100 px block at x = 58 holding a 0x50 left
+/// float, a 0x150 right float (`clear: left`) and an `overflow: hidden` box with `margin: 0
+/// -50px`: Taffy lays the box out at x = 58..208, Chrome for Testing 155.0.8059.85 (2026-10-28)
+/// at 8..208. Measured on 14 variants (c07-pin-b/zw in the run store): the margin applies past a
+/// zero-width float on either side (`left0 margin-left -50`: Chrome 8..158; `right0 margin 0
+/// -50px`: 8..208) and is clamped by a float 1 px wide or wider.
+///
+/// Edit, for a root whose top segment Taffy flags with zero-width floats only on a side where its
+/// margin is negative, and when no float wider than 0 is beside its border box over its whole
+/// height (Chrome then sees no float at all): the negative margin of the clamped side moves to the
+/// other side's margin (an `auto` width then stretches to Chrome's width; a specified width keeps
+/// its width), and the walk shifts the box and its subtree by that margin, onto Chrome's x. Only
+/// for left-to-right roots whose two margins are lengths or percentages. Not handled: zero-width
+/// floats clamping both sides, an absolutely positioned descendant whose containing block is
+/// outside the root (it is not shifted), and the opportunity Taffy misses when a float wider
+/// than 0 starts below the root's top (WPT zero-width-floats-positioning.tentative.html: Chrome
+/// narrows the root to avoid it, Taffy does not).
+fn zero_width_float_margins(
+    base: &BaseDocument,
+    skip: &std::collections::HashSet<NodeId>,
+) -> Vec<ZeroWidthFloatEdit> {
+    use style::values::computed::Margin;
+    let mut geometry = FloatGeometry::default();
+    let root = base.root_element().id;
+    collect_float_geometry(base, root, root, 0, &mut geometry);
+    let zero = |f: &FloatBox| (f.margin_rect[2] - f.margin_rect[0]).abs() <= 1e-3;
+    let mut edits = Vec::new();
+    for bfc_root in &geometry.bfc_roots {
+        if skip.contains(&bfc_root.id) {
+            continue;
+        }
+        let Some(node) = base.get_node(bfc_root.id) else {
+            continue;
+        };
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        if styles.get_inherited_box().clone_direction() != style::computed_values::direction::T::Ltr
+        {
+            continue;
+        }
+        let basis = style::values::computed::Length::new(
+            (bfc_root.container[1] - bfc_root.container[0]) as f32,
+        );
+        let resolve = |m: Margin| match m {
+            Margin::LengthPercentage(lp) => Some(f64::from(lp.resolve(basis).px())),
+            _ => None,
+        };
+        let (Some(ml), Some(mr)) = (
+            resolve(styles.clone_margin_left()),
+            resolve(styles.clone_margin_right()),
+        ) else {
+            continue;
+        };
+        let auto_width = matches!(
+            styles.clone_width(),
+            style::values::generics::length::GenericSize::Auto
+        );
+        drop(styles);
+        let rect = bfc_root.border_rect;
+        // Taffy's view: the floats of the segment at the root's top.
+        let at_top = |f: &FloatBox| {
+            f.margin_rect[1] <= rect[1] + OVERLAP_EPSILON_PX
+                && rect[1] + OVERLAP_EPSILON_PX < f.margin_rect[3]
+        };
+        // Chrome's view: every float beside the border box.
+        let beside = |f: &FloatBox| {
+            f.margin_rect[1] < rect[3] - OVERLAP_EPSILON_PX
+                && rect[1] + OVERLAP_EPSILON_PX < f.margin_rect[3]
+        };
+        let floats: Vec<&FloatBox> = geometry
+            .floats
+            .iter()
+            .filter(|f| f.bfc == bfc_root.bfc)
+            .collect();
+        let beside_root: Vec<&FloatBox> = floats.iter().copied().filter(|f| beside(f)).collect();
+        if beside_root.iter().any(|f| !zero(f)) {
+            continue;
+        }
+        let at_edge = |f: &FloatBox| {
+            let x = f.margin_rect[if f.left { 0 } else { 2 }];
+            let edge = bfc_root.container[if f.left { 0 } else { 1 }];
+            (x - edge).abs() <= OVERLAP_EPSILON_PX
+        };
+        if beside_root.iter().any(|f| !at_edge(f)) {
+            continue;
+        }
+        let top: Vec<&FloatBox> = floats.iter().copied().filter(|f| at_top(f)).collect();
+        let left = ml < 0.0 && top.iter().any(|f| f.left);
+        let right = mr < 0.0 && top.iter().any(|f| !f.left);
+        let edit = match (left, right) {
+            (true, false) if auto_width => ([Some(0.0), Some((ml + mr) as f32)], ml),
+            (true, false) => ([None, None], ml),
+            (false, true) if auto_width => ([Some((ml + mr) as f32), Some(0.0)], -mr),
+            _ => continue,
+        };
+        edits.push((bfc_root.id, edit.0, edit.1));
+    }
+    edits
+}
+
 /// Local name of the element [`trailing_float_wraps`] moves the trailing floats of a line into.
 const FLOAT_RUN_TAG: &str = "vellora-float-run";
 
@@ -4670,14 +4792,28 @@ fn resolve_and_walk<O: LayoutObserver>(
     // Floats Blitz/Taffy let overlap what Chrome moves out of their way (two Blitz bugs, see
     // `float_avoidance_fixups`): read off this layout, written into the computed styles, and
     // laid out once more. Off in the raw-Blitz render.
+    // Formatting-context roots Taffy keeps inside zero-width floats (a Taffy bug, see
+    // `zero_width_float_margins`): their margins edited here, the horizontal shift applied by
+    // the walk (`shifted`).
+    let mut shifted: Vec<(NodeId, f64)> = Vec::new();
     if O::VELLORA_CORRECTIONS {
         let fixups = float_avoidance_fixups(&doc);
-        // Floats the no-wrap fix-up already moves keep that edit.
+        // Floats the no-wrap fix-up already moves keep that edit, and roots the `clear` edit
+        // moves keep theirs.
         let edited: std::collections::HashSet<NodeId> = fixups.iter().map(|f| f.0).collect();
         let wraps = trailing_float_wraps(&doc, &edited);
-        if !fixups.is_empty() || !wraps.is_empty() {
+        let zero_width = zero_width_float_margins(&doc, &edited);
+        if !fixups.is_empty() || !wraps.is_empty() || !zero_width.is_empty() {
             apply_float_fixups(&mut doc, &fixups);
             wrap_trailing_floats(&mut doc, &wraps);
+            for &(id, [left, right], dx) in &zero_width {
+                set_margins(
+                    &mut doc,
+                    id,
+                    [None, right.map(f64::from), None, left.map(f64::from)],
+                );
+                shifted.push((id, dx));
+            }
             // Non-incremental: the edits are invisible to Blitz's damage tracking, so the whole
             // tree is re-constructed and re-laid out (their styles, edited ones included, are
             // kept; the style pass has nothing to restyle).
@@ -4752,6 +4888,12 @@ fn resolve_and_walk<O: LayoutObserver>(
             svg_fonts: Some(&svg_fonts),
             line_spans: std::collections::HashMap::new(),
         };
+        // The walk reads every box's position through `box_origin`'s memo: a shifted box's
+        // entry, seeded here in tree order, moves its subtree with it.
+        for &(id, dx) in &shifted {
+            let (x, y) = box_origin(base, id, &mut sink.origins, sink.reader_compensations);
+            sink.origins.insert(id, (x + dx, y));
+        }
         walk_box(base, root_id, 0, &mut sink);
     }
     crate::break_css::resolve_break_after(&mut boxes);

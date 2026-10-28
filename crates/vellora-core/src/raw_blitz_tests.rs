@@ -1831,3 +1831,63 @@ fn trailing_floats_go_below_their_line() {
     assert_eq!(trailing_float_geometry(&laid, "c", 95.0).0, 12.0);
     assert_eq!(trailing_float_geometry(&laid, "d", 30.0).0, 12.0);
 }
+
+/// Formatting-context roots with negative margins beside zero-width floats (the repro of
+/// `blitz_engine::zero_width_float_margins`, WPT css/CSS2/floats/zero-width-floats.html): a
+/// 100 px block at x = 50 with a 0x50 left float, a 0x150 right float (`clear: left`) and a
+/// 100 px tall `overflow: hidden` box with `margin: 0 -50px` holding text; then a 0x50 right
+/// float beside a 70 px tall one with the same margins.
+const ZERO_WIDTH_FLOATS: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font: 10px/12px monospace; }
+    .c { margin-left: 50px; width: 100px; clear: both; }
+    .g { overflow: hidden; margin: 0 -50px; }
+    </style></head><body>
+    <div class="c"><div style="float: left; width: 0; height: 50px"></div><div style="float: right; clear: left; width: 0; height: 150px"></div><div class="g" style="height: 100px">IN</div></div>
+    <div class="c"><div style="float: right; width: 0; height: 50px"></div><div class="g" style="height: 70px"></div></div>
+    </body></html>"#;
+
+/// `(x, width)` of the `overflow: hidden` box of [`ZERO_WIDTH_FLOATS`] that is `height` px tall
+/// (the last such box: its block is as tall).
+fn zero_width_root(doc: &LaidOutDoc, height: f64) -> (f64, f64) {
+    let b = doc
+        .boxes
+        .iter()
+        .rev()
+        .find(|b| b.height == height && b.width > 0.0)
+        .unwrap_or_else(|| panic!("{height} px root"));
+    (b.x, b.width)
+}
+
+/// CANARY of `blitz_engine::zero_width_float_margins`: Taffy still clamps a formatting-context
+/// root's negative margin at a zero-width float on the content edge (Chrome 155 applies it).
+#[test]
+fn blitz_still_clamps_a_negative_margin_at_a_zero_width_float() {
+    let (raw, _) = raw_layout(ZERO_WIDTH_FLOATS);
+    let (x, width) = zero_width_root(&raw, 100.0);
+    assert_eq!(
+        (x, width),
+        (50.0, 150.0),
+        "\n\nTAFFY CHANGED HOW A ZERO-WIDTH FLOAT CLAMPS A NEGATIVE MARGIN. Raw Blitz no longer lays \
+         ZERO_WIDTH_FLOATS's first `overflow: hidden` box out at x = 50, 150 px wide (now x = {x}, \
+         {width} px; Chrome 155: x = 0, 200 px), the bug zero_width_float_margins works around \
+         (taffy 0.15.0 src/compute/float.rs 516-518 and 711-727). If Taffy now matches Chrome, \
+         DELETE in crates/vellora-core/src/blitz_engine.rs `zero_width_float_margins`, \
+         `ZeroWidthFloatEdit`, the `zero_width` margin edit and the `shifted` origins in \
+         `resolve_and_walk`, this canary and `zero_width_floats_do_not_clamp_negative_margins`; \
+         then re-measure css/CSS2/floats with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28, c07-pin-b/zw z1/z8 in
+/// the run store): both margins apply, the box's text moves with it.
+#[test]
+fn zero_width_floats_do_not_clamp_negative_margins() {
+    let laid = product_layout(ZERO_WIDTH_FLOATS);
+    assert_eq!(zero_width_root(&laid, 100.0), (0.0, 200.0));
+    assert_eq!(zero_width_root(&laid, 70.0), (0.0, 200.0));
+    let text = runs_of(&laid)
+        .into_iter()
+        .find(|r| r.0.trim() == "IN")
+        .expect("IN");
+    assert_eq!(text.1, 0.0);
+}
