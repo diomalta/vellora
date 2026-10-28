@@ -33,7 +33,7 @@ publish = false
 # supplies a self-contained `FontContext` (see `src/fonts.rs`), so it never links
 # `libfontconfig` or reads host fonts — that is what makes output deterministic
 # across machines and lets it run on slim/Alpine/Lambda with no system deps.
-base64 = "0.22.1"
+base64 = "0.23.1"
 # `floats` turns on Blitz's float layout (blitz-dom `layout/inline.rs` float placement plus
 # `taffy/float_layout` and `stylo_taffy/floats`). It is NOT in blitz-dom 0.3.0-beta.4's
 # `default` list (its Cargo.toml [features]), and `default-features = false` would drop it
@@ -78,7 +78,7 @@ krilla = "0.8.2"
 # release for krilla 0.8.x and pins usvg ^0.47, so the graph holds usvg 0.47 (ours, painted) next
 # to Blitz's 0.48 (layout only); the two never exchange types.
 krilla-svg = "=0.8.1"
-usvg = "=0.47.0"
+usvg = "=0.48.1"
 # Blitz's usvg (the exact version and default features blitz-dom 0.3.0-beta.4 resolves; Cargo.lock
 # already holds it, so no crate is added), used ONLY to build the size-only `SvgImageData` that
 # Blitz lays an inline `<svg>` out with (`blitz_engine::hide_svgs_from_blitz`). Never painted.
@@ -96,4 +96,4 @@ url = "2"
 # PDF inspection for tests: text extraction (selectable text / ToUnicode) and
 # low-level structure (page count, font subsetting, metadata).
 pdf-extract = "0.12"
-lopdf = "0.42"
+lopdf = "0.46"
