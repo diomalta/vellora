@@ -345,3 +345,69 @@ fn whitespace_probe_keeps_every_space_chrome_renders() {
         assert!(text.contains(expected), "{expected:?} not in {text:?}");
     }
 }
+
+/// `(x pt, glyph ids)` of every text object of page 1 in content order (krilla writes one
+/// `Tm` per drawn glyph segment and its glyphs as 2-byte CIDs in `TJ`/`Tj` strings).
+fn pdf_text_objects(pdf: &[u8]) -> Vec<(f64, Vec<u16>)> {
+    let doc = lopdf::Document::load_mem(pdf).expect("lopdf parses output");
+    let (_, page_id) = doc.get_pages().into_iter().next().expect("page 1");
+    let content = doc.get_and_decode_page_content(page_id).expect("content");
+    let num = |o: &lopdf::Object| match o {
+        lopdf::Object::Real(v) => *v as f64,
+        lopdf::Object::Integer(v) => *v as f64,
+        other => panic!("not a number: {other:?}"),
+    };
+    let mut out: Vec<(f64, Vec<u16>)> = Vec::new();
+    for op in &content.operations {
+        match op.operator.as_str() {
+            "Tm" => out.push((num(&op.operands[4]), Vec::new())),
+            "Tj" | "TJ" => {
+                let last = &mut out.last_mut().expect("Tm before a show").1;
+                let mut push = |o: &lopdf::Object| {
+                    if let lopdf::Object::String(s, _) = o {
+                        last.extend(s.chunks(2).map(|c| u16::from_be_bytes([c[0], c[1]])));
+                    }
+                };
+                match &op.operands[0] {
+                    lopdf::Object::Array(items) => items.iter().for_each(&mut push),
+                    other => push(other),
+                }
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+/// A preserved tab is a shift to the next tab stop and paints nothing (CSS Text 3 §4.2; Chrome
+/// 155). No bundled face maps U+0009, so Parley shapes it to `.notdef` (glyph 0, a box); vellora
+/// drew that box (WPT `tab-size-integer-001..003`: the box showed over the green `pre`). The
+/// emitter now skips the tab's glyph and keeps its advance: `a` and `b` are two text objects,
+/// `b` starting two Liberation Mono advances (2 x 0.6 x 13 px = 15.6 px = 11.7 pt) after `a`.
+/// A genuinely unmapped character still draws its `.notdef` (Chrome paints tofu for it).
+#[test]
+fn preserved_tab_paints_no_glyph() {
+    let html = "<!DOCTYPE html><html><body><pre>a\tb</pre><p>\u{e000}</p></body></html>";
+    let pdf = render(html.as_bytes(), &RenderOptions::default()).expect("render");
+    let objects = pdf_text_objects(&pdf);
+    assert_eq!(
+        objects.len(),
+        3,
+        "a | b | the unmapped character: {objects:?}"
+    );
+    let (a, b, pua) = (&objects[0], &objects[1], &objects[2]);
+    assert_eq!((a.1.len(), b.1.len()), (1, 1), "{objects:?}");
+    assert!(
+        a.1[0] != 0 && b.1[0] != 0,
+        "no .notdef for the tab: {objects:?}"
+    );
+    assert!(
+        (b.0 - a.0 - 11.7).abs() < 0.01,
+        "b starts after a and the tab's advance: {objects:?}"
+    );
+    assert_eq!(
+        pua.1,
+        vec![0],
+        "an unmapped character keeps its .notdef: {objects:?}"
+    );
+}
