@@ -367,7 +367,7 @@ pub fn lay_out_margin_texts(
         .map(|id| {
             let id = id?;
             let node = base.get_node(id)?;
-            let (x, y) = box_origin(base, id, &mut origins);
+            let (x, y) = box_origin(base, id, &mut origins, true);
             let mut runs = read_text_runs(base, node, x, y, &mut face_cache, true);
             if runs.is_empty() {
                 return None;
@@ -1200,7 +1200,7 @@ fn collect_float_geometry(
     };
     let parent_inside = node.primary_styles().map(|s| s.clone_display().inside());
     let content_x_range = if node_has_layout_data(node) {
-        let (x, _) = box_origin(base, id, &mut geometry.origins);
+        let (x, _) = box_origin(base, id, &mut geometry.origins, false);
         let l = node.final_layout();
         let x0 = x + (l.border.left + l.padding.left) as f64;
         let x1 = x + (l.size.width - l.border.right - l.padding.right) as f64;
@@ -1238,7 +1238,7 @@ fn collect_float_geometry(
                 parent_inside,
                 Some(DisplayInside::Flex | DisplayInside::Grid)
             );
-        let (x, y) = box_origin(base, child_id, &mut geometry.origins);
+        let (x, y) = box_origin(base, child_id, &mut geometry.origins, false);
         let layout = child.final_layout();
         let (w, h) = (layout.size.width as f64, layout.size.height as f64);
         if floated && !out_of_flow {
@@ -1289,7 +1289,7 @@ fn inline_root_lines(
     origins: &mut std::collections::HashMap<NodeId, (f64, f64)>,
 ) -> Option<Vec<LineGeometry>> {
     let text = node.data.downcast_element()?.inline_layout_data.as_ref()?;
-    let (x, y) = box_origin(base, node.id, origins);
+    let (x, y) = box_origin(base, node.id, origins, false);
     let layout = node.final_layout();
     let content_x = x + (layout.border.left + layout.padding.left) as f64;
     let content_y = y + (layout.border.top + layout.padding.top) as f64 + text.block_offset as f64;
@@ -2579,7 +2579,7 @@ fn walk_box(base: &BaseDocument, node_id: NodeId, depth: usize, sink: &mut WalkS
     let Some(node) = base.get_node(node_id) else {
         return;
     };
-    let (abs_x, abs_y) = box_origin(base, node_id, &mut sink.origins);
+    let (abs_x, abs_y) = box_origin(base, node_id, &mut sink.origins, sink.reader_compensations);
     push_box(base, node, abs_x, abs_y, depth, sink);
 
     if node.flags.is_table_root() {
@@ -2693,10 +2693,16 @@ fn walk_table_part(
 /// up to the document node. This is Blitz's own `Node::absolute_position(0, 0)`
 /// without scroll offsets (a laid-out document never scrolls here), summed in
 /// `f64` from the root down, memoised per node.
+///
+/// With `compensate` (every render but the raw-Blitz one) each in-flow box also moves by the
+/// `position: relative` offsets of the non-atomic inline elements it sits in
+/// ([`inline_ancestor_relative_offset`], a Blitz gap), and its descendants inherit that through
+/// the memo.
 fn box_origin(
     base: &BaseDocument,
     node_id: NodeId,
     memo: &mut std::collections::HashMap<NodeId, (f64, f64)>,
+    compensate: bool,
 ) -> (f64, f64) {
     let mut chain = Vec::new();
     let mut origin = (0.0, 0.0);
@@ -2716,10 +2722,116 @@ fn box_origin(
         if let Some(node) = base.get_node(id).filter(|n| node_has_layout_data(n)) {
             let location = node.final_layout().location;
             origin = (origin.0 + location.x as f64, origin.1 + location.y as f64);
+            if compensate && !is_out_of_flow(node) {
+                let (dx, dy) =
+                    inline_ancestor_relative_offset(base, node.parent, node.containing_block());
+                origin = (origin.0 + dx, origin.1 + dy);
+            }
         }
         memo.insert(id, origin);
     }
     origin
+}
+
+fn is_out_of_flow(node: &blitz_dom::Node) -> bool {
+    node.primary_styles()
+        .is_some_and(|styles| styles.clone_position().is_absolutely_positioned())
+}
+
+/// The summed `position: relative` offset of the non-atomic inline elements (`display: inline`,
+/// which generate no Blitz layout box) from `start` up its DOM parents, stopping at `stop` (the
+/// box's containing block / the runs' inline root) or at the first element that is not a
+/// non-atomic inline.
+///
+/// BLITZ GAP (blitz-dom 0.3.0-beta.4, crates.io): CSS 2.2 §9.4.3 moves a relatively positioned
+/// box with all its content, and for an inline box that content is its text, its atomic inlines
+/// and its floats. Blitz applies the inset of a relatively positioned box only to that box's own
+/// layout location: `src/layout/inline.rs` 1059-1081 (`inset_offset` of an atomic inline box,
+/// from that box's own `style.inset()`), and taffy 0.15.0's block layout for block boxes. A plain
+/// `display: inline` element is no layout box (its text is Parley glyph runs of the inline root,
+/// its floats and atomic inlines are placed by the inline root, `src/layout/inline.rs` 722-790
+/// and 1047-1081), so nothing moves its content: in
+/// `<div><span style="position:relative; left:100px">x</span></div>` raw Blitz lays `x` out at
+/// the div's content-box left edge, 100 px left of where CSS 2.2 §9.4.3 (and Chrome 155, which
+/// passes the WPT tests below) puts it. Repro: `raw_blitz_tests.rs` `RELATIVE_INLINE`; WPT
+/// css/CSS2/visuren/float-inside-inline-between-blocks-1.html and
+/// css/CSS2/normal-flow/block-in-inline-float-between-001.xht, whose reference floats `bbb` inside
+/// a relative `<span>`: vellora drew it at x = 8 px, 100 px left of the test's (Blitz lays the
+/// test's `<span>`, which holds blocks, out as a block box and moves it).
+/// CANARY: `raw_blitz_tests.rs` `blitz_still_ignores_relative_offset_of_inline_elements` fails
+/// when Blitz moves that content itself; then delete this function, its two call sites
+/// ([`box_origin`]'s `compensate`, [`read_text_runs`]), that canary and
+/// `relative_inline_compensation_moves_text_and_floats`.
+///
+/// Elements with their own Blitz layout box are not walked past: an inline element that contains
+/// blocks becomes a block box in Blitz (its offset is already applied by Taffy), and it is the
+/// containing block of what it holds, so `stop` ends the walk there. `left`/`right` percentages
+/// resolve against `stop`'s content-box width (the containing block of a relatively positioned
+/// inline is its block container); a `top`/`bottom` percentage counts as 0 (UNVERIFIED
+/// ASSUMPTION: Chrome resolves it against a definite block-container height, which no WPT test or
+/// fixture measured here exercises).
+fn inline_ancestor_relative_offset(
+    base: &BaseDocument,
+    start: Option<NodeId>,
+    stop: Option<NodeId>,
+) -> (f64, f64) {
+    use style::values::generics::position::GenericInset;
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    let basis = stop
+        .and_then(|id| base.get_node(id))
+        .filter(|n| node_has_layout_data(n))
+        .map(|n| {
+            let l = n.final_layout();
+            (l.size.width - l.padding.left - l.padding.right - l.border.left - l.border.right)
+                .max(0.0) as f64
+        })
+        .unwrap_or(0.0);
+    let resolve = |inset: &style::values::computed::Inset, basis: f64| match inset {
+        GenericInset::LengthPercentage(lp) => Some(
+            lp.resolve(style::values::computed::Length::new(basis as f32))
+                .px() as f64,
+        ),
+        _ => None,
+    };
+    let mut offset = (0.0, 0.0);
+    let mut current = start;
+    // Bounded like every other upward walk here: the DOM depth is gated (SEC-1).
+    for _ in 0..4096 {
+        let Some(id) = current else { break };
+        if Some(id) == stop {
+            break;
+        }
+        let Some(node) = base.get_node(id) else { break };
+        if node.is_anonymous() || node.data.downcast_element().is_none() {
+            break;
+        }
+        let Some(styles) = node.primary_styles() else {
+            break;
+        };
+        let display = styles.clone_display();
+        if display.outside() != DisplayOutside::Inline || display.inside() != DisplayInside::Flow {
+            break;
+        }
+        if styles.clone_position() == style::computed_values::position::T::Relative {
+            let position = styles.get_position();
+            let rtl = styles.clone_direction() == style::computed_values::direction::T::Rtl;
+            let left = resolve(&position.left, basis);
+            let right = resolve(&position.right, basis).map(|r| -r);
+            let dx = if rtl { right.or(left) } else { left.or(right) };
+            let vertical = |inset: &style::values::computed::Inset| match inset {
+                GenericInset::LengthPercentage(lp) => {
+                    Some(lp.to_length().map_or(0.0, |l| l.px() as f64))
+                }
+                _ => None,
+            };
+            let top = vertical(&position.top);
+            let bottom = vertical(&position.bottom).map(|b| -b);
+            offset.0 += dx.unwrap_or(0.0);
+            offset.1 += top.or(bottom).unwrap_or(0.0);
+        }
+        current = node.parent;
+    }
+    offset
 }
 
 /// Read one box (border-box origin `abs_x`/`abs_y`) into the output list.
@@ -3533,13 +3645,29 @@ fn read_text_runs(
                 continue;
             }
 
+            // The runs of a relatively positioned inline element move with it (a Blitz gap,
+            // see `inline_ancestor_relative_offset`); not in the raw-Blitz render.
+            let (rel_x, rel_y) = if compensate {
+                let brush = base.get_node(style.brush.id);
+                let start = brush.and_then(|b| {
+                    if b.data.downcast_element().is_some() {
+                        Some(b.id)
+                    } else {
+                        b.parent
+                    }
+                });
+                inline_ancestor_relative_offset(base, start, Some(node.id))
+            } else {
+                (0.0, 0.0)
+            };
+
             runs.push(TextRun {
                 text: source.clone(),
                 font_data,
                 font_index,
                 font_size,
-                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
-                origin_y: line_box_top + glyph_run.baseline() as f64,
+                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px + rel_x,
+                origin_y: line_box_top + glyph_run.baseline() as f64 + rel_y,
                 line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
                 line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
                 glyphs,

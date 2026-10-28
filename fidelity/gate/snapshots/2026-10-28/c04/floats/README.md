@@ -74,3 +74,17 @@ Full WPT (`node fidelity/wpt/run.mjs --raw --chrome-from <10-tip> --expectations
 flip-only run: 4051 -> 4054, pass->fail 0, fail->pass float-nowrap-1,
 floats-wrap-bfc-003-left-table, floats-wrap-bfc-003-right-table. The 46 fixture/probe PDFs stay
 byte-identical to c03-tip (no fixture has a float, so no edit and no second pass).
+
+## 3. Relatively positioned inline elements (commit "relative inline offsets")
+
+Blitz gap (blitz-dom 0.3.0-beta.4 `src/layout/inline.rs` 1059-1081 applies `inset_offset` to an
+atomic inline box's own location only): the text, floats and atomic inlines of a
+`position: relative` `display: inline` element did not move. `inline_ancestor_relative_offset`
+adds the offsets of the non-atomic inline ancestors (up to the containing block / inline root,
+so a `<span>` Blitz lays out as a block box, which Taffy already moved, is not counted twice) to
+the box walk's origins and to each glyph run. Canary
+`blitz_still_ignores_relative_offset_of_inline_elements`.
+
+Full WPT vs section 2: 4054 -> 4059, pass->fail 0, fail->pass block-in-inline-float-between-001,
+float-inside-inline-between-blocks-1, floats-153, vertical-align-negative-leading-001,
+position-relative-033. 46 PDFs byte-identical to c03-tip (no fixture has a positioned element).

@@ -906,3 +906,77 @@ fn float_avoidance_leaves_boxes_that_fit() {
     let (x, y, _) = bfc_table_geometry(&product_layout(&narrow));
     assert_eq!((x, y), (100.0, 0.0));
 }
+
+/// Text and a float inside relatively positioned `display: inline` elements (left 100px, then
+/// left 100px + top 10px), each in its own div.
+const RELATIVE_INLINE: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font-family: sans-serif; font-size: 16px; }
+    .rel { position: relative; left: 100px; }
+    </style></head><body>
+    <div id="a"><span class="rel">rel</span></div>
+    <div id="b"><span class="rel" style="top: 10px"><span id="f" style="float: left;
+    width: 50px; height: 20px; background: blue"></span>txt</span></div>
+    </body></html>"#;
+
+/// `(x, y)` of the `rel` run, of the `txt` run and of the float, each relative to its div.
+fn relative_inline_geometry(doc: &LaidOutDoc) -> [(f64, f64); 3] {
+    let divs: Vec<_> = doc
+        .boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("div"))
+        .collect();
+    let run = |text: &str| {
+        runs_of(doc)
+            .into_iter()
+            .find(|(t, _, _)| t.trim() == text)
+            .unwrap_or_else(|| panic!("{text} run"))
+    };
+    let float = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("span") && b.width == 50.0)
+        .expect("float");
+    let (_, rel_x, rel_y) = run("rel");
+    let (_, txt_x, txt_y) = run("txt");
+    [
+        (rel_x - divs[0].x, rel_y - divs[0].y),
+        (txt_x - divs[1].x, txt_y - divs[1].y),
+        (float.x - divs[1].x, float.y - divs[1].y),
+    ]
+}
+
+/// CANARY of `blitz_engine::inline_ancestor_relative_offset`: raw Blitz still lays the content
+/// of the relatively positioned inline `<span>`s of [`RELATIVE_INLINE`] out where it would be
+/// without the offset: `rel` at x 0, the float at (0, 0) and `txt` right of it (x 50).
+#[test]
+fn blitz_still_ignores_relative_offset_of_inline_elements() {
+    let raw = relative_inline_geometry(&raw_layout(RELATIVE_INLINE).0);
+    let unmoved = [raw[0].0, raw[1].0, raw[2].0, raw[2].1];
+    assert_eq!(
+        unmoved,
+        [0.0, 50.0, 0.0, 0.0],
+        "\n\nBLITZ CHANGED HOW IT LAYS OUT RELATIVELY POSITIONED INLINE ELEMENTS. Raw Blitz no \
+         longer lays the RELATIVE_INLINE text and float out unmoved by their `position: \
+         relative` <span>s (now {raw:?}, relative to each div), the gap \
+         inline_ancestor_relative_offset fills (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         1059-1081 applies `inset_offset` to an atomic inline box's own location only). If \
+         Blitz now moves that content itself, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `inline_ancestor_relative_offset`, `is_out_of_flow`, the `compensate` parameter of \
+         `box_origin` and the relative offset in `read_text_runs`, this canary and \
+         `relative_inline_compensation_moves_text_and_floats`. Then re-measure \
+         css/CSS2/visuren and css/CSS2/normal-flow with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation: every piece of content moves by its spans' offsets (CSS 2.2 §9.4.3).
+#[test]
+fn relative_inline_compensation_moves_text_and_floats() {
+    let raw = relative_inline_geometry(&raw_layout(RELATIVE_INLINE).0);
+    let product = relative_inline_geometry(&product_layout(RELATIVE_INLINE));
+    let moved: Vec<(f64, f64)> = product
+        .iter()
+        .zip(&raw)
+        .map(|(p, r)| (p.0 - r.0, p.1 - r.1))
+        .collect();
+    assert_eq!(moved, vec![(100.0, 0.0), (100.0, 10.0), (100.0, 10.0)]);
+}
