@@ -2294,6 +2294,520 @@ fn hide_table_column_pseudos(doc: &mut BaseDocument) {
     }
 }
 
+/// Blitz bug compensation (Phase C step 06): the anonymous table objects of CSS 2.2 §17.2.1 and
+/// the table wrapper box of §17.4, which blitz-dom 0.3.0-beta.4 does not build.
+///
+/// - Blitz: `collect_table_cells` (`layout/table.rs` in the cargo registry source of blitz-dom
+///   0.3.0-beta.4) keeps a table's row groups, rows and cells only. A non-element child (text)
+///   is dropped at 531-533 (`if !node.is_element() { return; }`), and an element child whose
+///   display is `Flow | FlowRoot | Flex | Grid` is dropped at 738-748 ("Probably a table
+///   caption: ignore"). `display: table-caption` computes to outside `TableCaption`, inside
+///   `Flow` (stylo 0.22.0 `values/specified/box.rs` 258-259), so a caption takes that arm too.
+///   `layout/construct.rs` 589-595 says it: "Blitz does not yet generate anonymous table wrapper
+///   boxes". Neither child is in the table's layout children (`build_table_context`, 413-417), so
+///   Taffy never lays it out: it keeps a 0x0 layout and paints nothing.
+/// - Repro (raw canary `blitz_still_drops_table_captions_and_non_cell_children`,
+///   `src/raw_blitz_tests.rs`): `<div style="display:table"><div style="display:table-caption;
+///   height:30px">C</div><div style="height:40px">D</div></div>`: raw Blitz lays both children out
+///   0x0 and the table 0 px tall; Chrome 155 draws the caption (30 px) above an anonymous row
+///   holding D (40 px), 70 px in all. WPT css/css-break/table/caption-margin-002 / -005 and
+///   monolithic-overflow-001.tentative fail on it (Chrome passes all three; they passed while
+///   vellora had no multi-column layout only because the one-column render covered the red).
+/// - Correction, between the cascade and box construction, in the DOM Blitz builds its boxes
+///   from (every node keeps its computed style; the new nodes get the anonymous-box style, the
+///   parent's inherited properties and initial values for the rest, §17.2.1):
+///   1. [`wrap_table_children`]: a run of consecutive children of a table or row group that are
+///      not proper table children (§17.2.1 rule 2) goes into a new anonymous `table-row`, and a
+///      run of consecutive children of a row that are not cells into a new anonymous
+///      `table-cell`. White space between them stays in the run; white space next to a proper
+///      child stays where it is (Blitz drops it, §17.2.1 rule 1).
+///   2. [`wrap_table_captions`]: a table with in-flow captions gets a new wrapper box in its
+///      place (§17.4): a block formatting context holding the `caption-side: top` captions, the
+///      table, then the `bottom` ones, each side in document order. The wrapper takes the
+///      table's margins, `position` and offsets, `z-index`, `float` and `clear`; the table keeps
+///      the rest. Its width is the table's: a percentage width moves to the wrapper (the table
+///      then fills it), else the wrapper shrinks to fit (`fit-content`) and the table is at least
+///      as wide as it. An auto-width caption takes the wrapper's width without widening it.
+///
+///   The selector-derived sets of the render (break rules, `column-fill`, `orphans` / `widows`)
+///   are matched before this, on the source DOM, so the new nodes match no rule
+///   ([`resolve_and_walk`]). The new nodes are `div` (wrapper), `tr` and `td` elements with no
+///   attributes: vellora's table passes read rows and cells by tag.
+/// - Not modelled: a caption's min-content inline size widening the table (CSS Tables 3 §3.9:
+///   an auto-width caption never widens it here), the missing-parent rule (§17.2.1 rule 3: rows
+///   and cells outside a table stay as Blitz lays them out), `display: contents` children of a
+///   table, and an `inline-table`'s baseline (its wrapper is an `inline-block`).
+///
+/// WHEN BLITZ FIXES THIS, DELETE this function, [`wrap_table_children`],
+/// [`wrap_table_captions`], [`anonymous_element`], their call in [`resolve_and_walk`] (and the
+/// early selector matching kept for it there), the canary
+/// `blitz_still_drops_table_captions_and_non_cell_children` (`src/raw_blitz_tests.rs`), which
+/// fails as soon as raw Blitz lays either child out, and the tests
+/// `anonymous_table_objects_*` there; then re-run WPT css/css-tables, css/CSS2/tables and
+/// css/css-break.
+fn build_anonymous_table_objects(doc: &mut BaseDocument) {
+    use style::values::specified::box_::DisplayInside;
+    let mut tables = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        if node.is_element()
+            && node
+                .primary_styles()
+                .is_some_and(|s| s.clone_display().inside() == DisplayInside::Table)
+        {
+            tables.push(id);
+        }
+        stack.extend(node.children.iter().rev().copied());
+    }
+    for table in tables {
+        wrap_table_children(doc, table, TablePart::Table);
+        wrap_table_captions(doc, table);
+    }
+}
+
+/// The table box a child belongs to, for [`wrap_table_children`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum TablePart {
+    Table,
+    RowGroup,
+    Row,
+}
+
+/// How [`wrap_table_children`] treats one child of a [`TablePart`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum TableChild {
+    /// A box Blitz reads in this part (a row group or row of a table, a row of a row group, a
+    /// cell of a row), or a caption of a table (left to [`wrap_table_captions`]).
+    Proper,
+    /// No box of its own here: white space, a comment, `display: none`, an absolutely
+    /// positioned box (Blitz lays those out as the table's out-of-flow children), `display:
+    /// contents` (Blitz reads through it), a column, a misparented row group, row or caption.
+    Ignored,
+    /// Anything else: wrapped (§17.2.1 rule 2).
+    Misparented,
+}
+
+fn classify_table_child(node: &blitz_dom::Node, part: TablePart) -> TableChild {
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    if let blitz_dom::NodeData::Text(text) = &node.data {
+        return if text.content.chars().all(|c| c.is_ascii_whitespace()) {
+            TableChild::Ignored
+        } else {
+            TableChild::Misparented
+        };
+    }
+    if !node.is_element() {
+        return TableChild::Ignored;
+    }
+    let Some(styles) = node.primary_styles() else {
+        return TableChild::Ignored;
+    };
+    let display = styles.clone_display();
+    if display.outside() == DisplayOutside::None
+        || display.inside() == DisplayInside::Contents
+        || styles.clone_position().is_absolutely_positioned()
+    {
+        return TableChild::Ignored;
+    }
+    let inside = display.inside();
+    if matches!(
+        inside,
+        DisplayInside::TableColumn | DisplayInside::TableColumnGroup
+    ) {
+        return TableChild::Ignored;
+    }
+    let proper = match part {
+        TablePart::Table => {
+            matches!(
+                inside,
+                DisplayInside::TableRowGroup
+                    | DisplayInside::TableHeaderGroup
+                    | DisplayInside::TableFooterGroup
+                    | DisplayInside::TableRow
+            ) || display.outside() == DisplayOutside::TableCaption
+        }
+        TablePart::RowGroup => inside == DisplayInside::TableRow,
+        TablePart::Row => inside == DisplayInside::TableCell,
+    };
+    if proper {
+        return TableChild::Proper;
+    }
+    // A row group, row or caption where it is not a proper child (a row group in a row group or
+    // a row, a row in a row, a caption in either) would get an anonymous table of its own
+    // (§17.2.1 rule 3, not modelled): left out, as Blitz leaves it (Chrome 155 paints nothing for
+    // the empty ones of WPT css/CSS2/tables/empty-cells-applies-to-008..011 and -017).
+    let internal = matches!(
+        inside,
+        DisplayInside::TableRowGroup
+            | DisplayInside::TableHeaderGroup
+            | DisplayInside::TableFooterGroup
+            | DisplayInside::TableRow
+    ) || display.outside() == DisplayOutside::TableCaption;
+    if internal {
+        TableChild::Ignored
+    } else {
+        TableChild::Misparented
+    }
+}
+
+/// §17.2.1 rule 2 for one table, row group or row (see [`build_anonymous_table_objects`]):
+/// each run of misparented children goes into a new anonymous row (in a table or row group,
+/// whose own misparented children then go into anonymous cells) or cell (in a row). Recurses into
+/// the row groups and rows. A part with no misparented child is left as it is.
+fn wrap_table_children(doc: &mut BaseDocument, parent: NodeId, part: TablePart) {
+    use style::values::specified::box_::DisplayInside;
+    let Some(node) = doc.get_node(parent) else {
+        return;
+    };
+    let children: Vec<NodeId> = node.children.iter().copied().collect();
+    let kinds: Vec<TableChild> = children
+        .iter()
+        .map(|&id| {
+            doc.get_node(id)
+                .map_or(TableChild::Ignored, |c| classify_table_child(c, part))
+        })
+        .collect();
+    // The proper children's own parts, wrapped after this level.
+    let mut parts = Vec::new();
+    if part != TablePart::Row {
+        for (&id, &kind) in children.iter().zip(&kinds) {
+            if kind != TableChild::Proper {
+                continue;
+            }
+            let inside = doc
+                .get_node(id)
+                .and_then(|n| n.primary_styles().map(|s| s.clone_display().inside()));
+            match inside {
+                Some(
+                    DisplayInside::TableRowGroup
+                    | DisplayInside::TableHeaderGroup
+                    | DisplayInside::TableFooterGroup,
+                ) => parts.push((id, TablePart::RowGroup)),
+                Some(DisplayInside::TableRow) => parts.push((id, TablePart::Row)),
+                _ => {}
+            }
+        }
+    }
+    if kinds.contains(&TableChild::Misparented) {
+        let (local, display, inner) = match part {
+            TablePart::Row => (
+                blitz_dom::local_name!("td"),
+                style::values::computed::Display::TableCell,
+                None,
+            ),
+            TablePart::Table | TablePart::RowGroup => (
+                blitz_dom::local_name!("tr"),
+                style::values::computed::Display::TableRow,
+                Some(TablePart::Row),
+            ),
+        };
+        let mut out = Vec::with_capacity(children.len());
+        let mut run: Vec<NodeId> = Vec::new();
+        // Ignored children after the open run: they join it if another misparented child
+        // follows, else they stay outside.
+        let mut pending: Vec<NodeId> = Vec::new();
+        let mut wrappers = Vec::new();
+        let flush = |doc: &mut BaseDocument,
+                     out: &mut Vec<NodeId>,
+                     run: &mut Vec<NodeId>,
+                     wrappers: &mut Vec<NodeId>| {
+            if run.is_empty() {
+                return;
+            }
+            if let Some(anon) = anonymous_element(doc, parent, local.clone(), display) {
+                for &child in run.iter() {
+                    if let Some(c) = doc.get_node_mut(child) {
+                        c.parent = Some(anon);
+                    }
+                }
+                if let Some(a) = doc.get_node_mut(anon) {
+                    a.children = run.drain(..).collect();
+                }
+                out.push(anon);
+                wrappers.push(anon);
+            } else {
+                out.append(run);
+            }
+        };
+        for (&id, &kind) in children.iter().zip(&kinds) {
+            match kind {
+                TableChild::Misparented => {
+                    run.append(&mut pending);
+                    run.push(id);
+                }
+                TableChild::Ignored if !run.is_empty() => pending.push(id),
+                _ => {
+                    flush(doc, &mut out, &mut run, &mut wrappers);
+                    out.append(&mut pending);
+                    out.push(id);
+                }
+            }
+        }
+        flush(doc, &mut out, &mut run, &mut wrappers);
+        out.append(&mut pending);
+        if let Some(n) = doc.get_node_mut(parent) {
+            n.children = out.into_iter().collect();
+        }
+        if let Some(inner) = inner {
+            for anon in wrappers {
+                wrap_table_children(doc, anon, inner);
+            }
+        }
+    }
+    for (id, part) in parts {
+        wrap_table_children(doc, id, part);
+    }
+}
+
+/// §17.4 for one table (see [`build_anonymous_table_objects`]): a wrapper box in the table's
+/// place holds its in-flow captions and the table. A table without captions is left as it is.
+fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
+    use style::computed_values::caption_side::T as CaptionSide;
+    use style::values::computed::{Display, LengthPercentage, Size};
+    use style::values::generics::length::{GenericMargin, GenericSize};
+    use style::values::generics::NonNegative;
+    use style::values::specified::box_::DisplayOutside;
+    let Some(node) = doc.get_node(table) else {
+        return;
+    };
+    let Some(parent) = node.parent else {
+        return;
+    };
+    let (mut top, mut bottom) = (Vec::new(), Vec::new());
+    for &child in &node.children {
+        let Some(styles) = doc.get_node(child).and_then(|c| c.primary_styles()) else {
+            continue;
+        };
+        if styles.clone_display().outside() != DisplayOutside::TableCaption
+            || styles.clone_position().is_absolutely_positioned()
+        {
+            continue;
+        }
+        match styles.clone_caption_side() {
+            CaptionSide::Bottom => bottom.push(child),
+            _ => top.push(child),
+        }
+    }
+    if top.is_empty() && bottom.is_empty() {
+        return;
+    }
+    let Some(table_style) = node.primary_styles().map(|s| (**s).clone()) else {
+        return;
+    };
+    let inline = table_style.clone_display().outside() == DisplayOutside::Inline;
+    let percent_width = match &table_style.get_position().width {
+        GenericSize::LengthPercentage(NonNegative(lp)) if lp.has_percentage() => Some(lp.clone()),
+        _ => None,
+    };
+    let Some(wrapper) = anonymous_element(
+        doc,
+        table,
+        blitz_dom::local_name!("div"),
+        if inline {
+            Display::InlineBlock
+        } else {
+            flow_root_display()
+        },
+    ) else {
+        return;
+    };
+    // The wrapper takes the table's outer properties.
+    let t = &table_style;
+    mutate_primary_style(doc, wrapper, |v| {
+        *v.mutate_margin() = t.get_margin().clone();
+        let b = v.mutate_box();
+        b.set_position(t.clone_position());
+        b.set_float(t.clone_float());
+        b.set_clear(t.clone_clear());
+        let p = v.mutate_position();
+        p.set_top(t.clone_top());
+        p.set_right(t.clone_right());
+        p.set_bottom(t.clone_bottom());
+        p.set_left(t.clone_left());
+        p.set_z_index(t.clone_z_index());
+        p.set_width(match &percent_width {
+            Some(lp) => Size::LengthPercentage(NonNegative(lp.clone())),
+            None => Size::FitContent,
+        });
+    });
+    // The table keeps the rest, in flow at the wrapper's content edge.
+    mutate_primary_style(doc, table, |v| {
+        let zero = GenericMargin::LengthPercentage(LengthPercentage::new_length(
+            style::values::computed::Length::new(0.0),
+        ));
+        let m = v.mutate_margin();
+        m.set_margin_top(zero.clone());
+        m.set_margin_right(zero.clone());
+        m.set_margin_bottom(zero.clone());
+        m.set_margin_left(zero);
+        let b = v.mutate_box();
+        b.set_position(style::computed_values::position::T::Static);
+        b.set_float(style::computed_values::float::T::None);
+        b.set_clear(style::computed_values::clear::T::None);
+        if inline {
+            b.set_display(Display::Table);
+        }
+        let p = v.mutate_position();
+        if percent_width.is_some() {
+            p.set_width(Size::LengthPercentage(NonNegative(
+                LengthPercentage::hundred_percent(),
+            )));
+        } else if matches!(p.min_width, GenericSize::Auto) {
+            p.set_min_width(Size::LengthPercentage(NonNegative(
+                LengthPercentage::hundred_percent(),
+            )));
+        }
+    });
+    // An auto-width caption fills the wrapper without widening it: no inline size of its own,
+    // a minimum of the wrapper's content width less its own margins, borders and padding.
+    for &caption in top.iter().chain(&bottom) {
+        mutate_primary_style(doc, caption, |v| {
+            if !matches!(v.get_position().width, GenericSize::Auto) {
+                return;
+            }
+            let length =
+                |px: f32| LengthPercentage::new_length(style::values::computed::Length::new(px));
+            let margin = |m: &style::values::computed::Margin| match m {
+                GenericMargin::LengthPercentage(lp) => lp.clone(),
+                _ => length(0.0),
+            };
+            let (border_left, border_right) = {
+                let b = v.get_border();
+                (
+                    if b.border_left_style.none_or_hidden() {
+                        0.0
+                    } else {
+                        b.border_left_width.0.to_f32_px()
+                    },
+                    if b.border_right_style.none_or_hidden() {
+                        0.0
+                    } else {
+                        b.border_right_width.0.to_f32_px()
+                    },
+                )
+            };
+            let edges = [
+                margin(&v.get_margin().margin_left),
+                margin(&v.get_margin().margin_right),
+                v.get_padding().padding_left.0.clone(),
+                v.get_padding().padding_right.0.clone(),
+                length(border_left),
+                length(border_right),
+            ];
+            let min = LengthPercentage::hundred_percent_minus_list(
+                &edges.iter().collect::<Vec<_>>(),
+                style_traits::values::specified::AllowedNumericType::NonNegative,
+            );
+            let p = v.mutate_position();
+            p.set_width(Size::LengthPercentage(NonNegative(length(0.0))));
+            p.set_min_width(Size::LengthPercentage(NonNegative(min)));
+        });
+    }
+    // The tree: the wrapper in the table's place, holding top captions, table, bottom captions.
+    let Some(parent_node) = doc.get_node_mut(parent) else {
+        return;
+    };
+    for slot in parent_node.children.iter_mut() {
+        if *slot == table {
+            *slot = wrapper;
+        }
+    }
+    let captions: std::collections::HashSet<NodeId> = top.iter().chain(&bottom).copied().collect();
+    if let Some(t) = doc.get_node_mut(table) {
+        t.children.retain(|c| !captions.contains(c));
+        t.parent = Some(wrapper);
+    }
+    let held: Vec<NodeId> = top
+        .iter()
+        .copied()
+        .chain([table])
+        .chain(bottom.iter().copied())
+        .collect();
+    for &id in &held {
+        if id != table {
+            if let Some(c) = doc.get_node_mut(id) {
+                c.parent = Some(wrapper);
+            }
+        }
+    }
+    if let Some(w) = doc.get_node_mut(wrapper) {
+        w.parent = Some(parent);
+        w.children = held.into_iter().collect();
+    }
+}
+
+/// `display: flow-root`, parsed by Stylo (its servo build has no `Display::FlowRoot` constant).
+fn flow_root_display() -> style::values::computed::Display {
+    use style::context::QuirksMode;
+    use style::parser::Parse;
+    use style::stylesheets::{CssRuleType, Origin, UrlExtraData};
+    let url = url::Url::parse("about:blank").expect("about:blank is a valid URL");
+    let url_data = UrlExtraData::from(url);
+    let context = style::parser::ParserContext::new(
+        Origin::UserAgent,
+        &url_data,
+        Some(CssRuleType::Style),
+        style_traits::ParsingMode::DEFAULT,
+        QuirksMode::NoQuirks,
+        Default::default(),
+        None,
+        None,
+        Default::default(),
+    );
+    let mut input = cssparser::Parser::new("flow-root");
+    style::values::specified::Display::parse(&context, &mut input)
+        .unwrap_or(style::values::computed::Display::Block)
+}
+
+/// A new element node for an anonymous box (see [`build_anonymous_table_objects`]): an HTML
+/// `local` element with no attributes, `parent`'s child in the tree (the caller places it among
+/// the children), styled as CSS 2.2 §17.2.1 styles an anonymous table box: `parent`'s inherited
+/// properties, the initial value of every other property, and `display`. Its style is final:
+/// the cascade has run, nothing restyles it (Blitz restyles damaged nodes only).
+fn anonymous_element(
+    doc: &mut BaseDocument,
+    parent: NodeId,
+    local: blitz_dom::LocalName,
+    display: style::values::computed::Display,
+) -> Option<NodeId> {
+    let parent_style = doc.get_node(parent)?.primary_styles()?.clone();
+    let in_document = doc
+        .get_node(parent)?
+        .flags
+        .contains(blitz_dom::node::NodeFlags::IS_IN_DOCUMENT);
+    let style = {
+        let device = doc.stylist_device();
+        let mut builder = style::properties::StyleBuilder::for_inheritance(
+            device,
+            None,
+            Some(&parent_style),
+            None,
+        );
+        builder.set_display(display);
+        builder.build()
+    };
+    let id = doc.create_node(blitz_dom::NodeData::Element(Box::new(
+        blitz_dom::ElementData::new(
+            blitz_dom::QualName::new(None, blitz_dom::ns!(html), local),
+            Vec::new(),
+        ),
+    )));
+    let node = doc.get_node_mut(id)?;
+    node.parent = Some(parent);
+    if in_document {
+        node.flags
+            .insert(blitz_dom::node::NodeFlags::IS_IN_DOCUMENT);
+    }
+    let data = node.try_stylo_element_data_mut()?;
+    let mut element = data.ensure_init_mut();
+    element.styles.primary = Some(style);
+    element.set_restyled();
+    Some(id)
+}
+
 /// `lp` truncated to 1/64 px when it is a pure length and not on a step already.
 fn snap_lp(
     lp: &style::values::computed::LengthPercentage,
@@ -3188,8 +3702,14 @@ fn resolve_and_walk<O: LayoutObserver>(
     // restyle) lays it out. Off in the raw-Blitz render.
     // Before it, Chrome's LayoutUnit quantisation of computed lengths (`snap_lengths_to_layout_unit`,
     // so `cell_height_as_minimum` copies a snapped height). Both off in the raw-Blitz render.
+    // The selector-derived sets are matched on the source DOM, before
+    // `build_anonymous_table_objects` adds its anonymous nodes (they match no rule) and moves
+    // children under them; the raw-Blitz render matches them after layout, below.
+    let mut early_matches = None;
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
+        early_matches = Some(match_break_selectors(&mut doc, breaks));
+        build_anonymous_table_objects(&mut doc);
         snap_lengths_to_layout_unit(&mut doc);
         hide_table_column_pseudos(&mut doc);
         compensate_collapsed_borders(&mut doc)
@@ -3200,19 +3720,13 @@ fn resolve_and_walk<O: LayoutObserver>(
     // Multi-column containers (no multi-column layout in Blitz): laid out one column wide, the
     // content-sized ones given their balanced height (`lay_out_multicol`); the columns are cut
     // after the walk (`crate::multicol::apply`). Off in the raw-Blitz render.
-    let (multicols, line_rules) = if O::VELLORA_CORRECTIONS {
-        let media_applies = {
-            let device = doc.stylist_device();
-            breaks.media_applies(|query| media_query_matches(device, query))
-        };
-        let (_, _, fill) = breaks.column_rules(&media_applies);
-        let column_fill = matched_column_fill(&doc, &fill);
-        let (orphans, widows) = breaks.orphans_widows(&media_applies);
-        let lines = LineRules::new(&doc, &orphans, &widows);
-        let found = lay_out_multicol(&mut doc, &column_fill, &lines);
-        (found, lines)
-    } else {
-        (Vec::new(), LineRules::default())
+    let (multicols, line_rules) = match early_matches.as_mut() {
+        Some(matches) => {
+            let lines = std::mem::take(&mut matches.line_rules);
+            let found = lay_out_multicol(&mut doc, &matches.column_fill, &lines);
+            (found, lines)
+        }
+        None => (Vec::new(), LineRules::default()),
     };
     // Floats Blitz/Taffy let overlap what Chrome moves out of their way (two Blitz bugs, see
     // `float_avoidance_fixups`): read off this layout, written into the computed styles, and
@@ -3235,27 +3749,11 @@ fn resolve_and_walk<O: LayoutObserver>(
         balance_text_wrap(&mut doc, breaks);
     }
 
-    // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
-    // the device that just styled the document, matches (port step 09).
-    let media_applies = {
-        let device = doc.stylist_device();
-        breaks.media_applies(|query| media_query_matches(device, query))
+    let break_targets = match early_matches {
+        Some(matches) => matches.targets,
+        None => match_break_selectors(&mut doc, breaks).targets,
     };
-    let (avoid_inside, page_before, page_after) = breaks.selected(&media_applies);
-    let (column_before, column_after, _) = breaks.column_rules(&media_applies);
-    let (avoid_before, avoid_after) = breaks.avoid_rules(&media_applies);
     let base: &BaseDocument = &doc;
-    let break_targets = BreakTargets {
-        avoid_inside: matched_nodes(base, &avoid_inside),
-        page_before: matched_nodes(base, &page_before),
-        page_after: matched_nodes(base, &page_after),
-        column_before: matched_nodes(base, &column_before),
-        column_after: matched_nodes(base, &column_after),
-        avoid_before: matched_nodes(base, &avoid_before),
-        avoid_after: matched_nodes(base, &avoid_after),
-        page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
-        writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
-    };
     let mut boxes = Vec::new();
     // Resolves each <img> source to bytes during the walk and records the first
     // renderable-but-unresolved <img> in document order.
@@ -3379,6 +3877,47 @@ struct BreakTargets {
     page_names: std::collections::HashMap<NodeId, Option<String>>,
     /// The `writing-mode` each matched node gets from the stylesheet (`true` = vertical).
     writing_modes: std::collections::HashMap<NodeId, bool>,
+}
+
+/// Every node set the render matches with selectors from vellora's own reading of the
+/// stylesheets ([`crate::break_css::BreakRules`]): the break targets, `column-fill` and the
+/// `orphans` / `widows` rules. They depend on the DOM and the styled device only, not on layout.
+struct BreakSelectorMatches {
+    targets: BreakTargets,
+    column_fill: std::collections::HashMap<NodeId, bool>,
+    line_rules: LineRules,
+}
+
+fn match_break_selectors(
+    doc: &mut BaseDocument,
+    breaks: &crate::break_css::BreakRules,
+) -> BreakSelectorMatches {
+    // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
+    // the device that just styled the document, matches (port step 09).
+    let media_applies = {
+        let device = doc.stylist_device();
+        breaks.media_applies(|query| media_query_matches(device, query))
+    };
+    let (avoid_inside, page_before, page_after) = breaks.selected(&media_applies);
+    let (column_before, column_after, fill) = breaks.column_rules(&media_applies);
+    let (avoid_before, avoid_after) = breaks.avoid_rules(&media_applies);
+    let (orphans, widows) = breaks.orphans_widows(&media_applies);
+    let base: &BaseDocument = doc;
+    BreakSelectorMatches {
+        targets: BreakTargets {
+            avoid_inside: matched_nodes(base, &avoid_inside),
+            page_before: matched_nodes(base, &page_before),
+            page_after: matched_nodes(base, &page_after),
+            column_before: matched_nodes(base, &column_before),
+            column_after: matched_nodes(base, &column_after),
+            avoid_before: matched_nodes(base, &avoid_before),
+            avoid_after: matched_nodes(base, &avoid_after),
+            page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
+            writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
+        },
+        column_fill: matched_column_fill(base, &fill),
+        line_rules: LineRules::new(base, &orphans, &widows),
+    }
 }
 
 /// The declared `writing-mode` of every node a rule matches (later rule wins, as
