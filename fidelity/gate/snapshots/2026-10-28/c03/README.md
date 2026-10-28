@@ -76,6 +76,9 @@ Ledger base resolved through the pointer (no `--debt-base`), 0 ledger problems.
 
 Verdict FAIL, so **no baseline 11-phase-c was written**.
 
+Unused acceptances against the previous link: 2 (the postmark `[Product#2` / `Name]#2` pairing
+entries; they apply in the head view, as at table-frag).
+
 ### The 27 pin (c) items, by key and route (`pin-c-routes-c03-tip.json`)
 
 Route "b-provable": the run's rawOutcome (raw Blitz, `--raw`) fails too and the raw page counts
@@ -127,6 +130,11 @@ acceptances carried from 10-integration). Side-by-side images (Chrome | pin | c0
   record `{ id, key, step: 12-phase-c-03, fixed: true, runId: 20261028T013052Z, headComparison }`;
   head classes improvement 137, within-tolerance 40, none 3. No key vanished, no ceiling lowered or
   raised, no id reused, closed[] append-only.
+- The 7 kept WPT keys' (b) route, re-measured at this commit (CONFIRMED, this run's `--raw`): all 7
+  (floats-153, floats-placement-vertical-003/004, baseline-block-with-overflow-001,
+  flex-fragmented-with-float-descendant-001, zero-width-floats, inline-formatting-context-001)
+  fail in raw Blitz too, with the product's page counts ([1, 1]). The 10-tip evidence they carried
+  still holds.
 - Built by `scripts/shrink-ledger.mjs` (head comparison computed as gate/run.mjs computes it).
   `node fidelity/gate/debt.mjs check --ledger fidelity/baselines/port/DEBT.json --base
   fidelity/gate/snapshots/2026-10-27/10-final/DEBT-10-integration.json --step 12-phase-c-03
