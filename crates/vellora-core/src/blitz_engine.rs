@@ -2338,14 +2338,18 @@ fn hide_table_column_pseudos(doc: &mut BaseDocument) {
 ///   and cells outside a table stay as Blitz lays them out), `display: contents` children of a
 ///   table, and an `inline-table`'s baseline (its wrapper is an `inline-block`).
 ///
+/// The table's break properties and page name move to its wrapper
+/// ([`BreakTargets::move_to_wrapper`]).
+///
 /// WHEN BLITZ FIXES THIS, DELETE this function, [`wrap_table_children`],
-/// [`wrap_table_captions`], [`anonymous_element`], their call in [`resolve_and_walk`] (and the
-/// early selector matching kept for it there), the canary
+/// [`wrap_table_captions`], [`anonymous_element`], [`flow_root_display`],
+/// [`BreakTargets::move_to_wrapper`], their call in [`resolve_and_walk`] (and the early selector
+/// matching kept for it there), the canary
 /// `blitz_still_drops_table_captions_and_non_cell_children` (`src/raw_blitz_tests.rs`), which
 /// fails as soon as raw Blitz lays either child out, and the tests
 /// `anonymous_table_objects_*` there; then re-run WPT css/css-tables, css/CSS2/tables and
 /// css/css-break.
-fn build_anonymous_table_objects(doc: &mut BaseDocument) {
+fn build_anonymous_table_objects(doc: &mut BaseDocument) -> Vec<(NodeId, NodeId)> {
     use style::values::specified::box_::DisplayInside;
     let mut tables = Vec::new();
     let mut stack = vec![doc.root_element().id];
@@ -2362,10 +2366,14 @@ fn build_anonymous_table_objects(doc: &mut BaseDocument) {
         }
         stack.extend(node.children.iter().rev().copied());
     }
+    let mut wrappers = Vec::new();
     for table in tables {
         wrap_table_children(doc, table, TablePart::Table);
-        wrap_table_captions(doc, table);
+        if let Some(wrapper) = wrap_table_captions(doc, table) {
+            wrappers.push((wrapper, table));
+        }
     }
+    wrappers
 }
 
 /// The table box a child belongs to, for [`wrap_table_children`].
@@ -2564,18 +2572,14 @@ fn wrap_table_children(doc: &mut BaseDocument, parent: NodeId, part: TablePart) 
 
 /// §17.4 for one table (see [`build_anonymous_table_objects`]): a wrapper box in the table's
 /// place holds its in-flow captions and the table. A table without captions is left as it is.
-fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
+fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) -> Option<NodeId> {
     use style::computed_values::caption_side::T as CaptionSide;
     use style::values::computed::{Display, LengthPercentage, Size};
     use style::values::generics::length::{GenericMargin, GenericSize};
     use style::values::generics::NonNegative;
     use style::values::specified::box_::DisplayOutside;
-    let Some(node) = doc.get_node(table) else {
-        return;
-    };
-    let Some(parent) = node.parent else {
-        return;
-    };
+    let node = doc.get_node(table)?;
+    let parent = node.parent?;
     let (mut top, mut bottom) = (Vec::new(), Vec::new());
     for &child in &node.children {
         let Some(styles) = doc.get_node(child).and_then(|c| c.primary_styles()) else {
@@ -2592,17 +2596,15 @@ fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
         }
     }
     if top.is_empty() && bottom.is_empty() {
-        return;
+        return None;
     }
-    let Some(table_style) = node.primary_styles().map(|s| (**s).clone()) else {
-        return;
-    };
+    let table_style = node.primary_styles().map(|s| (**s).clone())?;
     let inline = table_style.clone_display().outside() == DisplayOutside::Inline;
     let percent_width = match &table_style.get_position().width {
         GenericSize::LengthPercentage(NonNegative(lp)) if lp.has_percentage() => Some(lp.clone()),
         _ => None,
     };
-    let Some(wrapper) = anonymous_element(
+    let wrapper = anonymous_element(
         doc,
         table,
         blitz_dom::local_name!("div"),
@@ -2611,9 +2613,7 @@ fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
         } else {
             flow_root_display()
         },
-    ) else {
-        return;
-    };
+    )?;
     // The wrapper takes the table's outer properties.
     let t = &table_style;
     mutate_primary_style(doc, wrapper, |v| {
@@ -2707,9 +2707,7 @@ fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
         });
     }
     // The tree: the wrapper in the table's place, holding top captions, table, bottom captions.
-    let Some(parent_node) = doc.get_node_mut(parent) else {
-        return;
-    };
+    let parent_node = doc.get_node_mut(parent)?;
     for slot in parent_node.children.iter_mut() {
         if *slot == table {
             *slot = wrapper;
@@ -2737,6 +2735,7 @@ fn wrap_table_captions(doc: &mut BaseDocument, table: NodeId) {
         w.parent = Some(parent);
         w.children = held.into_iter().collect();
     }
+    Some(wrapper)
 }
 
 /// `display: flow-root`, parsed by Stylo (its servo build has no `Display::FlowRoot` constant).
@@ -3708,8 +3707,11 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut early_matches = None;
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
-        early_matches = Some(match_break_selectors(&mut doc, breaks));
-        build_anonymous_table_objects(&mut doc);
+        let mut matches = match_break_selectors(&mut doc, breaks);
+        for (wrapper, table) in build_anonymous_table_objects(&mut doc) {
+            matches.targets.move_to_wrapper(&doc, wrapper, table);
+        }
+        early_matches = Some(matches);
         snap_lengths_to_layout_unit(&mut doc);
         hide_table_column_pseudos(&mut doc);
         compensate_collapsed_borders(&mut doc)
@@ -3877,6 +3879,47 @@ struct BreakTargets {
     page_names: std::collections::HashMap<NodeId, Option<String>>,
     /// The `writing-mode` each matched node gets from the stylesheet (`true` = vertical).
     writing_modes: std::collections::HashMap<NodeId, bool>,
+    /// Tables whose break properties (and page name) moved to their caption wrapper
+    /// ([`BreakTargets::move_to_wrapper`]): their own inline `style` breaks are not read.
+    moved_to_wrapper: std::collections::HashSet<NodeId>,
+}
+
+impl BreakTargets {
+    /// A table's `break-before/after/inside` and `page` apply to its wrapper box once it has
+    /// one ([`wrap_table_captions`]; CSS 2.2 §17.4: the wrapper is the table's outer box, and
+    /// Chrome 155 keeps a `break-inside: avoid` table's caption with it, WPT
+    /// css/CSS2/pagination/table-page-break-inside-avoid-7-print): the stylesheet matches and
+    /// the inline `style` declarations of `table` move to `wrapper`.
+    fn move_to_wrapper(&mut self, doc: &BaseDocument, wrapper: NodeId, table: NodeId) {
+        let inline = doc
+            .get_node(table)
+            .and_then(|n| n.attr(blitz_dom::local_name!("style")))
+            .map(|block| {
+                (
+                    crate::break_css::declares(block),
+                    crate::break_css::declared_page(block),
+                )
+            });
+        let (declared, page) = inline.unwrap_or_default();
+        for (set, inline) in [
+            (&mut self.avoid_inside, declared.avoid_inside),
+            (&mut self.page_before, declared.page_before),
+            (&mut self.page_after, declared.page_after),
+            (&mut self.column_before, declared.column_before),
+            (&mut self.column_after, declared.column_after),
+            (&mut self.avoid_before, declared.avoid_before),
+            (&mut self.avoid_after, declared.avoid_after),
+        ] {
+            if set.remove(&table) || inline {
+                set.insert(wrapper);
+            }
+        }
+        if let Some(name) = page.or_else(|| self.page_names.remove(&table)) {
+            self.page_names.insert(wrapper, name);
+        }
+        self.page_names.remove(&table);
+        self.moved_to_wrapper.insert(table);
+    }
 }
 
 /// Every node set the render matches with selectors from vellora's own reading of the
@@ -3914,6 +3957,7 @@ fn match_break_selectors(
             avoid_after: matched_nodes(base, &avoid_after),
             page_names: matched_page_names(base, &breaks.page_names(&media_applies)),
             writing_modes: matched_writing_modes(base, &breaks.writing_modes(&media_applies)),
+            moved_to_wrapper: Default::default(),
         },
         column_fill: matched_column_fill(base, &fill),
         line_rules: LineRules::new(base, &orphans, &widows),
@@ -4444,8 +4488,10 @@ fn push_box(
         sink.img,
     );
 
+    let moved = sink.breaks.moved_to_wrapper.contains(&node_id);
     let inline_breaks = node
         .attr(blitz_dom::local_name!("style"))
+        .filter(|_| !moved)
         .map(crate::break_css::declares)
         .unwrap_or_default();
     let floated = node.primary_styles().is_some_and(|styles| {
@@ -4499,6 +4545,7 @@ fn push_box(
             .or_else(|| sink.breaks.writing_modes.get(&node_id).copied()),
         page_name: node
             .attr(blitz_dom::local_name!("style"))
+            .filter(|_| !moved)
             .and_then(crate::break_css::declared_page)
             .or_else(|| sink.breaks.page_names.get(&node_id).cloned())
             .flatten(),
