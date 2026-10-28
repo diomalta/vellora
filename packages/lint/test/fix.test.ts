@@ -71,8 +71,8 @@ describe("Inline SVG to PNG codemod", () => {
   });
 
   // Regression: an SVG resvg cannot render (here, a zero-size SVG resvg rejects as an
-  // "invalid size") must NOT crash fix(); the <svg> is left unconverted so a downstream strict
-  // re-detect surfaces a located diagnostic instead of a raw resvg Error escaping the render.
+  // "invalid size") must NOT crash fix(); the <svg> is left unconverted, re-detected as a warning,
+  // and left to the native renderer, instead of a raw resvg Error escaping the render.
   test("an unrenderable SVG leaves the <svg> unconverted instead of throwing", () => {
     const html = '<!DOCTYPE html><html><body><svg width="0" height="0"><rect/></svg></body></html>';
     let result: ReturnType<typeof fix> | undefined;

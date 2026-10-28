@@ -6,7 +6,15 @@
 //! any system library or font requirement (no `libfontconfig`), so it runs on
 //! slim / Alpine (musl) / Lambda images out of the box. Custom user-supplied
 //! fonts (the planned `fonts` option) will register into this same context;
-//! host/system fonts are intentionally never consulted.
+//! host/system fonts are intentionally never consulted for anything vellora
+//! draws. One exception reads them without drawing with them: Blitz's own usvg
+//! parse of an inline `<svg>` (blitz-dom 0.3.0-beta.4 `util.rs` `FONT_DB`, the
+//! `svg` feature) loads the host font list once per process for Blitz's SVG tree,
+//! which vellora never paints (it paints from its own parse, `crate::svg`, with
+//! these bundled faces) and whose size it does not use for a `viewBox`-less SVG
+//! of `auto` size, the case where that size depends on text
+//! (`blitz_engine::size_svgs_like_chrome`, which also lists the percentage case
+//! it does not cover).
 
 use parley::fontique::{Blob, Collection, CollectionOptions, FamilyId, GenericFamily, SourceCache};
 use parley::FontContext;
@@ -32,6 +40,21 @@ const LIBERATION_MONO: &[u8] = include_bytes!("fonts/LiberationMono-Regular.ttf"
 const LIBERATION_MONO_BOLD: &[u8] = include_bytes!("fonts/LiberationMono-Bold.ttf");
 const DEJAVU_SANS: &[u8] = include_bytes!("fonts/DejaVuSans.ttf");
 const DEJAVU_SANS_BOLD: &[u8] = include_bytes!("fonts/DejaVuSans-Bold.ttf");
+
+/// The bundled faces, in the order [`build_font_context`] registers them (Liberation Sans, DejaVu
+/// Sans, Liberation Serif, Liberation Mono; regular then bold). The inline-SVG font database
+/// ([`crate::svg::font_db`]) loads exactly these, then the caller's faces, so SVG `<text>` sees
+/// the same fonts as HTML text and never a host font.
+pub(crate) const BUNDLED_FACES: [&[u8]; 8] = [
+    LIBERATION_SANS,
+    LIBERATION_SANS_BOLD,
+    DEJAVU_SANS,
+    DEJAVU_SANS_BOLD,
+    LIBERATION_SERIF,
+    LIBERATION_SERIF_BOLD,
+    LIBERATION_MONO,
+    LIBERATION_MONO_BOLD,
+];
 
 /// Sans-like CSS generic families resolve to the bundled sans stack.
 const SANS_GENERIC_FAMILIES: &[GenericFamily] = &[

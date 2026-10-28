@@ -1,0 +1,8 @@
+  pin/svg-with-transform.png 800 600 {'other': (8, 0, 356, 15), 'green': (8, 35, 108, 135)}
+  tip/svg-with-transform.png 800 600 {'other': (8, 18, 356, 34), 'green': (8, 50, 58, 150), 'red': (58, 50, 108, 150)}
+  s1/svg-with-transform.png 800 600 {'other': (8, 18, 356, 34), 'green': (8, 50, 108, 150)}
+  pin/svg-nocol.png 800 600 {'red': (8, 0, 108, 100), 'other': (8, 115, 38, 128)}
+  tip/svg-nocol.png 800 600 {'red': (8, 8, 108, 108), 'other': (8, 126, 38, 139)}
+  s1/svg-nocol.png 800 600 {'green': (8, 8, 58, 108), 'red': (58, 8, 108, 108), 'other': (8, 126, 38, 139)}
+  chrome/svg-with-transform.png 800 600 {'other': (8, 19, 356, 34), 'green': (8, 50, 108, 150)}
+  chrome/svg-nocol.png 800 600 {'green': (8, 8, 58, 108), 'red': (58, 8, 108, 108), 'other': (8, 127, 38, 139)}

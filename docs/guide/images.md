@@ -74,5 +74,8 @@ A renderable `<img>` whose source does not resolve rejects with `VelloraUnsuppor
 ## Not supported
 
 - Native remote fetching of `https://...` image URLs.
-- SVG rendering at runtime. Use `vellora fix` / `@vellora/lint.fix()` to rasterize inline SVG at
-  authoring time when that rule applies.
+- SVG files as `<img>` sources (`images` entries must be PNG, JPEG, GIF or WebP). Inline `<svg>`
+  elements are rendered natively as vector content; an `<image>` inside one must use a `data:`
+  URL (any other source rejects with `image:unresolved`). See COMPATIBILITY.md, "Inline SVG".
+  `vellora fix` / `@vellora/lint.fix()` can still rasterize an inline SVG to a PNG when a raster
+  image is wanted.

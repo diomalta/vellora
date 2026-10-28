@@ -24,7 +24,7 @@ test("public entry diagnose + fix return the documented report shape", () => {
   expect(report.conformant).toBe(false);
   expect(report.findings[0]).toMatchObject({
     rule: "inline-svg",
-    severity: "error",
+    severity: "warning",
     autoFixable: true,
     location: { line: 1, col: 28 },
   });

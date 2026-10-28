@@ -1375,3 +1375,145 @@ fn blitz_still_lays_multicol_out_in_one_column() {
     .expect("lays out");
     assert_eq!(blocks(&laid), vec![(0.0, 0.0, 100.0), (100.0, 0.0, 100.0)]);
 }
+
+/// The `<svg>` boxes of a layout: `(x, y, width, height, image runs)`.
+fn svg_boxes(doc: &LaidOutDoc) -> Vec<(f64, f64, f64, f64, usize)> {
+    doc.boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("svg"))
+        .map(|b| (b.x, b.y, b.width, b.height, b.image_runs.len()))
+        .collect()
+}
+
+/// Inline SVGs Chrome 155 sizes with the replaced-element default object size (measured
+/// 2026-10-28, Chrome for Testing 155.0.8059.85, `c06-svg/scripts/chrome-rects.mjs`):
+/// 300x150, 40x150, 60x150, and a `viewBox` one at the 784 px line width (784x1568).
+const SVG_SIZES: &str = r#"<!DOCTYPE html><html><head><style>
+    @page { size: 800px 600px; margin: 0; }
+    svg { display: block; }
+    </style></head><body>
+    <svg><rect width="25" height="50" fill="green"/></svg>
+    <svg width="40"></svg>
+    <svg style="width:60px"><rect width="25" height="50"/></svg>
+    <svg viewBox="0 0 10 20"></svg>
+    </body></html>"#;
+
+/// CANARY of `blitz_engine::size_svgs_like_chrome`: blitz-dom 0.3.0-beta.4 sizes an inline
+/// `<svg>` without `viewBox` from usvg's tree size, the bounding box of its content (blitz-dom
+/// `layout/mod.rs:407-430`, usvg 0.48.1 `calculate_svg_bbox`), and gives it that box's aspect
+/// ratio: raw Blitz lays `SVG_SIZES` out 25x50, 40x100, 60x120 where Chrome has 300x150, 40x150,
+/// 60x150. When this fails, Blitz sizes them itself: delete the compensation and this canary.
+#[test]
+fn blitz_still_sizes_an_svg_without_viewbox_to_its_content() {
+    let (raw, _) = raw_layout(SVG_SIZES);
+    let sizes: Vec<(f64, f64)> = svg_boxes(&raw).iter().map(|b| (b.2, b.3)).collect();
+    assert_eq!(
+        sizes,
+        vec![(25.0, 50.0), (40.0, 100.0), (60.0, 120.0), (784.0, 1568.0)]
+    );
+}
+
+/// `blitz_engine::size_svgs_like_chrome`: vellora's layout of `SVG_SIZES` is Chrome's, and each
+/// SVG gets one image run (its vector content).
+#[test]
+fn inline_svgs_get_chromes_default_object_size() {
+    let laid = product_layout(SVG_SIZES);
+    assert_eq!(
+        svg_boxes(&laid),
+        vec![
+            (8.0, 8.0, 300.0, 150.0, 1),
+            (8.0, 158.0, 40.0, 150.0, 1),
+            (8.0, 308.0, 60.0, 150.0, 1),
+            (8.0, 458.0, 784.0, 1568.0, 1),
+        ]
+    );
+}
+
+/// `blitz_engine::size_svgs_like_chrome` with `box-sizing: border-box`: the 300x150 is the content
+/// box (Chrome 155: the border box of `<svg style="box-sizing:border-box;padding:10px;border:2px
+/// solid">` is 324x174).
+#[test]
+fn inline_svg_default_size_is_the_content_box() {
+    let laid = product_layout(
+        r#"<!DOCTYPE html><html><head><style>@page { size: 800px 600px; margin: 0; }
+        body { margin: 0; } svg { display: block; box-sizing: border-box; padding: 10px;
+        border: 2px solid #000; }</style></head><body><svg></svg></body></html>"#,
+    );
+    let svg = svg_boxes(&laid);
+    assert_eq!((svg[0].2, svg[0].3), (324.0, 174.0));
+}
+
+/// CANARY of `blitz_engine::find_external_svg_image`: Blitz 0.3.0-beta.4 parses an inline SVG
+/// with usvg's default options, which read a non-`data:` `<image href>` from the host filesystem
+/// (usvg 0.48.1 `parser/image.rs:85-114`): with a PNG written to a temporary file, raw Blitz's
+/// SVG tree holds the image; without the file it is empty. When this fails, Blitz no longer reads
+/// host files for SVG images: delete the gate (see its comment) and this canary.
+#[test]
+fn blitz_still_reads_svg_image_sources_from_the_host() {
+    let png = include_bytes!("../tests/fixtures/logo.png");
+    let path = std::env::temp_dir().join(format!(
+        "vellora-svg-image-canary-{}.png",
+        std::process::id()
+    ));
+    std::fs::write(&path, png).expect("writes the temporary PNG");
+    let html = |href: &str| {
+        format!(
+            r#"<!DOCTYPE html><html><body><svg width="20" height="20"><image href="{href}"
+            width="20" height="20"/></svg></body></html>"#
+        )
+    };
+    let doc = html(path.to_str().expect("utf-8 temp path"));
+    // Parsed only (the document the gate inspects): Blitz has parsed no SVG yet.
+    let parsed = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, false);
+    let present = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, true);
+    std::fs::remove_file(&path).expect("removes the temporary PNG");
+    let absent = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, true);
+    assert_eq!((parsed, present, absent), (vec![], vec![true], vec![false]));
+}
+
+/// The order the gate relies on: Blitz 0.3.0-beta.4 parses an inline SVG only while it builds
+/// the boxes in `BaseDocument::resolve` (blitz-dom `resolve.rs:99` `resolve_layout_children`, the
+/// only caller of `layout/construct.rs` `collect_layout_children`, where `parse_svg_image` runs),
+/// never while the HTML is parsed, so `find_external_svg_image` sees the parsed DOM before any
+/// SVG source is resolved. When this fails, Blitz parses SVGs earlier: move the gate before that
+/// point (or drop it, see its comment).
+#[test]
+fn blitz_parses_inline_svg_only_when_it_builds_the_boxes() {
+    let doc = r#"<!DOCTYPE html><html><body><svg width="20" height="20"><rect width="20"
+        height="20"/></svg></body></html>"#;
+    assert_eq!(
+        crate::blitz_engine::raw_blitz_svg_trees_have_content(doc, false),
+        Vec::<bool>::new()
+    );
+    assert_eq!(
+        crate::blitz_engine::raw_blitz_svg_trees_have_content(doc, true),
+        vec![true]
+    );
+}
+
+/// `blitz_engine::size_svgs_like_chrome` with percentage sizes, against Chrome 155 (2026-10-28,
+/// `c06-svg/inputs/svg-sizes-pct.html`): a percentage height of an `auto`-height parent is
+/// `auto` (40x150, and 784x150 for `100%`/`100%` with text, whose Blitz size would otherwise come
+/// from the text's bounding box), one of a fixed-height parent resolves (50x100), and a
+/// percentage width resolves (392x150).
+#[test]
+fn inline_svg_percentage_sizes_are_chromes() {
+    let laid = product_layout(
+        r#"<!DOCTYPE html><html><head><style>@page { size: 800px 600px; margin: 0; }
+        svg { display: block; }</style></head><body>
+        <svg width="40" height="10%"></svg>
+        <svg width="100%" height="100%"><text x="0" y="20">percentage text</text></svg>
+        <div style="height:200px"><svg width="50" height="50%"></svg></div>
+        <svg width="50%"><rect width="10" height="10"/></svg>
+        </body></html>"#,
+    );
+    assert_eq!(
+        svg_boxes(&laid),
+        vec![
+            (8.0, 8.0, 40.0, 150.0, 1),
+            (8.0, 158.0, 784.0, 150.0, 1),
+            (8.0, 308.0, 50.0, 100.0, 1),
+            (8.0, 508.0, 392.0, 150.0, 1),
+        ]
+    );
+}

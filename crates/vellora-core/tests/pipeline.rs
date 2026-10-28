@@ -831,7 +831,8 @@ fn render_path_uses_single_shared_parse_for_validation_and_layout() {
         &[],
     );
     match denied {
-        Err(found) => assert_eq!(found.tag, "script"),
+        Err(blitz_engine::GateRejection::Element(found)) => assert_eq!(found.tag, "script"),
+        Err(blitz_engine::GateRejection::Image(_)) => panic!("rejected as an image, not <script>"),
         Ok(_) => panic!("script should be rejected before layout"),
     }
 }
