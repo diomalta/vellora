@@ -123,6 +123,27 @@ and 37 stay byte-identical. For the 9: page count, every pdftotext -bbox word (t
 0.01 pt) and the 72 dpi pdftoppm raster are identical to c03-tip, and the doc-aggregate summary
 equals c03-tip's in every metric (only its PDF input hashes differ).
 
+## Whole branch against the baselines
+
+Full WPT at the branch's product code (`c04-floats-iter/w6-merge`, run as above) vs c03-tip
+(run 20261028T013052Z): passes 3762 -> 4094 (+339, -7), error/timeout 0, unsupported 877
+(unchanged), raw passes 3760 -> 4065. With the repo's `suspectFlags` (`fidelity/wpt/lib/report.mjs`)
+against the expectations of 10-integration / 00-start / pin: clean -> suspect 0 / 0 / 0; clean
+passes lost 7 / 11 / 27 (c03-tip: 6 / 13 / 37). Every clean loss of this branch also fails at
+c03-tip except `css/css-break/table/table-border-007.html`: class (a), `accepted.json` here
+(its old pass was false: test and reference degraded identically while floats were off; now the
+reference draws Chrome's fragments rect for rect, the test lacks multicol). The 6 flagged passes
+lost (table in section 1) are reported, not gated (gate/wpt.mjs).
+
+`css/css-page/monolithic-overflow-014-print.html`, the one non-b-provable pin (c) item of
+c03-tip, now passes for real (pageCounts [4, 4], ink = Chrome's): its reference floats a 350vh
+box. The 10-integration class-a acceptance is still carried in `accepted.json` (orchestrator
+decision), expected unused on this branch.
+
+Pin view of the 26 b-provable c03 items: the 9 of this group pass. The other 17 (generated
+content, inline-table z-order, flex/ruby fragmentation, text) still fail here; raw-Blitz mode now
+lays floats out too, so their routes must be re-derived from the merge step's own `--raw` run.
+
 ## The 9 tests of this group, end of step
 
 `node fidelity/wpt/run.mjs css/CSS2 --filter <the 9> --raw --chrome-from <10-tip>`: 9/9 pass
