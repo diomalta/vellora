@@ -82,7 +82,16 @@ Supported or documented today:
 - custom TTF/OTF font bytes via the `fonts` option
 - PDF/A-2b archival output
 - partial flexbox behavior; prefer tables for reliable document layout
-- dev-time fixes for common issues such as inline SVG and grid/flex inside table cells
+- dev-time fixes for common issues such as grid/flex inside table cells, and rasterizing inline SVG when a raster image is wanted
+
+Not released yet (the released package is vellora@0.2.0):
+
+- inline `<svg>` drawn natively as PDF vector content, with `<text>` set in the bundled or
+  supplied fonts, never host fonts (the native addon is larger for it; see
+  [.changeset/inline-svg-native.md](./.changeset/inline-svg-native.md))
+- `float` layout, multi-column layout (`columns`, `column-count`, `column-width`, forced column
+  breaks), ruby annotations, table captions and anonymous table boxes, each with the gaps listed
+  in COMPATIBILITY.md
 
 Unsupported on the native path:
 

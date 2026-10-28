@@ -31,4 +31,6 @@ paint-order fix of the same release, 43 css/CSS2 reftests (normal-flow, position
 `*-replaced-*`) pass that failed, and none is lost. The WPT crashtests stay 239/239 ok (none of them
 renders an SVG); the 9 measured fixtures (no SVG) render byte-identical PDFs. The macOS
 arm64 native addon grows from 20.5 MB to 28.7 MB (the graph now holds two usvg versions: Blitz's
-for layout, krilla-svg's for drawing).
+for layout, krilla-svg's for drawing). Re-measured after the font-free SVG sizing change, on a
+local macOS arm64 release build (`npm run build`, 2026-10-28, indicative):
+`vellora.darwin-arm64.node` is 28,826,944 bytes.

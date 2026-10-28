@@ -119,10 +119,21 @@ WPT does change. Some of the published package's float "passes" were false: the 
 reference page lost their floats the same way and matched by accident. The merge gate classifies
 such a pass as an artefact (class a) only when there is evidence for it.
 
-Not every lost pass is an artefact. A few float and line-box tests that the published package
+Not every lost pass was an artefact. Four float and line-box tests that the published package
 passed were lost earlier, with the move to Blitz 0.3.0-beta.4, before the float feature was
-turned on. Raw Blitz 0.3.0-beta.4 fails them the same way. They are recorded in the debt ledger,
-not fixed, and the gate lists them by name under "What is not done".
+turned on, and raw Blitz 0.3.0-beta.4 fails all four. Three are now fixed by rendering. Each fix
+is a compensation whose comment names the Blitz or Taffy source lines, with a raw-Blitz canary:
+
+- a float that does not fit beside its line's text is placed below the line, as in Chrome
+  (`floats-placement-vertical-003`);
+- a negative margin next to a zero-width float is applied the way Chrome applies it
+  (`zero-width-floats`);
+- an inline-block is aligned on its last line box, not its first
+  (`baseline-block-with-overflow-001`).
+
+The fourth, `flex-fragmented-with-float-descendant-001`, now passes its reftest, but the harness
+flags the pass, because vellora's ink lands away from Chrome's (see "Multi-column gaps" below). It
+stays in the debt ledger, and the gate lists it under "What is not done".
 
 ## What word positions cannot see
 
@@ -192,21 +203,29 @@ What this costs, and what is still missing:
 - **A bigger addon.** The dependency graph now holds two versions of usvg, Blitz's for layout and
   krilla-svg's for drawing. The release notes for inline SVG
   ([`.changeset/inline-svg-native.md`](https://github.com/diomalta/vellora/blob/main/.changeset/inline-svg-native.md))
-  record the size of the macOS arm64 addon before and after, measured once on a local build.
-- **Host fonts can reach SVG layout.** The first inline SVG of a process loads the host's font list
-  once (Blitz's own SVG parse), and vellora never draws with it. In two cases, an SVG without a
-  `viewBox` gets its box size from its content, with `<text>` measured in host fonts. The two cases
-  are a percentage `height` inside a percentage-height parent, and `box-sizing: border-box` with a
-  percentage padding. In those cases the box size can differ from one host to another.
-  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md) lists both.
+  record the size of the macOS arm64 addon before and after, measured on a local build. It is
+  the main cost of inline SVG support.
+- **No host fonts in SVG layout.** Blitz's own SVG parse loads the host's font list, and for an
+  SVG without a `viewBox` it can size the box from the SVG's `<text>`, measured in host fonts. So
+  the same document could lay out differently on two machines. vellora's render path no longer
+  runs that parse. It sizes each inline `<svg>` from its own `width`, `height`, `viewBox` and
+  `preserveAspectRatio` attributes and its CSS, never from its content, as Chrome does. Its
+  `<text>` is set only in the bundled fonts and the `fonts` option's faces. One sizing case of a
+  `viewBox`-less SVG with a percentage height is not modelled yet;
+  [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md) describes it.
 - **Ruby adds an element.** vellora wraps each ruby base in a `vellora-ruby-base` element before
   the cascade. Your HTML is not changed, but a selector such as `ruby > b` no longer matches a
   `<b>` inside a base. How often that matters in real documents has not been measured. Ruby
   overhang, `ruby-align`, `ruby-position: under`, `<rtc>` and nested ruby are not implemented.
 - **Multi-column gaps.** `column-span: all` and `column-rule` are not implemented, and neither is
   a multi-column box inside another one. A multi-column box longer than one page is cut across
-  all its columns at once. One fragmentation test that the columns exposed, with a float beside a
-  line, still fails. It failed in the published package too.
+  all its columns at once, and columns that do not fit are not moved to the next page. Chrome's
+  print moves them; vellora lays them out side by side on the first page, the way Chrome lays
+  them out on screen. That is why `flex-fragmented-with-float-descendant-001` is flagged. The
+  harness compares only page 1 of this screen-mode test, and there vellora's ink covers more
+  columns than Chrome's. vellora also does not paint `outline`, which that test uses.
+  One fragmentation test that the columns exposed, with a float beside a line
+  (`widows-orphans-021`), still fails. It failed in the published package too.
 
 ## Results
 
@@ -277,15 +296,25 @@ The branch merges only when a strict oracle contract passes on one gated run. Fo
 must all hold:
 
 1. No measured item may be worse than in the published package unless the gate classifies it with
-   evidence. Class a means the old pass was false. Class b means raw Blitz fails it the same way,
-   and it goes in the debt ledger, with a ceiling that may only go down.
+   evidence. Class a means the old pass was false. Class b means it is carried in the debt
+   ledger, whose entries name a Blitz cause and have a ceiling that may only go down.
 2. Every fixture's median error and share within 1 mm must be at least as good as the published
    package's.
 3. Every fixture's page count must equal Chrome's.
 4. The step-to-step ratchet must pass.
 
 The run measured here passes all four. The gate's own list of what it still lets through is under
-"What is not done" above. Passing the gate is not a release. The branch still goes through review
+"What is not done" above.
+
+One test that the published package passed is still open: `flex-fragmented-with-float-descendant-001`.
+It passes on the branch with a suspect-pass flag, and the gate counts it as class b because it is
+still a debt-ledger key. That ledger entry was written when raw Blitz and the product failed the
+test the same way. They no longer do: the product now passes and raw Blitz still fails. The
+remaining gap points at vellora's own multi-column layer. Whether this one may merge as recorded debt,
+or must be fixed first, is still under review. If it is fixed first, this page is rebuilt from
+that run.
+
+Passing the gate is not a release. The branch still goes through review
 and merge, and then a release, which will set the version in the status note at the top. The
 numbers are local macOS measurements. The authoritative run is pinned Linux CI, which does not
 run the harness yet. When it does, this page is rebuilt from that run by the same generator.
