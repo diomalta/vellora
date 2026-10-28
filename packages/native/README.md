@@ -1,33 +1,54 @@
 # @vellora/native
 
-Prebuilt napi-rs addon loader for [vellora](https://github.com/diomalta/vellora) —
-the in-process native renderer. You normally depend on **`vellora`**, not on this
-package directly.
+**The native engine behind [vellora](https://www.npmjs.com/package/vellora): HTML layout and PDF
+output compiled to a Node addon.**
 
-> **0.x pre-1.0.** Per-platform prebuilds are published for the supported launch matrix —
-> see [`RELEASING.md`](https://github.com/diomalta/vellora/blob/main/RELEASING.md).
+[![npm](https://img.shields.io/npm/v/@vellora/native)](https://www.npmjs.com/package/@vellora/native)
+![license: MIT](https://img.shields.io/badge/license-MIT-blue)
+
+> **You probably want [`vellora`](https://www.npmjs.com/package/vellora) instead.** It installs
+> this package for you and gives you the friendly API: templating, validation with clear errors,
+> batching and streaming. Depend on `@vellora/native` directly only if you're building your own
+> wrapper.
+
+## What's inside
+
+A Rust engine, loaded into your Node process through [napi-rs](https://napi.rs). It parses the HTML,
+lays it out with [Blitz](https://github.com/DioxusLabs/blitz), splits it into pages (repeated table
+headers, page numbers, page breaks) and writes the PDF with [krilla](https://github.com/LaurenzV/krilla).
+Rendering runs on Node's worker thread pool, so it doesn't block your event loop, and parallel
+renders don't share state.
 
 ## Install
 
 ```bash
-npm install @vellora/native
+npm install vellora   # recommended: pulls this package in
 ```
 
-## Supported platforms
+npm installs only the binary for your machine, through one of these optional dependencies:
 
-Prebuilt binaries target the launch matrix: macOS (`arm64`, `x64`) and Linux (`x64` glibc,
-`arm64` glibc). **Windows and musl/Alpine are not supported yet** — they are planned fast-follows.
-On an unsupported platform the loader throws an actionable error; you can still build locally with
-the Rust toolchain (`npm run build` at the repo root).
+| Platform | Package |
+|---|---|
+| macOS, Apple Silicon | [`@vellora/native-darwin-arm64`](https://www.npmjs.com/package/@vellora/native-darwin-arm64) |
+| macOS, Intel | [`@vellora/native-darwin-x64`](https://www.npmjs.com/package/@vellora/native-darwin-x64) |
+| Linux x64 (glibc) | [`@vellora/native-linux-x64-gnu`](https://www.npmjs.com/package/@vellora/native-linux-x64-gnu) |
+| Linux arm64 (glibc) | [`@vellora/native-linux-arm64-gnu`](https://www.npmjs.com/package/@vellora/native-linux-arm64-gnu) |
 
-## Bundled fonts
+No Rust toolchain or compiler is needed. **Windows and Alpine (musl) are not supported yet.** On
+those, loading fails with an error that names your platform. You can still build from source with
+Rust (`npm run build` in the [repository](https://github.com/diomalta/vellora)).
 
-The addon embeds **Liberation Sans** (Regular + Bold) as its default browser-compatible
-font and **DejaVu Sans** as fallback coverage, so text renders deterministically with
-no system fonts or `libfontconfig` — see
-[THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
+If your bundler or deploy tool copies `node_modules` selectively, keep the `@vellora/*` packages
+external so the platform binary ships with your app.
+
+## Fonts included
+
+The addon embeds **Liberation Sans** (regular and bold, metric-compatible with Arial) as the default
+font and **DejaVu Sans** for wider character coverage. Text renders the same on every machine, with
+no system fonts or `fontconfig`. You can add your own fonts through vellora's `fonts` option.
+Font licenses are in [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
 
 ## License
 
-MIT — see [LICENSE](./LICENSE). Bundled third-party font licenses are in
+MIT. See [LICENSE](./LICENSE). Bundled font licenses are in
 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).

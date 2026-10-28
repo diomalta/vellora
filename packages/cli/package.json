@@ -1,7 +1,7 @@
 {
   "name": "@vellora/cli",
   "version": "0.1.0-alpha.0",
-  "description": "vellora render / lint / fix / doctor / fidelity commands.",
+  "description": "vellora on the command line: render HTML templates to PDF, lint and fix them, and compare the output with Chrome.",
   "keywords": [
     "html-to-pdf",
     "pdf",

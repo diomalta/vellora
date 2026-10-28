@@ -1,7 +1,7 @@
 {
   "name": "vellora",
   "version": "0.1.0-alpha.0",
-  "description": "HTML to PDF for Node.js — native and browserless by default, with templating and strict document validation.",
+  "description": "HTML to PDF for Node.js without Chromium or Puppeteer: a native, in-process renderer for invoices, receipts and reports, with templating and clear errors.",
   "keywords": [
     "html-to-pdf",
     "pdf",

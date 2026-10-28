@@ -1,7 +1,7 @@
 {
   "name": "@vellora/engine-chromium",
   "version": "0.1.0-alpha.0",
-  "description": "Optional Chromium-backed browser-fidelity renderer for vellora.",
+  "description": "Optional Chrome rendering for vellora: send only the templates that need a browser to Chromium, keep the rest native.",
   "keywords": ["html-to-pdf", "pdf", "chromium", "browser-fidelity", "puppeteer-alternative"],
   "homepage": "https://diomalta.github.io/vellora/",
   "bugs": "https://github.com/diomalta/vellora/issues",
