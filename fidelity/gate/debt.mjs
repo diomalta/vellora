@@ -956,7 +956,7 @@ export function transitionProblems(
         p.push(`${o.id}: ${key} removed as "key vanished" but the run still has it`);
       }
     } else if (c.fixed) {
-      p.push(...fixedRemovalProblems(o.id, key, c, { headItems }));
+      p.push(...fixedRemovalProblems(o.id, key, c, { headItems, presentKeys }));
     } else {
       p.push(
         `${o.id} ${key}: removed before its closesAt (${o.closesAt ?? "-"}): only a vanished key or a fixed item (closed[] fixed: true, runId, headComparison) is a stated reason (rule iii)`,
@@ -982,8 +982,14 @@ export const RUN_ID_RE = /^\d{8}T\d{6}Z$/;
  * still-failing key). `headComparison.class` is the head comparison item's class at `runId`, or
  * "none" when that comparison had no item (unchanged). Returns problems.
  */
-export function fixedRemovalProblems(id, key, c, { headItems = null } = {}) {
+export function fixedRemovalProblems(id, key, c, { headItems = null, presentKeys = null } = {}) {
   const p = [];
+  // A key the run no longer produces is not "fixed" (nothing was measured): that is keyVanished.
+  if (presentKeys && !presentKeys.has(key)) {
+    p.push(
+      `${id} ${key}: removed as fixed but the run no longer has the key: a vanished key is closed as keyVanished (rule iii)`,
+    );
+  }
   if (!headItems) {
     p.push(
       `${id} ${key}: removal because the item is fixed cannot be verified without the run's head comparison (rule iii)`,

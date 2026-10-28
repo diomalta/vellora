@@ -772,6 +772,20 @@ test("rule iii: a fixed key leaves with closed[] evidence; a still-failing key n
   assert.deepEqual(t([rec], now("improvement", false)), []);
   assert.deepEqual(t([rec], new Map()), []); // no item now: unchanged vs the head
   assert.match(t([rec], null).join(";"), /cannot be verified without the run's head comparison/);
+  const gone = transitionProblems(
+    old,
+    { ...emptyLedger(), closed: [rec] },
+    { step: "11-x", headItems: new Map(), presentKeys: new Set() },
+  );
+  assert.match(gone.join(";"), /closed as keyVanished/);
+  assert.deepEqual(
+    transitionProblems(
+      old,
+      { ...emptyLedger(), closed: [rec] },
+      { step: "11-x", headItems: new Map(), presentKeys: new Set([key]) },
+    ),
+    [],
+  );
   assert.match(t([{ ...rec, runId: "c02" }], new Map()).join(";"), /runId/);
   assert.match(t([{ ...rec, headComparison: null }], new Map()).join(";"), /headComparison/);
   assert.match(
