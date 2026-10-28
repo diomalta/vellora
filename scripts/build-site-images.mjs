@@ -14,7 +14,15 @@
 // Needs pdftoppm (poppler). Never reads the wall clock.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +32,14 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = join(REPO, "docs/public");
 const PROVENANCE = join(PUBLIC, "site-images.json");
 const MANIFEST = join(REPO, "docs/assets/fidelity/manifest.json");
-const EXAMPLES = ["oss-sparksuite-invoice", "oss-postmark-receipt", "invoice", "receipt", "boleto", "notification"];
+const EXAMPLES = [
+  "oss-sparksuite-invoice",
+  "oss-postmark-receipt",
+  "invoice",
+  "receipt",
+  "boleto",
+  "notification",
+];
 const COMPARE = ["oss-sparksuite-invoice", "oss-postmark-receipt", "invoice", "danfe"];
 // Fixed so re-running produces the same PDF bytes.
 const CREATION_DATE = "2026-06-23T00:00:00.000Z";
@@ -61,7 +76,10 @@ async function examples(version) {
   const work = mkdtempSync(join(tmpdir(), "vellora-site-images-"));
   try {
     execFileSync("npm", ["init", "-y"], { cwd: work, stdio: "ignore" });
-    execFileSync("npm", ["install", "--no-audit", "--no-fund", `vellora@${version}`], { cwd: work, stdio: "inherit" });
+    execFileSync("npm", ["install", "--no-audit", "--no-fund", `vellora@${version}`], {
+      cwd: work,
+      stdio: "inherit",
+    });
     const pkg = JSON.parse(readFileSync(join(work, "node_modules/vellora/package.json"), "utf8"));
     const { renderPdf } = await import(join(work, "node_modules/vellora/dist/index.js"));
     const outDir = join(PUBLIC, "examples");
@@ -78,9 +96,18 @@ async function examples(version) {
       const pdfPath = join(work, `${fixture}.pdf`);
       writeFileSync(pdfPath, pdf);
       const png = rasterize(pdfPath, join(outDir, fixture), "png");
-      images.push({ image: rel(png), fixture: `fixtures/${fixture}`, page: 1, pdfSha256: sha256(pdfPath) });
+      images.push({
+        image: rel(png),
+        fixture: `fixtures/${fixture}`,
+        page: 1,
+        pdfSha256: sha256(pdfPath),
+      });
     }
-    return { renderer: `vellora@${pkg.version} (published npm package)`, creationDate: CREATION_DATE, images };
+    return {
+      renderer: `vellora@${pkg.version} (published npm package)`,
+      creationDate: CREATION_DATE,
+      images,
+    };
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -90,7 +117,9 @@ function compare(runDir, metricsPath, newKey) {
   const manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
   const pinned = manifest.files.metrics.sha256;
   if (sha256(metricsPath) !== pinned) {
-    throw new Error(`${metricsPath} is not the metrics.json pinned by ${rel(MANIFEST)} (sha256 ${pinned})`);
+    throw new Error(
+      `${metricsPath} is not the metrics.json pinned by ${rel(MANIFEST)} (sha256 ${pinned})`,
+    );
   }
   const metrics = JSON.parse(readFileSync(metricsPath, "utf8"));
   const outDir = join(PUBLIC, "compare");
@@ -103,10 +132,18 @@ function compare(runDir, metricsPath, newKey) {
     for (const [side, hash] of Object.entries(pdfs)) {
       const pdf = join(runDir, "layout-diff", fixture, "run-all", `${side}.pdf`);
       if (!existsSync(pdf) || sha256(pdf) !== hash) {
-        throw new Error(`${pdf} is not the PDF metrics.json measured for ${fixture} (${side}, sha256 ${hash})`);
+        throw new Error(
+          `${pdf} is not the PDF metrics.json measured for ${fixture} (${side}, sha256 ${hash})`,
+        );
       }
       const jpg = rasterize(pdf, join(outDir, `${fixture}-${side}`), "jpeg");
-      images.push({ image: rel(jpg), fixture: `fixtures/${fixture}`, side, page: 1, pdfSha256: hash });
+      images.push({
+        image: rel(jpg),
+        fixture: `fixtures/${fixture}`,
+        side,
+        page: 1,
+        pdfSha256: hash,
+      });
     }
   }
   return {
@@ -126,8 +163,10 @@ const { values: a } = parseArgs({
     "new-key": { type: "string", default: "c07" },
   },
 });
-if (!a.examples && !a.compare) throw new Error("pass --examples and/or --compare <run-all dir> --metrics <file>");
-if (a.compare && !a.metrics) throw new Error("--compare needs --metrics <visual-compare metrics.json>");
+if (!a.examples && !a.compare)
+  throw new Error("pass --examples and/or --compare <run-all dir> --metrics <file>");
+if (a.compare && !a.metrics)
+  throw new Error("--compare needs --metrics <visual-compare metrics.json>");
 
 const provenance = existsSync(PROVENANCE) ? JSON.parse(readFileSync(PROVENANCE, "utf8")) : {};
 provenance.generator = "scripts/build-site-images.mjs";
