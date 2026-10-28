@@ -22,8 +22,11 @@ in as a dependency) are not version pinned; `setup` writes `dpkg-query` output t
 
 The oracles start sibling containers (`vellora-fidelity-tools:*`, veraPDF) with
 `docker run -v <path>:/work`. Instead of docker-in-docker, `run.sh` mounts the host's Docker
-socket, and mounts the repo (plus its git common dir, for a worktree) **at its host path**, with
-`TMPDIR` inside the repo, so every path an oracle mounts exists on the host. The tools image must
+socket, and mounts the repo (plus its git common dir, for a worktree) **at its host path**, so
+every path an oracle mounts (always a directory under the run's `--out`) exists on the host.
+`TMPDIR` stays the container's `/tmp`: three fidelity self-tests need a temp dir outside any git
+repo. Cargo runs with `CARGO_BUILD_JOBS=8`: with 18 parallel jobs the test binaries' debug links
+were OOM-killed (ld signal 9) in a 15.6 GiB Docker VM. The tools image must
 already exist on the host daemon (`fidelity/oracles/docker/tools.Dockerfile`).
 
 ## Use

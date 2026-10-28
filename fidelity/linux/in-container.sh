@@ -7,7 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 log=fidelity/results/linux
-mkdir -p "$log" "$TMPDIR"
+mkdir -p "$log"
 
 env_report() {
   uname -a; cat /etc/debian_version; node --version; rustc --version; cargo --version
