@@ -32,6 +32,7 @@
 //!   package reconstructs from this diagnostic — same name by intent, not type.
 
 pub mod blitz_engine;
+mod border_pattern;
 pub mod break_css;
 mod collapsed_borders;
 pub mod css_scan;

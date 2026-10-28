@@ -655,8 +655,9 @@ pub fn paginate_traced(
         let page = &page_boxes[i];
         // Chromium's whole-px content origin (`PageBox::content_origin`).
         let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
-        let (rects, rounded_strokes, images, text_runs) =
+        let (mut rects, rounded_strokes, images, text_runs) =
             lower_to_display_list(slice, origin_x, origin_y);
+        paint_canvas(&mut rects, page, doc.canvas_background);
 
         // Keep `report.footers` in lock-step with what is actually emitted: a
         // footer string is only recorded when its `MarginText` was produced.
@@ -806,7 +807,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     for (i, l) in lists.into_iter().enumerate() {
         let page = geometry.page(i).clone();
         let (ml, mt) = page.content_origin(geometry.rtl);
-        let rects = l
+        let mut rects = l
             .rects
             .into_iter()
             .map(|r| FilledRect {
@@ -815,6 +816,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 ..r
             })
             .collect();
+        paint_canvas(&mut rects, &page, doc.canvas_background);
         let rounded_strokes = l
             .strokes
             .into_iter()
@@ -2274,6 +2276,28 @@ fn lower_to_display_list(
         }
     }
     (merge_adjacent_rects(rects), rounded_strokes, images, runs)
+}
+
+/// Puts the canvas background ([`LaidOutDoc::canvas_background`], CSS Backgrounds 3 §2.11.2)
+/// under everything else of a page: one rect over the page's page area
+/// ([`PageBox::page_area`]), on every page, as Chrome 155's print path paints it.
+fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, canvas: Option<[u8; 3]>) {
+    let Some(color) = canvas else {
+        return;
+    };
+    let (x0, y0, x1, y1) = page.page_area();
+    if x1 > x0 && y1 > y0 {
+        rects.insert(
+            0,
+            FilledRect {
+                x: x0,
+                y: y0,
+                width: x1 - x0,
+                height: y1 - y0,
+                color,
+            },
+        );
+    }
 }
 
 /// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch

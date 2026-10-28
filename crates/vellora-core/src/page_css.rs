@@ -175,6 +175,21 @@ impl PageBox {
         (x, self.margin_top.round())
     }
 
+    /// The page area (the page box minus its margins) as Chromium's print path paints the
+    /// canvas background into it, `(x0, y0, x1, y1)` in CSS px: the top-left corner at the
+    /// margins rounded to whole px, the size the exact page-area size rounded to whole px, of
+    /// the authored page box (`css_width`, so `size: A4` is 210 mm wide). Chrome for Testing
+    /// 155.0.8059.85, on every page: A4 10 mm margins x 38..756, y 38..1085 (38 + round(718.11),
+    /// 38 + round(1046.93)); A4 20 mm x 76..719, y 76..1047 (76 + round(642.52), 76 +
+    /// round(971.34); `round(W - mr)` would give 718). The margins stay unpainted (Phase C step
+    /// 04, `tests/canvas_background.rs`).
+    pub fn page_area(&self) -> (f64, f64, f64, f64) {
+        let (x0, y0) = (self.margin_left.round(), self.margin_top.round());
+        let width = (self.css_width() - self.margin_left - self.margin_right).max(0.0);
+        let height = (self.height - self.margin_top - self.margin_bottom).max(0.0);
+        (x0, y0, x0 + width.round(), y0 + height.round())
+    }
+
     /// The authored page width Chromium lays out against: for `size: A4` that is 210 mm
     /// (793.7008 px), not the 594.96 pt MediaBox `A4_W` the page itself is emitted at.
     fn css_width(&self) -> f64 {

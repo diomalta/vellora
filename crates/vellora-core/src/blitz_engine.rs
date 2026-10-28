@@ -222,6 +222,10 @@ pub struct LaidOutDoc {
     pub unresolved_image: Option<UnresolvedImage>,
     /// What the `@page` context inherits from the root element, for the margin boxes.
     pub page_context: PageContext,
+    /// The canvas background ([`canvas_background`]): the root element's background colour,
+    /// else the HTML `<body>`'s (CSS Backgrounds 3 §2.11.2). Pagination fills every page's page
+    /// area with it; the element it came from paints no background of its own.
+    pub canvas_background: Option<[u8; 3]>,
 }
 
 /// The page context of a laid-out document (CSS Paged Media 3: "The page context inherits from
@@ -1562,6 +1566,18 @@ fn mutate_primary_style(
     *primary = style::servo_arc::Arc::new(values);
 }
 
+/// How a computed border style paints ([`crate::border_pattern`]): `dashed` and `dotted` as
+/// segments, every other visible style solid.
+fn line_style(style: style::values::specified::BorderStyle) -> crate::border_pattern::LineStyle {
+    use crate::border_pattern::LineStyle;
+    use style::values::specified::BorderStyle as B;
+    match style {
+        B::Dashed => LineStyle::Dashed,
+        B::Dotted => LineStyle::Dotted,
+        _ => LineStyle::Solid,
+    }
+}
+
 /// A computed border style as a [`crate::collapsed_borders::EdgeStyle`].
 fn edge_style(style: style::values::specified::BorderStyle) -> crate::collapsed_borders::EdgeStyle {
     use crate::collapsed_borders::EdgeStyle as E;
@@ -2078,6 +2094,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut face_cache: std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>> =
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
+    let canvas = canvas_background(base);
     // Scope the sink so its `&mut` borrows of `boxes`/`img_resolve` are released
     // before the post-walk normalize passes (which re-borrow `boxes`) and before
     // we read `img_resolve.first_unresolved` below.
@@ -2090,6 +2107,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             origins: std::collections::HashMap::new(),
             reader_compensations: O::VELLORA_CORRECTIONS,
             collapsed: &collapsed,
+            canvas_source: canvas.map(|(id, _)| id),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -2122,6 +2140,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         content_height,
         unresolved_image,
         page_context: page_context_of(base, font_ctx),
+        canvas_background: canvas.map(|(_, color)| color),
     }
 }
 
@@ -2142,6 +2161,9 @@ struct WalkSink<'a, 'img> {
     /// The tables and cells [`compensate_collapsed_borders`] re-laid out (empty in the
     /// raw-Blitz render).
     collapsed: &'a CollapsedBorders,
+    /// The element whose background is the canvas background ([`canvas_background`]); its
+    /// own box paints no background.
+    canvas_source: Option<NodeId>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -2428,7 +2450,13 @@ fn push_box(
         sink.face_cache,
         sink.reader_compensations,
     );
-    let (visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let (visual_rects, rounded_borders) = read_visuals(
+        node,
+        abs_x,
+        abs_y,
+        sink.collapsed,
+        sink.canvas_source == Some(node_id),
+    );
     let image_runs = resolve_image_runs(
         node,
         content_x,
@@ -2638,13 +2666,58 @@ fn colspan(node: &blitz_dom::Node) -> usize {
         .min(1000)
 }
 
+/// The canvas background (CSS Backgrounds 3 §2.11.2, "The Canvas Background and the Root
+/// Element" / "The Canvas Background and the HTML `<body>` Element"): the root element's
+/// background colour when it is not transparent, else, for an `<html>` root, that of its first
+/// `<body>` child. Returns the element it propagates from (whose own background is then not
+/// painted: its used value is transparent) and the colour, composited over white like every
+/// other colour here ([`absolute_color_to_srgb`]). Only the colour propagates: vellora paints
+/// no background images.
+///
+/// Chrome 155 paints it over the page area of every page (the page box minus its margins, edges
+/// on whole px), never into the page margins: repro `fidelity/gate/snapshots/2026-10-28/c04-paint/repro/bgmulti.html` (body
+/// `#F2F4F6`, A4, `@page { margin: 10mm }`, two pages) fills x 38..756 / y 38..1085 px of both
+/// pages and leaves the margins white; with `html { background: #9cf }` too, the page area is
+/// `#9cf` and the body box paints its own `#ccc` (Phase C step 04).
+fn canvas_background(base: &BaseDocument) -> Option<(NodeId, [u8; 3])> {
+    fn own_background(node: &blitz_dom::Node) -> Option<[u8; 3]> {
+        let styles = node.primary_styles()?;
+        let color = styles
+            .get_background()
+            .background_color
+            .resolve_to_absolute(&styles.clone_color());
+        absolute_color_to_srgb(color)
+    }
+    let root = base.root_element();
+    if let Some(color) = own_background(root) {
+        return Some((root.id, color));
+    }
+    let is_element = |node: &blitz_dom::Node, tag: &str| {
+        node.data.downcast_element().is_some_and(|el| {
+            let local: &str = &el.name.local;
+            local.eq_ignore_ascii_case(tag)
+        })
+    };
+    if !is_element(root, "html") {
+        return None;
+    }
+    let body = root
+        .children
+        .iter()
+        .filter_map(|&id| base.get_node(id))
+        .find(|child| is_element(child, "body"))?;
+    own_background(body).map(|color| (body.id, color))
+}
+
 /// Read paintable box visuals out of Blitz's computed style/layout, while
-/// keeping Blitz/Stylo/Taffy types sealed inside this module.
+/// keeping Blitz/Stylo/Taffy types sealed inside this module. `canvas_source`: the box's
+/// background is the canvas background ([`canvas_background`]), so the box paints none.
 fn read_visuals(
     node: &blitz_dom::Node,
     abs_x: f64,
     abs_y: f64,
     collapsed: &CollapsedBorders,
+    canvas_source: bool,
 ) -> (Vec<VisualRect>, Vec<RoundedBorder>) {
     let styles = match node.primary_styles() {
         Some(styles) => styles,
@@ -2666,7 +2739,7 @@ fn read_visuals(
         .get_background()
         .background_color
         .resolve_to_absolute(&current_color);
-    if let Some(color) = absolute_color_to_srgb(background_color) {
+    if let Some(color) = absolute_color_to_srgb(background_color).filter(|_| !canvas_source) {
         rects.push(VisualRect {
             x: abs_x,
             y: abs_y,
@@ -2709,14 +2782,17 @@ fn read_visuals(
         return (rects, rounded_borders);
     }
 
+    // `horizontal`: the side runs along x (top, bottom); dashes and dots follow it.
     let sides = [
         BorderSide {
+            horizontal: true,
             style: border.border_top_style,
             width: border.border_top_width.0.to_f64_px(),
             color: border.border_top_color.resolve_to_absolute(&current_color),
             rect: (abs_x, abs_y, width, border.border_top_width.0.to_f64_px()),
         },
         BorderSide {
+            horizontal: false,
             style: border.border_right_style,
             width: border.border_right_width.0.to_f64_px(),
             color: border
@@ -2730,6 +2806,7 @@ fn read_visuals(
             ),
         },
         BorderSide {
+            horizontal: true,
             style: border.border_bottom_style,
             width: border.border_bottom_width.0.to_f64_px(),
             color: border
@@ -2743,6 +2820,7 @@ fn read_visuals(
             ),
         },
         BorderSide {
+            horizontal: false,
             style: border.border_left_style,
             width: border.border_left_width.0.to_f64_px(),
             color: border.border_left_color.resolve_to_absolute(&current_color),
@@ -2757,15 +2835,20 @@ fn read_visuals(
         let Some(color) = absolute_color_to_srgb(side.color) else {
             continue;
         };
-        let (x, y, width, height) = side.rect;
+        let (_, _, width, height) = side.rect;
         if width > 0.0 && height > 0.0 {
-            rects.push(VisualRect {
-                x,
-                y,
-                width,
-                height,
-                color,
-            });
+            let style = line_style(side.style);
+            for (x, y, width, height) in
+                crate::border_pattern::side_rects(style, side.width, side.rect, side.horizontal)
+            {
+                rects.push(VisualRect {
+                    x,
+                    y,
+                    width,
+                    height,
+                    color,
+                });
+            }
         }
     }
 
@@ -2857,6 +2940,7 @@ fn resolve_radius(
 }
 
 struct BorderSide {
+    horizontal: bool,
     style: style::values::specified::BorderStyle,
     width: f64,
     color: style::color::AbsoluteColor,
