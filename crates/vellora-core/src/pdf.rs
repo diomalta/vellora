@@ -169,13 +169,19 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             draw_rounded_stroke(&mut surface, s);
         }
 
+        // Each run with its `text-decoration` lines: underlines and overlines under the
+        // glyphs, line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
         for run in &page.text_runs {
+            draw_decorations(&mut surface, run, false);
             draw_text_run(&mut surface, run, &mut font_cache)?;
+            draw_decorations(&mut surface, run, true);
         }
 
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
         for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
+            draw_decorations(&mut surface, run, false);
             draw_text_run(&mut surface, run, &mut font_cache)?;
+            draw_decorations(&mut surface, run, true);
         }
 
         surface.finish();
@@ -394,6 +400,25 @@ fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Op
     pb.cubic_to(x0, y0 + ry - oy, x0 + rx - ox, y0, x0 + rx, y0);
     pb.close();
     pb.finish()
+}
+
+/// A run's `text-decoration` lines ([`TextRun::decorations`]) with `over_text` as given, as
+/// filled rects relative to the run's origin.
+fn draw_decorations(surface: &mut krilla::surface::Surface, run: &TextRun, over_text: bool) {
+    for d in run.decorations.iter().filter(|d| d.over_text == over_text) {
+        if d.width > 0.0 && d.height > 0.0 {
+            draw_rect(
+                surface,
+                &FilledRect {
+                    x: run.origin_x + d.x,
+                    y: run.origin_y + d.top,
+                    width: d.width,
+                    height: d.height,
+                    color: d.color,
+                },
+            );
+        }
+    }
 }
 
 fn draw_text_run(

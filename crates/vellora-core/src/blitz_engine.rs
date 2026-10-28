@@ -190,6 +190,23 @@ pub struct TextRun {
     pub glyphs: Vec<Glyph>,
     /// sRGB color (r,g,b) 0..=255.
     pub color: [u8; 3],
+    /// The `text-decoration` lines painted with this run ([`run_decorations`]), relative to its
+    /// origin so every pass that moves the run moves them.
+    pub decorations: Vec<TextDecoration>,
+}
+
+/// One `text-decoration` line of a [`TextRun`] (Phase C step 04, [`crate::text_decoration`]):
+/// a filled rect at `origin_x + x .. + width`, `origin_y + top .. + height` (CSS px).
+#[derive(Debug, Clone, PartialEq)]
+pub struct TextDecoration {
+    pub x: f64,
+    pub width: f64,
+    pub top: f64,
+    pub height: f64,
+    /// sRGB color (r,g,b) 0..=255: the decorating box's `text-decoration-color`.
+    pub color: [u8; 3],
+    /// A line-through, painted over the glyphs; underlines and overlines go under them.
+    pub over_text: bool,
 }
 
 /// One positioned glyph. Offsets/advances are in font units already divided by
@@ -3225,6 +3242,7 @@ fn read_text_runs(
 
     for line in layout.lines() {
         let line_metrics = line.metrics();
+        let line_first_run = runs.len();
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
         let line_padding_right_px = if right_aligned {
@@ -3272,6 +3290,8 @@ fn read_text_runs(
             if glyphs.is_empty() {
                 continue;
             }
+            let ascent_em = f64::from(run.font_metrics().ascent) / f64::from(font_size.max(1e-3));
+            let decorations = run_decorations(base, style.brush.id, ascent_em, &glyphs);
 
             runs.push(TextRun {
                 text: source.clone(),
@@ -3284,12 +3304,137 @@ fn read_text_runs(
                 line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
                 glyphs,
                 color,
+                decorations,
             });
             inline_advance_adjust_px += padding_right_px;
+        }
+        // The spaces a line ends with are not decorated (Chrome 155 does not underline them).
+        if let Some(last) = runs.get_mut(line_first_run..).and_then(|r| r.last_mut()) {
+            trim_trailing_space_decorations(last);
         }
     }
 
     runs
+}
+
+/// The decorations in effect on text styled by `brush` ([`crate::text_decoration`] holds the
+/// rules and the Chrome measurements): those of `brush` and of every ancestor up to the root,
+/// except that none passes into an atomic inline (`inline-block` etc.), a float or an
+/// absolutely positioned box from outside it (CSS Text Decoration 3 §2.1). Each line takes its
+/// decorating box's font size, `text-decoration-color` and thickness; `ascent_em` is the run's
+/// first-font ascent per em, scaled to the decorating box's font size. Every line covers the
+/// run's advance (`glyphs`).
+fn run_decorations(
+    base: &BaseDocument,
+    brush: NodeId,
+    ascent_em: f64,
+    glyphs: &[Glyph],
+) -> Vec<TextDecoration> {
+    use crate::text_decoration::{geometry, Kind};
+    use style::computed_value_flags::ComputedValueFlags;
+    use style::values::computed::text::TextDecorationLine;
+    use style::values::generics::text::GenericTextDecorationLength;
+
+    let parent = |n: &blitz_dom::Node| n.parent.and_then(|id| base.get_node(id));
+    // The brush is the styled element of the run (Blitz `TextBrush::from_id`); a node without
+    // styles defers to its parent.
+    let mut node = base.get_node(brush);
+    while let Some(n) = node.filter(|n| n.primary_styles().is_none()) {
+        node = parent(n);
+    }
+    let Some(start) = node else {
+        return Vec::new();
+    };
+    if !start.primary_styles().is_some_and(|s| {
+        s.flags
+            .contains(ComputedValueFlags::HAS_TEXT_DECORATION_LINES)
+    }) {
+        return Vec::new();
+    }
+    let width: f64 = glyphs.iter().map(|g| f64::from(g.advance)).sum();
+    if width <= 0.0 {
+        return Vec::new();
+    }
+    let mut out = Vec::new();
+    let mut node = Some(start);
+    while let Some(n) = node {
+        let Some(styles) = n.primary_styles() else {
+            node = parent(n);
+            continue;
+        };
+        let text = styles.get_text();
+        let lines = text.text_decoration_line;
+        let color = absolute_color_to_srgb(
+            text.text_decoration_color
+                .resolve_to_absolute(&styles.clone_color()),
+        );
+        if let (false, Some(color)) = (lines.is_empty(), color) {
+            let font_size = f64::from(styles.get_font().font_size.used_size.0.px());
+            let thickness = match &text.text_decoration_thickness {
+                GenericTextDecorationLength::LengthPercentage(lp) => Some(f64::from(
+                    lp.resolve(style::values::computed::Length::new(font_size as f32))
+                        .px(),
+                )),
+                GenericTextDecorationLength::Auto | GenericTextDecorationLength::FromFont => None,
+            };
+            for (flag, line) in [
+                (TextDecorationLine::UNDERLINE, Kind::Underline),
+                (TextDecorationLine::OVERLINE, Kind::Overline),
+                (TextDecorationLine::LINE_THROUGH, Kind::LineThrough),
+            ] {
+                if lines.contains(flag) {
+                    let (top, height) = geometry(line, font_size, ascent_em * font_size, thickness);
+                    out.push(TextDecoration {
+                        x: 0.0,
+                        width,
+                        top,
+                        height,
+                        color,
+                        over_text: line == Kind::LineThrough,
+                    });
+                }
+            }
+        }
+        // Nothing outside an atomic inline, a float or an absolutely positioned box decorates
+        // its content.
+        use style::computed_values::{float::T as Float, position::T as Position};
+        let boundary = atomic_inline(n)
+            || !matches!(styles.clone_float(), Float::None)
+            || matches!(
+                styles.clone_position(),
+                Position::Absolute | Position::Fixed
+            );
+        if boundary {
+            break;
+        }
+        node = parent(n);
+    }
+    out
+}
+
+/// Shortens the decorations of a line's last run by the advance of the white space it ends
+/// with.
+fn trim_trailing_space_decorations(run: &mut TextRun) {
+    if run.decorations.is_empty() {
+        return;
+    }
+    let trailing: f64 = run
+        .glyphs
+        .iter()
+        .rev()
+        .take_while(|g| {
+            run.text
+                .get(g.text_start..g.text_end)
+                .is_some_and(|t| !t.is_empty() && t.chars().all(char::is_whitespace))
+        })
+        .map(|g| f64::from(g.advance))
+        .sum();
+    if trailing > 0.0 {
+        for d in &mut run.decorations {
+            d.width -= trailing;
+        }
+        run.decorations.retain(|d| d.width > 0.0);
+    }
 }
 
 /// Glyph-run -> line-run cluster key: `(run index, text range start, text range end)`.
