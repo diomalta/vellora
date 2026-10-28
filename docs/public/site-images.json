@@ -1,0 +1,108 @@
+{
+  "generator": "scripts/build-site-images.mjs",
+  "compare": {
+    "reference": "Google Chrome for Testing 155.0.8059.85",
+    "subject": "vellora 0.3.0",
+    "measuredBy": "docs/assets/fidelity/manifest.json -> files.metrics (sha256 9ab8ef631b36ea2ecfbf837c71ff532ab31e649042aeef8d2e8a98db71ec4a27)",
+    "images": [
+      {
+        "image": "docs/public/compare/oss-sparksuite-invoice-chrome.jpg",
+        "fixture": "fixtures/oss-sparksuite-invoice",
+        "side": "chrome",
+        "page": 1,
+        "pdfSha256": "bfb2731d47a9987581aff07b796368afbe0251ca1a5a228ef8c682deacf29589"
+      },
+      {
+        "image": "docs/public/compare/oss-sparksuite-invoice-vellora.jpg",
+        "fixture": "fixtures/oss-sparksuite-invoice",
+        "side": "vellora",
+        "page": 1,
+        "pdfSha256": "94627d3437965fb7ee0128165e565b0d5925024634f89e53dc3eee0f6de7be01"
+      },
+      {
+        "image": "docs/public/compare/oss-postmark-receipt-chrome.jpg",
+        "fixture": "fixtures/oss-postmark-receipt",
+        "side": "chrome",
+        "page": 1,
+        "pdfSha256": "afd7019d707500da9db3c813742046519a41d9b8f33fa59cc316b11ef52cb2df"
+      },
+      {
+        "image": "docs/public/compare/oss-postmark-receipt-vellora.jpg",
+        "fixture": "fixtures/oss-postmark-receipt",
+        "side": "vellora",
+        "page": 1,
+        "pdfSha256": "6e92042f44afd07475fb56117e79ff839a28136d5654533a27e5b3db8e457cdb"
+      },
+      {
+        "image": "docs/public/compare/invoice-chrome.jpg",
+        "fixture": "fixtures/invoice",
+        "side": "chrome",
+        "page": 1,
+        "pdfSha256": "67ba8806e5b555132800f7afe2d463f552c3e97658471c1038e3663687d694e8"
+      },
+      {
+        "image": "docs/public/compare/invoice-vellora.jpg",
+        "fixture": "fixtures/invoice",
+        "side": "vellora",
+        "page": 1,
+        "pdfSha256": "307ef0cdab846725b8b1bb813b69d508d2d2f8157b3bd826cfb16908d75e9f38"
+      },
+      {
+        "image": "docs/public/compare/danfe-chrome.jpg",
+        "fixture": "fixtures/danfe",
+        "side": "chrome",
+        "page": 1,
+        "pdfSha256": "9fea4d8d8a0a3acc371eb698bdc830c5429978cad9902784d8595578f7765dd1"
+      },
+      {
+        "image": "docs/public/compare/danfe-vellora.jpg",
+        "fixture": "fixtures/danfe",
+        "side": "vellora",
+        "page": 1,
+        "pdfSha256": "e664bf4c86928674f3b2ee4ab811f3263256db2093951bf031b5b92589b3e0cd"
+      }
+    ]
+  },
+  "examples": {
+    "renderer": "vellora@0.3.0 (published npm package)",
+    "creationDate": "2026-06-23T00:00:00.000Z",
+    "images": [
+      {
+        "image": "docs/public/examples/oss-sparksuite-invoice.png",
+        "fixture": "fixtures/oss-sparksuite-invoice",
+        "page": 1,
+        "pdfSha256": "d6d51d6d974da372bf03957fc519ebf1d20c3a14bd16a0e4815a9e74b21dba8f"
+      },
+      {
+        "image": "docs/public/examples/oss-postmark-receipt.png",
+        "fixture": "fixtures/oss-postmark-receipt",
+        "page": 1,
+        "pdfSha256": "082157026b0cb0f5f6ff7d56ec780a87270b559e8a833e7eff8c111cc18ba52d"
+      },
+      {
+        "image": "docs/public/examples/invoice.png",
+        "fixture": "fixtures/invoice",
+        "page": 1,
+        "pdfSha256": "e8fa41efb3024fd170fe42ddca6c60d4611929c376504e19dcfe511ae28738e9"
+      },
+      {
+        "image": "docs/public/examples/receipt.png",
+        "fixture": "fixtures/receipt",
+        "page": 1,
+        "pdfSha256": "024897b7886271ea1c37d2ba2926321884f1ea65cf5f481002fe13926bd6ea48"
+      },
+      {
+        "image": "docs/public/examples/boleto.png",
+        "fixture": "fixtures/boleto",
+        "page": 1,
+        "pdfSha256": "c0008daa045750a92cb7d9315f1b41bec1b972403e1ed4486423fa6e3dec2e76"
+      },
+      {
+        "image": "docs/public/examples/notification.png",
+        "fixture": "fixtures/notification",
+        "page": 1,
+        "pdfSha256": "e2e55877fd746a3ac6eab849d662ce0796235f1f0d06db8cc154209683af4686"
+      }
+    ]
+  }
+}
