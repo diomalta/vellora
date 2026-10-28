@@ -1018,6 +1018,304 @@ fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
     }
 }
 
+/// EMULATES CHROME'S LAYOUTUNIT: Chrome lays boxes out in fixed point (1/64 CSS px) and Blitz in
+/// unquantised f32, so every mm / pt / em length is a few hundredths of a px longer in Blitz and
+/// the difference accumulates down a document. This is not a CSS-spec bug of Blitz (the spec does
+/// not fix a precision); it is the reference browser's arithmetic, which vellora's geometry
+/// targets. Remove it if Blitz starts quantising lengths itself (the canary below fails) or if
+/// vellora stops targeting Chrome's geometry.
+///
+/// Evidence (CONFIRMED, Phase C step 03, 2026-10-27; repro set
+/// `fidelity/gate/snapshots/2026-10-27/c03/layoutunit/lu-repro/`, Chrome for Testing 155.0.8059.85
+/// getBoundingClientRect vs the raw Blitz 0.3.0-beta.4 tree):
+/// - Blitz hands Stylo's px lengths to Taffy as they are: stylo_taffy 0.3.0-beta.4
+///   `src/convert.rs` 85-93 (`length_percentage`: `length(len.px())`), 99-109 (`dimension`),
+///   169 (`margin`); and line heights to Parley as they are: blitz-dom 0.3.0-beta.4
+///   `src/stylo_to_parley.rs` 409-411 (`Number` -> `FontSizeRelative`, `Length` -> `Absolute`).
+/// - Chrome (Chromium `layout_unit.h` / `computed_style.cc`, cited in [`crate::layout_unit`]):
+///   lengths are `LayoutUnit(px)`, truncated toward zero; `line-height: <number>` is
+///   `LayoutUnit(n * FromFloatRound(font-size))`, a fixed line height `FromFloatRound(px)`;
+///   `border-spacing` is whole px, truncated (measured only; the Blink source was not read).
+/// - Repro numbers, Chrome vs Blitz: `padding: 1mm 0` around 10 px: 17.53125 vs 17.5591;
+///   `margin-bottom: -1mm`: next box at 16.234375 vs 16.2205; `height: 10.1mm` 38.171875 vs
+///   38.1732; `font-size: 8.5pt; line-height: 1.35` one line 15.28125 vs 15.2930;
+///   `font-size: 11.34px; line-height: 1.35` 15.3125 vs 15.3141; `border-spacing: 1.5mm` cells
+///   at y 5 / 25 / 45 vs 5.67 / 21.34 / 37.01. Corpus: text-stress-ptbr `table.extrato` rows
+///   (`padding: 1mm 1.5mm`, 8.5pt x 1.35, a 0.2mm = 1 px bottom border) are 23.8125 px in Chrome
+///   and 23.8520 in Blitz, +0.0395 px a row = padding 0.0278 + line height 0.0117, about 1.5 px
+///   by the end of a page, which put its words 1-2 px below Chrome's on pages 2-7 (the 127
+///   previous-link I1 items of the c02 gate).
+///
+/// What is snapped, per element (and its eager pseudo-elements), on the computed style after the
+/// cascade and before layout: pure-length `padding-*`, `margin-*`, `height`, `min-height`,
+/// `max-height`, `top`/`right`/`bottom`/`left`, `row-gap`/`column-gap` (truncated to 1/64 px),
+/// `line-height` (as above, turned into a length), `border-spacing` (whole px).
+///
+/// Inline sizes (`width`, `min-width`, `max-width`) are NOT snapped, although Chrome truncates
+/// them too (`width: 74mm` is 279.671875 px): Chrome also measures text in LayoutUnit for line
+/// breaking and Parley does not, so a narrower box alone made text that exactly fits wrap (an
+/// ungated WPT run of the first version, 2026-10-27, lost 4 clean passes, all `width: <n>ch`
+/// boxes holding n monospace characters: css-text `line-break-loose-hyphens-002`,
+/// `text-align-match-parent-05`, `word-break-break-all-062`, `word-break-keep-all-063`).
+/// Truncating a padding, margin or gap only widens the content box, so those never add a wrap.
+///
+/// Not modelled: percentages and `calc()` with a percentage (Chrome truncates the RESOLVED length,
+/// e.g. `width: 33.333%` of 800 is 266.65625, Taffy resolves them unquantised), `text-indent`,
+/// `flex-basis`, intrinsic sizes (text advances, images), `line-height: normal` (equal already:
+/// 12 px for 8.5pt in both). Border widths are not touched: Stylo already snaps them to whole px
+/// like Chrome (0.2mm / 0.3mm / 0.4mm -> 1, 1.5mm -> 5, 1.5px -> 1 in both).
+///
+/// Style sharing is kept: a computed style shared by many elements is snapped once (memo keyed by
+/// the `Arc` address, holding the old `Arc` so the address cannot be reused; lookup only, never
+/// iterated: DET-1). A style with nothing to snap is left as it is.
+///
+/// WHEN THIS GOES, DELETE: this function, `snap_computed_lengths`, `snap_lp`, `src/layout_unit.rs`
+/// (and its `mod` line in `lib.rs`), its call in [`resolve_and_walk`], the canary
+/// `blitz_still_lays_lengths_out_unquantised` (`src/raw_blitz_tests.rs`), which fails as soon as
+/// raw Blitz lays the `padding: 1mm` repro out at Chrome's 17.53125, and the
+/// `layout_unit_snapping_*` tests there.
+fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
+    use style::servo_arc::Arc;
+    type Memo = std::collections::HashMap<
+        *const style::properties::ComputedValues,
+        (
+            Arc<style::properties::ComputedValues>,
+            Option<Arc<style::properties::ComputedValues>>,
+        ),
+    >;
+    let mut memo: Memo = std::collections::HashMap::new();
+    let mut snapped = |old: &Arc<style::properties::ComputedValues>| {
+        let entry = memo
+            .entry(&**old as *const style::properties::ComputedValues)
+            .or_insert_with(|| {
+                let new = snap_computed_lengths(old).map(Arc::new);
+                (old.clone(), new)
+            });
+        entry.1.clone()
+    };
+    let mut ids = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        ids.push(id);
+        stack.extend(node.children.iter().rev().copied());
+    }
+    for id in ids {
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let Some(data) = node.try_stylo_element_data_mut() else {
+            continue;
+        };
+        let Some(mut element) = data.get_mut() else {
+            continue;
+        };
+        if let Some(primary) = element.styles.primary.as_mut() {
+            if let Some(new) = snapped(primary) {
+                *primary = new;
+            }
+        }
+        let pseudos: Vec<_> = element
+            .styles
+            .pseudos
+            .as_array()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, style)| style.as_ref().map(|s| (i, s.clone())))
+            .collect();
+        for (i, old) in pseudos {
+            if let Some(new) = snapped(&old) {
+                let pseudo = style::selector_parser::PseudoElement::from_eager_index(i);
+                element.styles.pseudos.set(&pseudo, new);
+            }
+        }
+    }
+}
+
+/// `lp` truncated to 1/64 px when it is a pure length and not on a step already.
+fn snap_lp(
+    lp: &style::values::computed::LengthPercentage,
+) -> Option<style::values::computed::LengthPercentage> {
+    use style::values::computed::{Length, LengthPercentage};
+    let px = f64::from(lp.to_length()?.px());
+    let snapped = crate::layout_unit::truncate(px);
+    (snapped != px).then(|| LengthPercentage::new_length(Length::new(snapped as f32)))
+}
+
+/// A copy of `values` with its lengths snapped ([`snap_lengths_to_layout_unit`]), or `None` when
+/// nothing changes.
+fn snap_computed_lengths(
+    values: &style::properties::ComputedValues,
+) -> Option<style::properties::ComputedValues> {
+    use style::values::computed::{
+        length::NonNegativeLengthPercentageOrNormal as Gap, BorderSpacing, Inset, LineHeight,
+        Margin, MaxSize, NonNegativeLength, Size,
+    };
+    use style::values::generics::NonNegative;
+    let mut out: Option<style::properties::ComputedValues> = None;
+    let mut edit = |f: &mut dyn FnMut(&mut style::properties::ComputedValues)| {
+        f(out.get_or_insert_with(|| values.clone()))
+    };
+    let nn = |lp: &NonNegative<_>| snap_lp(&lp.0).map(NonNegative);
+    let size = |s: &Size| match s {
+        Size::LengthPercentage(lp) => nn(lp).map(Size::LengthPercentage),
+        _ => None,
+    };
+    let max = |s: &MaxSize| match s {
+        MaxSize::LengthPercentage(lp) => nn(lp).map(MaxSize::LengthPercentage),
+        _ => None,
+    };
+    let margin = |m: &Margin| match m {
+        Margin::LengthPercentage(lp) => snap_lp(lp).map(Margin::LengthPercentage),
+        _ => None,
+    };
+    let inset = |m: &Inset| match m {
+        Inset::LengthPercentage(lp) => snap_lp(lp).map(Inset::LengthPercentage),
+        _ => None,
+    };
+    let gap = |g: &Gap| match g {
+        Gap::LengthPercentage(lp) => nn(lp).map(Gap::LengthPercentage),
+        _ => None,
+    };
+
+    let padding = values.get_padding();
+    let p = [
+        nn(&padding.padding_top),
+        nn(&padding.padding_right),
+        nn(&padding.padding_bottom),
+        nn(&padding.padding_left),
+    ];
+    if p.iter().any(Option::is_some) {
+        edit(&mut |v| {
+            let s = v.mutate_padding();
+            if let Some(x) = p[0].clone() {
+                s.set_padding_top(x);
+            }
+            if let Some(x) = p[1].clone() {
+                s.set_padding_right(x);
+            }
+            if let Some(x) = p[2].clone() {
+                s.set_padding_bottom(x);
+            }
+            if let Some(x) = p[3].clone() {
+                s.set_padding_left(x);
+            }
+        });
+    }
+
+    let m = values.get_margin();
+    let m = [
+        margin(&m.margin_top),
+        margin(&m.margin_right),
+        margin(&m.margin_bottom),
+        margin(&m.margin_left),
+    ];
+    if m.iter().any(Option::is_some) {
+        edit(&mut |v| {
+            let s = v.mutate_margin();
+            if let Some(x) = m[0].clone() {
+                s.set_margin_top(x);
+            }
+            if let Some(x) = m[1].clone() {
+                s.set_margin_right(x);
+            }
+            if let Some(x) = m[2].clone() {
+                s.set_margin_bottom(x);
+            }
+            if let Some(x) = m[3].clone() {
+                s.set_margin_left(x);
+            }
+        });
+    }
+
+    let pos = values.get_position();
+    // Block-axis sizes only: see "Inline sizes" in [`snap_lengths_to_layout_unit`].
+    let sizes = [size(&pos.height), size(&pos.min_height)];
+    let maxes = [max(&pos.max_height)];
+    let insets = [
+        inset(&pos.top),
+        inset(&pos.right),
+        inset(&pos.bottom),
+        inset(&pos.left),
+    ];
+    let gaps = [gap(&pos.row_gap), gap(&pos.column_gap)];
+    if sizes.iter().any(Option::is_some)
+        || maxes.iter().any(Option::is_some)
+        || insets.iter().any(Option::is_some)
+        || gaps.iter().any(Option::is_some)
+    {
+        edit(&mut |v| {
+            let s = v.mutate_position();
+            if let Some(x) = sizes[0].clone() {
+                s.set_height(x);
+            }
+            if let Some(x) = sizes[1].clone() {
+                s.set_min_height(x);
+            }
+            if let Some(x) = maxes[0].clone() {
+                s.set_max_height(x);
+            }
+            if let Some(x) = insets[0].clone() {
+                s.set_top(x);
+            }
+            if let Some(x) = insets[1].clone() {
+                s.set_right(x);
+            }
+            if let Some(x) = insets[2].clone() {
+                s.set_bottom(x);
+            }
+            if let Some(x) = insets[3].clone() {
+                s.set_left(x);
+            }
+            if let Some(x) = gaps[0].clone() {
+                s.set_row_gap(x);
+            }
+            if let Some(x) = gaps[1].clone() {
+                s.set_column_gap(x);
+            }
+        });
+    }
+
+    let spacing = values.get_inherited_table().clone_border_spacing();
+    let (h, w) = (
+        f64::from(spacing.0.width().0.px()),
+        f64::from(spacing.0.height().0.px()),
+    );
+    let (sh, sw) = (
+        crate::layout_unit::border_spacing(h),
+        crate::layout_unit::border_spacing(w),
+    );
+    if sh != h || sw != w {
+        let new = BorderSpacing::new(
+            NonNegativeLength::new(sh as f32),
+            NonNegativeLength::new(sw as f32),
+        );
+        edit(&mut |v| v.mutate_inherited_table().set_border_spacing(new));
+    }
+
+    let font = values.get_font();
+    let line_height = match font.line_height {
+        LineHeight::Number(n) => Some(crate::layout_unit::line_height_for_number(
+            f64::from(font.font_size.used_size.0.px()),
+            f64::from(n.0),
+        )),
+        LineHeight::Length(l) => {
+            let px = f64::from(l.0.px());
+            Some(crate::layout_unit::round(px)).filter(|s| *s != px)
+        }
+        LineHeight::Normal => None,
+    };
+    if let Some(px) = line_height {
+        edit(&mut |v| {
+            v.mutate_font()
+                .set_line_height(LineHeight::Length(NonNegativeLength::new(px as f32)))
+        });
+    }
+    out
+}
+
 /// COMPENSATES A BLITZ BUG: Blitz lays out `border-collapse: collapse` tables taller than
 /// Chrome. Remove this compensation when Blitz fixes it.
 ///
@@ -1716,8 +2014,11 @@ fn resolve_and_walk<O: LayoutObserver>(
     // `compensate_collapsed_borders`) edits computed styles between the cascade and layout:
     // style the document, edit, then `resolve` (whose own style pass then has nothing to
     // restyle) lays it out. Off in the raw-Blitz render.
+    // Before it, Chrome's LayoutUnit quantisation of computed lengths (`snap_lengths_to_layout_unit`,
+    // so `cell_height_as_minimum` copies a snapped height). Both off in the raw-Blitz render.
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
+        snap_lengths_to_layout_unit(&mut doc);
         compensate_collapsed_borders(&mut doc)
     } else {
         CollapsedBorders::default()

@@ -1,0 +1,3443 @@
+{
+  "previousLink": [
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#26|dy",
+      "c02": {
+        "before": -1.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Lançamentos#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#2|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|2026#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#2|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#5|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Compra#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|no#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|débito#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Padaria#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Pão#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#7|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Açúcar#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|&#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Cia.#3|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#8|dy",
+      "c02": {
+        "before": -7.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Saque#3|dy",
+      "c02": {
+        "before": -11.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|em#5|dy",
+      "c02": {
+        "before": -11.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|terminal#3|dy",
+      "c02": {
+        "before": -11.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#15|dy",
+      "c02": {
+        "before": -11.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|autoatendimento#3|dy",
+      "c02": {
+        "before": -11.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#17|dy",
+      "c02": {
+        "before": -10.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#18|dy",
+      "c02": {
+        "before": -1.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "within-tolerance",
+        "gating": false,
+        "after": 0.75
+      },
+      "value": {
+        "dy": 0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|PIX#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|recebido#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#10|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|João#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Ninguém#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|da#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Silva#3|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Compra#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|no#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|débito#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#11|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Padaria#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Pão#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#21|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Açúcar#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|&#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Cia.#4|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Tarifa#2|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#22|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|manutenção#2|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#23|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|conta#2|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#24|dy",
+      "c02": {
+        "before": -1.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|Lançamentos#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#2|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|2026#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#4|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#6|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#10|dy",
+      "c02": {
+        "before": -1.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|Estorno#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|cobrança#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|indevida#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|(reclamação#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|nº#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|2026/00417)#2|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|—#4|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#15|dy",
+      "c02": {
+        "before": -16.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|Rendimento#3|dy",
+      "c02": {
+        "before": -9.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#25|dy",
+      "c02": {
+        "before": -9.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|aplicação#3|dy",
+      "c02": {
+        "before": -9.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|automática#3|dy",
+      "c02": {
+        "before": -9.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Lançamentos#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#2|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|2026#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#4|dy",
+      "c02": {
+        "before": -10.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Compra#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|no#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|débito#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#2|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Padaria#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Pão#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#7|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Açúcar#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|&#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Cia.#1|dy",
+      "c02": {
+        "before": -26.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#8|dy",
+      "c02": {
+        "before": -7.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|PIX#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|recebido#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#4|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|João#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Ninguém#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|da#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Silva#1|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Pagamento#2|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#10|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#11|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#12|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#7|dy",
+      "c02": {
+        "before": -1.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|58.025,53#2|dy",
+      "c02": {
+        "before": -19.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#21|dy",
+      "c02": {
+        "before": -10.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#9|dy",
+      "c02": {
+        "before": -14.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#10|dy",
+      "c02": {
+        "before": -2.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#24|dy",
+      "c02": {
+        "before": -32.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "within-tolerance",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "within-tolerance",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#2|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "within-tolerance",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#1|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "within-tolerance",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#9|dy",
+      "c02": {
+        "before": -16.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Débito#2|dy",
+      "c02": {
+        "before": -34.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|automático#1|dy",
+      "c02": {
+        "before": -34.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|energia#1|dy",
+      "c02": {
+        "before": -34.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|elétrica#1|dy",
+      "c02": {
+        "before": -34.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#12|dy",
+      "c02": {
+        "before": -14.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#2|dy",
+      "c02": {
+        "before": -25.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#13|dy",
+      "c02": {
+        "before": -25.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#14|dy",
+      "c02": {
+        "before": -7.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#2|dy",
+      "c02": {
+        "before": -25.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#16|dy",
+      "c02": {
+        "before": -25.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#17|dy",
+      "c02": {
+        "before": -12.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#19|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#22|dy",
+      "c02": {
+        "before": -22.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#23|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#24|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|—#11|dy",
+      "c02": {
+        "before": -19.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Pagamento#9|dy",
+      "c02": {
+        "before": -6.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#31|dy",
+      "c02": {
+        "before": -6.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|em#5|dy",
+      "c02": {
+        "before": -16.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": -0.75
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Rendimento#3|dy",
+      "c02": {
+        "before": -13.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|aplicação#3|dy",
+      "c02": {
+        "before": -13.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|automática#3|dy",
+      "c02": {
+        "before": -13.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p7|de#5|dy",
+      "c02": {
+        "before": -20.65,
+        "after": 1.03
+      },
+      "now": {
+        "class": "improvement",
+        "gating": false,
+        "after": 0
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    }
+  ],
+  "head": [
+    {
+      "key": "wpt|css/CSS2/floats-clear/floats-153.xht",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-003.xht",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-004.xht",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/CSS2/floats/zero-width-floats.html",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/inline-formatting-context-001.xht",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "wpt|css/css-page/monolithic-overflow-014-print.html",
+      "c02": {
+        "before": "pass",
+        "after": "fail"
+      },
+      "now": {
+        "class": "head-regression",
+        "gating": true,
+        "after": "fail"
+      },
+      "value": {
+        "outcome": "fail",
+        "rawOutcome": "fail"
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|São#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Paulo#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|—#2|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|SP#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Avenida#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Central,#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|4500#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|—#3|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|Conjunto#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|12#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|faturamento@acmewidgets.example#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|CNPJ#2|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|invoice|p1|98.765.432/0001-21#1|dy",
+      "c02": {
+        "before": -2.8,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+      "c02": {
+        "before": "dx -0.9 dy -0.15",
+        "after": "unpaired"
+      },
+      "now": {
+        "class": "accepted",
+        "gating": false,
+        "after": "unpaired"
+      },
+      "value": {
+        "paired": false
+      }
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+      "c02": {
+        "before": "dx -0.9 dy -0.15",
+        "after": "unpaired"
+      },
+      "now": {
+        "class": "accepted",
+        "gating": false,
+        "after": "unpaired"
+      },
+      "value": {
+        "paired": false
+      }
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|unpaired-vellora",
+      "c02": {
+        "before": 0,
+        "after": 3
+      },
+      "now": {
+        "class": "accepted",
+        "gating": false,
+        "after": 3
+      },
+      "value": {
+        "unpairedVellora": 3
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|DESCRIÇÃO#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|QTD#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|UNITÁRIO#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|TOTAL#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|SKU#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|CAF-ESP-002#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|SKU#2|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|PAD-PCH-014#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|SKU#4|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|BEB-SUC-021#1|dy",
+      "c02": {
+        "before": -10.12,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|Total#1|dy",
+      "c02": {
+        "before": -11.62,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|pago#1|dy",
+      "c02": {
+        "before": -11.62,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|R$#11|dy",
+      "c02": {
+        "before": -11.62,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|receipt|p1|68,50#1|dy",
+      "c02": {
+        "before": -11.62,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#26|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p2|de#27|dy",
+      "c02": {
+        "before": -22.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|Lançamentos#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#2|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|2026#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#2|dy",
+      "c02": {
+        "before": -19.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#9|dy",
+      "c02": {
+        "before": -10.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#17|dy",
+      "c02": {
+        "before": -13.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#18|dy",
+      "c02": {
+        "before": -4.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|—#11|dy",
+      "c02": {
+        "before": -25.9,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p3|de#24|dy",
+      "c02": {
+        "before": -23.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|Lançamentos#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#2|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|2026#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#4|dy",
+      "c02": {
+        "before": -20.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#10|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#17|dy",
+      "c02": {
+        "before": -29.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#18|dy",
+      "c02": {
+        "before": -22.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p4|de#19|dy",
+      "c02": {
+        "before": -20.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|Lançamentos#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#2|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|2026#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#10|dy",
+      "c02": {
+        "before": -1.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#11|dy",
+      "c02": {
+        "before": -1.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|58.025,53#2|dy",
+      "c02": {
+        "before": -22.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#19|dy",
+      "c02": {
+        "before": -14.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|de#23|dy",
+      "c02": {
+        "before": 0.35,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p5|—#10|dy",
+      "c02": {
+        "before": -5.65,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#1|dy",
+      "c02": {
+        "before": -3.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#10|dy",
+      "c02": {
+        "before": -19.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|—#8|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#12|dy",
+      "c02": {
+        "before": -17.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|Lançamentos#2|dy",
+      "c02": {
+        "before": -28.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#13|dy",
+      "c02": {
+        "before": -28.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#14|dy",
+      "c02": {
+        "before": -10.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|2026#2|dy",
+      "c02": {
+        "before": -28.9,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#17|dy",
+      "c02": {
+        "before": -15.4,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|—#9|dy",
+      "c02": {
+        "before": -8.65,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#23|dy",
+      "c02": {
+        "before": -6.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#24|dy",
+      "c02": {
+        "before": -6.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#28|dy",
+      "c02": {
+        "before": -4.15,
+        "after": 1.1
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#30|dy",
+      "c02": {
+        "before": -28.15,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#31|dy",
+      "c02": {
+        "before": -9.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p6|de#32|dy",
+      "c02": {
+        "before": -0.4,
+        "after": 1.85
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": -0.75,
+        "abs_le_1pt": true
+      }
+    },
+    {
+      "key": "pdf-probe|text-stress-ptbr|p7|de#5|dy",
+      "c02": {
+        "before": -23.65,
+        "after": 1.03
+      },
+      "now": {
+        "class": "no item (unchanged vs the link or not measured)",
+        "gating": false,
+        "after": null
+      },
+      "value": {
+        "dy": 0,
+        "abs_le_1pt": true
+      }
+    }
+  ]
+}

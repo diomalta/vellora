@@ -1331,10 +1331,17 @@ fn rounded_badge_border_lowers_to_pdf_stroke() {
         .iter()
         .find(|r| r.text.contains("EM ABERTO"))
         .expect("badge text run exists");
-    let text_mid_y = text_run.origin_y - text_run.font_size as f64 / 2.0;
+    // Chrome 155 prints this baseline at 92 CSS px from the page top (CfT 155.0.8059.85,
+    // 2026-10-27, `fidelity/gate/snapshots/2026-10-27/c03/layoutunit/baseline-snap/` `badge_18mm`); text
+    // baselines land on whole page px (`pagination::snap_baseline_to_page_px`).
+    assert_eq!(text_run.origin_y, 92.0, "Chrome's baseline");
+    // Inside the stroke: the text's em box (baseline - 0.8 em .. baseline + 0.2 em) within it.
+    let text_mid_y = text_run.origin_y - text_run.font_size as f64 * 0.3;
     let stroke_mid_y = stroke.y + stroke.height / 2.0;
     assert!(
-        (text_mid_y - stroke_mid_y).abs() <= 2.0,
+        text_run.origin_y - 0.8 * text_run.font_size as f64 > stroke.y
+            && text_run.origin_y + 0.2 * (text_run.font_size as f64) < stroke.y + stroke.height
+            && (text_mid_y - stroke_mid_y).abs() <= 2.0,
         "badge text should be vertically centered inside rounded stroke; text_mid_y={text_mid_y}, stroke_mid_y={stroke_mid_y}, baseline={}, font_size={}, stroke=({}, {}, {}, {})",
         text_run.origin_y,
         text_run.font_size,
