@@ -1517,3 +1517,126 @@ fn inline_svg_percentage_sizes_are_chromes() {
         ]
     );
 }
+
+/// The anonymous-table-object repro of `blitz_engine::build_anonymous_table_objects`: a
+/// `display: table` box holding a 30 px caption and a 40 px non-cell child, then a block.
+const TABLE_ANONYMOUS: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0 }
+    aside { display: table-caption; height: 30px; background: #00f }
+    p { margin: 0; height: 40px; background: #0f0 }
+    footer { height: 10px }
+    </style></head><body><div style="display: table"><aside></aside><p></p></div>
+    <footer></footer></body></html>"#;
+
+/// `(y, height)` of the first box with tag `tag`.
+fn y_h(doc: &LaidOutDoc, tag: &str) -> (f64, f64) {
+    let b = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some(tag))
+        .unwrap_or_else(|| panic!("no <{tag}> box"));
+    (b.y, b.height)
+}
+
+/// CANARY of `blitz_engine::build_anonymous_table_objects`: raw Blitz (blitz-dom 0.3.0-beta.4
+/// `layout/table.rs` 738-748, "Probably a table caption: ignore") still drops a table's caption
+/// and its non-cell child: both keep a 0x0 layout, the table is 0 px tall and the block after it
+/// starts at y 0. Chrome 155 puts the caption (30 px) above an anonymous row holding the child
+/// (40 px): the block after them starts at y 70. When this fails, Blitz builds anonymous table
+/// objects itself: delete `build_anonymous_table_objects` and what its comment lists, then
+/// re-run WPT css/css-tables, css/CSS2/tables and css/css-break.
+#[test]
+fn blitz_still_drops_table_captions_and_non_cell_children() {
+    let (raw, _) = raw_layout(TABLE_ANONYMOUS);
+    assert_eq!(
+        [y_h(&raw, "aside").1, y_h(&raw, "p").1, y_h(&raw, "footer").0],
+        [0.0, 0.0, 0.0],
+        "\n\nBLITZ CHANGED HOW IT LAYS OUT A TABLE'S CAPTION OR NON-CELL CHILD: raw Blitz no longer \
+         leaves them 0x0 (blitz-dom 0.3.0-beta.4 src/layout/table.rs 738-748 dropped them). If \
+         Blitz now builds the anonymous table objects of CSS 2.2 §17.2.1 and the table wrapper \
+         box of §17.4 itself, DELETE `build_anonymous_table_objects` and the functions its \
+         comment lists (crates/vellora-core/src/blitz_engine.rs), this canary and the \
+         `anonymous_table_objects_*` tests, then re-run WPT css/css-tables, css/CSS2/tables and \
+         css/css-break.\n"
+    );
+}
+
+/// The compensation: the caption above the table, the non-cell child in an anonymous row and
+/// cell under it, the next block below both (Chrome 155: 0 / 30 / 70).
+#[test]
+fn anonymous_table_objects_place_the_caption_and_wrap_the_child() {
+    let doc = product_layout(TABLE_ANONYMOUS);
+    assert_eq!(y_h(&doc, "aside"), (0.0, 30.0));
+    assert_eq!(y_h(&doc, "p"), (30.0, 40.0));
+    assert_eq!(y_h(&doc, "footer").0, 70.0);
+    // The anonymous row and cell are boxes of the table (read by tag as a `<tr>` / `<td>`).
+    assert!(doc.boxes.iter().any(|b| b.tag.as_deref() == Some("tr")));
+    assert_eq!(y_h(&doc, "td"), (30.0, 40.0));
+}
+
+/// Bottom captions go below the table, top ones above it, each side in document order; the
+/// wrapper takes the table's margins.
+#[test]
+fn anonymous_table_objects_order_captions_by_side() {
+    let doc = product_layout(
+        r#"<!DOCTYPE html><html><head><style>
+        body { margin: 0 }
+        .t { display: table; margin-top: 5px }
+        h1, h2, h3 { margin: 0; display: table-caption; height: 10px }
+        h1 { caption-side: bottom }
+        section { display: table-cell; height: 20px }
+        </style></head><body><div class="t"><h1></h1><h2></h2><section></section><h3></h3></div>
+        </body></html>"#,
+    );
+    // h2 and h3 above (document order), the 20 px row (a cell straight in the table gets an
+    // anonymous row), then h1.
+    assert_eq!(y_h(&doc, "h2").0, 5.0);
+    assert_eq!(y_h(&doc, "h3").0, 15.0);
+    assert_eq!(y_h(&doc, "section").0, 25.0);
+    assert_eq!(y_h(&doc, "h1").0, 45.0);
+}
+
+/// The wrapper is as wide as the table: an auto-width caption does not widen a shrink-to-fit
+/// table, and a percentage table keeps its percentage of the containing block.
+#[test]
+fn anonymous_table_objects_size_the_wrapper_to_the_table() {
+    let width = |doc: &LaidOutDoc, tag: &str| {
+        doc.boxes
+            .iter()
+            .find(|b| b.tag.as_deref() == Some(tag))
+            .map(|b| b.width)
+            .unwrap_or_else(|| panic!("no <{tag}> box"))
+    };
+    let html = |table: &str| {
+        format!(
+            r#"<!DOCTYPE html><html><head><style>
+            body {{ margin: 0; width: 400px }}
+            aside {{ display: table-caption; margin: 0 5px; padding: 0 3px }}
+            nav {{ display: table }}
+            section {{ display: table-cell; width: 50px }}
+            </style></head><body><nav style="{table}"><aside>a caption longer than its table</aside>
+            <section></section></nav></body></html>"#
+        )
+    };
+    let shrink = product_layout(&html("border-spacing: 0"));
+    assert_eq!(width(&shrink, "nav"), 50.0);
+    // The caption's margin box fills the table's width: 50 - 2 * 5 margin.
+    assert_eq!(width(&shrink, "aside"), 40.0);
+    let percent = product_layout(&html("border-spacing: 0; width: 50%"));
+    assert_eq!(width(&percent, "nav"), 200.0);
+    assert_eq!(width(&percent, "aside"), 190.0);
+}
+
+/// A row group or row that is not a proper child where it sits gets no box (CSS 2.2 §17.2.1
+/// rule 3, an anonymous table of its own, is not modelled): Chrome 155 paints nothing for the
+/// empty red row group of WPT css/CSS2/tables/empty-cells-applies-to-008.
+#[test]
+fn anonymous_table_objects_leave_a_misparented_row_group_out() {
+    let doc = product_layout(
+        r#"<!DOCTYPE html><html><body><div style="display: table">
+        <div style="display: table-row"><nav style="display: table-row-group; height: 1em; background: red"></nav>
+        <div style="display: table-cell">X</div></div></div></body></html>"#,
+    );
+    let nav = doc.boxes.iter().find(|b| b.tag.as_deref() == Some("nav"));
+    assert!(nav.is_none_or(|b| b.visual_rects.is_empty() && b.height == 0.0));
+}

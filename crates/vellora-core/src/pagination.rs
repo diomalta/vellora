@@ -369,6 +369,24 @@ pub fn paginate_traced(
         let group_header_h = table_header.map(|header| header.height).unwrap_or(0.0);
         let forced_break_inside = frag.members.iter().skip(1).any(has_forced_break);
         if !frag.members.is_empty() && (fit_h + group_header_h > fit_limit || forced_break_inside) {
+            // Taller than a page, it still starts on a fresh page when the current one already
+            // holds content (an unforced break before it, CSS Fragmentation 3 §4.4: `avoid`
+            // prefers a break before the box), then breaks inside: Chrome 155 starts a
+            // `break-inside: avoid` table whose caption makes it 3in tall on page 2 of a 2in
+            // page box, after page 1's text (WPT
+            // css/CSS2/pagination/table-page-break-inside-avoid-7-print). A forced break inside
+            // the group wins over `avoid` and does not move it.
+            if !forced_break_inside && !frag.break_before && !current.is_empty() {
+                push_page(
+                    &mut current,
+                    &mut page_slices,
+                    &mut thead_repeated,
+                    !headers_on_current.is_empty(),
+                );
+                cursor = 0.0;
+                headers_on_current.clear();
+                page_start = PageStart::Unforced;
+            }
             let break_before = frag.break_before;
             let break_margin = frag.break_margin;
             let mut members = frag.members;
@@ -2056,11 +2074,24 @@ fn split_fragment(
     cut: f64,
     end: f64,
     keep_empty: bool,
+    truncate: f64,
 ) -> (Fragment, Option<Fragment>) {
     let parent = parents(&frag.boxes);
     let n = frag.boxes.len();
     let repeated = repeat_sliced_headers(&frag.boxes, cut);
     let shift: f64 = repeated.iter().map(|(_, _, h)| h).sum();
+    // The continuation's flow y of a flow y at or below the cut: the `truncate` px right below
+    // the cut (a margin truncated at the break, [`leading_margin_at`]) are taken out.
+    let truncate = truncate.max(0.0);
+    let squeeze = |y: f64| {
+        if y <= cut {
+            y
+        } else if y <= cut + truncate {
+            cut
+        } else {
+            y - truncate
+        }
+    };
     let mut first: Vec<Option<LaidOutBox>> = vec![None; n];
     let mut rest: Vec<Option<LaidOutBox>> = vec![None; n];
     let stretch_to = end;
@@ -2080,7 +2111,7 @@ fn split_fragment(
                 a.text_runs.push(run.clone());
             } else {
                 let mut run = run.clone();
-                run.origin_y += shift;
+                run.origin_y = squeeze(run.origin_y) + shift;
                 c.text_runs.push(run);
             }
         }
@@ -2089,7 +2120,7 @@ fn split_fragment(
                 a.image_runs.push(img.clone());
             } else {
                 let mut img = img.clone();
-                img.y += shift;
+                img.y = squeeze(img.y) + shift;
                 c.image_runs.push(img);
             }
         }
@@ -2098,7 +2129,7 @@ fn split_fragment(
                 a.rounded_borders.push(border.clone());
             } else {
                 let mut border = border.clone();
-                border.y += shift;
+                border.y = squeeze(border.y) + shift;
                 c.rounded_borders.push(border);
             }
         }
@@ -2108,7 +2139,8 @@ fn split_fragment(
                 a.visual_rects.push(rect.clone());
             } else if rect.y >= cut - CUT_EPSILON_PX {
                 let mut rect = rect.clone();
-                rect.y += shift;
+                rect.y = squeeze(rect.y) + shift;
+                rect.height = (squeeze(bottom) + shift - rect.y).max(0.0);
                 c.visual_rects.push(rect);
             } else {
                 let mut head = rect.clone();
@@ -2116,7 +2148,7 @@ fn split_fragment(
                 a.visual_rects.push(head);
                 let mut tail = rect.clone();
                 tail.y = cut;
-                tail.height = bottom - cut + shift;
+                tail.height = squeeze(bottom) - cut + shift;
                 c.visual_rects.push(tail);
             }
         }
@@ -2125,12 +2157,13 @@ fn split_fragment(
             if bottom > cut + ROUNDING_TAIL_PX {
                 a.height = (stretch_to - b.y).max(0.0);
                 c.y = cut;
-                c.height = bottom - cut + shift;
+                c.height = squeeze(bottom) - cut + shift;
                 rest[i] = Some(c);
             }
             first[i] = Some(a);
         } else {
-            c.y = b.y + shift;
+            c.y = squeeze(b.y) + shift;
+            c.height = (squeeze(bottom) - squeeze(b.y)).max(0.0);
             rest[i] = Some(c);
         }
     }
@@ -2179,7 +2212,7 @@ fn split_fragment(
     let bottom = rest_boxes
         .iter()
         .map(|b| b.y + b.height)
-        .fold(frag.bottom.max(cut) + shift, f64::max);
+        .fold(squeeze(frag.bottom.max(cut)) + shift, f64::max);
     let rest = Fragment {
         boxes: rest_boxes,
         top: cut,
@@ -2309,7 +2342,7 @@ fn slice_oversize(
     if cut <= frag.top + CUT_EPSILON_PX {
         return SliceOutcome::Whole;
     }
-    match split_fragment(frag, cut, end, false) {
+    match split_fragment(frag, cut, end, false, 0.0) {
         (head, Some(rest)) => SliceOutcome::Cut(Box::new(head), Box::new(rest)),
         (_, None) => SliceOutcome::Whole,
     }
@@ -2425,7 +2458,14 @@ pub(crate) fn fragment_columns(
         if cut <= start + CUT_EPSILON_PX {
             break;
         }
-        match split_fragment(&frag, cut, end, true) {
+        // An unforced break truncates the margin that adjoins it, through the empty boxes that
+        // start the next column (CSS Fragmentation 3 §5.2; see [`leading_margin_at`]).
+        let truncate = if forced.is_some_and(|f| (f - cut).abs() <= CUT_EPSILON_PX) {
+            0.0
+        } else {
+            leading_margin_at(&frag.boxes, &items, cut)
+        };
+        match split_fragment(&frag, cut, end, true, truncate) {
             (head, Some(rest)) => {
                 pieces.push(ColumnPiece {
                     boxes: head.boxes,
@@ -2444,6 +2484,45 @@ pub(crate) fn fragment_columns(
         boxes: frag.boxes,
     });
     pieces
+}
+
+/// The margin that adjoins a column break at flow y `cut`, to truncate at the top of the next
+/// column (CSS Fragmentation 3 §5.2: "any margins adjoining the break truncate to zero"): the
+/// space from the cut down to the first box below it that holds content (a box with a height,
+/// a line, an image), when that box's own top margin spans all of it and nothing in between
+/// takes room (only the boxes that start at the cut and hold it, and empty boxes). `0.0` when
+/// there is no such box. This truncates through empty boxes and into the boxes that start at
+/// the cut, as Chrome 155 does: with a column break before a table whose first caption is
+/// empty, the second caption's 200 px `margin-top` is truncated and it starts column 2 (WPT
+/// css/css-break/table/caption-margin-002 / -005; Chrome also gives the box the table sits in a
+/// 100 px fragment there, not 300). Not modelled: a margin collapsed from several (only the
+/// content box's own `margin-top` is read), and the same truncation at a page break.
+fn leading_margin_at(boxes: &[LaidOutBox], items: &[SliceItem], cut: f64) -> f64 {
+    let ends: Vec<usize> = (0..boxes.len()).map(|i| subtree_end(boxes, i)).collect();
+    let Some(first) = (1..boxes.len())
+        .filter(|&i| boxes[i].y > cut + CUT_EPSILON_PX && boxes[i].height > 0.0)
+        .min_by(|&a, &b| boxes[a].y.total_cmp(&boxes[b].y))
+    else {
+        return 0.0;
+    };
+    let f = &boxes[first];
+    let gap = f.y - cut;
+    if f.y - f.margin_top > cut + CUT_EPSILON_PX {
+        return 0.0;
+    }
+    // Nothing takes room between the cut and that box but the boxes that hold it.
+    let holds = |i: usize| i < first && ends[i] > first;
+    let crowded = (1..boxes.len()).any(|i| {
+        let b = &boxes[i];
+        b.y >= cut - CUT_EPSILON_PX && b.y < f.y - CUT_EPSILON_PX && b.height > 0.0 && !holds(i)
+    }) || items
+        .iter()
+        .any(|it| it.top >= cut - CUT_EPSILON_PX && it.top < f.y - CUT_EPSILON_PX);
+    if crowded {
+        0.0
+    } else {
+        gap
+    }
 }
 
 /// `boxes` (depth-ordered, the first one its root) cut at flow y `cut` with
@@ -2470,7 +2549,7 @@ pub(crate) fn split_boxes_at(
         members: Vec::new(),
         slices: 0,
     };
-    let (head, rest) = split_fragment(&frag, cut, cut, false);
+    let (head, rest) = split_fragment(&frag, cut, cut, false, 0.0);
     (head.boxes, rest.map(|r| r.boxes))
 }
 

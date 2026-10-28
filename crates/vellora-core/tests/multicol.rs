@@ -232,3 +232,22 @@ fn an_abspos_in_the_columns_counts_for_the_balancing() {
       <div style="position:relative;"><div style="position:absolute; height:100px;"></div></div></div>"#;
     assert!(approx(height_of(html, G1), 200.0));
 }
+
+/// A column break before a table whose first caption is empty truncates the second caption's
+/// `margin-top` (CSS Fragmentation 3 §5.2, through the empty caption), and the box the table
+/// sits in starts column 2 with a fragment as tall as the caption (Chrome 155 on WPT
+/// css/css-break/table/caption-margin-005 with its red wrapper recoloured blue: blue only at
+/// x 50-100, y 0-100 of the container, under the green caption; no blue in column 1).
+#[test]
+fn a_column_break_truncates_the_caption_margin_after_an_empty_caption() {
+    let html = r#"<body style="margin:0"><div style="columns:2; gap:0; column-fill:auto; width:100px; height:150px">
+        <div style="height:100px; background:#008000"></div>
+        <div style="background:#0000ff">
+          <div style="display:table">
+            <div style="display:table-caption"></div>
+            <div style="display:table-caption; margin-top:200px; contain:size; width:50px; height:100px; background:#00ff00"></div>
+          </div>
+        </div></div></body>"#;
+    assert_eq!(rects_of(html, [0, 0, 255]), vec![(50.0, 0.0, 50.0, 100.0)]);
+    assert_eq!(rects_of(html, [0, 255, 0]), vec![(50.0, 0.0, 50.0, 100.0)]);
+}
