@@ -1488,6 +1488,277 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
     }
 }
 
+/// Chromium's cap on the lines it balances (MDN `text-wrap` "balance": "six or less for
+/// Chromium"; the constant `kMaxLinesForBalance` used in Blink's `paragraph_line_breaker.cc` was
+/// not read: UNVERIFIED value).
+const MAX_LINES_FOR_BALANCE: usize = 6;
+
+/// BLITZ GAP COMPENSATION (blitz-dom 0.3.0-beta.4 + stylo 0.22.0): `text-wrap: balance` is
+/// ignored, lines are filled greedily.
+///
+/// - Spec: CSS Text 4 §6.1 `text-wrap-style: balance`: line breaks are chosen so the remaining
+///   space is balanced across the lines of the block. Chrome 155 (Blink
+///   `ParagraphLineBreaker::AttemptParagraphBalancing`, `paragraph_line_breaker.cc`) bisects the
+///   available width for the narrowest one that keeps the greedy line count, then lays the lines
+///   out at that width; alignment stays within the full line box (WPT
+///   `css/css-text/white-space/text-wrap-balance-align-001.html` passes in Chrome).
+/// - Blitz: Stylo parses `text-wrap-style` and the `text-wrap` shorthand for Gecko only (stylo
+///   0.22.0 `properties/longhands.toml` 4008-4014 and `properties/shorthands.toml` 551-554:
+///   `engine = "gecko"`), so the declaration is dropped and Blitz breaks every line with the full
+///   width (`layout/inline.rs` 666-668 / 677-683 of blitz-dom 0.3.0-beta.4). Repro (WPT
+///   `text-wrap-balance-text-indent-001.html`): Ahem 10 px, `width: 10ch`, `text-indent: 5ch`,
+///   "01 34 6 89 12 3 56": Blitz lines "01 34 " / "6 89 12 3 " / "56", Chrome "01" / "34 6 89" /
+///   "12 3 56" (the greedy count 3 at a 70 px width).
+/// - Correction, after layout: the declarations are read by vellora (`break_css`, selectors
+///   matched with Stylo; an inline `style` wins, an element inherits its parent's decision); for
+///   each such inline root, the Parley layout is re-broken at the narrowest width (bisected to
+///   1/64 px) that keeps its line count, then left-aligned again. Only when nothing else would
+///   move: an ltr root whose lines are all physically left-aligned, with 2 to
+///   [`MAX_LINES_FOR_BALANCE`] lines, no inline boxes, no forced break, no emergency (in-word)
+///   break, every line at the same inline offset and width, Blitz's breaks equal to a plain
+///   full-width re-break, no floated element anywhere in the document (Chrome leaves a paragraph
+///   beside a float unbalanced: WPT `text-wrap-balance-float-006.html`), no `line-clamp` (Blitz
+///   does not clamp), and the re-broken lines keep every baseline (else the original layout is
+///   kept). Box sizes are untouched (same line count, same line heights).
+///
+/// WHEN BLITZ SUPPORTS `text-wrap: balance`, DELETE this function, `rebalance_layout`,
+/// `MAX_LINES_FOR_BALANCE`, its call in [`resolve_and_walk`], the `wrap_*` parts of
+/// `src/break_css.rs`, the canary `blitz_still_wraps_balanced_text_greedily`
+/// (`src/raw_blitz_tests.rs`) and the `balance_*` tests there.
+fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRules) {
+    let (balance, unbalance) = {
+        let device = doc.stylist_device();
+        breaks.applicable_wrap(|query| media_query_matches(device, query))
+    };
+    let base: &BaseDocument = doc;
+    let balance = matched_nodes(base, &balance);
+    let unbalance = matched_nodes(base, &unbalance);
+    let mut roots = Vec::new();
+    let mut has_float = false;
+    let mut stack = vec![(base.root_element().id, false)];
+    while let Some((id, inherited)) = stack.pop() {
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        has_float |= node
+            .primary_styles()
+            .is_some_and(|s| !matches!(s.clone_float(), style::computed_values::float::T::None));
+        let inline = node
+            .attr(blitz_dom::local_name!("style"))
+            .and_then(|s| crate::break_css::declares(s).wrap_balance);
+        let on = inline.unwrap_or(match (balance.contains(&id), unbalance.contains(&id)) {
+            (true, false) => true,
+            (false, true) | (true, true) => false,
+            (false, false) => inherited,
+        });
+        if on && node.flags.is_inline_root() {
+            roots.push(id);
+        }
+        let layout_children: Vec<NodeId> = node
+            .layout_children
+            .borrow()
+            .as_ref()
+            .map(|c| c.iter().copied().collect())
+            .unwrap_or_default();
+        let mut children: Vec<NodeId> = node.children.iter().copied().collect();
+        children.extend(
+            layout_children
+                .into_iter()
+                .filter(|c| !node.children.contains(c)),
+        );
+        stack.extend(children.into_iter().rev().map(|c| (c, on)));
+    }
+    if has_float {
+        return;
+    }
+    for id in roots {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        if !matches!(inline_align(node), InlineAlign::Left)
+            || node.primary_styles().is_none_or(|s| {
+                matches!(
+                    s.clone_direction(),
+                    style::computed_values::direction::T::Rtl
+                ) || matches!(
+                    s.clone_text_align(),
+                    style::values::specified::TextAlignKeyword::Justify
+                ) || !matches!(
+                    s.clone_text_wrap_mode(),
+                    style::computed_values::text_wrap_mode::T::Wrap
+                )
+            })
+        {
+            continue;
+        }
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let Some(text_layout) = node
+            .data
+            .downcast_element_mut()
+            .and_then(|el| el.inline_layout_data.as_mut())
+        else {
+            continue;
+        };
+        if let Some(balanced) = rebalance_layout(&text_layout.layout) {
+            text_layout.layout = balanced;
+        }
+    }
+}
+
+/// `layout` re-broken at the narrowest width that keeps its line count ([`balance_text_wrap`]),
+/// or `None` when it does not qualify or would move a line.
+fn rebalance_layout<B: parley::Brush>(layout: &parley::Layout<B>) -> Option<parley::Layout<B>> {
+    let lines: Vec<parley::LineMetrics> = layout.lines().map(|l| *l.metrics()).collect();
+    let n = lines.len();
+    if !(2..=MAX_LINES_FOR_BALANCE).contains(&n)
+        || layout.inline_boxes().len() > 0
+        || layout.is_rtl()
+        || layout
+            .lines()
+            .any(|l| l.break_reason() == parley::BreakReason::Explicit)
+    {
+        return None;
+    }
+    let first = lines[0];
+    if lines.iter().any(|m| {
+        m.inline_min_coord != first.inline_min_coord || m.inline_max_coord != first.inline_max_coord
+    }) || first.inline_min_coord != 0.0
+    {
+        return None;
+    }
+    let full = first.inline_max_coord;
+    let ranges = |l: &parley::Layout<B>| -> Vec<std::ops::Range<usize>> {
+        l.lines().map(|line| line.text_range()).collect()
+    };
+    // Blitz's own breaking must be what a plain full-width break gives (no float shortened a
+    // line, nothing else placed one): else the layout is left alone.
+    let mut replay = layout.clone();
+    replay.break_all_lines(Some(full));
+    if ranges(&replay) != ranges(layout) {
+        return None;
+    }
+    let emergency = |l: &parley::Layout<B>| {
+        l.lines()
+            .any(|line| line.break_reason() == parley::BreakReason::Emergency)
+    };
+    if emergency(layout) {
+        return None;
+    }
+    // A width qualifies when it keeps `n` lines without breaking inside a word (Chrome keeps
+    // "CONTROLLING" whole under `overflow-wrap: break-word`: WPT
+    // `text-wrap-balance-overflow-001.html`).
+    let qualifies = |width: f32| {
+        let mut probe = layout.clone();
+        probe.break_all_lines(Some(width));
+        probe.len() <= n && !emergency(&probe)
+    };
+    // The narrowest qualifying width: `upper` always qualifies, `lower` never.
+    let (mut lower, mut upper) = (0.0f32, full);
+    const EPSILON: f32 = 1.0 / 64.0;
+    while lower + EPSILON < upper {
+        let mid = (lower + upper) / 2.0;
+        if !qualifies(mid) {
+            lower = mid;
+        } else {
+            upper = mid;
+        }
+    }
+    if upper >= full {
+        return None;
+    }
+    let mut balanced = layout.clone();
+    balanced.break_all_lines(Some(upper));
+    balanced.align(parley::Alignment::Left, parley::AlignmentOptions::default());
+    let same_lines = balanced.len() == n
+        && balanced
+            .lines()
+            .zip(&lines)
+            .all(|(l, m)| l.metrics().baseline == m.baseline && l.metrics().offset == m.offset);
+    same_lines.then_some(balanced)
+}
+
+/// BLITZ BUG COMPENSATION (blitz-dom 0.3.0-beta.4): a `::before`/`::after` with `display:
+/// table-column` or `table-column-group` renders its `content`.
+///
+/// - Spec: CSS 2.1 §17.2.1 rule 1 ("Remove irrelevant boxes"): the children of a `table-column`
+///   box are treated as `display: none`, and so are the non-column children of a
+///   `table-column-group`; outside a table the column is wrapped in an anonymous table, which
+///   paints nothing without cells. So such a pseudo-element shows neither its text nor its
+///   background. Chrome 155 passes WPT `css/CSS2/generated-content/{after,before}-content-display-
+///   {012,013}` (one "Filler text", no red).
+/// - Blitz: `layout/construct.rs` 589-595 (cargo registry source of blitz-dom 0.3.0-beta.4):
+///   internal table displays outside a table "are laid out as flow containers" ("Blitz does not
+///   yet generate anonymous table wrapper boxes"); the pseudo's text node, created by
+///   `flush_pseudo_elements` (same file, 676-735) from the style's `content`, is laid out and
+///   painted. Repro `div:after { content: ". FAIL"; display: table-column-group; font-size: 2em;
+///   background: red }` around "Filler text": raw Blitz lays ". FAIL" out at 32 px next to it;
+///   Chrome draws nothing (the four WPT tests above, raw outcome fail, pin 2003ba5 pass).
+/// - Correction, between the cascade and box construction: such an eager pseudo-element style is
+///   replaced by a copy with `display: none`, so Blitz builds no box for it (equal geometry: the
+///   anonymous table Chrome builds around a lone column is empty). Only pseudo-elements: a real
+///   `<col>`/`<colgroup>` (or any element with those displays) is left to Blitz, which reads
+///   columns inside tables for their widths (`layout/table.rs` 444-505).
+///
+/// WHEN BLITZ FIXES THIS, DELETE this function, its call in [`resolve_and_walk`], the canary
+/// `blitz_still_renders_table_column_pseudo_content` (`src/raw_blitz_tests.rs`), which fails as
+/// soon as raw Blitz stops laying the repro's ". FAIL" out, and the test
+/// `table_column_pseudo_compensation_renders_nothing` there.
+fn hide_table_column_pseudos(doc: &mut BaseDocument) {
+    use style::values::specified::box_::DisplayInside;
+    let is_column = |values: &style::properties::ComputedValues| {
+        matches!(
+            values.clone_display().inside(),
+            DisplayInside::TableColumn | DisplayInside::TableColumnGroup
+        )
+    };
+    let mut ids = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        ids.push(id);
+        stack.extend(node.children.iter().rev().copied());
+    }
+    for id in ids {
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let Some(data) = node.try_stylo_element_data_mut() else {
+            continue;
+        };
+        let Some(mut element) = data.get_mut() else {
+            continue;
+        };
+        let columns: Vec<_> = element
+            .styles
+            .pseudos
+            .as_array()
+            .iter()
+            .enumerate()
+            .filter_map(|(i, style)| {
+                style
+                    .as_ref()
+                    .filter(|s| is_column(s))
+                    .map(|s| (i, s.clone()))
+            })
+            .collect();
+        for (i, old) in columns {
+            let mut values = (*old).clone();
+            values
+                .mutate_box()
+                .set_display(style::values::computed::Display::None);
+            let pseudo = style::selector_parser::PseudoElement::from_eager_index(i);
+            element
+                .styles
+                .pseudos
+                .set(&pseudo, style::servo_arc::Arc::new(values));
+        }
+    }
+}
+
 /// `lp` truncated to 1/64 px when it is a pure length and not on a step already.
 fn snap_lp(
     lp: &style::values::computed::LengthPercentage,
@@ -2373,6 +2644,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut collapsed = if O::VELLORA_CORRECTIONS {
         doc.resolve_stylist(0.0);
         snap_lengths_to_layout_unit(&mut doc);
+        hide_table_column_pseudos(&mut doc);
         compensate_collapsed_borders(&mut doc)
     } else {
         CollapsedBorders::default()
@@ -2393,6 +2665,11 @@ fn resolve_and_walk<O: LayoutObserver>(
         }
     }
     collapsed_row_lines(&doc, &mut collapsed);
+    // `text-wrap: balance` (not in Blitz's style system): re-break the lines it applies to.
+    // Off in the raw-Blitz render.
+    if O::VELLORA_CORRECTIONS {
+        balance_text_wrap(&mut doc, breaks);
+    }
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
     // the device that just styled the document, matches (port step 09).
@@ -3690,10 +3967,15 @@ fn read_text_runs(
             0.0
         };
         let mut inline_advance_adjust_px = -line_padding_right_px;
+        let mut line_runs: Vec<(TextRun, bool)> = Vec::new();
+        let mut line_has_inline_box = false;
         for item in line.items() {
             let glyph_run = match item {
                 parley::PositionedLayoutItem::GlyphRun(gr) => gr,
-                _ => continue,
+                parley::PositionedLayoutItem::InlineBox(_) => {
+                    line_has_inline_box = true;
+                    continue;
+                }
             };
             let run = glyph_run.run();
             let font = run.font();
@@ -3736,23 +4018,242 @@ fn read_text_runs(
                 (0.0, 0.0)
             };
 
-            runs.push(TextRun {
-                text: source.clone(),
-                font_data,
-                font_index,
-                font_size,
-                origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px + rel_x,
-                origin_y: line_box_top + glyph_run.baseline() as f64 + rel_y,
-                line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
-                line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
-                glyphs,
-                color,
-            });
+            line_runs.push((
+                TextRun {
+                    text: source.clone(),
+                    font_data,
+                    font_index,
+                    font_size,
+                    origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px + rel_x,
+                    origin_y: line_box_top + glyph_run.baseline() as f64 + rel_y,
+                    line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0)
+                        as f64,
+                    line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0)
+                        as f64,
+                    glyphs,
+                    color,
+                },
+                run.is_rtl(),
+            ));
             inline_advance_adjust_px += padding_right_px;
         }
+        if compensate && layout.is_rtl() && !line_has_inline_box {
+            rtl_line_end_whitespace(node, &source, &line, &mut line_runs);
+        }
+        runs.extend(line_runs.into_iter().map(|(run, _)| run));
     }
 
     runs
+}
+
+/// BLITZ BUG COMPENSATION (parley 0.12.0, Blitz 0.3.0-beta.4's text engine): in a right-to-left
+/// paragraph, white space that ends a line inside a left-to-right run stays at that run's visual
+/// right end and does not hang.
+///
+/// - Spec: UAX #9 rule L1 resets white space at the end of each LINE to the paragraph level, so
+///   in an rtl paragraph it sits at the visual left end of the line; CSS Text 3 §4.1.3 then hangs
+///   it (collapsible spaces are removed; `pre-wrap` spaces hang, conditionally before a forced
+///   break; `pre`/`break-spaces` keep it). UAX #9 P1 ends a paragraph at a forced break, so a
+///   no-break space right before a `<br>` resolves to the paragraph direction too (N1/N2 with
+///   `eos`). Chrome 155 does both (WPT `css/css-text/text-align/text-align-end-006.html`,
+///   `css/css-text/text-justify/text-justify-and-trailing-spaces-003/004.html` pass in Chrome).
+/// - Parley: `layout/line_break.rs` 1896-1902 and `layout/data.rs` 497-500 (cargo registry source
+///   of parley 0.12.0): "We don't currently apply UAX #9 L1 (resetting trailing whitespace to
+///   paragraph level)"; trailing white space only hangs when its run is at the paragraph level.
+///   parley_engine 0.12.0 `bidi.rs` 52-150 resolves the whole inline text as ONE paragraph (L1
+///   only before a separator inside it), so the no-break space before `\n` takes the level of the
+///   ltr text after the break. Repros: `REF REF REF REF REF REF REF REF` (25 px Ahem, 300 px,
+///   `direction: rtl`, ltr letters): Parley puts the line's space at x 275..300, letters 0..275,
+///   Chrome letters 25..300; `XX XX ` (20 px monospace, 7ch = 84 px, rtl, `pre-wrap`,
+///   justify): Parley stretches both spaces by 6 px (letters at 0 / 42), Chrome hangs the
+///   trailing space at -12 and stretches the inner one to 36 px (letters at 0 / 60).
+/// - Correction, per line of an rtl inline root without inline boxes, when the line's logically
+///   last characters are spaces/tabs (or no-break spaces before a forced break or the end of the
+///   text) inside a NON-rtl run: those glyphs move to the visual left end of the line; spaces and
+///   tabs hang as above; the line is re-aligned the way Parley aligns an rtl line with that
+///   hanging advance (`layout/alignment.rs` 69-146: offset `-hang`, then right / center / left
+///   share of the free space, right-aligned on overflow, justification spread over the word
+///   separators that do not hang). Off in the raw-Blitz render (`compensate`).
+///
+/// WHEN PARLEY APPLIES L1 PER LINE (and P1 at forced breaks), DELETE this function, its call and
+/// the `line_runs` rtl flags in [`read_text_runs`], the canary
+/// `blitz_still_keeps_rtl_line_end_space_in_its_ltr_run` (`src/raw_blitz_tests.rs`) and the
+/// `rtl_line_end_whitespace_*` tests there.
+fn rtl_line_end_whitespace<B: parley::Brush>(
+    node: &blitz_dom::Node,
+    source: &str,
+    line: &parley::Line<'_, B>,
+    runs: &mut Vec<(TextRun, bool)>,
+) {
+    use style::computed_values::white_space_collapse::T as Collapse;
+    use style::values::specified::TextAlignKeyword as Align;
+    let Some(styles) = node.primary_styles() else {
+        return;
+    };
+    let metrics = line.metrics();
+    if metrics.hanging_advance != 0.0 {
+        return;
+    }
+    let break_reason = line.break_reason();
+    let ends_paragraph = matches!(
+        break_reason,
+        parley::BreakReason::Explicit | parley::BreakReason::None
+    );
+    // The logically last characters of the line, after its forced break if any.
+    let range = line.text_range();
+    let Some(text) = source.get(range.clone()) else {
+        return;
+    };
+    let body = text.trim_end_matches(['\n', '\r', '\u{2028}', '\u{2029}']);
+    let body_end = range.start + body.len();
+    let trail_start = range.start
+        + body
+            .trim_end_matches(|c: char| c == ' ' || c == '\t' || (ends_paragraph && c == '\u{a0}'))
+            .len();
+    if trail_start == body_end {
+        return;
+    }
+    let in_trail = |g: &Glyph| g.text_start >= trail_start && g.text_end <= body_end;
+    if runs
+        .iter()
+        .any(|(run, rtl)| *rtl && run.glyphs.iter().any(in_trail))
+    {
+        return; // Parley already resolved it to the paragraph level.
+    }
+    let Some(owner) = runs
+        .iter()
+        .position(|(run, _)| run.glyphs.iter().any(in_trail))
+    else {
+        return;
+    };
+    // The spaces/tabs after the last no-break space hang (CSS Text 3 §4.1.3).
+    let hang_start = trail_start
+        + source[trail_start..body_end]
+            .trim_end_matches([' ', '\t'])
+            .len();
+    let is_separator = |run: &TextRun, g: &Glyph| {
+        matches!(run.text.get(g.text_start..g.text_end), Some(" " | "\u{a0}"))
+    };
+    let is_hanging = |g: &Glyph| g.text_start >= hang_start && g.text_end <= body_end;
+
+    let collapse = styles.clone_white_space_collapse();
+    let wraps = matches!(
+        styles.clone_text_wrap_mode(),
+        style::computed_values::text_wrap_mode::T::Wrap
+    );
+    let avail = f64::from(metrics.inline_max_coord - metrics.inline_min_coord - metrics.indent);
+    let natural_advance = f64::from(metrics.advance);
+
+    // Parley's justification of this line (`alignment.rs` 126-144), to recover natural advances.
+    let last_line = ends_paragraph;
+    let align = styles.clone_text_align();
+    let align_last = styles.clone_text_align_last();
+    use style::values::specified::TextAlignLast as Last;
+    let line_align = if last_line {
+        match align_last {
+            Last::Auto if align == Align::Justify => Align::Start,
+            Last::Auto => align,
+            Last::Start => Align::Start,
+            Last::End => Align::End,
+            Last::Left => Align::Left,
+            Last::Right => Align::Right,
+            Last::Center => Align::Center,
+            Last::Justify => Align::Justify,
+        }
+    } else {
+        align
+    };
+    let free = avail - natural_advance;
+    let separators: usize = runs
+        .iter()
+        .map(|(run, _)| run.glyphs.iter().filter(|g| is_separator(run, g)).count())
+        .sum();
+    let old_extra = if line_align == Align::Justify && free > 0.0 && separators > 0 {
+        free / separators as f64
+    } else {
+        0.0
+    };
+    let natural = |run: &TextRun, g: &Glyph| {
+        f64::from(g.advance) - if is_separator(run, g) { old_extra } else { 0.0 }
+    };
+
+    let hang_natural: f64 = runs[owner]
+        .0
+        .glyphs
+        .iter()
+        .filter(|g| is_hanging(g))
+        .map(|g| natural(&runs[owner].0, g))
+        .sum();
+    let hang = match collapse {
+        Collapse::Collapse | Collapse::PreserveBreaks => hang_natural,
+        Collapse::Preserve if wraps && !ends_paragraph => hang_natural,
+        Collapse::Preserve if wraps => hang_natural.min((natural_advance - avail).max(0.0)),
+        _ => 0.0,
+    };
+    // Parley's rtl alignment with that hanging advance (`alignment.rs` 69-146).
+    let new_free = avail - natural_advance + hang;
+    let hanging_separators = runs[owner]
+        .0
+        .glyphs
+        .iter()
+        .filter(|g| hang > 0.0 && is_hanging(g) && is_separator(&runs[owner].0, g))
+        .count();
+    let mut new_extra = 0.0;
+    let offset = -hang
+        + if new_free <= 0.0 {
+            new_free
+        } else {
+            match line_align {
+                Align::Justify if separators > hanging_separators => {
+                    new_extra = new_free / (separators - hanging_separators) as f64;
+                    0.0
+                }
+                Align::Left | Align::MozLeft | Align::End => 0.0,
+                Align::Center | Align::MozCenter => new_free * 0.5,
+                _ => new_free,
+            }
+        };
+
+    // Line start in absolute coordinates, then every run re-placed in visual order with the
+    // moved white space first; gaps between runs (vellora's inline padding) are kept.
+    let Some(first_x) = runs.first().map(|(run, _)| run.origin_x) else {
+        return;
+    };
+    let mut line_x = first_x - f64::from(metrics.offset) + offset;
+    let run_width = |run: &TextRun| run.glyphs.iter().map(|g| f64::from(g.advance)).sum::<f64>();
+    let gaps: Vec<f64> = runs
+        .windows(2)
+        .map(|w| w[1].0.origin_x - (w[0].0.origin_x + run_width(&w[0].0)))
+        .collect();
+    let mut moved = runs[owner].0.clone();
+    moved.glyphs.retain(|g| in_trail(g));
+    runs[owner].0.glyphs.retain(|g| !in_trail(g));
+    let restretch = |run: &mut TextRun, hanging_ok: bool| {
+        let text = run.text.clone();
+        for g in &mut run.glyphs {
+            if matches!(text.get(g.text_start..g.text_end), Some(" " | "\u{a0}")) {
+                let extra = if hanging_ok && hang > 0.0 && is_hanging(g) {
+                    0.0
+                } else {
+                    new_extra
+                };
+                g.advance = (f64::from(g.advance) - old_extra + extra) as f32;
+            }
+        }
+    };
+    restretch(&mut moved, true);
+    moved.origin_x = line_x;
+    line_x += run_width(&moved);
+    for (i, (run, _)) in runs.iter_mut().enumerate() {
+        if i > 0 {
+            line_x += gaps[i - 1];
+        }
+        restretch(run, false);
+        run.origin_x = line_x;
+        line_x += run_width(run);
+    }
+    runs.retain(|(run, _)| !run.glyphs.is_empty());
+    runs.insert(0, (moved, false));
 }
 
 /// Glyph-run -> line-run cluster key: `(run index, text range start, text range end)`.

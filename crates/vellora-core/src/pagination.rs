@@ -732,6 +732,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     };
     struct Lists {
         rects: Vec<FilledRect>,
+        atomic_rects: Vec<FilledRect>,
         strokes: Vec<RoundedStroke>,
         images: Vec<ImageRun>,
         runs: Vec<crate::blitz_engine::TextRun>,
@@ -741,6 +742,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         while lists.len() <= i {
             lists.push(Lists {
                 rects: Vec::new(),
+                atomic_rects: Vec::new(),
                 strokes: Vec::new(),
                 images: Vec::new(),
                 runs: Vec::new(),
@@ -748,7 +750,10 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         }
         &mut lists[i]
     }
-    for b in &doc.boxes {
+    // Atomic inline subtrees paint after the other rects, as in the product's display list
+    // ([`in_atomic_inline`]).
+    let atomic = in_atomic_inline(&doc.boxes);
+    for (b, &atomic) in doc.boxes.iter().zip(&atomic) {
         for rect in &b.visual_rects {
             let first = band_of(rect.y, &mut geometry, &mut bands);
             let last = band_of(
@@ -764,7 +769,13 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 } else {
                     bottom
                 };
-                list(&mut lists, i).rects.push(FilledRect {
+                let l = list(&mut lists, i);
+                let rects = if atomic {
+                    &mut l.atomic_rects
+                } else {
+                    &mut l.rects
+                };
+                rects.push(FilledRect {
                     x: rect.x,
                     y: y0 - top,
                     width: rect.width,
@@ -810,6 +821,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         let rects = l
             .rects
             .into_iter()
+            .chain(l.atomic_rects)
             .map(|r| FilledRect {
                 x: r.x + ml,
                 y: r.y + mt,
@@ -2238,10 +2250,17 @@ fn lower_to_display_list(
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
     let mut rects = Vec::new();
+    let mut atomic_rects = Vec::new();
     let mut rounded_strokes = Vec::new();
     let mut images = Vec::new();
     let mut runs = Vec::new();
-    for b in boxes {
+    let atomic = in_atomic_inline(&boxes);
+    for (b, atomic) in boxes.into_iter().zip(atomic) {
+        let rects = if atomic {
+            &mut atomic_rects
+        } else {
+            &mut rects
+        };
         for rect in b.visual_rects {
             rects.push(FilledRect {
                 x: rect.x + margin_l,
@@ -2275,7 +2294,34 @@ fn lower_to_display_list(
             runs.push(r);
         }
     }
-    (merge_adjacent_rects(rects), rounded_strokes, images, runs)
+    let mut rects = merge_adjacent_rects(rects);
+    rects.extend(merge_adjacent_rects(atomic_rects));
+    (rects, rounded_strokes, images, runs)
+}
+
+/// For each box (in tree order, `depth` from the walk), whether it is an atomic inline-level box
+/// (`inline-block`, `inline-table`, ...) or inside one. CSS 2.1 Appendix E paints the backgrounds
+/// and borders of a stacking context's block-level descendants (step 4) before its inline-level
+/// content (step 7), where an atomic inline is painted as a whole: so a later block's background
+/// never covers an earlier inline-block's or inline-table's. The display list therefore emits the
+/// rects of these subtrees after all other rects of the page (Chrome 155: WPT
+/// `css/CSS2/normal-flow/inline-table-zorder-001.xht`, a green inline-table over the red
+/// background of the block after it, pulled up by `margin-top: -2em`). Not a Blitz bug (the
+/// display list is vellora's painter), so no raw canary; `tests/paint_order.rs`.
+fn in_atomic_inline(boxes: &[LaidOutBox]) -> Vec<bool> {
+    let mut atomic_depth: Option<usize> = None;
+    boxes
+        .iter()
+        .map(|b| {
+            if atomic_depth.is_some_and(|d| b.depth <= d) {
+                atomic_depth = None;
+            }
+            if atomic_depth.is_none() && b.atomic_inline {
+                atomic_depth = Some(b.depth);
+            }
+            atomic_depth.is_some()
+        })
+        .collect()
 }
 
 /// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch

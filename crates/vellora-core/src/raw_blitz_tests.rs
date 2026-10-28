@@ -1055,3 +1055,196 @@ fn float_avoidance_relayout_keeps_the_earlier_style_compensations() {
     assert!(div.height > 0.0);
     assert_eq!(span.y - div.y, div.height, "float below its line");
 }
+
+/// The table-column pseudo-element repro of `blitz_engine::hide_table_column_pseudos` (WPT
+/// `css/CSS2/generated-content/after-content-display-012.xht` plus a `table-column` `::before`).
+const TABLE_COLUMN_PSEUDOS: &str = r#"<!DOCTYPE html><html><head><style>
+    div::after { background-color: red; color: yellow; content: ". FAIL"; display: table-column-group; font-size: 2em; }
+    span::before { content: "COL"; display: table-column; }
+    </style></head><body><div>Filler text</div><span>x</span></body></html>"#;
+
+/// The text of every text run of a layout.
+fn run_texts(doc: &LaidOutDoc) -> Vec<String> {
+    runs_of(doc).into_iter().map(|(text, _, _)| text).collect()
+}
+
+/// CANARY of `blitz_engine::hide_table_column_pseudos`: raw Blitz still lays out the `content`
+/// of a `::before`/`::after` with `display: table-column(-group)`, which CSS 2.1 §17.2.1 and
+/// Chrome 155 never render.
+#[test]
+fn blitz_still_renders_table_column_pseudo_content() {
+    let (raw, _) = raw_layout(TABLE_COLUMN_PSEUDOS);
+    assert_eq!(
+        run_texts(&raw),
+        ["Filler text", ". FAIL", "x", "COL"],
+        "\n\nBLITZ CHANGED HOW IT BUILDS A `display: table-column(-group)` PSEUDO-ELEMENT: raw \
+         Blitz no longer lays out its `content` (blitz-dom 0.3.0-beta.4 src/layout/construct.rs \
+         589-595 laid internal table displays outside a table out as flow containers). If Blitz \
+         now renders nothing for them, like Chrome 155, DELETE `hide_table_column_pseudos` and \
+         its call in `resolve_and_walk` (crates/vellora-core/src/blitz_engine.rs), this canary \
+         and `table_column_pseudo_compensation_renders_nothing`, then re-run the WPT \
+         generated-content directory.\n"
+    );
+}
+
+/// The compensation: neither pseudo-element is laid out, the rest is untouched.
+#[test]
+fn table_column_pseudo_compensation_renders_nothing() {
+    let doc = product_layout(TABLE_COLUMN_PSEUDOS);
+    assert_eq!(run_texts(&doc), ["Filler text", "x"]);
+}
+
+/// The rtl line-end white-space repros of `blitz_engine::rtl_line_end_whitespace`, both with ltr
+/// letters in an rtl block (Liberation Mono, 0.6 em advances): a right-aligned line that breaks
+/// after a space (25 px: 15 px a character, 300 px = 20 characters, so the first line is
+/// "REF REF REF REF REF " with its space), and the `pre-wrap` justified line of WPT
+/// `css/css-text/text-justify/text-justify-and-trailing-spaces-003.html` (20 px: 12.002 px a
+/// character, `width: 7ch`).
+const RTL_LINE_END_RIGHT: &str = r#"<!DOCTYPE html><html><body style="margin: 0">
+    <div style="direction: rtl; width: 20ch; font: 25px/1 'Liberation Mono'">REF REF REF REF REF REF</div>
+    </body></html>"#;
+const RTL_LINE_END_JUSTIFY: &str = r#"<!DOCTYPE html><html><body style="margin: 0">
+    <div style="width: 7ch; font: 20px 'Liberation Mono'; margin-left: 20px; direction: rtl; white-space: pre-wrap; text-align: justify"><span>XX XX </span><span>XXX</span></div>
+    </body></html>"#;
+
+/// `(text, x)` of the runs of the first line (the smallest baseline) of a layout.
+fn first_line(doc: &LaidOutDoc) -> Vec<(String, f64)> {
+    let runs = runs_of(doc);
+    let y = runs.iter().map(|r| r.2).fold(f64::INFINITY, f64::min);
+    let mut line: Vec<(String, f64)> = runs
+        .into_iter()
+        .filter(|r| (r.2 - y).abs() < 1e-6)
+        .map(|(text, x, _)| (text, (x * 1000.0).round() / 1000.0))
+        .collect();
+    line.sort_by(|a, b| a.1.total_cmp(&b.1));
+    line
+}
+
+/// CANARY of `blitz_engine::rtl_line_end_whitespace`: raw Blitz (Parley 0.12) still keeps the
+/// space that ends an rtl line inside its ltr run, at the run's right end and not hanging.
+#[test]
+fn blitz_still_keeps_rtl_line_end_space_in_its_ltr_run() {
+    let right = first_line(&raw_layout(RTL_LINE_END_RIGHT).0);
+    let justify = first_line(&raw_layout(RTL_LINE_END_JUSTIFY).0);
+    assert_eq!(
+        (right, justify),
+        (
+            vec![("REF REF REF REF REF ".to_string(), 0.0)],
+            vec![("XX XX ".to_string(), 20.0)]
+        ),
+        "\n\nPARLEY CHANGED HOW IT ENDS AN RTL LINE: the space that ends the line no longer stays \
+         in its ltr run at the run's right end (parley 0.12.0 src/layout/line_break.rs 1896-1902 \
+         and src/layout/data.rs 497-500: UAX #9 L1 is not applied per line). If Parley now \
+         applies L1 (and P1 at forced breaks) like Chrome 155, DELETE `rtl_line_end_whitespace`, \
+         its call and the `line_runs` rtl flags in `read_text_runs` \
+         (crates/vellora-core/src/blitz_engine.rs), this canary and the \
+         `rtl_line_end_whitespace_*` tests, then re-run the WPT css-text directory.\n"
+    );
+}
+
+/// The compensation, right-aligned (`start` in rtl): the space moves to the left end and hangs,
+/// the letters end at the right edge (Chrome 155 on the WPT `text-align-end-ref-006` page:
+/// letters at 25..300 of the 300 px line, its trailing space not drawn inside).
+#[test]
+fn rtl_line_end_whitespace_right_aligned_hangs_on_the_left() {
+    assert_eq!(
+        first_line(&product_layout(RTL_LINE_END_RIGHT)),
+        [
+            (" ".to_string(), 0.0),
+            ("REF REF REF REF REF".to_string(), 15.002)
+        ]
+    );
+}
+
+/// The compensation, justified: the trailing space hangs left of the line (x 8 = 20 - 12) and
+/// the one separator left takes all the free space (36.006 px), so the letters sit at both edges
+/// like Chrome 155 (WPT `text-justify-and-trailing-spaces-003`: "XX" at 20..44 and 80..104).
+#[test]
+fn rtl_line_end_whitespace_justified_spreads_over_the_inner_separator() {
+    let doc = product_layout(RTL_LINE_END_JUSTIFY);
+    assert_eq!(
+        first_line(&doc),
+        [(" ".to_string(), 7.998), ("XX XX".to_string(), 20.0)]
+    );
+    let inner = doc
+        .boxes
+        .iter()
+        .flat_map(|b| &b.text_runs)
+        .find(|r| r.glyphs.len() == 5)
+        .and_then(|r| {
+            r.glyphs
+                .iter()
+                .find(|g| &r.text[g.text_start..g.text_end] == " ")
+        })
+        .map(|g| g.advance)
+        .expect("the inner space of \"XX XX\"");
+    assert!((inner - 36.006).abs() < 0.01, "inner separator {inner}");
+}
+
+/// The `text-wrap: balance` repro of `blitz_engine::balance_text_wrap`: WPT
+/// `css/css-text/white-space/text-wrap-balance-text-indent-001.html` in Liberation Mono instead
+/// of Ahem (every length is in `ch`, so the breaks are the same).
+const BALANCE: &str = r#"<!DOCTYPE html><html><head><style>
+    div { font: 10px 'Liberation Mono'; text-indent: 5ch; text-wrap: balance; width: 10ch; }
+    </style></head><body><div>
+      01
+      34 6 89
+      12 3 56
+    </div></body></html>"#;
+
+/// The text of each line (runs grouped by baseline, in order).
+fn line_texts(doc: &LaidOutDoc) -> Vec<String> {
+    let mut lines: Vec<(f64, String)> = Vec::new();
+    for (text, _, y) in runs_of(doc) {
+        match lines.iter_mut().find(|(ly, _)| (*ly - y).abs() < 1e-6) {
+            Some((_, line)) => line.push_str(&text),
+            None => lines.push((y, text)),
+        }
+    }
+    lines.sort_by(|a, b| a.0.total_cmp(&b.0));
+    lines.into_iter().map(|(_, text)| text).collect()
+}
+
+/// CANARY of `blitz_engine::balance_text_wrap`: raw Blitz still fills the lines of a
+/// `text-wrap: balance` block greedily (Stylo 0.22.0 parses `text-wrap` for Gecko only).
+#[test]
+fn blitz_still_wraps_balanced_text_greedily() {
+    assert_eq!(
+        line_texts(&raw_layout(BALANCE).0),
+        ["01 34 ", "6 89 12 3 ", "56"],
+        "\n\nBLITZ CHANGED HOW IT BREAKS A `text-wrap: balance` BLOCK: raw Blitz no longer fills \
+         the repro's lines greedily (stylo 0.22.0 properties/longhands.toml 4008-4014 and \
+         shorthands.toml 551-554 made `text-wrap-style` / `text-wrap` Gecko-only). If Blitz now \
+         balances like Chrome 155 (\"01\" / \"34 6 89\" / \"12 3 56\"), DELETE \
+         `balance_text_wrap`, `rebalance_layout`, `MAX_LINES_FOR_BALANCE` and its call in \
+         `resolve_and_walk` (crates/vellora-core/src/blitz_engine.rs), the `wrap_*` parts of \
+         src/break_css.rs, this canary and the `balance_*` tests, then re-run the WPT \
+         css-text/white-space directory.\n"
+    );
+}
+
+/// The compensation gives Chrome 155's lines (the WPT reference: "01" / "34 6 89" / "12 3 56").
+#[test]
+fn balance_text_wrap_gives_chromes_lines() {
+    assert_eq!(
+        line_texts(&product_layout(BALANCE)),
+        ["01 ", "34 6 89 ", "12 3 56"]
+    );
+}
+
+/// Left alone: a right-aligned block (Chrome aligns in the full line box, Parley in the narrowed
+/// one), a document with a float, and a block without `text-wrap: balance`.
+#[test]
+fn balance_text_wrap_skips_what_it_cannot_place_like_chrome() {
+    let greedy = ["01 34 ", "6 89 12 3 ", "56"];
+    let right = BALANCE.replace("width: 10ch;", "width: 10ch; text-align: right;");
+    let float = BALANCE.replace("<body>", "<body><span style=\"float: right\">f</span>");
+    let off = BALANCE.replace("text-wrap: balance;", "");
+    assert_eq!(line_texts(&product_layout(&right)), greedy);
+    // With Blitz's `floats` feature on (phasec/04-floats) the float is laid out beside the
+    // block on its own baseline, so its run is a separate "line": drop it.
+    let mut float_lines = line_texts(&product_layout(&float));
+    float_lines.retain(|line| line != "f");
+    assert_eq!(float_lines, greedy);
+    assert_eq!(line_texts(&product_layout(&off)), greedy);
+}

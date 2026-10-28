@@ -461,25 +461,58 @@ fn draw_text_run(
 
     let font_size = run.font_size;
 
-    // Build krilla glyphs. Parley gives px advances/offsets at this font size;
-    // krilla's KrillaGlyph expects them normalized by font size (it multiplies
-    // back by size internally), per its constructor contract.
-    let glyphs: Vec<KrillaGlyph> = run
-        .glyphs
-        .iter()
-        .map(|g| {
-            KrillaGlyph::new(
-                GlyphId::new(g.id),
-                g.advance / font_size,
-                g.x_offset / font_size,
-                g.y_offset / font_size,
-                0.0,
-                g.text_start..g.text_end,
-                None,
-            )
-        })
-        .collect();
+    set_solid_fill(surface, run.color);
 
+    // A preserved tab is a shift to the next tab stop, never a glyph (CSS Text 3 §4.2 "Tab
+    // Character Size": it is rendered as a horizontal shift; Chrome 155 paints nothing for it).
+    // Parley shapes U+0009 like any character, and no bundled face maps it, so the run carries
+    // the face's `.notdef` (glyph 0, a box in the Liberation faces) for it. The run is drawn in
+    // segments around its tab glyphs: each tab keeps its advance (the next segment starts after
+    // it) and draws nothing. Only U+0009 clusters: a genuinely unmapped character keeps its
+    // `.notdef`, as Chrome paints tofu for it. Parley 0.12 also gives a tab one space advance
+    // whatever `tab-size` says; that width is not corrected here
+    // (`tests/text_probes.rs` `preserved_tab_paints_no_glyph`).
+    let mut pen_px = 0.0f64;
+    let mut segment_start_px = 0.0f64;
+    let mut segment: Vec<KrillaGlyph> = Vec::new();
+    for g in &run.glyphs {
+        if run.text.get(g.text_start..g.text_end) == Some("\t") {
+            draw_glyph_segment(surface, run, font.clone(), segment_start_px, &segment);
+            segment.clear();
+            pen_px += f64::from(g.advance);
+            segment_start_px = pen_px;
+            continue;
+        }
+        // Parley gives px advances/offsets at this font size; krilla's KrillaGlyph expects
+        // them normalized by font size (it multiplies back by size internally), per its
+        // constructor contract.
+        segment.push(KrillaGlyph::new(
+            GlyphId::new(g.id),
+            g.advance / font_size,
+            g.x_offset / font_size,
+            g.y_offset / font_size,
+            0.0,
+            g.text_start..g.text_end,
+            None,
+        ));
+        pen_px += f64::from(g.advance);
+    }
+    draw_glyph_segment(surface, run, font, segment_start_px, &segment);
+
+    Ok(())
+}
+
+/// Draw `glyphs` of `run` starting `offset_px` after the run's origin.
+fn draw_glyph_segment(
+    surface: &mut krilla::surface::Surface,
+    run: &TextRun,
+    font: Font,
+    offset_px: f64,
+    glyphs: &[KrillaGlyph],
+) {
+    if glyphs.is_empty() {
+        return;
+    }
     // Baseline origin in krilla's top-left space (px->pt, no flip). `origin_y` is
     // the Parley line baseline placed exactly as Blitz's own painter places it
     // (content box + `block_offset` + `GlyphRun::baseline()`,
@@ -487,20 +520,18 @@ fn draw_text_run(
     // drawn as is. Port step 04 removed the former constant 4 px raise
     // (`TEXT_BASELINE_COMPENSATION_PX`): it drew every glyph 3 pt above Chrome's
     // print baseline (`tests/text_baseline.rs`).
-    let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(run.origin_y));
-
-    set_solid_fill(surface, run.color);
-
+    let start = Point::from_xy(
+        content_x_pt(run.origin_x + offset_px),
+        content_y_pt(run.origin_y),
+    );
     surface.draw_glyphs(
         start,
-        &glyphs,
+        glyphs,
         font,
         &run.text,
-        font_size * PX_TO_PT as f32,
+        run.font_size * PX_TO_PT as f32,
         false,
     );
-
-    Ok(())
 }
 
 #[cfg(test)]
