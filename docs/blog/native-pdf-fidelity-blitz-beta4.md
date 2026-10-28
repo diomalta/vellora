@@ -63,8 +63,9 @@ uses a git revision of Blitz's 0.3.0-alpha.5 line. The branch moves to the 0.3.0
 from crates.io, with no fork, and ports vellora's own layout layers to it. All Blitz access stays
 behind one module of vellora, so an upstream change is contained in one file.
 
-The upgrade alone improved most fixtures and made two of them, boleto and notification, worse
-than the published package. The layout diff showed why.
+The upgrade alone did not fix boleto or notification: the committed snapshot of that step
+([`tip-10-integration.doc-aggregate.json`](https://github.com/diomalta/vellora/blob/main/fidelity/gate/snapshots/2026-10-27/02-doc-oracle/tip-10-integration.doc-aggregate.json))
+shows both below the published package. The layout diff showed why.
 
 ## The bug: bordered collapsed tables grew row by row
 
@@ -119,7 +120,7 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 
 <!-- fidelity-evidence:losses -->
 - **invoice: 93.2% of words within 1 mm** (vellora 0.2.0 (published): 36.0%); p90 error 0.64 mm.
-- **oss-postmark-receipt: 1 page, Chrome prints 2.** 39 of Chrome's 180 words have no counterpart in vellora's PDF (vellora 0.2.0 (published): 39). Tracked as table fragmentation across pages; not fixed on this branch.
+- **oss-postmark-receipt: 1 page, Chrome prints 2.** 39 of Chrome's 180 words have no counterpart in vellora's PDF (vellora 0.2.0 (published): 39). Tracked as table fragmentation across pages (exit-contract condition 3). Not fixed on this branch.
 - **WPT:** 3,769 of 8,047 reftests pass (46.84%); 3,228 (40.11%) pass without any suspect-pass flag. 3,388 still fail and 877 are rejected as outside the strict subset.
 - **Merge gate:** verdict FAIL on this run, with 295 gating items: 127 step-to-step ratchet regressions, 167 further items worse than the published package that the gate cannot classify yet, and 1 page-count item. The branch does not merge until the contract passes.
 <!-- /fidelity-evidence:losses -->

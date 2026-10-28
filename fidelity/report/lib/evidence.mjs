@@ -83,6 +83,12 @@ export const FIXTURES = [
   },
 ];
 
+/** Known, tracked causes of a page-count difference (shown only for that fixture). */
+const PAGE_CAUSES = {
+  "oss-postmark-receipt":
+    "Tracked as table fragmentation across pages (exit-contract condition 3).",
+};
+
 /** The fixture whose page-1 composite is the hero image (dense table document, synthetic data). */
 export const HERO_FIXTURE = "danfe";
 
@@ -662,7 +668,7 @@ function lossesBlock(m) {
     const b = f.before;
     if (a.pages !== f.chromePages) {
       items.push(
-        `**${f.id}: ${plural(a.pages, "page")}, Chrome prints ${f.chromePages}.** ${a.missingWords} of Chrome's ${f.chromeWords} words have no counterpart in vellora's PDF (${m.before.label}: ${b.missingWords}). Tracked as table fragmentation across pages; not fixed on this branch.`,
+        `**${f.id}: ${plural(a.pages, "page")}, Chrome prints ${f.chromePages}.** ${a.missingWords} of Chrome's ${f.chromeWords} words have no counterpart in vellora's PDF (${m.before.label}: ${b.missingWords}). ${PAGE_CAUSES[f.id] ?? "Cause not yet attributed."} Not fixed on this branch.`,
       );
     }
     if (a.within1mmPct < 100 && a.pages === f.chromePages) {

@@ -97,7 +97,7 @@ Each cell reads vellora 0.2.0 (published) → vellora (unreleased branch). Refer
 
 <!-- fidelity-evidence:losses -->
 - **invoice: 93.2% of words within 1 mm** (vellora 0.2.0 (published): 36.0%); p90 error 0.64 mm.
-- **oss-postmark-receipt: 1 page, Chrome prints 2.** 39 of Chrome's 180 words have no counterpart in vellora's PDF (vellora 0.2.0 (published): 39). Tracked as table fragmentation across pages; not fixed on this branch.
+- **oss-postmark-receipt: 1 page, Chrome prints 2.** 39 of Chrome's 180 words have no counterpart in vellora's PDF (vellora 0.2.0 (published): 39). Tracked as table fragmentation across pages (exit-contract condition 3). Not fixed on this branch.
 - **WPT:** 3,769 of 8,047 reftests pass (46.84%); 3,228 (40.11%) pass without any suspect-pass flag. 3,388 still fail and 877 are rejected as outside the strict subset.
 - **Merge gate:** verdict FAIL on this run, with 295 gating items: 127 step-to-step ratchet regressions, 167 further items worse than the published package that the gate cannot classify yet, and 1 page-count item. The branch does not merge until the contract passes.
 <!-- /fidelity-evidence:losses -->
@@ -205,8 +205,9 @@ node fidelity/wpt/install-chrome.mjs
 
 # 2. A full measured run. The doc-aggregate step writes <run>/doc-aggregate/summary.json.
 #    --wpt-chrome runs Chrome's WPT outcomes live; --chrome-from <earlier run>/wpt/results.json
-#    reuses them (same WPT commit and comparison settings).
-node fidelity/run-all.mjs --gate --main --chrome <Chrome for Testing> \
+#    reuses them (same WPT commit and comparison settings). --contract makes the gate report the
+#    strict merge contract, which is the only report that can turn the evidence from DRAFT to PASS.
+node fidelity/run-all.mjs --gate --contract --chrome <Chrome for Testing> \
   --baseline fidelity/baselines/port/10-integration --wpt-chrome \
   --tools-image vellora-fidelity-tools:local --out fidelity/results/run-all/<id>
 
