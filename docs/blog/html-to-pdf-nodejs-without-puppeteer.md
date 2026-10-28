@@ -121,8 +121,10 @@ The repository has a pinned resource benchmark run for the native path and Vello
 Chromium path. This is a snapshot from CI, not a universal promise for every host or template. It is
 useful because it keeps the discussion concrete.
 
-Source: [Resource Benchmarks run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627)
-on pinned Linux CI, Node v22.23.0, 4 cores.
+Source: [Resource Benchmarks run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121)
+on pinned Linux CI, built from the `v0.3.0` commit `c40b3c2`: AMD EPYC 7763, 4 cores, Linux x64,
+Node v22.23.4, 2026-10-28. The fixture is the 3-page invoice; RSS is the peak at 8 concurrent
+renders, and warm timings are over 50 renders.
 
 The benchmark separates package footprint from external runtime. Fresh install measures the npm
 package footprint, which is why the native and Chromium package installs look almost identical. The
@@ -132,14 +134,20 @@ native path does not carry.
 Memory is split the same way. The native path runs in-process, so its relevant number is RSS inside
 Node. The Chromium path runs browser work out-of-process, so the relevant number is external RSS.
 
-| Path | Fresh install | External runtime | RSS @8 | External RSS @8 | Warm median / p95 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Native `vellora` | 28.93 MB | N/A | 116.51 MB | N/A | 17.47 / 17.96 ms |
-| Vellora Chromium | 28.94 MB | 412.28 MB | N/A | 6425.81 MB | 491.85 / 509.43 ms |
+| Path | Fresh install | External runtime | RSS @8 | External RSS @8 | Cold start | Warm median / p95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Native `vellora` | 39.72 MB | N/A | 117.60 MB | N/A | 47.29 ms | 19.09 / 23.32 ms |
+| Vellora Chromium | 39.74 MB | 412.28 MB | N/A | 6833.96 MB | 735.01 ms | 635.50 / 681.03 ms |
 
-At concurrency 8, the native path reported 116.51 MB RSS inside the Node process. The Chromium path
-reported 6425.81 MB across external browser processes. Warm latency showed the same shape:
-17.47 / 17.96 ms median/p95 for native, versus 491.85 / 509.43 ms for Vellora Chromium.
+At concurrency 8, the native path reported 117.60 MB RSS inside the Node process. The Chromium path
+reported 6833.96 MB across external browser processes. Latency showed the same shape: a 47.29 ms
+cold start and 19.09 / 23.32 ms warm median/p95 for native, versus 735.01 ms and
+635.50 / 681.03 ms for Vellora Chromium.
+
+Not everything moved in the native path's favor. The previous snapshot this article quoted,
+[run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627) (2026-06-27,
+before 0.3.0), measured a 28.93 MB fresh install and a 17.47 / 17.96 ms warm median/p95. The 0.3.0
+install is larger; the release notes attribute the addon growth to inline SVG support.
 
 Output fidelity is measured separately, against Chrome, in
 [Measured fidelity](/guide/fidelity#measured-fidelity).
