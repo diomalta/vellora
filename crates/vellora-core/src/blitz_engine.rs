@@ -68,6 +68,11 @@ pub struct LaidOutBox {
     /// A forced page break (`break-before: page`, `page-break-before: always`)
     /// applies before this element.
     pub break_before_page: bool,
+    /// Whether this box is an atomic inline-level box (`inline-block`, `inline-flex`,
+    /// `inline-grid`, `inline-table`): it sits in one line box of its parent and is monolithic
+    /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
+    /// pagination's oversize-fragment slicer (Phase C step 03).
+    pub atomic_inline: bool,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
@@ -165,6 +170,13 @@ pub struct TextRun {
     /// Baseline origin in absolute document coordinates (CSS px).
     pub origin_x: f64,
     pub origin_y: f64,
+    /// The extent of the run's line box around its baseline (CSS px): the line box spans
+    /// `origin_y - line_above ..= origin_y + line_below` (Parley `LineMetrics::block_min_coord` /
+    /// `block_max_coord`). Relative to the baseline so every pass that moves `origin_y` moves the
+    /// line with it. Read by pagination (Phase C step 03): a line box is monolithic, a page break
+    /// falls between lines, never through one (CSS Fragmentation 3 §4.1, class B break points).
+    pub line_above: f64,
+    pub line_below: f64,
     pub glyphs: Vec<Glyph>,
     /// sRGB color (r,g,b) 0..=255.
     pub color: [u8; 3],
@@ -2142,6 +2154,7 @@ fn push_box(
         break_inside_avoid: inline_breaks.avoid_inside
             || sink.breaks.avoid_inside.contains(&node_id),
         break_before_page: inline_breaks.page_before || sink.breaks.page_before.contains(&node_id),
+        atomic_inline: atomic_inline(node),
         depth,
         text_runs,
         visual_rects,
@@ -2177,6 +2190,17 @@ fn width_percentage_hint(node: &blitz_dom::Node) -> Option<f64> {
 fn table_layout_fixed(node: &blitz_dom::Node) -> bool {
     node.primary_styles()
         .is_some_and(|styles| matches!(styles.clone_table_layout(), TableLayout::Fixed))
+}
+
+/// Whether `node` computes an atomic inline-level display: `display-outside: inline` with an
+/// inner display other than `flow` (`inline-block` is inline + flow-root, `inline-flex`,
+/// `inline-grid`, `inline-table`). A plain `inline` element generates no box of its own here.
+fn atomic_inline(node: &blitz_dom::Node) -> bool {
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    node.primary_styles().is_some_and(|styles| {
+        let display = styles.clone_display();
+        display.outside() == DisplayOutside::Inline && display.inside() != DisplayInside::Flow
+    })
 }
 
 fn table_border_collapse(node: &blitz_dom::Node) -> bool {
@@ -2719,6 +2743,7 @@ fn read_text_runs(
     };
 
     for line in layout.lines() {
+        let line_metrics = line.metrics();
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
         let line_padding_right_px = if right_aligned {
@@ -2774,6 +2799,8 @@ fn read_text_runs(
                 font_size,
                 origin_x: abs_x + glyph_run.offset() as f64 + inline_advance_adjust_px,
                 origin_y: line_box_top + glyph_run.baseline() as f64,
+                line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
+                line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
                 glyphs,
                 color,
             });

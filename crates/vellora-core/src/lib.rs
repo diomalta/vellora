@@ -363,13 +363,14 @@ mod tests {
                 "the HTML parse lost {text:?}: {new:?}"
             );
         }
-        // Emitted is not visible (port step 09, review of step 08): the HTML parse draws "The
-        // [Product Name] team" on page 1, but the oversize layout table is placed whole, so
-        // "1234 Street Rd." and "Suite 1234" sit below the page edge (Chrome 155 breaks the
-        // table onto page 2). Pinned in `tests/html_parse.rs` as a known gap.
+        // Emitted and visible: until Phase C step 03 the oversize layout table was placed whole,
+        // so "1234 Street Rd." and "Suite 1234" sat below the page edge (port step 09, review of
+        // step 08); pagination now breaks the table onto page 2 as Chrome 155 does
+        // (`tests/html_parse.rs`, `postmark_receipt_breaks_its_layout_table_onto_page_2_like_chrome`).
         let visible = |text: &str| new.iter().any(|(t, on_page)| t == text && *on_page);
-        assert!(visible(AFTER_BR[0]), "{new:?}");
-        assert!(!visible(AFTER_BR[1]) && !visible(AFTER_BR[2]), "{new:?}");
+        for text in AFTER_BR {
+            assert!(visible(text), "{text:?} not visible: {new:?}");
+        }
     }
 
     #[test]
