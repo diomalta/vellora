@@ -72,7 +72,7 @@ Ledger base resolved through the pointer (no `--debt-base`), 0 ledger problems.
 | (1) pin --main: 0 (c) | **NOT MET** | pin (a) 5, (b) 5, (c) 27, declared 10. All 27 (c) are WPT. **0 fixture words** (c02-tip: 193) |
 | (2) doc aggregate >= pin per fixture | MET 9/9 | docRegressions 0; table below |
 | (3) pages == Chrome | MET 9/9 | contractPagesFailing 0 (postmark 2 = 2) |
-| (4) previous-link ratchets | NOT MET (1 item) | vs 10-integration: 0 regressions outside the 27 pin (c) WPT items (c02-tip: 127 text-stress I1); head vs 00-start: 1 head-regression (`monolithic-overflow-014-print`), debt 7, accepted 7 |
+| (4) previous-link ratchets | NOT MET (1 item) | vs 10-integration: 0 regressions outside the 27 pin (c) WPT items (c02-tip: 127 text-stress I1); head vs 00-start: 1 head-regression (`monolithic-overflow-014-print`, a class-a item accepted at 10-integration that this step's accepted.json does not carry, see the pin (c) table), debt 7, accepted 7 |
 
 Verdict FAIL, so **no baseline 11-phase-c was written**.
 
@@ -92,7 +92,7 @@ they stay (c) until fixed.
 | b-provable, stacking | 1 | CSS2/normal-flow/inline-table-zorder-001.xht |
 | b-provable, flex / ruby fragmentation | 4 | css-break/flexbox/multi-line-column-flex-fragmentation-054.html, -055.html, -058.html; css-break/ruby-003.html |
 | b-provable, text | 8 | css-text/hanging-punctuation/hanging-punctuation-first-002.html; tab-size/tab-size-integer-001/002/003.html; text-align/text-align-end-006.html; text-justify/text-justify-and-trailing-spaces-003.html, -004.html; white-space/text-wrap-balance-text-indent-001.html |
-| (c), vellora layer | 1 | css-page/monolithic-overflow-014-print.html: product pageCounts [4, 4] = Chrome's [4, 4] but the pixels differ; raw Blitz [4, 1] (pageCountMismatch). Not (b) (raw page counts differ), not a class-a artefact |
+| (c), vellora layer | 1 | css-page/monolithic-overflow-014-print.html: product pageCounts [4, 4] = Chrome's [4, 4] but the pixels differ; raw Blitz [4, 1] (pageCountMismatch). Not (b) (raw page counts differ). Correction (verify phasec/03, 2026-10-28): against the head and the pin it IS a GATE-A3 (a) false pass by page count. The old test printed [2, 2] while Chrome prints [4, 4] (`baselines/port/05-walk-rewrite/attachments/accepted-evidence.json`, the port/04 record). The 10-integration gate accepted it on that ground (`2026-10-27/10-debt/accepted.json`). No later accepted.json carries it (not the ledger step's, not table-frag's, not this step's). With that acceptance carried, the re-gate of this run gives pin (c) 26, headGating 0, head PASS (what-if, not committed) |
 
 Pin (b) 5 = the DEBT-10-wpt-* keys that are pin items (floats-153, floats-placement-vertical-003,
 zero-width-floats, baseline-block-with-overflow-001, flex-fragmented-with-float-descendant-001);
