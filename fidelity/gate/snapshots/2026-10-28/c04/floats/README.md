@@ -53,3 +53,24 @@ The 10 pass->fail tests (against the 10-integration expectations' suspect flags)
 | css/css-break/table/table-border-007.html | clean | see below |
 | css/CSS2/floats/floats-wrap-bfc-003-left-table.xht, -right-table.xht | clean | see below |
 | css/CSS2/floats/float-nowrap-1.html | clean (pin: fail) | see below |
+
+## 2. Floats that Blitz/Taffy let collide (commit "float avoidance fixups")
+
+Two bugs of the crates.io stack, compensated in `blitz_engine::float_avoidance_fixups` with one
+extra, non-incremental `resolve` when an edit applies (comments: crate version, file:line, repro,
+numbers, what to delete; raw canaries `blitz_still_overlaps_a_wide_table_with_a_float`,
+`blitz_still_places_a_float_over_its_nowrap_line`, both CONFIRMED to fail when the edit is run
+in the raw render too):
+
+- taffy 0.15.0 `src/compute/block.rs` 1297-1309: an auto-width formatting-context root is
+  fit-tested with the slot's own stretch width, so a 250 px-wide table sits beside a 100 px
+  float in a 300 px cell (floats-wrap-bfc-003-left/right-table). Edit: `clear` toward the floats
+  beside the box's top edge when its border box leaves the band they leave free.
+- blitz-dom 0.3.0-beta.4 `src/layout/inline.rs` 722-765: a float is placed at the current
+  line's top whatever is already on the line (float-nowrap-1). Edit, no-wrap lines only:
+  `margin-top` grown to the line's bottom when text precedes the float and overlaps it.
+
+Full WPT (`node fidelity/wpt/run.mjs --raw --chrome-from <10-tip> --expectations none`) vs the
+flip-only run: 4051 -> 4054, pass->fail 0, fail->pass float-nowrap-1,
+floats-wrap-bfc-003-left-table, floats-wrap-bfc-003-right-table. The 46 fixture/probe PDFs stay
+byte-identical to c03-tip (no fixture has a float, so no edit and no second pass).
