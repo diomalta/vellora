@@ -1640,3 +1640,47 @@ fn anonymous_table_objects_leave_a_misparented_row_group_out() {
     let nav = doc.boxes.iter().find(|b| b.tag.as_deref() == Some("nav"));
     assert!(nav.is_none_or(|b| b.visual_rects.is_empty() && b.height == 0.0));
 }
+
+/// A ruby base and its 50% annotation, Liberation Serif 20 px.
+const RUBY: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font: 20px "Liberation Serif"; }
+    </style></head><body><div>xx <ruby>base<rt>an</rt></ruby> yy</div></body></html>"#;
+
+/// CANARY of `blitz_engine::wrap_ruby_bases` / `ruby_containers_atomic` / `lay_out_ruby` and
+/// `crate::ruby`: blitz-dom 0.3.0-beta.4 has no ruby layout. Stylo 0.22.0 in servo mode does not
+/// parse `display: ruby` / `ruby-text` (`stylo-0.22.0/values/specified/box.rs:513-541`,
+/// gecko-only), so Blitz's UA rules for them (`blitz-dom-0.3.0-beta.4/assets/default.css:
+/// 1006-1021`) are dropped and raw Blitz lays the `<rt>` out inline after its base, on the base's
+/// baseline (measured here: same baseline, "an" 35.5 px right of "base"). When this fails, Blitz
+/// lays ruby out itself: delete `RUBY_UA_CSS`, `wrap_ruby_bases`, `ruby_containers_atomic`,
+/// `lay_out_ruby`, `crate::ruby` and their call sites, and re-measure WPT css/css-ruby and
+/// css/css-break/ruby-*.
+#[test]
+fn blitz_still_lays_ruby_text_out_inline() {
+    let at = |doc: &LaidOutDoc, text: &str| {
+        runs_of(doc)
+            .into_iter()
+            .find(|r| r.0.trim() == text || r.0.trim().ends_with(&format!(" {text}")))
+            .unwrap_or_else(|| panic!("{text} in {:?}", runs_of(doc)))
+    };
+    let (raw, _) = raw_layout(RUBY);
+    let (base, an) = (at(&raw, "base"), at(&raw, "an"));
+    assert_eq!(base.2, an.2);
+    assert!(an.1 >= base.1 + 35.0, "{:?}", runs_of(&raw));
+    // vellora's layout: the annotation's baseline 18 px above the base's, over the base
+    // (Chrome 155: `crate::ruby` `em_boxes_are_blinks_normalized_typo_metrics`).
+    let (laid, _) = validate_and_lay_out(
+        RUBY.as_bytes(),
+        &RenderOptions::default(),
+        DocumentSyntax::Html,
+        &mut NoObserver,
+    )
+    .expect("lays out");
+    let (base, an) = (at(&laid, "base"), at(&laid, "an"));
+    assert_eq!(base.2 - an.2, 18.0, "{:?}", runs_of(&laid));
+    assert!(
+        an.1 > base.1 && an.1 < base.1 + 20.0,
+        "{:?}",
+        runs_of(&laid)
+    );
+}

@@ -1,0 +1,160 @@
+# Chrome/155.0.8059.85
+== p1.html
+p	p	block	8,16,784,18
+  text:"Test passes "			8,16,273.02,18
+mc	div	block	8,50,100,60
+r	ruby	ruby	8,136,100,18
+base	div	inline-block	8,100,100,50
+rt	rt	ruby-text	8,92,100,10
+ann	div	inline-block	8,50,100,50
+after	div	block	8,110,784,18
+  text:"after"			8,110,29.31,18
+nomc	div	block	8,128,100,104
+r2	ruby	ruby	8,214,100,18
+base2	div	inline-block	8,178,100,50
+rt2	rt	ruby-text	8,170,100,10
+ann2	div	inline-block	8,128,100,50
+after2	div	block	8,232,784,18
+  text:"after"			8,232,29.31,18
+== p2.html
+d1	div	block	0,0,600,31
+  text:"xx"			0,8,25,22
+  text:"yy"			60.55,8,25,22
+r1	ruby	ruby	25,8,35.55,22
+  text:"base"			25,8,35.55,22
+t1	rt	ruby-text	25,-1,35.55,11
+  text:"an"			25,-1,35.55,11
+d2	div	block	0,31,600,30
+  text:"xx"			0,38,25,22
+  text:"yy"			57.2,38,25,22
+r2	ruby	ruby	25,38,32.2,22
+  text:"ba"			20,38,42.2,22
+t2	rt	ruby-text	20,29,42.22,11
+  text:"annotation"			20,29,42.22,11
+d3	div	block	0,61,600,30
+  text:"xx"			0,68,25,22
+  text:"yy"			92.81,68,25,22
+r3	ruby	ruby	25,68,67.81,22
+  text:"A"			25,68,14.45,22
+  text:"BBBB"			39.45,68,53.36,22
+t3a	rt	ruby-text	25,59,14.44,11
+  text:"x"			25,59,14.44,11
+t3b	rt	ruby-text	39.45,59,53.34,11
+  text:"yy"			39.45,59,53.34,11
+d4	div	block	0,91,600,30
+  text:"xx"			0,98,25,22
+  text:"yy"			102.81,98,25,22
+r4	ruby	ruby	25,98,77.81,22
+b4a	rb	inline	25,98,14.45,22
+  text:"A"			25,98,14.45,22
+b4b	rb	inline	39.45,98,53.36,22
+  text:"BBBB"			39.45,98,53.36,22
+t4a	rt	ruby-text	25,89,67.81,11
+  text:"x"			25,89,67.81,11
+t4b	rt	ruby-text	92.81,89,10,11
+  text:"yy"			92.81,89,10,11
+d5	div	block	0,121,600,30
+  text:"xx"			0,128,25,22
+  text:"yy"			39.45,128,25,22
+r5	ruby	ruby	25,128,14.45,22
+  text:"A"			25,128,14.45,22
+rp1	rp	none	0,0,0,0
+  text:"("			0,0,0,0
+t5	rt	ruby-text	25,119,14.44,11
+  text:"x"			25,119,14.44,11
+d6	div	block	0,151,600,28
+  text:"xx"			0,158,25,22
+  text:"yy"			60.55,158,25,22
+r6	ruby	ruby	25,158,35.55,22
+  text:"base"			25,158,35.55,22
+t6	rt	ruby-text	25,149,35.55,11
+  text:"an"			25,149,35.55,11
+d7	div	block	0,179,600,60
+  text:"xx"			0,198,25,22
+  text:"yy"			60.55,198,25,22
+r7	ruby	ruby	25,198,35.55,22
+  text:"base"			25,198,35.55,22
+t7	rt	ruby-text	25,189,35.55,11
+  text:"an"			25,189,35.55,11
+d8	div	block	0,239,600,20
+  text:"xx yy"			0,238,45,22
+d9	div	block	0,259,600,31
+  text:"xx"			0,267,25,22
+  text:"yy"			60.55,267,25,22
+r9	ruby	ruby	25,267,35.55,22
+s9	span	inline	25,267,35.55,22
+  text:"base"			25,267,35.55,22
+t9	rt	ruby-text	25,258,35.55,11
+ts9	span	inline	25,258,35.55,11
+  text:"an"			25,258,35.55,11
+d10	div	block	0,290,600,32
+  text:"xx"			0,299,25,22
+  text:"yy"			74.98,299,25,22
+r10	ruby	ruby	25,299,35.55,22
+  text:"base"			25,299,35.55,22
+r10b	ruby	ruby	65.55,299,9.44,22
+t10	rt	ruby-text	65.55,288,9.45,11
+  text:"an"			65.55,288,9.45,11
+d11	div	block	0,322,120,76
+  text:"aaa"			0,322,26.64,22
+  text:"dd"			0,375,20,22
+r11	ruby	ruby	0,352,113.27,22
+  text:"bbbbbb"			0,352,60,22
+  text:"cccccc"			60,352,53.27,22
+d12	div	block	0,398,600,23
+  text:"xx yy"			0,398,45,22
+== p3.html
+a1	div	block	0,0,600,31
+  text:"xx"			0,8,25,22
+  text:"yy"			60.55,8,25,22
+ra1	ruby	ruby	25,8,35.55,22
+  text:"base"			25,8,35.55,22
+ta1	rt	ruby-text	25,-1,35.55,11
+  text:"an"			25,-1,35.55,11
+a2	div	block	0,31,600,30
+  text:"xx"			0,38,25,22
+  text:"yy"			60.55,38,25,22
+ra2	ruby	ruby	25,38,35.55,22
+  text:"base"			25,38,35.55,22
+ta2	rt	ruby-text	25,29,35.55,11
+  text:"an"			25,29,35.55,11
+a3	div	block	0,61,600,30
+  text:"xx"			0,68,25,22
+  text:"yy"			57.2,68,25,22
+ra3	ruby	ruby	25,68,32.2,22
+  text:"ba"			20,68,42.2,22
+ta3	rt	ruby-text	20,59,42.22,11
+  text:"annotation"			20,59,42.22,11
+a4	div	block	0,91,600,30
+  text:"xx"			0,98,25,22
+  text:"yy"			60.55,98,25,22
+ra4	ruby	ruby	25,98,35.55,22
+  text:"base"			25,98,35.55,22
+ta4	rt	ruby-text	25,89,35.55,11
+  text:"an"			25,89,35.55,11
+a5	div	block	0,121,600,30
+ra5	ruby	ruby	0,128,35.55,22
+  text:"base"			0,128,35.55,22
+ta5	rt	ruby-text	0,119,35.55,11
+  text:"an"			0,119,35.55,11
+a6	div	block	0,151,600,30
+  text:"xx"			0,158,25,22
+  text:"yy"			60.55,158,25,22
+ra6	ruby	ruby	25,158,35.55,22
+  text:"base"			25,158,35.55,22
+ta6	rt	ruby-text	25,149,35.55,11
+  text:"a"			25,149,35.55,11
+a7	div	block	0,181,600,30
+  text:"xx"			0,188,25,22
+  text:"yy"			45,188,25,22
+ra7	ruby	ruby	25,188,20,22
+  text:"bb"			25,188,20,22
+ta7	rt	ruby-text	25,179,19.98,11
+  text:"aa"			25,179,19.98,11
+a8	div	block	0,211,600,30
+  text:"xx"			0,218,25,22
+  text:"yy"			60.55,218,25,22
+ra8	ruby	ruby	25,218,35.55,22
+  text:"base"			25,218,35.55,22
+ta8	rt	ruby-text	25,209,35.55,11
+  text:"an"			25,209,35.55,11

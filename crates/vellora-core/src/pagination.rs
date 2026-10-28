@@ -2744,6 +2744,26 @@ fn column_items(boxes: &[LaidOutBox], column_height: f64) -> Vec<SliceItem> {
                 line: false,
             }),
     );
+    // The line box of an atomic inline is monolithic whatever its height: no column break
+    // parts the boxes of one line, and a line taller than the column stays whole in it,
+    // overflowing (Chrome 155: a ruby line, the annotation inline-block above the base one,
+    // 104 px in a 60 px column, WPT css/css-break/ruby-003; Phase C step 06).
+    items.extend(
+        boxes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, b)| b.atomic_inline && !in_parallel_flow(i))
+            .filter_map(|(i, b)| {
+                let (top, bottom) = b.line_span?;
+                (bottom > top).then(|| SliceItem {
+                    top: (b.y + top).min(b.y),
+                    bottom: (b.y + bottom).max(b.y + b.height),
+                    owner: i,
+                    line: false,
+                })
+            }),
+    );
     items
 }
 
