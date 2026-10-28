@@ -2265,3 +2265,77 @@ with the moved base: exit 0, counts identical; `debt.mjs check --base <new base>
   pages, per-parallel-flow unforced breaks; ruby overhang / `ruby-position: under` / `<rtc>`;
   per-positioned-box rect order and collapsed borders of positioned cells; text painted after
   every rect.
+
+## `12-phase-c-final`: baseline 12 written, strict exit contract met with pin (b) 1 (2026-10-28, branch `phasec/07-tip`)
+
+Link `port/12-phase-c-final`, gated against `port/11-phase-c`. Every number is from ONE run,
+`20261028T110750Z` (`phasec/07-tip` aa41259, 0 dirty: the Phase C step 07 merge of
+`phasec/07-svg-fonts` 789359d and `phasec/07-pin-b` 68274db on `phasec/06-verify` b81811a; Blitz
+0.3.0-beta.4 from crates.io), `run-all --gate --main --contract --raw`, Chrome for Testing
+155.0.8059.85 (`--chrome`), WPT Chrome outcomes `--chrome-from` the 10-tip run, tools image
+`vellora-fidelity-tools:baseline-beta4` (c405e06c). Environment: darwin 27.0.0 arm64 (macOS
+27.0.1, Apple M5 Pro), Node v22.23.2, rustc 1.96.0, PyMuPDF 1.28.2; local macOS, INDICATIVE.
+`<RUN>` =
+`~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259`.
+Full record (merges, pre-run, ledger, the remaining pin (b) key, render cost, DET-1):
+`fidelity/gate/snapshots/2026-10-28/c07/README.md`.
+
+```
+node fidelity/gate/run.mjs --baseline fidelity/baselines/port/11-phase-c --run <RUN> \
+  --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from <RUN> \
+  --debt fidelity/baselines/port/DEBT.json --step 16-phase-c-07-tip \
+  --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json \
+  --doc-aggregate <RUN>/doc-aggregate/summary.json --contract --out <scratch>/regate
+# exit 0: PASS
+```
+
+**Baseline source.** Written with `write-baseline.mjs --run <RUN> --name 12-phase-c-final --root
+fidelity/baselines/port --accept .../c07/accepted.json --attach
+<RUN>/gate-contract/gate-report.md=gate-report-contract-regate.md` straight from the run copy (its
+own `gate/gate-report.json` is PASS with `--contract`); 65 files. The run gated against this
+baseline itself: exit 0, gating 0, unchanged 18400.
+
+### Strict exit contract (CONFIRMED, post-hoc `--contract` re-gate, exit 0)
+
+| condition | status | numbers |
+|---|---|---|
+| (1) pin `--main`: 0 (c) | MET | pin (a) 5, (b) 1, **(c) 0**, declared 10; merge to main OK; 0 fixture words |
+| (2) doc aggregate >= pin per fixture | MET 9/9 | docRegressions 0 |
+| (3) pages == Chrome | MET 9/9 | invoice 3, receipt 2, boleto 1, boleto-febraban 1, danfe 1, notification 1, text-stress-ptbr 7, postmark 2, sparksuite 1 |
+| (4) previous-link ratchets | MET | vs 11-phase-c gating 0 (improvement 8, flaggedPassLost 0); head vs 00-start PASS: gating 0, debt 1, accepted 5, declared 10 |
+
+- pin (a) 5: class-a acceptances float-nowrap-8, page-name-flex-001/002/004,
+  hanging-punctuation-first-002 (`c07/accepted.json`, c06's 13 entries verbatim).
+- pin (b) 4 -> 1. floats-placement-vertical-003, baseline-block-with-overflow-001 and
+  zero-width-floats pass clean by rendering (floats-placement-vertical-004, head-only, too). The
+  remaining key, `css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html`, passes
+  (test == reference) but is flagged `ink-displaced-vs-chrome` (bboxShift 426 px): Chrome PRINTS
+  the multicol-with-`max-height` as two columns plus 1 px slivers on page 1 (ink x 7..313,
+  y 7..599; 96 pages in a live print), vellora prints Chrome's screen layout, four columns on one
+  page (ink x 8..598, y 8..173). A clean pass at the pin and 00-start became a suspect pass, so it
+  stays a head debt item. Clearing it needs multicol fragmentation across pages and `outline`
+  painting. GATE-A3 (a) evidence does not exist (the old records carry no ink flag or page
+  count), so no acceptance was written.
+- WPT 4553 passes of 8047 (11-phase-c 4545). Crashtests 239/239 ok. Canaries 35/35 caught
+  (+8 measurement-only). 52/52 vellora PDFs byte-identical to 11-phase-c's run.
+
+### Ledger and its base
+
+`DEBT.json`: 1 entry / 1 key (`DEBT-10-wpt-1`: flex-fragmented-with-float-descendant-001). The
+shrink closed 4 keys as fixed (rule iii, head class `none`): floats-placement-vertical-003, -004,
+baseline-block-with-overflow-001 (`DEBT-10-wpt-1`), zero-width-floats (`DEBT-10-wpt-2`, which
+empties). `debt.mjs check --base fidelity/gate/snapshots/2026-10-28/c06/DEBT-c06-tip.json`:
+0 problems. `DEBT-BASE.json` now names the frozen copy
+`fidelity/gate/snapshots/2026-10-28/c07/DEBT-c07-tip.json` (sha256 1d8fc8eb…, step
+16-phase-c-07-tip; byte-identical to the committed DEBT.json). Re-gated with the moved base:
+exit 0, counts identical; `debt.mjs check --base <new base>`: 0 problems.
+
+### Known failures that become the floor
+
+- flex-fragmented-with-float-descendant-001 (above).
+- Head view: 40 flagged WPT passes lost vs 00-start (reported, not gating).
+- css/css-break/widows-orphans-021 (still fails; failed at pin, 00-start and 10-integration).
+- Not modelled (COMPATIBILITY.md): the 11-phase-c list, plus pin-b's float/line-box gaps (a float
+  with wrapping text after it on its line, zero-width floats on both sides, a later line with no
+  room beside a float, inline-blocks ending in flex/grid, `sub`/`super` inline-blocks) and a
+  viewBox-less inline SVG with a non-300 px width and an indefinite percentage height.

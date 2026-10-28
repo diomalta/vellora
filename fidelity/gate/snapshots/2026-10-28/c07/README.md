@@ -162,3 +162,14 @@ the code (the A/B shows no such cost).
   in flex/grid, `sub`/`super` inline-blocks), and svg-fonts' viewBox-less SVG with a non-300 px
   width and an indefinite percentage height (100x50 vs Chrome 100x150, deterministic).
 - Head view flagged passes lost: 40 (reported, not gated).
+
+## After the run
+
+The contract passed and the one remaining pin (b) key is explained above, so **baseline
+`port/12-phase-c-final` was written** from the run copy as-is (its own gate report is PASS with
+`--contract`; 65 files, the re-gate report attached) and **`DEBT-BASE.json` now names the frozen
+`c07/DEBT-c07-tip.json`** (sha256 1d8fc8eb…, byte-identical to `DEBT.json`). Re-gate with the
+moved base: exit 0, counts identical; `debt.mjs check --base c07/DEBT-c07-tip.json`: 0 problems.
+The run gated against the new baseline itself: exit 0, gating 0, unchanged 18400. Write-up: port
+README section `12-phase-c-final` (`fidelity/baselines/port/README.md`); the committed-pointer
+assertion in `gate/test/debt.test.mjs` now expects 1 entry / 1 key.
