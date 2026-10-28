@@ -18,8 +18,6 @@
     "boleto",
     "receipt",
     "pdfa",
-    "pdfua",
-    "tagged-pdf",
     "no-puppeteer",
     "no-chromium",
     "serverless",

@@ -1,14 +1,18 @@
 ---
 layout: home
+titleTemplate: HTML to PDF for Node.js without Puppeteer or Chromium
 
 hero:
   name: vellora
-  text: HTML to PDF for Node.js
-  tagline: Render invoices, receipts, statements, boletos, and other generated HTML documents to deterministic PDFs — no Puppeteer on the native path.
+  text: HTML to PDF for Node.js, without Puppeteer or Chromium
+  tagline: Render invoices, receipts, statements, boletos, and other generated HTML documents to deterministic PDFs in-process. Measured word by word against Chrome's print-to-PDF output.
   actions:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
+    - theme: alt
+      text: Measured against Chrome
+      link: /guide/fidelity#measured-fidelity
     - theme: alt
       text: npm package
       link: https://www.npmjs.com/package/vellora
@@ -46,11 +50,35 @@ const pdf = await renderPdf(invoiceHtml, invoiceData, {
 });
 ```
 
+## Measured against Chrome
+
+vellora 0.3.0 numbers, each from a reproducible run in this repository:
+
+| What | Native `vellora` | Chromium path | Source |
+|---|---:|---:|---|
+| Warm render, median / p95 | 19.09 / 23.32 ms | 635.50 / 681.03 ms | [Benchmark run 40687532121](https://github.com/diomalta/vellora/actions/runs/40687532121) |
+| Cold start | 47.29 ms | 735.01 ms | same run |
+| Memory at 8 concurrent renders | 117.60 MB RSS in Node | 6833.96 MB external browser RSS | same run |
+| External runtime | none | 412.28 MB | same run |
+
+The benchmark ran on pinned Linux CI (AMD EPYC 7763, 4 cores, Node v22.23.4) with a 3-page invoice;
+the Chromium path is vellora's optional `@vellora/engine-chromium`. Puppeteer and Playwright were
+measured too, but the run marks them non-comparable for this fixture, so they are not quoted.
+
+Output is compared against Chrome for Testing 155 print-to-PDF, word by word, on 9 document
+fixtures: 8 of 9 have every word within 1 mm of Chrome's position, and 9 of 9 print the same number
+of pages (vellora 0.2.0: 0 of 9 and 6 of 9). That fidelity run is an indicative local macOS
+measurement. The method, the full table and the losses are in
+[Measured fidelity](/guide/fidelity#measured-fidelity); the story of how it got there is in
+[Word by word against Chrome](/blog/native-pdf-fidelity-blitz-beta4).
+
 ## What ships now
 
 - Native HTML to PDF rendering through `vellora` and `@vellora/native`.
 - Built-in templating with interpolation, loops, conditionals, and currency/date/number helpers.
 - Paged document features: `@page`, page counters, multi-page tables, repeated `<thead>`, selectable text.
+- Layout added in 0.3.0: floats, multi-column, ruby annotations, `break-before` / `break-after`,
+  table captions, and inline `<svg>` drawn natively as PDF vectors.
 - Image support through `data:` URLs or caller-supplied `images` bytes with optional `baseUrl`.
 - Custom fonts through caller-supplied TTF/OTF bytes, without host font lookup.
 - PDF/A-2b output for archive-oriented workflows.
@@ -73,7 +101,34 @@ explicit and reviewable.
 
 - Start with [Install & first PDF](/guide/getting-started).
 - Read [HTML to PDF in Node.js without Puppeteer or Chromium](/blog/html-to-pdf-nodejs-without-puppeteer).
+- Read [Word by word against Chrome](/blog/native-pdf-fidelity-blitz-beta4), how 0.3.0 was measured.
 - Build a paginated [invoice](/guide/invoices).
 - Add [custom fonts](/guide/fonts) and [images](/guide/images).
 - Use [Rendering fidelity](/guide/fidelity) when comparing against Chromium or a legacy Puppeteer PDF.
 - Check the generated [Compatibility](/compatibility) reference before adopting new HTML/CSS patterns.
+
+## FAQ
+
+### Is vellora a Puppeteer alternative?
+
+For generated document HTML, yes: invoices, receipts, statements, boletos, reports and
+notifications whose markup you control. vellora renders them to PDF in-process, with no headless
+browser. For arbitrary web pages, JavaScript-driven templates or exact Chromium output, keep a
+browser renderer, or route only those templates through vellora's optional Chromium engine.
+
+### Does vellora need Chromium, Puppeteer or Playwright installed?
+
+No. The default renderer is a native Node.js addon (Rust, napi-rs) with prebuilt binaries for macOS
+and Linux on x64 and arm64. Chromium is only used if you opt into `engine: "chromium"` or
+`engine: "auto"`.
+
+### How close is the output to Chrome's PDF?
+
+On the repository's 9 document fixtures, 8 have every word within 1 mm of Chrome for Testing 155's
+print-to-PDF position and all 9 have the same page count. See
+[Measured fidelity](/guide/fidelity#measured-fidelity) for the method and the losses.
+
+### What happens with HTML vellora does not support?
+
+In strict mode (the default) it is rejected before any PDF is written, with an error naming the
+feature, line, column and a hint. See [Compatibility](/compatibility).

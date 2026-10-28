@@ -31,6 +31,7 @@ const structuredData = {
       applicationSubCategory: "HTML to PDF renderer",
       operatingSystem: "macOS, Linux",
       runtimePlatform: "Node.js >=20",
+      softwareVersion: "0.3.0",
       url: SITE_URL,
       downloadUrl: NPM_URL,
       installUrl: NPM_URL,
@@ -39,7 +40,7 @@ const structuredData = {
       programmingLanguage: ["TypeScript", "Rust"],
       description: DEFAULT_DESCRIPTION,
       keywords:
-        "html-to-pdf, html to pdf, nodejs, pdf generation, pdf/a, no puppeteer, no chromium, serverless, invoices, receipts",
+        "html-to-pdf, html to pdf, nodejs, pdf generation, pdf/a, no puppeteer, no chromium, puppeteer alternative, playwright alternative, headless chrome alternative, serverless, invoices, receipts",
       offers: {
         "@type": "Offer",
         price: "0",
@@ -71,7 +72,7 @@ const structuredData = {
 
 const pageDescriptions: Record<string, string> = {
   "index.md":
-    "vellora renders generated HTML documents to PDF in Node.js with no Puppeteer on the native path, deterministic output, PDF/A, fonts, images, and optional Chromium fidelity.",
+    "HTML to PDF for Node.js without Puppeteer or Chromium: vellora renders invoices, receipts and reports in-process to deterministic PDFs, measured word by word against Chrome.",
   "guide/getting-started.md":
     "Install vellora and render the first HTML to PDF document in Node.js without a Rust toolchain, Chromium, Python, or Java.",
   "guide/invoices.md":
@@ -99,6 +100,34 @@ const pageDescriptions: Record<string, string> = {
     "Why vellora uses a native browserless default for generated document HTML in Node.js, where it fits, and when to keep a browser renderer.",
   "blog/native-pdf-fidelity-blitz-beta4.md":
     "How vellora moved to Blitz 0.3.0-beta.4, built measurement oracles first, compensated Blitz layout bugs, laid out multi-column, ruby and inline SVG itself, and measured every word against Chrome.",
+};
+
+// Mirrors the visible "FAQ" section of docs/index.md; keep the two in sync.
+const homeFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    [
+      "Is vellora a Puppeteer alternative?",
+      "For generated document HTML, yes: invoices, receipts, statements, boletos, reports and notifications whose markup you control. vellora renders them to PDF in-process, with no headless browser. For arbitrary web pages, JavaScript-driven templates or exact Chromium output, keep a browser renderer, or route only those templates through vellora's optional Chromium engine.",
+    ],
+    [
+      "Does vellora need Chromium, Puppeteer or Playwright installed?",
+      'No. The default renderer is a native Node.js addon (Rust, napi-rs) with prebuilt binaries for macOS and Linux on x64 and arm64. Chromium is only used if you opt into engine: "chromium" or engine: "auto".',
+    ],
+    [
+      "How close is the output to Chrome's PDF?",
+      "On the repository's 9 document fixtures, 8 have every word within 1 mm of Chrome for Testing 155's print-to-PDF position and all 9 have the same page count.",
+    ],
+    [
+      "What happens with HTML vellora does not support?",
+      "In strict mode (the default) it is rejected before any PDF is written, with an error naming the feature, line, column and a hint.",
+    ],
+  ].map(([name, text]) => ({
+    "@type": "Question",
+    name,
+    acceptedAnswer: { "@type": "Answer", text },
+  })),
 };
 
 function canonicalUrl(relativePath: string): string {
@@ -150,7 +179,7 @@ export default defineConfig({
       pageDescriptions[pageData.relativePath] ?? pageData.description ?? DEFAULT_DESCRIPTION;
     const title =
       pageData.relativePath === "index.md"
-        ? "vellora - HTML to PDF for Node.js"
+        ? "vellora - HTML to PDF for Node.js without Puppeteer or Chromium"
         : `${pageData.title} | vellora`;
     const url = canonicalUrl(pageData.relativePath);
     const image = pageImages[pageData.relativePath] ?? {
@@ -169,6 +198,9 @@ export default defineConfig({
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
       ["meta", { name: "twitter:image", content: image.url }],
+      ...(pageData.relativePath === "index.md"
+        ? [["script", { type: "application/ld+json" }, JSON.stringify(homeFaq)]]
+        : []),
     ];
   },
   cleanUrls: true,
