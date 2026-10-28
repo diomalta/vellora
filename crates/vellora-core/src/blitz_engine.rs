@@ -1123,6 +1123,12 @@ enum FloatFixup {
     Clear(style::computed_values::clear::T),
     /// The new `margin-top` (px) of a float placed over its own no-wrap line.
     MarginTop(f32),
+    /// The `max-width` (px, for the box's own `box-sizing`) that caps a shrink-to-fit box at
+    /// Chrome's max-content width ([`float_max_content_caps`]).
+    MaxWidth(f32),
+    /// The new `padding-top` (px) that moves a block's first line below the floats it does not
+    /// fit beside ([`narrow_first_line_drops`]).
+    PaddingTop(f32),
 }
 
 /// An absolute (document px) rectangle `[x0, y0, x1, y1]`.
@@ -1278,6 +1284,9 @@ fn float_avoidance_fixups(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
 struct FloatGeometry {
     floats: Vec<FloatBox>,
     bfc_roots: Vec<BfcRootBox>,
+    /// In-flow inline formatting context roots that do not establish a formatting context
+    /// ([`narrow_first_line_drops`]).
+    line_roots: Vec<LineRootBox>,
     /// The [`box_origin`] memo.
     origins: std::collections::HashMap<NodeId, (f64, f64)>,
 }
@@ -1292,6 +1301,18 @@ struct BfcRootBox {
     container: [f64; 2],
     /// Its left and right margins.
     margin_x: [f64; 2],
+}
+
+/// An in-flow block whose lines are laid out beside the floats of its formatting context.
+struct LineRootBox {
+    id: NodeId,
+    bfc: NodeId,
+    /// Its content box's absolute top and `[x0, x1]`.
+    content_top: f64,
+    content_x: [f64; 2],
+    /// How many floats precede it in tree order (`FloatGeometry::floats[..preceding]`): only
+    /// those are placed when its first line is.
+    preceding: usize,
 }
 
 struct FloatBox {
@@ -1425,6 +1446,25 @@ fn collect_float_geometry(
                 margin_x: [layout.margin.left as f64, layout.margin.right as f64],
             });
         }
+        if !floated
+            && !out_of_flow
+            && child
+                .data
+                .downcast_element()
+                .is_some_and(|el| el.inline_layout_data.is_some())
+        {
+            let (b, p) = (layout.border, layout.padding);
+            geometry.line_roots.push(LineRootBox {
+                id: child_id,
+                bfc: if establishes_bfc { child_id } else { bfc },
+                content_top: y + (b.top + p.top) as f64,
+                content_x: [
+                    x + (b.left + p.left) as f64,
+                    x + w - (b.right + p.right) as f64,
+                ],
+                preceding: geometry.floats.len(),
+            });
+        }
         drop(styles);
         let child_bfc = if establishes_bfc { child_id } else { bfc };
         collect_float_geometry(base, child_id, child_bfc, depth + 1, geometry);
@@ -1505,8 +1545,335 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
                         Length::new(px),
                     )))
             }
+            FloatFixup::MaxWidth(px) => values.mutate_position().set_max_width(
+                style::values::computed::MaxSize::LengthPercentage(
+                    style::values::generics::NonNegative(LengthPercentage::new_length(
+                        Length::new(px),
+                    )),
+                ),
+            ),
+            FloatFixup::PaddingTop(px) => {
+                values
+                    .mutate_padding()
+                    .set_padding_top(style::values::generics::NonNegative(
+                        LengthPercentage::new_length(Length::new(px)),
+                    ))
+            }
         });
     }
+}
+
+/// The `max-width` caps that size shrink-to-fit boxes holding floats as Chrome 155 does, read off
+/// a laid-out document. Compensates a BLITZ BUG of the crates.io Blitz 0.3.0-beta.4 stack; the
+/// raw-Blitz canary `blitz_still_sums_floats_across_forced_line_breaks` (`raw_blitz_tests.rs`)
+/// fails when it is fixed, and then this function, [`FloatFixup::MaxWidth`], its call in
+/// [`resolve_and_walk`], the canary and `float_max_content_is_per_line` are deleted.
+///
+/// The max-content width of an inline formatting context is that of its widest line when only
+/// forced breaks end lines, a float counting on the line it is on (CSS Sizing 3 §5.1; Blink
+/// adds a float's inline size to the line being measured and starts again after a forced
+/// break). BLITZ BUG (blitz-dom 0.3.0-beta.4 `src/layout/inline.rs` 538-582 and 595): Blitz adds
+/// the floats of all the inline content, summed per side, to the max-content width of all its
+/// text, whatever line each one is on. Repro (WPT
+/// css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html): a flex item holding a
+/// 106 px left float, a `<br>` and a 100 px left float has a max-content width of 206 px in
+/// Blitz (shrunk to its 142 px column) and of 106 px in Chrome for Testing 155.0.8059.85
+/// (2026-10-28, the item's border box 114 px wide).
+///
+/// Edit: for a shrink-to-fit box with `width: auto` (a float, an inline-block, an absolutely
+/// positioned box, or a row flex item with `flex-basis: auto` and `flex-grow: 0`) that is an
+/// inline formatting context root with floats and at least two forced lines: Chrome's
+/// max-content width is measured on a copy of its line layout broken only at forced breaks (each
+/// line's advance, its hanging white space left out and its indent in, plus the margin boxes of
+/// the floats on it, summed per side as Blitz does, a `clear` starting a side again). When the
+/// box's used content width is wider than that, Chrome's shrink-to-fit width is that width, so
+/// `max-width` caps it there (the author's `max-width` kept when smaller). Inexact when an
+/// atomic inline's max-content width differs from its laid-out width.
+fn float_max_content_caps(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
+    use style::values::computed::Overflow;
+    let mut caps = Vec::new();
+    let mut stack = vec![(base.root_element().id, 0usize)];
+    while let Some((id, depth)) = stack.pop() {
+        // The DOM depth is gated before layout (SEC-1); this bounds the walk the same way.
+        if depth > 4096 {
+            continue;
+        }
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        if let Some(children) = node.layout_children.borrow().as_ref() {
+            stack.extend(children.iter().rev().map(|&c| (c, depth + 1)));
+        }
+        let Some(text) = node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        else {
+            continue;
+        };
+        let float_ids: std::collections::HashSet<u64> = text
+            .layout
+            .inline_boxes()
+            .filter(|b| b.kind == parley::InlineBoxKind::CustomOutOfFlow)
+            .map(|b| b.id)
+            .collect();
+        if float_ids.is_empty() || !shrink_to_fit(base, node) {
+            continue;
+        }
+        let mut forced = text.layout.clone();
+        forced.break_all_lines(None);
+        if forced.len() < 2 {
+            continue;
+        }
+        let mut chrome = 0.0f64;
+        let (mut left, mut right) = (0.0f64, 0.0f64);
+        for line in forced.lines() {
+            let m = line.metrics();
+            let text_width = f64::from(m.advance - m.hanging_advance + m.indent);
+            for item in line.items() {
+                let parley::PositionedLayoutItem::InlineBox(ibox) = item else {
+                    continue;
+                };
+                if !float_ids.contains(&ibox.id) {
+                    continue;
+                }
+                let Some(float) = base.get_node(NodeId::from_u64(ibox.id)) else {
+                    continue;
+                };
+                let Some(styles) = float.primary_styles() else {
+                    continue;
+                };
+                use style::computed_values::clear::T as Clear;
+                match styles.clone_clear() {
+                    Clear::Left | Clear::InlineStart => left = 0.0,
+                    Clear::Right | Clear::InlineEnd => right = 0.0,
+                    Clear::Both => (left, right) = (0.0, 0.0),
+                    _ => {}
+                }
+                let l = float.final_layout();
+                let margin_box = f64::from(l.size.width + l.margin.left + l.margin.right);
+                if matches!(styles.clone_float(), style::computed_values::float::T::Left) {
+                    left += margin_box;
+                } else {
+                    right += margin_box;
+                }
+            }
+            chrome = chrome.max(text_width + left + right);
+            (left, right) = (0.0, 0.0);
+        }
+        let layout = node.final_layout();
+        let pb = f64::from(
+            layout.padding.left + layout.padding.right + layout.border.left + layout.border.right,
+        );
+        let used = f64::from(layout.size.width) - pb;
+        if used <= chrome + OVERLAP_EPSILON_PX {
+            continue;
+        }
+        let Some(styles) = node.primary_styles() else {
+            continue;
+        };
+        if !matches!(
+            styles.clone_overflow_x(),
+            Overflow::Visible | Overflow::Clip
+        ) {
+            // A scroll container's scrollbar gutter is not modelled: left alone.
+            continue;
+        }
+        let border_box =
+            styles.get_position().box_sizing == style::computed_values::box_sizing::T::BorderBox;
+        let cap = if border_box { chrome + pb } else { chrome };
+        caps.push((id, FloatFixup::MaxWidth(cap as f32)));
+    }
+    caps
+}
+
+/// Whether `node`'s used width is its shrink-to-fit width ([`float_max_content_caps`]): `width:
+/// auto` and a float, an inline-block, an absolutely positioned box or a row flex item with
+/// `flex-basis: auto` and `flex-grow: 0`, with no `max-width` of its own.
+fn shrink_to_fit(base: &BaseDocument, node: &blitz_dom::Node) -> bool {
+    use style::values::generics::length::GenericSize;
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    if node.is_anonymous() {
+        return false;
+    }
+    let Some(styles) = node.primary_styles() else {
+        return false;
+    };
+    if !matches!(styles.clone_width(), GenericSize::Auto)
+        || !matches!(
+            styles.clone_max_width(),
+            style::values::generics::length::GenericMaxSize::None
+        )
+    {
+        return false;
+    }
+    let display = styles.clone_display();
+    if !matches!(styles.clone_float(), style::computed_values::float::T::None)
+        || styles.clone_position().is_absolutely_positioned()
+        || (display.outside() == DisplayOutside::Inline
+            && display.inside() == DisplayInside::FlowRoot)
+    {
+        return true;
+    }
+    let flex_row_item = node
+        .parent
+        .and_then(|p| base.get_node(p))
+        .and_then(|p| p.primary_styles())
+        .is_some_and(|p| {
+            p.clone_display().inside() == DisplayInside::Flex
+                && matches!(
+                    p.clone_flex_direction(),
+                    style::computed_values::flex_direction::T::Row
+                        | style::computed_values::flex_direction::T::RowReverse
+                )
+        });
+    flex_row_item
+        && styles.clone_flex_grow().0 == 0.0
+        && matches!(
+            styles.clone_flex_basis(),
+            style::values::generics::flex::GenericFlexBasis::Size(GenericSize::Auto)
+        )
+}
+
+/// The `padding-top` edits that move a block's first line below the floats it does not fit
+/// beside, as Chrome 155 does, read off a laid-out document. Compensates a BLITZ BUG of the
+/// crates.io Blitz 0.3.0-beta.4 stack; the raw-Blitz canary
+/// `blitz_still_lays_a_first_line_out_in_no_room_beside_a_float` (`raw_blitz_tests.rs`) fails
+/// when it is fixed, and then this function, [`FloatFixup::PaddingTop`], its call in
+/// [`resolve_and_walk`], the canary and `a_first_line_that_does_not_fit_goes_below_the_float` are
+/// deleted.
+///
+/// A line box shortened by floats so much that no content fits in it moves down until some
+/// content fits or no more floats are beside it (CSS 2.2 §9.5). BLITZ BUG (blitz-dom 0.3.0-beta.4
+/// `src/layout/inline.rs` 678-685 and 699-711): the slot `find_content_slot` returns at the line's
+/// top is used whatever its width, even a negative one, and Parley then overflows the first
+/// item out of it. Repro (the reference of WPT
+/// css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html): a 100 px block beside a
+/// 106 px float, holding a 30 px inline-block: Blitz puts the inline-block at the float's right
+/// edge, overflowing the block, Chrome for Testing 155.0.8059.85 (2026-10-28) below the float.
+/// `H <100 px float> <p>P</p>` in 100 px: Blitz puts `P` at x = 100 beside the float, Chrome
+/// below it (c07-pin-b/fl f7 in the run store).
+///
+/// Edit: for a block (an element) whose FIRST line's room beside the floats placed before it in
+/// its formatting context, over the line's height, is narrower than the line's
+/// first unbreakable piece (its first in-flow inline box, or its first glyph run up to the first
+/// white space), and whose text can wrap (`text-wrap-mode: wrap`; Chrome keeps a `white-space:
+/// pre` line that does not fit beside the float, WPT css/css-text/white-space/pre-float-001.html),
+/// `padding-top` grows by the distance to the first float bottom below which the
+/// piece fits (or below them all). The block's box stays where it is and its content moves down,
+/// as in Chrome (its background covers the same area). Not handled: a later line that does not
+/// fit (Blitz's placement kept), and a first line whose height changes once moved.
+fn narrow_first_line_drops(base: &BaseDocument) -> Vec<(NodeId, FloatFixup)> {
+    let mut geometry = FloatGeometry::default();
+    let root = base.root_element().id;
+    collect_float_geometry(base, root, root, 0, &mut geometry);
+    let mut drops = Vec::new();
+    for block in &geometry.line_roots {
+        let Some(node) = base.get_node(block.id) else {
+            continue;
+        };
+        if node.is_anonymous()
+            || !node.primary_styles().is_some_and(|s| {
+                s.clone_text_wrap_mode() == style::computed_values::text_wrap_mode::T::Wrap
+            })
+        {
+            continue;
+        }
+        let Some(text) = node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        else {
+            continue;
+        };
+        let Some(line) = text.layout.lines().next() else {
+            continue;
+        };
+        // The first unbreakable piece of the line.
+        let mut needed = None;
+        for item in line.items() {
+            match item {
+                parley::PositionedLayoutItem::InlineBox(ibox) => {
+                    if ibox.kind == parley::InlineBoxKind::InFlow {
+                        needed = Some(f64::from(ibox.width));
+                        break;
+                    }
+                }
+                parley::PositionedLayoutItem::GlyphRun(glyph_run) => {
+                    let mut width = 0.0f64;
+                    for cluster in glyph_run.run().clusters() {
+                        let space = text
+                            .text
+                            .get(cluster.text_range())
+                            .is_some_and(|s| !s.is_empty() && s.chars().all(char::is_whitespace));
+                        if space && width > 0.0 {
+                            break;
+                        }
+                        if !space {
+                            width += f64::from(cluster.advance());
+                        }
+                    }
+                    if width > 0.0 {
+                        needed = Some(width);
+                        break;
+                    }
+                }
+            }
+        }
+        let Some(needed) = needed else {
+            continue;
+        };
+        let layout = node.final_layout();
+        let metrics = line.metrics();
+        let content_top = block.content_top + f64::from(text.block_offset);
+        let top = content_top + f64::from(metrics.block_min_coord);
+        let height = f64::from(metrics.block_max_coord - metrics.block_min_coord);
+        let floats: Vec<&FloatBox> = geometry.floats[..block.preceding]
+            .iter()
+            .filter(|f| f.bfc == block.bfc)
+            .collect();
+        let room = |y: f64| {
+            let (mut x0, mut x1) = (block.content_x[0], block.content_x[1]);
+            let mut beside = false;
+            for f in &floats {
+                if f.margin_rect[1] < y + height - OVERLAP_EPSILON_PX
+                    && y + OVERLAP_EPSILON_PX < f.margin_rect[3]
+                {
+                    beside = true;
+                    if f.left {
+                        x0 = x0.max(f.margin_rect[2]);
+                    } else {
+                        x1 = x1.min(f.margin_rect[0]);
+                    }
+                }
+            }
+            (x1 - x0, beside)
+        };
+        let (width, beside) = room(top);
+        if !beside || width + OVERLAP_EPSILON_PX >= needed {
+            continue;
+        }
+        let mut bottoms: Vec<f64> = floats
+            .iter()
+            .map(|f| f.margin_rect[3])
+            .filter(|&b| b > top + OVERLAP_EPSILON_PX)
+            .collect();
+        bottoms.sort_by(f64::total_cmp);
+        let Some(&last) = bottoms.last() else {
+            continue;
+        };
+        let y = bottoms
+            .iter()
+            .copied()
+            .find(|&b| {
+                let (w, beside) = room(b);
+                !beside || w + OVERLAP_EPSILON_PX >= needed
+            })
+            .unwrap_or(last);
+        let grown = f64::from(layout.padding.top) + (y - top);
+        drops.push((block.id, FloatFixup::PaddingTop(grown as f32)));
+    }
+    drops
 }
 
 /// One edit of [`zero_width_float_margins`]: the box, its new left and right margins (px; `None`
@@ -4803,6 +5170,9 @@ fn resolve_and_walk<O: LayoutObserver>(
         let edited: std::collections::HashSet<NodeId> = fixups.iter().map(|f| f.0).collect();
         let wraps = trailing_float_wraps(&doc, &edited);
         let zero_width = zero_width_float_margins(&doc, &edited);
+        let mut fixups = fixups;
+        fixups.extend(float_max_content_caps(&doc));
+        fixups.extend(narrow_first_line_drops(&doc));
         if !fixups.is_empty() || !wraps.is_empty() || !zero_width.is_empty() {
             apply_float_fixups(&mut doc, &fixups);
             wrap_trailing_floats(&mut doc, &wraps);

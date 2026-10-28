@@ -1891,3 +1891,103 @@ fn zero_width_floats_do_not_clamp_negative_margins() {
         .expect("IN");
     assert_eq!(text.1, 0.0);
 }
+
+/// A row flex item (4 px borders) holding a 106 px float, a `<br>` and a 100 px float (the
+/// repro of `blitz_engine::float_max_content_caps`, WPT
+/// css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html).
+const FLOATS_ON_TWO_LINES: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; font: 10px/12px monospace; }
+    .f { float: left; height: 20px; }
+    </style></head><body>
+    <div style="display: flex; width: 300px"><div style="border: 4px solid">
+    <div class="f" style="width: 106px"></div><br><div class="f" style="width: 100px"></div>
+    </div></div>
+    </body></html>"#;
+
+/// The border-box width of [`FLOATS_ON_TWO_LINES`]'s flex item.
+fn two_line_item_width(doc: &LaidOutDoc) -> f64 {
+    doc.boxes
+        .iter()
+        .filter(|b| b.tag.as_deref() == Some("div"))
+        .nth(1)
+        .expect("flex item")
+        .width
+}
+
+/// CANARY of `blitz_engine::float_max_content_caps`: Blitz still sums the floats of every line
+/// into an inline formatting context's max-content width (Chrome 155: the widest line).
+#[test]
+fn blitz_still_sums_floats_across_forced_line_breaks() {
+    let (raw, _) = raw_layout(FLOATS_ON_TWO_LINES);
+    let width = two_line_item_width(&raw);
+    assert_eq!(
+        width, 214.0,
+        "\n\nBLITZ CHANGED THE MAX-CONTENT WIDTH OF FLOATS ON SEVERAL LINES. Raw Blitz no longer sizes \
+         FLOATS_ON_TWO_LINES's flex item 214 px wide (now {width}; Chrome 155: 114), the bug \
+         float_max_content_caps works around (blitz-dom 0.3.0-beta.4 src/layout/inline.rs \
+         538-582, 595). If Blitz now matches Chrome, DELETE in \
+         crates/vellora-core/src/blitz_engine.rs `float_max_content_caps`, `shrink_to_fit`, \
+         `FloatFixup::MaxWidth` and its call in `resolve_and_walk`, this canary and \
+         `float_max_content_is_per_line`; then re-measure css/css-break and css/CSS2/floats with \
+         fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28): the item is as wide
+/// as its widest line, the 106 px float plus its borders.
+#[test]
+fn float_max_content_is_per_line() {
+    assert_eq!(
+        two_line_item_width(&product_layout(FLOATS_ON_TWO_LINES)),
+        114.0
+    );
+}
+
+/// A 100 px block holding a 100x30 left float and then a paragraph (the repro of
+/// `blitz_engine::narrow_first_line_drops`; c07-pin-b/fl f7 in the run store).
+const FIRST_LINE_BESIDE_FULL_FLOAT: &str = r#"<!DOCTYPE html><html><head><style>
+    body { margin: 0; width: 100px; font: 10px/12px monospace; }
+    p { margin: 0; }
+    </style></head><body>
+    <div style="float: left; width: 100px; height: 30px"></div><p>PP</p>
+    </body></html>"#;
+
+/// CANARY of `blitz_engine::narrow_first_line_drops`: Blitz still lays a first line out in a
+/// slot with no room beside a float (Chrome 155 moves it below the float).
+#[test]
+fn blitz_still_lays_a_first_line_out_in_no_room_beside_a_float() {
+    let (raw, _) = raw_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let run = runs_of(&raw)
+        .into_iter()
+        .find(|r| r.0.trim() == "PP")
+        .expect("PP");
+    assert_eq!(
+        run.1, 100.0,
+        "\n\nBLITZ CHANGED WHERE IT PUTS A LINE WITH NO ROOM BESIDE A FLOAT. Raw Blitz no longer puts \
+         FIRST_LINE_BESIDE_FULL_FLOAT's `PP` at x = 100 beside the float (now {:?}; Chrome 155: \
+         x = 0, below the float), the bug narrow_first_line_drops works around (blitz-dom \
+         0.3.0-beta.4 src/layout/inline.rs 678-685, 699-711). If Blitz now matches Chrome, DELETE \
+         in crates/vellora-core/src/blitz_engine.rs `narrow_first_line_drops`, `LineRootBox`, \
+         `FloatGeometry::line_roots`, `FloatFixup::PaddingTop` and its call in \
+         `resolve_and_walk`, this canary and `a_first_line_that_does_not_fit_goes_below_the_float`; \
+         then re-measure css/css-break, css/css-text and css/CSS2/floats with fidelity/wpt.\n",
+        (run.1, run.2)
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28): `PP` at x = 0, on
+/// the line below the float (its baseline in the 12 px line from y = 30).
+#[test]
+fn a_first_line_that_does_not_fit_goes_below_the_float() {
+    let laid = product_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let (raw, _) = raw_layout(FIRST_LINE_BESIDE_FULL_FLOAT);
+    let at = |doc: &LaidOutDoc| {
+        runs_of(doc)
+            .into_iter()
+            .find(|r| r.0.trim() == "PP")
+            .expect("PP")
+    };
+    let (moved, beside) = (at(&laid), at(&raw));
+    assert_eq!(moved.1, 0.0);
+    assert_eq!(moved.2 - beside.2, 30.0);
+}
