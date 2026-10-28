@@ -47,6 +47,7 @@ pub mod pagination;
 pub mod pdf;
 #[cfg(test)]
 mod raw_blitz_tests;
+mod ruby;
 mod text_decoration;
 pub mod validation;
 

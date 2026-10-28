@@ -111,6 +111,12 @@ pub struct LaidOutBox {
     /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
     /// pagination's oversize-fragment slicer (Phase C step 03).
     pub atomic_inline: bool,
+    /// For an atomic inline: the top and bottom of the line box it sits on, relative to its own
+    /// border-box top (`y`), so they move with the box. A line box is monolithic (CSS
+    /// Fragmentation 3 §4.1): the column breaks of [`crate::multicol`] keep it whole (Phase C
+    /// step 06: a ruby line holds two atomic inlines, the annotation above the base, which no
+    /// break may part; Chrome 155, WPT css/css-break/ruby-003).
+    pub line_span: Option<(f64, f64)>,
     /// Whether the box has size containment (`contain: size`, `strict`): monolithic for the
     /// column breaks of [`crate::multicol`] (Phase C step 05).
     pub contain_size: bool,
@@ -1418,6 +1424,339 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
     }
 }
 
+/// Local name of the element vellora wraps each ruby base in ([`wrap_ruby_bases`]): Chrome's
+/// anonymous ruby-base box, made a real (unstyled) element so it can be laid out and measured.
+const RUBY_BASE_TAG: &str = "vellora-ruby-base";
+
+/// vellora's UA rules for ruby (Phase C step 06, [`crate::ruby`]). Blitz 0.3.0-beta.4 lays ruby
+/// out as plain inlines (Stylo 0.22.0 in servo mode drops `display: ruby` / `ruby-text`, see
+/// the `crate::ruby` module docs), so a ruby column is built from two atomic inlines: the base
+/// wrapper and the `<rt>`, placed by [`lay_out_ruby`]. Author rules win over these (an author
+/// `rt { display: none }` hides the annotation, as in Chrome). `white-space: nowrap`: Chrome 155
+/// keeps a ruby on one line (`p2.html` d11: a 113 px ruby whose first column fits after "aaa"
+/// moves to the next line whole) and never parts a base from its annotation.
+const RUBY_UA_CSS: &str = "ruby { white-space: nowrap; }\n\
+     ruby > vellora-ruby-base, ruby > rt { display: inline-block; text-indent: 0; }";
+
+/// Wraps the base of every ruby column in a [`RUBY_BASE_TAG`] element before the cascade: the
+/// children of a `<ruby>` since the previous `<rt>` (or its start) become the base of the next
+/// `<rt>`. That is Chrome 155's pairing (`p2.html` d4: `<rb>A</rb><rb>BBBB</rb><rt>x</rt><rt>yy
+/// </rt>` gives one column "A BBBB" / "x" and a base-less one / "yy"; `<rb>` pairs nothing). The
+/// white space around a base goes into its wrapper, whose line trims it (Chrome drops the white
+/// space between a base and its annotation). Content after the last `<rt>` is left as it is, and
+/// a ruby without `<rt>` is not touched. Returns the `(base wrapper, rt)` pairs, in tree order.
+fn wrap_ruby_bases(doc: &mut BaseDocument) -> Vec<(NodeId, NodeId)> {
+    let is_html = |doc: &BaseDocument, id: NodeId, tag: &str| {
+        doc.get_node(id)
+            .and_then(|n| n.data.downcast_element())
+            .is_some_and(|el| el.name.ns == blitz_dom::ns!(html) && &*el.name.local == tag)
+    };
+    let mut rubies = Vec::new();
+    let mut stack = vec![doc.root_element().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        if is_html(doc, id, "ruby") {
+            rubies.push(id);
+        }
+        stack.extend(node.children.iter().rev().copied());
+    }
+    let mut pairs = Vec::new();
+    for ruby in rubies {
+        let children = doc
+            .get_node(ruby)
+            .map(|n| n.children.clone())
+            .unwrap_or_default();
+        if !children.iter().any(|&c| is_html(doc, c, "rt")) {
+            continue;
+        }
+        let mut pending: Vec<NodeId> = Vec::new();
+        for child in children {
+            if !is_html(doc, child, "rt") {
+                pending.push(child);
+                continue;
+            }
+            let mut mutator = doc.mutate();
+            let name = blitz_dom::QualName::new(
+                None,
+                blitz_dom::ns!(html),
+                blitz_dom::LocalName::from(RUBY_BASE_TAG),
+            );
+            let wrapper = mutator.create_element(name, Vec::new());
+            mutator.insert_nodes_before(child, &[wrapper]);
+            mutator.append_children(wrapper, &pending);
+            drop(mutator);
+            pairs.push((wrapper, child));
+            pending.clear();
+        }
+    }
+    pairs
+}
+
+/// Makes every inline `<ruby>` that [`wrap_ruby_bases`] built columns in an inline-block (in
+/// its computed style, between the cascade and layout), with no `text-indent` of its own: an
+/// atomic inline, so the line breaker never parts its columns. Chrome 155 keeps a ruby on one
+/// line (`p2.html` d11); Parley 0.12.0 breaks between two inline boxes whatever the
+/// `white-space` of the text around them (`parley-0.12.0/src/layout/line_break.rs:1097-1104`:
+/// the wrap mode is the line state's, set by the last text run).
+fn ruby_containers_atomic(doc: &mut BaseDocument, pairs: &[(NodeId, NodeId)]) {
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    let mut rubies: Vec<NodeId> = Vec::new();
+    for &(base_id, _) in pairs {
+        if let Some(ruby) = doc.get_node(base_id).and_then(|n| n.parent) {
+            if !rubies.contains(&ruby) {
+                rubies.push(ruby);
+            }
+        }
+    }
+    for ruby in rubies {
+        let inline = doc
+            .get_node(ruby)
+            .and_then(|n| n.primary_styles())
+            .is_some_and(|s| {
+                let d = s.clone_display();
+                d.outside() == DisplayOutside::Inline && d.inside() == DisplayInside::Flow
+            });
+        if inline {
+            mutate_primary_style(doc, ruby, |values| {
+                values
+                    .mutate_box()
+                    .set_display(style::values::computed::Display::InlineBlock);
+                values
+                    .mutate_inherited_text()
+                    .set_text_indent(style::values::computed::TextIndent::zero());
+            });
+        }
+    }
+}
+
+/// The last-line baseline of inline root `node` below its border-box top, and the em box
+/// ([`crate::ruby::em_box`]) of its content around that baseline: each glyph run that is not
+/// all white space, each in-flow atomic inline's border box (Blink `ComputeEmHeight`).
+fn ruby_inline_metrics(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    fonts: &mut std::collections::HashMap<u64, Option<crate::ruby::FontVMetrics>>,
+) -> (Option<f64>, crate::ruby::EmBox) {
+    let Some(text) = node
+        .data
+        .downcast_element()
+        .and_then(|el| el.inline_layout_data.as_ref())
+    else {
+        return (None, None);
+    };
+    let Some(last) = text.layout.lines().last() else {
+        return (None, None);
+    };
+    let baseline = f64::from(last.metrics().baseline);
+    let mut em = None;
+    for line in text.layout.lines() {
+        for item in line.items() {
+            match item {
+                parley::PositionedLayoutItem::GlyphRun(glyph_run) => {
+                    let run = glyph_run.run();
+                    if text
+                        .text
+                        .get(run.text_range())
+                        .is_none_or(|s| s.chars().all(char::is_whitespace))
+                    {
+                        continue;
+                    }
+                    let font = run.font();
+                    let metrics = fonts.entry(font.data.id()).or_insert_with(|| {
+                        crate::ruby::font_vmetrics(font.data.as_ref(), font.index)
+                    });
+                    if let Some(metrics) = metrics {
+                        let (a, d) = crate::ruby::em_box(metrics, f64::from(run.font_size()));
+                        let shift = f64::from(glyph_run.baseline()) - baseline;
+                        em = crate::ruby::unite(em, Some((a - shift, d + shift)));
+                    }
+                }
+                parley::PositionedLayoutItem::InlineBox(ibox) => {
+                    if ibox.kind != parley::InlineBoxKind::InFlow {
+                        continue;
+                    }
+                    let Some(child) = base.get_node(NodeId::from_u64(ibox.id)) else {
+                        continue;
+                    };
+                    let layout = child.unrounded_layout();
+                    let top = f64::from(ibox.y + layout.margin.top);
+                    let bottom = top + f64::from(layout.size.height);
+                    em = crate::ruby::unite(em, Some((baseline - top, bottom - baseline)));
+                }
+            }
+        }
+    }
+    let layout = node.unrounded_layout();
+    let content_top = layout.border.top + layout.padding.top + text.block_offset;
+    (Some(f64::from(content_top) + baseline), em)
+}
+
+/// The line of its inline-root ancestor that atomic inline `id` sits on: `(inline root, line
+/// index)` and that line box's ascent and descent around its baseline.
+fn containing_line(base: &BaseDocument, id: NodeId) -> Option<((NodeId, usize), (f64, f64))> {
+    let mut at = base.get_node(id)?.parent;
+    while let Some(parent) = at {
+        let node = base.get_node(parent)?;
+        if let Some(text) = node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        {
+            for (index, line) in text.layout.lines().enumerate() {
+                let holds = line.items().any(|item| {
+                    matches!(item, parley::PositionedLayoutItem::InlineBox(b) if b.id == id.as_u64())
+                });
+                if holds {
+                    let m = line.metrics();
+                    return Some((
+                        (parent, index),
+                        (
+                            f64::from(m.baseline - m.block_min_coord),
+                            f64::from(m.block_max_coord - m.baseline),
+                        ),
+                    ));
+                }
+            }
+            return None;
+        }
+        at = node.parent;
+    }
+    None
+}
+
+/// Lays out the ruby columns [`wrap_ruby_bases`] built (Phase C step 06, [`crate::ruby`]), on
+/// the layout just resolved: measures each base wrapper and `<rt>`, computes Chrome's placement
+/// ([`crate::ruby::place`]) and writes it into their computed styles (margins, and the `<rt>`'s
+/// `vertical-align` length). Returns whether anything was edited; the caller then lays the
+/// document out once more. A column whose `<rt>` is not an inline-block (an author `display`)
+/// or whose two boxes are not on one line is left as laid out.
+///
+/// The em boxes of a line are united from this layout's lines; the edits change only the
+/// columns' widths (to `max(base, annotation)`, never wider than before), so a line can take
+/// more content in the second layout. The columns keep the em boxes of their first-layout line
+/// (UNVERIFIED for lines whose rubies' em boxes differ and whose breaks move).
+fn lay_out_ruby(doc: &mut BaseDocument, pairs: &[(NodeId, NodeId)]) -> bool {
+    use style::values::specified::box_::{Display, DisplayInside, DisplayOutside};
+    let base: &BaseDocument = doc;
+    let inline_block = |id: NodeId| {
+        base.get_node(id)
+            .and_then(|n| n.primary_styles())
+            .is_some_and(|s| {
+                let d: Display = s.clone_display();
+                d.outside() == DisplayOutside::Inline && d.inside() == DisplayInside::FlowRoot
+            })
+    };
+    // Lookup only (DET-1): keyed by font blob id, never iterated.
+    let mut fonts = std::collections::HashMap::new();
+    let mut columns = Vec::new();
+    let mut placed = Vec::new();
+    for &(base_id, rt_id) in pairs {
+        if !inline_block(base_id) || !inline_block(rt_id) {
+            continue;
+        }
+        let (Some(base_node), Some(rt_node)) = (base.get_node(base_id), base.get_node(rt_id))
+        else {
+            continue;
+        };
+        // The base's line metrics (an empty base's em box), and the line the ruby sits on: the
+        // columns of one line share their em boxes. The `<rt>` need not be on the base's line
+        // yet: it advances nothing once placed.
+        let Some((base_line, line_metrics)) = containing_line(base, base_id) else {
+            continue;
+        };
+        let line = base_node
+            .parent
+            .filter(|&ruby| inline_block(ruby))
+            .and_then(|ruby| containing_line(base, ruby))
+            .map_or(base_line, |(line, _)| line);
+        let (_, base_em) = ruby_inline_metrics(base, base_node, &mut fonts);
+        let (rt_baseline, annotation_em) = ruby_inline_metrics(base, rt_node, &mut fonts);
+        let base_layout = base_node.unrounded_layout();
+        let rt_layout = rt_node.unrounded_layout();
+        let annotation_height = f64::from(rt_layout.size.height);
+        columns.push(crate::ruby::Column {
+            line: (raw_id(line.0), line.1),
+            base_width: f64::from(base_layout.size.width),
+            annotation_width: f64::from(rt_layout.size.width),
+            base_em,
+            line_metrics,
+            annotation_em,
+            annotation_height,
+            annotation_baseline: rt_baseline.unwrap_or(annotation_height),
+        });
+        // The `<rt>` sits on the side of its base the line breaker put it on: after it, or
+        // before it when the line runs right to left. Read off the layout, not `direction`:
+        // Parley 0.12.0 keeps the inline boxes of a `dir=rtl` ruby in logical order, left to
+        // right (measured, `ruby-bidi-004`'s first ruby).
+        let rtl = rt_layout.location.x < base_layout.location.x
+            && containing_line(base, rt_id).is_some_and(|(l, _)| l == base_line);
+        placed.push((base_id, rt_id, rtl));
+    }
+    let edits = crate::ruby::place(&columns);
+    for (&(base_id, rt_id, rtl), edit) in placed.iter().zip(&edits) {
+        set_margins(
+            doc,
+            base_id,
+            [
+                None,
+                Some(edit.base_margin.1),
+                None,
+                Some(edit.base_margin.0),
+            ],
+        );
+        let (left, right) = if rtl {
+            (edit.annotation_margin_x.1, edit.annotation_margin_x.0)
+        } else {
+            edit.annotation_margin_x
+        };
+        set_margins(
+            doc,
+            rt_id,
+            [
+                Some(edit.annotation_margin_y.0),
+                Some(right),
+                Some(edit.annotation_margin_y.1),
+                Some(left),
+            ],
+        );
+        let raise = edit.annotation_raise;
+        mutate_primary_style(doc, rt_id, |values| {
+            use style::values::computed::{Length, LengthPercentage};
+            let b = values.mutate_box();
+            b.set_alignment_baseline(style::values::computed::AlignmentBaseline::Baseline);
+            b.set_baseline_shift(style::values::computed::BaselineShift::Length(
+                LengthPercentage::new_length(Length::new(raise as f32)),
+            ));
+        });
+    }
+    !placed.is_empty()
+}
+
+/// Sets the given margins (`[top, right, bottom, left]`, px; `None` keeps one) of `id`'s
+/// computed style.
+fn set_margins(doc: &mut BaseDocument, id: NodeId, px: [Option<f64>; 4]) {
+    use style::values::computed::{Length, LengthPercentage, Margin};
+    let margin =
+        |px: f64| Margin::LengthPercentage(LengthPercentage::new_length(Length::new(px as f32)));
+    mutate_primary_style(doc, id, |values| {
+        let m = values.mutate_margin();
+        if let Some(px) = px[0] {
+            m.set_margin_top(margin(px));
+        }
+        if let Some(px) = px[1] {
+            m.set_margin_right(margin(px));
+        }
+        if let Some(px) = px[2] {
+            m.set_margin_bottom(margin(px));
+        }
+        if let Some(px) = px[3] {
+            m.set_margin_left(margin(px));
+        }
+    });
+}
+
 /// A multi-column container found in the cascade ([`multicol_containers`]), with its column
 /// geometry ([`multicol_geometry`]) and its `column-fill` (read by vellora, see
 /// [`crate::break_css::BreakRules::column_fill`]).
@@ -1707,6 +2046,7 @@ fn walk_subtree(doc: &BaseDocument, id: NodeId) -> Vec<LaidOutBox> {
         collapsed: &collapsed,
         tiers: std::collections::HashMap::new(),
         canvas_source: None,
+        line_spans: std::collections::HashMap::new(),
     };
     walk_box(doc, id, 0, &mut sink);
     out
@@ -3176,6 +3516,17 @@ fn resolve_and_walk<O: LayoutObserver>(
     // The document was built with this viewport (`build_document_with`), so no device change
     // is queued here; kept so a document built otherwise still lays out against it.
     doc.set_viewport(viewport);
+    // Ruby (no ruby layout in Blitz, see `crate::ruby`): each base wrapped before the cascade,
+    // the columns placed after the first layout (`lay_out_ruby`). Off in the raw-Blitz render.
+    let ruby_pairs = if O::VELLORA_CORRECTIONS {
+        let pairs = wrap_ruby_bases(&mut doc);
+        if !pairs.is_empty() {
+            doc.add_user_agent_stylesheet(blitz_dom::UserAgentStylesheet::parse(RUBY_UA_CSS));
+        }
+        pairs
+    } else {
+        Vec::new()
+    };
     // Off in the raw-Blitz render: it is a vellora layer, not Blitz's layout.
     if O::VELLORA_CORRECTIONS {
         if let Some(css) = table_spacing_hints_css(&doc) {
@@ -3192,11 +3543,18 @@ fn resolve_and_walk<O: LayoutObserver>(
         doc.resolve_stylist(0.0);
         snap_lengths_to_layout_unit(&mut doc);
         hide_table_column_pseudos(&mut doc);
+        ruby_containers_atomic(&mut doc, &ruby_pairs);
         compensate_collapsed_borders(&mut doc)
     } else {
         CollapsedBorders::default()
     };
     doc.resolve(0.0);
+    if !ruby_pairs.is_empty() && lay_out_ruby(&mut doc, &ruby_pairs) {
+        // Non-incremental, as for the float fix-ups below: the style edits are invisible to
+        // Blitz's damage tracking.
+        doc.set_incremental_layout(false);
+        doc.resolve(0.0);
+    }
     // Multi-column containers (no multi-column layout in Blitz): laid out one column wide, the
     // content-sized ones given their balanced height (`lay_out_multicol`); the columns are cut
     // after the walk (`crate::multicol::apply`). Off in the raw-Blitz render.
@@ -3290,6 +3648,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             collapsed: &collapsed,
             tiers: std::collections::HashMap::new(),
             canvas_source: canvas.map(|(id, _)| id),
+            line_spans: std::collections::HashMap::new(),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -3360,6 +3719,9 @@ struct WalkSink<'a, 'img> {
     /// The element whose background is the canvas background ([`canvas_background`]); its
     /// own box paints no background.
     canvas_source: Option<NodeId>,
+    /// [`atomic_line_span`]'s memo: the absolute line-box span of every inline box of each
+    /// inline root read so far (`None` for the roots themselves, once read). Lookup only.
+    line_spans: std::collections::HashMap<NodeId, Option<(f64, f64)>>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -3964,6 +4326,10 @@ fn push_box(
             .or_else(|| sink.breaks.page_names.get(&node_id).cloned())
             .flatten(),
         atomic_inline: atomic_inline(node),
+        line_span: atomic_inline(node)
+            .then(|| atomic_line_span(base, node_id, &mut sink.origins, &mut sink.line_spans))
+            .flatten()
+            .map(|(top, bottom)| (top - abs_y, bottom - abs_y)),
         orphans: None,
         widows: None,
         contain_size: node.primary_styles().is_some_and(|styles| {
@@ -4096,6 +4462,53 @@ fn table_layout_fixed(node: &blitz_dom::Node) -> bool {
 /// Whether `node` computes an atomic inline-level display: `display-outside: inline` with an
 /// inner display other than `flow` (`inline-block` is inline + flow-root, `inline-flex`,
 /// `inline-grid`, `inline-table`). A plain `inline` element generates no box of its own here.
+/// The absolute top and bottom of the line box atomic inline `id` sits on, in its inline-root
+/// ancestor's layout. Each inline root's lines are read once, for all its inline boxes
+/// (`memo`): a paragraph of N inline-blocks costs one pass over its lines, not N.
+fn atomic_line_span(
+    base: &BaseDocument,
+    id: NodeId,
+    origins: &mut std::collections::HashMap<NodeId, (f64, f64)>,
+    memo: &mut std::collections::HashMap<NodeId, Option<(f64, f64)>>,
+) -> Option<(f64, f64)> {
+    if let Some(&span) = memo.get(&id) {
+        return span;
+    }
+    let mut at = base.get_node(id)?.parent;
+    let (root, text) = loop {
+        let node = base.get_node(at?)?;
+        if let Some(text) = node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        {
+            break (node, text);
+        }
+        at = node.parent;
+    };
+    if memo.insert(root.id, None).is_some() {
+        // Read already: `id` is not one of its inline boxes.
+        memo.insert(id, None);
+        return None;
+    }
+    let (_, y) = box_origin(base, root.id, origins, false);
+    let layout = root.final_layout();
+    let content_y = y + (layout.border.top + layout.padding.top) as f64 + text.block_offset as f64;
+    for line in text.layout.lines() {
+        let m = line.metrics();
+        let span = (
+            content_y + m.block_min_coord as f64,
+            content_y + m.block_max_coord as f64,
+        );
+        for item in line.items() {
+            if let parley::PositionedLayoutItem::InlineBox(ibox) = item {
+                memo.insert(NodeId::from_u64(ibox.id), Some(span));
+            }
+        }
+    }
+    *memo.entry(id).or_insert(None)
+}
+
 fn atomic_inline(node: &blitz_dom::Node) -> bool {
     use style::values::specified::box_::{DisplayInside, DisplayOutside};
     node.primary_styles().is_some_and(|styles| {
