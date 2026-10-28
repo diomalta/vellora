@@ -4115,6 +4115,13 @@ fn resolve_and_walk<O: LayoutObserver>(
     } else {
         CollapsedBorders::default()
     };
+    // Last before the first `resolve` (the edits above read the `<svg>` names and parents), kept
+    // until after the last one (`restore_hidden_svgs` below). Off in the raw-Blitz render.
+    let hidden_svgs = if O::VELLORA_CORRECTIONS {
+        hide_svgs_from_blitz(&mut doc)
+    } else {
+        Vec::new()
+    };
     doc.resolve(0.0);
     if !ruby_pairs.is_empty() && lay_out_ruby(&mut doc, &ruby_pairs) {
         // Non-incremental, as for the float fix-ups below: the style edits are invisible to
@@ -4153,6 +4160,8 @@ fn resolve_and_walk<O: LayoutObserver>(
     if O::VELLORA_CORRECTIONS {
         balance_text_wrap(&mut doc, breaks);
     }
+    // No `resolve` after this point.
+    restore_hidden_svgs(&mut doc, hidden_svgs);
 
     let break_targets = match early_matches {
         Some(matches) => matches.targets,
@@ -5607,6 +5616,11 @@ fn is_svg_element(node: &blitz_dom::Node, local: &str) -> bool {
 /// The first offending element in DOM order is returned, located like an `<img>`
 /// ([`UnresolvedImage::tag`]).
 ///
+/// Since Phase C step 07 the render path never lets Blitz parse an SVG
+/// ([`hide_svgs_from_blitz`]), so there the gate is defence in depth (and the rejection a
+/// located diagnostic for a source vellora would not draw); it still guards the raw-Blitz render
+/// ([`RawBlitz`], fidelity tooling), which keeps Blitz's own parse.
+///
 /// WHEN BLITZ LETS CALLERS SET THE SVG PARSE OPTIONS (or stops resolving paths), DELETE: this
 /// function, its call in [`validate_then_lay_out_observed`], the `image`/`feimage` branch of
 /// `validation::image_diagnostic`, and the canary
@@ -5696,9 +5710,11 @@ fn svg_has_view_box(node: &blitz_dom::Node) -> bool {
 /// reports an aspect ratio (blitz-dom `layout/mod.rs:407-430`, `node/svg.rs:197-205`): usvg sizes
 /// an SVG without `viewBox` whose width or height is absent or a percentage to the bounding box
 /// of its content (usvg 0.48.1 `parser/converter.rs:523-605`, `calculate_svg_bbox`), so Blitz
-/// lays those three out 25x50, 40x100 and 60x120. The bounding box includes `<text>` measured
-/// with the HOST fonts Blitz's usvg parse loads (blitz-dom `util.rs:42-50` `FONT_DB`), so the
-/// uncompensated size is not even host-independent.
+/// lays those three out 25x50, 40x100 and 60x120 (raw Blitz; the bounding box includes `<text>`
+/// measured with the HOST fonts Blitz's usvg parse loads, blitz-dom `util.rs:42-50` `FONT_DB`).
+/// On the render path Blitz no longer sees the content at all ([`hide_svgs_from_blitz`]: its
+/// tree is (absolute width, else 300) x (absolute height, else 150)), so this edit only decides the
+/// cases that tree's aspect ratio would otherwise get wrong.
 ///
 /// What is changed, on the computed style after the cascade and before layout: for every `<svg>`
 /// (SVG namespace) without a valid `viewBox` ([`svg_has_view_box`]), a `width: auto` becomes
@@ -5707,10 +5723,11 @@ fn svg_has_view_box(node: &blitz_dom::Node) -> bool {
 /// in-flow SVG whose parent has `height: auto` is `auto` (CSS 2.2 §10.5) and gets the 150 px too
 /// (Chrome: `<svg width="40" height="10%">` is 40x150, Blitz 40x10; `<svg width="100%"
 /// height="100%">` holding a `<text>` is 784x150, Blitz takes the height from the text's box).
-/// `min-*`/`max-*` still apply, as in Chrome. Not modelled: a percentage height against any other
+/// `min-*`/`max-*` still apply, as in Chrome. Not edited: a percentage height against any other
 /// indefinite containing block (a flex item, a percentage-height parent, an absolutely positioned
-/// SVG's containing block), which Blitz keeps resolving through usvg's tree size; and flex/grid
-/// stretching of an SVG's auto size, which a fixed length turns off.
+/// SVG's containing block), which Blitz resolves through the size-only tree's ratio (Chrome's 150
+/// px for a 300 px wide box; another width keeps the 2:1 ratio where Chrome keeps 150 px); and
+/// flex/grid stretching of an SVG's auto size, which a fixed length turns off.
 ///
 /// WHEN THIS GOES, DELETE: this function, its call in [`resolve_and_walk`], and the canary
 /// `blitz_still_sizes_an_svg_without_viewbox_to_its_content` (`src/raw_blitz_tests.rs`), which
@@ -5799,6 +5816,191 @@ fn size_svgs_like_chrome(doc: &mut BaseDocument) {
     }
 }
 
+/// The local name an `<svg>` carries while [`hide_svgs_from_blitz`] hides it from Blitz's box
+/// construction: a replaced element Blitz lays out exactly like an `svg` (blitz-dom 0.3.0-beta.4
+/// `layout/replaced.rs:10-17` `is_replaced_element`, its only use in layout, `layout/mod.rs:377`,
+/// `node/node.rs:1125`, `resolved_style.rs:375`) and constructs like any element (no `embed`
+/// branch in `layout/construct.rs`). An HTML `<embed>` never gets this far: the render gate
+/// denies it (`validation.rs` `DENIED_ELEMENTS`).
+const HIDDEN_SVG_LOCAL: &str = "embed";
+
+/// An `<svg>` hidden from Blitz's box construction ([`hide_svgs_from_blitz`]).
+pub(crate) struct HiddenSvg {
+    id: NodeId,
+    name: html5ever::QualName,
+    children: Vec<NodeId>,
+}
+
+/// BLITZ BEHAVIOUR COMPENSATION (blitz-dom 0.3.0-beta.4, `svg` feature; Phase C step 07): keeps
+/// host fonts, and the host font scan, out of the layout of an inline `<svg>` (DET-1: no system
+/// fonts).
+///
+/// Blitz parses every element named `svg` with usvg while it constructs its box (blitz-dom
+/// `layout/construct.rs:460-477`, by tag name only), with a font database that loads the HOST
+/// fonts (`util.rs:47-50` `FONT_DB`, `load_system_fonts`; `util.rs:157-164` `parse_svg_image`;
+/// a private static, so callers cannot swap it), and re-parses it whenever the node is damaged
+/// (`layout/damage.rs:122-130` forces `CONSTRUCT_BOX` on an `svg` node; every non-incremental
+/// `resolve` damages all nodes). That tree's size reaches layout (`layout/mod.rs:407-430`): it is
+/// the intrinsic size of an SVG with neither `viewBox` nor `width`/`height` and the aspect ratio
+/// of every `viewBox`-less SVG whose `width`/`height` are not both absolute, and usvg sizes such
+/// an SVG to the bounding box of its content (usvg 0.48.1 `parser/converter.rs:523-605`), `<text>`
+/// measured in host fonts. Measured on macOS 27 (2026-10-28, `c07-svgfonts/scripts/hostfont3.mjs`,
+/// `<text font-size="40">WWWWWWWWWW</text>` naming the host-only `Zapfino` vs an unknown family):
+/// `<div style="height:50%"><svg height="50%">` 300x39.83 vs 300x38.66, and `<svg
+/// style="display:block;box-sizing:border-box;padding:5%">` 834x180.1 vs 457.5x128.7 (Chrome 155:
+/// 300x150 and 380x230 for both); the first SVG of a process also paid the host font scan
+/// (about 21 ms, `fidelity/gate/snapshots/2026-10-28/c06-svg/first-svg-cost-20261028.txt`).
+///
+/// What is done, after the cascade and vellora's style edits and before the first `resolve`: each
+/// element named `svg` (any namespace, Blitz's own test; not inside another one, whose subtree
+/// Blitz never constructs either) is renamed [`HIDDEN_SVG_LOCAL`], its children are detached, and
+/// its `special_data` is set to [`svg_sizing_data`]: an `SvgImageData` parsed from the root's
+/// `width`/`height`/`viewBox`/`preserveAspectRatio` alone, with no fonts. Blitz then lays it out
+/// through the same replaced-element code with no SVG parse of its own; [`restore_hidden_svgs`]
+/// undoes the rename and the detach before the box walk, which paints from vellora's own parse
+/// ([`inline_svg_run`]). The content-free tree is also what Chrome sizes by: an SVG's content
+/// never changes its CSS box (CSS Images 3 §5.1, the natural dimensions of an `<svg>` come from
+/// its attributes only).
+///
+/// Off in the raw-Blitz render ([`RawBlitz`]), which keeps Blitz's own parse.
+///
+/// WHEN BLITZ LETS CALLERS SET THE SVG PARSE OPTIONS / FONT DATABASE, OR STOPS SIZING AN SVG
+/// FROM ITS CONTENT, DELETE: this function, [`svg_sizing_data`], [`restore_hidden_svgs`],
+/// [`HIDDEN_SVG_LOCAL`] and their calls in [`resolve_and_walk`] (and the `usvg_blitz`
+/// dependency). The canaries `blitz_parses_inline_svg_only_when_it_builds_the_boxes` (Blitz still
+/// parses at construction) and `blitz_still_sizes_an_svg_without_viewbox_to_its_content` (the
+/// content bounding box still reaches layout), both in `src/raw_blitz_tests.rs`, fail when either
+/// changes. There is no host-independent canary for "Blitz still loads system fonts" (it depends
+/// on what the host has installed); `tests/inline_svg.rs` holds the host-font invariance tests.
+pub(crate) fn hide_svgs_from_blitz(doc: &mut BaseDocument) -> Vec<HiddenSvg> {
+    use blitz_dom::node::{ImageData, SpecialElementData};
+    let mut found = Vec::new();
+    let mut stack = vec![doc.root_node().id];
+    while let Some(id) = stack.pop() {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        let is_svg = node
+            .data
+            .downcast_element()
+            .is_some_and(|el| &*el.name.local == "svg");
+        if is_svg {
+            found.push(id);
+        } else {
+            stack.extend(node.children.iter().copied());
+        }
+    }
+    let mut hidden = Vec::with_capacity(found.len());
+    for id in found {
+        let Some(sizing) = doc.get_node(id).map(svg_sizing_data) else {
+            continue;
+        };
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let children: Vec<NodeId> = node.children.drain(..).collect();
+        let Some(el) = node.element_data_mut() else {
+            continue;
+        };
+        let name = el.name.clone();
+        el.name.local = html5ever::LocalName::from(HIDDEN_SVG_LOCAL);
+        // `ImageData::None` when usvg rejects even the bare root (e.g. `width="0"`): Blitz then
+        // gives the box no intrinsic size and a zero default object size
+        // (`layout/mod.rs:431`), as it did when its own parse failed.
+        el.special_data = SpecialElementData::Image(Box::new(match sizing {
+            Some(svg) => ImageData::Svg(svg),
+            None => ImageData::None,
+        }));
+        hidden.push(HiddenSvg { id, name, children });
+    }
+    hidden
+}
+
+/// Undoes [`hide_svgs_from_blitz`]: the `<svg>` names and children come back; the size-only
+/// `special_data` stays (the walk only checks that it is `ImageData::Svg`).
+pub(crate) fn restore_hidden_svgs(doc: &mut BaseDocument, hidden: Vec<HiddenSvg>) {
+    for HiddenSvg { id, name, children } in hidden {
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        node.children.extend(children);
+        if let Some(el) = node.element_data_mut() {
+            el.name = name;
+        }
+    }
+}
+
+/// The `SvgImageData` Blitz lays a hidden `<svg>` out with ([`hide_svgs_from_blitz`]), built from
+/// the root's `width`, `height`, `viewBox` and `preserveAspectRatio` alone: no content, no fonts.
+///
+/// What Blitz reads from it (blitz-dom 0.3.0-beta.4 `node/svg.rs:126-205`, `layout/mod.rs:407-430`):
+/// the declared root dimensions (`intrinsic_dimensions`, which Blitz's own
+/// `SvgIntrinsicDimensions::from_xmltree` reads from those attributes, so they equal its parse's);
+/// an absolute `width`/`height` as usvg resolves it; the `viewBox` ratio; and, for a `viewBox`-less
+/// SVG whose `width`/`height` are not both absolute, the tree size and its ratio. Only that last
+/// one came from the content (usvg 0.48.1 `parser/converter.rs:497-498`, `calculate_svg_bbox`); a
+/// bare root would give 100x100 there (usvg resolves a missing or percentage length against a
+/// 100x100 viewport, `converter.rs:523-594`, whatever `Options::default_size` says). Here it is
+/// (absolute width, else 300) x (absolute height, else 150), the CSS default object size (CSS 2.2
+/// §10.3.2, §10.6.2), so where Blitz falls back on the tree (a percentage height against an
+/// indefinite containing block, an `auto` size [`size_svgs_like_chrome`] does not edit) it gets
+/// Chrome's numbers. Chrome 155 (2026-10-28, `c07-svgfonts/chrome-hostfont-cases.txt`) for the
+/// two cases in [`hide_svgs_from_blitz`]: 300x150 and 380x230.
+fn svg_sizing_data(node: &blitz_dom::Node) -> Option<blitz_dom::node::SvgImageData> {
+    use blitz_dom::node::SvgImageData;
+    let el = node.element_data()?;
+    let attr = |wanted: &str| {
+        el.attrs()
+            .iter()
+            .find(|attr| {
+                let local: &str = &attr.name.local;
+                let ns: &str = &attr.name.ns;
+                ns.is_empty() && local == wanted
+            })
+            .map(|attr| attr.value.to_string())
+    };
+    let root = |attrs: &[(&str, Option<String>)]| {
+        let mut source = String::from("<svg xmlns=\"http://www.w3.org/2000/svg\"");
+        for (name, value) in attrs {
+            if let Some(value) = value {
+                source.push(' ');
+                source.push_str(name);
+                source.push_str("=\"");
+                escape_xml(value, true, &mut source);
+                source.push('"');
+            }
+        }
+        source.push_str("/>");
+        source
+    };
+    let declared = root(&[
+        ("width", attr("width")),
+        ("height", attr("height")),
+        ("viewBox", attr("viewBox")),
+        ("preserveAspectRatio", attr("preserveAspectRatio")),
+    ]);
+    // An empty font database (usvg's default) and nothing to resolve: no `<image>`, no `<text>`.
+    let options = usvg_blitz::Options::default();
+    let parsed = SvgImageData::from_data(declared.as_bytes(), &options).ok()?;
+    // Blitz's own test for an absolute (non-percentage) declared length (`node/svg.rs:126-146`).
+    let (abs_width, abs_height) = (parsed.intrinsic_width(), parsed.intrinsic_height());
+    if parsed.viewbox_aspect_ratio().is_some() || (abs_width.is_some() && abs_height.is_some()) {
+        // usvg's tree size does not depend on the content here (`converter.rs:540-594`).
+        return Some(parsed);
+    }
+    let sized = root(&[
+        ("width", Some(abs_width.unwrap_or(300.0).to_string())),
+        ("height", Some(abs_height.unwrap_or(150.0).to_string())),
+    ]);
+    let tree = SvgImageData::from_data(sized.as_bytes(), &options)
+        .ok()?
+        .tree;
+    Some(SvgImageData {
+        tree,
+        intrinsic_dimensions: parsed.intrinsic_dimensions,
+    })
+}
+
 /// The font database of the inline SVGs of one render ([`crate::svg::font_db`] over the
 /// caller's `fonts`), built on the first SVG only.
 struct SvgFonts<'a> {
@@ -5839,7 +6041,10 @@ fn inline_svg_run(
     let SpecialElementData::Image(data) = &el.special_data else {
         return None;
     };
-    if !matches!(**data, ImageData::Svg(_)) || !is_svg_element(node, "svg") {
+    // `HIDDEN_SVG_LOCAL`: an `<svg>` still hidden from Blitz (`hide_svgs_from_blitz`), met by the
+    // throwaway walks of `lay_out_multicol` (`walk_subtree`), which run between two resolves.
+    let svg_root = is_svg_element(node, "svg") || is_svg_element(node, HIDDEN_SVG_LOCAL);
+    if !matches!(**data, ImageData::Svg(_)) || !svg_root {
         return None;
     }
     if !(width > 0.0 && height > 0.0 && width.is_finite() && height.is_finite()) {

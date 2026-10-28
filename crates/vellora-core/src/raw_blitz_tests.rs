@@ -1518,6 +1518,103 @@ fn inline_svg_percentage_sizes_are_chromes() {
     );
 }
 
+/// The `<svg>` cases whose Blitz size came from usvg's content bounding box, `<text>` measured in
+/// the HOST fonts of Blitz's own parse (Phase C step 06 verify, finding 1), plus neighbours, as
+/// `(body with a FAMILY placeholder, Chrome 155's svg box)`. Chrome measured 2026-10-28 with
+/// Chrome for Testing 155.0.8059.85, `c06-svg/scripts/chrome-rects.mjs` on
+/// `c07-svgfonts/hostfont-after2/*.html` (`c07-svgfonts/chrome-hostfont-cases.txt`).
+const SVG_HOST_FONT_CASES: &[(&str, (f64, f64))] = &[
+    (
+        r#"<div style="height:50%"><svg height="50%">TEXT</svg></div>"#,
+        (300.0, 150.0),
+    ),
+    (
+        r#"<svg style="display:block;box-sizing:border-box;padding:5%">TEXT</svg>"#,
+        (380.0, 230.0),
+    ),
+    (
+        r#"<div style="position:relative;height:300px"><svg style="position:absolute;left:0;top:0" height="50%">TEXT</svg></div>"#,
+        (300.0, 150.0),
+    ),
+    (
+        r#"<div style="display:flex"><svg height="50%">TEXT</svg></div>"#,
+        (300.0, 150.0),
+    ),
+    (
+        r#"<svg width="100%" height="100%">TEXT</svg>"#,
+        (800.0, 150.0),
+    ),
+    (r#"<p>a <svg>TEXT</svg> b</p>"#, (300.0, 150.0)),
+    (r#"<svg viewBox="0 0 100 50">TEXT</svg>"#, (800.0, 400.0)),
+];
+
+fn svg_host_font_doc(body: &str, family: &str) -> String {
+    let text =
+        format!(r#"<text x="0" y="40" font-size="40" font-family="{family}">WWWWWWWWWW</text>"#);
+    format!(
+        r#"<!DOCTYPE html><html><head><style>@page {{ size: 800px 600px; margin: 0; }}
+        body {{ margin: 0; }}</style></head><body>{}</body></html>"#,
+        body.replace("TEXT", &text)
+    )
+}
+
+/// DET-1 (no system-font fallback), `blitz_engine::hide_svgs_from_blitz`: an inline SVG's box
+/// never depends on the fonts its `<text>` names. Each case is laid out and rendered with the
+/// text in `Zapfino` (installed on macOS, never bundled: before step 07 it changed the box there,
+/// e.g. 834x180.1 vs 457.5x128.7 for the padding case), an unknown family, and a bundled one; the
+/// three boxes are Chrome's and the host-only and unknown families give byte-identical PDFs (both
+/// fall back to the same bundled face in vellora's SVG font database). On a host without Zapfino
+/// the first two documents are equivalent, and the Chrome sizes still discriminate.
+#[test]
+fn inline_svg_size_never_depends_on_host_fonts() {
+    let opts = RenderOptions {
+        creation_date: Some((2026, 10, 28)),
+        ..Default::default()
+    };
+    for &(body, chrome) in SVG_HOST_FONT_CASES {
+        let mut sizes = Vec::new();
+        let mut pdfs = Vec::new();
+        for family in ["Zapfino", "NoSuchFontAnywhere", "Liberation Sans"] {
+            let html = svg_host_font_doc(body, family);
+            let laid = product_layout(&html);
+            let svg = svg_boxes(&laid);
+            assert_eq!(svg.len(), 1, "{body}");
+            sizes.push((svg[0].2, svg[0].3));
+            pdfs.push(crate::render(html.as_bytes(), &opts).expect("renders"));
+        }
+        assert_eq!(sizes, vec![chrome; 3], "{body}");
+        assert!(
+            pdfs[0] == pdfs[1],
+            "host-only vs unknown family PDF bytes: {body}"
+        );
+    }
+}
+
+/// The document of [`hidden_svgs_survive_every_relayout`]: a ruby (`lay_out_ruby` lays the
+/// document out again), a `viewBox`-less SVG in a percentage-height parent whose content is a
+/// 25x50 rect, and a multi-column container holding a second SVG (`lay_out_multicol` lays it out
+/// again, and its balancing walks that SVG while it is hidden).
+const SVG_RELAYOUT: &str = r#"<!DOCTYPE html><html><head><style>@page { size: 800px 600px; margin: 0; }
+    body { margin: 0; } svg { display: block; } #mc { columns: 2; column-gap: 0; }</style></head>
+    <body><p><ruby>漢<rt>kan</rt></ruby></p>
+    <div style="height:50%"><svg height="50%"><rect width="25" height="50"/></svg></div>
+    <div id="mc"><svg width="40" height="20"></svg><p>x</p></div></body></html>"#;
+
+/// `blitz_engine::hide_svgs_from_blitz` holds across vellora's extra non-incremental resolves
+/// (every node damaged, which would make Blitz re-parse an `svg`-named node from its content):
+/// the percentage-height SVG of [`SVG_RELAYOUT`] is still Chrome's 300x150, and both SVGs are
+/// painted (one image run each). Raw Blitz, which keeps its own parse, sizes the first from its
+/// content's 1:2 ratio (300x600 with vellora's width).
+#[test]
+fn hidden_svgs_survive_every_relayout() {
+    let laid = product_layout(SVG_RELAYOUT);
+    let sizes: Vec<(f64, f64, usize)> = svg_boxes(&laid).iter().map(|b| (b.2, b.3, b.4)).collect();
+    assert_eq!(sizes, vec![(300.0, 150.0, 1), (40.0, 20.0, 1)]);
+    let (raw, _) = raw_layout(&SVG_RELAYOUT.replace("<svg height", r#"<svg width="300" height"#));
+    let raw_sizes: Vec<(f64, f64)> = svg_boxes(&raw).iter().map(|b| (b.2, b.3)).collect();
+    assert_eq!(raw_sizes[0], (300.0, 600.0));
+}
+
 /// The anonymous-table-object repro of `blitz_engine::build_anonymous_table_objects`: a
 /// `display: table` box holding a 30 px caption and a 40 px non-cell child, then a block.
 const TABLE_ANONYMOUS: &str = r#"<!DOCTYPE html><html><head><style>
