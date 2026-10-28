@@ -1156,6 +1156,197 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
     }
 }
 
+/// Chromium's cap on the lines it balances (MDN `text-wrap` "balance": "six or less for
+/// Chromium"; the constant `kMaxLinesForBalance` used in Blink's `paragraph_line_breaker.cc` was
+/// not read: UNVERIFIED value).
+const MAX_LINES_FOR_BALANCE: usize = 6;
+
+/// BLITZ GAP COMPENSATION (blitz-dom 0.3.0-beta.4 + stylo 0.22.0): `text-wrap: balance` is
+/// ignored, lines are filled greedily.
+///
+/// - Spec: CSS Text 4 §6.1 `text-wrap-style: balance`: line breaks are chosen so the remaining
+///   space is balanced across the lines of the block. Chrome 155 (Blink
+///   `ParagraphLineBreaker::AttemptParagraphBalancing`, `paragraph_line_breaker.cc`) bisects the
+///   available width for the narrowest one that keeps the greedy line count, then lays the lines
+///   out at that width; alignment stays within the full line box (WPT
+///   `css/css-text/white-space/text-wrap-balance-align-001.html` passes in Chrome).
+/// - Blitz: Stylo parses `text-wrap-style` and the `text-wrap` shorthand for Gecko only (stylo
+///   0.22.0 `properties/longhands.toml` 4008-4014 and `properties/shorthands.toml` 551-554:
+///   `engine = "gecko"`), so the declaration is dropped and Blitz breaks every line with the full
+///   width (`layout/inline.rs` 666-668 / 677-683 of blitz-dom 0.3.0-beta.4). Repro (WPT
+///   `text-wrap-balance-text-indent-001.html`): Ahem 10 px, `width: 10ch`, `text-indent: 5ch`,
+///   "01 34 6 89 12 3 56": Blitz lines "01 34 " / "6 89 12 3 " / "56", Chrome "01" / "34 6 89" /
+///   "12 3 56" (the greedy count 3 at a 70 px width).
+/// - Correction, after layout: the declarations are read by vellora (`break_css`, selectors
+///   matched with Stylo; an inline `style` wins, an element inherits its parent's decision); for
+///   each such inline root, the Parley layout is re-broken at the narrowest width (bisected to
+///   1/64 px) that keeps its line count, then left-aligned again. Only when nothing else would
+///   move: an ltr root whose lines are all physically left-aligned, with 2 to
+///   [`MAX_LINES_FOR_BALANCE`] lines, no inline boxes, no forced break, no emergency (in-word)
+///   break, every line at the same inline offset and width, Blitz's breaks equal to a plain
+///   full-width re-break, no floated element anywhere in the document (Chrome leaves a paragraph
+///   beside a float unbalanced: WPT `text-wrap-balance-float-006.html`), no `line-clamp` (Blitz
+///   does not clamp), and the re-broken lines keep every baseline (else the original layout is
+///   kept). Box sizes are untouched (same line count, same line heights).
+///
+/// WHEN BLITZ SUPPORTS `text-wrap: balance`, DELETE this function, `rebalance_layout`,
+/// `MAX_LINES_FOR_BALANCE`, its call in [`resolve_and_walk`], the `wrap_*` parts of
+/// `src/break_css.rs`, the canary `blitz_still_wraps_balanced_text_greedily`
+/// (`src/raw_blitz_tests.rs`) and the `balance_*` tests there.
+fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRules) {
+    let (balance, unbalance) = {
+        let device = doc.stylist_device();
+        breaks.applicable_wrap(|query| media_query_matches(device, query))
+    };
+    let base: &BaseDocument = doc;
+    let balance = matched_nodes(base, &balance);
+    let unbalance = matched_nodes(base, &unbalance);
+    let mut roots = Vec::new();
+    let mut has_float = false;
+    let mut stack = vec![(base.root_element().id, false)];
+    while let Some((id, inherited)) = stack.pop() {
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        has_float |= node
+            .primary_styles()
+            .is_some_and(|s| !matches!(s.clone_float(), style::computed_values::float::T::None));
+        let inline = node
+            .attr(blitz_dom::local_name!("style"))
+            .and_then(|s| crate::break_css::declares(s).wrap_balance);
+        let on = inline.unwrap_or(match (balance.contains(&id), unbalance.contains(&id)) {
+            (true, false) => true,
+            (false, true) | (true, true) => false,
+            (false, false) => inherited,
+        });
+        if on && node.flags.is_inline_root() {
+            roots.push(id);
+        }
+        let layout_children: Vec<NodeId> = node
+            .layout_children
+            .borrow()
+            .as_ref()
+            .map(|c| c.iter().copied().collect())
+            .unwrap_or_default();
+        let mut children: Vec<NodeId> = node.children.iter().copied().collect();
+        children.extend(
+            layout_children
+                .into_iter()
+                .filter(|c| !node.children.contains(c)),
+        );
+        stack.extend(children.into_iter().rev().map(|c| (c, on)));
+    }
+    if has_float {
+        return;
+    }
+    for id in roots {
+        let Some(node) = doc.get_node(id) else {
+            continue;
+        };
+        if !matches!(inline_align(node), InlineAlign::Left)
+            || node.primary_styles().is_none_or(|s| {
+                matches!(
+                    s.clone_direction(),
+                    style::computed_values::direction::T::Rtl
+                ) || matches!(
+                    s.clone_text_align(),
+                    style::values::specified::TextAlignKeyword::Justify
+                ) || !matches!(
+                    s.clone_text_wrap_mode(),
+                    style::computed_values::text_wrap_mode::T::Wrap
+                )
+            })
+        {
+            continue;
+        }
+        let Some(node) = doc.get_node_mut(id) else {
+            continue;
+        };
+        let Some(text_layout) = node
+            .data
+            .downcast_element_mut()
+            .and_then(|el| el.inline_layout_data.as_mut())
+        else {
+            continue;
+        };
+        if let Some(balanced) = rebalance_layout(&text_layout.layout) {
+            text_layout.layout = balanced;
+        }
+    }
+}
+
+/// `layout` re-broken at the narrowest width that keeps its line count ([`balance_text_wrap`]),
+/// or `None` when it does not qualify or would move a line.
+fn rebalance_layout<B: parley::Brush>(layout: &parley::Layout<B>) -> Option<parley::Layout<B>> {
+    let lines: Vec<parley::LineMetrics> = layout.lines().map(|l| *l.metrics()).collect();
+    let n = lines.len();
+    if !(2..=MAX_LINES_FOR_BALANCE).contains(&n)
+        || layout.inline_boxes().len() > 0
+        || layout.is_rtl()
+        || layout
+            .lines()
+            .any(|l| l.break_reason() == parley::BreakReason::Explicit)
+    {
+        return None;
+    }
+    let first = lines[0];
+    if lines.iter().any(|m| {
+        m.inline_min_coord != first.inline_min_coord || m.inline_max_coord != first.inline_max_coord
+    }) || first.inline_min_coord != 0.0
+    {
+        return None;
+    }
+    let full = first.inline_max_coord;
+    let ranges = |l: &parley::Layout<B>| -> Vec<std::ops::Range<usize>> {
+        l.lines().map(|line| line.text_range()).collect()
+    };
+    // Blitz's own breaking must be what a plain full-width break gives (no float shortened a
+    // line, nothing else placed one): else the layout is left alone.
+    let mut replay = layout.clone();
+    replay.break_all_lines(Some(full));
+    if ranges(&replay) != ranges(layout) {
+        return None;
+    }
+    let emergency = |l: &parley::Layout<B>| {
+        l.lines()
+            .any(|line| line.break_reason() == parley::BreakReason::Emergency)
+    };
+    if emergency(layout) {
+        return None;
+    }
+    // A width qualifies when it keeps `n` lines without breaking inside a word (Chrome keeps
+    // "CONTROLLING" whole under `overflow-wrap: break-word`: WPT
+    // `text-wrap-balance-overflow-001.html`).
+    let qualifies = |width: f32| {
+        let mut probe = layout.clone();
+        probe.break_all_lines(Some(width));
+        probe.len() <= n && !emergency(&probe)
+    };
+    // The narrowest qualifying width: `upper` always qualifies, `lower` never.
+    let (mut lower, mut upper) = (0.0f32, full);
+    const EPSILON: f32 = 1.0 / 64.0;
+    while lower + EPSILON < upper {
+        let mid = (lower + upper) / 2.0;
+        if !qualifies(mid) {
+            lower = mid;
+        } else {
+            upper = mid;
+        }
+    }
+    if upper >= full {
+        return None;
+    }
+    let mut balanced = layout.clone();
+    balanced.break_all_lines(Some(upper));
+    balanced.align(parley::Alignment::Left, parley::AlignmentOptions::default());
+    let same_lines = balanced.len() == n
+        && balanced
+            .lines()
+            .zip(&lines)
+            .all(|(l, m)| l.metrics().baseline == m.baseline && l.metrics().offset == m.offset);
+    same_lines.then_some(balanced)
+}
+
 /// BLITZ BUG COMPENSATION (blitz-dom 0.3.0-beta.4): a `::before`/`::after` with `display:
 /// table-column` or `table-column-group` renders its `content`.
 ///
@@ -2128,6 +2319,11 @@ fn resolve_and_walk<O: LayoutObserver>(
     };
     doc.resolve(0.0);
     collapsed_row_lines(&doc, &mut collapsed);
+    // `text-wrap: balance` (not in Blitz's style system): re-break the lines it applies to.
+    // Off in the raw-Blitz render.
+    if O::VELLORA_CORRECTIONS {
+        balance_text_wrap(&mut doc, breaks);
+    }
 
     // The break rules inside `@media` blocks apply when Stylo's evaluation of those blocks, on
     // the device that just styled the document, matches (port step 09).

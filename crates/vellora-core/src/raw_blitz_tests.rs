@@ -902,3 +902,67 @@ fn rtl_line_end_whitespace_justified_spreads_over_the_inner_separator() {
         .expect("the inner space of \"XX XX\"");
     assert!((inner - 36.006).abs() < 0.01, "inner separator {inner}");
 }
+
+/// The `text-wrap: balance` repro of `blitz_engine::balance_text_wrap`: WPT
+/// `css/css-text/white-space/text-wrap-balance-text-indent-001.html` in Liberation Mono instead
+/// of Ahem (every length is in `ch`, so the breaks are the same).
+const BALANCE: &str = r#"<!DOCTYPE html><html><head><style>
+    div { font: 10px 'Liberation Mono'; text-indent: 5ch; text-wrap: balance; width: 10ch; }
+    </style></head><body><div>
+      01
+      34 6 89
+      12 3 56
+    </div></body></html>"#;
+
+/// The text of each line (runs grouped by baseline, in order).
+fn line_texts(doc: &LaidOutDoc) -> Vec<String> {
+    let mut lines: Vec<(f64, String)> = Vec::new();
+    for (text, _, y) in runs_of(doc) {
+        match lines.iter_mut().find(|(ly, _)| (*ly - y).abs() < 1e-6) {
+            Some((_, line)) => line.push_str(&text),
+            None => lines.push((y, text)),
+        }
+    }
+    lines.sort_by(|a, b| a.0.total_cmp(&b.0));
+    lines.into_iter().map(|(_, text)| text).collect()
+}
+
+/// CANARY of `blitz_engine::balance_text_wrap`: raw Blitz still fills the lines of a
+/// `text-wrap: balance` block greedily (Stylo 0.22.0 parses `text-wrap` for Gecko only).
+#[test]
+fn blitz_still_wraps_balanced_text_greedily() {
+    assert_eq!(
+        line_texts(&raw_layout(BALANCE).0),
+        ["01 34 ", "6 89 12 3 ", "56"],
+        "\n\nBLITZ CHANGED HOW IT BREAKS A `text-wrap: balance` BLOCK: raw Blitz no longer fills \
+         the repro's lines greedily (stylo 0.22.0 properties/longhands.toml 4008-4014 and \
+         shorthands.toml 551-554 made `text-wrap-style` / `text-wrap` Gecko-only). If Blitz now \
+         balances like Chrome 155 (\"01\" / \"34 6 89\" / \"12 3 56\"), DELETE \
+         `balance_text_wrap`, `rebalance_layout`, `MAX_LINES_FOR_BALANCE` and its call in \
+         `resolve_and_walk` (crates/vellora-core/src/blitz_engine.rs), the `wrap_*` parts of \
+         src/break_css.rs, this canary and the `balance_*` tests, then re-run the WPT \
+         css-text/white-space directory.\n"
+    );
+}
+
+/// The compensation gives Chrome 155's lines (the WPT reference: "01" / "34 6 89" / "12 3 56").
+#[test]
+fn balance_text_wrap_gives_chromes_lines() {
+    assert_eq!(
+        line_texts(&product_layout(BALANCE)),
+        ["01 ", "34 6 89 ", "12 3 56"]
+    );
+}
+
+/// Left alone: a right-aligned block (Chrome aligns in the full line box, Parley in the narrowed
+/// one), a document with a float, and a block without `text-wrap: balance`.
+#[test]
+fn balance_text_wrap_skips_what_it_cannot_place_like_chrome() {
+    let greedy = ["01 34 ", "6 89 12 3 ", "56"];
+    let right = BALANCE.replace("width: 10ch;", "width: 10ch; text-align: right;");
+    let float = BALANCE.replace("<body>", "<body><span style=\"float: right\">f</span>");
+    let off = BALANCE.replace("text-wrap: balance;", "");
+    assert_eq!(line_texts(&product_layout(&right)), greedy);
+    assert_eq!(line_texts(&product_layout(&float))[1..], greedy);
+    assert_eq!(line_texts(&product_layout(&off)), greedy);
+}

@@ -29,6 +29,12 @@ pub struct BreakRules {
     pub avoid_inside: Vec<BreakRule>,
     /// Selector lists declaring a forced break before the element.
     pub page_before: Vec<BreakRule>,
+    /// Selector lists declaring `text-wrap-style: balance` (or `text-wrap: balance`), and those
+    /// declaring any other `text-wrap-style` (or a `text-wrap` without `balance`). Stylo parses
+    /// `text-wrap-style` and the `text-wrap` shorthand for Gecko only (`engine = "gecko"`), so
+    /// `blitz_engine::balance_text_wrap` reads them from here (Phase C step 04).
+    pub wrap_balance: Vec<BreakRule>,
+    pub wrap_unbalance: Vec<BreakRule>,
     /// Every `@media` block a rule was read in, in the order they open (an
     /// enclosing block comes before the blocks inside it).
     pub media: Vec<MediaBlock>,
@@ -59,6 +65,23 @@ impl BreakRules {
         &'a self,
         mut matches: impl FnMut(&str) -> bool,
     ) -> (Vec<&'a str>, Vec<&'a str>) {
+        let applies = self.media_applies(&mut matches);
+        let select = |rules: &'a [BreakRule]| select_rules(rules, &applies);
+        (select(&self.avoid_inside), select(&self.page_before))
+    }
+
+    /// The `(wrap_balance, wrap_unbalance)` selector lists whose `@media` blocks all match, like
+    /// [`BreakRules::applicable`].
+    pub fn applicable_wrap(&self, mut matches: impl FnMut(&str) -> bool) -> (Vec<&str>, Vec<&str>) {
+        let applies = self.media_applies(&mut matches);
+        (
+            select_rules(&self.wrap_balance, &applies),
+            select_rules(&self.wrap_unbalance, &applies),
+        )
+    }
+
+    /// Whether each `@media` block applies (it and every block it sits in match).
+    fn media_applies(&self, matches: &mut impl FnMut(&str) -> bool) -> Vec<bool> {
         let mut by_query: std::collections::HashMap<&str, bool> = std::collections::HashMap::new();
         let mut applies: Vec<bool> = Vec::with_capacity(self.media.len());
         for block in &self.media {
@@ -70,15 +93,17 @@ impl BreakRules {
                     .or_insert_with(|| matches(&block.query));
             applies.push(applied);
         }
-        let select = |rules: &'a [BreakRule]| -> Vec<&'a str> {
-            rules
-                .iter()
-                .filter(|rule| rule.media.is_none_or(|block| applies[block]))
-                .map(|rule| rule.selector.as_str())
-                .collect()
-        };
-        (select(&self.avoid_inside), select(&self.page_before))
+        applies
     }
+}
+
+/// The selectors of `rules` whose `@media` block applies.
+fn select_rules<'a>(rules: &'a [BreakRule], applies: &[bool]) -> Vec<&'a str> {
+    rules
+        .iter()
+        .filter(|rule| rule.media.is_none_or(|block| applies[block]))
+        .map(|rule| rule.selector.as_str())
+        .collect()
 }
 
 /// Which fragmentation hints one declaration block carries.
@@ -86,6 +111,10 @@ impl BreakRules {
 pub struct BreakHints {
     pub avoid_inside: bool,
     pub page_before: bool,
+    /// `Some(true)`: `text-wrap-style: balance` (or `text-wrap` with `balance`); `Some(false)`:
+    /// another `text-wrap-style`, or a `text-wrap` without `balance` (the shorthand resets the
+    /// style to `auto`); `None`: neither property.
+    pub wrap_balance: Option<bool>,
 }
 
 /// Collect the break rules declared in the document's `<style>` elements.
@@ -102,7 +131,15 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
                 });
             }
             if hints.page_before {
-                rules.page_before.push(BreakRule { selector, media });
+                rules.page_before.push(BreakRule {
+                    selector: selector.clone(),
+                    media,
+                });
+            }
+            match hints.wrap_balance {
+                Some(true) => rules.wrap_balance.push(BreakRule { selector, media }),
+                Some(false) => rules.wrap_unbalance.push(BreakRule { selector, media }),
+                None => {}
             }
         }
     }
@@ -114,6 +151,7 @@ pub fn parse_break_rules(html: &str) -> BreakRules {
 /// in the cascade within a single block.
 pub fn declares(block: &str) -> BreakHints {
     let mut hints = BreakHints::default();
+    let mut line_clamp = false;
     for decl in block.split(';') {
         let Some((prop, value)) = decl.split_once(':') else {
             continue;
@@ -134,8 +172,26 @@ pub fn declares(block: &str) -> BreakHints {
             "page-break-before" => {
                 hints.page_before = matches!(value, "always" | "left" | "right");
             }
+            // Blitz does not clamp (`line-clamp` is Gecko-only in Stylo 0.22.0), so a clamped
+            // block is not balanced either (`blitz_engine::balance_text_wrap`; WPT
+            // `text-wrap-balance-line-clamp-001.html`).
+            "line-clamp" | "-webkit-line-clamp" => {
+                line_clamp = !matches!(value, "none" | "initial" | "unset" | "revert");
+            }
+            "text-wrap" | "text-wrap-style" => {
+                // `inherit`/`unset` (an inherited property)/`revert*` defer to the parent.
+                hints.wrap_balance =
+                    if matches!(value, "inherit" | "unset" | "revert" | "revert-layer") {
+                        None
+                    } else {
+                        Some(value.split_ascii_whitespace().any(|v| v == "balance"))
+                    };
+            }
             _ => {}
         }
+    }
+    if line_clamp {
+        hints.wrap_balance = Some(false);
     }
     hints
 }
@@ -509,5 +565,35 @@ mod tests {
         assert!(hints.avoid_inside);
         assert!(hints.page_before);
         assert_eq!(declares("color: red"), BreakHints::default());
+    }
+
+    #[test]
+    fn text_wrap_balance_is_read_from_the_shorthand_and_the_longhand() {
+        assert_eq!(declares("text-wrap: balance").wrap_balance, Some(true));
+        assert_eq!(declares("text-wrap: wrap balance").wrap_balance, Some(true));
+        assert_eq!(
+            declares("TEXT-WRAP-STYLE: Balance").wrap_balance,
+            Some(true)
+        );
+        assert_eq!(declares("text-wrap: wrap").wrap_balance, Some(false));
+        assert_eq!(
+            declares("text-wrap-style: pretty").wrap_balance,
+            Some(false)
+        );
+        assert_eq!(declares("text-wrap: inherit").wrap_balance, None);
+        assert_eq!(declares("color: red").wrap_balance, None);
+        // Blitz does not clamp, so a clamped block is not balanced.
+        assert_eq!(
+            declares("text-wrap: balance; -webkit-line-clamp: 2").wrap_balance,
+            Some(false)
+        );
+        let rules = parse_break_rules(
+            "<style>p { text-wrap: balance } .x { text-wrap-style: auto } \
+             @media print { h1 { text-wrap: balance } }</style>",
+        );
+        let (balance, unbalance) = rules.applicable_wrap(|_| true);
+        assert_eq!((balance, unbalance), (vec!["p", "h1"], vec![".x"]));
+        let (balance, _) = rules.applicable_wrap(|_| false);
+        assert_eq!(balance, vec!["p"]);
     }
 }
