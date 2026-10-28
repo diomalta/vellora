@@ -23,3 +23,6 @@ wide-right-nosp.html    0.00    0.0   20.0    0.0  True
 wide-right.html       0.00    0.0   20.0    0.0  True
 c05 float top == Chrome: 21/22
 c04 float top == Chrome: 7 / 18
+end-sp6.html          0.00    0.0    n/a    0.0  True   (added after the commit f1e057a measurement; c05 product code unchanged)
+end-sp6-b.html       20.00    0.0    n/a   20.0  True
+c05 float top == Chrome incl. the 2 later repros: 23/24

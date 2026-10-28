@@ -48,6 +48,19 @@ top (px below the div's top) next to raw Blitz, the c04 fixup (3545ce4) and this
 | **left-over** | `Some text <left f 5ch>that …` | **20** | 0 | 0 | **0** |
 
 (n/a: repro added after the c04 measurement.) Float tops equal Chrome on **21/22** (c04: 7/18).
+Two later repros check the collapsible space when the float ends the line, both measured on
+f1e057a's product code: `Some <f 6ch>` with nothing after it gives Chrome 0 and vellora 0
+(Blitz's run is `Some`, without the space), and `Some <b>x</b> <f 6ch>` gives Chrome 20 and
+vellora 20. That makes **23/24**.
+
+Exact-fit boundaries are matched with little to spare. The overlap test runs on Taffy's rounded
+`final_layout` with `OVERLAP_EPSILON_PX` 0.5:
+
+- fit-sp overlaps by 0.41 px (rounded float x 38.0 against the run's end at 38.41);
+- pre-fit overlaps by 0.01 px.
+
+Chrome's test is exact (LayoutUnit). Exact fits at other sizes are UNVERIFIED, and the epsilon was
+not touched in this step.
 The one miss, `left-over`, is unchanged by this step and was missed at c04 too: Blitz shifts
 the whole line, the text before the float included, right of a left float at the line's top, so no
 run before the float overlaps it. Chrome 155 puts that float below the line with the text at

@@ -32,6 +32,8 @@ CASES = {
     "nbsp6": ("10ch", "nowrap", "right", "6ch", "", "Some&nbsp;<span class=f id=f></span>text after"),
     "wide-first": ("10ch", "nowrap", "right", "12ch", "", "<span class=f id=f></span>Some text after"),
     "left-fit10": ("10ch", "nowrap", "left", "5ch", "", "Some <span class=f id=f></span>text that overflows my parent."),
+    "end-sp6": ("10ch", "nowrap", "right", "6ch", "", "Some <span class=f id=f></span>"),
+    "end-sp6-b": ("10ch", "nowrap", "right", "6ch", "", "Some <b>x</b> <span class=f id=f></span>"),
     "second-line": ("10ch", "nowrap", "right", "5ch", "", "Line one<br>Ab <span class=f id=f></span>cdefghijklmnop"),
 }
 for name, (w, ws, side, fw, extra, body) in CASES.items():
