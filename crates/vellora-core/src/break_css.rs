@@ -103,10 +103,17 @@ pub struct BreakHints {
 /// document makes no page (Chrome 155 prints no trailing blank page for
 /// `<p style="page-break-after: always">` as the body's last child).
 ///
+/// A sibling laid out beside the box (the other items of a row flex line, the next cells of a
+/// grid row) cannot start a page of its own: the break goes after the whole row, before the
+/// first sibling that starts below the box, or to the parent when no sibling does. Chrome 155
+/// propagates `break-after: page` on a row flex item to its flex line (WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-082c-print.html; css-flexbox-1 §12 "Flex Layout
+/// Fragmentation").
+///
 /// `boxes` is the walk's depth-ordered pre-order list (a box's descendants follow it with a
 /// greater `depth`). The list is read back to front, so a child's propagated break reaches its
-/// parent before the parent is visited. Linear: each box is visited once, its parent comes from
-/// one forward pass and the next-sibling index is remembered per depth.
+/// parent before the parent is visited. Each box is visited once, its parent comes from one
+/// forward pass and its next in-flow sibling is remembered per depth.
 pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
     if !boxes.iter().any(|b| b.break_after_page) {
         return;
@@ -128,6 +135,13 @@ pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
     // next_at[d]: index of the box at depth d that follows the box being visited, at the same
     // depth and within the same parent (reset when the walk climbs above depth d).
     let mut next_at: Vec<Option<usize>> = Vec::new();
+    // next_sibling[i]: the next in-flow sibling of box i (filled when i is visited).
+    let mut next_sibling: Vec<Option<usize>> = vec![None; boxes.len()];
+    // `b` sits beside `a` on the inline axis (no horizontal overlap) and starts above a's bottom.
+    let beside = |a: &crate::blitz_engine::LaidOutBox, b: &crate::blitz_engine::LaidOutBox| {
+        const EPS: f64 = 0.5;
+        b.y < a.y + a.height - EPS && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+    };
     for i in (0..boxes.len()).rev() {
         let depth = boxes[i].depth;
         if next_at.len() <= depth {
@@ -148,8 +162,13 @@ pub fn resolve_break_after(boxes: &mut [crate::blitz_engine::LaidOutBox]) {
             boxes[i].break_after_page = false;
             continue;
         }
+        next_sibling[i] = next;
         if boxes[i].break_after_page {
-            match next {
+            let mut target = next;
+            while let Some(j) = target.filter(|&j| beside(&boxes[i], &boxes[j])) {
+                target = next_sibling[j];
+            }
+            match target {
                 Some(j) => boxes[j].break_before_page = true,
                 None => {
                     // Last child: propagate to the parent (the nearest earlier box one level up).

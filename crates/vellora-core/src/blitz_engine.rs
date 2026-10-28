@@ -2478,7 +2478,14 @@ fn push_box(
         break_inside_avoid: inline_breaks.avoid_inside
             || sink.breaks.avoid_inside.contains(&node_id),
         break_before_page: inline_breaks.page_before || sink.breaks.page_before.contains(&node_id),
-        break_after_page: inline_breaks.page_after || sink.breaks.page_after.contains(&node_id),
+        // A float's `break-after` is ignored (Chrome 155: `<div style="float: left;
+        // break-after: page">` before two paragraphs prints one page, probe ba-float-source in
+        // fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py); a float after a
+        // break-after box still takes the break (probe ba-float-next).
+        break_after_page: (inline_breaks.page_after || sink.breaks.page_after.contains(&node_id))
+            && !node.primary_styles().is_some_and(|styles| {
+                !matches!(styles.clone_float(), style::computed_values::float::T::None)
+            }),
         out_of_flow: node
             .primary_styles()
             .is_some_and(|styles| styles.clone_position().is_absolutely_positioned()),

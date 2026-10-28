@@ -37,3 +37,6 @@ Results (Chrome pages | first words per page):
 | ba-propagate, ba-wrapped, ba-margin | 2 pages | 2 pages |
 | ba-abspos-next | 2: One Abs / Two | 2: One Abs / Two |
 | ba-inline-block | 1 page | 1 page |
+| ba-float-next (a float after the break) | 2: One / Float Two | 2: One / Float Two |
+| ba-float-source (`break-after` on a float) | 1 page | 1 page (floats are laid out in flow without the blitz-dom `floats` feature, so the words differ) |
+| ba-flex-row (`break-after` on a row flex item) | 2: Item1 Item2 / Item3 After | 2: Item1 Item2 / Item3 After |

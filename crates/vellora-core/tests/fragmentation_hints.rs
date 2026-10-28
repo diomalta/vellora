@@ -339,6 +339,25 @@ fn break_after_page_starts_the_next_box_on_a_fresh_page() {
     assert_eq!(pages_with(&abspos, "Two"), vec![1]);
 }
 
+/// `break-after: page` on an item of a row flex line breaks after the line, not between the
+/// items beside each other (Chrome 155, WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-082c-print.html: items 3 and 4 share page 1, 5 starts
+/// page 2).
+#[test]
+fn break_after_on_a_row_flex_item_breaks_after_its_line() {
+    let html = format!(
+        "<!DOCTYPE html><html><head><style>{SHORT_PAGE} .f {{ display: flex; flex-wrap: wrap; }} \
+         .f > div {{ width: 50%; }}</style></head><body>\
+         <div class=\"f\"><div>Item1</div><div>Item2</div>\
+         <div style=\"break-after: page\">Item3</div><div>Item4</div></div>\
+         <div class=\"f\"><div>Item5</div><div>Item6</div></div></body></html>"
+    );
+    let p = paginate(&html);
+    assert_eq!(p.report.page_count, 2);
+    assert_eq!(pages_with(&p, "Item4"), vec![0]);
+    assert_eq!(pages_with(&p, "Item5"), vec![1]);
+}
+
 /// A `<thead>` repeats only when it is at most a quarter of the page's content height (Chrome
 /// 155: 48 px repeats and 49 px does not on a 192 px content box, probes
 /// fidelity/gate/snapshots/2026-10-28/c04-frag/probes/thead-repeat*.py); one that does not repeat is
