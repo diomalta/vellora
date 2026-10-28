@@ -160,7 +160,7 @@ does not exist is treated like a missing venv.
   `underlines-missing` (and `-extra`). Run-all step `paint-probe` writes
   `<run>/paint-probe/summary.json` and always exits 0; `node fidelity/oracles/paint-probe.mjs
   --run <dir> --out <file>` re-probes an existing run. Before/after of step 04:
-  `fidelity/gate/snapshots/2026-10-28/c04-paint/`.
+  `fidelity/gate/snapshots/2026-10-28/c04-paint/` (evidence archive: git tag `fidelity-archive-2026-10-28`, commit `b5c9546`).
 - **layout-consensus** (`lib/layout.mjs`, `lib/consensus.mjs`, `py/words.py`): word anchors are
   the pen origin x of the first glyph and the baseline y (PyMuPDF `rawdict`). Box tops are not
   used, because they come from producer-declared font ascents (see

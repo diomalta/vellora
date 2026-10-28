@@ -9,6 +9,17 @@ The step-06 branch records stay where their workers wrote them: `../c06-svg/`,
 `../c06-col-breaks/`, `../c06-ruby/` (the table branch kept its record in its run store,
 `~/Repositories/vellora-fidelity-runs/c06-table-anon/`).
 
+> **Pruned 2026-10-28.** Of the 2026-10-28 snapshots only this directory and
+> `../c06-docs/paint-probe-pin-v0.2.0.json` are in the tree. The other paths this README cites
+> (`../c06-svg/`, `../c06-col-breaks/`, `../c06-ruby/`, `../c05/`, `../c03/`,
+> `../../2026-10-27/10-final/` with `DEBT-10-integration.json` and `pin-classification.json`) are
+> at the git tag `fidelity-archive-2026-10-28`, commit `b5c95460eebedcc86a6dce3c0e262a940b0a8c27`.
+> The ledger script `c03/scripts/shrink-ledger.mjs` used below is now `fidelity/gate/shrink-ledger.mjs`
+> (same shrink; `--baseline` defaults to the latest port link, so pass
+> `--baseline fidelity/baselines/port/10-integration` to repeat this step's run).
+> Re-checking the published gate needs only kept files: the post-hoc command below, over the run
+> copy, with `--baseline fidelity/baselines/port/10-integration`.
+
 **Verdict: PASS, exit 0, on the gated run and on the post-hoc `--contract` re-gate. All four
 conditions of the strict exit contract are met** (table below).
 

@@ -6,6 +6,11 @@ source HTML), vellora's `html_normalize` pre-pass, vellora's box walk and text r
 `layout_normalize` pass, or pagination. Instrumentation only: it measures, it does not change
 rendering.
 
+> **Pruned evidence (2026-10-28).** The `snapshots/` paths below (`fidelity/layout-diff/snapshots/2026-10-21/`), the port links
+> `01`…`09` and `fidelity/baselines/beta4/` they cite are not in this tree; they are at the git tag
+> `fidelity-archive-2026-10-28`, commit `b5c95460eebedcc86a6dce3c0e262a940b0a8c27`
+> (`git show fidelity-archive-2026-10-28:<path>`; rule: `fidelity/README.md` "Committed evidence").
+
 > **Scope (read first).** Chromium is laid out as ONE continuous flow (no fragmentation) at the
 > same viewport width vellora hands Blitz. That is comparable to vellora's pre-pagination layers;
 > the headline and `final_layer` are the last of those. Layer `P` (schema-2 dumps) adds

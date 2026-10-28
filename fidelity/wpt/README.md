@@ -1,5 +1,11 @@
 # fidelity/wpt — WPT reftests over vellora's native pipeline
 
+> **Pruned evidence (2026-10-28).** The port links `01`…`09`, `beta4/`, `beta4-gated/` and the
+> dated gate snapshots cited below, and `fidelity/baselines/wpt/blitz-2003ba5fc2d8.json` (byte-identical
+> to the kept `fidelity/baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json`), are not in this tree; they are at the git tag
+> `fidelity-archive-2026-10-28`, commit `b5c95460eebedcc86a6dce3c0e262a940b0a8c27`
+> (`git show fidelity-archive-2026-10-28:<path>`; rule: `fidelity/README.md` "Committed evidence").
+
 Third-party conformance oracle for the native renderer: [web-platform-tests](https://github.com/web-platform-tests/wpt)
 reftests rendered **test and reference both** through vellora's real public pipeline
 (`renderPdf(html, undefined, { strict: true, fonts, images, baseUrl })` with the built napi addon),

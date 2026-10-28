@@ -31,5 +31,5 @@ a non-cell table child, a float beside a line, forced breaks between items at th
 Five of them pass again in this release (inline SVG painting, anonymous table objects and the
 caption wrapper, forced column breaks in document order; gated Phase C 06 tip run
 20261028T084519Z); `css/css-break/widows-orphans-021.html` (the float beside a line) still fails.
-They are listed in `fidelity/gate/snapshots/2026-10-28/c05-multicol/README.md` and
+They are listed in `fidelity/gate/snapshots/2026-10-28/c05-multicol/README.md` (evidence archive: git tag `fidelity-archive-2026-10-28`, commit `b5c9546`) and
 `fidelity/gate/snapshots/2026-10-28/c06/README.md`.

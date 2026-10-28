@@ -4,6 +4,18 @@ Every Phase B port step is measured by the fidelity gate (`fidelity/gate/`, rule
 in `fidelity/ACCEPTANCE.md` section 8) against the step before it. Local macOS runs with local
 Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN TARGET (not wired).
 
+> **Pruned evidence (2026-10-28).** This tree keeps only what the gate reads going forward and what
+> the published claims cite (`node fidelity/scripts/prune-evidence.mjs --keep-latest`, rule in its
+> header): `pin/`, `port/00-start` (chain head), the latest link `port/11-phase-c` and the link it
+> was gated against, `port/10-integration`, this directory's files, `baselines/wpt/blitz-0.3.0-beta.4.json`
+> and the snapshot `gate/snapshots/2026-10-28/c06/` that holds the `DEBT-BASE.json` ledger. The
+> links `01-pagination-gaps` … `09-review-fixes`, `beta4/`, `beta4-gated/`, every other dated
+> snapshot (including `2026-10-27/10-final/DEBT-10-integration.json`, the previous rule-iii base),
+> the layout-diff / combine snapshots, oracle reports and upstream drafts that the sections below
+> (and `DEBT.json`'s evidence strings) cite are **not in this tree**: they are at the git tag
+> `fidelity-archive-2026-10-28`, commit `b5c95460eebedcc86a6dce3c0e262a940b0a8c27`
+> (`git show fidelity-archive-2026-10-28:<path>`). The sections are kept verbatim as the record.
+
 ## Chain convention
 
 - A port step `NN-name` (two-digit ordinal + kebab-case name, e.g. `01-text-block-offset`) writes
@@ -107,12 +119,16 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   PDFs byte-identical, oracle verdicts, WPT outcomes 8047/8047 and gate counts identical). The
   veraPDF image `verapdf/cli:v1.30.3` was also lost and was re-pulled by digest (same id
   `sha256:45b2f7cd...`).
-- **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks `00-start`
-  (integrity, PASS vs `beta4-gated`, no `--force`); a new link should add the same assertion
-  against its predecessor. `fidelity/gate/test/head-chain.test.mjs` re-checks the head ratchet
-  and the pin view on the committed links with the ledger they were gated with (empty; DEBT.json
-  was first populated on 2026-10-27, `fidelity/gate/snapshots/2026-10-27/10-debt/`), and `07` against `06` with `--head port/00-start` gives the counts in "Head ratchet
-  and debt ledger" below. A new link should add its own head and pin counts there.
+- **Committed-data check.** `fidelity/gate/test/committed-canary.test.mjs` re-checks the kept
+  links' integrity, the real comparator canary pin vs `00-start`, and that the latest link
+  (`11-phase-c`) reproduces its committed gate against the link it was written from
+  (`10-integration`: PASS only with its class-a acceptances, `manifest.json gate.counts`).
+  `fidelity/gate/test/head-chain.test.mjs` re-evaluates that step in process with the committed
+  `DEBT.json`, the `DEBT-BASE.json` base and `--main`, and must give the c06 contract re-gate's
+  head and pin counts. A new link should move both tests to itself and its predecessor, then run
+  `node fidelity/scripts/prune-evidence.mjs --keep-latest --apply`. (Until 2026-10-28 these
+  tests replayed every link 00..10 against its predecessor and 07 / 09 against the head; those
+  checks went with the links, see the note at the top.)
 - **pdf-probe semantics.** Since 2026-10-21 every link's gated pdf-probe section
   (`pdf-probe/<fixture>.json`) is semantics 2 ("pdf-probe v2 re-score" below); the gate refuses
   to compare it with a semantics-1 section, so a new link is gated with v2 only. The v1 sections

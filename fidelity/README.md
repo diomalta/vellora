@@ -15,7 +15,7 @@ instead of by our own eyes. Private, unpublished, and not a root workspace membe
 | `corpus/` | Real-document corpus (boleto, DANFE, text stress, OSS invoice/receipt under `fixtures/`) and its spec-derived checks. |
 | `lib/chrome-reference.mjs` | THE Chromium reference setup: one font alias table + one puppeteer-core print path, used by corpus, oracles and layout-diff. |
 | `gate/` | The value ratchet: snapshot loaders, metric parser, tolerances, comparator, report, baseline writer, code-checks step; the head ratchet and debt ledger (`debt.mjs`, `baselines/port/DEBT.json`), the gate's own canaries (`canaries.mjs`), per-item layer vectors (`layer-vector.mjs`, packs in `gate/data/`), ledger candidates (`ledger-candidates.mjs`); self-tests. |
-| `baselines/` | Committed baselines the gate compares against (`pin/`, `beta4/`: Phase A shape; `<name>/` written by `gate/write-baseline.mjs`: gate shape; `port/NN-name/`: the Phase B port chain, each step gated against the previous one, convention in `baselines/port/README.md`) and `wpt/<engine>.json` expectations. |
+| `baselines/` | Committed baselines the gate compares against (`pin/`: Phase A shape, the published v0.2.0; `port/NN-name/`: the Phase B/C port chain, each step gated against the previous one, convention in `baselines/port/README.md`) and `wpt/<engine>.json` expectations. Only the keep-latest set is committed (`scripts/prune-evidence.mjs`; see "Committed evidence" below). |
 | `ACCEPTANCE.md` | Per-document-class acceptance criteria, each traced to a primary source, plus the gate rules and tolerances (section 8). |
 | `run-all.mjs`, `combine/` | Single entry point over every area, the combined summary, and the LET-*/TXT-B1 evaluation (`combine/letter.mjs`). |
 
@@ -121,26 +121,43 @@ What it compares (rules and tolerances with rationale: `ACCEPTANCE.md` section 8
   makes (c) gate.
 
 Self-tests: `gate/test/` (synthetic regression, synthetic accepted regression, every rule, and a
-real canary on committed data: `baselines/beta4` against `baselines/pin` must flag notification
-REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT clean-pass regressions; and the head of
-the port chain, `baselines/port/00-start`, must pass its sha256 integrity check and PASS against
-`baselines/beta4-gated`; `baselines/port/01-pagination-gaps` must FAIL against `00-start` on
-exactly its 150 `acceptedRegressions` and PASS with them; `02-delete-noop-passes` must PASS against
-`01` with none; `03-table-passes`, `04-block-offset` and `05-walk-rewrite` must FAIL against their
-predecessor on exactly their 40, 2587 and 18 and PASS with them; `06-page-rules` likewise with its
-13; `07-media-print` must PASS against `06` with no change, and `08-html-parse` against `07` with no
-acceptance and only the oss-postmark-receipt text rows improving; the Phase A baselines `pin`/`beta4`,
-which predate the layout-diff allowlist, are classified with its frozen copy
+real canary on committed data: the chain head `baselines/port/00-start` (the beta.4 bump) against
+`baselines/pin` must flag notification REF-W 3.60 → 8.54 mm, invoice 2.44 → 3.91 mm and 53 WPT
+clean-pass regressions; every kept baseline must pass its sha256 integrity check; the latest link
+`port/11-phase-c` must PASS against `port/10-integration` with exactly its 3 class-a acceptances
+(and FAIL on exactly those 3 without them), with the link-to-link counts of its `manifest.json`
+(`committed-canary.test.mjs`), and, evaluated in process with the committed `DEBT.json`, its
+`DEBT-BASE.json` base and `--main`, give the c06 contract re-gate's head (gating 0, debt 5,
+accepted 5, declared 10) and pin ((a) 5, (b) 4, (c) 0) counts (`head-chain.test.mjs`); the Phase
+A baseline `pin`, which predates the layout-diff allowlist, is classified with its frozen copy
 `layout-diff/expected-check-failures-phase-a.json`). Reports copied into a baseline (`gate-report.*`, `--attach`) get the same
 `<repo>`/`~` path rewrite as the files the writer generates (`gate/test/write-baseline.test.mjs`).
-Since the D4–D6 fixes (2026-10-21): `06-page-rules` against `05` gates its 10 undeclared
-`css:page-varying-width` rejections on top of its 13 acceptances and passes with the declaration
-it would have needed (`committed-canary.test.mjs`); `07-media-print` against `06` with `--head
-port/00-start` is 0 gating link to link and 985 `head-regression` items, and its pin view has 213
-(c) items while `DEBT.json` is empty (`head-chain.test.mjs`; evidence and candidate classes in
-`gate/snapshots/2026-10-21/ledger/`); every DEBT rule, the relaxed (b) rule and the pin view have a
-planted self-test (`debt.test.mjs`); layer vectors are checked on committed packs
-(`layer-vector.test.mjs`).
+Every DEBT rule, the relaxed (b) rule and the pin view have a planted self-test (`debt.test.mjs`);
+layer vectors are checked on committed packs (`layer-vector.test.mjs`); the keep-latest prune rule
+on a planted tree (`prune-evidence.test.mjs`). Until 2026-10-28 the committed-data tests also
+replayed every link 01 … 10 against its predecessor (and beta4, beta4-gated) and the
+head / pin counts of 07 and 09; those checks were deleted with the links (archive below).
+
+## Committed evidence
+
+Only the evidence the gate reads going forward and the evidence the published claims cite is
+committed. `node fidelity/scripts/prune-evidence.mjs --keep-latest` (dry run; `--apply` deletes)
+keeps `baselines/pin/`, the `baselines/port/` files (`README.md`, `DEBT.json`, `DEBT-BASE.json`,
+`declared-rejections.json`), the chain head, the latest link and the link it was gated against
+(its `manifest.json gate.baseline`), the latest engine's `baselines/wpt/<engine>.json`, the gate
+snapshot directory holding the ledger `DEBT-BASE.json` names, and every snapshot path
+`docs/assets/fidelity/manifest.json` cites; it deletes every other baseline, link and gate
+snapshot and all of `layout-diff/snapshots/`, `combine/snapshots/`, `oracles/reports/` and
+`upstream-drafts/`. Run it after a new link and its snapshot are committed.
+
+The 2026-10-28 prune removed the intermediate links `port/01` … `port/09`, `beta4/`,
+`beta4-gated/`, `baselines/wpt/blitz-2003ba5fc2d8.json` (byte-identical to the kept
+`baselines/pin/wpt/expectations-blitz-2003ba5fc2d8.json`), the dated snapshots of 2026-10-21,
+2026-10-22, 2026-10-27 and the 2026-10-28 steps before c06, and the four roots above. Paths to
+them in READMEs, source comments, `DEBT.json` evidence strings and acceptance evidence are not in
+this tree: everything is at the git tag **`fidelity-archive-2026-10-28`**, commit
+**`b5c95460eebedcc86a6dce3c0e262a940b0a8c27`** (`git show fidelity-archive-2026-10-28:<path>`,
+or `git archive fidelity-archive-2026-10-28 fidelity | tar -x -C <dir>`).
 
 ## Canaries
 
@@ -178,5 +195,5 @@ stays a superset of `benchmarks/visual-fidelity.mjs`.
 - Claims are labelled CONFIRMED / UNVERIFIED ASSUMPTION / HYPOTHESIS / DESIGN TARGET.
 - An oracle is only trusted after it has been shown to catch a deliberately broken input.
 - Local macOS runs are indicative; the pinned Linux CI run is authoritative.
-- A committed snapshot of the Phase A run is in `combine/snapshots/2026-10-21/` (local macOS,
-  INDICATIVE).
+- A snapshot of the Phase A run (`combine/snapshots/2026-10-21/`, local macOS, INDICATIVE) is at
+  the archive tag `fidelity-archive-2026-10-28` (b5c9546), not in this tree.

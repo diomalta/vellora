@@ -63,9 +63,10 @@ uses a git revision of Blitz's 0.3.0-alpha.5 line. The branch moves to the 0.3.0
 from crates.io, with no fork, and ports vellora's own layout layers to it. All Blitz access stays
 behind one module of vellora, so an upstream change is contained in one file.
 
-The upgrade alone did not fix boleto or notification: the committed snapshot of that step
-([`tip-10-integration.doc-aggregate.json`](https://github.com/diomalta/vellora/blob/main/fidelity/gate/snapshots/2026-10-27/02-doc-oracle/tip-10-integration.doc-aggregate.json))
-shows both below the published package. The layout diff showed why.
+The upgrade alone did not fix boleto or notification: the snapshot of that step
+([`tip-10-integration.doc-aggregate.json`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-27/02-doc-oracle/tip-10-integration.doc-aggregate.json),
+in the evidence archive: tag `fidelity-archive-2026-10-28`, commit `b5c9546`) shows both below the
+published package. The layout diff showed why.
 
 ## The bug: bordered collapsed tables grew row by row
 
@@ -77,8 +78,9 @@ A minimal repro confirmed it. In Blitz 0.3.0-beta.4, a collapsed-border cell is 
 own full borders, and then the collapsed border is added again as the grid gap. Each row comes out
 taller than Chrome's by twice the border width, and every table adds its rows' error to everything
 below it. The cause is in `blitz-dom`'s table layout (`layout/table.rs`). The repro and the source analysis are in
-[`fidelity/upstream-drafts/blitz-collapsed-cell-border-measure`](https://github.com/diomalta/vellora/tree/main/fidelity/upstream-drafts/blitz-collapsed-cell-border-measure),
-written up as an upstream report that has not been filed yet.
+[`fidelity/upstream-drafts/blitz-collapsed-cell-border-measure`](https://github.com/diomalta/vellora/tree/fidelity-archive-2026-10-28/fidelity/upstream-drafts/blitz-collapsed-cell-border-measure)
+(evidence archive, tag `fidelity-archive-2026-10-28`, commit `b5c9546`), written up as an upstream
+report that has not been filed yet.
 
 vellora now compensates for the bug. The compensation never edits your HTML (strict mode still
 passes it through unchanged). After the CSS cascade and before layout, it changes the computed
@@ -107,7 +109,8 @@ not in the default feature list. vellora 0.2.0 depends on Blitz git revision 200
 `default-features = false` and no extra features. Blitz's float code was therefore never
 compiled, and every `float: left` or `float: right` box was laid out as an ordinary in-flow
 block. The step that found this is recorded in
-[`fidelity/gate/snapshots/2026-10-28/c04/floats/README.md`](https://github.com/diomalta/vellora/blob/main/fidelity/gate/snapshots/2026-10-28/c04/floats/README.md).
+[`fidelity/gate/snapshots/2026-10-28/c04/floats/README.md`](https://github.com/diomalta/vellora/blob/fidelity-archive-2026-10-28/fidelity/gate/snapshots/2026-10-28/c04/floats/README.md)
+(evidence archive, tag `fidelity-archive-2026-10-28`, commit `b5c9546`).
 
 The branch turns the feature on. That is a crates.io feature switch, not a fork. It also exposed
 two bugs in the crates.io stack. One is in Taffy's fit test for a box placed next to a float. The

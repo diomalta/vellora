@@ -23,4 +23,4 @@ reference; indicative, not CI): WPT reftest passes in the default suites 4414 ->
 tests, none lost), among them css/css-break/ruby-000, -001 and -003; css/css-ruby (not a default
 suite) 31 -> 29 of 143: 5 gained, 7 lost, of which one Chrome passes with covered glyphs
 (ruby-bidi-004, whose old pass rendered both sides without their `dir=rtl`). Details in
-`fidelity/gate/snapshots/2026-10-28/c06-ruby/README.md`.
+`fidelity/gate/snapshots/2026-10-28/c06-ruby/README.md` (evidence archive: git tag `fidelity-archive-2026-10-28`, commit `b5c9546`).
