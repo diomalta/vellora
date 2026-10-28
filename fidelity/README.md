@@ -69,9 +69,11 @@ node fidelity/gate/run.mjs --baseline fidelity/baselines/pin --run fidelity/resu
 
 # both commands ALSO gate against the chain head (--head, default port/00-start, named in
 # baselines/port/README.md) with the debt ledger (--debt, default baselines/port/DEBT.json;
-# --debt-base <the ledger at the merge base> checks its transition), run the gate's own canaries
-# and report the pin view (--pin, default baselines/pin). A merge to main adds --main.
-git show main:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json   # absent = first population
+# rule iii checks its transition from the base: --debt-base, else DEBT.json at `git merge-base HEAD
+# main`, else the frozen ledger the committed pointer baselines/port/DEBT-BASE.json names), run the
+# gate's own canaries and report the pin view (--pin, default baselines/pin). A merge to main adds
+# --main. An explicit base, e.g. main's ledger (absent there: the pointer's frozen ledger applies):
+git show main:fidelity/baselines/port/DEBT.json > /tmp/debt-base.json
 node fidelity/gate/run.mjs --baseline fidelity/baselines/port/<previous> --run <run> \
   --step <NN-name> --debt-base /tmp/debt-base.json [--accept accepted.json]
 node fidelity/gate/debt.mjs check --base /tmp/debt-base.json --step <NN-name>   # ledger only
@@ -153,7 +155,7 @@ sub-CSS-px ITF renders), which show a behaviour and test no oracle. Phase A mani
 caught / 8 measurement-only" (24 detection canaries then) while `oracles/README.md` said "two rows
 are measurements"; both counts now come from `canaryCounts`.
 
-The gate's own rules have **13 more detection canaries** (`gate/canaries.mjs`, GATE-K2), run on
+The gate's own rules have **32 more detection canaries** (2026-10-27; `gate/canaries.mjs`, GATE-K2), run on
 every gate evaluation and planted into the snapshots being gated: sub-tolerance creep only the head
 ratchet sees, WPT fail → unsupported, a verdict row → `strict gate rejected` and → NOT-RUN, a lost
 flagged pass (counted, not gating), DEBT rules i/ii, iii, iv, v, vi, the relaxed (b) rule, a

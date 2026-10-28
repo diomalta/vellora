@@ -13,8 +13,10 @@ import {
   ceilingOf,
   classifyVectorItem,
   classifyWptItem,
+  freshId,
   groupEntries,
   introducedBy,
+  ledgerIds,
   pageCriterionKey,
   pageScopeEntries,
   tableSpacingHintFixtures,
@@ -22,12 +24,14 @@ import {
 } from "../debt-populate.mjs";
 import {
   DEBT_FILE,
+  HEAD_GATING_CLASSES,
   d7KeyProblems,
   entryProblems,
   ledgerProblems,
   loadDebt,
   pageScopeD7Problems,
   relaxedB,
+  transitionProblems,
 } from "../debt.mjs";
 import { pageMetricValues } from "../run.mjs";
 import { loadBaselineDir } from "../snapshot.mjs";
@@ -122,13 +126,46 @@ test("introducedBy is the first link that has the key; grouping by fixture, owne
     evidence: ["e"],
     keyRecord: { key },
   });
-  const e = groupEntries([r("a", ["P"], "04-b"), r("b", ["P"], "04-b"), r("c", [], "04-b")]);
+  const e = groupEntries([r("a", ["P"], "04-b"), r("b", ["P"], "04-b"), r("c", [], "04-b")], {
+    step: "10-integration",
+  });
   assert.deepEqual(
     e.map((x) => [x.id, x.keys.map((k) => k.key)]),
     [
       ["DEBT-10-boleto-1", ["a", "b"]],
       ["DEBT-10-boleto-2", ["c"]],
     ],
+  );
+  // Rule iii, ids never reused (Phase C 03): a later step's population derives its prefix from
+  // --step, skips every id a ledger has used, and keeps the base's id for keys the base holds.
+  const later = groupEntries([r("a", ["P"], "04-b"), r("c", [], "04-b"), r("d", ["L0"], "04-b")], {
+    step: "11-collapse-comp",
+    takenIds: new Set(["DEBT-10-boleto-1", "DEBT-10-boleto-2", "DEBT-11-boleto-1"]),
+    baseIdOf: (k) => ({ a: "DEBT-10-boleto-1", c: "DEBT-10-boleto-2" })[k] ?? null,
+  });
+  assert.deepEqual(
+    later.map((x) => [x.id, x.keys.map((k) => k.key)]),
+    [
+      ["DEBT-10-boleto-1", ["a"]],
+      ["DEBT-10-boleto-2", ["c"]],
+      ["DEBT-11-boleto-2", ["d"]],
+    ],
+  );
+  // A base id whose keys split into two groups: the first keeps it, the other takes a fresh id.
+  const split = groupEntries([r("a", ["P"], "04-b"), r("b", [], "04-b")], {
+    step: "11-collapse-comp",
+    takenIds: new Set(["DEBT-10-boleto-1"]),
+    baseIdOf: () => "DEBT-10-boleto-1",
+  });
+  assert.deepEqual(
+    split.map((x) => x.id),
+    ["DEBT-10-boleto-1", "DEBT-11-boleto-1"],
+  );
+  assert.throws(() => groupEntries([r("a", [], "04-b")], {}), /step id/);
+  assert.equal(freshId("DEBT-11-x", new Set(["DEBT-11-x-1"])), "DEBT-11-x-2");
+  assert.deepEqual(
+    [...ledgerIds({ entries: [{ id: "A" }], closed: [{ id: "B", key: "k" }] })].sort(),
+    ["A", "B"],
   );
 });
 
@@ -165,16 +202,16 @@ test("the 10-integration ledger: 27 entries, 1026 keys, every key passes D7 agai
 // Phase C 02 (2026-10-27): DEBT.json shrunk from run 20261027T231548Z (snapshots/2026-10-27/c02):
 // 10 entries, 180 keys, each a key the 10-integration ledger covered, no ceiling above its old one,
 // every removed key recorded in closed[]; every key passes D7 against the c02 no-ledger re-gate.
-test("the committed ledger (c02 shrink): 10 entries, 180 keys, D7 against the c02 head report, only shrunk", () => {
+test("the committed ledger (c02 shrink, c03 rebuild): 15 entries, 187 keys, rule iii vs the frozen 10-integration ledger", () => {
   const ledger = loadDebt(DEBT_FILE);
   const old = loadDebt(LEDGER_10);
-  assert.equal(ledger.entries.length, 10);
+  assert.equal(ledger.entries.length, 15);
   assert.deepEqual(ledgerProblems(ledger), []);
   const report = JSON.parse(
     gunzipSync(readFileSync(join(SNAP_C02, "gate-report-c02-nodebt.json.gz"))).toString(),
   );
   const head = new Map(report.head.items.map((i) => [i.key, i]));
-  const oldKeys = new Map(old.entries.flatMap((e) => e.keys.map((k) => [k.key, k])));
+  const oldKeys = new Map(old.entries.flatMap((e) => e.keys.map((k) => [k.key, { e, k }])));
   const oldScope = new Set(old.entries.flatMap((e) => e.scope?.keys ?? []));
   const kept = new Set();
   for (const e of ledger.entries) {
@@ -183,18 +220,43 @@ test("the committed ledger (c02 shrink): 10 entries, 180 keys, D7 against the c0
     assert.equal(e.scope, undefined, e.id);
     for (const k of e.keys) {
       kept.add(k.key);
-      assert.deepEqual(d7KeyProblems(e, k, head.get(k.key)), [], k.key);
       const o = oldKeys.get(k.key);
       assert.ok(o || oldScope.has(k.key), `${k.key}: not covered by the 10-integration ledger`);
-      if (o && typeof o.ceiling === "number") assert.ok(k.ceiling <= o.ceiling + 1e-9, k.key);
+      // Ids are never reused (rule iii): a kept key keeps its 10-integration entry id; the 9 former
+      // scope keys take fresh DEBT-11-* ids.
+      assert.equal(
+        e.id,
+        o ? o.e.id : e.id.startsWith("DEBT-11-") ? e.id : "(fresh DEBT-11-*)",
+        k.key,
+      );
+      if (k.key.startsWith("wpt|")) {
+        // Restored verbatim (step 02 closed them while they still failed).
+        const { layerVector, ...rec } = k;
+        assert.deepEqual(rec, o.k, k.key);
+        continue;
+      }
+      assert.deepEqual(d7KeyProblems(e, k, head.get(k.key)), [], k.key);
+      if (o && typeof o.k.ceiling === "number") assert.ok(k.ceiling <= o.k.ceiling + 1e-9, k.key);
     }
   }
-  assert.equal(kept.size, 180);
-  const closed = new Set(ledger.closed.map((c) => c.key));
+  assert.equal(kept.size, 187);
+  assert.equal([...kept].filter((k) => !oldKeys.has(k)).length, 9);
+  const closed = new Map(ledger.closed.map((c) => [c.key, c]));
   for (const key of oldKeys.keys()) {
     if (!kept.has(key)) assert.ok(closed.has(key), `${key}: removed without a closed[] record`);
   }
-  assert.equal(ledger.closed.length, 855);
+  assert.equal(ledger.closed.length, 848);
+  for (const c of ledger.closed) {
+    assert.equal(c.fixed, true, c.key);
+    assert.equal(c.runId, "20261027T231548Z", c.key);
+    assert.ok(!HEAD_GATING_CLASSES.includes(c.headComparison.class), c.key);
+    assert.equal(c.id, oldKeys.get(c.key).e.id, c.key);
+  }
+  // Rule iii against the frozen base on the c02 head items: no problem.
+  assert.deepEqual(
+    transitionProblems(old, ledger, { step: "11-collapse-comp", headItems: head }),
+    [],
+  );
 });
 
 test("rule vi': one listed page-scope entry per fixture whose page metric is unchanged vs the head", () => {
@@ -216,10 +278,29 @@ test("rule vi': one listed page-scope entry per fixture whose page metric is unc
     runValues: new Map([[page, r]]),
     introduced: (k) => (k.includes("p3") ? "04-b" : "03-a"),
     pages: new Map([["fx", { vellora: 8, chrome: 7 }]]),
+    step: "10-integration",
   });
   const { entries, left } = pageScopeEntries(residual, opts(1, 1));
   assert.equal(entries.length, 1);
   const e = entries[0];
+  assert.equal(e.id, "DEBT-10-fx-page-scope-1");
+  // Ids (rule iii): a taken id is skipped; the base's scope of the metric keeps its id only when it
+  // lists every key again.
+  const taken = { ...opts(1, 1), step: "11-x", takenIds: new Set(["DEBT-11-fx-page-scope-1"]) };
+  assert.equal(pageScopeEntries(residual, taken).entries[0].id, "DEBT-11-fx-page-scope-2");
+  const all = new Set(["pdf-probe|fx|p2|a#1|dx", "pdf-probe|fx|p3|b#1|dy"]);
+  const baseScopeOf = (scopeKeys) => (k) => (k === page ? { id: "DEBT-10-old", scopeKeys } : null);
+  assert.equal(
+    pageScopeEntries(residual, { ...taken, baseScopeOf: baseScopeOf(all) }).entries[0].id,
+    "DEBT-10-old",
+  );
+  assert.equal(
+    pageScopeEntries(residual, {
+      ...taken,
+      baseScopeOf: baseScopeOf(new Set(["pdf-probe|fx|p2|a#1|dx"])),
+    }).entries[0].id,
+    "DEBT-11-fx-page-scope-2",
+  );
   assert.deepEqual(e.scope, {
     fixture: "fx",
     fromPage: 2,

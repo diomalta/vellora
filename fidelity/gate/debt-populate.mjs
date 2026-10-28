@@ -22,6 +22,9 @@
 //   node fidelity/gate/debt-populate.mjs --report <gate-report.json> --run <run-all dir>
 //     --vectors <repo-relative layer-vector file>... --step <NN-name> [--chain fidelity/baselines/port]
 //     [--head <baseline dir>] [--accept <accepted.json>] [--date YYYY-MM-DD] --out <DEBT.json>
+//     [--base <DEBT.json>]   the rule-iii base (default: gate/debt.mjs resolveLedgerBase); its keys
+//              keep their entry ids, new groups get fresh DEBT-<NN>-* ids (NN from --step) that
+//              neither the base nor the committed DEBT.json has used (entries or closed[])
 //     [--residual <residual.json>] [--pin-out <pin-classification.json>
 //     [--pin-candidates <ledger-candidates.json[.gz]>] [--pin-report <gate-report.json>]]
 //   --pin-report  the report whose pin view is classified (default --report; pass the re-gate WITH
@@ -34,12 +37,15 @@ import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import { compareSnapshots } from "./compare.mjs";
 import {
+  DEBT_FILE,
   DEBT_SCHEMA,
   HEAD_GATING_CLASSES,
   ledgerProblems,
+  loadDebt,
   pageScopeD7Problems,
   pdfProbePage,
   relaxedB,
+  resolveLedgerBase,
   resolveVectorRef,
 } from "./debt.mjs";
 import { relaxedBFacts } from "./layer-vector.mjs";
@@ -129,8 +135,20 @@ export function pageCriterionKey(keys) {
  */
 export function pageScopeEntries(
   residual,
-  { pageKeys, headValues, runValues, introduced, pages = new Map(), evidence = [] },
+  {
+    pageKeys,
+    headValues,
+    runValues,
+    introduced,
+    pages = new Map(),
+    evidence = [],
+    step,
+    takenIds = new Set(),
+    baseScopeOf = () => null,
+  },
 ) {
+  const prefix = stepIdPrefix(step);
+  const taken = new Set(takenIds);
   const byFixture = new Map();
   for (const r of residual.filter((x) => x.route === "page-scope")) {
     const fx = r.key.split("|")[1];
@@ -151,8 +169,15 @@ export function pageScopeEntries(
     const links = {};
     for (const k of keys) links[introduced(k)] = (links[introduced(k)] ?? 0) + 1;
     const ordered = Object.keys(links).sort();
+    // Rule iii: the base's page scope of this metric keeps its id when it lists every key again;
+    // anything else is a different scope and takes a fresh id.
+    const base = baseScopeOf(key);
+    const id =
+      base && keys.every((k) => base.scopeKeys.has(k))
+        ? base.id
+        : freshId(`${prefix}${fx}-page-scope`, taken);
     entries.push({
-      id: `DEBT-10-${fx}-page-scope`,
+      id,
       class: "b",
       owner: {
         layer: "vellora:pagination",
@@ -210,20 +235,65 @@ export function introducedBy(key, linkReports, step) {
   return linkReports.find((l) => l.keys.has(key))?.link ?? step;
 }
 
-/** Group classified records into debt/2 entries. Pure. */
-export function groupEntries(records, { evidence = [], date = null } = {}) {
+/**
+ * The id prefix of entries a step creates: `DEBT-<NN>-` from its step id NN-name (Phase C 03,
+ * 2026-10-27: every population used to write DEBT-10-*, so a re-population gave an id of step 10
+ * to a different group of keys; rule iii now refuses a reused id, gate/debt.mjs idReuseProblems).
+ */
+export function stepIdPrefix(step) {
+  const m = /^(\d{2})-[a-z0-9]/.exec(String(step ?? ""));
+  if (!m)
+    throw new Error(`entry ids derive from the step id (NN-name), not ${JSON.stringify(step)}`);
+  return `DEBT-${m[1]}-`;
+}
+
+/** `<stem>-<n>` with the smallest n >= 1 not in `taken`; adds it to `taken`. */
+export function freshId(stem, taken) {
+  let n = 1;
+  while (taken.has(`${stem}-${n}`)) n++;
+  const id = `${stem}-${n}`;
+  taken.add(id);
+  return id;
+}
+
+/** Every id a ledger has used: its entries' and its closed[] records' (never reused). */
+export function ledgerIds(ledger) {
+  return new Set(
+    [
+      ...(ledger?.entries ?? []).map((e) => e.id),
+      ...(ledger?.closed ?? []).map((c) => c?.id),
+    ].filter(Boolean),
+  );
+}
+
+/**
+ * Group classified records into debt/2 entries. Pure. Ids (rule iii, never reused): a record whose
+ * key the base ledger already holds keeps that entry's id (`baseIdOf(key)`; the first group of an
+ * id keeps it, a group that splits off takes a fresh one); every other group takes a fresh
+ * `DEBT-<NN>-<fixture>-<n>` (NN from `step`) that is not in `takenIds` (ledgerIds of the base and
+ * of the committed ledger).
+ */
+export function groupEntries(
+  records,
+  { evidence = [], date = null, step, takenIds = new Set(), baseIdOf = () => null } = {},
+) {
+  const prefix = stepIdPrefix(step);
   const groups = new Map();
   for (const r of records) {
-    const g = [r.fixture, r.owner.layer, r.compensators.join("+"), r.introducedBy].join("|");
-    if (!groups.has(g)) groups.set(g, { ...r, keys: [] });
+    const baseId = baseIdOf(r.keyRecord.key) ?? "";
+    const g = [baseId, r.fixture, r.owner.layer, r.compensators.join("+"), r.introducedBy].join(
+      "|",
+    );
+    if (!groups.has(g)) groups.set(g, { ...r, baseId, keys: [] });
     groups.get(g).keys.push(r.keyRecord);
   }
-  const perFixture = new Map();
+  const taken = new Set(takenIds);
+  const kept = new Set();
   return [...groups.values()].map((g) => {
-    const n = (perFixture.get(g.fixture) ?? 0) + 1;
-    perFixture.set(g.fixture, n);
+    const reuse = g.baseId && !kept.has(g.baseId);
+    if (reuse) kept.add(g.baseId);
     return {
-      id: `DEBT-10-${g.fixture}-${n}`,
+      id: reuse ? g.baseId : freshId(`${prefix}${g.fixture}`, taken),
       class: "b",
       owner: g.owner,
       compensators: g.compensators,
@@ -445,7 +515,33 @@ async function main() {
     `head items: ${reportFile.split(homedir()).join("~")} (head ${report.head.baseline}); built by node fidelity/gate/debt-populate.mjs ${argv.join(" ")}`
       .split(homedir())
       .join("~");
-  const entries = groupEntries(records, { evidence: [builtBy] });
+  // Ids (rule iii): keys the rule-iii base holds keep their entry's id; new groups take fresh
+  // DEBT-<NN>-* ids no ledger has used (--base, default: the base gate/debt.mjs resolveLedgerBase
+  // resolves, plus the committed DEBT.json).
+  const baseLedger = val("--base")
+    ? (loadDebt(resolve(val("--base"))) ?? null)
+    : (() => {
+        const b = resolveLedgerBase({});
+        if (b.refusal) throw new Error(b.refusal);
+        return b.ledger;
+      })();
+  const takenIds = new Set([...ledgerIds(baseLedger), ...ledgerIds(loadDebt(DEBT_FILE))]);
+  const baseIds = new Map();
+  const baseScopes = new Map();
+  for (const e of baseLedger?.entries ?? []) {
+    for (const k of e.keys ?? []) baseIds.set(k.key, e.id);
+    if (Array.isArray(e.scope?.keys)) {
+      for (const k of e.keys ?? [])
+        baseScopes.set(k.key, { id: e.id, scopeKeys: new Set(e.scope.keys) });
+    }
+  }
+  const entries = groupEntries(records, {
+    evidence: [builtBy],
+    step,
+    takenIds,
+    baseIdOf: (k) => baseIds.get(k) ?? null,
+  });
+  for (const e of entries) takenIds.add(e.id);
   // Rule vi' (GATE-D6b): the page-scope residual of a fixture whose page metric is unchanged vs
   // the head becomes ONE listed page-scope entry; the rest stays residual.
   const runPageValues = pageMetricValues(runSnapshot);
@@ -465,6 +561,9 @@ async function main() {
         .map(([fx, sec]) => [fx, sec.pages]),
     ),
     evidence: [builtBy],
+    step,
+    takenIds,
+    baseScopeOf: (k) => baseScopes.get(k) ?? null,
   });
   entries.push(...scoped.entries);
   const scopedKeys = new Set(scoped.entries.flatMap((e) => e.scope.keys));

@@ -375,6 +375,121 @@ export function runGateCanaries({
     );
   }
 
+  // 8b. Rule iii, removals and ids (Phase C 03, 2026-10-27; verify phasec/02 finding 1: step 02
+  // closed 7 WPT keys that still failed, and its population reused DEBT-10-* ids for other keys).
+  // A key leaves before its closesAt only as vanished or FIXED (closed[] fixed: true, runId,
+  // headComparison), never while the run's head comparison still has it gating (any route,
+  // closesAt included); an id never names a different thing; closed[] is append-only and a
+  // closed key never re-enters.
+  {
+    const key = "pdf-probe|canary|p1|Canary#1|dy";
+    const old = { ...emptyLedger(), entries: [entryFor(key, 3)] };
+    const fixedRec = (extra = {}) => ({
+      id: "CANARY-1",
+      key,
+      step: "98-other",
+      reason: "canary: fixed",
+      fixed: true,
+      runId: "20261027T000000Z",
+      headComparison: { class: "improvement", before: 2, after: 0.5 },
+      ...extra,
+    });
+    const closedWith = (rec) => ({ ...emptyLedger(), closed: [rec] });
+    const failing = new Map([
+      [key, { key, class: "regression", gating: true, before: 0.2, after: 2.8 }],
+    ]);
+    const fixedNow = new Map([
+      [key, { key, class: "improvement", gating: false, before: 2, after: 0.5 }],
+    ]);
+    const stillFails = transition(old, closedWith(fixedRec()), {
+      step: "98-other",
+      headItems: failing,
+    });
+    const atClosesAt = transition(old, emptyLedger(), { step: "99-canary", headItems: failing });
+    rows.push(
+      row(
+        "DEBT rule iii: a still-failing key removed",
+        "a key whose head item still gates, removed as fixed or at its closesAt -> problem (never removed, only its ceiling lowered)",
+        `as fixed ${stillFails.length}, at closesAt ${atClosesAt.length}`,
+        stillFails.some((x) => /still fails/.test(x)) &&
+          atClosesAt.some((x) => /still fails/.test(x)),
+      ),
+    );
+    const fixedOk = transition(old, closedWith(fixedRec()), {
+      step: "98-other",
+      headItems: fixedNow,
+    });
+    const noRunId = transition(old, closedWith(fixedRec({ runId: undefined })), {
+      step: "98-other",
+      headItems: fixedNow,
+    });
+    const noComparison = transition(old, closedWith(fixedRec({ headComparison: undefined })), {
+      step: "98-other",
+      headItems: fixedNow,
+    });
+    const unverifiable = transition(old, closedWith(fixedRec()), { step: "98-other" });
+    rows.push(
+      row(
+        "DEBT rule iii: a fixed key removed with evidence",
+        "closed[] fixed: true + runId + headComparison and no gating head item -> none; without runId, without headComparison, or without the run's head comparison -> problem",
+        `with evidence ${fixedOk.length}; no runId ${noRunId.length}, no headComparison ${noComparison.length}, no head comparison ${unverifiable.length}`,
+        fixedOk.length === 0 &&
+          noRunId.some((x) => /runId/.test(x)) &&
+          noComparison.some((x) => /headComparison/.test(x)) &&
+          unverifiable.some((x) => /cannot be verified/.test(x)),
+      ),
+    );
+    const k2 = "pdf-probe|canary|p1|Other#1|dy";
+    const k2Item = new Map([
+      [
+        k2,
+        { key: k2, class: "regression", gating: true, before: 0, after: 1, better: "lower-abs" },
+      ],
+    ]);
+    const other = (id) =>
+      entryFor(k2, 1, { id }, { measured: 1, layerVectorRef: { unit: "pt", N0: 2, P: 1, run: 1 } });
+    const fresh = transition(
+      old,
+      { ...emptyLedger(), entries: [entryFor(key, 3), other("CANARY-1x")] },
+      {
+        headItems: k2Item,
+      },
+    );
+    const reusedId = transition(
+      { ...emptyLedger(), entries: [entryFor(key, 3), entryFor(`${key}y`, 3, { id: "CANARY-Y" })] },
+      { ...emptyLedger(), entries: [entryFor(key, 3), other("CANARY-Y")] },
+      { headItems: k2Item, presentKeys: new Set([key]) },
+    );
+    const closedOld = {
+      ...emptyLedger(),
+      entries: [entryFor(key, 3)],
+      closed: [fixedRec({ id: "CANARY-Z", key: "k-z" })],
+    };
+    const reusedClosed = transition(
+      closedOld,
+      { ...closedOld, entries: [entryFor(key, 3), other("CANARY-Z")] },
+      { headItems: k2Item },
+    );
+    const lostHistory = transition(closedOld, { ...closedOld, closed: [] }, {});
+    const reentered = ledgerCheck({
+      ...emptyLedger(),
+      entries: [entryFor(key, 3)],
+      closed: [fixedRec()],
+    });
+    rows.push(
+      row(
+        "DEBT rule iii: an id reused",
+        "an id the base has naming another key -> problem; an id the base closed -> problem; a closed key back in the ledger -> problem; closed[] losing a base record -> problem; a fresh id (control) -> no id problem",
+        `fresh ${fresh.filter((x) => /id reused/.test(x)).length}; reused ${reusedId.filter((x) => /id reused/.test(x)).length}, closed id ${reusedClosed.filter((x) => /id reused/.test(x)).length}, re-entered ${reentered.filter((x) => /re-enters/.test(x)).length}, history ${lostHistory.filter((x) => /append-only/.test(x)).length}`,
+        fresh.filter((x) => /id reused/.test(x)).length === 0 &&
+          reusedId.some((x) => /id reused/.test(x)) &&
+          reusedClosed.some((x) => /id reused/.test(x)) &&
+          reentered.some((x) => /re-enters/.test(x)) &&
+          lostHistory.some((x) => /append-only/.test(x)),
+      ),
+    );
+  }
+
   // 9. Rule iv and 10. rule vi (ledger shape).
   {
     const k = "pdf-probe|canary|p1|Canary#1|dy";
@@ -526,10 +641,11 @@ export function runGateCanaries({
         return { status: 128, stdout: "", stderr: "unexpected" };
       };
     const raised = { ...emptyLedger(), entries: [entryFor(key, 4)] };
-    const b = resolveBase({ git: repo() });
+    // pointer: null: the planted repository has no per-branch base pointer (DEBT-BASE.json).
+    const b = resolveBase({ git: repo(), pointer: null });
     const problems = b.ledger ? transition(b.ledger, raised, {}) : [];
-    const noBase = resolveBase({ git: repo({ mergeBase: false }) });
-    const first = resolveBase({ git: repo({ ledger: false }) });
+    const noBase = resolveBase({ git: repo({ mergeBase: false }), pointer: null });
+    const first = resolveBase({ git: repo({ ledger: false }), pointer: null });
     rows.push(
       row(
         "DEBT rule iii without --debt-base (I2)",
