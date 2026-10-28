@@ -138,7 +138,11 @@ fn distribute_auto_table_excess(boxes: &mut [LaidOutBox], table_idx: usize, end:
     let total_max: f64 = max_content.iter().sum();
     let total_width: f64 = widths.iter().sum();
     let excess = total_width - total_max;
-    if total_max <= 0.0 || excess <= 0.5 {
+    // Taffy rounds each column to whole px and the max-content widths are unrounded, so up to
+    // 0.5 px per column of "excess" is rounding, not spare width: a shrink-to-fit table
+    // (`width: auto`) has none (WPT css/css-tables/baseline-empty-cell-001.html moved its
+    // inner border by 1 px when the threshold was 0.5 px for the whole table).
+    if total_max <= 0.0 || excess <= 0.5 * columns as f64 + 0.5 {
         return;
     }
     let targets: Vec<f64> = max_content
