@@ -1684,3 +1684,66 @@ fn blitz_still_lays_ruby_text_out_inline() {
         runs_of(&laid)
     );
 }
+
+/// An inline-block of two block-level lines, then text on its line (the repro of
+/// `blitz_engine::inline_block_baseline_shifts`); one whose last child is a scroll container
+/// with a bottom margin; one with an author raise.
+const INLINE_BLOCK_TWO_LINES: &str = r#"<!DOCTYPE html><html><head><style>
+    body { font: 16px/20px sans-serif; }
+    p { margin: 0; }
+    .ib { display: inline-block; }
+    #sc { overflow: hidden; height: 30px; margin-bottom: 10px; }
+    </style></head><body>
+    <div><span class="ib"><p>AA</p><p>BB</p></span> XX</div>
+    <div><span class="ib"><div>CC</div><div id="sc">SS</div></span> YY</div>
+    <div><span class="ib" style="vertical-align: 10px"><p>DD</p><p>EE</p></span> ZZ</div>
+    </body></html>"#;
+
+/// The baseline y of the run whose trimmed text is `text`.
+fn run_y(doc: &LaidOutDoc, text: &str) -> f64 {
+    runs_of(doc)
+        .into_iter()
+        .find(|r| r.0.trim() == text)
+        .unwrap_or_else(|| panic!("{text} in {:?}", runs_of(doc)))
+        .2
+}
+
+/// CANARY of `blitz_engine::inline_block_baseline_shifts`: raw Blitz still aligns an
+/// inline-block of block-level lines on its FIRST line (Taffy's block layout reports only a first
+/// baseline), where Chrome 155 uses its last.
+#[test]
+fn blitz_still_aligns_an_inline_block_on_its_first_line() {
+    let (raw, _) = raw_layout(INLINE_BLOCK_TWO_LINES);
+    let (aa, bb, xx) = (run_y(&raw, "AA"), run_y(&raw, "BB"), run_y(&raw, "XX"));
+    assert_eq!(bb - aa, 20.0);
+    assert_eq!(
+        xx, aa,
+        "\n\nBLITZ CHANGED THE BASELINE OF AN INLINE-BLOCK OF BLOCKS. Raw Blitz no longer puts the \
+         text after INLINE_BLOCK_TWO_LINES's first inline-block on its first line (XX at y = \
+         {xx}, AA {aa}, BB {bb}; Chrome 155: on BB's line), the bug \
+         inline_block_baseline_shifts works around (taffy 0.15.0 src/compute/block.rs 758 \
+         `Baselines::from_first`, blitz-dom 0.3.0-beta.4 src/layout/inline.rs 449-451). If Blitz \
+         now matches Chrome, DELETE in crates/vellora-core/src/blitz_engine.rs \
+         `inline_block_baseline_shifts`, `inline_block_raise`, `chrome_last_baseline`, \
+         `apply_baseline_shifts`, `INLINE_BLOCK_BASELINE_ROUNDS`, `BASELINE_EPSILON_PX` and their \
+         loop in `resolve_and_walk`, this canary and `inline_block_baseline_matches_chrome`; then \
+         re-measure css/CSS2/linebox and css/CSS2/visudet with fidelity/wpt.\n"
+    );
+}
+
+/// The compensation against Chrome for Testing 155.0.8059.85 (2026-10-28,
+/// c07-pin-b/baseline v1/v2/v7 in the run store): the text after the inline-block on its LAST
+/// line; after one whose last child is a scroll container, on that child's bottom margin edge;
+/// an author raise kept on top of the corrected baseline.
+#[test]
+fn inline_block_baseline_matches_chrome() {
+    let laid = product_layout(INLINE_BLOCK_TWO_LINES);
+    assert_eq!(run_y(&laid, "XX"), run_y(&laid, "BB"));
+    let sc = laid
+        .boxes
+        .iter()
+        .find(|b| b.text_runs.iter().any(|r| r.text.trim() == "SS"))
+        .expect("SS box");
+    assert_eq!(run_y(&laid, "YY"), sc.y + sc.height + 10.0);
+    assert_eq!(run_y(&laid, "ZZ") - run_y(&laid, "EE"), 10.0);
+}

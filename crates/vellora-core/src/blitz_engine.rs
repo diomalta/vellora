@@ -1458,6 +1458,253 @@ fn apply_float_fixups(doc: &mut BaseDocument, fixups: &[(NodeId, FloatFixup)]) {
     }
 }
 
+/// How many times [`inline_block_baseline_shifts`] is re-run on the re-laid-out document: an
+/// inline-block whose last line holds another corrected inline-block moves once that one has,
+/// so each round settles one more level of nesting. Deeper nestings keep the last round's
+/// placement.
+const INLINE_BLOCK_BASELINE_ROUNDS: usize = 3;
+
+/// The `vertical-align` raise (px) that puts each inline-block on its line at Chrome 155's
+/// baseline, read off a laid-out document; empty when every inline-block already sits there.
+/// Compensates a TAFFY BUG of the crates.io Blitz 0.3.0-beta.4 stack; the raw-Blitz canary
+/// `blitz_still_aligns_an_inline_block_on_its_first_line` (`raw_blitz_tests.rs`) fails when it is
+/// fixed, and then this function, [`chrome_last_baseline`], [`INLINE_BLOCK_BASELINE_ROUNDS`],
+/// their loop in [`resolve_and_walk`], the canary and the `inline_block_baseline_*` tests are
+/// deleted.
+///
+/// An inline-block's baseline is the baseline of its LAST line box in normal flow (CSS 2.2
+/// §10.8.1; css-align-3 §9.1 `baseline-source: auto`), and blitz-dom asks for it
+/// (`src/layout/inline.rs` 449-451: `output.baselines.last.or(output.baselines.first)`), but a
+/// block container laid out by Taffy only ever reports its FIRST baseline (taffy 0.15.0
+/// `src/compute/block.rs` 758, `Baselines::from_first(first_baseline)`, set at 1687-1701 from the
+/// first in-flow child that has one). So every inline-block whose content is block-level (two
+/// `<p>`s, a `<div>` per row) sits on its first line instead of its last. Repro (Chrome for
+/// Testing 155.0.8059.85, 2026-10-28, 16px/20px monospace, c07-pin-b/baseline in the run store):
+/// `<div><span style="display:inline-block"><p>AA</p><p>BB</p></span> XX</div>`: Chrome puts XX
+/// on BB's line (both tops y = 28), Blitz on AA's (y = 8). WPT
+/// css/CSS2/linebox/baseline-block-with-overflow-001.html fails on the same bug, plus Chrome's
+/// rule for a descendant scroll container below.
+///
+/// Chrome's last baseline ([`chrome_last_baseline`]), measured on the same build: the in-flow
+/// children are searched from the last one back (floats and absolutely positioned boxes skipped,
+/// a child without a baseline, such as an empty block, skipped); an inline formatting context
+/// gives its last line's baseline (Blitz's own rule for it, the trailing empty line after a
+/// forced break left out); a block-level scroll container (`overflow` other than `visible` /
+/// `clip`) gives its bottom MARGIN edge, not its content (a 30 px `overflow: hidden` div with
+/// `margin-bottom: 10px` after a 20 px line: baseline at 68, WPT section 5: 310 = 250 + 30 + 30);
+/// a `display: table` child is skipped (Chrome aligned with the line before it). A flex or grid
+/// child, or any other display, stops the search and the inline-block keeps Blitz's placement
+/// (Chrome used the flex container's first line; not modelled). An inline-block with no
+/// baseline sits on its bottom margin edge, as in Blitz.
+///
+/// Edit: `vertical-align` (Stylo's `baseline-shift`) raised by the difference between that
+/// baseline and the one Blitz used, which moves the box exactly as the right baseline would
+/// (its ascent and descent in the line box are the same). Only for `vertical-align: baseline`
+/// or `<length>` / `<percentage>` (Chrome measured: a 10px raise adds to the last baseline);
+/// `sub` / `super` and the line-relative keywords are left alone (`super` also uses the last
+/// baseline in Chrome, but Parley decides its amount). Not applied to an inline-block that is
+/// itself a scroll container, is layout-contained or has `baseline-source: first` (Blitz is
+/// right there), nor to ruby's boxes ([`lay_out_ruby`] sets their raise) or form controls.
+fn inline_block_baseline_shifts(
+    base: &BaseDocument,
+    author_raises: &mut std::collections::HashMap<NodeId, f64>,
+) -> Vec<(NodeId, f32)> {
+    let mut shifts = Vec::new();
+    let mut stack = vec![(base.root_element().id, 0usize)];
+    while let Some((id, depth)) = stack.pop() {
+        // The DOM depth is gated before layout (SEC-1); this bounds the walk the same way.
+        if depth > 4096 {
+            continue;
+        }
+        let Some(node) = base.get_node(id) else {
+            continue;
+        };
+        if let Some(text) = node
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        {
+            for line in text.layout.lines() {
+                let line_baseline = f64::from(line.metrics().baseline);
+                for item in line.items() {
+                    let parley::PositionedLayoutItem::InlineBox(ibox) = item else {
+                        continue;
+                    };
+                    if ibox.kind != parley::InlineBoxKind::InFlow {
+                        continue;
+                    }
+                    let child_id = NodeId::from_u64(ibox.id);
+                    let Some(child) = base.get_node(child_id) else {
+                        continue;
+                    };
+                    let Some(raise) = inline_block_raise(child) else {
+                        continue;
+                    };
+                    // The author's raise, read before this function's first edit of the box.
+                    let author = *author_raises.entry(child_id).or_insert(raise);
+                    let layout = child.unrounded_layout();
+                    let Some(chrome) = chrome_last_baseline(base, child, depth + 1) else {
+                        continue;
+                    };
+                    // `None`: no baseline, the box's bottom margin edge sits on the line's.
+                    let chrome =
+                        chrome.unwrap_or(f64::from(layout.size.height + layout.margin.bottom));
+                    // The baseline Blitz aligned (px below the box's border-box top): the line's,
+                    // less the current raise.
+                    let used = line_baseline - f64::from(ibox.y + layout.margin.top) - raise;
+                    let wanted = author + chrome - used;
+                    if (wanted - raise).abs() > BASELINE_EPSILON_PX {
+                        shifts.push((child_id, wanted as f32));
+                    }
+                }
+            }
+        }
+        if let Some(children) = node.layout_children.borrow().as_ref() {
+            stack.extend(children.iter().rev().map(|&c| (c, depth + 1)));
+        }
+    }
+    shifts
+}
+
+/// Baseline differences up to this much are float rounding, not a misplaced box.
+const BASELINE_EPSILON_PX: f64 = 0.01;
+
+/// The current `vertical-align` raise (px) of an inline-block [`inline_block_baseline_shifts`]
+/// corrects, or `None` for a box it leaves alone.
+fn inline_block_raise(node: &blitz_dom::Node) -> Option<f64> {
+    use style::values::computed::{BaselineSource, Contain, Overflow};
+    use style::values::specified::box_::{DisplayInside, DisplayOutside};
+    let element = node.data.downcast_element()?;
+    let local = element.name.local.as_ref();
+    if matches!(local, "rt" | "button" | "input" | "select" | "textarea") || local == RUBY_BASE_TAG
+    {
+        return None;
+    }
+    let styles = node.primary_styles()?;
+    let display = styles.clone_display();
+    if display.outside() != DisplayOutside::Inline || display.inside() != DisplayInside::FlowRoot {
+        return None;
+    }
+    let b = styles.get_box();
+    if matches!(b.clone_baseline_source(), BaselineSource::First)
+        || b.clone_contain().contains(Contain::LAYOUT)
+        || !matches!(
+            styles.clone_overflow_y(),
+            Overflow::Visible | Overflow::Clip
+        )
+    {
+        return None;
+    }
+    baseline_raise(&styles)
+}
+
+/// Chrome 155's last baseline of a laid-out block container (px below its border-box top), the
+/// search [`inline_block_baseline_shifts`] documents: `Some(None)` when it has none, `None`
+/// when the search meets a box it does not model.
+fn chrome_last_baseline(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    depth: usize,
+) -> Option<Option<f64>> {
+    use style::values::computed::{Contain, Overflow};
+    use style::values::specified::box_::DisplayInside;
+    if depth > 4096 {
+        return None;
+    }
+    if node
+        .primary_styles()
+        .is_some_and(|s| s.clone_contain().contains(Contain::LAYOUT))
+    {
+        return Some(None);
+    }
+    if let Some(text) = node
+        .data
+        .downcast_element()
+        .and_then(|el| el.inline_layout_data.as_ref())
+    {
+        // Blitz's own last baseline of an inline formatting context (blitz-dom 0.3.0-beta.4
+        // `src/layout/inline.rs` 838-839 and 851-864, 1104-1114).
+        if text.text.is_empty() && text.layout.inline_boxes().len() == 0 {
+            return Some(None);
+        }
+        let count = text.layout.len();
+        let mut last = count.checked_sub(1);
+        if count >= 2 {
+            if let (Some(prev), Some(end)) =
+                (text.layout.get(count - 2), text.layout.get(count - 1))
+            {
+                if prev.break_reason() == parley::BreakReason::Explicit
+                    && end.text_range().is_empty()
+                    && end.items().next().is_none()
+                {
+                    last = Some(count - 2);
+                }
+            }
+        }
+        let layout = node.unrounded_layout();
+        let top = f64::from(layout.border.top + layout.padding.top + text.block_offset);
+        return Some(
+            last.and_then(|i| text.layout.get(i))
+                .map(|line| top + f64::from(line.metrics().baseline)),
+        );
+    }
+    let children: Vec<NodeId> = node
+        .layout_children
+        .borrow()
+        .as_ref()
+        .map(|c| c.iter().copied().collect())
+        .unwrap_or_default();
+    for &child_id in children.iter().rev() {
+        let Some(child) = base.get_node(child_id).filter(|n| node_has_layout_data(n)) else {
+            continue;
+        };
+        let Some(styles) = child.primary_styles() else {
+            continue;
+        };
+        if styles.clone_position().is_absolutely_positioned()
+            || !matches!(styles.clone_float(), style::computed_values::float::T::None)
+        {
+            continue;
+        }
+        let inside = styles.clone_display().inside();
+        let scroll = !matches!(
+            styles.clone_overflow_y(),
+            Overflow::Visible | Overflow::Clip
+        );
+        drop(styles);
+        let layout = child.unrounded_layout();
+        let top = f64::from(layout.location.y);
+        match inside {
+            DisplayInside::Flow | DisplayInside::FlowRoot if scroll => {
+                return Some(Some(
+                    top + f64::from(layout.size.height + layout.margin.bottom),
+                ));
+            }
+            DisplayInside::Flow | DisplayInside::FlowRoot => {
+                if let Some(baseline) = chrome_last_baseline(base, child, depth + 1)? {
+                    return Some(Some(top + baseline));
+                }
+            }
+            DisplayInside::Table => {}
+            _ => return None,
+        }
+    }
+    Some(None)
+}
+
+fn apply_baseline_shifts(doc: &mut BaseDocument, shifts: &[(NodeId, f32)]) {
+    use style::values::computed::{AlignmentBaseline, BaselineShift, Length, LengthPercentage};
+    for &(id, px) in shifts {
+        mutate_primary_style(doc, id, |values| {
+            let b = values.mutate_box();
+            b.set_alignment_baseline(AlignmentBaseline::Baseline);
+            b.set_baseline_shift(BaselineShift::Length(LengthPercentage::new_length(
+                Length::new(px),
+            )));
+        });
+    }
+}
+
 /// Local name of the element vellora wraps each ruby base in ([`wrap_ruby_bases`]): Chrome's
 /// anonymous ruby-base box, made a real (unstyled) element so it can be laid out and measured.
 const RUBY_BASE_TAG: &str = "vellora-ruby-base";
@@ -4143,6 +4390,22 @@ fn resolve_and_walk<O: LayoutObserver>(
             // Non-incremental: the edits are invisible to Blitz's damage tracking, so the whole
             // tree is re-constructed and re-laid out (their styles, edited ones included, are
             // kept; the style pass has nothing to restyle).
+            doc.set_incremental_layout(false);
+            doc.resolve(0.0);
+        }
+    }
+    // Inline-blocks Blitz aligns on their first line where Chrome uses the last (a Taffy bug,
+    // see `inline_block_baseline_shifts`): their `vertical-align` raise edited and the document
+    // laid out again, once per nesting level. Off in the raw-Blitz render.
+    if O::VELLORA_CORRECTIONS {
+        // Lookup only (DET-1): never iterated.
+        let mut author_raises = std::collections::HashMap::new();
+        for _ in 0..INLINE_BLOCK_BASELINE_ROUNDS {
+            let shifts = inline_block_baseline_shifts(&doc, &mut author_raises);
+            if shifts.is_empty() {
+                break;
+            }
+            apply_baseline_shifts(&mut doc, &shifts);
             doc.set_incremental_layout(false);
             doc.resolve(0.0);
         }
