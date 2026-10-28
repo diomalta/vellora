@@ -1181,6 +1181,45 @@ fn rtl_line_end_whitespace_justified_spreads_over_the_inner_separator() {
     assert!((inner - 36.006).abs() < 0.01, "inner separator {inner}");
 }
 
+/// Merge of phasec/04-text with phasec/04-paint: the rtl line-end move carries the runs'
+/// `text-decoration` lines with it. The hanging space is not underlined (Chrome 155 decorates
+/// no line-end space) and the stretched run's underline spans its new width (no line is drawn
+/// twice or past the glyphs).
+#[test]
+fn rtl_line_end_whitespace_moves_the_decorations_with_the_glyphs() {
+    let underlined = RTL_LINE_END_JUSTIFY.replace(
+        "text-align: justify\"",
+        "text-align: justify; text-decoration: underline\"",
+    );
+    let doc = product_layout(&underlined);
+    let y = runs_of(&doc)
+        .iter()
+        .map(|r| r.2)
+        .fold(f64::INFINITY, f64::min);
+    let line: Vec<_> = doc
+        .boxes
+        .iter()
+        .flat_map(|b| &b.text_runs)
+        .filter(|r| (r.origin_y - y).abs() < 1e-6)
+        .collect();
+    let space = line
+        .iter()
+        .find(|r| r.glyphs.len() == 1)
+        .expect("the moved space");
+    assert!(space.decorations.is_empty(), "{:?}", space.decorations);
+    let word = line
+        .iter()
+        .find(|r| r.glyphs.len() == 5)
+        .expect("\"XX XX\"");
+    let width: f64 = word.glyphs.iter().map(|g| f64::from(g.advance)).sum();
+    assert_eq!(word.decorations.len(), 1, "{:?}", word.decorations);
+    let d = &word.decorations[0];
+    assert!(
+        d.x.abs() < 1e-6 && (d.width - width).abs() < 1e-6,
+        "{d:?} vs {width}"
+    );
+}
+
 /// The `text-wrap: balance` repro of `blitz_engine::balance_text_wrap`: WPT
 /// `css/css-text/white-space/text-wrap-balance-text-indent-001.html` in Liberation Mono instead
 /// of Ahem (every length is in `ch`, so the breaks are the same).

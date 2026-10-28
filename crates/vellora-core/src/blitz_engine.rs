@@ -192,6 +192,23 @@ pub struct TextRun {
     pub glyphs: Vec<Glyph>,
     /// sRGB color (r,g,b) 0..=255.
     pub color: [u8; 3],
+    /// The `text-decoration` lines painted with this run ([`run_decorations`]), relative to its
+    /// origin so every pass that moves the run moves them.
+    pub decorations: Vec<TextDecoration>,
+}
+
+/// One `text-decoration` line of a [`TextRun`] (Phase C step 04, [`crate::text_decoration`]):
+/// a filled rect at `origin_x + x .. + width`, `origin_y + top .. + height` (CSS px).
+#[derive(Debug, Clone, PartialEq)]
+pub struct TextDecoration {
+    pub x: f64,
+    pub width: f64,
+    pub top: f64,
+    pub height: f64,
+    /// sRGB color (r,g,b) 0..=255: the decorating box's `text-decoration-color`.
+    pub color: [u8; 3],
+    /// A line-through, painted over the glyphs; underlines and overlines go under them.
+    pub over_text: bool,
 }
 
 /// One positioned glyph. Offsets/advances are in font units already divided by
@@ -224,6 +241,14 @@ pub struct LaidOutDoc {
     pub unresolved_image: Option<UnresolvedImage>,
     /// What the `@page` context inherits from the root element, for the margin boxes.
     pub page_context: PageContext,
+    /// The canvas background ([`canvas_background`]): the root element's background colour,
+    /// else the HTML `<body>`'s (CSS Backgrounds 3 §2.11.2). Pagination fills every page's page
+    /// area with it; the element it came from paints no background of its own.
+    pub canvas_background: Option<[u8; 3]>,
+    /// Whether the root element generates a box. A `display: none` root prints blank pages:
+    /// no canvas and no `@page` background either (Chrome 155, WPT
+    /// css/css-page/root-element-display-none-print.html, `@page { background: hotpink }`).
+    pub root_rendered: bool,
 }
 
 /// The page context of a laid-out document (CSS Paged Media 3: "The page context inherits from
@@ -2165,6 +2190,18 @@ fn mutate_primary_style(
     *primary = style::servo_arc::Arc::new(values);
 }
 
+/// How a computed border style paints ([`crate::border_pattern`]): `dashed` and `dotted` as
+/// segments, every other visible style solid.
+fn line_style(style: style::values::specified::BorderStyle) -> crate::border_pattern::LineStyle {
+    use crate::border_pattern::LineStyle;
+    use style::values::specified::BorderStyle as B;
+    match style {
+        B::Dashed => LineStyle::Dashed,
+        B::Dotted => LineStyle::Dotted,
+        _ => LineStyle::Solid,
+    }
+}
+
 /// A computed border style as a [`crate::collapsed_borders::EdgeStyle`].
 fn edge_style(style: style::values::specified::BorderStyle) -> crate::collapsed_borders::EdgeStyle {
     use crate::collapsed_borders::EdgeStyle as E;
@@ -2701,6 +2738,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let mut face_cache: std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>> =
         std::collections::HashMap::new();
     let root_id = base.root_element().id;
+    let canvas = canvas_background(base);
     // Scope the sink so its `&mut` borrows of `boxes`/`img_resolve` are released
     // before the post-walk normalize passes (which re-borrow `boxes`) and before
     // we read `img_resolve.first_unresolved` below.
@@ -2714,6 +2752,7 @@ fn resolve_and_walk<O: LayoutObserver>(
             reader_compensations: O::VELLORA_CORRECTIONS,
             collapsed: &collapsed,
             tiers: std::collections::HashMap::new(),
+            canvas_source: canvas.map(|(id, _)| id),
         };
         walk_box(base, root_id, 0, &mut sink);
     }
@@ -2746,6 +2785,8 @@ fn resolve_and_walk<O: LayoutObserver>(
         content_height,
         unresolved_image,
         page_context: page_context_of(base, font_ctx),
+        canvas_background: canvas.map(|(_, color)| color),
+        root_rendered: root_rendered(base),
     }
 }
 
@@ -2768,6 +2809,9 @@ struct WalkSink<'a, 'img> {
     collapsed: &'a CollapsedBorders,
     /// The [`paint_tier`] memo. Lookup only, like `origins`.
     tiers: std::collections::HashMap<NodeId, u8>,
+    /// The element whose background is the canvas background ([`canvas_background`]); its
+    /// own box paints no background.
+    canvas_source: Option<NodeId>,
 }
 
 /// Node ids matched by the stylesheet's fragmentation rules
@@ -3229,7 +3273,13 @@ fn push_box(
         sink.face_cache,
         sink.reader_compensations,
     );
-    let (mut visual_rects, rounded_borders) = read_visuals(node, abs_x, abs_y, sink.collapsed);
+    let (mut visual_rects, rounded_borders) = read_visuals(
+        node,
+        abs_x,
+        abs_y,
+        sink.collapsed,
+        sink.canvas_source == Some(node_id),
+    );
     let tier = paint_tier(base, node_id, &mut sink.tiers);
     for rect in &mut visual_rects {
         rect.tier = tier;
@@ -3443,13 +3493,68 @@ fn colspan(node: &blitz_dom::Node) -> usize {
         .min(1000)
 }
 
+/// The canvas background (CSS Backgrounds 3 §2.11.2, "The Canvas Background and the Root
+/// Element" / "The Canvas Background and the HTML `<body>` Element"): the root element's
+/// background colour when it is not transparent, else, for an `<html>` root, that of its first
+/// `<body>` child. Returns the element it propagates from (whose own background is then not
+/// painted: its used value is transparent) and the colour, composited over white like every
+/// other colour here ([`absolute_color_to_srgb`]). Only the colour propagates: vellora paints
+/// no background images.
+///
+/// Chrome 155 paints it over the page area of every page (the page box minus its margins, edges
+/// on whole px), never into the page margins: repro `fidelity/gate/snapshots/2026-10-28/c04-paint/repro/bgmulti.html` (body
+/// `#F2F4F6`, A4, `@page { margin: 10mm }`, two pages) fills x 38..756 / y 38..1085 px of both
+/// pages and leaves the margins white; with `html { background: #9cf }` too, the page area is
+/// `#9cf` and the body box paints its own `#ccc` (Phase C step 04).
+/// Whether the root element generates a box (its `display` is not `none`).
+fn root_rendered(base: &BaseDocument) -> bool {
+    base.root_element()
+        .primary_styles()
+        .is_some_and(|s| !s.clone_display().is_none())
+}
+
+fn canvas_background(base: &BaseDocument) -> Option<(NodeId, [u8; 3])> {
+    if !root_rendered(base) {
+        return None;
+    }
+    fn own_background(node: &blitz_dom::Node) -> Option<[u8; 3]> {
+        let styles = node.primary_styles()?;
+        let color = styles
+            .get_background()
+            .background_color
+            .resolve_to_absolute(&styles.clone_color());
+        absolute_color_to_srgb(color)
+    }
+    let root = base.root_element();
+    if let Some(color) = own_background(root) {
+        return Some((root.id, color));
+    }
+    let is_element = |node: &blitz_dom::Node, tag: &str| {
+        node.data.downcast_element().is_some_and(|el| {
+            let local: &str = &el.name.local;
+            local.eq_ignore_ascii_case(tag)
+        })
+    };
+    if !is_element(root, "html") {
+        return None;
+    }
+    let body = root
+        .children
+        .iter()
+        .filter_map(|&id| base.get_node(id))
+        .find(|child| is_element(child, "body"))?;
+    own_background(body).map(|color| (body.id, color))
+}
+
 /// Read paintable box visuals out of Blitz's computed style/layout, while
-/// keeping Blitz/Stylo/Taffy types sealed inside this module.
+/// keeping Blitz/Stylo/Taffy types sealed inside this module. `canvas_source`: the box's
+/// background is the canvas background ([`canvas_background`]), so the box paints none.
 fn read_visuals(
     node: &blitz_dom::Node,
     abs_x: f64,
     abs_y: f64,
     collapsed: &CollapsedBorders,
+    canvas_source: bool,
 ) -> (Vec<VisualRect>, Vec<RoundedBorder>) {
     let styles = match node.primary_styles() {
         Some(styles) => styles,
@@ -3471,7 +3576,7 @@ fn read_visuals(
         .get_background()
         .background_color
         .resolve_to_absolute(&current_color);
-    if let Some(color) = absolute_color_to_srgb(background_color) {
+    if let Some(color) = absolute_color_to_srgb(background_color).filter(|_| !canvas_source) {
         rects.push(VisualRect {
             x: abs_x,
             y: abs_y,
@@ -3516,14 +3621,17 @@ fn read_visuals(
         return (rects, rounded_borders);
     }
 
+    // `horizontal`: the side runs along x (top, bottom); dashes and dots follow it.
     let sides = [
         BorderSide {
+            horizontal: true,
             style: border.border_top_style,
             width: border.border_top_width.0.to_f64_px(),
             color: border.border_top_color.resolve_to_absolute(&current_color),
             rect: (abs_x, abs_y, width, border.border_top_width.0.to_f64_px()),
         },
         BorderSide {
+            horizontal: false,
             style: border.border_right_style,
             width: border.border_right_width.0.to_f64_px(),
             color: border
@@ -3537,6 +3645,7 @@ fn read_visuals(
             ),
         },
         BorderSide {
+            horizontal: true,
             style: border.border_bottom_style,
             width: border.border_bottom_width.0.to_f64_px(),
             color: border
@@ -3550,6 +3659,7 @@ fn read_visuals(
             ),
         },
         BorderSide {
+            horizontal: false,
             style: border.border_left_style,
             width: border.border_left_width.0.to_f64_px(),
             color: border.border_left_color.resolve_to_absolute(&current_color),
@@ -3564,16 +3674,21 @@ fn read_visuals(
         let Some(color) = absolute_color_to_srgb(side.color) else {
             continue;
         };
-        let (x, y, width, height) = side.rect;
+        let (_, _, width, height) = side.rect;
         if width > 0.0 && height > 0.0 {
-            rects.push(VisualRect {
-                x,
-                y,
-                width,
-                height,
-                color,
-                tier: 0,
-            });
+            let style = line_style(side.style);
+            for (x, y, width, height) in
+                crate::border_pattern::side_rects(style, side.width, side.rect, side.horizontal)
+            {
+                rects.push(VisualRect {
+                    x,
+                    y,
+                    width,
+                    height,
+                    color,
+                    tier: 0,
+                });
+            }
         }
     }
 
@@ -3665,6 +3780,7 @@ fn resolve_radius(
 }
 
 struct BorderSide {
+    horizontal: bool,
     style: style::values::specified::BorderStyle,
     width: f64,
     color: style::color::AbsoluteColor,
@@ -3949,6 +4065,7 @@ fn read_text_runs(
 
     for line in layout.lines() {
         let line_metrics = line.metrics();
+        let line_first_run = runs.len();
         let mut consumed_by_run: std::collections::HashMap<(usize, usize, usize), usize> =
             std::collections::HashMap::new();
         let line_padding_right_px = if right_aligned {
@@ -4001,6 +4118,9 @@ fn read_text_runs(
             if glyphs.is_empty() {
                 continue;
             }
+            let ascent_em = f64::from(run.font_metrics().ascent) / f64::from(font_size.max(1e-3));
+            let root_shift = f64::from(glyph_run.baseline() - line_metrics.baseline);
+            let decorations = run_decorations(base, style.brush.id, ascent_em, root_shift, &glyphs);
 
             // The runs of a relatively positioned inline element move with it (a Blitz gap,
             // see `inline_ancestor_relative_offset`); not in the raw-Blitz render.
@@ -4032,6 +4152,7 @@ fn read_text_runs(
                         as f64,
                     glyphs,
                     color,
+                    decorations,
                 },
                 run.is_rtl(),
             ));
@@ -4041,6 +4162,10 @@ fn read_text_runs(
             rtl_line_end_whitespace(node, &source, &line, &mut line_runs);
         }
         runs.extend(line_runs.into_iter().map(|(run, _)| run));
+        // The spaces a line ends with are not decorated (Chrome 155 does not underline them).
+        if let Some(last) = runs.get_mut(line_first_run..).and_then(|r| r.last_mut()) {
+            trim_trailing_space_decorations(last);
+        }
     }
 
     runs
@@ -4225,6 +4350,7 @@ fn rtl_line_end_whitespace<B: parley::Brush>(
         .windows(2)
         .map(|w| w[1].0.origin_x - (w[0].0.origin_x + run_width(&w[0].0)))
         .collect();
+    let old_widths: Vec<f64> = runs.iter().map(|(run, _)| run_width(run)).collect();
     let mut moved = runs[owner].0.clone();
     moved.glyphs.retain(|g| in_trail(g));
     runs[owner].0.glyphs.retain(|g| !in_trail(g));
@@ -4252,8 +4378,212 @@ fn rtl_line_end_whitespace<B: parley::Brush>(
         run.origin_x = line_x;
         line_x += run_width(run);
     }
+    // Decorations (phasec/04-paint, relative to each run's origin) follow the moved glyphs:
+    // the moved line-end white space carries none (Chrome 155 decorates no line-end spaces,
+    // see `trim_trailing_space_decorations`), and a whole-run decoration of a run whose
+    // glyphs or advances changed is refitted to the run's new width.
+    moved.decorations.clear();
+    for ((run, _), old) in runs.iter_mut().zip(&old_widths) {
+        let new = run_width(run);
+        for d in &mut run.decorations {
+            if d.x.abs() < 1e-6 && (d.width - old).abs() < 1e-6 {
+                d.width = new;
+            }
+        }
+        run.decorations.retain(|d| d.width > 0.0);
+    }
     runs.retain(|(run, _)| !run.glyphs.is_empty());
     runs.insert(0, (moved, false));
+}
+
+/// The decorations in effect on text styled by `brush` ([`crate::text_decoration`] holds the
+/// rules and the Chrome measurements): those of `brush` and of every ancestor up to the root,
+/// except that none passes into an atomic inline (`inline-block` etc.), a float or an
+/// absolutely positioned box from outside it (CSS Text Decoration 3 §2.1). Each line takes its
+/// decorating box's font size, `text-decoration-color` and thickness; `ascent_em` is the run's
+/// first-font ascent per em, scaled to the decorating box's font size. Every line covers the
+/// run's advance (`glyphs`).
+///
+/// A line sits on its DECORATING box's baseline, which `vertical-align` on descendants does not
+/// move (CSS 2.2 §16.3.1; WPT css/CSS2/text/text-decoration-va-length-001/002): a block-level
+/// decorating box's baseline is the line's root baseline (`root_shift` = run baseline - line
+/// baseline, px, down); an inline one's is the run's baseline moved back by the length
+/// `vertical-align` of the boxes between the run and it ([`baseline_raise`]), or, when one of those
+/// is a keyword, the root baseline moved by the decorating box's own chain up to the block; when
+/// neither chain is all lengths, the run's baseline.
+fn run_decorations(
+    base: &BaseDocument,
+    brush: NodeId,
+    ascent_em: f64,
+    root_shift: f64,
+    glyphs: &[Glyph],
+) -> Vec<TextDecoration> {
+    use crate::text_decoration::{geometry, Kind};
+    use style::computed_value_flags::ComputedValueFlags;
+    use style::values::computed::text::TextDecorationLine;
+    use style::values::generics::text::GenericTextDecorationLength;
+
+    let parent = |n: &blitz_dom::Node| n.parent.and_then(|id| base.get_node(id));
+    // The brush is the styled element of the run (Blitz `TextBrush::from_id`); a node without
+    // styles defers to its parent.
+    let mut node = base.get_node(brush);
+    while let Some(n) = node.filter(|n| n.primary_styles().is_none()) {
+        node = parent(n);
+    }
+    let Some(start) = node else {
+        return Vec::new();
+    };
+    if !start.primary_styles().is_some_and(|s| {
+        s.flags
+            .contains(ComputedValueFlags::HAS_TEXT_DECORATION_LINES)
+    }) {
+        return Vec::new();
+    }
+    let width: f64 = glyphs.iter().map(|g| f64::from(g.advance)).sum();
+    if width <= 0.0 {
+        return Vec::new();
+    }
+    let is_inline = |n: &blitz_dom::Node| {
+        use style::values::specified::box_::DisplayOutside;
+        n.primary_styles()
+            .is_some_and(|s| s.clone_display().outside() == DisplayOutside::Inline)
+    };
+    // The raise (px, up) of every inline box from `from` up to (not including) the first that
+    // is `stop` or block-level; `None` if one of them is not a plain length.
+    let chain_raise = |from: &blitz_dom::Node, stop: Option<NodeId>| -> Option<f64> {
+        let mut raise = 0.0;
+        let mut cur = Some(from);
+        while let Some(c) = cur {
+            if Some(c.id) == stop || !is_inline(c) {
+                break;
+            }
+            raise += c
+                .primary_styles()
+                .map_or(Some(0.0), |s| baseline_raise(&s))?;
+            cur = parent(c);
+        }
+        Some(raise)
+    };
+    let mut out = Vec::new();
+    let mut node = Some(start);
+    while let Some(n) = node {
+        let Some(styles) = n.primary_styles() else {
+            node = parent(n);
+            continue;
+        };
+        // Where this box's baseline is, relative to the run's (px, down).
+        let baseline = if n.id == start.id {
+            0.0
+        } else if !is_inline(n) {
+            -root_shift
+        } else if let Some(raise) = chain_raise(start, Some(n.id)) {
+            raise
+        } else if let Some(raise) = chain_raise(n, None) {
+            -root_shift - raise
+        } else {
+            0.0
+        };
+        let text = styles.get_text();
+        let lines = text.text_decoration_line;
+        let color = absolute_color_to_srgb(
+            text.text_decoration_color
+                .resolve_to_absolute(&styles.clone_color()),
+        );
+        if let (false, Some(color)) = (lines.is_empty(), color) {
+            let font_size = f64::from(styles.get_font().font_size.used_size.0.px());
+            let thickness = match &text.text_decoration_thickness {
+                GenericTextDecorationLength::LengthPercentage(lp) => Some(f64::from(
+                    lp.resolve(style::values::computed::Length::new(font_size as f32))
+                        .px(),
+                )),
+                GenericTextDecorationLength::Auto | GenericTextDecorationLength::FromFont => None,
+            };
+            for (flag, line) in [
+                (TextDecorationLine::UNDERLINE, Kind::Underline),
+                (TextDecorationLine::OVERLINE, Kind::Overline),
+                (TextDecorationLine::LINE_THROUGH, Kind::LineThrough),
+            ] {
+                if lines.contains(flag) {
+                    let (top, height) = geometry(line, font_size, ascent_em * font_size, thickness);
+                    out.push(TextDecoration {
+                        x: 0.0,
+                        width,
+                        top: baseline + top,
+                        height,
+                        color,
+                        over_text: line == Kind::LineThrough,
+                    });
+                }
+            }
+        }
+        // Nothing outside an atomic inline, a float or an absolutely positioned box decorates
+        // its content.
+        use style::computed_values::{float::T as Float, position::T as Position};
+        let boundary = atomic_inline(n)
+            || !matches!(styles.clone_float(), Float::None)
+            || matches!(
+                styles.clone_position(),
+                Position::Absolute | Position::Fixed
+            );
+        if boundary {
+            break;
+        }
+        node = parent(n);
+    }
+    out
+}
+
+/// How far `vertical-align` raises a box's baseline above its parent's (px, up): `baseline`
+/// alignment with a length (or percentage of the box's `line-height`, as blitz-dom 0.3.0-beta.4
+/// `stylo_to_parley::vertical_align` resolves it) shift; `None` for a keyword shift (`sub`,
+/// `super`, `top`, ...) or another alignment, whose amount Parley decides.
+fn baseline_raise(styles: &style::properties::ComputedValues) -> Option<f64> {
+    use style::values::computed::{AlignmentBaseline, BaselineShift};
+    let b = styles.get_box();
+    if !matches!(b.clone_alignment_baseline(), AlignmentBaseline::Baseline) {
+        return None;
+    }
+    match b.clone_baseline_shift() {
+        BaselineShift::Length(lp) => {
+            let font = styles.get_font();
+            let font_size = font.font_size.used_size.0.px();
+            let line_height = match font.line_height {
+                style::values::computed::font::LineHeight::Normal => font_size * 1.2,
+                style::values::computed::font::LineHeight::Number(n) => font_size * n.0,
+                style::values::computed::font::LineHeight::Length(v) => v.0.px(),
+            };
+            Some(f64::from(
+                lp.resolve(style::values::computed::Length::new(line_height))
+                    .px(),
+            ))
+        }
+        _ => None,
+    }
+}
+
+/// Shortens the decorations of a line's last run by the advance of the white space it ends
+/// with.
+fn trim_trailing_space_decorations(run: &mut TextRun) {
+    if run.decorations.is_empty() {
+        return;
+    }
+    let trailing: f64 = run
+        .glyphs
+        .iter()
+        .rev()
+        .take_while(|g| {
+            run.text
+                .get(g.text_start..g.text_end)
+                .is_some_and(|t| !t.is_empty() && t.chars().all(char::is_whitespace))
+        })
+        .map(|g| f64::from(g.advance))
+        .sum();
+    if trailing > 0.0 {
+        for d in &mut run.decorations {
+            d.width -= trailing;
+        }
+        run.decorations.retain(|d| d.width > 0.0);
+    }
 }
 
 /// Glyph-run -> line-run cluster key: `(run index, text range start, text range end)`.

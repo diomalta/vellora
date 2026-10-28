@@ -150,6 +150,17 @@ does not exist is treated like a missing venv.
   (`baselines/pin/doc-aggregate.json`) is made by `doc-aggregate-pin.mjs` with the published
   engine. Method, pin provenance and the gate rules (DOC-1..DOC-4): `fidelity/ACCEPTANCE.md`
   section 9.
+- **paint-probe** (`paint-probe.mjs`, `lib/paint-probe.mjs`, `py/paint.py`; Phase C step 04,
+  2026-10-28; REPORT-ONLY, no gate rule reads it): per fixture of a run-all dir and per page,
+  Chrome's `chrome.pdf` vs the run's `vellora.pdf` for three paint facts no other oracle
+  measures, from vector paint only (PyMuPDF `get_drawings` + text spans): the canvas background
+  (the largest filled rect when it covers half the page: colour and coverage), dashed/dotted
+  border segments (filled sub-paths shaped like a dash or a dot) and underlines (thin rects
+  under a text span's baseline, inside its extent). Flags `canvas`, `dashes-missing`,
+  `underlines-missing` (and `-extra`). Run-all step `paint-probe` writes
+  `<run>/paint-probe/summary.json` and always exits 0; `node fidelity/oracles/paint-probe.mjs
+  --run <dir> --out <file>` re-probes an existing run. Before/after of step 04:
+  `fidelity/gate/snapshots/2026-10-28/c04-paint/`.
 - **layout-consensus** (`lib/layout.mjs`, `lib/consensus.mjs`, `py/words.py`): word anchors are
   the pen origin x of the first glyph and the baseline y (PyMuPDF `rawdict`). Box tops are not
   used, because they come from producer-declared font ascents (see

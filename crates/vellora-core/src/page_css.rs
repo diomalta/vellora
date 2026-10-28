@@ -122,6 +122,10 @@ pub struct PageBox {
     pub margin_left: f64,
     /// Running header/footer templates.
     pub margins_content: Vec<MarginContent>,
+    /// The page's own background colour (`@page { background(-color): <color> }`, opaque sRGB),
+    /// painted over the whole page box, margins included, under the canvas background
+    /// ([`page_background_color`]).
+    pub background: Option<[u8; 3]>,
     /// Every `@page` rule of the document, for [`PageBox::for_page`].
     sheet: Arc<PageSheet>,
 }
@@ -175,6 +179,21 @@ impl PageBox {
         (x, self.margin_top.round())
     }
 
+    /// The page area (the page box minus its margins) as Chromium's print path paints the
+    /// canvas background into it, `(x0, y0, x1, y1)` in CSS px: the top-left corner at the
+    /// margins rounded to whole px, the size the exact page-area size rounded to whole px, of
+    /// the authored page box (`css_width`, so `size: A4` is 210 mm wide). Chrome for Testing
+    /// 155.0.8059.85, on every page: A4 10 mm margins x 38..756, y 38..1085 (38 + round(718.11),
+    /// 38 + round(1046.93)); A4 20 mm x 76..719, y 76..1047 (76 + round(642.52), 76 +
+    /// round(971.34); `round(W - mr)` would give 718). The margins stay unpainted (Phase C step
+    /// 04, `tests/canvas_background.rs`).
+    pub fn page_area(&self) -> (f64, f64, f64, f64) {
+        let (x0, y0) = (self.margin_left.round(), self.margin_top.round());
+        let width = (self.css_width() - self.margin_left - self.margin_right).max(0.0);
+        let height = (self.height - self.margin_top - self.margin_bottom).max(0.0);
+        (x0, y0, x0 + width.round(), y0 + height.round())
+    }
+
     /// The authored page width Chromium lays out against: for `size: A4` that is 210 mm
     /// (793.7008 px), not the 594.96 pt MediaBox `A4_W` the page itself is emitted at.
     fn css_width(&self) -> f64 {
@@ -199,6 +218,7 @@ impl PageBox {
             margin_bottom: m,
             margin_left: m,
             margins_content: Vec::new(),
+            background: None,
             sheet: Arc::new(PageSheet::default()),
         }
     }
@@ -473,6 +493,11 @@ impl PageSheet {
                     }
                     "margin-left" => {
                         page.margin_left = length_px(&d.value).unwrap_or(page.margin_left)
+                    }
+                    "background" | "background-color" => {
+                        if let Some(color) = page_background_color(&d.value) {
+                            page.background = color;
+                        }
                     }
                     p if TEXT_PROPERTIES.contains(&p) => set_declaration(&mut page_style, d),
                     _ => {}
@@ -1031,6 +1056,38 @@ fn margin_box_name(name: &str) -> Option<MarginBox> {
         "bottom-center" => Some(MarginBox::BottomCenter),
         _ => None,
     }
+}
+
+/// The colour of an `@page` `background` / `background-color` value: `Some(None)` for
+/// `transparent`, `Some(Some(rgb))` for a hex or named colour (composited over white when it has
+/// alpha), `None` when no token is one of those (the declaration is then ignored, like an
+/// invalid one; `rgb()` and other functions are not parsed here). The page background covers
+/// the whole page box, margins included, on every page its rule matches: Chrome for Testing
+/// 155.0.8059.85, `@page { size: A4; margin: 20mm; background: yellow } @page :first {
+/// background-color: #9cf }` paints page 1 `#99ccff` and page 2 `#ffff00` over x 0..794, y
+/// 0..1123 px, the body's canvas background over the page area on top (Phase C step 04, repro
+/// `fidelity/gate/snapshots/2026-10-28/c04-paint/repro/pagebg.html`; WPT
+/// css/css-page/page-box-001-print.html).
+pub(crate) fn page_background_color(value: &str) -> Option<Option<[u8; 3]>> {
+    value.split_whitespace().find_map(|token| {
+        let token = token.trim_end_matches(',');
+        if token.eq_ignore_ascii_case("transparent") {
+            return Some(None);
+        }
+        let (r, g, b, a) = if let Some(hex) = token.strip_prefix('#') {
+            cssparser::color::parse_hash_color(hex.as_bytes()).ok()?
+        } else {
+            let (r, g, b) =
+                cssparser::color::parse_named_color(&token.to_ascii_lowercase()).ok()?;
+            (r, g, b, 1.0)
+        };
+        let over_white = |c: u8| {
+            (f32::from(c) * a + 255.0 * (1.0 - a))
+                .round()
+                .clamp(0.0, 255.0) as u8
+        };
+        Some((a > 0.0).then(|| [over_white(r), over_white(g), over_white(b)]))
+    })
 }
 
 fn apply_size(page: &mut PageBox, value: &str) {

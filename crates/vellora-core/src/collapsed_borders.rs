@@ -35,7 +35,8 @@
 //! and paint); Chrome's exact choice of the table's left/right outer width (CSS 2.1 takes the
 //! first row's cells; here the widest edge of the whole column line, UNVERIFIED against Chrome
 //! for a non-uniform left/right edge); collapsed-border painting details (corner joins are
-//! overlapping rectangles; non-solid styles are painted solid, as every other border is).
+//! overlapping rectangles; `dashed` / `dotted` edges are painted as segments along each cell's
+//! painted rect ([`crate::border_pattern`], Phase C step 04), every other style solid).
 
 /// A border style, ordered by conflict-resolution priority (CSS 2.1 §17.6.2.1 rule 3):
 /// `Inset` lowest, `Double` highest. `None` and `Hidden` are handled before the order is used.
@@ -184,7 +185,17 @@ impl ResolvedCell {
             }
             if let Some(color) = self.sides[side].color {
                 if rect.2 > 0.0 && rect.3 > 0.0 {
-                    out.push((rect.0, rect.1, rect.2, rect.3, color));
+                    let style = match self.sides[side].style {
+                        EdgeStyle::Dashed => crate::border_pattern::LineStyle::Dashed,
+                        EdgeStyle::Dotted => crate::border_pattern::LineStyle::Dotted,
+                        _ => crate::border_pattern::LineStyle::Solid,
+                    };
+                    let horizontal = side == TOP || side == BOTTOM;
+                    for (x, y, w, h) in
+                        crate::border_pattern::side_rects(style, w[side], rect, horizontal)
+                    {
+                        out.push((x, y, w, h, color));
+                    }
                 }
             }
         };

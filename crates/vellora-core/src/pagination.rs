@@ -655,8 +655,9 @@ pub fn paginate_traced(
         let page = &page_boxes[i];
         // Chromium's whole-px content origin (`PageBox::content_origin`).
         let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
-        let (rects, rounded_strokes, images, text_runs) =
+        let (mut rects, rounded_strokes, images, text_runs) =
             lower_to_display_list(slice, origin_x, origin_y);
+        paint_canvas(&mut rects, page, doc);
 
         // Keep `report.footers` in lock-step with what is actually emitted: a
         // footer string is only recorded when its `MarginText` was produced.
@@ -818,7 +819,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     for (i, l) in lists.into_iter().enumerate() {
         let page = geometry.page(i).clone();
         let (ml, mt) = page.content_origin(geometry.rtl);
-        let rects = l
+        let mut rects = l
             .rects
             .into_iter()
             .chain(l.atomic_rects)
@@ -828,6 +829,7 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                 ..r
             })
             .collect();
+        paint_canvas(&mut rects, &page, doc);
         let rounded_strokes = l
             .strokes
             .into_iter()
@@ -2294,9 +2296,44 @@ fn lower_to_display_list(
             runs.push(r);
         }
     }
-    let mut rects = merge_adjacent_rects(rects);
-    rects.extend(merge_adjacent_rects(atomic_rects));
-    (rects, rounded_strokes, images, runs)
+    (
+        paint_ordered_rects(rects, atomic_rects),
+        rounded_strokes,
+        images,
+        runs,
+    )
+}
+
+/// The page's rects in painting order, combining the two orders of Phase C step 04: the paint
+/// tiers of `blitz_engine::paint_tier` (phasec/04-floats: in-flow blocks, floats, positioned
+/// boxes) and the atomic-inline split of [`in_atomic_inline`] (phasec/04-text). CSS 2.2
+/// Appendix E paints in-flow block backgrounds (step 4), then floats (step 5), then inline
+/// content, where an atomic inline paints as a whole (step 7), then positioned boxes (step 8).
+/// So the groups are: tier-0 non-atomic, floats (their own atomic inlines after their blocks),
+/// tier-0 atomic inlines, then positioned boxes (their atomic inlines after their blocks). Each
+/// group is merged on its own by [`merge_adjacent_rects`]. Coarse like the tiers: a float inside
+/// an atomic inline paints with the floats, not inside the atomic inline.
+fn paint_ordered_rects(rects: Vec<FilledRect>, atomic_rects: Vec<FilledRect>) -> Vec<FilledRect> {
+    use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
+    let group = |tier: u8, atomic: bool| -> usize {
+        match (tier, atomic) {
+            (PAINT_TIER_POSITIONED, false) => 4,
+            (PAINT_TIER_POSITIONED, true) => 5,
+            (PAINT_TIER_FLOAT, false) => 1,
+            (PAINT_TIER_FLOAT, true) => 2,
+            (_, false) => 0,
+            (_, true) => 3,
+        }
+    };
+    let mut groups: [Vec<FilledRect>; 6] = Default::default();
+    for (rect, atomic) in rects
+        .into_iter()
+        .map(|r| (r, false))
+        .chain(atomic_rects.into_iter().map(|r| (r, true)))
+    {
+        groups[group(rect.tier, atomic)].push(rect);
+    }
+    groups.into_iter().flat_map(merge_adjacent_rects).collect()
 }
 
 /// For each box (in tree order, `depth` from the walk), whether it is an atomic inline-level box
@@ -2322,6 +2359,42 @@ fn in_atomic_inline(boxes: &[LaidOutBox]) -> Vec<bool> {
             atomic_depth.is_some()
         })
         .collect()
+}
+
+/// Puts the canvas background ([`LaidOutDoc::canvas_background`], CSS Backgrounds 3 §2.11.2)
+/// under everything else of a page: one rect over the page's page area
+/// ([`PageBox::page_area`]), on every page, as Chrome 155's print path paints it.
+///
+/// Under it, the page's own `@page` background ([`PageBox::background`]) over the whole page box.
+/// Neither when the root element generates no box ([`LaidOutDoc::root_rendered`]).
+fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, doc: &LaidOutDoc) {
+    if !doc.root_rendered {
+        return;
+    }
+    let canvas = doc.canvas_background;
+    let mut under = Vec::new();
+    if let Some(color) = page.background {
+        under.push(FilledRect {
+            x: 0.0,
+            y: 0.0,
+            width: page.width,
+            height: page.height,
+            color,
+            tier: 0,
+        });
+    }
+    let (x0, y0, x1, y1) = page.page_area();
+    if let Some(color) = canvas.filter(|_| x1 > x0 && y1 > y0) {
+        under.push(FilledRect {
+            x: x0,
+            y: y0,
+            width: x1 - x0,
+            height: y1 - y0,
+            color,
+            tier: 0,
+        });
+    }
+    rects.splice(0..0, under);
 }
 
 /// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch
@@ -2595,6 +2668,34 @@ mod merge_tests {
         .map(|r| (r.tier, r.x))
         .collect();
         assert_eq!(order, vec![(0, 40.0), (1, 20.0), (2, 0.0)]);
+    }
+
+    /// The merge of the floats tiers with the text branch's atomic-inline split follows CSS 2.2
+    /// Appendix E: in-flow blocks (4), floats with their own atomic inlines (5), in-flow atomic
+    /// inlines (7), positioned boxes with their atomic inlines (8).
+    #[test]
+    fn atomic_inlines_paint_after_floats_and_before_positioned_boxes() {
+        use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
+        let at = |x: f64, tier: u8| FilledRect {
+            tier,
+            ..rect(x, 5.0)
+        };
+        let order: Vec<f64> = paint_ordered_rects(
+            vec![
+                at(0.0, PAINT_TIER_POSITIONED),
+                at(10.0, PAINT_TIER_FLOAT),
+                at(20.0, 0),
+            ],
+            vec![
+                at(30.0, PAINT_TIER_POSITIONED),
+                at(40.0, 0),
+                at(50.0, PAINT_TIER_FLOAT),
+            ],
+        )
+        .iter()
+        .map(|r| r.x)
+        .collect();
+        assert_eq!(order, vec![20.0, 10.0, 50.0, 40.0, 0.0, 30.0]);
     }
 
     #[test]

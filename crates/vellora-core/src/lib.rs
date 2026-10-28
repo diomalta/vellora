@@ -32,6 +32,7 @@
 //!   package reconstructs from this diagnostic — same name by intent, not type.
 
 pub mod blitz_engine;
+mod border_pattern;
 pub mod break_css;
 mod collapsed_borders;
 pub mod css_scan;
@@ -45,6 +46,7 @@ pub mod pagination;
 pub mod pdf;
 #[cfg(test)]
 mod raw_blitz_tests;
+mod text_decoration;
 pub mod validation;
 
 pub use pdf::{DocMeta, PdfAProfile};

@@ -172,6 +172,17 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             draw_rounded_stroke(&mut surface, s);
         }
 
+        // The runs' `text-decoration` lines: underlines and overlines under the glyphs,
+        // line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
+        let runs = || {
+            page.text_runs
+                .iter()
+                .chain(page.margin_texts.iter().flat_map(|mt| mt.runs.iter()))
+        };
+        for r in decoration_rects(runs(), false) {
+            draw_rect(&mut surface, &r);
+        }
+
         let mut at = 0;
         while at < page.text_runs.len() {
             let end = contiguous_run_end(&page.text_runs, at);
@@ -190,6 +201,10 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
         for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
             draw_text_run(&mut surface, run, &mut font_cache)?;
+        }
+
+        for r in decoration_rects(runs(), true) {
+            draw_rect(&mut surface, &r);
         }
 
         surface.finish();
@@ -448,6 +463,43 @@ fn contiguous_run_end(runs: &[TextRun], start: usize) -> usize {
     end
 }
 
+/// The `text-decoration` lines ([`TextRun::decorations`]) of `runs` with `over_text` as given,
+/// as page rects, in run order. A line continued by the next run of the same line (same colour,
+/// top and height, the next starting within 0.5 px of its end) is one rect: two abutting rects
+/// leave an anti-aliasing seam between them in a rasterizer.
+fn decoration_rects<'a>(
+    runs: impl Iterator<Item = &'a TextRun>,
+    over_text: bool,
+) -> Vec<FilledRect> {
+    let mut out: Vec<FilledRect> = Vec::new();
+    for run in runs {
+        for d in run.decorations.iter().filter(|d| d.over_text == over_text) {
+            if !(d.width > 0.0 && d.height > 0.0) {
+                continue;
+            }
+            let rect = FilledRect {
+                x: run.origin_x + d.x,
+                y: run.origin_y + d.top,
+                width: d.width,
+                height: d.height,
+                color: d.color,
+                tier: 0,
+            };
+            if let Some(prev) = out.last_mut().filter(|p| {
+                p.color == rect.color
+                    && (p.y - rect.y).abs() < 1e-6
+                    && (p.height - rect.height).abs() < 1e-6
+                    && (rect.x - (p.x + p.width)).abs() <= 0.5
+            }) {
+                prev.width = rect.x + rect.width - prev.x;
+                continue;
+            }
+            out.push(rect);
+        }
+    }
+    out
+}
+
 fn draw_text_run(
     surface: &mut krilla::surface::Surface,
     run: &TextRun,
@@ -586,6 +638,7 @@ mod tests {
                 })
                 .collect(),
             color: [0, 0, 0],
+            decorations: Vec::new(),
         };
         let hello = run(10.0, 0);
         let kitty = run(10.0 + 27.5, 5);
