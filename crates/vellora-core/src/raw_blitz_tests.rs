@@ -1462,14 +1462,33 @@ fn blitz_still_reads_svg_image_sources_from_the_host() {
             width="20" height="20"/></svg></body></html>"#
         )
     };
-    let present = crate::blitz_engine::raw_blitz_svg_trees_have_content(&html(
-        path.to_str().expect("utf-8 temp path"),
-    ));
+    let doc = html(path.to_str().expect("utf-8 temp path"));
+    // Parsed only (the document the gate inspects): Blitz has parsed no SVG yet.
+    let parsed = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, false);
+    let present = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, true);
     std::fs::remove_file(&path).expect("removes the temporary PNG");
-    let absent = crate::blitz_engine::raw_blitz_svg_trees_have_content(&html(
-        path.to_str().expect("utf-8 temp path"),
-    ));
-    assert_eq!((present, absent), (vec![true], vec![false]));
+    let absent = crate::blitz_engine::raw_blitz_svg_trees_have_content(&doc, true);
+    assert_eq!((parsed, present, absent), (vec![], vec![true], vec![false]));
+}
+
+/// The order the gate relies on: Blitz 0.3.0-beta.4 parses an inline SVG only while it builds
+/// the boxes in `BaseDocument::resolve` (blitz-dom `resolve.rs:99` `resolve_layout_children`, the
+/// only caller of `layout/construct.rs` `collect_layout_children`, where `parse_svg_image` runs),
+/// never while the HTML is parsed, so `find_external_svg_image` sees the parsed DOM before any
+/// SVG source is resolved. When this fails, Blitz parses SVGs earlier: move the gate before that
+/// point (or drop it, see its comment).
+#[test]
+fn blitz_parses_inline_svg_only_when_it_builds_the_boxes() {
+    let doc = r#"<!DOCTYPE html><html><body><svg width="20" height="20"><rect width="20"
+        height="20"/></svg></body></html>"#;
+    assert_eq!(
+        crate::blitz_engine::raw_blitz_svg_trees_have_content(doc, false),
+        Vec::<bool>::new()
+    );
+    assert_eq!(
+        crate::blitz_engine::raw_blitz_svg_trees_have_content(doc, true),
+        vec![true]
+    );
 }
 
 /// `blitz_engine::size_svgs_like_chrome` with percentage sizes, against Chrome 155 (2026-10-28,

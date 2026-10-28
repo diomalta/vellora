@@ -409,6 +409,13 @@ pub fn lay_out_margin_texts(
     let html =
         format!("<!DOCTYPE html><html><head><style>{css}</style></head><body>{body}</body></html>");
     let mut doc = build_document_with(&html, ctx.font_ctx.clone(), DocumentSyntax::Html, None);
+    // Defence in depth for the SVG image-source gate (`find_external_svg_image`): the margin
+    // text is escaped and the `@page` declarations come from a `<style>` element's raw text,
+    // which cannot hold `</style`, so no element can be injected here; if one ever were, Blitz's
+    // `resolve` below must not parse an SVG that reads a host file.
+    if find_external_svg_image(&doc).is_some() {
+        return requests.iter().map(|_| None).collect();
+    }
     let viewport = Viewport::new(100_000, 1000, 1.0, ColorScheme::Light);
     doc.set_viewport(viewport);
     doc.resolve(0.0);
@@ -5997,11 +6004,12 @@ fn capture_raw_runs(
     }
 }
 
-/// Test only (the raw-Blitz canary of [`find_external_svg_image`]): `html` parsed and laid out by
-/// Blitz with NO vellora gate or correction, and, for each `<svg>` Blitz parsed into
-/// `ImageData::Svg` (DOM order), whether Blitz's own usvg tree holds any node.
+/// Test only (the raw-Blitz canaries of [`find_external_svg_image`]): `html` parsed by Blitz,
+/// laid out when `resolve` (NO vellora gate or correction), and, for each `<svg>` Blitz parsed
+/// into `ImageData::Svg` (DOM order), whether Blitz's own usvg tree holds any node. With
+/// `resolve` false this is the document the gate inspects: no SVG may be parsed yet.
 #[cfg(test)]
-pub(crate) fn raw_blitz_svg_trees_have_content(html: &str) -> Vec<bool> {
+pub(crate) fn raw_blitz_svg_trees_have_content(html: &str, resolve: bool) -> Vec<bool> {
     use blitz_dom::node::{ImageData, SpecialElementData};
     let mut doc = build_document_with(
         html,
@@ -6009,7 +6017,9 @@ pub(crate) fn raw_blitz_svg_trees_have_content(html: &str) -> Vec<bool> {
         DocumentSyntax::Html,
         Some(layout_viewport(800.0, 600.0).0),
     );
-    doc.resolve(0.0);
+    if resolve {
+        doc.resolve(0.0);
+    }
     let mut found = Vec::new();
     let mut stack = vec![doc.root_element().id];
     while let Some(id) = stack.pop() {

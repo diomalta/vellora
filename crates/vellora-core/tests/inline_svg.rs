@@ -85,6 +85,48 @@ fn inline_svg_renders_as_pdfa_2b() {
     assert!(pdf.starts_with(b"%PDF-"));
 }
 
+/// The embedded font names of a PDF (`BaseFont`).
+fn base_fonts(pdf: &[u8]) -> Vec<String> {
+    let doc = lopdf::Document::load_mem(pdf).expect("parses");
+    doc.objects
+        .values()
+        .filter_map(|o| o.as_dict().ok())
+        .filter_map(|d| d.get(b"BaseFont").ok())
+        .filter_map(|n| n.as_name().ok())
+        .map(|n| String::from_utf8_lossy(n).into_owned())
+        .collect()
+}
+
+/// A face supplied through the `fonts` option is reachable from SVG `<text>` by its family name
+/// (the SVG font database holds the bundled faces, then the caller's); without it the text falls
+/// back to a bundled face.
+#[test]
+fn svg_text_uses_a_caller_supplied_font() {
+    let mono: &[u8] = include_bytes!("../../../fixtures/fonts/DejaVuSansMono.ttf");
+    let html = page(
+        r#"<svg width="200" height="40"><text x="5" y="25" font-family="DejaVu Sans Mono">mono</text></svg>"#,
+    );
+    let with = render(
+        html.as_bytes(),
+        &RenderOptions {
+            fonts: vec![mono.to_vec()],
+            ..opts()
+        },
+    )
+    .expect("renders");
+    let fonts = base_fonts(&with);
+    assert!(
+        fonts.iter().any(|f| f.contains("DejaVuSansMono")),
+        "fonts: {fonts:?}"
+    );
+    let without = render(html.as_bytes(), &opts()).expect("renders");
+    let fonts = base_fonts(&without);
+    assert!(
+        !fonts.is_empty() && !fonts.iter().any(|f| f.contains("DejaVuSansMono")),
+        "fonts: {fonts:?}"
+    );
+}
+
 fn rejection(body: &str) -> vellora_core::validation::Diagnostic {
     match render(page(body).as_bytes(), &opts()) {
         Err(VelloraError::Unsupported(d)) => d,

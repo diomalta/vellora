@@ -1,0 +1,21 @@
+Chrome/155.0.8059.85
+== ~/Repositories/vellora-fidelity-runs/c06-svg/inputs/svg-sizes-block.html
+svg#a x=8 y=8 w=300 h=150
+svg#b x=8 y=158 w=40 h=150
+svg#c x=8 y=308 w=60 h=150
+svg#d x=8 y=458 w=784 h=1568
+svg#e x=8 y=2026 w=324 h=174
+== ~/Repositories/vellora-fidelity-runs/c06-svg/inputs/svg-sizes.html
+svg#a x=8 y=8 w=300 h=150
+svg#b x=8 y=162 w=784 h=1568
+svg#c x=8 y=1734 w=40 h=150
+svg#d x=48 y=1734 w=40 h=150
+svg#e x=8 y=1888 w=40 h=30
+svg#f x=8 y=1918 w=60 h=150
+svg#g x=8 y=2072 w=200 h=400
+== ~/Repositories/vellora-fidelity-runs/c06-svg/inputs/svg-nocol.html
+svg x=8 y=8 w=300 h=150
+P x=8 y=124 w=784 h=18
+== ~/Repositories/vellora-fidelity-runs/c06-svg/inputs/svg-with-transform.html
+P x=8 y=16 w=784 h=18
+svg x=58 y=50 w=300 h=150
