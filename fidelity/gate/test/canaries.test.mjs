@@ -25,7 +25,7 @@ const caughtBy = (rows) => Object.fromEntries(rows.map((r) => [r.canary, r.caugh
 test("every gate canary is caught on the committed 07 baseline (real seeds) and on synthetic seeds", () => {
   for (const run of [step07, null]) {
     const rows = runGateCanaries({ run, passes: PASSES });
-    assert.equal(rows.length, 29);
+    assert.equal(rows.length, 32);
     assert.ok(
       rows.every((r) => r.caught === true && r.ran === true && r.oracle === "gate"),
       JSON.stringify(rows.filter((r) => !r.caught)),
@@ -290,5 +290,41 @@ test("an uncaught gate canary becomes an absolute failure item", () => {
   assert.deepEqual(
     items.map((i) => [i.key, i.class, i.gating]),
     [["canary|gate|x", "failure", true]],
+  );
+});
+
+// Phase C 03 (2026-10-27): rule iii removals and ids (verify phasec/02 finding 1).
+test("a transition that removes a still-failing key leaves its canary uncaught", () => {
+  const lax = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/still fails/.test(p));
+  const c = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: lax }));
+  assert.equal(c["DEBT rule iii: a still-failing key removed"], false);
+  assert.equal(c["DEBT rule iii: a fixed key removed with evidence"], true);
+});
+
+test("a transition that refuses every fixed removal, or accepts one without its run id, leaves its canary uncaught", () => {
+  const old = (o, n, x) => [
+    ...transitionProblems(o, n, x),
+    ...(n?.closed ?? []).filter((r) => r.fixed).map((r) => `${r.id} ${r.key}: only a vanished key`),
+  ];
+  const c1 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: old }));
+  assert.equal(c1["DEBT rule iii: a fixed key removed with evidence"], false);
+  const noRunId = (o, n, x) => transitionProblems(o, n, x).filter((p) => !/runId/.test(p));
+  const c2 = caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: noRunId }));
+  assert.equal(c2["DEBT rule iii: a fixed key removed with evidence"], false);
+});
+
+test("a ledger that allows a reused id, a re-entered closed key or a lost closed record leaves its canary uncaught", () => {
+  const name = "DEBT rule iii: an id reused";
+  for (const re of [/id reused/, /append-only/]) {
+    const lax = (o, n, x) => transitionProblems(o, n, x).filter((p) => !re.test(p));
+    assert.equal(
+      caughtBy(runGateCanaries({ run: step07, passes: PASSES, transition: lax }))[name],
+      false,
+    );
+  }
+  const reenter = (l, o) => ledgerProblems(l, o).filter((p) => !/re-enters/.test(p));
+  assert.equal(
+    caughtBy(runGateCanaries({ run: step07, passes: PASSES, ledgerCheck: reenter }))[name],
+    false,
   );
 });

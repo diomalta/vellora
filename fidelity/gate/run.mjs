@@ -19,9 +19,12 @@
 //            worse than it (a) artefact / (b) ledger debt / (c) neither; --main makes (c) gate
 //            (a merge to main, GATE-H3). --no-pin skips it.
 // --debt     the ledger (default fidelity/baselines/port/DEBT.json); --debt-base the ledger at
-//            the merge base (default: DEBT.json at `git merge-base HEAD main`, absent there = the
-//            first population; a base that cannot be determined REFUSES the gate, I2): checks
-//            rule iii (count, ceilings, removals) and that new entries satisfy the relaxed (b) rule.
+//            the merge base (default: DEBT.json at `git merge-base HEAD main`; absent there, the
+//            frozen ledger the committed per-branch pointer baselines/port/DEBT-BASE.json names,
+//            sha256-checked, Phase C 03; neither = the first population; a base that cannot be
+//            determined REFUSES the gate, I2): checks rule iii (count, ceilings, removals: vanished
+//            or fixed with closed[] evidence, never a still-failing key; ids never reused; closed[]
+//            append-only) and that new entries satisfy the relaxed (b) rule.
 // --step     the step id (NN-name) the run measures: an entry may close at its closesAt step.
 //            The head comparison merges the declaredRejections of every port link from the head
 //            (exclusive) to this step (inclusive), the pin view those of every link up to it

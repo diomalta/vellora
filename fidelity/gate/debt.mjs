@@ -47,11 +47,16 @@
 //   (i)   every head-gating item matches an entry key, else it gates
 //   (ii)  the current value is within the KEY's ceiling, else it gates (debt-exceeded)
 //   (iii) across a merge (old ledger -> new ledger; the old ledger defaults to DEBT.json at
-//         `git merge-base HEAD main`, resolveLedgerBase, and an undeterminable base REFUSES the
-//         gate, I2), per key: the entry count, the key count and the sum of ceilings per tolClass
-//         never increase, no key's ceiling goes up, a key is removed only at its entry's closesAt
-//         step or with a stated reason when it vanished from the run; the first population (no
-//         previous key at all) is exempt from the count and sum rule (DESIGN TARGET)
+//         `git merge-base HEAD main`, else the frozen ledger of the committed per-branch pointer
+//         baselines/port/DEBT-BASE.json (Phase C 03, 2026-10-27), resolveLedgerBase, and an
+//         undeterminable base REFUSES the gate, I2), per key: the entry count, the key count and
+//         the sum of ceilings per tolClass never increase, no key's ceiling goes up, a key is
+//         removed only at its entry's closesAt step, or with a closed[] record when it vanished
+//         from the run (keyVanished) or is FIXED (fixed: true, runId, headComparison: no longer a
+//         head item, re-checked on the run's head comparison), and NEVER while its item still
+//         fails against the head (any route); an id is never reused for a different thing;
+//         closed[] is append-only and a closed key never re-enters (ledgerProblems); the first
+//         population (no previous key at all) is exempt from the count and sum rule (DESIGN TARGET)
 //   (iv)  an owner.layer "vellora:*" entry names a retirement step in closesAt (NN-name)
 //   (v)   a layout_normalize pass listed as a compensator and absent from the run forces the
 //         entry to be re-gated (its layer vectors no longer describe the run)
@@ -79,8 +84,9 @@
 //     from --base; --report gives the head items GATE-D7 ties new keys to; [--head-dir <baseline>]
 //     [--run <run dir>] give the page metrics a listed page scope binds, rule vi'); exit 0 ok, 3 not
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import {
@@ -221,14 +227,61 @@ export function runGit(args, cwd = REPO_ROOT) {
   };
 }
 
+/** The committed per-branch ledger base pointer (schema vellora-fidelity/debt-base/1). */
+export const DEBT_BASE_POINTER = join(BASELINES_DIR, "port", "DEBT-BASE.json");
+export const DEBT_BASE_SCHEMA = "vellora-fidelity/debt-base/1";
+
+/**
+ * The ledger a per-branch base pointer names: { "schema": "vellora-fidelity/debt-base/1",
+ * "ledger": "<repo-relative frozen DEBT.json>", "sha256": "<its sha256>", "step", "why" }.
+ * Returns null when `pointer` is null or absent, { refusal } when it is malformed, its ledger is
+ * missing or its sha256 differs (a frozen base never changes), else { ledger, source }.
+ */
+export function readBasePointer(pointer = DEBT_BASE_POINTER, { root = REPO_ROOT } = {}) {
+  if (!pointer || !existsSync(pointer)) return null;
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(pointer, "utf8"));
+  } catch (e) {
+    return { refusal: `the ledger base pointer ${pointer} is not JSON: ${e.message}` };
+  }
+  if (doc.schema !== DEBT_BASE_SCHEMA || typeof doc.ledger !== "string" || !doc.sha256) {
+    return {
+      refusal: `the ledger base pointer ${pointer} needs schema ${DEBT_BASE_SCHEMA}, ledger and sha256`,
+    };
+  }
+  const file = resolve(root, doc.ledger);
+  if (!existsSync(file)) {
+    return { refusal: `the ledger base pointer names ${doc.ledger}, which does not exist` };
+  }
+  const bytes = readFileSync(file);
+  const sha = createHash("sha256").update(bytes).digest("hex");
+  if (sha !== doc.sha256) {
+    return {
+      refusal: `the frozen ledger base ${doc.ledger} has sha256 ${sha}, not the pointer's ${doc.sha256}: a frozen base never changes`,
+    };
+  }
+  return {
+    ledger: parseDebt(bytes.toString("utf8"), doc.ledger, { root }),
+    source: `base pointer ${relative(root, pointer)} -> ${doc.ledger} (sha256 ${sha.slice(0, 12)}, step ${doc.step ?? "-"})`,
+  };
+}
+
 /**
  * The ledger rule iii compares against (I2, 2026-10-22): `debtBase` when given (a file that does
- * not exist is the ledger's first population), else DEBT.json at `git merge-base HEAD <ref>`
- * (absent there = first population). Rule iii used to run only with an explicit --debt-base, so
+ * not exist is the ledger's first population), else DEBT.json at `git merge-base HEAD <ref>`;
+ * absent there, the frozen ledger the committed base pointer `pointer` (DEBT-BASE.json) names
+ * (Phase C 03, 2026-10-27), else the first population. Rule iii used to run only with an explicit --debt-base, so
  * a raised ceiling passed silently. Returns { ledger (null = first population), source, refusal }:
  * a non-null refusal means the base cannot be determined and a gated run is REFUSED.
  */
-export function resolveLedgerBase({ debtBase = undefined, git = runGit, ref = "main" } = {}) {
+export function resolveLedgerBase({
+  debtBase = undefined,
+  git = runGit,
+  ref = "main",
+  pointer = DEBT_BASE_POINTER,
+  root = REPO_ROOT,
+} = {}) {
   if (debtBase !== undefined && debtBase !== null) {
     return { ledger: loadDebt(debtBase), source: `--debt-base ${debtBase}`, refusal: null };
   }
@@ -247,6 +300,19 @@ export function resolveLedgerBase({ debtBase = undefined, git = runGit, ref = "m
   }
   const has = git(["cat-file", "-e", `${sha}:${DEBT_REPO_PATH}`]);
   if (has.status !== 0) {
+    // No ledger on main yet: a committed per-branch base pointer (DEBT-BASE.json) names the frozen
+    // ledger this branch shrinks from, so rule iii is enforced across the branch instead of being
+    // exempt as a "first population" (Phase C 03, 2026-10-27; verify phasec/02 finding 1).
+    const fromPointer = readBasePointer(pointer, { root });
+    if (fromPointer) {
+      return fromPointer.refusal
+        ? { ledger: undefined, source: null, refusal: fromPointer.refusal }
+        : {
+            ledger: fromPointer.ledger,
+            source: `${fromPointer.source} (${DEBT_REPO_PATH} absent at merge-base ${sha.slice(0, 12)} (HEAD, ${ref}))`,
+            refusal: null,
+          };
+    }
     return {
       ledger: null,
       source: `${DEBT_REPO_PATH} absent at merge-base ${sha.slice(0, 12)} (HEAD, ${ref}): first population`,
@@ -546,6 +612,26 @@ export function ledgerProblems(ledger, { pageMetricKeys = null } = {}) {
       keyOwner.set(k, e.id);
     }
   }
+  // Rule iii, history (Phase C 03, 2026-10-27): a closed key never re-enters (it would come back at
+  // its old ceiling as an "existing" key of a frozen base), and an entry closed as a whole (a
+  // closed[] record without key) keeps its id retired.
+  const closedKeys = new Map();
+  const closedEntryIds = new Set();
+  for (const c of ledger.closed ?? []) {
+    if (c?.key) closedKeys.set(c.key, c);
+    else if (c?.id) closedEntryIds.add(c.id);
+  }
+  for (const e of ledger.entries) {
+    if (closedEntryIds.has(e.id)) p.push(`${e.id}: id closed as a whole in closed[]: never reused`);
+    for (const k of [...entryKeys(e), ...(isListedPageScope(e) ? e.scope.keys : [])]) {
+      const c = closedKeys.get(k);
+      if (c) {
+        p.push(
+          `${e.id}: ${k} re-enters the ledger after closed[] closed it (${c.id}, step ${c.step ?? "-"}): a closed key never comes back (rule iii)`,
+        );
+      }
+    }
+  }
   const scoped = ledger.entries.filter((e) => e.scope);
   const byCriterion = new Map();
   for (const e of scoped) {
@@ -840,6 +926,18 @@ export function transitionProblems(
   const closedNow = newLedger?.closed ?? [];
   for (const [key, { e: o }] of oldKeys) {
     if (newKeys.has(key)) continue;
+    // A key whose item still fails is never removed, by any route (closesAt included): only its
+    // ceiling may go down when the value is better (Phase C 03, 2026-10-27: phasec/02 closed 7 WPT
+    // keys that still failed). Checked whenever the run's head comparison is known.
+    // (A gate report's head items carry the comparison's class as headClass.)
+    const hi = headItems?.get(key);
+    const hiClass = hi?.headClass ?? hi?.class;
+    if (hi?.gating !== false && hi && HEAD_GATING_CLASSES.includes(hiClass)) {
+      p.push(
+        `${o.id} ${key}: removed while its item still fails against the head (${hiClass}, ${hi.before} -> ${hi.after}): a key whose item still fails is never removed, only its ceiling lowered when better (rule iii)`,
+      );
+      continue;
+    }
     if (step && o.closesAt === step) continue;
     const c =
       closedNow.find((x) => x.key === key) ?? closedNow.find((x) => x.id === o.id && !x.key);
@@ -857,13 +955,132 @@ export function transitionProblems(
       } else if (presentKeys.has(key)) {
         p.push(`${o.id}: ${key} removed as "key vanished" but the run still has it`);
       }
+    } else if (c.fixed) {
+      p.push(...fixedRemovalProblems(o.id, key, c, { headItems, presentKeys }));
     } else {
       p.push(
-        `${o.id} ${key}: removed before its closesAt (${o.closesAt ?? "-"}): only a vanished key is a stated reason (rule iii)`,
+        `${o.id} ${key}: removed before its closesAt (${o.closesAt ?? "-"}): only a vanished key or a fixed item (closed[] fixed: true, runId, headComparison) is a stated reason (rule iii)`,
       );
     }
   }
+  p.push(...idReuseProblems(before, after, oldLedger?.closed ?? []));
+  p.push(...closedHistoryProblems(oldLedger?.closed ?? [], closedNow));
   return p;
+}
+
+/** A run id as run-all.mjs writes it (provenance.runId, e.g. 20261027T231548Z). */
+export const RUN_ID_RE = /^\d{8}T\d{6}Z$/;
+
+/**
+ * Rule iii, the FIXED removal route (Phase C 03, 2026-10-27; verify phasec/02 finding 1): a key
+ * whose item is no longer a head item (within tolerance of, or better than, the chain head) may
+ * leave the ledger before its closesAt with a closed[] record { id, key, step, reason, fixed: true,
+ * runId, headComparison: { class, before, after } } naming the run and the head comparison that
+ * showed it fixed. The record is evidence; the proof is the CURRENT head comparison (`headItems`),
+ * re-checked on every gated run (rule iii always runs against the base): if the item gates against
+ * the head again, the removal is refused (transitionProblems already refuses any removal of a
+ * still-failing key). `headComparison.class` is the head comparison item's class at `runId`, or
+ * "none" when that comparison had no item (unchanged). Returns problems.
+ */
+export function fixedRemovalProblems(id, key, c, { headItems = null, presentKeys = null } = {}) {
+  const p = [];
+  // A key the run no longer produces is not "fixed" (nothing was measured): that is keyVanished.
+  if (presentKeys && !presentKeys.has(key)) {
+    p.push(
+      `${id} ${key}: removed as fixed but the run no longer has the key: a vanished key is closed as keyVanished (rule iii)`,
+    );
+  }
+  if (!headItems) {
+    p.push(
+      `${id} ${key}: removal because the item is fixed cannot be verified without the run's head comparison (rule iii)`,
+    );
+  }
+  if (typeof c.runId !== "string" || !RUN_ID_RE.test(c.runId)) {
+    p.push(
+      `${id} ${key}: a fixed removal records the run id that showed it fixed (closed[].runId, e.g. 20261027T231548Z), not ${JSON.stringify(c.runId)} (rule iii)`,
+    );
+  }
+  const hc = c.headComparison;
+  if (!hc || typeof hc !== "object" || typeof hc.class !== "string") {
+    p.push(
+      `${id} ${key}: a fixed removal records its head comparison (closed[].headComparison { class, before, after }; class "none" = no item) (rule iii)`,
+    );
+  } else if (HEAD_GATING_CLASSES.includes(hc.class) || hc.class === "head-regression") {
+    p.push(
+      `${id} ${key}: the recorded head comparison is a gating ${hc.class} (${hc.before} -> ${hc.after}): a key whose item still fails is never removed (rule iii)`,
+    );
+  }
+  return p;
+}
+
+/** Item keys and listed scope keys of each entry id. */
+const idKeySets = (entries) => {
+  const out = new Map();
+  for (const e of entries) {
+    out.set(e.id, {
+      keys: new Set(entryKeys(e)),
+      scope: new Set(isListedPageScope(e) ? e.scope.keys : []),
+    });
+  }
+  return out;
+};
+
+/**
+ * Rule iii, ids (Phase C 03, 2026-10-27): an id is never reused for a different thing. An entry id
+ * the base ledger has may hold only keys the base entry of that id held (its item keys among the
+ * base's item keys, its listed scope keys among the base's scope keys); an id the base does not
+ * have must not appear in the base's closed[] either (a closed entry's id stays retired). Moving a
+ * key into another entry therefore needs a fresh id (debt-populate.mjs derives ids from --step and
+ * skips taken ones). Returns problems.
+ */
+export function idReuseProblems(before, after, oldClosed = []) {
+  const p = [];
+  const old = idKeySets(before);
+  const closedIds = new Set(oldClosed.map((c) => c?.id).filter(Boolean));
+  for (const e of after) {
+    const o = old.get(e.id);
+    if (!o) {
+      if (closedIds.has(e.id)) {
+        p.push(
+          `${e.id}: id reused: the base ledger closed this id (closed[]); a new entry takes a fresh id (rule iii)`,
+        );
+      }
+      continue;
+    }
+    const foreign = entryKeys(e).filter((k) => !o.keys.has(k));
+    const foreignScope = (isListedPageScope(e) ? e.scope.keys : []).filter((k) => !o.scope.has(k));
+    for (const [what, list] of [
+      ["keys", foreign],
+      ["scope.keys", foreignScope],
+    ]) {
+      if (list.length) {
+        p.push(
+          `${e.id}: id reused for a different thing: ${list.length} ${what} the base entry ${e.id} did not hold (${list.slice(0, 3).join(", ")}${list.length > 3 ? ", ..." : ""}); keys moving to another entry take a fresh id (rule iii)`,
+        );
+      }
+    }
+  }
+  return p;
+}
+
+const closedSig = (c) => JSON.stringify([c?.id ?? null, c?.key ?? null, c?.step ?? null]);
+
+/**
+ * Rule iii, history (Phase C 03, 2026-10-27): closed[] is append-only across a merge: every closed
+ * record of the base (by id, key and step) is still there. Together with ledgerProblems' "a closed
+ * key never re-enters", a key fixed at one step cannot come back at its old ceiling later on the
+ * same branch, whatever base the gate compares with. Returns problems.
+ */
+export function closedHistoryProblems(oldClosed, newClosed) {
+  const now = new Set((newClosed ?? []).map(closedSig));
+  const gone = (oldClosed ?? []).filter((c) => !now.has(closedSig(c)));
+  if (!gone.length) return [];
+  return [
+    `closed[] lost ${gone.length} record(s) of the base (${gone
+      .slice(0, 3)
+      .map((c) => `${c.id} ${c.key ?? "(entry)"}`)
+      .join(", ")}${gone.length > 3 ? ", ..." : ""}): the closed history is append-only (rule iii)`,
+  ];
 }
 
 /** Pin view class of a pin-comparison item: (a) accepted artefact, (b) ledger, (c) otherwise. */

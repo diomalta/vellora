@@ -2,6 +2,7 @@
 // snapshots: one test per rule (i)-(vi), the relaxed (b) rule for new entries, class-a vs legacy
 // acceptances against the head, and the pin view.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -9,16 +10,20 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { compareSnapshots } from "../compare.mjs";
 import {
+  DEBT_BASE_SCHEMA,
   DEBT_REPO_PATH,
   applyLedger,
   chainHead,
+  closedHistoryProblems,
   d7KeyProblems,
   emptyLedger,
   entryProblems,
+  idReuseProblems,
   ledgerProblems,
   migrateEntryV1,
   parseDebt,
   pdfProbePage,
+  readBasePointer,
   relaxedB,
   resolveLedgerBase,
   transitionProblems,
@@ -397,14 +402,71 @@ test("I2: resolveLedgerBase reads DEBT.json at the merge base, else first popula
     return { status: 1, stdout: "", stderr: "" };
   };
   const path = `0123abcd:${DEBT_REPO_PATH}`;
-  const b = resolveLedgerBase({ git: repo({ [path]: JSON.stringify(EXAMPLE) }) });
+  const b = resolveLedgerBase({ git: repo({ [path]: JSON.stringify(EXAMPLE) }), pointer: null });
   assert.equal(b.refusal, null);
   assert.equal(b.ledger.entries.length, 1);
   assert.match(b.source, /merge-base 0123abcd/);
   assert.deepEqual(calls.slice(0, 1), ["merge-base HEAD main"]);
-  const first = resolveLedgerBase({ git: repo({}) });
+  const first = resolveLedgerBase({ git: repo({}), pointer: null });
   assert.equal(first.ledger, null);
   assert.match(first.source, /first population/);
+  // Phase C 03: no ledger at the merge base -> the committed per-branch base pointer names the
+  // frozen base (sha256-checked); a ledger at the merge base still wins over the pointer.
+  const dir = mkdtempSync(join(tmpdir(), "debt-base-"));
+  const frozen = join(dir, "DEBT-frozen.json");
+  writeFileSync(frozen, JSON.stringify(EXAMPLE));
+  const sha = createHash("sha256").update(readFileSync(frozen)).digest("hex");
+  const ptr = (doc) => {
+    const f = join(dir, `ptr-${Math.random().toString(36).slice(2)}.json`);
+    writeFileSync(f, JSON.stringify(doc));
+    return f;
+  };
+  const good = ptr({
+    schema: DEBT_BASE_SCHEMA,
+    ledger: "DEBT-frozen.json",
+    sha256: sha,
+    step: "10-x",
+  });
+  const viaPointer = resolveLedgerBase({ git: repo({}), pointer: good, root: dir });
+  assert.equal(viaPointer.refusal, null);
+  assert.equal(viaPointer.ledger.entries.length, 1);
+  assert.match(
+    viaPointer.source,
+    /base pointer .*DEBT-frozen\.json.*step 10-x.*absent at merge-base/,
+  );
+  const mbWins = resolveLedgerBase({
+    git: repo({ [path]: JSON.stringify({ ...EXAMPLE, entries: [] }) }),
+    pointer: good,
+    root: dir,
+  });
+  assert.equal(mbWins.ledger.entries.length, 0);
+  assert.match(mbWins.source, /merge-base 0123abcd/);
+  const tampered = ptr({
+    schema: DEBT_BASE_SCHEMA,
+    ledger: "DEBT-frozen.json",
+    sha256: "0".repeat(64),
+  });
+  const t = resolveLedgerBase({ git: repo({}), pointer: tampered, root: dir });
+  assert.equal(t.ledger, undefined);
+  assert.match(t.refusal, /frozen ledger base .* sha256 .* never changes/);
+  const missing = ptr({ schema: DEBT_BASE_SCHEMA, ledger: "nope.json", sha256: sha });
+  assert.match(
+    resolveLedgerBase({ git: repo({}), pointer: missing, root: dir }).refusal,
+    /does not exist/,
+  );
+  assert.match(
+    resolveLedgerBase({ git: repo({}), pointer: ptr({ ledger: "DEBT-frozen.json" }), root: dir })
+      .refusal,
+    /needs schema/,
+  );
+  // The committed pointer names the frozen 10-integration ledger (27 entries, 1026 keys).
+  const committed = readBasePointer();
+  assert.equal(committed.refusal, undefined);
+  assert.equal(committed.ledger.entries.length, 27);
+  assert.equal(
+    committed.ledger.entries.reduce((n, e) => n + e.keys.length, 0),
+    1026,
+  );
   const none = resolveLedgerBase({
     git: () => ({ status: 128, stdout: "", stderr: "fatal: no main" }),
   });
@@ -688,5 +750,91 @@ test("rule vi': a listed scope binds no moved page metric and starts at page >= 
   assert.deepEqual(
     ledgerProblems(one(psEntry({}, { fromPage: 3, keys: ["pdf-probe|fx|p3|w#1|dy"] }))),
     [],
+  );
+});
+
+// Phase C 03 (2026-10-27): rule iii removal routes, ids and the closed history.
+test("rule iii: a fixed key leaves with closed[] evidence; a still-failing key never leaves; ids are never reused", () => {
+  const key = KREC.key;
+  const old = { ...emptyLedger(), entries: [ENTRY] };
+  const rec = {
+    id: ENTRY.id,
+    key,
+    step: "11-x",
+    reason: "fixed",
+    fixed: true,
+    runId: "20261027T231548Z",
+    headComparison: { class: "within-tolerance", before: 0.1, after: 0.4 },
+  };
+  const now = (cls, gating) => new Map([[key, { key, class: cls, gating, before: 0, after: 1 }]]);
+  const t = (closed, headItems, step = "11-x") =>
+    transitionProblems(old, { ...emptyLedger(), closed }, { step, headItems });
+  assert.deepEqual(t([rec], now("improvement", false)), []);
+  assert.deepEqual(t([rec], new Map()), []); // no item now: unchanged vs the head
+  assert.match(t([rec], null).join(";"), /cannot be verified without the run's head comparison/);
+  const gone = transitionProblems(
+    old,
+    { ...emptyLedger(), closed: [rec] },
+    { step: "11-x", headItems: new Map(), presentKeys: new Set() },
+  );
+  assert.match(gone.join(";"), /closed as keyVanished/);
+  assert.deepEqual(
+    transitionProblems(
+      old,
+      { ...emptyLedger(), closed: [rec] },
+      { step: "11-x", headItems: new Map(), presentKeys: new Set([key]) },
+    ),
+    [],
+  );
+  assert.match(t([{ ...rec, runId: "c02" }], new Map()).join(";"), /runId/);
+  assert.match(t([{ ...rec, headComparison: null }], new Map()).join(";"), /headComparison/);
+  assert.match(
+    t([{ ...rec, headComparison: { class: "regression" } }], new Map()).join(";"),
+    /recorded head comparison is a gating regression/,
+  );
+  // Still failing now: refused as fixed, at its closesAt, and from a gate report (headClass).
+  assert.match(t([rec], now("regression", true)).join(";"), /still fails/);
+  assert.match(
+    t([], now("regression", true), ENTRY.closesAt ?? "99-x").join(";"),
+    ENTRY.closesAt ? /still fails/ : /without a stated reason/,
+  );
+  const fromReport = new Map([
+    [key, { key, class: "head-regression", headClass: "regression", gating: true }],
+  ]);
+  assert.match(t([rec], fromReport).join(";"), /still fails/);
+  // A plain reason (neither vanished nor fixed) is still refused.
+  assert.match(
+    t([{ id: ENTRY.id, key, reason: "shrink" }], new Map()).join(";"),
+    /only a vanished key or a fixed item/,
+  );
+  // Ids: an id of the base naming another key, and an id the base closed, are refused.
+  const moved = { ...ENTRY, keys: [{ ...KREC, key: `${key}x` }] };
+  assert.match(idReuseProblems([ENTRY], [moved]).join(";"), /id reused for a different thing/);
+  assert.deepEqual(idReuseProblems([ENTRY], [{ ...moved, id: "DEBT-11-fresh-1" }]), []);
+  assert.match(
+    idReuseProblems([], [{ ...moved, id: "OLD-1" }], [{ id: "OLD-1", key: "k" }]).join(";"),
+    /closed this id/,
+  );
+  const scopeE = { ...ENTRY, scope: { fixture: "f", fromPage: 2, keys: ["a"] } };
+  assert.match(
+    idReuseProblems([scopeE], [{ ...scopeE, scope: { ...scopeE.scope, keys: ["a", "b"] } }]).join(
+      ";",
+    ),
+    /scope\.keys the base entry/,
+  );
+  // History: closed[] is append-only, and a closed key never re-enters.
+  assert.match(closedHistoryProblems([rec], []).join(";"), /append-only/);
+  assert.deepEqual(closedHistoryProblems([rec], [rec, { ...rec, key: "z" }]), []);
+  assert.match(
+    ledgerProblems({ ...emptyLedger(), entries: [ENTRY], closed: [rec] }).join(";"),
+    /re-enters the ledger after closed\[\] closed it/,
+  );
+  assert.match(
+    ledgerProblems({
+      ...emptyLedger(),
+      entries: [ENTRY],
+      closed: [{ id: ENTRY.id, reason: "x" }],
+    }).join(";"),
+    /closed as a whole/,
   );
 });

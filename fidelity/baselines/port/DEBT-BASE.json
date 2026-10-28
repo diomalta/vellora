@@ -1,0 +1,7 @@
+{
+  "schema": "vellora-fidelity/debt-base/1",
+  "ledger": "fidelity/gate/snapshots/2026-10-27/10-final/DEBT-10-integration.json",
+  "sha256": "929ba96def9ef90c8678b0ca4230f37d5f23f457c39dbd3cd1050a990cfd24da",
+  "step": "10-integration",
+  "why": "Rule iii base of this branch while main has no DEBT.json (gate/debt.mjs resolveLedgerBase: DEBT.json at git merge-base HEAD main first, then this pointer, then first population). The named file is byte-identical (sha256) to fidelity/baselines/port/DEBT.json at phaseb/10-final-verify af1bd4f, the ledger of port step 10-integration (27 entries, 1026 keys, 144 listed scope keys). Every gated run on this branch checks the ledger's transition from it: counts and ceiling sums never grow, no ceiling rises, a key leaves only at its closesAt, as vanished, or as fixed with a closed[] record (run id + head comparison) and never while its item still fails, ids are never reused, closed[] is append-only. Advance it only to a ledger committed by a gated step that passed rule iii against this one; delete it once main carries a DEBT.json (the merge base then wins). Phase C 03, 2026-10-27."
+}

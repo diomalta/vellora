@@ -21,8 +21,11 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
   ```sh
   export PATH="$HOME/.nvm/versions/node/v22.23.2/bin:$PATH"
   # The ledger base (rule iii) defaults to DEBT.json at `git merge-base HEAD main` since
-  # 2026-10-22 (I2; absent there = first population, exempt from the count and sum rule); pass
-  # --debt-base <file> only where that merge base cannot be determined (e.g. a clone without main).
+  # 2026-10-22 (I2); absent there (main has no ledger yet), the frozen ledger the committed
+  # per-branch pointer baselines/port/DEBT-BASE.json names (since Phase C 03, 2026-10-27: the
+  # 10-integration ledger, sha256-checked); only with neither is it the first population (exempt
+  # from the count and sum rule). Pass --debt-base <file> only where that merge base cannot be
+  # determined (e.g. a clone without main).
   # Chrome is PINNED (since 2026-10-27): local stable Chrome auto-updated to 156.0.8078.4, which
   # would mix a Chrome major change into the gate. Install Chrome for Testing 155.0.8059.85 per
   # checkout (fidelity/.cache/chrome, gitignored) and pass it with --chrome (the path below is
@@ -47,9 +50,18 @@ Chrome are **INDICATIVE**; the pinned Linux Chrome-for-Testing run is a DESIGN T
 
   `--step` names the step the run measures (an entry may close at its `closesAt` step, rule iii;
   the head comparison merges the declarations of the links up to it, I4). Rule iii runs on every
-  gated run (I2, 2026-10-22): the base is `--debt-base` or DEBT.json at `git merge-base HEAD main`,
-  and a base that cannot be determined REFUSES the gate. A NEW ledger key must satisfy the relaxed
-  (b) rule and GATE-D7 (tied to the run's head item, I3).
+  gated run (I2, 2026-10-22): the base is `--debt-base`, else DEBT.json at `git merge-base HEAD
+  main`, else the frozen ledger `DEBT-BASE.json` points at (Phase C 03), and a base that cannot be
+  determined (or a pointer whose sha256 does not match) REFUSES the gate. A NEW ledger key must
+  satisfy the relaxed (b) rule and GATE-D7 (tied to the run's head item, I3). A key leaves before its
+  `closesAt` only as vanished from the run or as FIXED: a `closed[]` record `{ id, key, step,
+  reason, fixed: true, runId, headComparison: { class, before, after } }` (the run and the head
+  comparison that showed it within tolerance of or better than the head; class `"none"` = no item),
+  re-verified on every gated run against the run's own head comparison. A key whose item still
+  fails against the head is never removed by any route (its ceiling may only go down). An id is
+  never reused for a different thing (an id of the base holds only keys that entry held; an id the
+  base closed stays retired; `debt-populate.mjs` derives new ids `DEBT-<NN>-*` from `--step` and
+  skips taken ones), `closed[]` is append-only and a closed key never re-enters (GATE-D3).
 - **Merge rule.** The step merges only when its gate is PASS against the previous link AND the
   chain head. A chain step is never written with `--force`: `manifest.json
   gate.writtenDespiteVerdict` must be `false` and `gate.baseline` must name the previous step. A
