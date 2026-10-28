@@ -123,3 +123,52 @@ Equivalence check (CONFIRMED): the c04 shrink was re-run with the new script, us
 
 Its `entries` and `closed` are deep-equal to the committed `baselines/port/DEBT.json`. Only the
 note's wording differs.
+
+## 5. Multicol in strict mode, and the exact effect of rejecting it
+
+**Today (CONFIRMED):** strict mode accepts multicol and prints it in one column.
+
+- Neither `COMPATIBILITY.md` nor `docs/compatibility.md` mentions `columns`, `column-count` or
+  `column-width`, and none of them is on a denylist.
+- `COMPATIBILITY.md` defines the subset as a denylist: anything not denied is "rendered
+  best-effort".
+- `docs/compatibility.md` says out-of-subset input "is rejected ... rather than rendered
+  incorrectly".
+- Probe `c05-probe/inputs/multicol-strict.html`: the tip renders `columns: 2` on a 400 px box with
+  lines running to x 292 pt, the full width.
+
+**How the gate would classify a rejection** (`gate/wpt.mjs`):
+
+- A test that rendered and is now `unsupported` is class `rejection`. It gates against the
+  previous link and the head unless a `declaredRejections` entry of the step covers it (GATE-A2).
+- This holds for pass -> unsupported and for fail -> unsupported (D5).
+- `wpt/run.mjs` marks a test `unsupported` when the test *or any reference* is rejected.
+
+**The proposal:** branch `phasec/05-multicol-reject-proposal`, not merged. It rejects the
+declarations in three places:
+
+- the core gate (`css:multicol`, value-aware: `auto` and CSS-wide keywords pass, `column-gap` etc.
+  stay in the subset);
+- the `multicol` lint rule;
+- `RULE_ID_TO_CORE_FEATURE`.
+
+**Measured effect:** a full default WPT run of that build (`--chrome-from` the 10-tip run).
+`multicol-reject-wpt-diff.json` here holds the full list.
+
+- 775 tests change, **all** to `unsupported` / `css:multicol`. No other test changed.
+- 76 c04 passes -> unsupported.
+- 699 c04 fails -> unsupported.
+- In the pin view, 54 pin clean passes would become `unsupported`, including the 4 items above
+  and table-border-007.
+- Chrome passes 755 of the 775.
+- No fixture, corpus or probe HTML uses multicol (the 33 HTML inputs of the c04 run copy and the
+  repo fixtures), so no verdict row changes.
+
+**What it would mean for the gate:**
+
+- Landing it would add 775 gating rejections.
+- Declaring them (GATE-A2) would also turn the 4 pin (c) items into declared rejections. That
+  would resolve contract (1) by declaration instead of by rendering, so it is an orchestrator
+  decision.
+- It would hide 699 real failures under one feature id and drop 76 clean passes.
+- For that reason it is reported here and not committed on this branch.
