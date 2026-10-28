@@ -15,7 +15,7 @@
       "closesAt": null,
       "introducedBy": "04-block-offset",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -169,7 +169,7 @@
       "closesAt": null,
       "introducedBy": "03-table-passes",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -219,7 +219,7 @@
       "closesAt": null,
       "introducedBy": "01-pagination-gaps",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -293,7 +293,7 @@
       "closesAt": null,
       "introducedBy": "01-pagination-gaps",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -319,7 +319,7 @@
       "closesAt": null,
       "introducedBy": "04-block-offset",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -873,7 +873,7 @@
       "closesAt": null,
       "introducedBy": "04-block-offset",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -923,7 +923,7 @@
       "closesAt": null,
       "introducedBy": "01-pagination-gaps",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -1037,7 +1037,7 @@
       "closesAt": null,
       "introducedBy": "04-block-offset",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -1279,7 +1279,7 @@
       "closesAt": null,
       "introducedBy": "04-block-offset",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
@@ -1585,7 +1585,7 @@
       "closesAt": null,
       "introducedBy": "03-table-passes",
       "evidence": [
-        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora/.claude/worktrees/wf_d84ee40a-478-1/fidelity/results/run-all/c02 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
+        "layer vectors: node fidelity/gate/layer-vector.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c02-20261027T231548Z-blitz-0.3.0-beta.4-vellora-6c0e2e3 (fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz, fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz)",
         "head items: fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json (head fidelity/baselines/port/00-start); built by node fidelity/gate/debt-populate.mjs --report fidelity/gate/snapshots/2026-10-27/c02/gate-report-c02-nodebt.json --run fidelity/results/run-all/c02 --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-head.json.gz --vectors fidelity/gate/snapshots/2026-10-27/c02/layer-vectors-danfe-l1.json.gz --step 11-collapse-comp --out <scratch>/DEBT-proposal.json --residual <scratch>/residual.json"
       ],
       "keys": [
