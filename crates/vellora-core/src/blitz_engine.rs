@@ -73,6 +73,11 @@ pub struct LaidOutBox {
     /// for fragmentation (CSS Fragmentation 3 §4.1; Chrome 155 never breaks inside one). Read by
     /// pagination's oversize-fragment slicer (Phase C step 03).
     pub atomic_inline: bool,
+    /// Whether the box clips its content in the block direction (`overflow-y` other than
+    /// `visible`). vellora paints overflow unclipped; the oversize-fragment slicer clips the
+    /// descendants of such a box to its border box so the overflow makes no pages of its own
+    /// (Chrome 155: WPT css/css-page/monolithic-overflow-028, Phase C step 03).
+    pub clips_overflow: bool,
     /// Depth in the tree (0 = root). Useful for debugging/asserts.
     pub depth: usize,
     /// If this node is an inline root, the shaped text it owns.
@@ -2155,6 +2160,9 @@ fn push_box(
             || sink.breaks.avoid_inside.contains(&node_id),
         break_before_page: inline_breaks.page_before || sink.breaks.page_before.contains(&node_id),
         atomic_inline: atomic_inline(node),
+        clips_overflow: node.primary_styles().is_some_and(|styles| {
+            styles.clone_overflow_y() != style::values::computed::Overflow::Visible
+        }),
         depth,
         text_runs,
         visual_rects,

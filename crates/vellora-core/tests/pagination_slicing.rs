@@ -268,3 +268,125 @@ fn a_continuation_that_paints_nothing_is_dropped_design_target() {
     assert_eq!(p.report.page_count, 2, "Chrome: 26");
     assert_eq!(at(&p, "after").0, 1);
 }
+
+/// The WPT print page (`fidelity/wpt`: 5in × 3in, 0.5in margins) and the boxes of the
+/// css/CSS2/pagination tests: 1in blue squares.
+const WPT_PAGE: &str = "@page { size:5in 3in; margin:0.5in; } body { margin: 8px; font-family: \
+                        \"Liberation Sans\" } p { height: 1in; width: 1in; margin:0; \
+                        background-color:blue; }";
+
+fn wpt(css: &str, body: &str) -> String {
+    format!("<!DOCTYPE html><html><head><style>{WPT_PAGE} {css}</style></head><body>{body}</body></html>")
+}
+
+/// Every page's lines, top to bottom, as text.
+fn texts(p: &pagination::Paginated) -> Vec<Vec<String>> {
+    let all = lines(p);
+    (0..p.pages.len())
+        .map(|i| {
+            let mut on: Vec<&(usize, String, f64)> = all.iter().filter(|l| l.0 == i).collect();
+            on.sort_by(|a, b| a.2.total_cmp(&b.2));
+            on.into_iter().map(|l| l.1.clone()).collect()
+        })
+        .collect()
+}
+
+#[test]
+fn a_break_inside_avoid_box_taller_than_a_page_starts_a_fresh_page_like_chrome() {
+    // WPT css/CSS2/pagination/block-page-break-inside-avoid-15: two 2.5in `avoid` boxes after a
+    // 1in box on 2in pages. Chrome (its reference: `page-break-before: always`) moves each to a
+    // fresh page and cuts it there: 5 pages, "1" / "2" / (rest of 2) / "4" / (rest of 4).
+    let p = paginate(&wpt(
+        ".test { page-break-inside:avoid; height:2.5in; }",
+        "<p>1</p><p class=\"test\">2</p><p class=\"test\">4</p>",
+    ));
+    assert_eq!(texts(&p), [vec!["1"], vec!["2"], vec![], vec!["4"], vec![]]);
+}
+
+#[test]
+fn an_avoid_table_row_moves_to_the_next_page_then_is_cut_like_chrome() {
+    // WPT css/CSS2/pagination/row-page-break-inside-avoid-2 (Chrome 155 print of the test,
+    // 2026-10-27): row 1 on page 1; the `avoid` row 2 (two 1in squares, taller than the page with
+    // its cell borders) starts page 2 and its last 2 px go to page 3.
+    let p = paginate(&wpt(
+        ".test { page-break-inside:avoid; }",
+        "<table border=\"1\"><tbody><tr><td><p>1</p></td></tr><tr class=\"test\"><td><p>2</p>\
+         <p>3</p></td></tr></tbody></table>",
+    ));
+    assert_eq!(texts(&p), [vec!["1"], vec!["2", "3"], vec![]]);
+}
+
+#[test]
+fn a_forced_break_inside_an_avoid_row_group_wins_like_chrome() {
+    // WPT css/CSS2/pagination/rowgroup-page-break-inside-avoid-8: a `break-before: page` row
+    // inside a `break-inside: avoid` <tbody>: Chrome keeps row 1 on page 1 and starts row 2 on
+    // page 2 (a forced break wins over avoid, CSS Fragmentation 3 §4.4).
+    let p = paginate(&wpt(
+        ".test { page-break-inside:avoid; } .bb { page-break-before:always; }",
+        "1<table border=\"1\"><tbody class=\"test\"><tr><td><p>1</p></td></tr><tr class=\"bb\">\
+         <td><p>2</p><p>2</p></td></tr></tbody></table>",
+    ));
+    assert_eq!(texts(&p), [vec!["1", "1"], vec!["2", "2"], vec![]]);
+}
+
+#[test]
+fn a_clipped_overflow_makes_no_pages_of_its_own_like_chrome() {
+    // WPT css/css-page/monolithic-overflow-028: an 8in `overflow-y: clip` box holding a 23in
+    // child prints four pages in Chrome; the clipped 15in are not printed.
+    let p = paginate(&wpt(
+        "body { margin: 0; color: white }",
+        "<div style=\"position:absolute; overflow-y:clip; width:100%; contain:size; height:8in; \
+         background:red;\"><div style=\"height:23in; background:green;\">There should be four \
+         green pages.</div></div>",
+    ));
+    assert_eq!(p.report.page_count, 4);
+}
+
+#[test]
+fn a_box_one_page_tall_leaves_no_sliver_on_the_next_page() {
+    // WPT css/css-page/subpixel-page-size-001: a 123.9 px box on a 123.9 px page. Blitz lays it
+    // out 124 px tall; its last 0.1 px must not paint a red row on page 2 (Chrome fits it).
+    let html = "<!DOCTYPE html><html><head><style>body { margin: 0; } @page { size: 400px \
+                123.9px; margin: 0; }</style></head><body><div style=\"height:123.9px; \
+                background:red;\">This page should not be printed.</div>There should be no red.\
+                </body></html>";
+    let p = paginate(html);
+    assert_eq!(p.report.page_count, 2);
+    assert!(rects_of(&p, 1, [255, 0, 0]).is_empty(), "no red on page 2");
+}
+
+#[test]
+fn an_empty_box_that_fits_stays_and_the_next_box_starts_the_page_like_chrome() {
+    // The reference of WPT css/css-break/flexbox/multi-line-row-flex-fragmentation-063: 0.5in
+    // items separated by empty 0.2in divs in a bordered box. Item 3 does not fit page 1; the empty
+    // div before it does and stays there (the latest break wins), so item 3 starts page 2 at the
+    // top, as in Chrome's print of the test.
+    let items: String = (1..=6)
+        .map(|i| {
+            let gap = if i < 5 {
+                "<div class=\"gap\"></div>"
+            } else {
+                ""
+            };
+            format!("<div class=\"item\">{i}</div>{gap}")
+        })
+        .collect();
+    let p = paginate(&wpt(
+        "body { margin: 0 } .flexbox { border: 0.25in solid black; font-size: 0.25in; } .item \
+         { contain: size; box-sizing: border-box; border: 4px solid purple; height: 0.5in; } \
+         .gap { height: 0.2in; }",
+        &format!(
+            "<div style=\"height: 0.25in; background: gray;\"></div><div class=\"flexbox\">\
+             {items}</div><div style=\"height: 0.25in; background: gray;\"></div>"
+        ),
+    ));
+    assert_eq!(texts(&p)[0], ["1", "2"]);
+    assert_eq!(texts(&p)[1], ["3", "4", "5"]);
+    let (_, y1) = at(&p, "1");
+    let (_, y3) = at(&p, "3");
+    // Item 1 sits 0.25in (gray) + 0.25in (border) below the content top; item 3 at the top.
+    assert!(
+        (y1 - y3 - 48.0).abs() <= TOL,
+        "item 3 at {y3}, item 1 at {y1}"
+    );
+}

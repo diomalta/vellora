@@ -1508,14 +1508,19 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
 //   table row that fits on a page (Chrome moved a 7-line row that had room for 6 of its lines:
 //   rows are kept whole unless taller than a page; the postmark layout table's one row is
 //   broken inside, as Chrome does);
-// - the latest such point wins, then it moves up to the top of the first box that starts after
-//   the last piece of content that fits (a break between siblings, so `table.body-action` starts
-//   the postmark's page 2 with its border, as in Chrome), and up to the top of every box that
-//   would leave only its border and padding above the cut (break before the box, not between
-//   its content edge and its first child);
+// - the latest such point wins; it moves up to the top of every box that would leave only its
+//   border and padding above the cut (break before the box, not between its content edge and its
+//   first child: `table.body-action` starts the postmark's page 2 with its border, as in
+//   Chrome), and to the top of a `break-inside: avoid` box it goes through, whatever its height
+//   (Chrome moves such a box to a fresh page, then cuts it there); empty space below the cut
+//   (collapsed margins) is skipped, the continuation starts with the next box;
+// - a forced break (`break-before: page`) inside the fragment ends the page, over `avoid`;
 // - orphans and widows 2 (CSS Fragmentation 3 §3.3 initial values, which vellora does not read
 //   from the style): a paragraph split by the cut keeps at least two lines on each side, else the
 //   cut moves up (Chrome: 3 + 1 lines become 2 + 2; 1 + 3 lines move whole);
+// - what an `overflow-y`-clipping box's descendants paint below it is cut away before slicing
+//   (a clipped overflow makes no pages), and a box ending less than half a px below the cut
+//   (Taffy's whole-px rounding) stays whole on the first page;
 // - a box the cut goes through is sliced (`box-decoration-break: slice`): on the first page its
 //   backgrounds and borders run down to the end of the page content box (Chrome stretches a
 //   broken box's fragment to the fragmentainer end: postmark's white body column ends at 813 pt
@@ -1525,9 +1530,13 @@ fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragm
 //
 // Not modelled: break-inside: avoid-page/column, orphans/widows values other than 2, the
 // independent per-cell break of a row taller than a page (one cut for the whole fragment), a
-// rounded border the cut goes through (kept whole on the page of its top), and blank pages for a
+// rounded border the cut goes through (kept whole on the page of its top), blank pages for a
 // continuation that paints nothing (Chrome prints them: a 5000 px empty div is 25 blank pages;
-// vellora drops such a continuation).
+// vellora drops such a continuation), `break-after` (not read at all; WPT tests whose reference
+// relies on it, e.g. css/CSS2/pagination/table-page-break-inside-avoid-1, now fail: the test
+// prints Chrome's 3 pages, the reference 2), and flex items' margins and gaps after a break
+// (Chrome keeps a column flex item's margin-top at the page top, WPT
+// css/css-break/flexbox/single-line-column-flex-fragmentation-060; vellora truncates it).
 
 /// Orphans and widows: the CSS initial value (2), not read from the style.
 const ORPHANS: usize = 2;
@@ -1535,8 +1544,16 @@ const WIDOWS: usize = 2;
 /// At most this many page breaks inside one flow fragment; past it the rest is placed whole (the
 /// pre-step-03 behaviour) so a box millions of px tall cannot allocate a page per page height.
 const MAX_SLICES_PER_FRAGMENT: usize = 1000;
-/// Positions within this distance (px) of the cut count as on it.
-const CUT_EPSILON_PX: f64 = 0.01;
+/// Positions within this distance (px) of the cut count as on it: Chrome's layout unit, 1/64 px
+/// (LayoutUnit). A box exactly one page tall in CSS px is 1.5e-6 px taller than the page here
+/// (f32 layout vs f64 page box); with a smaller epsilon its background left a 1-row sliver on a
+/// page of its own (WPT css/css-page/subpixel-page-size-001: a 123.9 px box on a 123.9 px page).
+const CUT_EPSILON_PX: f64 = 1.0 / 64.0;
+/// A box or background that ends at most this far (px) below the cut is kept whole on the first
+/// page instead of leaving a sliver on the next: Blitz/Taffy round box edges to whole px, so a
+/// box Chrome fits exactly can end up to half a px past the page end (WPT
+/// css/css-page/subpixel-page-size-001: a 123.9 px box laid out 124 px tall on a 123.9 px page).
+const ROUNDING_TAIL_PX: f64 = 0.5;
 
 /// A monolithic span of a fragment: no break point inside it.
 #[derive(Debug, Clone, Copy)]
@@ -1599,11 +1616,10 @@ fn slice_items(boxes: &[LaidOutBox], page_height: f64) -> Vec<SliceItem> {
             owner: i,
             line: false,
         }));
-        let whole = if b.tag.as_deref() == Some("tr") {
-            let (top, bottom) = row_span(&boxes[i..subtree_end(boxes, i)]);
-            Some((top, bottom))
-        } else if (b.atomic_inline || b.break_inside_avoid) && i > 0 {
-            Some((b.y, b.y + b.height))
+        let whole = if b.tag.as_deref() == Some("tr")
+            || ((b.atomic_inline || b.break_inside_avoid) && i > 0)
+        {
+            Some(box_span(boxes, i))
         } else {
             None
         };
@@ -1619,6 +1635,53 @@ fn slice_items(boxes: &[LaidOutBox], page_height: f64) -> Vec<SliceItem> {
         }
     }
     items
+}
+
+/// The flow span of box `i`: its border box, or for a table row / row group (zero-size
+/// structural boxes at the table origin, see [`row_span`]) the span of its cells.
+fn box_span(boxes: &[LaidOutBox], i: usize) -> (f64, f64) {
+    let b = &boxes[i];
+    match b.tag.as_deref() {
+        Some("tr" | "tbody" | "thead" | "tfoot") if b.height <= 0.0 => {
+            row_span(&boxes[i..subtree_end(boxes, i)])
+        }
+        _ => (b.y, b.y + b.height),
+    }
+}
+
+/// `boxes` with what the descendants of an `overflow-y`-clipping box paint below its border box
+/// cut away (and their boxes shortened to it), so a clipped overflow makes no pages of its own:
+/// Chrome 155 prints an 8in `overflow-y: clip` box holding a 23in child on 4 pages (WPT
+/// css/css-page/monolithic-overflow-028). Used by the slicer only; a fragment that fits a page
+/// still paints its overflow (vellora does not clip).
+fn clip_overflow(boxes: &[LaidOutBox]) -> Vec<LaidOutBox> {
+    let parent = parents(boxes);
+    let mut clip = vec![f64::INFINITY; boxes.len()];
+    let mut out = boxes.to_vec();
+    for i in 0..boxes.len() {
+        if let Some(p) = parent[i] {
+            let own = if boxes[p].clips_overflow {
+                boxes[p].y + boxes[p].height
+            } else {
+                f64::INFINITY
+            };
+            clip[i] = clip[p].min(own);
+        }
+        let limit = clip[i];
+        if !limit.is_finite() {
+            continue;
+        }
+        let b = &mut out[i];
+        b.text_runs.retain(|run| run_line_span(run).0 < limit);
+        b.image_runs.retain(|img| img.y < limit);
+        b.rounded_borders.retain(|border| border.y < limit);
+        b.visual_rects.retain(|rect| rect.y < limit);
+        for rect in &mut b.visual_rects {
+            rect.height = rect.height.min(limit - rect.y);
+        }
+        b.height = b.height.min(limit - b.y).max(0.0);
+    }
+    out
 }
 
 /// Index of every box's parent in a depth-ordered box list (`None` for the roots).
@@ -1650,7 +1713,20 @@ fn paints(b: &LaidOutBox) -> bool {
 /// `None` when no break point at or below `start` leaves content above it.
 fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> Option<f64> {
     let ends: Vec<usize> = (0..boxes.len()).map(|i| subtree_end(boxes, i)).collect();
-    let mut cut = end;
+    // A forced break inside the fragment (`break-before: page` on a box below its top, a `<tr>`
+    // of a thead-less table included) that comes before the page end is where the page ends: it
+    // wins over `avoid` (CSS Fragmentation 3 §4.4; Chrome 155 keeps row 1 of a `break-inside:
+    // avoid` `<tbody>` on page 1 and starts its `break-before: page` row 2 on page 2, WPT
+    // css/CSS2/pagination/rowgroup-page-break-inside-avoid-8).
+    let forced = |i: usize| {
+        let top = box_span(boxes, i).0;
+        (i > 0 && boxes[i].break_before_page && top > start + CUT_EPSILON_PX).then_some(top)
+    };
+    let mut cut = (0..boxes.len())
+        .filter_map(forced)
+        .filter(|&top| top <= end + CUT_EPSILON_PX)
+        .fold(end, f64::min);
+    let holds_forced = |i: usize| (i + 1..ends[i]).any(|j| forced(j).is_some());
     // Every step only moves the cut up, to a position of one of the items or boxes: bounded.
     for _ in 0..(4 * (items.len() + boxes.len()) + 8) {
         let before = cut;
@@ -1663,27 +1739,7 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
         {
             cut = top;
         }
-        // 2. Break before the first box that starts after the last content that fits.
-        let last_fit = items
-            .iter()
-            .filter(|it| it.bottom <= cut + CUT_EPSILON_PX && it.top >= start - CUT_EPSILON_PX)
-            .map(|it| it.bottom)
-            .fold(start, f64::max);
-        let next_start = boxes
-            .iter()
-            .filter(|b| b.height > 0.0 && b.y >= last_fit - CUT_EPSILON_PX && b.y < cut)
-            .map(|b| b.y)
-            .chain(
-                items
-                    .iter()
-                    .filter(|it| it.top >= last_fit - CUT_EPSILON_PX && it.top < cut)
-                    .map(|it| it.top),
-            )
-            .reduce(f64::min);
-        if let Some(y) = next_start {
-            cut = cut.min(y.max(last_fit));
-        }
-        // 3. Orphans and widows of every paragraph the cut splits.
+        // 2. Orphans and widows of every paragraph the cut splits.
         for owner in items.iter().filter(|it| it.line).map(|it| it.owner) {
             let mut lines: Vec<&SliceItem> = items
                 .iter()
@@ -1704,14 +1760,16 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
                 cut = cut.min(lines[lines.len() - WIDOWS].top);
             }
         }
-        // 4. Break before a box that would keep only its border and padding above the cut.
-        let empty_above = boxes
-            .iter()
-            .enumerate()
-            .filter(|(_, b)| {
-                b.y > start + CUT_EPSILON_PX
-                    && b.y < cut - CUT_EPSILON_PX
-                    && b.y + b.height > cut + CUT_EPSILON_PX
+        // 3. Break before a box that would keep only its border and padding above the cut, and
+        // before a `break-inside: avoid` box the cut goes through, whatever its height (Chrome
+        // moves it to the next page even when it is taller than a page, then breaks it there:
+        // WPT css/CSS2/pagination/block-page-break-inside-avoid-15, row-...-avoid-2).
+        let empty_above = (0..boxes.len())
+            .map(|i| (i, box_span(boxes, i)))
+            .filter(|&(_, (top, bottom))| {
+                top > start + CUT_EPSILON_PX
+                    && top < cut - CUT_EPSILON_PX
+                    && bottom > cut + CUT_EPSILON_PX
             })
             .filter(|&(i, _)| {
                 let inside = i..ends[i];
@@ -1721,15 +1779,47 @@ fn find_cut(boxes: &[LaidOutBox], items: &[SliceItem], start: f64, end: f64) -> 
                     || boxes[i + 1..ends[i]].iter().any(|d| {
                         d.height > 0.0 && paints(d) && d.y + d.height <= cut + CUT_EPSILON_PX
                     });
-                !content_above
+                (boxes[i].break_inside_avoid && !holds_forced(i)) || !content_above
             })
-            .map(|(_, b)| b.y)
+            .map(|(_, (top, _))| top)
             .reduce(f64::min);
         if let Some(y) = empty_above {
             cut = y;
         }
         if cut >= before - CUT_EPSILON_PX {
             break;
+        }
+    }
+    // The space between the cut and the next box or line that starts below it (collapsed
+    // margins) is truncated at an unforced break (CSS Fragmentation 3 §5.2): the continuation
+    // starts with that box, at the page top. The latest break wins, so an empty box that fits
+    // stays on this page (Chrome 155: an empty 0.2in `div` between two flex items, WPT
+    // css/css-break/flexbox/multi-line-row-flex-fragmentation-063-print-ref). Only empty space
+    // is skipped: not when a box the cut goes through ends before that next box (its rest is
+    // what continues on the next page).
+    let crossing_ends = |next: f64| {
+        (1..boxes.len())
+            .map(|i| box_span(boxes, i))
+            .any(|(top, bottom)| {
+                top < cut - CUT_EPSILON_PX
+                    && bottom > cut + ROUNDING_TAIL_PX
+                    && bottom <= next + CUT_EPSILON_PX
+            })
+    };
+    if let Some(next) = (1..boxes.len())
+        .map(|i| box_span(boxes, i))
+        .filter(|&(top, bottom)| bottom > top && top >= cut - CUT_EPSILON_PX)
+        .map(|(top, _)| top)
+        .chain(
+            items
+                .iter()
+                .filter(|it| it.top >= cut - CUT_EPSILON_PX)
+                .map(|it| it.top),
+        )
+        .reduce(f64::min)
+    {
+        if !crossing_ends(next) {
+            cut = cut.max(next);
         }
     }
     // Something whole must stay above the cut: a monolithic span, or a painting box (a
@@ -1757,7 +1847,7 @@ fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Frag
     let shift: f64 = repeated.iter().map(|(_, _, h)| h).sum();
     let mut first: Vec<Option<LaidOutBox>> = vec![None; n];
     let mut rest: Vec<Option<LaidOutBox>> = vec![None; n];
-    let stretch_to = end.max(cut);
+    let stretch_to = end;
     let bare = |b: &LaidOutBox| {
         let mut nb = b.clone();
         nb.text_runs.clear();
@@ -1798,7 +1888,7 @@ fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Frag
         }
         for rect in &b.visual_rects {
             let bottom = rect.y + rect.height;
-            if bottom <= cut + CUT_EPSILON_PX {
+            if bottom <= cut + ROUNDING_TAIL_PX {
                 a.visual_rects.push(rect.clone());
             } else if rect.y >= cut - CUT_EPSILON_PX {
                 let mut rect = rect.clone();
@@ -1806,7 +1896,7 @@ fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Frag
                 c.visual_rects.push(rect);
             } else {
                 let mut head = rect.clone();
-                head.height = stretch_to - rect.y;
+                head.height = (stretch_to - rect.y).max(0.0);
                 a.visual_rects.push(head);
                 let mut tail = rect.clone();
                 tail.y = cut;
@@ -1816,8 +1906,8 @@ fn split_fragment(frag: &Fragment, cut: f64, end: f64) -> (Fragment, Option<Frag
         }
         let bottom = b.y + b.height;
         if b.y < cut - CUT_EPSILON_PX {
-            if bottom > cut + CUT_EPSILON_PX {
-                a.height = stretch_to - b.y;
+            if bottom > cut + ROUNDING_TAIL_PX {
+                a.height = (stretch_to - b.y).max(0.0);
                 c.y = cut;
                 c.height = bottom - cut + shift;
                 rest[i] = Some(c);
@@ -1960,9 +2050,38 @@ fn slice_oversize(
     page_empty: bool,
 ) -> SliceOutcome {
     let end = frag.top + (content_height - placed_top);
-    if end <= frag.top + CUT_EPSILON_PX && !page_empty {
+    // A `break-inside: avoid` fragment starts on a fresh page, where it is then cut (see
+    // `find_cut` step 3).
+    let avoid = frag
+        .boxes
+        .first()
+        .is_some_and(|root| root.break_inside_avoid);
+    if (end <= frag.top + CUT_EPSILON_PX || avoid) && !page_empty {
         return SliceOutcome::NextPage;
     }
+    let clipped;
+    let frag = if frag.boxes.iter().any(|b| b.clips_overflow) {
+        let boxes = clip_overflow(&frag.boxes);
+        let bottom = boxes
+            .iter()
+            .map(|b| b.y + b.height)
+            .fold(frag.top, f64::max);
+        clipped = Fragment {
+            boxes,
+            top: frag.top,
+            bottom,
+            contained_bottom: frag.contained_bottom.min(bottom),
+            break_margin: frag.break_margin,
+            table_id: frag.table_id,
+            is_thead: frag.is_thead,
+            break_before: frag.break_before,
+            members: Vec::new(),
+            slices: frag.slices,
+        };
+        &clipped
+    } else {
+        frag
+    };
     let items = slice_items(&frag.boxes, content_height);
     let cut = match find_cut(&frag.boxes, &items, frag.top, end) {
         Some(cut) => cut,
