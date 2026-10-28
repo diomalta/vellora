@@ -1,0 +1,591 @@
+{
+  "schema": 1,
+  "reportOnly": true,
+  "label": "pin-v0.2.0",
+  "command": "node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c06/paint-probe-pin-v0.2.0.json",
+  "run": "~/Repositories/vellora-fidelity-runs/run-all-c06-tip-20261028T084519Z-blitz-0.3.0-beta.4-vellora-7e6b028",
+  "subject": "~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0",
+  "method": {
+    "facts": "fidelity/oracles/py/paint.py (PyMuPDF get_drawings + text spans; docstring)",
+    "canvasChannelTolerance": 2,
+    "canvasCoverageTolerance": 0.02,
+    "gating": false
+  },
+  "tool": "pymupdf 1.28.2",
+  "problems": [],
+  "fixtures": {
+    "invoice": {
+      "pages": 3,
+      "chromePages": 3,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 2,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 3,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": []
+    },
+    "receipt": {
+      "pages": 2,
+      "chromePages": 2,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 2,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": []
+    },
+    "boleto": {
+      "pages": 1,
+      "chromePages": 1,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 135,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 135,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": ["dashes-missing"]
+    },
+    "notification": {
+      "pages": 1,
+      "chromePages": 1,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": []
+    },
+    "boleto-febraban": {
+      "pages": 1,
+      "chromePages": 1,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 152,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 152,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": ["dashes-missing"]
+    },
+    "danfe": {
+      "pages": 2,
+      "chromePages": 1,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 2052,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 2,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": null,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": null,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": null,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 2052,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": ["dashes-missing"]
+    },
+    "text-stress-ptbr": {
+      "pages": 8,
+      "chromePages": 7,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 2,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 3,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 4,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 5,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 6,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 7,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 8,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": null,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": null,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": null,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": []
+    },
+    "oss-sparksuite-invoice": {
+      "pages": 1,
+      "chromePages": 1,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": null,
+            "vellora": null,
+            "match": true
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 0,
+            "vellora": 0
+          }
+        }
+      ],
+      "canvasMismatchPages": [],
+      "dashSegments": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 0,
+        "vellora": 0
+      },
+      "flags": []
+    },
+    "oss-postmark-receipt": {
+      "pages": 1,
+      "chromePages": 2,
+      "perPage": [
+        {
+          "page": 1,
+          "canvas": {
+            "chrome": {
+              "color": "#f2f4f6",
+              "coverage": 0.8454
+            },
+            "vellora": {
+              "color": "#f2f4f6",
+              "coverage": 1.1916
+            },
+            "match": false
+          },
+          "dashSegments": {
+            "chrome": 136,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 2,
+            "vellora": 0
+          },
+          "underlineLengthPt": {
+            "chrome": 245.48,
+            "vellora": 0
+          }
+        },
+        {
+          "page": 2,
+          "canvas": {
+            "chrome": {
+              "color": "#f2f4f6",
+              "coverage": 0.8442
+            },
+            "vellora": null,
+            "match": false
+          },
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": null
+          },
+          "underlines": {
+            "chrome": 3,
+            "vellora": null
+          },
+          "underlineLengthPt": {
+            "chrome": 233.61,
+            "vellora": null
+          }
+        }
+      ],
+      "canvasMismatchPages": [1, 2],
+      "dashSegments": {
+        "chrome": 136,
+        "vellora": 0
+      },
+      "underlines": {
+        "chrome": 5,
+        "vellora": 0
+      },
+      "flags": ["canvas", "dashes-missing", "underlines-missing"]
+    }
+  }
+}

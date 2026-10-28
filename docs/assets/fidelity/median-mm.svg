@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 422" width="760" height="422" role="img" aria-labelledby="median-mm-t median-mm-d">
+<title id="median-mm-t">Median word-position error vs Chrome, per fixture (lower is better)</title>
+<desc id="median-mm-d">Dumbbell chart, log scale in millimetres. Invoice: 1.46 mm to 0.10 mm; Receipt: 5.18 mm to 0.05 mm; Boleto (bank slip): 1.77 mm to 0.12 mm; Boleto, FEBRABAN layout: 80.70 mm to 0.08 mm; DANFE (NF-e invoice): 17.68 mm to 0.21 mm; Notification letter: 0.41 mm to 0.01 mm; Long pt-BR text (stress): 106.22 mm to 0.02 mm; Postmark receipt (OSS template): 0.66 mm to 0.13 mm; Sparksuite simple invoice (OSS template): 9.87 mm to 0.00 mm.</desc>
+<style>
+  text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .num{font-variant-numeric:tabular-nums}
+  .bg{fill:#fcfcfb} .t1{fill:#0b0b0b} .t2{fill:#52514e} .mu{fill:#6f6e69}
+  .grid{stroke:#e1e0d9} .axis{stroke:#c3c2b7} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#c3c2b7} .before{stroke:#eb6834;fill:#fcfcfb} .beforeFill{fill:#eb6834}
+  .after{fill:#2a78d6;stroke:#fcfcfb} .afterFill{fill:#2a78d6}
+  @media (prefers-color-scheme: dark){
+  .bg{fill:#1a1a19} .t1{fill:#f0efec} .t2{fill:#c3c2b7} .mu{fill:#a3a29c}
+  .grid{stroke:#2c2c2a} .axis{stroke:#383835} .ref{stroke:#898781} .refFill{fill:#898781}
+  .link{stroke:#383835} .before{stroke:#d95926;fill:#1a1a19} .beforeFill{fill:#d95926}
+  .after{fill:#3987e5;stroke:#1a1a19} .afterFill{fill:#3987e5}}
+</style>
+<rect class="bg" width="760" height="422" rx="8"/>
+<text class="t1" x="20" y="28" font-size="15" font-weight="600">Median word-position error vs Chrome, per fixture (lower is better)</text>
+<text class="t2" x="20" y="48" font-size="12">Reference: Chrome for Testing 155.0.8059.85 print-to-PDF, whose own error is 0 mm by definition. Log scale.</text>
+<g transform="translate(20,72)">
+  <circle class="before" cx="6" cy="0" r="5" stroke-width="2"/><text class="t2" x="18" y="4" font-size="12">vellora 0.2.0 (published)</text>
+  <circle class="after" cx="226" cy="0" r="5" stroke-width="2"/><text class="t2" x="238" y="4" font-size="12">vellora (unreleased branch)</text>
+</g>
+<line class="grid" x1="233.42864876084434" y1="90" x2="233.42864876084434" y2="366" stroke-width="1"/>
+<text class="mu num" x="233.42864876084434" y="382" font-size="11" text-anchor="middle">0.1 mm</text>
+<line class="grid" x1="344.4762162536148" y1="90" x2="344.4762162536148" y2="366" stroke-width="1"/>
+<text class="mu num" x="344.4762162536148" y="382" font-size="11" text-anchor="middle">1 mm</text>
+<line class="grid" x1="455.5237837463852" y1="90" x2="455.5237837463852" y2="366" stroke-width="1"/>
+<text class="mu num" x="455.5237837463852" y="382" font-size="11" text-anchor="middle">10 mm</text>
+<line class="grid" x1="566.5713512391557" y1="90" x2="566.5713512391557" y2="366" stroke-width="1"/>
+<text class="mu num" x="566.5713512391557" y="382" font-size="11" text-anchor="middle">100 mm</text>
+<line class="ref" x1="344.4762162536148" y1="90" x2="344.4762162536148" y2="366" stroke-width="1.5"/>
+<text class="t2" x="350.4762162536148" y="92" font-size="11" text-anchor="start">1 mm</text>
+<text class="mu" x="614" y="92" font-size="11">before → after</text>
+<g>
+  <title>Invoice: vellora 0.2.0 (published) 1.46 mm, vellora (unreleased branch) 0.10 mm</title>
+  <text class="t1" x="188" y="115" font-size="12" text-anchor="end">Invoice</text>
+  <line class="link" x1="362.72720109896665" y1="111" x2="233.42864876084434" y2="111" stroke-width="2"/>
+  <circle class="before" cx="362.72720109896665" cy="111" r="5" stroke-width="2"/>
+  <circle class="after" cx="233.42864876084434" cy="111" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="115" font-size="12">1.46 mm → 0.10 mm</text>
+</g>
+<g>
+  <title>Receipt: vellora 0.2.0 (published) 5.18 mm, vellora (unreleased branch) 0.05 mm</title>
+  <text class="t1" x="188" y="145" font-size="12" text-anchor="end">Receipt</text>
+  <line class="link" x1="423.8007984610181" y1="141" x2="200" y2="141" stroke-width="2"/>
+  <circle class="before" cx="423.8007984610181" cy="141" r="5" stroke-width="2"/>
+  <circle class="after" cx="200" cy="141" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="145" font-size="12">5.18 mm → 0.05 mm</text>
+</g>
+<g>
+  <title>Boleto (bank slip): vellora 0.2.0 (published) 1.77 mm, vellora (unreleased branch) 0.12 mm</title>
+  <text class="t1" x="188" y="175" font-size="12" text-anchor="end">Boleto</text>
+  <line class="link" x1="372.0130442863302" y1="171" x2="242.22153352547963" y2="171" stroke-width="2"/>
+  <circle class="before" cx="372.0130442863302" cy="171" r="5" stroke-width="2"/>
+  <circle class="after" cx="242.22153352547963" cy="171" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="175" font-size="12">1.77 mm → 0.12 mm</text>
+</g>
+<g>
+  <title>Boleto, FEBRABAN layout: vellora 0.2.0 (published) 80.70 mm, vellora (unreleased branch) 0.08 mm</title>
+  <text class="t1" x="188" y="205" font-size="12" text-anchor="end">Boleto FEBRABAN</text>
+  <line class="link" x1="556.2298838008417" y1="201" x2="222.66702755060695" y2="201" stroke-width="2"/>
+  <circle class="before" cx="556.2298838008417" cy="201" r="5" stroke-width="2"/>
+  <circle class="after" cx="222.66702755060695" cy="201" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="205" font-size="12">80.70 mm → 0.08 mm</text>
+</g>
+<g>
+  <title>DANFE (NF-e invoice): vellora 0.2.0 (published) 17.68 mm, vellora (unreleased branch) 0.21 mm</title>
+  <text class="t1" x="188" y="235" font-size="12" text-anchor="end">DANFE</text>
+  <line class="link" x1="483.0060867921838" y1="231" x2="269.21031764028214" y2="231" stroke-width="2"/>
+  <circle class="before" cx="483.0060867921838" cy="231" r="5" stroke-width="2"/>
+  <circle class="after" cx="269.21031764028214" cy="231" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="235" font-size="12">17.68 mm → 0.21 mm</text>
+</g>
+<g>
+  <title>Notification letter: vellora 0.2.0 (published) 0.41 mm, vellora (unreleased branch) 0.01 mm</title>
+  <text class="t1" x="188" y="265" font-size="12" text-anchor="end">Notification</text>
+  <line class="link" x1="301.4768054484093" y1="261" x2="200" y2="261" stroke-width="2"/>
+  <circle class="before" cx="301.4768054484093" cy="261" r="5" stroke-width="2"/>
+  <circle class="after" cx="200" cy="261" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="265" font-size="12">0.41 mm → 0.01 mm</text>
+</g>
+<g>
+  <title>Long pt-BR text (stress): vellora 0.2.0 (published) 106.22 mm, vellora (unreleased branch) 0.02 mm</title>
+  <text class="t1" x="188" y="295" font-size="12" text-anchor="end">Long pt-BR text</text>
+  <line class="link" x1="569.4814967832287" y1="291" x2="200" y2="291" stroke-width="2"/>
+  <circle class="before" cx="569.4814967832287" cy="291" r="5" stroke-width="2"/>
+  <circle class="after" cx="200" cy="291" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="295" font-size="12">106.22 mm → 0.02 mm</text>
+</g>
+<g>
+  <title>Postmark receipt (OSS template): vellora 0.2.0 (published) 0.66 mm, vellora (unreleased branch) 0.13 mm</title>
+  <text class="t1" x="188" y="325" font-size="12" text-anchor="end">Postmark receipt (OSS)</text>
+  <line class="link" x1="324.43700925622073" y1="321" x2="246.08178086649033" y2="321" stroke-width="2"/>
+  <circle class="before" cx="324.43700925622073" cy="321" r="5" stroke-width="2"/>
+  <circle class="after" cx="246.08178086649033" cy="321" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="325" font-size="12">0.66 mm → 0.13 mm</text>
+</g>
+<g>
+  <title>Sparksuite simple invoice (OSS template): vellora 0.2.0 (published) 9.87 mm, vellora (unreleased branch) 0.00 mm</title>
+  <text class="t1" x="188" y="355" font-size="12" text-anchor="end">Sparksuite invoice (OSS)</text>
+  <line class="link" x1="454.8927173739156" y1="351" x2="200" y2="351" stroke-width="2"/>
+  <circle class="before" cx="454.8927173739156" cy="351" r="5" stroke-width="2"/>
+  <circle class="after" cx="200" cy="351" r="5" stroke-width="2"/>
+  <text class="t2 num" x="614" y="355" font-size="12">9.87 mm → 0.00 mm</text>
+</g>
+<text class="mu" x="400" y="400" font-size="11" text-anchor="middle">median distance between a word in vellora's PDF and the same word in Chrome's PDF</text>
+<text class="mu" x="20" y="412" font-size="10">Strict merge gate PASS. Not merged or released yet. Local macOS: indicative. Source: docs/assets/fidelity/manifest.json</text>
+</svg>
