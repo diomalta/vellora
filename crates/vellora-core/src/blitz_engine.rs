@@ -1047,10 +1047,19 @@ fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
 ///   previous-link I1 items of the c02 gate).
 ///
 /// What is snapped, per element (and its eager pseudo-elements), on the computed style after the
-/// cascade and before layout: pure-length `padding-*`, `margin-*`, `width`, `height`,
-/// `min-*`, `max-*`, `top`/`right`/`bottom`/`left`, `row-gap`/`column-gap` (truncated to
-/// 1/64 px), `line-height` (as above, turned into a length), `border-spacing` (whole px). Not
-/// modelled: percentages and `calc()` with a percentage (Chrome truncates the RESOLVED length,
+/// cascade and before layout: pure-length `padding-*`, `margin-*`, `height`, `min-height`,
+/// `max-height`, `top`/`right`/`bottom`/`left`, `row-gap`/`column-gap` (truncated to 1/64 px),
+/// `line-height` (as above, turned into a length), `border-spacing` (whole px).
+///
+/// Inline sizes (`width`, `min-width`, `max-width`) are NOT snapped, although Chrome truncates
+/// them too (`width: 74mm` is 279.671875 px): Chrome also measures text in LayoutUnit for line
+/// breaking and Parley does not, so a narrower box alone made text that exactly fits wrap (an
+/// ungated WPT run of the first version, 2026-10-27, lost 4 clean passes, all `width: <n>ch`
+/// boxes holding n monospace characters: css-text `line-break-loose-hyphens-002`,
+/// `text-align-match-parent-05`, `word-break-break-all-062`, `word-break-keep-all-063`).
+/// Truncating a padding, margin or gap only widens the content box, so those never add a wrap.
+///
+/// Not modelled: percentages and `calc()` with a percentage (Chrome truncates the RESOLVED length,
 /// e.g. `width: 33.333%` of 800 is 266.65625, Taffy resolves them unquantised), `text-indent`,
 /// `flex-basis`, intrinsic sizes (text advances, images), `line-height: normal` (equal already:
 /// 12 px for 8.5pt in both). Border widths are not touched: Stylo already snaps them to whole px
@@ -1222,13 +1231,9 @@ fn snap_computed_lengths(
     }
 
     let pos = values.get_position();
-    let sizes = [
-        size(&pos.width),
-        size(&pos.height),
-        size(&pos.min_width),
-        size(&pos.min_height),
-    ];
-    let maxes = [max(&pos.max_width), max(&pos.max_height)];
+    // Block-axis sizes only: see "Inline sizes" in [`snap_lengths_to_layout_unit`].
+    let sizes = [size(&pos.height), size(&pos.min_height)];
+    let maxes = [max(&pos.max_height)];
     let insets = [
         inset(&pos.top),
         inset(&pos.right),
@@ -1244,21 +1249,12 @@ fn snap_computed_lengths(
         edit(&mut |v| {
             let s = v.mutate_position();
             if let Some(x) = sizes[0].clone() {
-                s.set_width(x);
-            }
-            if let Some(x) = sizes[1].clone() {
                 s.set_height(x);
             }
-            if let Some(x) = sizes[2].clone() {
-                s.set_min_width(x);
-            }
-            if let Some(x) = sizes[3].clone() {
+            if let Some(x) = sizes[1].clone() {
                 s.set_min_height(x);
             }
             if let Some(x) = maxes[0].clone() {
-                s.set_max_width(x);
-            }
-            if let Some(x) = maxes[1].clone() {
                 s.set_max_height(x);
             }
             if let Some(x) = insets[0].clone() {
