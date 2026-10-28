@@ -172,8 +172,19 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             draw_rounded_stroke(&mut surface, s);
         }
 
-        for run in &page.text_runs {
-            draw_text_run(&mut surface, run, &mut font_cache)?;
+        let mut at = 0;
+        while at < page.text_runs.len() {
+            let end = contiguous_run_end(&page.text_runs, at);
+            if end == at + 1 {
+                draw_text_run(&mut surface, &page.text_runs[at], &mut font_cache)?;
+            } else {
+                let mut merged = page.text_runs[at].clone();
+                for run in &page.text_runs[at + 1..end] {
+                    merged.glyphs.extend(run.glyphs.iter().cloned());
+                }
+                draw_text_run(&mut surface, &merged, &mut font_cache)?;
+            }
+            at = end;
         }
 
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
@@ -399,6 +410,44 @@ fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Op
     pb.finish()
 }
 
+/// Two runs continue each other when the second starts where the first's advances end.
+const RUN_CONTINUATION_EPSILON_PX: f64 = 1e-3;
+
+/// The end of the stretch of `runs` from `start` that one text object can draw: each next run
+/// continues the previous one exactly (same source string, face, size and colour, same baseline,
+/// its origin where the previous run's advances end). Parley ends a glyph run at every inline
+/// box, so text that a float (or another inline box of zero advance) interrupts reaches the
+/// emitter as two runs; drawn as two text objects, the second restarts at a rounded `Tm` origin
+/// and Poppler rasterizes its glyphs a fraction of a pixel off the single-object drawing of the
+/// same text (WPT css/CSS2/floats/floats-placement-vertical-001a.xht: `Hello` + `Kitty` vs the
+/// reference's `HelloKitty`, 4 pixels differ by up to 3/255; float-nowrap-8.html: 4 pixels, up
+/// to 84/255). One text object for the stretch draws the glyphs where they were already
+/// positioned, so the page's text does not move.
+fn contiguous_run_end(runs: &[TextRun], start: usize) -> usize {
+    let mut end = start + 1;
+    while let (Some(prev), Some(next)) = (runs.get(end - 1), runs.get(end)) {
+        let prev_end = prev.origin_x
+            + prev
+                .glyphs
+                .iter()
+                .map(|g| f64::from(g.advance))
+                .sum::<f64>();
+        let continues = Arc::ptr_eq(&prev.text, &next.text)
+            && Arc::ptr_eq(&prev.font_data, &next.font_data)
+            && prev.font_index == next.font_index
+            && prev.font_size == next.font_size
+            && prev.color == next.color
+            && prev.origin_y == next.origin_y
+            && !next.glyphs.is_empty()
+            && (next.origin_x - prev_end).abs() < RUN_CONTINUATION_EPSILON_PX;
+        if !continues {
+            break;
+        }
+        end += 1;
+    }
+    end
+}
+
 fn draw_text_run(
     surface: &mut krilla::surface::Surface,
     run: &TextRun,
@@ -475,5 +524,60 @@ mod tests {
             (top - (95.0 * PX_TO_PT) as f32).abs() < 1e-3,
             "y must be origin_y * PX_TO_PT, got {top}"
         );
+    }
+
+    /// Runs that continue each other exactly are drawn as one text object; any break in the
+    /// source string, colour, baseline or pen position ends the stretch.
+    #[test]
+    fn only_exact_continuations_share_a_text_object() {
+        use super::contiguous_run_end;
+        use crate::blitz_engine::{Glyph, TextRun};
+        use std::sync::Arc;
+        let text = Arc::new("HelloKitty".to_string());
+        let face = Arc::new(vec![0u8; 4]);
+        let run = |x: f64, start: usize| TextRun {
+            text: text.clone(),
+            font_data: face.clone(),
+            font_index: 0,
+            font_size: 12.0,
+            origin_x: x,
+            origin_y: 20.0,
+            line_above: 10.0,
+            line_below: 4.0,
+            glyphs: (start..start + 5)
+                .map(|i| Glyph {
+                    id: i as u32,
+                    advance: 5.5,
+                    x_offset: 0.0,
+                    y_offset: 0.0,
+                    text_start: i,
+                    text_end: i + 1,
+                })
+                .collect(),
+            color: [0, 0, 0],
+        };
+        let hello = run(10.0, 0);
+        let kitty = run(10.0 + 27.5, 5);
+        assert_eq!(contiguous_run_end(&[hello.clone(), kitty.clone()], 0), 2);
+        let gap = TextRun {
+            origin_x: kitty.origin_x + 0.01,
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), gap], 0), 1);
+        let red = TextRun {
+            color: [255, 0, 0],
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), red], 0), 1);
+        let lower = TextRun {
+            origin_y: 21.0,
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), lower], 0), 1);
+        let other_text = TextRun {
+            text: Arc::new("HelloKitty".to_string()),
+            ..kitty
+        };
+        assert_eq!(contiguous_run_end(&[hello, other_text], 0), 1);
     }
 }

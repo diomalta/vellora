@@ -102,3 +102,30 @@ Full WPT vs section 3: 4059 -> 4076, fail->pass 21 (between-float-and-text, 7 fl
 positioning, 4 table-visual-layout-026a-d, ...), pass->fail 4: floats-clear-multicol-002/003 and
 -balancing-002/003, which fail at the pin, 00-start, 10-integration and c03-tip (multicol is not
 implemented) and passed only in this step's intermediate runs. 46 PDFs byte-identical.
+
+## 5. One text object per continued run (commit "draw continued runs as one text object")
+
+Not a Blitz bug: Parley ends a glyph run at every inline box (here: a float), and the emitter
+drew each run as its own text object. With the second object starting at a rounded `Tm` origin,
+Poppler rasterized its glyphs a fraction of a pixel off the reference's single object:
+floats-placement-vertical-001a (`Hello` + `Kitty` vs `HelloKitty`) 4 pixels up to 3/255 and
+float-nowrap-8 4 pixels up to 84/255, with every word bbox equal to 1e-6 pt (pdftotext -bbox).
+`pdf::contiguous_run_end` draws a stretch of runs that continue each other exactly (same source
+string, face, size, colour, baseline; pen position within 1e-3 px) as one text object. Test
+`only_exact_continuations_share_a_text_object`.
+
+Full WPT vs section 4: 4076 -> 4094, pass->fail 0, fail->pass 18 (float-nowrap-7/8,
+floats-placement-vertical-001a/b/c, 2 inline-formatting-context-001, 2 position-relative, 2
+caption-side, 3 css-text boundary-shaping/hyphens, ...).
+
+Fixtures: 9 of the 46 PDFs change bytes (boleto, text-stress-ptbr, the 7 probe-r_* RTL/LTR probes)
+and 37 stay byte-identical. For the 9: page count, every pdftotext -bbox word (text and bbox at
+0.01 pt) and the 72 dpi pdftoppm raster are identical to c03-tip, and the doc-aggregate summary
+equals c03-tip's in every metric (only its PDF input hashes differ).
+
+## The 9 tests of this group, end of step
+
+`node fidelity/wpt/run.mjs css/CSS2 --filter <the 9> --raw --chrome-from <10-tip>`: 9/9 pass
+(raw Blitz: 6 pass, 3 fail; the 3 need vellora compensations: the relative-inline pair and
+float-nowrap-8). Chrome 155 itself fails float-nowrap-8 and floats-placement-vertical-001a
+(maxDifference 255 / 16): both now pass in vellora against the references the tests ship.
