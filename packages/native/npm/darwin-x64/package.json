@@ -9,7 +9,7 @@
     "LICENSE-DejaVu.txt",
     "LICENSE-Liberation.txt"
   ],
-  "description": "Prebuilt napi-rs addon binary for vellora.",
+  "description": "Prebuilt vellora HTML-to-PDF renderer for macOS x64. Installed automatically by vellora.",
   "keywords": [
     "html-to-pdf",
     "pdf",

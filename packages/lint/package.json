@@ -1,7 +1,7 @@
 {
   "name": "@vellora/lint",
   "version": "0.1.0-alpha.0",
-  "description": "Dev-time HTML diagnose + fix for the vellora HTML/CSS subset (parse5 + resvg).",
+  "description": "Check and auto-fix HTML templates for the vellora HTML-to-PDF renderer, in your editor or CI.",
   "keywords": [
     "html-to-pdf",
     "pdf",
