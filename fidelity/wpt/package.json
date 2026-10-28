@@ -1,0 +1,19 @@
+{
+  "name": "@vellora/fidelity-wpt",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WPT reftest runner over vellora's native pipeline (NOT published, NOT a workspace member). puppeteer-core is only used by the optional Chrome oracle (--chrome) and never downloads a browser.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "fetch": "node fetch-wpt.mjs",
+    "wpt": "node run.mjs",
+    "test": "node --test 'test/*.test.mjs'"
+  },
+  "dependencies": {
+    "@puppeteer/browsers": "3.2.5",
+    "puppeteer-core": "25.15.0"
+  }
+}

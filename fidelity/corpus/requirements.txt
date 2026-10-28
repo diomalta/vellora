@@ -1,0 +1,16 @@
+# Pinned Python deps for the corpus oracles (decode_barcodes.py, measure_bars.py, font_sizes.py,
+# pdf_probe.py, font_metrics.py, make_placeholder_logo.py). Python 3.12.13 via uv:
+#   uv venv --python 3.12 fidelity/.venv
+#   uv pip install --python fidelity/.venv/bin/python -r fidelity/corpus/requirements.txt
+# fidelity/.venv is SHARED with fidelity/oracles (hash-locked requirements.txt): install that lock
+# first, then this file; every pin that appears in both files must be identical. pillow follows
+# the oracles lock (12.3.0): 13.0.0 is a new major released 2026-10-16 (integration, 2026-10-21).
+zxing-cpp==3.1.1
+pillow==12.3.0
+pypdf==6.21.1
+pdfminer.six==20260107
+fonttools==4.67.0
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.11
+charset-normalizer==3.5.2

@@ -134,7 +134,7 @@ not streaming.
 
 The durable engineering lives in broad, well-backed crates that anyone can reuse:
 
-- **Blitz** (DioxusLabs) — modular HTML/CSS renderer = `html5ever` (WHATWG parser, Servo) + **Stylo** (CSS cascade, powers Firefox) + **Taffy** (block/flex/grid layout; used by Zed, Bevy) + **Parley** + `harfrust` + `fontique` (text layout/shaping/fonts, Linebender). *Pre-alpha but actively funded.*
+- **Blitz** (DioxusLabs) — modular HTML/CSS renderer = `html5ever` (WHATWG parser, Servo) + **Stylo** (CSS cascade, powers Firefox) + **Taffy** (block/flex/grid layout; used by Zed, Bevy) + **Parley** + `harfrust` + `fontique` (text layout/shaping/fonts, Linebender). *Pre-1.0 (crates.io pre-release `0.3.0-beta.4`) but actively funded.*
 - **krilla** (Typst ecosystem) — high-level PDF: font subsetting, tagged PDF, PDF/A, PDF/UA, SVG; on top of `pdf-writer`. *Production.*
 - **resvg** — strict SVG rasterizer (used at dev-time fix to turn inline SVG into PNG).
 
@@ -154,6 +154,6 @@ JavaScript execution · arbitrary web pages on the native engine · CSS features
 
 ## Honest risks
 
-- **Blitz is pre-alpha** — layout fidelity is capped by Blitz; expect upstream churn.
+- **Blitz is pre-1.0** (vellora pins the exact crates.io pre-release `=0.3.0-beta.4`; see `crates/vellora-core/Cargo.toml`) — layout fidelity is capped by Blitz; expect upstream churn.
 - **The core integration is the real work** — driving Blitz headless into a paginated display list fed to krilla, plus thread-safety for concurrent napi calls, is where the engineering cost concentrates.
 - **Subset coverage** — managed by an explicit, generated **compatibility table** and **strict diagnostics**, so expectations never silently mismatch Chrome.

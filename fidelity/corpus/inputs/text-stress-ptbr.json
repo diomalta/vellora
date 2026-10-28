@@ -1,0 +1,36 @@
+{
+  "_comment": "Inputs for fixtures/text-stress-ptbr (self-authored text stress document). The statement rows are generated deterministically from the seed by fidelity/corpus/build-fixtures.mjs (32-bit LCG, no Math.random); never edit fixtures/text-stress-ptbr/data.json by hand.",
+  "titular": "Conceição Araújo Gonçalves Ibañez",
+  "conta": "Agência 0042 · Conta 001234-5",
+  "periodo": { "inicio": "2026-01-01", "fim": "2026-12-31" },
+  "saldoInicialCentavos": 15000000,
+  "seed": 20261020,
+  "lancamentosPorMes": 11,
+  "historicos": [
+    "PIX recebido — João Ninguém da Silva",
+    "Pagamento de boleto — Companhia de Saneamento Básico",
+    "Tarifa de manutenção de conta",
+    "Transferência TED — Distribuidora Exemplo de Componentes Ltda.",
+    "Compra no débito — Padaria Pão de Açúcar & Cia.",
+    "Rendimento de aplicação automática",
+    "Estorno de cobrança indevida (reclamação nº 2026/00417)",
+    "Débito automático — energia elétrica",
+    "Saque em terminal de autoatendimento",
+    "Pagamento de fatura do cartão de crédito",
+    "Depósito em cheque compensado"
+  ],
+  "meses": [
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro"
+  ]
+}

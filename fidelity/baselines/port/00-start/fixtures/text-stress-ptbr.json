@@ -1,0 +1,309 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "text-stress-ptbr",
+  "fixture": "text-stress-ptbr",
+  "variant": "data.json",
+  "class": "text",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "TXT-X1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "10/10",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "TXT-X2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pdftotext 10/10; pypdf 10/10; pdfminer 10/10",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "TXT-A1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "46 tokens in 3 columns, worst right-edge spread 0 mm (Débito (R$); max 0.3)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "TXT-P1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "8 vs reference 7",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "TXT-R1",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "worst TXT-S5 11.86 mm (tol 1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "true",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "DET-2",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "TZ=America/Sao_Paulo LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8: same sha256",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "PDF-S1",
+      "oracle": "corpus",
+      "status": "PASS",
+      "value": "pypdf 6.21.1 strict",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "PASS"
+      }
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 2 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "FAIL",
+      "value": "pdftotext fail (missing 82, extra 50); pdfminer.six warn (missing 0, extra 9); pymupdf warn (missing 0, extra 9)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "8 pages vs Chrome 7 (WeasyPrint 7)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 101.6 mm, p95 97.36 mm over 736 consensus words (Chrome and WeasyPrint within 2 pt; coverage 0.818)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 0.818,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "run-all",
+      "status": "PASS",
+      "value": "two in-process PDF/A-2b renders byte-identical (915c1891536611ab97188e1b0e019bd463efd10e825ad19ccba644993a58d4fc)",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "LET-1",
+      "oracle": "oracles:layout",
+      "status": "NOT-RUN",
+      "value": "no anchor with a reference consensus (1 disputed)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "LET-2",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "0 of 2 paragraphs differ in line count (1 disputed/not located in the references)",
+      "kind": "criterion",
+      "mode": "plain",
+      "metrics": [
+        {
+          "metric": "paragraphsMismatched",
+          "value": 0,
+          "better": "lower",
+          "tolClass": "count"
+        },
+        {
+          "metric": "paragraphsCompared",
+          "value": 2,
+          "better": "info"
+        },
+        {
+          "metric": "paragraphsDisputed",
+          "value": 1,
+          "better": "info"
+        }
+      ],
+      "basis": "line count = distinct baselines of the paragraph's words (PyMuPDF origins) in vellora's, Chrome's and WeasyPrint's PDFs; reference = Chrome and WeasyPrint agreeing"
+    },
+    {
+      "criterion": "LET-3",
+      "oracle": "corpus",
+      "status": "FAIL",
+      "value": "8 vs reference 7 (= TXT-P1)",
+      "kind": "criterion",
+      "reference": {
+        "engine": "chrome",
+        "status": "N/A"
+      }
+    },
+    {
+      "criterion": "TXT-B1",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "6 pages with statement rows, header missing on none; months split across pages none (a split the Chrome reference also makes is allowed: taller than a page)",
+      "kind": "criterion",
+      "metrics": [
+        {
+          "metric": "pagesMissingHeader",
+          "value": 0,
+          "better": "lower",
+          "tolClass": "count"
+        },
+        {
+          "metric": "monthsSplit",
+          "value": 0,
+          "better": "lower",
+          "tolClass": "count"
+        },
+        {
+          "metric": "pagesWithRows",
+          "value": 6,
+          "better": "info"
+        }
+      ]
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>h2:nth-child(6)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "P",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0,
+        "dy": 0.578,
+        "dw": 0
+      }
+    },
+    "firstText": {
+      "text": "2. Ligaduras e pesos misturados",
+      "owner": "html>body:nth-child(2)>h2:nth-child(6)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "P",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0,
+        "dy": 0.578,
+        "dy_basis": "baseline",
+        "dw": 0,
+        "dright": 0
+      }
+    },
+    "firstPassRegression": {
+      "path": "html>body:nth-child(2)>table:nth-child(17)>thead:nth-child(2)>tr:nth-child(1)>th:nth-child(1)",
+      "type": "enter",
+      "by": [
+        "fixed_table_widths worsened dw -0.25->48.917",
+        "P worsened dy 1.125->2.125"
+      ]
+    },
+    "regressionEventsByLayer": {
+      "fixed_table_widths": {
+        "box": 822,
+        "text": 575
+      },
+      "P": {
+        "box": 29,
+        "text": 49
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": false,
+      "wrappers_recorded": 0,
+      "wrappers_located": 0
+    }
+  }
+}

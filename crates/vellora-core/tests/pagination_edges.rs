@@ -20,7 +20,7 @@ fn page(width: f64, height: f64, margin: f64) -> PageBox {
 
 #[test]
 fn each_element_type_yields_a_positioned_box() {
-    // block/inline/table/img/text each produce a positioned box.
+    // block/table/img each produce a positioned box; inline text is shaped.
     let html = r#"<!DOCTYPE html><html><body style="margin:0">
         <div style="width:100px;height:30px">block</div>
         <p><span>inline</span> text</p>
@@ -28,7 +28,17 @@ fn each_element_type_yields_a_positioned_box() {
         <img src="x" style="width:40px;height:40px" />
     </body></html>"#;
     let doc = blitz_engine::lay_out(html);
-    for tag in ["div", "p", "span", "table", "td", "img"] {
+    // A non-atomic inline element (`<span>`) generates no box of its own (port
+    // step 05: the walk follows Blitz's box tree): its text is in the glyph runs
+    // of the `<p>`, the inline root that shaped it.
+    assert!(doc.boxes.iter().all(|b| b.tag.as_deref() != Some("span")));
+    let p = doc
+        .boxes
+        .iter()
+        .find(|b| b.tag.as_deref() == Some("p"))
+        .expect("p box present");
+    assert!(p.text_runs.iter().any(|r| r.text.contains("inline text")));
+    for tag in ["div", "p", "table", "td", "img"] {
         let b = doc
             .boxes
             .iter()
@@ -209,4 +219,42 @@ fn at_page_size_drives_usable_rect_synthetic() {
     assert_eq!(pb.margin_left, 30.0);
     assert_eq!(pb.content_width(), 500.0 - 60.0);
     assert_eq!(pb.content_height(), 700.0 - 50.0);
+}
+
+/// WPT css/CSS2/pagination/table-page-break-inside-avoid-7-print (Chrome 155: 3 pages): a
+/// `break-inside: avoid` table whose caption makes it 3in tall on a 2in page starts on page 2,
+/// after page 1's text, and breaks there; its `avoid` is the caption wrapper's (Phase C step 06).
+#[test]
+fn a_break_inside_avoid_table_taller_than_a_page_starts_on_a_fresh_page() {
+    let html = r#"<!DOCTYPE html><html><head><style>
+        @page { size: 5in 3in; margin: 0.5in; }
+        p { height: 1in; width: 1in; margin: 0; background-color: blue; }
+        .test { page-break-inside: avoid; }
+        </style></head><body><div>Text</div>
+        <table cellspacing="0" cellpadding="0" class="test"><caption><p>1</p></caption><tr><td><p>1</p><p>2</p></td></tr></table>
+        </body></html>"#;
+    let page_box = page_css::parse_page_box(html);
+    let doc = blitz_engine::validate_then_lay_out(
+        html,
+        vellora_core::validation::denied_elements(),
+        page_box.layout_content_width(),
+        page_box.content_height(),
+        &Default::default(),
+        None,
+        &[],
+    )
+    .ok()
+    .expect("lays out");
+    let pages = pagination::paginate(&doc, &page_box).pages;
+    let blue = |i: usize| {
+        pages[i]
+            .rects
+            .iter()
+            .filter(|r| r.color == [0, 0, 255])
+            .count()
+    };
+    assert_eq!(pages.len(), 3);
+    // Page 1: the text only; the caption starts page 2 with the table.
+    assert_eq!(blue(0), 0);
+    assert!(blue(1) >= 1);
 }

@@ -1,0 +1,15 @@
+# Direct Python dependencies of the host-side oracles (fidelity/.venv, Python 3.12).
+# The fully pinned, hash-locked set is requirements.txt, regenerated with:
+#   uv pip compile fidelity/oracles/requirements.in --python-version 3.12 --generate-hashes \
+#     -o fidelity/oracles/requirements.txt
+#
+# pdfminer.six  - text extractor #2 (pure-Python layout analysis, independent of poppler/MuPDF).
+# pymupdf       - text extractor #3 (MuPDF) and the word-box source for the layout consensus.
+#                 Pinned to 1.28.2, NOT 2.0: 2.0 is a new major released 2026-10-19 (one day
+#                 before this pin was chosen); an oracle should not adopt an unproven major.
+# zxing-cpp     - barcode decoder #1 (ITF / Interleaved 2 of 5).
+# pillow        - image loading for zxing-cpp.
+pdfminer.six==20260107
+pymupdf==1.28.2
+zxing-cpp==3.1.1
+pillow==12.3.0

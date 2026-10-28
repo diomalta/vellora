@@ -3,9 +3,26 @@
 //! Blitz/Taffy produce ONE continuous flow. This pass consumes that laid-out
 //! tree (absolute document coordinates) and slices it into ordered pages
 //! against the `@page` content box, repeating `<thead>` on table continuation
-//! pages, never splitting a row, keeping the totals block once, and resolving
-//! `counter(page)`/`counter(pages)` for the running footer. Coordinates emitted
-//! into the display list are PAGE-LOCAL.
+//! pages, never splitting a row that fits on a page, keeping the totals block
+//! once, and resolving `counter(page)`/`counter(pages)` for the running footer.
+//! Coordinates emitted into the display list are PAGE-LOCAL.
+//!
+//! **Oversize fragments (Phase C step 03).** A fragment taller than an empty
+//! page is cut at a break point inside it (between line boxes, boxes or table
+//! rows; [`slice_oversize`], rules and Chrome evidence in the section comment
+//! above it) instead of being placed whole past the page edge.
+//!
+//! **Gap model (slice, not re-stack).** Blitz has already collapsed margins
+//! (CSS 2.2 §8.3.1) in its continuous flow, so the space between two fragments
+//! on one page is their flow distance, never a re-derived margin: every page
+//! maps flow y to page-local y by ONE translation (`shift`), set where the page
+//! starts and kept for every fragment placed on it. Where a page starts follows
+//! CSS Fragmentation 3 §5.2: page 1 keeps the document's leading offset (body
+//! margin/padding, the first box's margin, a relative `top:`), margins adjoining
+//! an unforced break truncate to zero, and margins after a forced break are
+//! kept. A repeated `<thead>` band takes its flow height plus the flow spacing to
+//! the first body row (border-spacing). Chrome-verified in
+//! `tests/pagination_gaps.rs`.
 
 use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -31,13 +48,134 @@ pub struct PaginationReport {
     pub oversize_hit: bool,
 }
 
-/// Browser-print engines make page-break decisions after fractional layout and
-/// font fallback. Our deterministic bundled font can push a table row a few px
-/// past the content-box bottom even when Chromium keeps the same row on the
-/// page, leaving a visibly under-filled page. Keep this tolerance small and
-/// table-row-only so it absorbs metric drift without pulling another full row.
+/// How far (capped by the bottom page margin, so nothing is painted past the
+/// physical page) a block may overflow the box that contains it and still be
+/// fitted against that box (`fit_height`); what the fragment paints must also
+/// stay above a drawn `@bottom-center` line (`band_fit_height`, port step 10).
+/// It was also the table-row fit tolerance until Phase C step 03 (see
+/// [`TABLE_ROW_FIT_SLACK_PX`]).
 const TABLE_ROW_BREAK_TOLERANCE_PX: f64 = 12.0;
-const RECT_MERGE_TOLERANCE_PX: f64 = 4.0;
+/// How far a table row (or a keep-together row group) may end past the content
+/// box and still stay on the page. vellora's boxes are whole px (Taffy rounds
+/// them) where Chrome's are 1/64 px, so a row Chrome ends exactly at the page
+/// end can end up to 0.5 px lower here.
+///
+/// It was 12 px (the shared `TABLE_ROW_BREAK_TOLERANCE_PX`) to absorb the row
+/// drift of Blitz's collapsed-border bug and its unquantised lengths; with both
+/// corrected (`blitz_engine::compensate_collapsed_borders`,
+/// `blitz_engine::snap_lengths_to_layout_unit`) rows have Chrome's pitch, and
+/// 12 px kept text-stress-ptbr's June `<tbody>` (`break-inside: avoid`, ending
+/// 11 px past the content box at 1005 / 994.06 px) on page 3 where Chrome 155
+/// moves it to page 4 (layout-diff + pdf-probe, Phase C step 03, 2026-10-27:
+/// 721 words of pages 3-6 unpaired).
+const TABLE_ROW_FIT_SLACK_PX: f64 = 0.5;
+/// How far apart (px) two same-paint rects of one band may be and still be drawn as ONE rect
+/// by [`merge_adjacent_rects`]: rects that touch (or overlap by up to 0.5 px) within this
+/// sub-pixel epsilon. Chrome paints such rects as one seamless area; drawing them as two leaves an
+/// anti-aliased seam at vellora's fractional page offsets in some PDF rasterizers. A real gap is
+/// never bridged, so the background between them shows as it does in Chrome.
+///
+/// Was 4 px (`RECT_MERGE_TOLERANCE_PX`, "Refine PDF visual chrome", 2026-06), which drew two
+/// black WPT stripes 2 px apart as one 42 px rect (30 head / 14 pin WPT passes lost at port link
+/// 01, `fidelity/gate/snapshots/2026-10-22/wpt-raw/`). Over the corpus, oracle fixtures,
+/// layout-diff and probe suite (trace of every merge, 2026-10-22) the merged gaps are exactly
+/// 0, 1 or 2 px, so any epsilon below 1 px gives the same display list; the 1 and 2 px gaps are
+/// no longer bridged (port step `10-rects`, `fidelity/baselines/port/README.md`).
+const RECT_MERGE_EPSILON_PX: f64 = 0.05;
+
+/// Debug/fidelity trace of [`paginate`]'s decisions (fidelity layer `P`, read by
+/// `fidelity/layout-diff/`). Filled only by [`paginate_traced`] with `Some`; the
+/// render path passes `None`, so it never exists there. Not a stable API.
+#[doc(hidden)]
+#[derive(Debug, Clone, Default)]
+pub struct PaginationTrace {
+    /// One record per fragment placed on a page, in placement order.
+    pub placements: Vec<FragmentPlacement>,
+    /// Keep-together groups split back into their members (each member is then
+    /// placed, and recorded, on its own).
+    pub groups_split: usize,
+    pub page_count: usize,
+}
+
+/// Where one fragment landed. Flow coordinates (`top`/`bottom`) are Blitz's
+/// continuous-flow CSS px; `placed_top` is the page-local CSS px (content-box
+/// origin, before the `@page` margin is added) that `top` was moved to.
+#[doc(hidden)]
+#[derive(Debug, Clone)]
+pub struct FragmentPlacement {
+    /// `block` (a top-level box or a flattened wrapper's child), `row` (a table
+    /// row), `group` (a `break-inside: avoid` group placed whole), or the
+    /// `oversize-` prefixed variant when the fragment did not fit an empty page.
+    pub kind: &'static str,
+    /// Node ids of the fragment's boxes, in document order (the first is its root).
+    pub node_ids: Vec<usize>,
+    pub root_tag: Option<String>,
+    /// Table root of a row/group fragment.
+    pub table_id: Option<usize>,
+    /// Flow span (min top, max bottom of its boxes; cells only for rows).
+    pub top: f64,
+    pub bottom: f64,
+    /// The flow gap from this fragment's bottom to the NEXT placed fragment's
+    /// top (filled in when that one is placed; 0 for the last placement).
+    pub trailing_gap: f64,
+    /// Source of `trailing_gap`: `flow-gap` once the next fragment is placed,
+    /// `none` for the last placement.
+    pub gap_source: &'static str,
+    /// 0-based page index.
+    pub page: usize,
+    /// Why this fragment opened a new page: `forced-break`, `overflow`,
+    /// `oversize` (it did not fit an empty page), `after-oversize` (the
+    /// previous fragment was oversize and closed its page), or
+    /// `forced-break-blank` (monolithic content that did not fit under the margin
+    /// kept after a forced break left that page blank, port step 10); `None` when it
+    /// continued the current page (or was the very first fragment).
+    pub new_page: Option<&'static str>,
+    /// Used height of the page before this fragment (and before its gap).
+    pub cursor_before: f64,
+    /// The gap this fragment asked for: its flow top minus the previous placed
+    /// fragment's flow bottom (`flow-gap`), or minus the flow origin for the
+    /// first placement (`flow-origin`).
+    pub pending_gap: f64,
+    pub pending_gap_source: &'static str,
+    /// The space actually added above it (above its repeated `<thead>` band, if
+    /// one is injected), and why: `applied` (the flow gap, kept on the page),
+    /// `none` (flow gap 0), `page-origin` (page 1: the document's leading
+    /// offset is kept), `page-start` (unforced break: adjoining margins
+    /// truncate to 0), `forced-break-margin` (forced break: the margin after it
+    /// is kept, CSS Fragmentation 3 §5.2), `out-of-order` (its flow position lies
+    /// above the page top, so it follows the previous fragment).
+    pub gap_applied: f64,
+    pub gap_note: &'static str,
+    /// A repeated `<thead>` band injected right above this fragment (it sits at
+    /// `placed_top - height`).
+    pub header_injected: Option<InjectedHeader>,
+    /// Page-local y the fragment's `top` was placed at.
+    pub placed_top: f64,
+}
+
+/// A table's `<thead>` band as injected above a row (trace only).
+#[doc(hidden)]
+#[derive(Debug, Clone)]
+pub struct InjectedHeader {
+    pub table_id: usize,
+    /// Node ids of the band's boxes, in document order.
+    pub node_ids: Vec<usize>,
+    /// Flow top of the band and its height, which includes the flow spacing
+    /// down to the first body row (so the row sits at `top + height`).
+    pub top: f64,
+    pub height: f64,
+}
+
+impl InjectedHeader {
+    fn new(table_id: usize, header: &TableHeader) -> Self {
+        Self {
+            table_id,
+            node_ids: header.boxes.iter().map(|b| b.node_id).collect(),
+            top: header.top,
+            height: header.height,
+        }
+    }
+}
 
 /// A fragmentable unit: a top-level flow item, or a single table row. Each
 /// carries its absolute Y span so the breaker can place it on a page.
@@ -46,7 +184,26 @@ struct Fragment {
     boxes: Vec<LaidOutBox>,
     top: f64,
     bottom: f64,
-    trailing_gap: f64,
+    /// Bottom of the box that contains the fragment's content in the flow: its
+    /// root's border box, or, for a child of a flattened wrapper, no lower than
+    /// the wrapper's border box. Content below it is overflow, which does not
+    /// push the flow. When the overflow is small (at most
+    /// `TABLE_ROW_BREAK_TOLERANCE_PX`, capped by the bottom page margin; the
+    /// painted part never reaches a drawn `@bottom-center` line, port step 10) the fit
+    /// tests use this edge instead of `bottom` (`fit_height`): Blitz
+    /// 0.3.0-beta.4 lays some content out taller than Chrome (the
+    /// boleto-febraban ficha's table is +9.45 px in the raw Blitz layer), so a
+    /// fixed-height box Chrome fills exactly overflows by a few px here, and
+    /// that drift must not push the overflowing tail onto a page of its own.
+    /// DESIGN TARGET, not Chrome behaviour (Chrome fragments real overflow
+    /// across pages); a larger overflow is fitted as is.
+    contained_bottom: f64,
+    /// The margin kept above this fragment when a forced break puts it at the
+    /// top of a page (CSS Fragmentation 3 §5.2: "margins after the break are
+    /// preserved"): the margins that collapse into its top edge (see
+    /// [`leading_margin`]), including those of an ancestor whose forced break
+    /// moved onto this fragment and of dropped fragments it collapses through.
+    break_margin: CollapsedMargin,
     /// Root table node for table-row/header fragments.
     table_id: Option<usize>,
     /// If this fragment is a `<thead>`, its boxes get repeated for that table.
@@ -58,32 +215,97 @@ struct Fragment {
     /// been split into. Kept so a group taller than an empty page falls back to
     /// them — `avoid` is a preference, never a reason to overflow the page.
     members: Vec<Fragment>,
+    /// How many page breaks the oversize-fragment slicer ([`slice_oversize`]) already put
+    /// inside the fragment this one continues (0 for a fragment of the flow itself); capped
+    /// by [`MAX_SLICES_PER_FRAGMENT`].
+    slices: usize,
 }
 
 struct TableHeader {
     boxes: Vec<LaidOutBox>,
     top: f64,
+    /// Band height PLUS the flow spacing down to the table's first body
+    /// fragment (border-spacing): a body row placed right under the band sits
+    /// `height` below the band's top, as in the flow. Chrome 155 repeats the band
+    /// at the top of a continuation page and puts the row the same distance
+    /// below it (`tests/pagination_gaps.rs`, f1).
     height: f64,
+    /// The band's own block size (its rows, without the spacing below it): what decides
+    /// whether it repeats at all ([`header_repeats`]).
+    own_height: f64,
+}
+
+/// Whether a table's header band repeats on the pages its body continues on, and so is placed
+/// with the table's first body row instead of on its own: Chrome 155.0.8059.85 repeats a
+/// `<thead>` only when its block size is at most a quarter of the page's content height.
+/// Measured (probes `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/thead-repeat*.py`, 2026-10-28):
+/// on a 192 px content box a 48 px header repeats and a 49 px one does not; on a 480 px box 120 px repeats and
+/// 121 px does not; a 40 px header with `border-spacing: 0 10px` (band 50 px) repeats, so the
+/// spacing is not counted. A header that does not repeat is an ordinary fragment of the flow:
+/// a forced break after it (`thead { page-break-after: always }`, WPT
+/// css/CSS2/pagination/rowgroup-page-break-inside-avoid-5-print-ref.html) starts the body on
+/// the next page, as in Chrome; a repeating header keeps the break inert (Chrome prints the
+/// 20 px header probe with `page-break-after: always` on one page). Phase C step 04.
+fn header_repeats(header: &TableHeader, page_content_height: f64) -> bool {
+    header.own_height <= page_content_height / 4.0 + 1e-6
+}
+
+/// How the current (still empty) page began; decides where its first
+/// fragment goes (CSS Fragmentation 3 §5.2).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PageStart {
+    /// Page 1 before anything was placed: the flow is kept verbatim, so the
+    /// document's leading offset (body margin/padding, the first box's margin,
+    /// a relative `top:`) stays above the first fragment.
+    Origin,
+    /// After a forced break: the margin after the break is kept.
+    Forced,
+    /// After an unforced break (overflow, oversize): adjoining margins
+    /// truncate to zero, the fragment starts at the page top.
+    Unforced,
 }
 
 /// Paginate a laid-out document against the `@page` box.
 pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
-    let usable_h = page_box.content_height();
-    let margin_l = page_box.margin_left;
-    let margin_t = page_box.margin_top;
+    paginate_traced(doc, page_box, None)
+}
+
+/// [`paginate`] that, given `Some(trace)`, also records every placement decision
+/// (fidelity layer `P`). Debug/fidelity tooling only: the trace is write-only
+/// here, so its presence cannot change the pages (the render path passes `None`).
+#[doc(hidden)]
+pub fn paginate_traced(
+    doc: &LaidOutDoc,
+    page_box: &PageBox,
+    mut trace: Option<&mut PaginationTrace>,
+) -> Paginated {
+    // Each page's own `@page` box (`:first`, `:left`/`:right` rules may give pages different
+    // heights and margins; the content width is the same on every page, see
+    // `page_css::varying_width_rule`).
+    let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
 
     let fragments = build_fragments(doc);
-    let table_row_fit_limit = usable_h + TABLE_ROW_BREAK_TOLERANCE_PX;
 
     let headers = table_headers_by_id(&fragments);
 
     // Phase one: break fragments into page slices.
     let mut page_slices: Vec<Vec<LaidOutBox>> = Vec::new();
     let mut current: Vec<LaidOutBox> = Vec::new();
-    let mut cursor = 0.0_f64; // used height on the current page
+    // Page-local y = flow y + `shift` for every fragment of the current page; set
+    // by the page's first fragment (see `PageStart`), so the flow gaps between
+    // the fragments of one page are kept exactly (margins already collapsed by
+    // Blitz, negative/overlapping gaps and relative offsets included).
+    let mut shift = 0.0_f64;
+    let mut page_start = PageStart::Origin;
+    // Used height on the current page (the bottom of the last placed fragment).
+    let mut cursor = 0.0_f64;
     let mut thead_repeated: Vec<bool> = Vec::new();
     let mut oversize_hit = false;
-    let mut pending_gap = 0.0_f64;
+    // Trace only: the flow bottom of the last placed fragment (to report the
+    // flow gap each fragment asked for), and whether an oversize fragment closed
+    // the previous page (never read by layout).
+    let mut prev_flow_bottom: Option<f64> = None;
+    let mut page_closed_by_oversize = false;
     // Tracks whether the current page already carries the header band. Reset on
     // every page break and re-set whenever a tbody row injects the header, so the
     // header leads the table-start page AND every continuation page —
@@ -98,45 +320,47 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         thead_repeated.push(repeated);
     };
 
-    // Inject the repeated <thead> band at the CURRENT cursor — the table's start
-    // on this page — not at the page top. On a continuation page the cursor is 0
-    // (page top, the desired place), but on the table's FIRST page the cursor sits
-    // below the title/intro, so injecting at 0 would overlap that preceding content.
-    let inject_header = |current: &mut Vec<LaidOutBox>, cursor: &mut f64, header: &TableHeader| {
-        let mut header_boxes = reposition(&header.boxes, header.top, *cursor);
-        current.append(&mut header_boxes);
-        *cursor += header.height;
-    };
-
     let mut queue: VecDeque<Fragment> = fragments.into();
-    while let Some(frag) = queue.pop_front() {
-        if frag.is_thead {
-            // The header is emitted inline as part of its table's first page and
-            // re-injected on continuations; skip standalone placement here.
+    while let Some(mut frag) = queue.pop_front() {
+        // The header of the page the fragment is tried on, when it repeats there
+        // ([`header_repeats`]); a header that does not repeat is never injected.
+        let page_content_height = geometry.page(page_slices.len()).content_height();
+        let repeating = |table_id: Option<usize>| {
+            table_id
+                .and_then(|table_id| headers.get(&table_id))
+                .filter(|header| header_repeats(header, page_content_height))
+        };
+        if frag.is_thead && repeating(frag.table_id).is_some() {
+            // A repeating header is emitted inline as part of its table's first page and
+            // re-injected on continuations; skip standalone placement here. One that does
+            // not repeat is placed where it is in the flow, like a row.
             continue;
         }
-        let frag_height = frag.bottom - frag.top;
-        let table_header = frag.table_id.and_then(|table_id| headers.get(&table_id));
+        let table_header = if frag.is_thead {
+            None
+        } else {
+            repeating(frag.table_id)
+        };
         let is_table_row = frag.is_row();
-        let fit_limit = if is_table_row {
-            table_row_fit_limit
-        } else {
-            usable_h
-        };
-
-        // A table row that lands on a page without the header yet needs the
-        // header band placed above it; account for its height in the fit test so
-        // the header is never stranded at the bottom of a page.
-        let header_needed = is_table_row
-            && table_header.is_some()
-            && frag
-                .table_id
-                .is_some_and(|table_id| !headers_on_current.contains(&table_id));
-        let lead_h = if header_needed {
-            table_header.map(|header| header.height).unwrap_or(0.0)
-        } else {
-            0.0
-        };
+        // The fit limit of the page the fragment is tried on (re-read after every page break).
+        let mut fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
+        // How far content may overflow the box that contains it and still be
+        // fitted against that box: the row drift allowance, but never past the
+        // physical page (the bottom page margin).
+        let overflow_allowance = TABLE_ROW_BREAK_TOLERANCE_PX
+            .min(geometry.page(page_slices.len()).margin_bottom.max(0.0));
+        // The height the fit tests use: a small overflow of the box that
+        // contains the fragment does not count (see `Fragment::contained_bottom`),
+        // and what the fragment paints never reaches a drawn `@bottom-center` line:
+        // its painted bottom must stay within the free space above that line
+        // (`band_fit_height`). Port step 10: step 09 capped the allowance itself by
+        // that space, which also moved an overflowing box that paints nothing there
+        // (probe f5_allowance_footer: Chrome 155 and step 08 keep "Tail" on page 1).
+        let fit_h = fit_height(&frag, overflow_allowance).max(band_fit_height(
+            &frag,
+            geometry.bottom_box_clearance(page_slices.len(), doc),
+            fit_limit - geometry.page(page_slices.len()).content_height(),
+        ));
 
         // A keep-together group that cannot fit even on an empty page is split
         // back into its parts (the forced break, if any, moves to the first).
@@ -144,47 +368,54 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
         // over `avoid` (CSS Fragmentation 3, §4.4).
         let group_header_h = table_header.map(|header| header.height).unwrap_or(0.0);
         let forced_break_inside = frag.members.iter().skip(1).any(has_forced_break);
-        if !frag.members.is_empty()
-            && (frag_height + group_header_h > fit_limit || forced_break_inside)
-        {
+        if !frag.members.is_empty() && (fit_h + group_header_h > fit_limit || forced_break_inside) {
+            // Taller than a page, it still starts on a fresh page when the current one already
+            // holds content (an unforced break before it, CSS Fragmentation 3 §4.4: `avoid`
+            // prefers a break before the box), then breaks inside: Chrome 155 starts a
+            // `break-inside: avoid` table whose caption makes it 3in tall on page 2 of a 2in
+            // page box, after page 1's text (WPT
+            // css/CSS2/pagination/table-page-break-inside-avoid-7-print). A forced break inside
+            // the group wins over `avoid` and does not move it.
+            if !forced_break_inside && !frag.break_before && !current.is_empty() {
+                push_page(
+                    &mut current,
+                    &mut page_slices,
+                    &mut thead_repeated,
+                    !headers_on_current.is_empty(),
+                );
+                cursor = 0.0;
+                headers_on_current.clear();
+                page_start = PageStart::Unforced;
+            }
             let break_before = frag.break_before;
+            let break_margin = frag.break_margin;
             let mut members = frag.members;
             if let Some(first) = members.first_mut() {
                 first.break_before |= break_before;
+                first.break_margin = first.break_margin.collapse(break_margin);
             }
             for member in members.into_iter().rev() {
                 queue.push_front(member);
             }
+            if let Some(t) = trace.as_deref_mut() {
+                t.groups_split += 1;
+            }
             continue;
         }
 
-        // A forced break starts this fragment on a fresh page.
-        if frag.break_before && !current.is_empty() {
-            push_page(
-                &mut current,
-                &mut page_slices,
-                &mut thead_repeated,
-                !headers_on_current.is_empty(),
-            );
-            cursor = 0.0;
-            headers_on_current.clear();
-        }
+        // Trace only: why (if at all) this fragment opens a new page, and the
+        // flow gap it asks for.
+        let mut new_page: Option<&'static str> =
+            std::mem::take(&mut page_closed_by_oversize).then_some("after-oversize");
+        let (pending_gap, pending_gap_source) = match prev_flow_bottom {
+            Some(bottom) => (frag.top - bottom, "flow-gap"),
+            None => (frag.top, "flow-origin"),
+        };
 
-        let mut page_gap = if current.is_empty() { 0.0 } else { pending_gap };
-        if page_gap > 0.0
-            && cursor + frag_height + lead_h + page_gap > fit_limit
-            && cursor + frag_height + lead_h <= fit_limit
-        {
-            page_gap = 0.0;
-        }
-
-        // Oversized single fragment (e.g. a row taller than an empty page):
-        // own page, then terminate that fragment (never split mid-row). The
-        // fragment is placed in full and bleeds past the page box — krilla does
-        // not clip to the media box, so over-height content is emitted, not
-        // trimmed. A future clip pass would live in pdf::emit.
-        if frag_height + lead_h + page_gap > fit_limit && (frag_height > fit_limit || lead_h == 0.0)
-        {
+        // A forced break starts this fragment on a fresh page. There is no
+        // blank page before the first content: a break before it is not a valid
+        // break point, so page 1 keeps its origin.
+        if frag.break_before {
             if !current.is_empty() {
                 push_page(
                     &mut current,
@@ -192,16 +423,27 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
                     &mut thead_repeated,
                     !headers_on_current.is_empty(),
                 );
+                cursor = 0.0;
+                headers_on_current.clear();
+                page_start = PageStart::Forced;
+                new_page = Some("forced-break");
+                fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
+            } else if page_start == PageStart::Unforced {
+                // An oversize fragment closed the previous page; the break
+                // requested here is still a forced one.
+                page_start = PageStart::Forced;
             }
-            cursor = 0.0;
-            headers_on_current.clear();
-            // Even an oversize table row keeps its header band on its own page.
-            if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
-                inject_header(&mut current, &mut cursor, header);
-                headers_on_current.insert(table_id);
-            }
-            let mut placed = reposition(&frag.boxes, frag.top, cursor);
-            current.append(&mut placed);
+        }
+
+        // Oversized single fragment (taller than an empty page): since Phase C step 03 it
+        // starts where it is in the flow, on the current page, and is sliced at a break point
+        // inside it ([`slice_oversize`]); the continuation goes to the next page. Past
+        // `MAX_SLICES_PER_FRAGMENT` breaks (or with nothing to cut) the fragment is placed in
+        // full on its own page and bleeds past the page box, as every oversize fragment did
+        // before: krilla does not clip to the media box.
+        let oversize = fit_h > fit_limit;
+        let slice = oversize && frag.slices < MAX_SLICES_PER_FRAGMENT;
+        if oversize && !slice && !current.is_empty() {
             push_page(
                 &mut current,
                 &mut page_slices,
@@ -210,15 +452,51 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             );
             cursor = 0.0;
             headers_on_current.clear();
-            oversize_hit = true;
-            pending_gap = frag.trailing_gap;
-            continue;
+            page_start = PageStart::Unforced;
+            new_page = Some("oversize");
+            fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         }
 
-        // Does the fragment (plus any header it needs) fit in the remaining
-        // space on the current page?
-        if cursor + frag_height + lead_h + page_gap > fit_limit && !current.is_empty() {
-            // Move whole fragment to next page (rows never split).
+        // A table fragment entering a page without its header (table start OR a
+        // continuation page) gets the header band injected right above it.
+        let header_for = |headers_on_current: &HashSet<usize>| match (frag.table_id, table_header) {
+            (Some(table_id), Some(header)) if !headers_on_current.contains(&table_id) => {
+                Some((table_id, header))
+            }
+            _ => None,
+        };
+
+        // Where the fragment goes if it stays on the current page: its flow
+        // position. A row whose table starts on this page sits right under its
+        // header band, which is placed at the band's own flow position. (Rows of a
+        // `border-collapse: collapse` table abut in the flow itself since Phase C
+        // step 02, `blitz_engine::compensate_collapsed_borders`; the gap drop that
+        // stood in for that, `collapsed-rows`, is gone.)
+        // A fragment whose flow position lies above the top of the current page
+        // comes out of flow order (DOM order is not always flow order: Blitz
+        // lays a `<tfoot>` written before the body out at the table bottom); the
+        // page translation cannot place it, so it follows the previous fragment
+        // (`out-of-order`).
+        let continuing = !current.is_empty();
+        let mid_page = continuing.then(|| {
+            let header_h = header_for(&headers_on_current).map_or(0.0, |(_, header)| header.height);
+            let (top, note) = if let Some((_, header)) = header_for(&headers_on_current) {
+                (header.top + shift + header.height, None)
+            } else {
+                (frag.top + shift, None)
+            };
+            if top - header_h < 0.0 {
+                (cursor + header_h, Some("out-of-order"))
+            } else {
+                (top, note)
+            }
+        });
+
+        // Does the fragment fit in the rest of the page there? Otherwise the
+        // whole fragment moves to the next page (rows never split); the margins
+        // adjoining that unforced break truncate, so nothing of the gap moves
+        // with it.
+        if !slice && mid_page.is_some_and(|(top, _)| top + fit_h > fit_limit) {
             push_page(
                 &mut current,
                 &mut page_slices,
@@ -227,25 +505,173 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             );
             cursor = 0.0;
             headers_on_current.clear();
-            page_gap = 0.0;
+            page_start = PageStart::Unforced;
+            new_page = Some("overflow");
+            fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
         }
 
-        let page_gap = if current.is_empty() { 0.0 } else { page_gap };
-        cursor += page_gap;
-
-        // A table row entering a page without the header (table start OR a
-        // continuation page) gets the header band re-injected at the top first.
-        if let (Some(table_id), Some(header)) = (frag.table_id, table_header) {
-            if !headers_on_current.contains(&table_id) {
-                inject_header(&mut current, &mut cursor, header);
-                headers_on_current.insert(table_id);
+        // A fragment that opens a page after a forced break but does not fit under the
+        // margin kept after that break (CSS Fragmentation 3 §5.2), while it fits the page
+        // without it (port step 10; probes f5_*, Chrome 155):
+        // - a table without a `<thead>` (one block fragment) is split between its rows,
+        //   the first row keeping the break and the margin: Chrome keeps the margin and
+        //   moves the rows that do not fit to the next page;
+        // - monolithic content (one line of text, or one image) moves to the next page,
+        //   leaving the forced page blank, as Chrome does (the margin truncates at that
+        //   unforced break);
+        // - anything else (several lines or boxes, which Chrome fragments between its
+        //   lines and vellora cannot) keeps step 09's placement: the margin is truncated
+        //   to the room the fragment leaves (KNOWN GAP, `tests/pagination_gaps.rs`).
+        if current.is_empty() && page_start == PageStart::Forced && !oversize {
+            let header_h = header_for(&headers_on_current).map_or(0.0, |(_, header)| header.height);
+            let margin = frag.break_margin.value();
+            if margin > 0.0 && header_h + margin + fit_h > fit_limit {
+                if let Some(rows) = table_rows_of(&frag) {
+                    let mut rows = rows;
+                    if let Some(first) = rows.first_mut() {
+                        first.break_before = true;
+                        first.break_margin = frag.break_margin;
+                    }
+                    for row in rows.into_iter().rev() {
+                        queue.push_front(row);
+                    }
+                    if let Some(t) = trace.as_deref_mut() {
+                        t.groups_split += 1;
+                    }
+                    continue;
+                }
+                if is_monolithic(&frag) {
+                    push_page(&mut current, &mut page_slices, &mut thead_repeated, false);
+                    cursor = 0.0;
+                    page_start = PageStart::Unforced;
+                    new_page = Some("forced-break-blank");
+                    fit_limit = geometry.fit_limit(page_slices.len(), is_table_row);
+                }
             }
         }
 
-        let mut placed = reposition(&frag.boxes, frag.top, cursor);
+        let header = header_for(&headers_on_current);
+        let header_h = header.map_or(0.0, |(_, header)| header.height);
+        let (placed_top, gap_note) = match mid_page {
+            Some((top, note)) if !current.is_empty() => {
+                let gap = top - header_h - cursor;
+                (
+                    top,
+                    note.unwrap_or(if gap == 0.0 { "none" } else { "applied" }),
+                )
+            }
+            _ => match page_start {
+                // Page 1: the flow verbatim (`shift` 0), leading offset kept.
+                // When the first fragment would fit at the page top but not below
+                // that offset (its flow position is past the page end, e.g. a
+                // `<tfoot>` written first and laid out last), it starts at the
+                // page top instead: the fragment model cannot leave page 1
+                // holding only the offset. A first fragment that does not fit
+                // at the top either keeps the offset (it overflows either way),
+                // unless that offset is itself past the page end: then it starts
+                // at the page top too, so it is never placed off the page (the
+                // `<tfoot>` guard in `tests/pagination_gaps.rs`, which the 12 px
+                // row fit slack used to satisfy, Phase C step 03).
+                PageStart::Origin
+                    if frag.top + fit_h <= fit_limit
+                        || (header_h + fit_h > fit_limit && frag.top < fit_limit) =>
+                {
+                    (frag.top.max(header_h), "page-origin")
+                }
+                PageStart::Origin => (header_h, "page-start"),
+                // The margin after a forced break is kept (CSS Fragmentation 3 §5.2). A table
+                // or monolithic content that does not fit under it was split or moved on above
+                // (port step 10); what is left here is a block with break points inside it,
+                // which Chrome fragments between its lines and vellora cannot: its margin is
+                // truncated to the room it leaves, so it never runs into the bottom margin
+                // band (port step 09's rule, KNOWN GAP, `tests/pagination_gaps.rs`).
+                PageStart::Forced => {
+                    let room = (fit_limit - header_h - fit_h).max(0.0);
+                    (
+                        frag.break_margin.value().min(room) + header_h,
+                        "forced-break-margin",
+                    )
+                }
+                PageStart::Unforced => (header_h, "page-start"),
+            },
+        };
+        // An oversize fragment is cut where the page ends; its continuation goes back to the
+        // queue and opens the next page. When no break point leaves content on this page, the
+        // fragment starts on the next one (it is tried again there, on an empty page).
+        if slice {
+            let content_height = geometry.page(page_slices.len()).content_height();
+            match slice_oversize(&frag, placed_top, content_height, current.is_empty()) {
+                SliceOutcome::Cut(head, rest) => {
+                    queue.push_front(*rest);
+                    frag = *head;
+                }
+                SliceOutcome::NextPage => {
+                    push_page(
+                        &mut current,
+                        &mut page_slices,
+                        &mut thead_repeated,
+                        !headers_on_current.is_empty(),
+                    );
+                    cursor = 0.0;
+                    headers_on_current.clear();
+                    page_start = PageStart::Unforced;
+                    queue.push_front(frag);
+                    continue;
+                }
+                SliceOutcome::Whole => {}
+            }
+        }
+
+        let cursor_before = cursor;
+        shift = placed_top - frag.top;
+
+        let mut header_injected = None;
+        if let Some((table_id, header)) = header {
+            let mut header_boxes = reposition(&header.boxes, header.top, placed_top - header_h);
+            current.append(&mut header_boxes);
+            headers_on_current.insert(table_id);
+            header_injected = Some(InjectedHeader::new(table_id, header));
+        }
+
+        if let Some(t) = trace.as_deref_mut() {
+            if let Some(previous) = t.placements.last_mut() {
+                previous.trailing_gap = pending_gap;
+                previous.gap_source = pending_gap_source;
+            }
+            t.placements.push(placement_record(
+                &frag,
+                PlacementState {
+                    oversize,
+                    page: page_slices.len(),
+                    new_page,
+                    cursor_before,
+                    pending_gap,
+                    pending_gap_source,
+                    gap_applied: placed_top - header_h - cursor_before,
+                    gap_note,
+                    header_injected,
+                    placed_top,
+                },
+            ));
+        }
+        let mut placed = reposition(&frag.boxes, frag.top, placed_top);
         current.append(&mut placed);
-        cursor += frag_height;
-        pending_gap = frag.trailing_gap;
+        cursor = placed_top + (frag.bottom - frag.top);
+        prev_flow_bottom = Some(frag.bottom);
+
+        if oversize {
+            push_page(
+                &mut current,
+                &mut page_slices,
+                &mut thead_repeated,
+                !headers_on_current.is_empty(),
+            );
+            cursor = 0.0;
+            headers_on_current.clear();
+            page_start = PageStart::Unforced;
+            oversize_hit = true;
+            page_closed_by_oversize = true;
+        }
     }
 
     if !current.is_empty() {
@@ -264,43 +690,42 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     }
 
     let total = page_slices.len();
+    if let Some(t) = trace {
+        t.page_count = total;
+    }
 
     // Phase two: build PdfPages, resolving running header/footer counters now
     // that the total page count is known.
+    let page_boxes: Vec<PageBox> = (0..total).map(|i| geometry.page(i).clone()).collect();
+    let mut margin_texts = build_margin_texts(doc, &page_boxes);
     let mut pages = Vec::with_capacity(total);
     let mut footers = Vec::with_capacity(total);
     for (i, slice) in page_slices.into_iter().enumerate() {
-        let page_num = i + 1;
-        let (rects, rounded_strokes, images, text_runs) =
-            lower_to_display_list(slice, margin_l, margin_t);
+        let page = &page_boxes[i];
+        // Chromium's whole-px content origin (`PageBox::content_origin`).
+        let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
+        let (mut rects, rounded_strokes, images, text_runs) =
+            lower_to_display_list(slice, origin_x, origin_y);
+        paint_canvas(&mut rects, page, doc);
 
-        // Resolve and place running header/footer margin-box content. Keep
-        // `report.footers` in lock-step with what is actually emitted: a footer
-        // string is only recorded when its `MarginText` was actually produced
-        // (build_margin_text returns None when there is no body font to shape
-        // with, e.g. an empty document), so a reported footer always
-        // corresponds to a rendered one.
-        let mut margin_texts = Vec::new();
-        let mut footer_text = String::new();
-        for mc in &page_box.margins_content {
-            let resolved = resolve_content(&mc.parts, page_num, total);
-            if let Some(mt) = build_margin_text(&resolved, mc.which, page_box, doc) {
-                if mc.which == MarginBox::BottomCenter {
-                    footer_text = resolved.clone();
-                }
-                margin_texts.push(mt);
-            }
-        }
+        // Keep `report.footers` in lock-step with what is actually emitted: a
+        // footer string is only recorded when its `MarginText` was produced.
+        let page_margin_texts = std::mem::take(&mut margin_texts[i]);
+        let footer_text = page_margin_texts
+            .iter()
+            .find(|(which, _)| *which == MarginBox::BottomCenter)
+            .map(|(_, mt)| mt.text.clone())
+            .unwrap_or_default();
         footers.push(footer_text);
 
         pages.push(PdfPage {
-            width_px: page_box.width,
-            height_px: page_box.height,
+            width_px: page.width,
+            height_px: page.height,
             rects,
             rounded_strokes,
             images,
             text_runs,
-            margin_texts,
+            margin_texts: page_margin_texts.into_iter().map(|(_, mt)| mt).collect(),
         });
     }
 
@@ -315,6 +740,240 @@ pub fn paginate(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
     }
 }
 
+/// Fidelity tooling ONLY ([`crate::debug_render_raw_blitz`]), never the render path: Blitz's one
+/// continuous flow cut into page-tall bands with no fragmentation logic, the "raw" counterpart of
+/// [`paginate`]. Blitz has no paginator, so the raw render cannot drop pagination; it replaces it
+/// with the plainest one. Page `i` shows the flow band `[start_i, start_i + content_height_i)` of
+/// page `i`'s own `@page` box (`start_0 = 0`, so page 1 is the flow verbatim, exactly what a
+/// viewport screenshot shows), translated to the page's content box. Nothing is moved, repeated
+/// or kept together: no break rules (`break-*`), no `<thead>` repeat, no fit tolerance, no margin
+/// boxes, and no display-list rect merge (`merge_adjacent_rects`). A background or border rect is
+/// clipped into every band it crosses; a text run goes to the band of its baseline, an image or
+/// rounded border to the band of its top. Content above the flow origin stays on page 1.
+#[doc(hidden)]
+pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
+    let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
+    let mut bands: Vec<(f64, f64)> = Vec::new();
+    // The band index of flow y, growing the page list as far as `y` reaches.
+    // Past `FLAT_MAX_PAGES` bands, content stays on the last page, below its edge (a document
+    // millions of px tall must not allocate a page per band).
+    const FLAT_MAX_PAGES: usize = 200;
+    let band_of = |y: f64, geometry: &mut PageGeometry, bands: &mut Vec<(f64, f64)>| {
+        if bands.is_empty() {
+            bands.push((0.0, geometry.page(0).content_height().max(1.0)));
+        }
+        if !y.is_finite() || y < 0.0 {
+            return 0;
+        }
+        loop {
+            if let Some(i) = bands
+                .iter()
+                .position(|&(top, bottom)| y >= top && y < bottom)
+            {
+                return i;
+            }
+            if bands.len() >= FLAT_MAX_PAGES {
+                return bands.len() - 1;
+            }
+            let top = bands.last().map_or(0.0, |&(_, bottom)| bottom);
+            let height = geometry.page(bands.len()).content_height().max(1.0);
+            bands.push((top, top + height));
+        }
+    };
+    struct Lists {
+        rects: Vec<FilledRect>,
+        atomic_rects: Vec<FilledRect>,
+        strokes: Vec<RoundedStroke>,
+        images: Vec<ImageRun>,
+        runs: Vec<crate::blitz_engine::TextRun>,
+    }
+    let mut lists: Vec<Lists> = Vec::new();
+    fn list(lists: &mut Vec<Lists>, i: usize) -> &mut Lists {
+        while lists.len() <= i {
+            lists.push(Lists {
+                rects: Vec::new(),
+                atomic_rects: Vec::new(),
+                strokes: Vec::new(),
+                images: Vec::new(),
+                runs: Vec::new(),
+            });
+        }
+        &mut lists[i]
+    }
+    // Atomic inline subtrees paint after the other rects, as in the product's display list
+    // ([`in_atomic_inline`]).
+    let atomic = in_atomic_inline(&doc.boxes);
+    for (b, &atomic) in doc.boxes.iter().zip(&atomic) {
+        for rect in &b.visual_rects {
+            let first = band_of(rect.y, &mut geometry, &mut bands);
+            let last = band_of(
+                (rect.y + rect.height).max(rect.y) - 1e-6,
+                &mut geometry,
+                &mut bands,
+            )
+            .max(first);
+            for (i, &(top, bottom)) in bands.iter().enumerate().take(last + 1).skip(first) {
+                let y0 = if i == first { rect.y } else { top };
+                let y1 = if i == last {
+                    rect.y + rect.height
+                } else {
+                    bottom
+                };
+                let l = list(&mut lists, i);
+                let rects = if atomic {
+                    &mut l.atomic_rects
+                } else {
+                    &mut l.rects
+                };
+                rects.push(FilledRect {
+                    x: rect.x,
+                    y: y0 - top,
+                    width: rect.width,
+                    height: (y1 - y0).max(0.0),
+                    color: rect.color,
+                    tier: rect.tier,
+                    stack: rect.stack,
+                });
+            }
+        }
+        for border in &b.rounded_borders {
+            let i = band_of(border.y, &mut geometry, &mut bands);
+            let top = bands[i].0;
+            list(&mut lists, i).strokes.push(RoundedStroke {
+                x: border.x,
+                y: border.y - top,
+                width: border.width,
+                height: border.height,
+                radius_x: border.radius_x,
+                radius_y: border.radius_y,
+                stroke_width: border.stroke_width,
+                color: border.color,
+            });
+        }
+        for image in &b.image_runs {
+            let i = band_of(image.y, &mut geometry, &mut bands);
+            let mut image = image.clone();
+            image.y -= bands[i].0;
+            list(&mut lists, i).images.push(image);
+        }
+        for run in &b.text_runs {
+            let i = band_of(run.origin_y, &mut geometry, &mut bands);
+            let mut run = run.clone();
+            run.origin_y -= bands[i].0;
+            list(&mut lists, i).runs.push(run);
+        }
+    }
+    let total = lists.len().max(1);
+    list(&mut lists, total - 1);
+    let mut pages = Vec::with_capacity(total);
+    for (i, l) in lists.into_iter().enumerate() {
+        let page = geometry.page(i).clone();
+        let (ml, mt) = page.content_origin(geometry.rtl);
+        let mut rects = l
+            .rects
+            .into_iter()
+            .chain(l.atomic_rects)
+            .map(|r| FilledRect {
+                x: r.x + ml,
+                y: r.y + mt,
+                ..r
+            })
+            .collect();
+        paint_canvas(&mut rects, &page, doc);
+        let rounded_strokes = l
+            .strokes
+            .into_iter()
+            .map(|s| RoundedStroke {
+                x: s.x + ml,
+                y: s.y + mt,
+                ..s
+            })
+            .collect();
+        let images = l
+            .images
+            .into_iter()
+            .map(|mut im| {
+                im.x += ml;
+                im.y += mt;
+                im
+            })
+            .collect();
+        let text_runs = l
+            .runs
+            .into_iter()
+            .map(|mut r| {
+                r.origin_x += ml;
+                r.origin_y += mt;
+                r
+            })
+            .collect();
+        pages.push(PdfPage {
+            width_px: page.width,
+            height_px: page.height,
+            // Not `merge_adjacent_rects`: the raw render draws Blitz's boxes one rect each.
+            rects,
+            rounded_strokes,
+            images,
+            text_runs,
+            margin_texts: Vec::new(),
+        });
+    }
+    Paginated {
+        report: PaginationReport {
+            page_count: total,
+            footers: vec![String::new(); total],
+            thead_repeated: vec![false; total],
+            oversize_hit: false,
+        },
+        pages,
+    }
+}
+
+/// The placement-time facts of one [`FragmentPlacement`] (trace only).
+struct PlacementState {
+    oversize: bool,
+    page: usize,
+    new_page: Option<&'static str>,
+    cursor_before: f64,
+    pending_gap: f64,
+    pending_gap_source: &'static str,
+    gap_applied: f64,
+    gap_note: &'static str,
+    header_injected: Option<InjectedHeader>,
+    placed_top: f64,
+}
+
+fn placement_record(frag: &Fragment, state: PlacementState) -> FragmentPlacement {
+    let kind = match (frag.members.is_empty(), frag.is_row(), state.oversize) {
+        (false, _, false) => "group",
+        (false, _, true) => "oversize-group",
+        (true, true, false) => "row",
+        (true, true, true) => "oversize-row",
+        (true, false, false) => "block",
+        (true, false, true) => "oversize-block",
+    };
+    FragmentPlacement {
+        kind,
+        node_ids: frag.boxes.iter().map(|b| b.node_id).collect(),
+        root_tag: frag.boxes.first().and_then(|b| b.tag.clone()),
+        table_id: frag.table_id,
+        top: frag.top,
+        bottom: frag.bottom,
+        // Filled in when the next fragment is placed (its `pending_gap`).
+        trailing_gap: 0.0,
+        gap_source: "none",
+        page: state.page,
+        new_page: state.new_page,
+        cursor_before: state.cursor_before,
+        pending_gap: state.pending_gap,
+        pending_gap_source: state.pending_gap_source,
+        gap_applied: state.gap_applied,
+        gap_note: state.gap_note,
+        header_injected: state.header_injected,
+        placed_top: state.placed_top,
+    }
+}
+
 fn table_headers_by_id(fragments: &[Fragment]) -> HashMap<usize, TableHeader> {
     let mut headers = HashMap::new();
     collect_table_headers(fragments, &mut headers);
@@ -322,9 +981,11 @@ fn table_headers_by_id(fragments: &[Fragment]) -> HashMap<usize, TableHeader> {
 }
 
 /// Collect every `<thead>` band, including those inside keep-together groups
-/// (whose rows need the band if the group falls back to its parts).
+/// (whose rows need the band if the group falls back to its parts). The band's
+/// height reaches down to the flow top of the table's first body fragment, so
+/// the flow spacing between band and row (border-spacing) comes with it.
 fn collect_table_headers(fragments: &[Fragment], out: &mut HashMap<usize, TableHeader>) {
-    for fragment in fragments {
+    for (i, fragment) in fragments.iter().enumerate() {
         collect_table_headers(&fragment.members, out);
         if !fragment.is_thead {
             continue;
@@ -333,12 +994,17 @@ fn collect_table_headers(fragments: &[Fragment], out: &mut HashMap<usize, TableH
             continue;
         };
         let (top, bottom) = row_span(&fragment.boxes);
+        let band_bottom = fragments[i + 1..]
+            .iter()
+            .find(|next| next.table_id == Some(table_id) && !next.is_thead)
+            .map_or(bottom, |next| next.top);
         out.insert(
             table_id,
             TableHeader {
                 boxes: fragment.boxes.clone(),
                 top,
-                height: (bottom - top).max(0.0),
+                height: (band_bottom - top).max(0.0),
+                own_height: (bottom - top).max(0.0),
             },
         );
     }
@@ -365,6 +1031,41 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
     let body_depth = body.map(|b| b.depth).unwrap_or(0);
 
     let mut fragments = Vec::new();
+
+    // A body whose in-flow content is all inline-level is itself the inline root:
+    // Blitz shapes its text into the body box (there is no anonymous block to
+    // carry it), and its children in the box list are only the boxes embedded in
+    // those lines (atomic inlines, out-of-flow and floated boxes). Fragmenting the
+    // body's children alone dropped that text (`tests/walk.rs`); the whole body
+    // is one block fragment instead. The body's own background and borders stay
+    // out of it: CSS 2.2 §14.2 propagates the body background to the canvas,
+    // which pagination does not model (a separate change).
+    if let Some(body_index) = doc
+        .boxes
+        .iter()
+        .position(|b| b.tag.as_deref() == Some("body") && !b.text_runs.is_empty())
+    {
+        let end = subtree_end(&doc.boxes, body_index);
+        let mut subtree = doc.boxes[body_index..end].to_vec();
+        subtree[0].visual_rects.clear();
+        subtree[0].rounded_borders.clear();
+        let (top, bottom) = span(&subtree);
+        let body = &doc.boxes[body_index];
+        fragments.push(Fragment {
+            top,
+            bottom,
+            contained_bottom: bottom.min(box_bottom(body)),
+            break_margin: leading_margin(&subtree),
+            table_id: None,
+            is_thead: false,
+            break_before: body.break_before_page,
+            members: Vec::new(),
+            slices: 0,
+            boxes: subtree,
+        });
+        finalize_fragments(&mut fragments);
+        return fragments;
+    }
 
     // Walk the flat box list. For tables, break into rows; otherwise treat each
     // top-level body child subtree as one fragment.
@@ -398,14 +1099,19 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
             // `break-inside: avoid` tbody group).
             emit_table_fragments(subtree, &mut parts);
         } else if splittable {
-            emit_wrapper_child_fragments(subtree, b.margin_bottom, &mut parts);
+            emit_wrapper_child_fragments(subtree, &mut parts);
         }
 
-        if splittable && !b.break_inside_avoid {
+        // A wrapper with a forced break whose children paint nothing yields no parts; it stays
+        // one (empty) block fragment so `finalize_fragments` carries its break on (Phase C step
+        // 04: the empty `<div style="page: c">` of WPT css/css-page/page-name-display-none-child
+        // keeps its page; before, the break was dropped with the wrapper). Without a forced
+        // break such a wrapper is still dropped, as before (WPT css/css-page/
+        // page-background-003-print-ref: a 500 px abspos wrapper of unloaded images).
+        let empty_forced_wrapper = splittable && b.break_before_page && parts.is_empty();
+        if splittable && !b.break_inside_avoid && !empty_forced_wrapper {
             if b.break_before_page {
-                if let Some(first) = parts.iter_mut().find(|part| !part.is_thead) {
-                    first.break_before = true;
-                }
+                move_forced_break_to_first_part(&mut parts, leading_margin(subtree));
             }
             fragments.append(&mut parts);
         } else {
@@ -416,11 +1122,13 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
                 boxes: subtree.to_vec(),
                 top,
                 bottom,
-                trailing_gap: b.margin_bottom,
+                contained_bottom: bottom.min(box_bottom(b)),
+                break_margin: leading_margin(subtree),
                 table_id: None,
                 is_thead: false,
                 break_before: b.break_before_page,
                 members: parts,
+                slices: 0,
             });
         }
 
@@ -431,36 +1139,262 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
     fragments
 }
 
-/// Compute inter-fragment gaps and drop fragments with nothing to paint, at
-/// every level: a keep-together group's members get the same treatment so a
-/// group that falls back to its parts keeps the spacing it would have had
-/// without `avoid`, and its last member inherits the group's trailing gap. A
-/// dropped fragment's forced break (an empty `<div>` with
-/// `page-break-before: always`) moves to the next kept fragment.
+/// A forced break on a split container (items table, flattened wrapper)
+/// lands on its first body part, which also keeps the container's own
+/// leading margin (the two collapse into the margin after the break).
+fn move_forced_break_to_first_part(parts: &mut [Fragment], container_margin: CollapsedMargin) {
+    if let Some(first) = parts.iter_mut().find(|part| !part.is_thead) {
+        first.break_before = true;
+        first.break_margin = first.break_margin.collapse(container_margin);
+    }
+}
+
+/// Drop fragments with nothing to paint, at every level (a keep-together
+/// group's members get the same treatment so a group that falls back to its
+/// parts places exactly what it would have placed without `avoid`). A dropped
+/// fragment's forced break (an empty `<div>` with `page-break-before: always`)
+/// moves to the next kept fragment, with the dropped fragment's margins (they
+/// collapse through it into the next one). No gap is computed here: gaps are
+/// the flow distance between placed fragments (see the module docs).
 fn finalize_fragments(fragments: &mut Vec<Fragment>) {
-    apply_inter_fragment_gaps(fragments);
     for fragment in fragments.iter_mut() {
-        if fragment.members.is_empty() {
+        if !fragment.members.is_empty() {
+            finalize_fragments(&mut fragment.members);
+        }
+    }
+    let mut carried_break: Option<CollapsedMargin> = None;
+    // The last dropped element a carried break went through (see below).
+    let mut carrier: Option<Fragment> = None;
+    let mut kept = Vec::with_capacity(fragments.len());
+    for mut fragment in fragments.drain(..) {
+        if !fragment_has_renderables(&fragment) {
+            if fragment.break_before || carried_break.is_some() {
+                let margin = carried_break
+                    .unwrap_or_default()
+                    .collapse(dropped_margin(&fragment));
+                carried_break = Some(margin);
+                carrier = Some(fragment);
+            }
             continue;
         }
-        finalize_fragments(&mut fragment.members);
-        let group_gap = fragment.trailing_gap;
-        if let Some(last) = fragment.members.last_mut() {
-            if last.trailing_gap == 0.0 {
-                last.trailing_gap = group_gap;
+        if let Some(margin) = carried_break.take() {
+            // An empty element between two forced breaks keeps its own (blank) page: Chrome 155
+            // prints `<div page:a>a</div><div page:c><div display:none></div></div><div
+            // page:b>b</div>` on 3 pages (WPT css/css-page/page-name-display-none-child-print).
+            match carrier.take() {
+                Some(mut empty) if fragment.break_before && is_element_fragment(&empty) => {
+                    empty.break_before = true;
+                    empty.break_margin = margin;
+                    kept.push(empty);
+                }
+                _ => {
+                    fragment.break_before = true;
+                    fragment.break_margin = fragment.break_margin.collapse(margin);
+                }
+            }
+        }
+        kept.push(fragment);
+    }
+    // A forced break that no later content takes still starts a page when an element follows
+    // it: Chrome 155 prints `<div style="break-after: page">…</div><div></div>` (an empty block
+    // after the break) on 2 pages (WPT css/css-break/zero-height-page-break-001-print.html), and
+    // prints no trailing page when nothing follows the break (Phase C step 04 probes
+    // `fidelity/gate/snapshots/2026-10-28/c04-frag/probes/break-after.py`). The empty element is kept,
+    // with the break.
+    if let (Some(margin), Some(mut fragment)) = (carried_break, carrier) {
+        if is_element_fragment(&fragment) {
+            fragment.break_before = true;
+            fragment.break_margin = margin;
+            kept.push(fragment);
+        }
+    }
+    *fragments = kept;
+}
+
+/// Whether a fragment's root is an element of the flow (not an anonymous box or `<head>` etc.).
+fn is_element_fragment(fragment: &Fragment) -> bool {
+    fragment
+        .boxes
+        .first()
+        .and_then(|root| root.tag.as_deref())
+        .is_some_and(is_renderable_flow_tag)
+}
+
+/// Adjoining vertical margins collapsed into one (CSS 2.2 §8.3.1): "the
+/// maximum of the adjoining margins" when all are positive, "the absolute
+/// maximum of the negative adjoining margins is deducted from the maximum of
+/// the positive adjoining margins" otherwise. Kept as the two parts, so
+/// collapsing more margins in later (an ancestor's, a dropped fragment's) is
+/// exact whatever the order.
+///
+/// Before port step 09 the paginator kept only the largest positive margin, so
+/// a forced break before `section { margin-top: 25px }` whose first `<p>` has
+/// `margin-top: -10px` kept 25 px where Chrome 155 keeps 15 px
+/// (`tests/pagination_gaps.rs`).
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+struct CollapsedMargin {
+    /// The largest positive margin (0 when none is positive).
+    positive: f64,
+    /// The most negative margin (0 when none is negative).
+    negative: f64,
+}
+
+impl CollapsedMargin {
+    fn of(margin: f64) -> Self {
+        CollapsedMargin {
+            positive: margin.max(0.0),
+            negative: margin.min(0.0),
+        }
+    }
+
+    fn with(self, margin: f64) -> Self {
+        self.collapse(Self::of(margin))
+    }
+
+    fn collapse(self, other: Self) -> Self {
+        CollapsedMargin {
+            positive: self.positive.max(other.positive),
+            negative: self.negative.min(other.negative),
+        }
+    }
+
+    /// The collapsed margin's width (negative when the negative part wins).
+    fn value(self) -> f64 {
+        self.positive + self.negative
+    }
+}
+
+/// The margins of a fragment with nothing to paint, which collapse through it
+/// (CSS 2.2 §8.3.1: its top and bottom margins adjoin) into the next
+/// fragment's leading margin.
+fn dropped_margin(fragment: &Fragment) -> CollapsedMargin {
+    fragment
+        .boxes
+        .first()
+        .map_or(CollapsedMargin::default(), |root| {
+            fragment
+                .break_margin
+                .with(root.margin_top)
+                .with(root.margin_bottom)
+        })
+}
+
+/// The margin kept above a subtree placed right after a forced break (CSS
+/// Fragmentation 3 §5.2: "margins after the break are preserved"): the
+/// margin-top of the subtree root collapsed with those of its chain of first
+/// element children that start at the same flow y, i.e. whose top margins
+/// collapse with the root's (CSS 2.2 §8.3.1; Blitz reports each box's OWN
+/// margin and places a collapsed-through child at its parent's y). Chrome 155
+/// keeps 25 px for `<section style="margin-top:25px"><p style="margin-top:10px">`
+/// and 15 px with `margin-top:-10px` on the `<p>` (`tests/pagination_gaps.rs`).
+fn leading_margin(subtree: &[LaidOutBox]) -> CollapsedMargin {
+    let Some(root) = subtree.first() else {
+        return CollapsedMargin::default();
+    };
+    let mut margin = CollapsedMargin::of(root.margin_top);
+    let mut depth = root.depth + 1;
+    for b in &subtree[1..] {
+        if b.depth < depth {
+            break;
+        }
+        if b.depth > depth || b.tag.is_none() {
+            // A text node (whitespace between tags paints nothing and does not
+            // separate margins) or something below an element we did not take.
+            continue;
+        }
+        if (b.y - root.y).abs() > 0.5 {
+            break;
+        }
+        margin = margin.with(b.margin_top);
+        depth += 1;
+    }
+    margin
+}
+
+/// Bottom edge of a box's border box in flow coordinates.
+fn box_bottom(b: &LaidOutBox) -> f64 {
+    b.y + b.height
+}
+
+/// The height the fit tests use: up to `contained_bottom` when the fragment
+/// overflows its containing box by at most `allowance`, else its full span
+/// (see `Fragment::contained_bottom`).
+fn fit_height(fragment: &Fragment, allowance: f64) -> f64 {
+    let overflow = fragment.bottom - fragment.contained_bottom;
+    let bottom = if overflow > 0.0 && overflow <= allowance {
+        fragment.contained_bottom
+    } else {
+        fragment.bottom
+    };
+    (bottom - fragment.top).max(0.0)
+}
+
+/// Descent below the baseline assumed for a text run's ink (UNVERIFIED ASSUMPTION: the bundled
+/// Liberation faces descend 0.212-0.216 em and DejaVu 0.236 em by their `hhea` metrics; the
+/// shaped runs carry no line box, so the band test uses this bound).
+const TEXT_INK_DESCENT_EM: f64 = 0.25;
+
+/// The fit height that keeps what the fragment paints (text, backgrounds, borders, images)
+/// within `clearance` px below the content box, where a drawn `@bottom-center` line starts
+/// (`PageGeometry::bottom_box_clearance`; infinite without one, then 0). `row_tolerance` is how
+/// far the fit limit lies below the content box (the table-row drift tolerance, else 0).
+fn band_fit_height(fragment: &Fragment, clearance: f64, row_tolerance: f64) -> f64 {
+    if !clearance.is_finite() {
+        return 0.0;
+    }
+    let ink_bottom = fragment
+        .boxes
+        .iter()
+        .flat_map(|b| {
+            let text = b
+                .text_runs
+                .iter()
+                .filter(|r| !r.glyphs.is_empty())
+                .map(|r| r.origin_y + TEXT_INK_DESCENT_EM * f64::from(r.font_size));
+            let rects = b.visual_rects.iter().map(|r| r.y + r.height);
+            let borders = b.rounded_borders.iter().map(|r| r.y + r.height);
+            let images = b.image_runs.iter().map(|r| r.y + r.height);
+            text.chain(rects).chain(borders).chain(images)
+        })
+        .fold(f64::NEG_INFINITY, f64::max);
+    if !ink_bottom.is_finite() {
+        return 0.0;
+    }
+    (ink_bottom - fragment.top - clearance + row_tolerance).max(0.0)
+}
+
+/// The rows a table placed as ONE block fragment (no `<thead>`, not `break-inside: avoid`)
+/// splits into, when it has more than one; `None` for anything else.
+fn table_rows_of(fragment: &Fragment) -> Option<Vec<Fragment>> {
+    let root = fragment.boxes.first()?;
+    if root.tag.as_deref() != Some("table")
+        || root.break_inside_avoid
+        || fragment.table_id.is_some()
+        || !fragment.members.is_empty()
+    {
+        return None;
+    }
+    let mut parts = Vec::new();
+    emit_table_fragments(&fragment.boxes, &mut parts);
+    parts.retain(|part| !part.is_thead);
+    finalize_fragments(&mut parts);
+    (parts.len() > 1).then_some(parts)
+}
+
+/// Whether a fragment has no break point inside it: it paints one line of text or one image,
+/// and nothing else that holds content.
+fn is_monolithic(fragment: &Fragment) -> bool {
+    let mut baselines: Vec<f64> = Vec::new();
+    let mut images = 0usize;
+    for b in &fragment.boxes {
+        images += b.image_runs.len();
+        for run in b.text_runs.iter().filter(|r| !r.glyphs.is_empty()) {
+            if !baselines.iter().any(|y| (y - run.origin_y).abs() < 0.5) {
+                baselines.push(run.origin_y);
             }
         }
     }
-    let mut carried_break = false;
-    fragments.retain_mut(|fragment| {
-        if !fragment_has_renderables(fragment) {
-            carried_break |= fragment.break_before;
-            return false;
-        }
-        fragment.break_before |= carried_break;
-        carried_break = false;
-        true
-    });
+    baselines.len() + images == 1
 }
 
 /// Whether a fragment, or any fragment nested in it, starts with a forced break.
@@ -468,31 +1402,12 @@ fn has_forced_break(fragment: &Fragment) -> bool {
     fragment.break_before || fragment.members.iter().any(has_forced_break)
 }
 
-fn apply_inter_fragment_gaps(fragments: &mut [Fragment]) {
-    if fragments.len() < 2 {
-        return;
-    }
-
-    for i in 0..fragments.len() - 1 {
-        if fragments[i].trailing_gap > 0.0 || !fragment_has_renderables(&fragments[i]) {
-            continue;
-        }
-        let Some(next_i) =
-            ((i + 1)..fragments.len()).find(|idx| fragment_has_renderables(&fragments[*idx]))
-        else {
-            continue;
-        };
-        let current_is_table_part = fragments[i].is_thead || fragments[i].is_row();
-        let next_is_table_part = fragments[next_i].is_thead || fragments[next_i].is_row();
-        if current_is_table_part && next_is_table_part {
-            continue;
-        }
-        fragments[i].trailing_gap = (fragments[next_i].top - fragments[i].bottom).max(0.0);
-    }
+fn fragment_has_renderables(fragment: &Fragment) -> bool {
+    boxes_have_renderables(&fragment.boxes)
 }
 
-fn fragment_has_renderables(fragment: &Fragment) -> bool {
-    fragment.boxes.iter().any(|b| {
+fn boxes_have_renderables(boxes: &[LaidOutBox]) -> bool {
+    boxes.iter().any(|b| {
         !b.text_runs.is_empty()
             || !b.visual_rects.is_empty()
             || !b.rounded_borders.is_empty()
@@ -534,15 +1449,17 @@ fn should_flatten_transparent_wrapper(root: &LaidOutBox, subtree: &[LaidOutBox])
     })
 }
 
-fn emit_wrapper_child_fragments(
-    subtree: &[LaidOutBox],
-    wrapper_trailing_gap: f64,
-    out: &mut Vec<Fragment>,
-) {
+/// One fragment per child of a flattened wrapper. The wrapper's own margins,
+/// padding and the children's collapsed margins are all in the flow positions
+/// (Blitz collapsed them), so nothing is added here: the gap between two
+/// children, and between the last child and whatever follows the wrapper, is
+/// their flow distance (the wrapper's margin is never counted twice).
+fn emit_wrapper_child_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
     let root_depth = subtree[0].depth;
     let child_depth = root_depth + 1;
-    let before = out.len();
-    let mut carried_break = false;
+    // A forced break (and the margins after it) carried over children with
+    // nothing to paint onto the next child that has something.
+    let mut carried_break: Option<CollapsedMargin> = None;
     let mut j = 1;
     while j < subtree.len() {
         if subtree[j].depth != child_depth {
@@ -556,47 +1473,41 @@ fn emit_wrapper_child_fragments(
         let child_is_items_table = child_root.tag.as_deref() == Some("table")
             && child.iter().any(|x| x.tag.as_deref() == Some("thead"));
 
-        let break_before = child_root.break_before_page || carried_break;
-        carried_break = false;
+        let own_break = child_root.break_before_page.then(|| leading_margin(child));
+        let break_margin = match (own_break, carried_break.take()) {
+            (None, None) => None,
+            (a, b) => Some(a.unwrap_or_default().collapse(b.unwrap_or_default())),
+        };
         if child_is_items_table {
             let start = out.len();
             emit_table_fragments(child, out);
-            if break_before {
-                if let Some(first) = out[start..].iter_mut().find(|part| !part.is_thead) {
-                    first.break_before = true;
-                }
+            if let Some(margin) = break_margin {
+                move_forced_break_to_first_part(&mut out[start..], margin);
             }
-        } else if fragment_has_renderables(&Fragment {
-            boxes: child.to_vec(),
-            top: 0.0,
-            bottom: 0.0,
-            trailing_gap: 0.0,
-            table_id: None,
-            is_thead: false,
-            break_before: false,
-            members: Vec::new(),
-        }) {
+        } else if boxes_have_renderables(child) {
             let (top, bottom) = span(child);
             out.push(Fragment {
                 boxes: child.to_vec(),
                 top,
                 bottom,
-                trailing_gap: child_root.margin_bottom,
+                contained_bottom: bottom
+                    .min(box_bottom(child_root))
+                    .min(box_bottom(&subtree[0])),
+                break_margin: leading_margin(child).collapse(break_margin.unwrap_or_default()),
                 table_id: None,
                 is_thead: false,
-                break_before,
+                break_before: break_margin.is_some(),
                 members: Vec::new(),
+                slices: 0,
             });
-        } else {
-            carried_break = break_before;
+        } else if let Some(margin) = break_margin {
+            carried_break = Some(
+                margin
+                    .with(child_root.margin_top)
+                    .with(child_root.margin_bottom),
+            );
         }
         j = child_end;
-    }
-
-    if out.len() > before && wrapper_trailing_gap > 0.0 {
-        if let Some(last) = out.last_mut() {
-            last.trailing_gap += wrapper_trailing_gap;
-        }
     }
 }
 
@@ -604,17 +1515,37 @@ fn emit_wrapper_child_fragments(
 /// `<tbody>` marked `break-inside: avoid` becomes one group fragment over its
 /// rows; a forced break on a `<tbody>` or `<tr>` lands on its first row.
 fn emit_table_fragments(subtree: &[LaidOutBox], out: &mut Vec<Fragment>) {
-    let table_id = subtree.first().map(|b| b.node_id);
-    emit_table_parts(subtree, table_id, out);
+    let table = TableRef {
+        id: subtree.first().map(|b| b.node_id),
+    };
+    emit_table_parts(subtree, table, out);
 }
 
-fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut Vec<Fragment>) {
+/// The table a row/header fragment belongs to.
+#[derive(Clone, Copy)]
+struct TableRef {
+    id: Option<usize>,
+}
+
+fn emit_table_parts(subtree: &[LaidOutBox], table: TableRef, out: &mut Vec<Fragment>) {
     // Group boxes by their nearest enclosing <tr>/<thead>.
     let mut j = 0;
     let mut pending_break_before = false;
+    // The rows of a `<tfoot>`, emitted after every other part: Blitz lays the footer out at the
+    // table bottom wherever it is written (CSS 2.2 §17.2: a footer row group is displayed after
+    // all other rows), so in flow order its rows come last. Before Phase C step 04 they were
+    // emitted in DOM order, so a `<tfoot>` written first opened page 1 on its own and the body
+    // followed it (WPT css/CSS2/pagination/rowgroup-page-break-inside-avoid-4: Chrome 155 prints
+    // the footer under the body on the last page).
+    let mut footer: Vec<Fragment> = Vec::new();
     while j < subtree.len() {
         let b = &subtree[j];
         match b.tag.as_deref() {
+            Some("tfoot") => {
+                let end = subtree_end(subtree, j);
+                emit_table_parts(&subtree[j + 1..end], table, &mut footer);
+                j = end;
+            }
             Some(tag @ ("thead" | "tr")) => {
                 let end = subtree_end(subtree, j);
                 let group = &subtree[j..end];
@@ -629,11 +1560,14 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
                     boxes: group.to_vec(),
                     top,
                     bottom,
-                    trailing_gap: 0.0,
-                    table_id,
+                    contained_bottom: bottom,
+                    // Rows and row groups have no margins.
+                    break_margin: CollapsedMargin::default(),
+                    table_id: table.id,
                     is_thead,
                     break_before: !is_thead && (b.break_before_page || pending_break_before),
                     members: Vec::new(),
+                    slices: 0,
                 });
                 if !is_thead {
                     pending_break_before = false;
@@ -643,7 +1577,7 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
             Some("tbody") if b.break_inside_avoid => {
                 let end = subtree_end(subtree, j);
                 let mut rows = Vec::new();
-                emit_table_parts(&subtree[j + 1..end], table_id, &mut rows);
+                emit_table_parts(&subtree[j + 1..end], table, &mut rows);
                 rows.retain(|row| !row.is_thead);
                 if let Some(first) = rows.first_mut() {
                     first.break_before |= b.break_before_page || pending_break_before;
@@ -663,13 +1597,26 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
                             .collect(),
                         top,
                         bottom,
-                        trailing_gap: 0.0,
-                        table_id,
+                        contained_bottom: bottom,
+                        break_margin: CollapsedMargin::default(),
+                        table_id: table.id,
                         is_thead: false,
                         break_before,
                         members: rows,
+                        slices: 0,
                     });
                 } else {
+                    // A group of one row is that row: it keeps the group's `avoid`, so an
+                    // oversize row starts on a fresh page before it is cut (`slice_oversize`),
+                    // as Chrome 155 moves the `break-inside: avoid` `<tbody>` of WPT
+                    // css/CSS2/pagination/rowgroup-page-break-inside-avoid-4/5 past the
+                    // header to page 2 (Phase C step 04; until then a group of one row lost
+                    // its `avoid` and was cut right under the header).
+                    for row in &mut rows {
+                        if let Some(root) = row.boxes.first_mut() {
+                            root.break_inside_avoid = true;
+                        }
+                    }
                     out.append(&mut rows);
                 }
                 j = end;
@@ -693,6 +1640,1171 @@ fn emit_table_parts(subtree: &[LaidOutBox], table_id: Option<usize>, out: &mut V
             }
         }
     }
+    out.append(&mut footer);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Oversize-fragment slicing (Phase C step 03).
+//
+// A fragment taller than an empty page (an e-mail layout table holding the whole document, a
+// body that is one inline root, a long bordered box) used to be placed whole and bleed past the
+// page edge: its tail was emitted below the media box, never visible (oss-postmark-receipt: 37
+// words off-page, Chrome 155 prints 2 pages). Chrome fragments such a box (CSS Fragmentation 3).
+// The slicer cuts it at ONE flow y, `cut`: everything that starts above the cut stays on the
+// current page, the rest becomes a continuation fragment placed at the top of the next page
+// (and sliced again if it is still oversize). Measured against Chrome 155.0.8059.85 (probe
+// fixtures `fidelity/layout-diff/probes/`, 2026-10-27):
+//
+// - break points are between line boxes and between boxes, never through a line box, an image,
+//   an atomic inline (`inline-block`, the postmark button), a `break-inside: avoid` box or a
+//   table row that fits on a page (Chrome moved a 7-line row that had room for 6 of its lines:
+//   rows are kept whole unless taller than a page; the postmark layout table's one row is
+//   broken inside, as Chrome does);
+// - the latest such point wins; it moves up to the top of every box that would leave only its
+//   border and padding above the cut (break before the box, not between its content edge and its
+//   first child: `table.body-action` starts the postmark's page 2 with its border, as in
+//   Chrome), and to the top of a `break-inside: avoid` box it goes through, whatever its height
+//   (Chrome moves such a box to a fresh page, then cuts it there); empty space below the cut
+//   (collapsed margins) is skipped, the continuation starts with the next box;
+// - a forced break (`break-before: page`) inside the fragment ends the page, over `avoid`;
+// - orphans and widows 2 (CSS Fragmentation 3 §3.3 initial values, which vellora does not read
+//   from the style): a paragraph split by the cut keeps at least two lines on each side, else the
+//   cut moves up (Chrome: 3 + 1 lines become 2 + 2; 1 + 3 lines move whole);
+// - what an `overflow-y`-clipping box's descendants paint below it is cut away before slicing
+//   (a clipped overflow makes no pages), and a box ending less than half a px below the cut
+//   (Taffy's whole-px rounding) stays whole on the first page;
+// - a box the cut goes through is sliced (`box-decoration-break: slice`): on the first page its
+//   backgrounds and borders run down to the end of the page content box (Chrome stretches a
+//   broken box's fragment to the fragmentainer end: postmark's white body column ends at 813 pt
+//   on page 1), on the next page they start at the page top, with no border there;
+// - a `<thead>` of a table the cut goes through is repeated at the top of the continuation, the
+//   rest moving down by its height (Chrome repeats a nested table's header on page 2).
+//
+// Not modelled: break-inside: avoid-page/column, orphans/widows values other than 2, the
+// independent per-cell break of a row taller than a page (one cut for the whole fragment), a
+// rounded border the cut goes through (kept whole on the page of its top), blank pages for a
+// continuation that paints nothing (Chrome prints them: a 5000 px empty div is 25 blank pages;
+// vellora drops such a continuation), `break-after` (not read at all; WPT tests whose reference
+// relies on it, e.g. css/CSS2/pagination/table-page-break-inside-avoid-1, now fail: the test
+// prints Chrome's 3 pages, the reference 2), and flex items' margins and gaps after a break
+// (Chrome keeps a column flex item's margin-top at the page top, WPT
+// css/css-break/flexbox/single-line-column-flex-fragmentation-060; vellora truncates it).
+
+/// Orphans and widows: the CSS initial value (2), not read from the style.
+const ORPHANS: usize = 2;
+const WIDOWS: usize = 2;
+/// At most this many page breaks inside one flow fragment; past it the rest is placed whole (the
+/// pre-step-03 behaviour) so a box millions of px tall cannot allocate a page per page height.
+const MAX_SLICES_PER_FRAGMENT: usize = 1000;
+/// Positions within this distance (px) of the cut count as on it: Chrome's layout unit, 1/64 px
+/// (LayoutUnit). A box exactly one page tall in CSS px is 1.5e-6 px taller than the page here
+/// (f32 layout vs f64 page box); with a smaller epsilon its background left a 1-row sliver on a
+/// page of its own (WPT css/css-page/subpixel-page-size-001: a 123.9 px box on a 123.9 px page).
+const CUT_EPSILON_PX: f64 = 1.0 / 64.0;
+/// A box or background that ends at most this far (px) below the cut is kept whole on the first
+/// page instead of leaving a sliver on the next: Blitz/Taffy round box edges to whole px, so a
+/// box Chrome fits exactly can end up to half a px past the page end (WPT
+/// css/css-page/subpixel-page-size-001: a 123.9 px box laid out 124 px tall on a 123.9 px page).
+const ROUNDING_TAIL_PX: f64 = 0.5;
+
+/// A monolithic span of a fragment: no break point inside it.
+#[derive(Debug, Clone, Copy)]
+struct SliceItem {
+    top: f64,
+    bottom: f64,
+    /// Index of the box that owns it in the fragment's box list.
+    owner: usize,
+    /// A line box (counts for orphans/widows of its owner).
+    line: bool,
+}
+
+/// What [`slice_oversize`] decided for an oversize fragment.
+enum SliceOutcome {
+    /// Place the first part on this page, the continuation on the next.
+    Cut(Box<Fragment>, Box<Fragment>),
+    /// No break point leaves content on this (non-empty) page: start the fragment on the next.
+    NextPage,
+    /// Nothing to cut (nothing paints below the page end): place the fragment as is.
+    Whole,
+}
+
+/// The line box of a text run (absolute flow coordinates).
+fn run_line_span(run: &crate::blitz_engine::TextRun) -> (f64, f64) {
+    if run.line_above + run.line_below > 0.0 {
+        (run.origin_y - run.line_above, run.origin_y + run.line_below)
+    } else {
+        // A run without line metrics: its em box around the baseline.
+        let size = f64::from(run.font_size);
+        (
+            run.origin_y - 0.8 * size,
+            run.origin_y + TEXT_INK_DESCENT_EM * size,
+        )
+    }
+}
+
+/// The monolithic spans of a fragment's boxes (see the section comment). `page_height` decides
+/// whether a row or a `break-inside: avoid` box is kept whole (only if it fits on a page).
+fn slice_items(boxes: &[LaidOutBox], page_height: f64) -> Vec<SliceItem> {
+    let mut items = Vec::new();
+    for (i, b) in boxes.iter().enumerate() {
+        let mut lines: Vec<(f64, f64)> = Vec::new();
+        for run in b.text_runs.iter().filter(|r| !r.glyphs.is_empty()) {
+            let (top, bottom) = run_line_span(run);
+            if let Some(line) = lines.iter_mut().find(|(t, _)| (t - top).abs() < 0.5) {
+                line.1 = line.1.max(bottom);
+            } else {
+                lines.push((top, bottom));
+            }
+        }
+        items.extend(lines.into_iter().map(|(top, bottom)| SliceItem {
+            top,
+            bottom,
+            owner: i,
+            line: true,
+        }));
+        items.extend(b.image_runs.iter().map(|img| SliceItem {
+            top: img.y,
+            bottom: img.y + img.height,
+            owner: i,
+            line: false,
+        }));
+        let whole = if b.tag.as_deref() == Some("tr")
+            || ((b.atomic_inline || b.break_inside_avoid) && i > 0)
+        {
+            Some(box_span(boxes, i))
+        } else {
+            None
+        };
+        if let Some((top, bottom)) = whole {
+            if bottom - top > 0.0 && bottom - top <= page_height {
+                items.push(SliceItem {
+                    top,
+                    bottom,
+                    owner: i,
+                    line: false,
+                });
+            }
+        }
+    }
+    items
+}
+
+/// The flow span of box `i`: its border box, or for a table row / row group (zero-size
+/// structural boxes at the table origin, see [`row_span`]) the span of its cells.
+fn box_span(boxes: &[LaidOutBox], i: usize) -> (f64, f64) {
+    let b = &boxes[i];
+    match b.tag.as_deref() {
+        Some("tr" | "tbody" | "thead" | "tfoot") if b.height <= 0.0 => {
+            row_span(&boxes[i..subtree_end(boxes, i)])
+        }
+        _ => (b.y, b.y + b.height),
+    }
+}
+
+/// `boxes` with what the descendants of an `overflow-y`-clipping box paint below its border box
+/// cut away (and their boxes shortened to it), so a clipped overflow makes no pages of its own:
+/// Chrome 155 prints an 8in `overflow-y: clip` box holding a 23in child on 4 pages (WPT
+/// css/css-page/monolithic-overflow-028). Used by the slicer only; a fragment that fits a page
+/// still paints its overflow (vellora does not clip).
+fn clip_overflow(boxes: &[LaidOutBox]) -> Vec<LaidOutBox> {
+    let parent = parents(boxes);
+    let mut clip = vec![f64::INFINITY; boxes.len()];
+    let mut out = boxes.to_vec();
+    for i in 0..boxes.len() {
+        if let Some(p) = parent[i] {
+            let own = if boxes[p].clips_overflow {
+                boxes[p].y + boxes[p].height
+            } else {
+                f64::INFINITY
+            };
+            clip[i] = clip[p].min(own);
+        }
+        let limit = clip[i];
+        if !limit.is_finite() {
+            continue;
+        }
+        let b = &mut out[i];
+        b.text_runs.retain(|run| run_line_span(run).0 < limit);
+        b.image_runs.retain(|img| img.y < limit);
+        b.rounded_borders.retain(|border| border.y < limit);
+        b.visual_rects.retain(|rect| rect.y < limit);
+        for rect in &mut b.visual_rects {
+            rect.height = rect.height.min(limit - rect.y);
+        }
+        b.height = b.height.min(limit - b.y).max(0.0);
+    }
+    out
+}
+
+/// Index of every box's parent in a depth-ordered box list (`None` for the roots).
+fn parents(boxes: &[LaidOutBox]) -> Vec<Option<usize>> {
+    let mut stack: Vec<usize> = Vec::new();
+    boxes
+        .iter()
+        .enumerate()
+        .map(|(i, b)| {
+            while stack.last().is_some_and(|&j| boxes[j].depth >= b.depth) {
+                stack.pop();
+            }
+            let parent = stack.last().copied();
+            stack.push(i);
+            parent
+        })
+        .collect()
+}
+
+/// Whether a box paints anything of its own (text, backgrounds/borders, images).
+fn paints(b: &LaidOutBox) -> bool {
+    b.text_runs.iter().any(|r| !r.glyphs.is_empty())
+        || !b.visual_rects.is_empty()
+        || !b.rounded_borders.is_empty()
+        || !b.image_runs.is_empty()
+}
+
+/// The flow y to cut `boxes` at so the first part ends by `end` (see the section comment), or
+/// `None` when no break point at or below `start` leaves content above it.
+///
+/// `column`: the fragmentainer is a column of a multi-column container ([`fragment_columns`]),
+/// where a forced column break (`break-before: column`) ends it too; a page breaks only at a
+/// forced page break. `orphans_widows`: honour orphans and widows (step 2); off, the rules are
+/// relaxed (CSS Fragmentation 3 §4.4: when no break point satisfies them they are dropped).
+fn find_cut(
+    boxes: &[LaidOutBox],
+    items: &[SliceItem],
+    start: f64,
+    end: f64,
+    column: bool,
+    orphans_widows: bool,
+) -> Option<f64> {
+    let ends: Vec<usize> = (0..boxes.len()).map(|i| subtree_end(boxes, i)).collect();
+    // A forced break inside the fragment (`break-before: page` on a box below its top, a `<tr>`
+    // of a thead-less table included) that comes before the page end is where the page ends: it
+    // wins over `avoid` (CSS Fragmentation 3 §4.4; Chrome 155 keeps row 1 of a `break-inside:
+    // avoid` `<tbody>` on page 1 and starts its `break-before: page` row 2 on page 2, WPT
+    // css/CSS2/pagination/rowgroup-page-break-inside-avoid-8).
+    let forced = |i: usize| {
+        let top = box_span(boxes, i).0;
+        let forced = boxes[i].break_before_page || (column && boxes[i].break_before_column);
+        (i > 0 && forced && top > start + CUT_EPSILON_PX).then_some(top)
+    };
+    let mut cut = (0..boxes.len())
+        .filter_map(forced)
+        .filter(|&top| top <= end + CUT_EPSILON_PX)
+        .fold(end, f64::min);
+    let holds_forced = |i: usize| (i + 1..ends[i]).any(|j| forced(j).is_some());
+    // Whether a `break-before/after: avoid` moved the cut (step 2b, columns only).
+    let mut avoid_moved = false;
+    // Every step only moves the cut up, to a position of one of the items or boxes: bounded.
+    for _ in 0..(4 * (items.len() + boxes.len()) + 8) {
+        let before = cut;
+        // 1. Never through a monolithic span: move up to the top of any span the cut crosses.
+        while let Some(top) = items
+            .iter()
+            .filter(|it| it.top < cut - CUT_EPSILON_PX && it.bottom > cut + CUT_EPSILON_PX)
+            .map(|it| it.top)
+            .reduce(f64::min)
+        {
+            cut = top;
+        }
+        // 2. Orphans and widows of every paragraph the cut splits.
+        for owner in items
+            .iter()
+            .filter(|it| it.line && orphans_widows)
+            .map(|it| it.owner)
+        {
+            let mut lines: Vec<&SliceItem> = items
+                .iter()
+                .filter(|it| it.line && it.owner == owner)
+                .collect();
+            lines.sort_by(|a, b| a.top.total_cmp(&b.top));
+            let above = lines
+                .iter()
+                .filter(|l| l.bottom <= cut + CUT_EPSILON_PX)
+                .count();
+            let below = lines.len() - above;
+            if above == 0 || below == 0 {
+                continue;
+            }
+            let (orphans, widows) = if column {
+                line_limits(&boxes[owner])
+            } else {
+                (ORPHANS, WIDOWS)
+            };
+            if above < orphans || lines.len() < orphans + widows {
+                cut = cut.min(lines[0].top);
+            } else if below < widows {
+                cut = cut.min(lines[lines.len() - widows].top);
+            }
+        }
+        // 2b. Columns: no break between two boxes where `break-after: avoid` on the one above
+        // or `break-before: avoid` on the one below forbids it (an item's avoid applies to its
+        // row flex line, whose items start together; Chrome 155: WPT css/css-break/flexbox/
+        // multi-line-row-flex-fragmentation-037/038). The cut moves up to the top of the boxes
+        // that end right above the break, the previous break point. Relaxed with orphans and
+        // widows. Parallel flows (the lines of a multi-line column flex container) share the
+        // one cut, so an avoid in one line also moves the others (KNOWN GAP).
+        if column && orphans_widows {
+            let next = (1..boxes.len())
+                .map(|i| box_span(boxes, i))
+                .filter(|&(top, bottom)| bottom > top && top >= cut - CUT_EPSILON_PX)
+                .map(|(top, _)| top)
+                .reduce(f64::min);
+            let above: Vec<usize> = (1..boxes.len())
+                .filter(|&i| {
+                    let (top, bottom) = box_span(boxes, i);
+                    bottom > top
+                        && top > start + CUT_EPSILON_PX
+                        && bottom <= cut + CUT_EPSILON_PX
+                        && next.is_none_or(|n| bottom <= n + CUT_EPSILON_PX)
+                })
+                .collect();
+            let before_avoided = next.is_some_and(|n| {
+                (1..boxes.len()).any(|i| {
+                    boxes[i].break_before_avoid
+                        && (box_span(boxes, i).0 - n).abs() <= CUT_EPSILON_PX
+                })
+            });
+            let last_bottom = above.iter().map(|&i| box_span(boxes, i).1).reduce(f64::max);
+            let ends_last = |i: usize| {
+                last_bottom.is_some_and(|b| (box_span(boxes, i).1 - b).abs() <= CUT_EPSILON_PX)
+            };
+            let after_avoided = above
+                .iter()
+                .any(|&i| boxes[i].break_after_avoid && ends_last(i));
+            if before_avoided || after_avoided {
+                if let Some(top) = above
+                    .iter()
+                    .filter(|&&i| ends_last(i))
+                    .map(|&i| box_span(boxes, i).0)
+                    .reduce(f64::min)
+                {
+                    cut = cut.min(top);
+                    avoid_moved = true;
+                }
+            }
+        }
+        // 3. Break before a box that would keep only its border and padding above the cut, and
+        // before a `break-inside: avoid` box the cut goes through, whatever its height (Chrome
+        // moves it to the next page even when it is taller than a page, then breaks it there:
+        // WPT css/CSS2/pagination/block-page-break-inside-avoid-15, row-...-avoid-2).
+        let empty_above = (0..boxes.len())
+            .map(|i| (i, box_span(boxes, i)))
+            .filter(|&(_, (top, bottom))| {
+                top > start + CUT_EPSILON_PX
+                    && top < cut - CUT_EPSILON_PX
+                    && bottom > cut + CUT_EPSILON_PX
+            })
+            .filter(|&(i, _)| {
+                let inside = i..ends[i];
+                let content_above = items
+                    .iter()
+                    .any(|it| inside.contains(&it.owner) && it.bottom <= cut + CUT_EPSILON_PX)
+                    || boxes[i + 1..ends[i]].iter().any(|d| {
+                        d.height > 0.0 && paints(d) && d.y + d.height <= cut + CUT_EPSILON_PX
+                    });
+                (boxes[i].break_inside_avoid && !holds_forced(i)) || !content_above
+            })
+            .map(|(_, (top, _))| top)
+            .reduce(f64::min);
+        if let Some(y) = empty_above {
+            cut = y;
+        }
+        if cut >= before - CUT_EPSILON_PX {
+            break;
+        }
+    }
+    // The space between the cut and the next box or line that starts below it (collapsed
+    // margins) is truncated at an unforced break (CSS Fragmentation 3 §5.2): the continuation
+    // starts with that box, at the page top. The latest break wins, so an empty box that fits
+    // stays on this page (Chrome 155: an empty 0.2in `div` between two flex items, WPT
+    // css/css-break/flexbox/multi-line-row-flex-fragmentation-063-print-ref). Only empty space
+    // is skipped: not when a box the cut goes through ends before that next box (its rest is
+    // what continues on the next page).
+    let crossing_ends = |next: f64| {
+        (1..boxes.len())
+            .map(|i| box_span(boxes, i))
+            .any(|(top, bottom)| {
+                top < cut - CUT_EPSILON_PX
+                    && bottom > cut + ROUNDING_TAIL_PX
+                    && bottom <= next + CUT_EPSILON_PX
+            })
+    };
+    if let Some(next) = (1..boxes.len())
+        .map(|i| box_span(boxes, i))
+        .filter(|&(top, bottom)| bottom > top && top >= cut - CUT_EPSILON_PX)
+        .map(|(top, _)| top)
+        .chain(
+            items
+                .iter()
+                .filter(|it| it.top >= cut - CUT_EPSILON_PX)
+                .map(|it| it.top),
+        )
+        .reduce(f64::min)
+    {
+        if !crossing_ends(next) {
+            cut = cut.max(next);
+        }
+    }
+    // Something whole must stay above the cut: a monolithic span, or a painting box (a
+    // background-only box) other than the fragment's root.
+    let content_above = items
+        .iter()
+        .any(|it| it.bottom <= cut + CUT_EPSILON_PX && it.top >= start - CUT_EPSILON_PX)
+        || boxes.iter().skip(1).any(|b| {
+            // A break an avoid moved here is a break between two boxes: it leaves the box
+            // above it, painted or not.
+            (paints(b) || (avoid_moved && b.y >= start - CUT_EPSILON_PX))
+                && b.height > 0.0
+                && b.y + b.height <= cut + CUT_EPSILON_PX
+        });
+    (cut > start + CUT_EPSILON_PX && content_above).then_some(cut)
+}
+
+/// Split `frag` at flow y `cut`: the part that starts above it (its sliced backgrounds and
+/// borders stretched down to `end`, the page content end) and the continuation from `cut` down,
+/// or `None` for the continuation when nothing of the fragment paints at or below the cut. The
+/// continuation starts with the repeated `<thead>` bands of the tables the cut goes through
+/// ([`repeat_sliced_headers`]); everything below the cut moves down by their height and the
+/// sliced boxes grow by it.
+///
+/// `keep_empty`: keep a continuation that paints nothing (a column of a multi-column container,
+/// whose empty boxes still take room in the balancing; a page that would print nothing is not
+/// made).
+///
+/// `truncate`: the px right below the cut that the continuation drops (a margin truncated at an
+/// unforced column break, [`leading_margin_at`]); `0.0` for pages and forced breaks. It is
+/// always `0.0` when `tail_from` is set (a break taken in flow order is forced).
+///
+/// `tail_from`: a forced break taken in flow order ([`forced_in_flow_order`]): box `tail_from`
+/// and every box after it in document order (none of them is an ancestor of it) go whole to the
+/// continuation, wherever they lie, even above the cut (a negative margin after the forced break
+/// is preserved there, CSS Fragmentation 3 §5.2); the boxes before it, its ancestors included,
+/// are split at `cut` as without it. `None` for pages.
+fn split_fragment(
+    frag: &Fragment,
+    cut: f64,
+    end: f64,
+    keep_empty: bool,
+    truncate: f64,
+    tail_from: Option<usize>,
+) -> (Fragment, Option<Fragment>) {
+    let parent = parents(&frag.boxes);
+    let n = frag.boxes.len();
+    let repeated = repeat_sliced_headers(&frag.boxes, cut);
+    let shift: f64 = repeated.iter().map(|(_, _, h)| h).sum();
+    // The continuation's flow y of a flow y at or below the cut: the `truncate` px right below
+    // the cut (a margin truncated at the break, [`leading_margin_at`]) are taken out.
+    let truncate = truncate.max(0.0);
+    let squeeze = |y: f64| {
+        if y <= cut {
+            y
+        } else if y <= cut + truncate {
+            cut
+        } else {
+            y - truncate
+        }
+    };
+    let mut first: Vec<Option<LaidOutBox>> = vec![None; n];
+    let mut rest: Vec<Option<LaidOutBox>> = vec![None; n];
+    let stretch_to = end;
+    let bare = |b: &LaidOutBox| {
+        let mut nb = b.clone();
+        nb.text_runs.clear();
+        nb.visual_rects.clear();
+        nb.rounded_borders.clear();
+        nb.image_runs.clear();
+        nb
+    };
+    for (i, b) in frag.boxes.iter().enumerate() {
+        if tail_from.is_some_and(|t| i >= t) {
+            rest[i] = Some(reposition(std::slice::from_ref(b), 0.0, shift).remove(0));
+            continue;
+        }
+        let mut a = bare(b);
+        let mut c = bare(b);
+        for run in &b.text_runs {
+            if run_line_span(run).0 < cut - CUT_EPSILON_PX {
+                a.text_runs.push(run.clone());
+            } else {
+                let mut run = run.clone();
+                run.origin_y = squeeze(run.origin_y) + shift;
+                c.text_runs.push(run);
+            }
+        }
+        for img in &b.image_runs {
+            if img.y < cut - CUT_EPSILON_PX {
+                a.image_runs.push(img.clone());
+            } else {
+                let mut img = img.clone();
+                img.y = squeeze(img.y) + shift;
+                c.image_runs.push(img);
+            }
+        }
+        for border in &b.rounded_borders {
+            if border.y < cut - CUT_EPSILON_PX {
+                a.rounded_borders.push(border.clone());
+            } else {
+                let mut border = border.clone();
+                border.y = squeeze(border.y) + shift;
+                c.rounded_borders.push(border);
+            }
+        }
+        for rect in &b.visual_rects {
+            let bottom = rect.y + rect.height;
+            if bottom <= cut + ROUNDING_TAIL_PX {
+                a.visual_rects.push(rect.clone());
+            } else if rect.y >= cut - CUT_EPSILON_PX {
+                let mut rect = rect.clone();
+                rect.y = squeeze(rect.y) + shift;
+                rect.height = (squeeze(bottom) + shift - rect.y).max(0.0);
+                c.visual_rects.push(rect);
+            } else {
+                let mut head = rect.clone();
+                head.height = (stretch_to - rect.y).max(0.0);
+                a.visual_rects.push(head);
+                let mut tail = rect.clone();
+                tail.y = cut;
+                tail.height = squeeze(bottom) - cut + shift;
+                c.visual_rects.push(tail);
+            }
+        }
+        let bottom = b.y + b.height;
+        if b.y < cut - CUT_EPSILON_PX {
+            if bottom > cut + ROUNDING_TAIL_PX {
+                a.height = (stretch_to - b.y).max(0.0);
+                c.y = cut;
+                c.height = squeeze(bottom) - cut + shift;
+                rest[i] = Some(c);
+            }
+            first[i] = Some(a);
+        } else {
+            c.y = squeeze(b.y) + shift;
+            c.height = (squeeze(bottom) - squeeze(b.y)).max(0.0);
+            rest[i] = Some(c);
+        }
+    }
+    // Keep the ancestors of every kept box (the tree shape: row/table structure, depths).
+    for part in [&mut first, &mut rest] {
+        for i in (0..n).rev() {
+            if part[i].is_some() {
+                if let Some(p) = parent[i] {
+                    if part[p].is_none() {
+                        let mut anc = bare(&frag.boxes[p]);
+                        anc.y = anc.y.max(cut);
+                        anc.height = 0.0;
+                        part[p] = Some(anc);
+                    }
+                }
+            }
+        }
+    }
+    let head = Fragment {
+        boxes: first.into_iter().flatten().collect(),
+        top: frag.top,
+        bottom: cut,
+        contained_bottom: cut,
+        break_margin: frag.break_margin,
+        table_id: frag.table_id,
+        is_thead: false,
+        break_before: frag.break_before,
+        members: Vec::new(),
+        slices: frag.slices,
+    };
+    let mut rest_boxes: Vec<LaidOutBox> = rest.into_iter().flatten().collect();
+    if !keep_empty && !rest_boxes.iter().any(paints) {
+        return (head, None);
+    }
+    // Each repeated band goes right after its table's box: the table's first part, where a
+    // later slice of the continuation finds it again (outer tables first, stacked from `cut`).
+    let mut at = cut;
+    for (table_id, band, height) in repeated {
+        let top = row_span(&band).0;
+        let moved = reposition(&band, top, at);
+        at += height;
+        if let Some(k) = rest_boxes.iter().position(|b| b.node_id == table_id) {
+            rest_boxes.splice(k + 1..k + 1, moved);
+        }
+    }
+    let bottom = rest_boxes
+        .iter()
+        .map(|b| b.y + b.height)
+        .fold(squeeze(frag.bottom.max(cut)) + shift, f64::max);
+    let rest = Fragment {
+        boxes: rest_boxes,
+        top: cut,
+        bottom,
+        contained_bottom: bottom,
+        break_margin: CollapsedMargin::default(),
+        table_id: frag.table_id,
+        is_thead: false,
+        break_before: false,
+        members: Vec::new(),
+        slices: frag.slices + 1,
+    };
+    (head, Some(rest))
+}
+
+/// The `<thead>` bands to repeat at the top of a continuation cut at `cut`: for every table of
+/// the fragment the cut goes through (outer first) whose `<thead>` lies above the cut and that
+/// has a body row below it, the table's node id, the band's boxes and its height (down to the table's first body row,
+/// so the border-spacing comes with it, as [`TableHeader`]). A row fragment's own table is not
+/// here: its header is the existing per-table repeat (`TableHeader`), its boxes are not in the
+/// fragment.
+fn repeat_sliced_headers(boxes: &[LaidOutBox], cut: f64) -> Vec<(usize, Vec<LaidOutBox>, f64)> {
+    let mut out = Vec::new();
+    for (i, table) in boxes.iter().enumerate() {
+        if table.tag.as_deref() != Some("table")
+            || !(table.y < cut - CUT_EPSILON_PX && table.y + table.height > cut + CUT_EPSILON_PX)
+        {
+            continue;
+        }
+        let end = subtree_end(boxes, i);
+        let child_depth = table.depth + 1;
+        let mut thead: Option<(usize, usize)> = None;
+        let mut first_body_top: Option<f64> = None;
+        let mut body_below = false;
+        let mut j = i + 1;
+        while j < end {
+            let b = &boxes[j];
+            let part_end = subtree_end(boxes, j);
+            if b.depth == child_depth {
+                match b.tag.as_deref() {
+                    Some("thead") if thead.is_none() => thead = Some((j, part_end)),
+                    Some("tbody" | "tr") => {
+                        let mut k = j;
+                        while k < part_end {
+                            if boxes[k].tag.as_deref() == Some("tr")
+                                && boxes[k].depth <= child_depth + 1
+                            {
+                                let row_end = subtree_end(boxes, k);
+                                let (top, _) = row_span(&boxes[k..row_end]);
+                                first_body_top.get_or_insert(top);
+                                body_below |= top >= cut - CUT_EPSILON_PX;
+                                k = row_end;
+                            } else {
+                                k += 1;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            j = part_end;
+        }
+        let (Some((start, stop)), Some(body_top)) = (thead, first_body_top) else {
+            continue;
+        };
+        let band = &boxes[start..stop];
+        let (top, bottom) = row_span(band);
+        if !body_below || bottom > cut + CUT_EPSILON_PX {
+            continue;
+        }
+        out.push((table.node_id, band.to_vec(), (body_top - top).max(0.0)));
+    }
+    out
+}
+
+/// Slice an oversize fragment placed with its top at `placed_top` on a page whose content box is
+/// `content_height` tall (see the section comment). `page_empty`: nothing is placed on the page
+/// yet, so the cut must succeed (a first piece taller than the page is cut through, its tail
+/// bleeding as before step 03).
+fn slice_oversize(
+    frag: &Fragment,
+    placed_top: f64,
+    content_height: f64,
+    page_empty: bool,
+) -> SliceOutcome {
+    let end = frag.top + (content_height - placed_top);
+    // A `break-inside: avoid` fragment starts on a fresh page, where it is then cut (see
+    // `find_cut` step 3).
+    let avoid = frag
+        .boxes
+        .first()
+        .is_some_and(|root| root.break_inside_avoid);
+    if (end <= frag.top + CUT_EPSILON_PX || avoid) && !page_empty {
+        return SliceOutcome::NextPage;
+    }
+    let clipped;
+    let frag = if frag.boxes.iter().any(|b| b.clips_overflow) {
+        let boxes = clip_overflow(&frag.boxes);
+        let bottom = boxes
+            .iter()
+            .map(|b| b.y + b.height)
+            .fold(frag.top, f64::max);
+        clipped = Fragment {
+            boxes,
+            top: frag.top,
+            bottom,
+            contained_bottom: frag.contained_bottom.min(bottom),
+            break_margin: frag.break_margin,
+            table_id: frag.table_id,
+            is_thead: frag.is_thead,
+            break_before: frag.break_before,
+            members: Vec::new(),
+            slices: frag.slices,
+        };
+        &clipped
+    } else {
+        frag
+    };
+    let items = slice_items(&frag.boxes, content_height);
+    let cut = match find_cut(&frag.boxes, &items, frag.top, end, false, true) {
+        Some(cut) => cut,
+        None if !page_empty => return SliceOutcome::NextPage,
+        // Nothing fits whole on an empty page: cut at the page end (what straddles it stays
+        // with the first part, bleeding as an oversize fragment did before step 03).
+        None => end,
+    };
+    if cut <= frag.top + CUT_EPSILON_PX {
+        return SliceOutcome::Whole;
+    }
+    match split_fragment(frag, cut, end, false, 0.0, None) {
+        (head, Some(rest)) => SliceOutcome::Cut(Box::new(head), Box::new(rest)),
+        (_, None) => SliceOutcome::Whole,
+    }
+}
+
+/// At most this many columns per multi-column container ([`fragment_columns`]): past it the
+/// rest of the content stays in the last column (bounded work, as [`MAX_SLICES_PER_FRAGMENT`]).
+pub(crate) const MAX_COLUMNS: usize = 1000;
+
+/// One column of a multi-column container ([`fragment_columns`]): its boxes, still in flow
+/// coordinates, and the flow y its top starts at (the column's content maps flow y to
+/// `y - flow_top` below the container's content-box top).
+pub(crate) struct ColumnPiece {
+    pub boxes: Vec<LaidOutBox>,
+    pub flow_top: f64,
+}
+
+impl ColumnPiece {
+    /// How far below `flow_top` the column's content reaches: its boxes, line boxes and
+    /// images (a box cut by the column's end was stretched to it). More than the column height
+    /// when something monolithic overflows the column.
+    pub(crate) fn extent(&self) -> f64 {
+        // An empty zero-height box (a structural ancestor kept for the tree shape, which
+        // `split_fragment` puts at the cut) takes no room.
+        self.boxes
+            .iter()
+            .filter(|b| b.height > 0.0 || paints(b))
+            .flat_map(|b| {
+                let runs = b.text_runs.iter().map(|r| run_line_span(r).1);
+                let images = b.image_runs.iter().map(|img| img.y + img.height);
+                std::iter::once(b.y + b.height).chain(runs).chain(images)
+            })
+            .fold(self.flow_top, f64::max)
+            - self.flow_top
+    }
+}
+
+/// Cut the content of a multi-column container into columns `column_height` tall (CSS
+/// Multi-column Layout 1 §8, CSS Fragmentation 3; Phase C step 05, [`crate::multicol`]), with the
+/// oversize-fragment slicer of the paginator ([`find_cut`], [`split_fragment`]): the same break
+/// points (between lines and boxes, never through a line, an image, an atomic inline, or a
+/// `break-inside: avoid` box that fits a column), the same truncation of the space at an
+/// unforced break (the next column starts with the next box: CSS Fragmentation 3 §5.2, which
+/// also suppresses a flex `row-gap` at a break, csswg-drafts#11520), the same forced breaks
+/// (`break-before: column` or `page`) and the same `box-decoration-break: slice` of a box cut by
+/// a break (its first part stretched to the column end).
+///
+/// `boxes` is the depth-ordered flow of the container, its first box a stand-in for the
+/// container (no paint of its own; it is never cut away). `top` is the flow y of the first
+/// column's top. Returns at least one column; past [`MAX_COLUMNS`] the rest stays in the last.
+pub(crate) fn fragment_columns(
+    boxes: Vec<LaidOutBox>,
+    top: f64,
+    column_height: f64,
+) -> Vec<ColumnPiece> {
+    let bottom = boxes.iter().map(|b| b.y + b.height).fold(top, f64::max);
+    let mut frag = Fragment {
+        boxes,
+        top,
+        bottom,
+        contained_bottom: bottom,
+        break_margin: CollapsedMargin::default(),
+        table_id: None,
+        is_thead: false,
+        break_before: false,
+        members: Vec::new(),
+        slices: 0,
+    };
+    let column_height = column_height.max(0.0);
+    let mut pieces = Vec::new();
+    // The boxes whose forced break has been taken or lies behind: every box of an earlier
+    // column (its first fragment is there) and the line a forced break started a column with
+    // (lookup only, DET-1).
+    let mut taken: HashSet<usize> = HashSet::new();
+    loop {
+        let start = frag.top;
+        let end = start + column_height;
+        let in_flow_order = forced_in_flow_order(&frag.boxes, start, end, &taken);
+        let forced_inside = in_flow_order.is_some()
+            || frag.boxes.iter().skip(1).any(|b| {
+                (b.break_before_page || b.break_before_column)
+                    && b.y > start + CUT_EPSILON_PX
+                    && b.y < frag.bottom
+            });
+        let fits = frag.bottom <= end + CUT_EPSILON_PX && !forced_inside;
+        if fits || pieces.len() + 1 >= MAX_COLUMNS {
+            break;
+        }
+        let items = column_items(&frag.boxes, column_height);
+        // A forced break (`break-before: column` or `page`) in this column ends it there,
+        // whatever lies above it: the first one below the column top, or one taken in flow order
+        // ([`forced_in_flow_order`]), whichever comes first in the flow; after one taken in flow
+        // order the continuation starts with the forced box's flex line ([`line_start`]) and
+        // everything after it in document order. Otherwise the slicer's latest break point; when none keeps
+        // orphans and widows they are relaxed (Chrome 155 balances seven one-line `<br>` lines
+        // of four columns 2-2-2-1); when there is none at all, monolithic content that starts
+        // the column stays in it whole, overflowing it (Chrome 155: a 100 px `contain: size`
+        // box in a 60 px column, WPT css/css-break/monolithic-overflow-002.tentative), and
+        // anything else is cut at the column end.
+        let below_top = frag
+            .boxes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|(_, b)| {
+                (b.break_before_page || b.break_before_column)
+                    && b.y > start + CUT_EPSILON_PX
+                    && b.y <= end + CUT_EPSILON_PX
+            })
+            .map(|(i, b)| (b.y, i))
+            .reduce(|a, b| if b.0 < a.0 { b } else { a });
+        let forced = match (below_top, in_flow_order) {
+            (Some(a), Some(b)) => Some(if b.0 < a.0 || (b.0 == a.0 && b.1 < a.1) {
+                b
+            } else {
+                a
+            }),
+            (a, b) => a.or(b),
+        };
+        // A break taken in flow order may start the next column at the same flow y (each such
+        // break moves at least one box with content out of this column: no endless loop).
+        let flow_order_cut = in_flow_order.is_some() && forced == in_flow_order;
+        // Only a break taken in flow order moves what follows it in document order whole: a
+        // break below the column top is a cut by flow y, as before, which is what keeps the
+        // other lines of a multi-line column flex container (parallel flows beside the forced
+        // item) where they are (WPT css/css-break/flexbox/multi-line-column-flex-fragmentation-
+        // 029/032 and multi-line-row-flex-fragmentation-044 lose their pass when every forced
+        // break moves its followers whole: measured 2026-10-28, step 06).
+        let tail_from = forced
+            .filter(|_| flow_order_cut)
+            .map(|(_, i)| line_start(&frag.boxes, i));
+        let cut = forced
+            .map(|(at, _)| at)
+            .or_else(|| find_cut(&frag.boxes, &items, start, end, true, true))
+            .or_else(|| find_cut(&frag.boxes, &items, start, end, true, false))
+            .or_else(|| {
+                items
+                    .iter()
+                    .filter(|it| it.top <= start + CUT_EPSILON_PX && it.bottom > end)
+                    .map(|it| it.bottom)
+                    .reduce(f64::max)
+            })
+            .unwrap_or(end);
+        if cut <= start + CUT_EPSILON_PX && !flow_order_cut {
+            break;
+        }
+        if let Some((_, i)) = forced {
+            let line = line_start(&frag.boxes, i);
+            taken.extend(frag.boxes[line..=i].iter().map(|b| b.node_id));
+        }
+        // An unforced break truncates the margin that adjoins it, through the empty boxes that
+        // start the next column (CSS Fragmentation 3 §5.2; see [`leading_margin_at`]). A forced
+        // break keeps it (and one taken in flow order moves its followers whole, `tail_from`).
+        let truncate = if forced.is_some_and(|(f, _)| (f - cut).abs() <= CUT_EPSILON_PX) {
+            0.0
+        } else {
+            leading_margin_at(&frag.boxes, &items, cut)
+        };
+        match split_fragment(&frag, cut, end, true, truncate, tail_from) {
+            (head, Some(rest)) => {
+                taken.extend(head.boxes.iter().map(|b| b.node_id));
+                pieces.push(ColumnPiece {
+                    boxes: head.boxes,
+                    flow_top: start,
+                });
+                frag = rest;
+            }
+            (head, None) => {
+                frag = head;
+                break;
+            }
+        }
+    }
+    pieces.push(ColumnPiece {
+        flow_top: frag.top,
+        boxes: frag.boxes,
+    });
+    pieces
+}
+
+/// The margin that adjoins a column break at flow y `cut`, to truncate at the top of the next
+/// column (CSS Fragmentation 3 §5.2: "any margins adjoining the break truncate to zero"): the
+/// space from the cut down to the first box below it that holds content (a box with a height,
+/// a line, an image), when that box's own top margin spans all of it and nothing in between
+/// takes room (only the boxes that start at the cut and hold it, and empty boxes). `0.0` when
+/// there is no such box. This truncates through empty boxes and into the boxes that start at
+/// the cut, as Chrome 155 does: with a column break before a table whose first caption is
+/// empty, the second caption's 200 px `margin-top` is truncated and it starts column 2 (WPT
+/// css/css-break/table/caption-margin-002 / -005; Chrome also gives the box the table sits in a
+/// 100 px fragment there, not 300). Not modelled: a margin collapsed from several (only the
+/// content box's own `margin-top` is read), and the same truncation at a page break.
+fn leading_margin_at(boxes: &[LaidOutBox], items: &[SliceItem], cut: f64) -> f64 {
+    let ends: Vec<usize> = (0..boxes.len()).map(|i| subtree_end(boxes, i)).collect();
+    let Some(first) = (1..boxes.len())
+        .filter(|&i| boxes[i].y > cut + CUT_EPSILON_PX && boxes[i].height > 0.0)
+        .min_by(|&a, &b| boxes[a].y.total_cmp(&boxes[b].y))
+    else {
+        return 0.0;
+    };
+    let f = &boxes[first];
+    let gap = f.y - cut;
+    if f.y - f.margin_top > cut + CUT_EPSILON_PX {
+        return 0.0;
+    }
+    // Nothing takes room between the cut and that box but the boxes that hold it.
+    let holds = |i: usize| i < first && ends[i] > first;
+    let crowded = (1..boxes.len()).any(|i| {
+        let b = &boxes[i];
+        b.y >= cut - CUT_EPSILON_PX && b.y < f.y - CUT_EPSILON_PX && b.height > 0.0 && !holds(i)
+    }) || items
+        .iter()
+        .any(|it| it.top >= cut - CUT_EPSILON_PX && it.top < f.y - CUT_EPSILON_PX);
+    if crowded {
+        0.0
+    } else {
+        gap
+    }
+}
+
+/// Whether boxes `a` and `b` sit side by side: they overlap in the block direction (by more
+/// than half a px) and not in the inline direction (two items of one row flex line, a cell and
+/// its neighbour).
+fn beside(a: &LaidOutBox, b: &LaidOutBox) -> bool {
+    const EPS: f64 = 0.5;
+    a.y < b.y + b.height - EPS
+        && b.y < a.y + a.height - EPS
+        && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+}
+
+/// The first box of box `i`'s row flex line: the run of `i`'s preceding siblings that sit beside
+/// it or beside each other ([`beside`]), else `i`. A forced break on any item of a row flex
+/// line applies before the line (CSS Flexible Box Layout 1 §10, "Fragmenting Flex Layout": a
+/// break-before on an item is propagated to its flex line), so the column that follows the
+/// break starts with the whole line.
+fn line_start(boxes: &[LaidOutBox], i: usize) -> usize {
+    let depth = boxes[i].depth;
+    let mut first = i;
+    let mut j = i;
+    while j > 1 {
+        j -= 1;
+        if boxes[j].depth < depth {
+            break;
+        }
+        if boxes[j].depth > depth {
+            continue;
+        }
+        if (first..=i).any(|m| boxes[m].depth == depth && beside(&boxes[j], &boxes[m])) {
+            first = j;
+        } else {
+            break;
+        }
+    }
+    first
+}
+
+/// A forced column break (`break-before: column` or `page`) taken in flow order: on a box whose
+/// border box does not start below the column's top `start` (so a cut by flow y alone would
+/// keep it in this column), but that comes in document order after other content of this column
+/// that starts above the break. The break position is the top of its flex line
+/// ([`line_start`]) with a negative top margin taken back out (the line's top; never above
+/// `start`), and must be at most `end`. Returns `(position, box index)` of the first such break
+/// in the flow, the earliest position winning. A box in `taken` has had its break (a box of an
+/// earlier column, or one whose break started this column).
+///
+/// Chrome 155 (2026-10-28, Chrome for Testing 155.0.8059.85; WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-045, `tests/multicol.rs`
+/// `forced_breaks_at_one_flow_y_each_start_a_column`): five `margin-top: -100px` 100 px items,
+/// each on a 0 px tall flex line of its own and each `break-before: column`, take one column
+/// each, every item 100 px above its column's top: all five lines start at the same flow y, so
+/// only their order separates them. The margin after a forced break is kept (CSS Fragmentation
+/// 3 §5.2); a positive one is still dropped at a break taken below the column top (the cut is
+/// the border-box top, the pre-step-06 behaviour, not re-measured).
+fn forced_in_flow_order(
+    boxes: &[LaidOutBox],
+    start: f64,
+    end: f64,
+    taken: &HashSet<usize>,
+) -> Option<(f64, usize)> {
+    let mut best: Option<(f64, usize)> = None;
+    for i in 1..boxes.len() {
+        let b = &boxes[i];
+        if !(b.break_before_page || b.break_before_column)
+            || b.y > start + CUT_EPSILON_PX
+            || taken.contains(&b.node_id)
+        {
+            continue;
+        }
+        let line = line_start(boxes, i);
+        let at = (line..=i)
+            .filter(|&m| boxes[m].depth == b.depth)
+            .map(|m| boxes[m].y - boxes[m].margin_top.min(0.0))
+            .fold(f64::INFINITY, f64::min)
+            .max(start);
+        if at > end + CUT_EPSILON_PX || best.is_some_and(|(p, _)| p <= at) {
+            continue;
+        }
+        // Content before the line in document order (not an ancestor of it) that starts above
+        // the break: what stays in this column.
+        let content_before = (1..line).any(|k| {
+            subtree_end(boxes, k) <= line
+                && (boxes[k].height > 0.0 || paints(&boxes[k]))
+                && boxes[k].y < at - CUT_EPSILON_PX
+        });
+        if content_before {
+            best = Some((at, i));
+        }
+    }
+    best
+}
+
+/// `boxes` (depth-ordered, the first one its root) cut at flow y `cut` with
+/// [`split_fragment`]'s slice of the boxes it goes through: the part above the cut, and the part
+/// from the cut down (`None` when nothing of it paints there). For the absolutely positioned
+/// boxes of a multi-column container ([`crate::multicol`]).
+pub(crate) fn split_boxes_at(
+    boxes: Vec<LaidOutBox>,
+    cut: f64,
+) -> (Vec<LaidOutBox>, Option<Vec<LaidOutBox>>) {
+    let (top, bottom) = span(&boxes);
+    if bottom <= cut + ROUNDING_TAIL_PX || top >= cut {
+        return (boxes, None);
+    }
+    let frag = Fragment {
+        boxes,
+        top,
+        bottom,
+        contained_bottom: bottom,
+        break_margin: CollapsedMargin::default(),
+        table_id: None,
+        is_thead: false,
+        break_before: false,
+        members: Vec::new(),
+        slices: 0,
+    };
+    let (head, rest) = split_fragment(&frag, cut, cut, false, 0.0, None);
+    (head.boxes, rest.map(|r| r.boxes))
+}
+
+/// The `orphans` and `widows` a column break honours in box `b`'s lines: its declared values
+/// (read for the boxes of a multi-column container, [`crate::multicol`]), else the initial 2.
+fn line_limits(b: &LaidOutBox) -> (usize, usize) {
+    (
+        b.orphans.map_or(ORPHANS, |n| n as usize),
+        b.widows.map_or(WIDOWS, |n| n as usize),
+    )
+}
+
+/// The monolithic spans of a column's flow ([`slice_items`]), plus every `contain: size` box
+/// whatever its height (CSS Contain 2 §3.1: its size does not depend on its content, and Chrome
+/// 155 never breaks inside one: WPT css/css-break/monolithic-overflow-001/002.tentative), unless
+/// it sits in a parallel flow (a box beside a sibling, a row flex item): Chrome breaks each
+/// parallel flow on its own (WPT css/css-break/flexbox/single-line-row-flex-fragmentation-010:
+/// the item beside a monolithic one is not pushed down), which one cut for the whole column
+/// cannot do; there the cut goes through it, as before.
+fn column_items(boxes: &[LaidOutBox], column_height: f64) -> Vec<SliceItem> {
+    let mut items = slice_items(boxes, column_height);
+    let parent = parents(boxes);
+    let in_parallel_flow = |i: usize| {
+        let mut a = Some(i);
+        while let Some(j) = a {
+            let Some(p) = parent[j] else {
+                break;
+            };
+            if (p + 1..subtree_end(boxes, p))
+                .filter(|&k| parent[k] == Some(p) && k != j)
+                .any(|k| beside(&boxes[j], &boxes[k]))
+            {
+                return true;
+            }
+            a = Some(p);
+        }
+        false
+    };
+    items.extend(
+        boxes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, b)| b.contain_size && b.height > 0.0 && !in_parallel_flow(i))
+            .map(|(i, b)| SliceItem {
+                top: b.y,
+                bottom: b.y + b.height,
+                owner: i,
+                line: false,
+            }),
+    );
+    // The line box of an atomic inline is monolithic whatever its height: no column break
+    // parts the boxes of one line, and a line taller than the column stays whole in it,
+    // overflowing (Chrome 155: a ruby line, the annotation inline-block above the base one,
+    // 104 px in a 60 px column, WPT css/css-break/ruby-003; Phase C step 06).
+    items.extend(
+        boxes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|&(i, b)| b.atomic_inline && !in_parallel_flow(i))
+            .filter_map(|(i, b)| {
+                let (top, bottom) = b.line_span?;
+                (bottom > top).then(|| SliceItem {
+                    top: (b.y + top).min(b.y),
+                    bottom: (b.y + bottom).max(b.y + b.height),
+                    owner: i,
+                    line: false,
+                })
+            }),
+    );
+    items
+}
+
+/// The tallest content of a column's flow that no column break can go through: a monolithic
+/// span ([`column_items`]), or the lines of a paragraph that orphans and widows keep together
+/// (its first `orphans` lines, its last `widows` ([`line_limits`]), the whole paragraph when it has fewer than
+/// both). A balanced column is never shorter (Blink's column balancer starts from the tallest
+/// unbreakable block size; Chrome 155 balances two 2-line paragraphs of a 4-column container
+/// 2 + 2 with `widows: 2`, WPT css/css-break/widows-orphans-002).
+pub(crate) fn tallest_unbreakable(boxes: &[LaidOutBox]) -> f64 {
+    let items = column_items(boxes, f64::INFINITY);
+    let mut tallest = items
+        .iter()
+        .filter(|it| !it.line)
+        .map(|it| it.bottom - it.top)
+        .fold(0.0, f64::max);
+    let mut owners: Vec<usize> = items
+        .iter()
+        .filter(|it| it.line)
+        .map(|it| it.owner)
+        .collect();
+    owners.sort_unstable();
+    owners.dedup();
+    for owner in owners {
+        let mut lines: Vec<&SliceItem> = items
+            .iter()
+            .filter(|it| it.line && it.owner == owner)
+            .collect();
+        lines.sort_by(|a, b| a.top.total_cmp(&b.top));
+        let n = lines.len();
+        let (orphans, widows) = line_limits(&boxes[owner]);
+        let run = |from: usize, to: usize| lines[to - 1].bottom - lines[from].top;
+        let kept = if n < orphans + widows {
+            run(0, n)
+        } else {
+            run(0, orphans.min(n)).max(run(n - widows.min(n), n))
+        };
+        tallest = tallest.max(kept);
+    }
+    tallest
 }
 
 /// Index just past the subtree rooted at `start` in the flat document-order box
@@ -772,6 +2884,34 @@ fn reposition(boxes: &[LaidOutBox], from_top: f64, to_top: f64) -> Vec<LaidOutBo
         .collect()
 }
 
+/// A text baseline on the printed page: the nearest whole CSS px of the PAGE (top margin
+/// included). Chrome prints every baseline there and vellora's layout does not: Blitz/Taffy
+/// place a line's baseline on a whole px of the CONTENT box, which a fractional top page margin
+/// (16mm = 60.4724 px) then moves off the page's px grid. Text only; boxes, borders and images
+/// keep their positions (Chrome paints those at fractional positions). Used for body text
+/// ([`lower_to_display_list`]) and the `@page` margin-box text ([`build_margin_texts`]); the
+/// raw-Blitz render's flat pagination does not snap (Blitz's own placement).
+///
+/// Evidence (CONFIRMED, Phase C step 03, 2026-10-27, Chrome for Testing 155.0.8059.85, PyMuPDF
+/// origins of the reference print): every word baseline of 8 of the 9 measured fixtures is a
+/// whole px of the page (invoice 541/541, text-stress-ptbr 1833/1833, ...), and so is every line
+/// of the repro set `fidelity/gate/snapshots/2026-10-27/c03/layoutunit/baseline-snap/` (plain blocks,
+/// `overflow: hidden`, table cells, a 0.42cm margin, a danfe-like table), including lines whose
+/// layout baseline drifts 0.3 px a block (`pad_16mm`: 71, 87, 102, 118, 134, 149; vellora
+/// before this: 71.47, 87.47, ...; `tests/baseline_snap.rs`). vellora's words sat
+/// frac(margin) = +0.47 px below Chrome's on every 16mm fixture, so a word whose line Taffy
+/// rounded 1 px low ended 1.1 pt (> the 1 pt pdf-probe tolerance) from Chrome. The exception is
+/// danfe, whose Chrome baselines are fractional with glyphs printed ~0.1 % smaller (9.987 vs
+/// 9.996 pt): HYPOTHESIS, Chrome scales that page to fit, after snapping; not modelled.
+///
+/// Where Blink snaps (paint or page-margin rounding) was not read in its source: the rule here
+/// is the measured outcome. Not a Blitz bug (Blitz has no paged output), so there is no raw-Blitz
+/// canary; `tests/baseline_snap.rs` pins Chrome's numbers. Delete this (and those tests) only if
+/// vellora stops targeting Chrome's print geometry.
+fn snap_baseline_to_page_px(y: f64) -> f64 {
+    y.round()
+}
+
 /// Lower a page's positioned boxes into a krilla display list: background fills
 /// for boxes that declare a non-white background (header band etc.) and the
 /// already-positioned text runs. X is offset by the left margin; the page-local
@@ -789,10 +2929,17 @@ fn lower_to_display_list(
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
     let mut rects = Vec::new();
+    let mut atomic_rects = Vec::new();
     let mut rounded_strokes = Vec::new();
     let mut images = Vec::new();
     let mut runs = Vec::new();
-    for b in boxes {
+    let atomic = in_atomic_inline(&boxes);
+    for (b, atomic) in boxes.into_iter().zip(atomic) {
+        let rects = if atomic {
+            &mut atomic_rects
+        } else {
+            &mut rects
+        };
         for rect in b.visual_rects {
             rects.push(FilledRect {
                 x: rect.x + margin_l,
@@ -800,6 +2947,8 @@ fn lower_to_display_list(
                 width: rect.width,
                 height: rect.height,
                 color: rect.color,
+                tier: rect.tier,
+                stack: rect.stack,
             });
         }
         for border in b.rounded_borders {
@@ -821,17 +2970,132 @@ fn lower_to_display_list(
         }
         for mut r in b.text_runs {
             r.origin_x += margin_l;
-            r.origin_y += margin_t;
+            r.origin_y = snap_baseline_to_page_px(r.origin_y + margin_t);
             runs.push(r);
         }
     }
-    (merge_adjacent_rects(rects), rounded_strokes, images, runs)
+    (
+        paint_ordered_rects(rects, atomic_rects),
+        rounded_strokes,
+        images,
+        runs,
+    )
 }
 
+/// The page's rects in painting order, combining the two orders of Phase C step 04: the paint
+/// tiers of `blitz_engine::paint_tier` (phasec/04-floats: in-flow blocks, floats, positioned
+/// boxes) and the atomic-inline split of [`in_atomic_inline`] (phasec/04-text). Groups, each
+/// merged on its own by [`merge_adjacent_rects`]: tier-0 blocks, tier-0 atomic inlines, floats
+/// (their blocks, then their atomic inlines), positioned boxes (likewise). Coarse like the
+/// tiers: a float inside an atomic inline paints with the floats.
+///
+/// DELIBERATE DEVIATION from CSS 2.2 Appendix E, which paints in-flow atomic inlines (step 7)
+/// AFTER floats (step 5). Line boxes are shortened around floats, so an in-flow atomic inline
+/// overlaps a float only where it overflows its container, and vellora does not clip
+/// `overflow: hidden`. Painting it over the float then shows the overflow Chrome clips: WPT
+/// `css/CSS2/floats/floats-wrap-bfc-003-right-overflow.xht` (a 250 px purple inline-block in a
+/// 200 px `overflow: hidden` block beside a blue float) fails with the Appendix E order (purple
+/// over the float, 2500 px differ; c04-tip pre-run, 2026-10-28, local macOS) and passes with
+/// this one, which is also each branch's measured order (floats: atomics in tier 0; text:
+/// atomics after the blocks). Revisit together with overflow clipping.
+fn paint_ordered_rects(rects: Vec<FilledRect>, atomic_rects: Vec<FilledRect>) -> Vec<FilledRect> {
+    use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
+    let group = |tier: u8, atomic: bool| -> usize {
+        match (tier, atomic) {
+            (PAINT_TIER_POSITIONED, false) => 4,
+            (PAINT_TIER_POSITIONED, true) => 5,
+            (PAINT_TIER_FLOAT, false) => 2,
+            (PAINT_TIER_FLOAT, true) => 3,
+            (_, false) => 0,
+            (_, true) => 1,
+        }
+    };
+    let mut groups: [Vec<FilledRect>; 6] = Default::default();
+    for (rect, atomic) in rects
+        .into_iter()
+        .map(|r| (r, false))
+        .chain(atomic_rects.into_iter().map(|r| (r, true)))
+    {
+        groups[group(rect.tier, atomic)].push(rect);
+    }
+    groups.into_iter().flat_map(merge_adjacent_rects).collect()
+}
+
+/// For each box (in tree order, `depth` from the walk), whether it is an atomic inline-level box
+/// (`inline-block`, `inline-table`, ...) or inside one. CSS 2.1 Appendix E paints the backgrounds
+/// and borders of a stacking context's block-level descendants (step 4) before its inline-level
+/// content (step 7), where an atomic inline is painted as a whole: so a later block's background
+/// never covers an earlier inline-block's or inline-table's. The display list therefore emits the
+/// rects of these subtrees after all other rects of the page (Chrome 155: WPT
+/// `css/CSS2/normal-flow/inline-table-zorder-001.xht`, a green inline-table over the red
+/// background of the block after it, pulled up by `margin-top: -2em`). Not a Blitz bug (the
+/// display list is vellora's painter), so no raw canary; `tests/paint_order.rs`.
+fn in_atomic_inline(boxes: &[LaidOutBox]) -> Vec<bool> {
+    let mut atomic_depth: Option<usize> = None;
+    boxes
+        .iter()
+        .map(|b| {
+            if atomic_depth.is_some_and(|d| b.depth <= d) {
+                atomic_depth = None;
+            }
+            if atomic_depth.is_none() && b.atomic_inline {
+                atomic_depth = Some(b.depth);
+            }
+            atomic_depth.is_some()
+        })
+        .collect()
+}
+
+/// Puts the canvas background ([`LaidOutDoc::canvas_background`], CSS Backgrounds 3 §2.11.2)
+/// under everything else of a page: one rect over the page's page area
+/// ([`PageBox::page_area`]), on every page, as Chrome 155's print path paints it.
+///
+/// Under it, the page's own `@page` background ([`PageBox::background`]) over the whole page box.
+/// Neither when the root element generates no box ([`LaidOutDoc::root_rendered`]).
+fn paint_canvas(rects: &mut Vec<FilledRect>, page: &PageBox, doc: &LaidOutDoc) {
+    if !doc.root_rendered {
+        return;
+    }
+    let canvas = doc.canvas_background;
+    let mut under = Vec::new();
+    if let Some(color) = page.background {
+        under.push(FilledRect {
+            x: 0.0,
+            y: 0.0,
+            width: page.width,
+            height: page.height,
+            color,
+            tier: 0,
+            stack: 0,
+        });
+    }
+    let (x0, y0, x1, y1) = page.page_area();
+    if let Some(color) = canvas.filter(|_| x1 > x0 && y1 > y0) {
+        under.push(FilledRect {
+            x: x0,
+            y: y0,
+            width: x1 - x0,
+            height: y1 - y0,
+            color,
+            tier: 0,
+            stack: 0,
+        });
+    }
+    rects.splice(0..0, under);
+}
+
+/// Joins same-colour rects of one band (same `y` and height within 0.5 px) that touch
+/// horizontally, within [`RECT_MERGE_EPSILON_PX`], into one rect. Rects with a real gap between
+/// them stay apart.
+///
+/// The emitter draws rects in this list's order, so the sort puts each painting-order tier
+/// (`blitz_engine::paint_tier`: in-flow blocks, then floats, then positioned boxes) after the
+/// lower ones, and merges only within a tier.
 fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
     rects.sort_by(|a, b| {
-        a.y.partial_cmp(&b.y)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        a.tier
+            .cmp(&b.tier)
+            .then_with(|| a.y.partial_cmp(&b.y).unwrap_or(std::cmp::Ordering::Equal))
             .then_with(|| a.x.partial_cmp(&b.x).unwrap_or(std::cmp::Ordering::Equal))
     });
 
@@ -840,9 +3104,10 @@ fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
         if let Some(prev) = merged.last_mut() {
             let gap = rect.x - (prev.x + prev.width);
             if prev.color == rect.color
+                && prev.tier == rect.tier
                 && (prev.y - rect.y).abs() <= 0.5
                 && (prev.height - rect.height).abs() <= 0.5
-                && (-0.5..=RECT_MERGE_TOLERANCE_PX).contains(&gap)
+                && (-0.5..=RECT_MERGE_EPSILON_PX).contains(&gap)
             {
                 let right = (rect.x + rect.width).max(prev.x + prev.width);
                 prev.width = right - prev.x;
@@ -854,49 +3119,310 @@ fn merge_adjacent_rects(mut rects: Vec<FilledRect>) -> Vec<FilledRect> {
     merged
 }
 
-/// Build a running-header/footer `MarginText` centered in the top/bottom margin
-/// band. The string is shaped by krilla's `draw_text` against the borrowed body
-/// font, so glyphs + ToUnicode are correct (the footer is selectable). Width is
-/// estimated for centering from an average glyph advance.
-fn build_margin_text(
-    text: &str,
-    which: MarginBox,
-    page_box: &PageBox,
-    doc: &LaidOutDoc,
-) -> Option<MarginText> {
-    if text.is_empty() {
-        return None;
+/// The `@page` box of every page, resolved on first use (`PageBox::for_page`).
+struct PageGeometry<'a> {
+    base: &'a PageBox,
+    rtl: bool,
+    pages: Vec<PageBox>,
+    /// [`PageGeometry::bottom_box_clearance`] of pages 1 to 3, once computed.
+    clearances: [Option<f64>; 3],
+}
+
+impl<'a> PageGeometry<'a> {
+    fn new(base: &'a PageBox, rtl: bool) -> Self {
+        PageGeometry {
+            base,
+            rtl,
+            pages: Vec::new(),
+            clearances: [None; 3],
+        }
     }
-    // Borrow a font face from any body run; without one (truly empty document)
-    // there is no font to shape the footer with.
-    let sample = doc
+
+    /// The free height between the bottom of page `index`'s content box and the top of the
+    /// `@bottom-center` line drawn below it (that line is centred in the bottom margin band,
+    /// [`build_margin_texts`]); unbounded when the page draws none. The line is laid out with
+    /// provisional counters (page `index + 1` of `index + 1`): a margin box is one line that
+    /// does not wrap, so its height does not depend on the digits. Like the box itself, it
+    /// depends only on whether the page is the first and on its side (page n ≥ 3 is page n − 2).
+    fn bottom_box_clearance(&mut self, index: usize, doc: &LaidOutDoc) -> f64 {
+        let key = if index >= 3 {
+            1 + (index - 1) % 2
+        } else {
+            index
+        };
+        if let Some(clearance) = self.clearances[key] {
+            return clearance;
+        }
+        let page = self.page(key).clone();
+        let clearance = page
+            .margins_content
+            .iter()
+            .find(|mc| mc.which == MarginBox::BottomCenter)
+            .filter(|_| has_body_text(doc))
+            .and_then(|mc| {
+                let text = resolve_content(&mc.parts, key + 1, key + 1);
+                if text.trim().is_empty() {
+                    return None;
+                }
+                let request = crate::blitz_engine::MarginRequest {
+                    text: &text,
+                    page_style: &mc.page_style,
+                    box_style: &mc.box_style,
+                };
+                crate::blitz_engine::lay_out_margin_texts(&doc.page_context, &[request])
+                    .into_iter()
+                    .next()
+                    .flatten()
+            })
+            .map_or(f64::INFINITY, |line| {
+                ((page.margin_bottom - line.height) / 2.0).max(0.0)
+            });
+        self.clearances[key] = Some(clearance);
+        clearance
+    }
+
+    /// The box of page `index` (0-based).
+    fn page(&mut self, index: usize) -> &PageBox {
+        while self.pages.len() <= index {
+            let n = self.pages.len();
+            // A page's box depends only on whether it is page 1 and on its side (left/right), so
+            // page n ≥ 3 is page n − 2 again; this resolves at most three pages, not one cascade
+            // of every `@page` rule per page (port step 09).
+            let next = if n >= 3 {
+                self.pages[n - 2].clone()
+            } else {
+                self.base.for_page(n, self.rtl)
+            };
+            self.pages.push(next);
+        }
+        &self.pages[index]
+    }
+
+    /// The height a fragment may take on page `index`: the page's content height, plus the row
+    /// fit slack ([`TABLE_ROW_FIT_SLACK_PX`]) for a table row.
+    fn fit_limit(&mut self, index: usize, is_table_row: bool) -> f64 {
+        let usable_h = self.page(index).content_height();
+        if is_table_row {
+            usable_h + TABLE_ROW_FIT_SLACK_PX
+        } else {
+            usable_h
+        }
+    }
+}
+
+/// The running headers/footers of every page (`@top-center` / `@bottom-center`), laid out by
+/// Blitz with their cascaded text properties ([`crate::blitz_engine::lay_out_margin_texts`]) and
+/// placed like Chrome 155 places them (CSS Paged Media 3 §5.3, UA defaults `text-align: center`,
+/// `vertical-align: middle`):
+///
+/// - horizontally, the line is centred in the page area (between the left and right page
+///   margins, so asymmetric margins move it);
+/// - vertically, the line box is centred in the margin band (the top or bottom page margin), so
+///   the baseline sits (ascent − descent) / 2 below the band's centre whatever the line height.
+///
+/// Chrome snaps that baseline to whole device pixels (≤ 1 px), and so does vellora since Phase C
+/// step 03 ([`snap_baseline_to_page_px`]: text-stress-ptbr's "Página n de 7", Chrome 1093 px,
+/// vellora 1092.54 before); WeasyPrint does not.
+/// A document without any shaped body text gets no margin text, as in Chrome (an empty body
+/// prints no footer). Fonts are deduplicated against the body's faces so a face is embedded
+/// once (`tests/pipeline.rs::each_face_is_embedded_exactly_once_across_pages`).
+fn build_margin_texts(doc: &LaidOutDoc, pages: &[PageBox]) -> Vec<Vec<(MarginBox, MarginText)>> {
+    let mut out: Vec<Vec<(MarginBox, MarginText)>> = (0..pages.len()).map(|_| Vec::new()).collect();
+    if !has_body_text(doc) {
+        return out;
+    }
+    let total = pages.len();
+    // (page index, box, resolved text) per non-empty margin box, in page order.
+    let mut wanted: Vec<(usize, &crate::page_css::MarginContent, String)> = Vec::new();
+    for (i, page) in pages.iter().enumerate() {
+        for mc in &page.margins_content {
+            let text = resolve_content(&mc.parts, i + 1, total);
+            if !text.trim().is_empty() {
+                wanted.push((i, mc, text));
+            }
+        }
+    }
+    let requests: Vec<crate::blitz_engine::MarginRequest<'_>> = wanted
+        .iter()
+        .map(|(_, mc, text)| crate::blitz_engine::MarginRequest {
+            text,
+            page_style: &mc.page_style,
+            box_style: &mc.box_style,
+        })
+        .collect();
+    let layouts = crate::blitz_engine::lay_out_margin_texts(&doc.page_context, &requests);
+
+    let body_faces: Vec<&std::sync::Arc<Vec<u8>>> = doc
         .boxes
         .iter()
         .flat_map(|b| b.text_runs.iter())
-        .find(|r| !r.glyphs.is_empty())?;
+        .map(|r| &r.font_data)
+        .collect();
+    let mut faces: Vec<std::sync::Arc<Vec<u8>>> = Vec::new();
+    for ((index, mc, text), layout) in wanted.into_iter().zip(layouts) {
+        let Some(layout) = layout else {
+            continue;
+        };
+        let page = &pages[index];
+        let area_w = page.width - page.margin_left - page.margin_right;
+        let x0 = page.margin_left + (area_w - layout.width) / 2.0;
+        let (band_top, band_h) = match mc.which {
+            MarginBox::TopCenter => (0.0, page.margin_top),
+            MarginBox::BottomCenter => (page.height - page.margin_bottom, page.margin_bottom),
+        };
+        let y0 = band_top + (band_h - layout.height) / 2.0;
+        let runs = layout
+            .runs
+            .into_iter()
+            .map(|mut run| {
+                run.origin_x += x0;
+                run.origin_y = snap_baseline_to_page_px(run.origin_y + y0);
+                run.font_data = shared_face(&run.font_data, &body_faces, &mut faces);
+                run
+            })
+            .collect();
+        out[index].push((mc.which, MarginText { text, runs }));
+    }
+    out
+}
 
-    let font_size = 9.0_f32;
-    // Estimate centered X from an average advance per char (good enough for a
-    // centered single-line label; exact width needs a shaper we run at emit).
-    let avg_advance = {
-        let total: f32 = sample.glyphs.iter().map(|g| g.advance).sum();
-        let per = total / sample.glyphs.len().max(1) as f32;
-        (per / sample.font_size) * font_size
-    };
-    let est_w = avg_advance as f64 * text.chars().count() as f64;
-    let x = ((page_box.width - est_w) / 2.0).max(page_box.margin_left);
-    let y = match which {
-        MarginBox::BottomCenter => page_box.height - page_box.margin_bottom / 2.0,
-        MarginBox::TopCenter => page_box.margin_top / 2.0,
-    };
+/// Whether the document shapes any body text: without it no margin box is drawn (Chrome prints
+/// no footer for an empty body).
+fn has_body_text(doc: &LaidOutDoc) -> bool {
+    doc.boxes
+        .iter()
+        .flat_map(|b| b.text_runs.iter())
+        .any(|r| !r.glyphs.is_empty())
+}
 
-    Some(MarginText {
-        text: text.to_string(),
-        origin_x: x,
-        origin_y: y,
-        font_size,
-        font_data: sample.font_data.clone(),
-        font_index: sample.font_index,
-        color: [60, 60, 60],
-    })
+/// The body's `Arc` of the same face bytes (or the first margin run's), so the PDF embeds each
+/// face once: the margin-box document materializes its own copies of the bytes.
+fn shared_face(
+    data: &std::sync::Arc<Vec<u8>>,
+    body: &[&std::sync::Arc<Vec<u8>>],
+    seen: &mut Vec<std::sync::Arc<Vec<u8>>>,
+) -> std::sync::Arc<Vec<u8>> {
+    let same = |other: &std::sync::Arc<Vec<u8>>| {
+        std::sync::Arc::ptr_eq(other, data) || (other.len() == data.len() && **other == **data)
+    };
+    if let Some(found) = body.iter().find(|f| same(f)) {
+        return (*found).clone();
+    }
+    if let Some(found) = seen.iter().find(|f| same(f)) {
+        return found.clone();
+    }
+    seen.push(data.clone());
+    data.clone()
+}
+
+#[cfg(test)]
+mod merge_tests {
+    use super::*;
+
+    fn rect(x: f64, width: f64) -> FilledRect {
+        FilledRect {
+            x,
+            y: 10.0,
+            width,
+            height: 96.0,
+            color: [0, 0, 0],
+            tier: 0,
+            stack: 0,
+        }
+    }
+
+    fn spans(rects: Vec<FilledRect>) -> Vec<(f64, f64)> {
+        merge_adjacent_rects(rects)
+            .iter()
+            .map(|r| (r.x, r.width))
+            .collect()
+    }
+
+    /// Painting order: every float rect after every in-flow one, every positioned rect after
+    /// both, whatever their positions; touching same-colour rects of different tiers stay apart.
+    #[test]
+    fn rects_paint_tier_by_tier() {
+        let at = |x: f64, tier: u8| FilledRect {
+            tier,
+            ..rect(x, 20.0)
+        };
+        let order: Vec<(u8, f64)> = merge_adjacent_rects(vec![
+            at(0.0, crate::blitz_engine::PAINT_TIER_POSITIONED),
+            at(40.0, 0),
+            at(20.0, crate::blitz_engine::PAINT_TIER_FLOAT),
+            at(60.0, 0),
+        ])
+        .iter()
+        .map(|r| (r.tier, r.x))
+        .collect();
+        assert_eq!(order, vec![(0, 40.0), (1, 20.0), (2, 0.0)]);
+    }
+
+    /// The merge of the floats tiers with the text branch's atomic-inline split: in-flow blocks,
+    /// in-flow atomic inlines, floats with their own atomic inlines, positioned boxes with theirs
+    /// (`paint_ordered_rects` says why in-flow atomic inlines go before floats).
+    #[test]
+    fn atomic_inlines_paint_after_the_blocks_of_their_tier() {
+        use crate::blitz_engine::{PAINT_TIER_FLOAT, PAINT_TIER_POSITIONED};
+        let at = |x: f64, tier: u8| FilledRect {
+            tier,
+            ..rect(x, 5.0)
+        };
+        let order: Vec<f64> = paint_ordered_rects(
+            vec![
+                at(0.0, PAINT_TIER_POSITIONED),
+                at(10.0, PAINT_TIER_FLOAT),
+                at(20.0, 0),
+            ],
+            vec![
+                at(30.0, PAINT_TIER_POSITIONED),
+                at(40.0, 0),
+                at(50.0, PAINT_TIER_FLOAT),
+            ],
+        )
+        .iter()
+        .map(|r| r.x)
+        .collect();
+        assert_eq!(order, vec![20.0, 40.0, 10.0, 50.0, 0.0, 30.0]);
+    }
+
+    #[test]
+    fn touching_and_overlapping_same_colour_rects_merge() {
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(28.0, 20.0)]),
+            vec![(8.0, 40.0)]
+        );
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(27.5, 20.0)]),
+            vec![(8.0, 39.5)]
+        );
+        assert_eq!(
+            spans(vec![rect(8.0, 20.0), rect(28.03, 20.0)]),
+            vec![(8.0, 40.03)]
+        );
+    }
+
+    #[test]
+    fn a_real_gap_is_never_bridged() {
+        // WPT css/CSS2/linebox/line-height-006.xht: two stripes 2 px apart. The corpus's merged
+        // gaps before port step 10-rects were exactly 1 and 2 px (collapsed-border segments,
+        // `cellspacing` tables Blitz lays out with the default 2 px spacing).
+        for gap in [0.1, 1.0, 2.0, 4.0] {
+            assert_eq!(
+                spans(vec![rect(8.0, 20.0), rect(28.0 + gap, 20.0)]),
+                vec![(8.0, 20.0), (28.0 + gap, 20.0)],
+                "gap {gap}"
+            );
+        }
+    }
+
+    #[test]
+    fn different_colour_or_band_never_merges() {
+        let mut other = rect(28.0, 20.0);
+        other.color = [1, 0, 0];
+        assert_eq!(spans(vec![rect(8.0, 20.0), other]).len(), 2);
+        let mut lower = rect(28.0, 20.0);
+        lower.y = 11.0;
+        assert_eq!(spans(vec![rect(8.0, 20.0), lower]).len(), 2);
+    }
 }

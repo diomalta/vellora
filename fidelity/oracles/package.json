@@ -1,0 +1,16 @@
+{
+  "name": "@vellora/fidelity-oracles",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "External PDF oracles (qpdf, veraPDF, three text extractors, ITF barcode decoders, WeasyPrint consensus). NOT published, NOT a root workspace member.",
+  "scripts": {
+    "oracles": "node run.mjs",
+    "oracles:fixtures": "node run-fixtures.mjs",
+    "test": "node --test",
+    "test:integration": "VELLORA_ORACLE_INTEGRATION=1 node --test"
+  },
+  "dependencies": {
+    "puppeteer-core": "25.15.0"
+  }
+}

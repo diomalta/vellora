@@ -1,0 +1,9 @@
+# WeasyPrint second-layout oracle, installed INSIDE the tools image (Pango is a system library
+# that is not installed on the macOS host; Docker keeps it off the host).
+# Hash-locked set: requirements-weasyprint.txt, regenerated with:
+#   uv pip compile fidelity/oracles/docker/requirements-weasyprint.in --python-version 3.12 \
+#     --python-platform linux --generate-hashes -o fidelity/oracles/docker/requirements-weasyprint.txt
+#
+# Version decision (see ../README.md "WeasyPrint version"): 70.0 (2026-09-08) instead of the
+# 62.3 pinned by benchmarks/ (a throughput benchmark, not a layout oracle).
+weasyprint==70.0

@@ -1,0 +1,57 @@
+{
+  "schema": "vellora-layout-diff/pdf-probe/2",
+  "semantics": 2,
+  "settings": {
+    "semantics": 2,
+    "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+    "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+    "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+    "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+    "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+    "maxDistancePt": 36,
+    "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+  },
+  "reference": {
+    "chromeWordsSha256": "ad9b88a8cacbf5efe60635f8090370a7971e299ea077060708e7389ae5253694"
+  },
+  "pages": {
+    "vellora": 3,
+    "chrome": 3
+  },
+  "words": {
+    "vellora": 3,
+    "chrome": 3,
+    "paired": 3,
+    "unpairedVellora": 0,
+    "unpairedChrome": 0
+  },
+  "pairs": [
+    {
+      "k": "p1|One#1",
+      "text": "One",
+      "page": 1,
+      "dx": 0,
+      "dy": 0
+    },
+    {
+      "k": "p3|Two#1",
+      "text": "Two",
+      "page": 3,
+      "dx": 0,
+      "dy": 0
+    },
+    {
+      "k": "p3|Three#1",
+      "text": "Three",
+      "page": 3,
+      "dx": 0,
+      "dy": 0
+    }
+  ],
+  "unpairedChrome": [],
+  "unpairedVellora": [],
+  "offPage": {
+    "vellora": [],
+    "chrome": []
+  }
+}

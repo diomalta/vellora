@@ -1,0 +1,935 @@
+{
+  "_generated": "DERIVED by fidelity/corpus/build-fixtures.mjs from fidelity/corpus/inputs/danfe.json. Do not edit.",
+  "chave": {
+    "digitos": "35261012345678000195550010000123451705243180",
+    "formatada": "3526 1012 3456 7800 0195 5500 1000 0123 4517 0524 3180"
+  },
+  "codigoBarras": {
+    "simbologia": "CODE-128C",
+    "moduloPx": 1,
+    "moduloMm": 0.2646,
+    "modulos": 277,
+    "lengthMm": 73.2896,
+    "heightMm": 10,
+    "elementos": [
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "4px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "4px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "4px",
+        "k": "b"
+      },
+      {
+        "w": "2px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      },
+      {
+        "w": "3px",
+        "k": "s"
+      },
+      {
+        "w": "3px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "1px",
+        "k": "b"
+      },
+      {
+        "w": "1px",
+        "k": "s"
+      },
+      {
+        "w": "2px",
+        "k": "b"
+      }
+    ]
+  },
+  "nf": {
+    "numero": "000.012.345",
+    "serie": "001",
+    "tipo": "1",
+    "folha": "1/1",
+    "naturezaOperacao": "VENDA DE MERCADORIA ADQUIRIDA DE TERCEIROS",
+    "protocolo": "135260000123456 15/10/2026 10:25:02",
+    "dataEmissao": "15/10/2026",
+    "dataSaida": "15/10/2026",
+    "horaSaida": "14:00:00"
+  },
+  "emitente": {
+    "razaoSocial": "Distribuidora Exemplo de Componentes Ltda.",
+    "enderecoLinha1": "Rua dos Testes, 1234 — Galpão 3",
+    "enderecoLinha2": "Distrito Industrial — Campinas / SP — CEP 13069-000",
+    "fone": "Fone: (19) 3555-0100",
+    "cnpj": "12.345.678/0001-95",
+    "ie": "110.042.490.114",
+    "ieSt": ""
+  },
+  "destinatario": {
+    "razaoSocial": "Comércio Fictício de Eletrônicos São João Ltda.",
+    "cnpj": "98.765.432/0001-98",
+    "endereco": "Avenida das Nações Unidas, 12901",
+    "bairro": "Brooklin Paulista",
+    "cep": "04578-000",
+    "municipio": "São Paulo",
+    "uf": "SP",
+    "fone": "(11) 3555-0199",
+    "ie": "407.112.348.110"
+  },
+  "duplicatas": [
+    {
+      "numero": "001",
+      "vencimento": "14/11/2026",
+      "valor": "7.402,96"
+    },
+    {
+      "numero": "002",
+      "vencimento": "14/12/2026",
+      "valor": "7.185,22"
+    },
+    {
+      "numero": "003",
+      "vencimento": "13/01/2027",
+      "valor": "7.185,22"
+    }
+  ],
+  "imposto": {
+    "bcIcms": "21.773,40",
+    "vIcms": "3.919,21",
+    "bcIcmsSt": "0,00",
+    "vIcmsSt": "0,00",
+    "vProd": "21.773,40",
+    "vFrete": "0,00",
+    "vSeguro": "0,00",
+    "vDesc": "0,00",
+    "vOutro": "0,00",
+    "vIpi": "0,00",
+    "vNF": "21.773,40"
+  },
+  "transportador": {
+    "razaoSocial": "Transportes Exemplares S.A.",
+    "modFrete": "0 – Remetente",
+    "codigoAntt": "",
+    "placa": "ABC1D23",
+    "ufPlaca": "SP",
+    "cnpj": "44.555.666/0001-81",
+    "endereco": "Rodovia Anhanguera, km 98",
+    "municipio": "Campinas",
+    "uf": "SP",
+    "ie": "244.556.677.118",
+    "volumes": {
+      "quantidade": "6",
+      "especie": "CAIXA",
+      "marca": "EXEMPLO",
+      "numeracao": "1 A 6",
+      "pesoBruto": "48,600",
+      "pesoLiquido": "45,100"
+    }
+  },
+  "itens": [
+    {
+      "codigo": "CMP-0001",
+      "descricao": "Placa-mãe micro-ATX com chipset B760, 4 slots DDR5",
+      "ncm": "84733041",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "899,90",
+      "vTotal": "3.599,60",
+      "bcIcms": "3.599,60",
+      "vIcms": "647,93",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0002",
+      "descricao": "Memória DDR5 16 GB 5600 MT/s",
+      "ncm": "84733042",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "8,0000",
+      "vUn": "329,50",
+      "vTotal": "2.636,00",
+      "bcIcms": "2.636,00",
+      "vIcms": "474,48",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0003",
+      "descricao": "SSD NVMe 1 TB PCIe 4.0",
+      "ncm": "84717012",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "6,0000",
+      "vUn": "419,00",
+      "vTotal": "2.514,00",
+      "bcIcms": "2.514,00",
+      "vIcms": "452,52",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0004",
+      "descricao": "Fonte de alimentação 650 W 80 Plus Bronze",
+      "ncm": "85044021",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "389,90",
+      "vTotal": "1.559,60",
+      "bcIcms": "1.559,60",
+      "vIcms": "280,73",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0005",
+      "descricao": "Gabinete mid-tower com painel lateral de vidro temperado",
+      "ncm": "84733099",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "275,00",
+      "vTotal": "1.100,00",
+      "bcIcms": "1.100,00",
+      "vIcms": "198,00",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0006",
+      "descricao": "Cabo de força tripolar NBR 14136, 1,8 m",
+      "ncm": "85444200",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "20,0000",
+      "vUn": "18,90",
+      "vTotal": "378,00",
+      "bcIcms": "378,00",
+      "vIcms": "68,04",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0007",
+      "descricao": "Pasta térmica de prata, seringa 4 g",
+      "ncm": "34039900",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "10,0000",
+      "vUn": "24,50",
+      "vTotal": "245,00",
+      "bcIcms": "245,00",
+      "vIcms": "44,10",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0008",
+      "descricao": "Processador 6 núcleos 12 threads, soquete LGA1700",
+      "ncm": "85423190",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "1.129,00",
+      "vTotal": "4.516,00",
+      "bcIcms": "4.516,00",
+      "vIcms": "812,88",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0009",
+      "descricao": "Cooler para processador com dissipador em alumínio",
+      "ncm": "84145990",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "149,90",
+      "vTotal": "599,60",
+      "bcIcms": "599,60",
+      "vIcms": "107,93",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0010",
+      "descricao": "Teclado ABNT2 com fio, USB",
+      "ncm": "84716052",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "12,0000",
+      "vUn": "89,90",
+      "vTotal": "1.078,80",
+      "bcIcms": "1.078,80",
+      "vIcms": "194,18",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0011",
+      "descricao": "Mouse óptico 1600 dpi, USB",
+      "ncm": "84716053",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "12,0000",
+      "vUn": "45,90",
+      "vTotal": "550,80",
+      "bcIcms": "550,80",
+      "vIcms": "99,14",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    },
+    {
+      "codigo": "CMP-0012",
+      "descricao": "Monitor LED 23,8\" Full HD, entrada HDMI",
+      "ncm": "85285200",
+      "cst": "000",
+      "cfop": "5102",
+      "un": "UN",
+      "qtd": "4,0000",
+      "vUn": "749,00",
+      "vTotal": "2.996,00",
+      "bcIcms": "2.996,00",
+      "vIcms": "539,28",
+      "vIpi": "0,00",
+      "aliqIcms": "18,00",
+      "aliqIpi": "0,00"
+    }
+  ],
+  "informacoesComplementares": [
+    "SEM VALOR FISCAL — NF-e emitida em ambiente de homologação (fixture sintética do vellora, fidelity/corpus).",
+    "Pedido de compra nº PC-2026-0815. Entrega no horário comercial.",
+    "Valor aproximado dos tributos: R$ 4.203,37 (Fonte: IBPT) — valor fictício."
+  ],
+  "expected": {
+    "chaveDigits": "35261012345678000195550010000123451705243180",
+    "chaveDv": 0,
+    "code128Values": [
+      105,
+      35,
+      26,
+      10,
+      12,
+      34,
+      56,
+      78,
+      0,
+      1,
+      95,
+      55,
+      0,
+      10,
+      0,
+      1,
+      23,
+      45,
+      17,
+      5,
+      24,
+      31,
+      80,
+      40
+    ],
+    "vProdCentavos": 2177340,
+    "vIcmsCentavos": 391921,
+    "vNFCentavos": 2177340,
+    "itemCount": 12
+  }
+}

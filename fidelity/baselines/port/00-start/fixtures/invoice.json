@@ -1,0 +1,150 @@
+{
+  "schema": "vellora-fidelity/baseline/2/fixture",
+  "key": "invoice",
+  "fixture": "invoice",
+  "variant": "data.json",
+  "class": "invoice",
+  "diagnostic": false,
+  "verdicts": [
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant false, 3 failed rules",
+      "kind": "control",
+      "mode": "plain",
+      "note": "plain render claims no PDF/A: veraPDF must report it non-compliant (negative control)"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "oracles",
+      "status": "PASS",
+      "value": "two in-process renders byte-identical",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "EXT-2",
+      "oracle": "oracles:text",
+      "status": "WARN",
+      "value": "pdftotext warn (missing 0, extra 0); pdfminer.six warn (missing 0, extra 0); pymupdf pass (missing 0, extra 0)",
+      "kind": "criterion",
+      "mode": "plain",
+      "basis": "every body token of Chrome's own PDF of the same HTML (control) is present in vellora's PDF, per extractor (pdftotext, pdfminer.six, PyMuPDF); stricter than the corpus required-string list"
+    },
+    {
+      "criterion": "EXT-3",
+      "oracle": "oracles:text",
+      "status": "PASS",
+      "value": "copy-paste clean in pdftotext, pdfminer.six, pymupdf",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-P",
+      "oracle": "oracles:layout",
+      "status": "PASS",
+      "value": "3 pages vs Chrome 3 (WeasyPrint 3)",
+      "kind": "criterion",
+      "mode": "plain"
+    },
+    {
+      "criterion": "REF-W",
+      "oracle": "oracles:layout",
+      "status": "FAIL",
+      "value": "max 3.91 mm, p95 3.78 mm over 230 consensus words (Chrome and WeasyPrint within 2 pt; coverage 0.429)",
+      "kind": "criterion",
+      "consensusTolPt": 2,
+      "coverage": 0.429,
+      "mode": "plain"
+    },
+    {
+      "criterion": "PDF-Q1",
+      "oracle": "oracles:qpdf",
+      "status": "PASS",
+      "value": "",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "PDF-A1",
+      "oracle": "oracles:verapdf",
+      "status": "PASS",
+      "value": "compliant true",
+      "kind": "criterion",
+      "mode": "pdfa"
+    },
+    {
+      "criterion": "DET-1",
+      "oracle": "oracles",
+      "status": "PASS",
+      "value": "two in-process renders byte-identical",
+      "kind": "criterion",
+      "mode": "pdfa"
+    }
+  ],
+  "layoutDiff": {
+    "status": "ran",
+    "attributionValid": true,
+    "checksFailed": [],
+    "checksWarned": [],
+    "checksNotRun": [],
+    "checksExpectedFailures": [],
+    "checksUnexpectedFailures": [],
+    "checksExpired": [],
+    "finalLayer": "collapsed_table_medium_border_insets_x",
+    "firstBox": {
+      "type": "enter",
+      "path": "html>body:nth-child(2)>table:nth-child(1)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "N0",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 0,
+        "dy": 0,
+        "dw": -10.469
+      }
+    },
+    "firstText": {
+      "text": "EMITENTE",
+      "owner": "html>body:nth-child(2)>table:nth-child(2)>tbody:nth-child(1)>tr:nth-child(1)>td:nth-child(1)>div:nth-child(1)",
+      "firstOverTolerance": "N0",
+      "dominantLayer": "painted_table_cell_text_baselines",
+      "finalDelta": {
+        "layer": "collapsed_table_medium_border_insets_x",
+        "status": "diverged",
+        "dx": 1.109,
+        "dy": -1.141,
+        "dy_basis": "baseline",
+        "dw": -0.016,
+        "dright": 1.093
+      }
+    },
+    "firstPassRegression": null,
+    "regressionEventsByLayer": {
+      "painted_table_cell_text_baselines": {
+        "box": 0,
+        "text": 8
+      },
+      "auto_table_compact_columns": {
+        "box": 0,
+        "text": 70
+      }
+    },
+    "htmlNormalize": {
+      "source_layer": "N0",
+      "dom_altered": true,
+      "wrappers_recorded": 35,
+      "wrappers_located": 35
+    }
+  }
+}

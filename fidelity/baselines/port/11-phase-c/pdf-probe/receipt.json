@@ -1,0 +1,1093 @@
+{
+  "schema": "vellora-layout-diff/pdf-probe/2",
+  "semantics": 2,
+  "settings": {
+    "semantics": 2,
+    "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+    "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+    "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+    "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+    "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+    "maxDistancePt": 36,
+    "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+  },
+  "reference": {
+    "chromeWordsSha256": "739b630999f5c4031f05f5065dc4e462c4532b500fe970784680d3a86a57b8c7"
+  },
+  "pages": {
+    "vellora": 2,
+    "chrome": 2
+  },
+  "words": {
+    "vellora": 151,
+    "chrome": 151,
+    "paired": 151,
+    "unpairedVellora": 0,
+    "unpairedChrome": 0
+  },
+  "pairs": [
+    {
+      "k": "p1|Cafeteria#1",
+      "text": "Cafeteria",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Aurora#1",
+      "text": "Aurora",
+      "page": 1,
+      "dx": 0.32,
+      "dy": 0
+    },
+    {
+      "k": "p1|Ltda#1",
+      "text": "Ltda",
+      "page": 1,
+      "dx": 0.35,
+      "dy": 0
+    },
+    {
+      "k": "p1|Cafés#1",
+      "text": "Cafés",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|especiais#1",
+      "text": "especiais",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|e#1",
+      "text": "e",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|padaria#1",
+      "text": "padaria",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|artesanal#1",
+      "text": "artesanal",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Rua#1",
+      "text": "Rua",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|das#1",
+      "text": "das",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Flores,#1",
+      "text": "Flores,",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|123#1",
+      "text": "123",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Centro#1",
+      "text": "Centro",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|—#1",
+      "text": "—",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|São#1",
+      "text": "São",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Paulo/SP#1",
+      "text": "Paulo/SP",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|CEP#1",
+      "text": "CEP",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0.75
+    },
+    {
+      "k": "p1|01001-000#1",
+      "text": "01001-000",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0.75
+    },
+    {
+      "k": "p1|CNPJ#1",
+      "text": "CNPJ",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|12.345.678/0001-90#1",
+      "text": "12.345.678/0001-90",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Recibo#1",
+      "text": "Recibo",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|nº#1",
+      "text": "nº",
+      "page": 1,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p1|REC-2026-000482#1",
+      "text": "REC-2026-000482",
+      "page": 1,
+      "dx": -0.06,
+      "dy": 0
+    },
+    {
+      "k": "p1|Data#1",
+      "text": "Data",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|22/06/2026#1",
+      "text": "22/06/2026",
+      "page": 1,
+      "dx": -0.05,
+      "dy": 0
+    },
+    {
+      "k": "p1|14:37#1",
+      "text": "14:37",
+      "page": 1,
+      "dx": -0.01,
+      "dy": 0
+    },
+    {
+      "k": "p1|Atendente#1",
+      "text": "Atendente",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Joana#1",
+      "text": "Joana",
+      "page": 1,
+      "dx": -0.04,
+      "dy": 0
+    },
+    {
+      "k": "p1|Pereira#1",
+      "text": "Pereira",
+      "page": 1,
+      "dx": -0.02,
+      "dy": 0
+    },
+    {
+      "k": "p1|Cliente#1",
+      "text": "Cliente",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|Cliente#2",
+      "text": "Cliente",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p1|Final#1",
+      "text": "Final",
+      "page": 1,
+      "dx": -0.06,
+      "dy": 0
+    },
+    {
+      "k": "p1|(CUST-00042)#1",
+      "text": "(CUST-00042)",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 0
+    },
+    {
+      "k": "p1|ITENS#1",
+      "text": "ITENS",
+      "page": 1,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p1|DESCRIÇÃO#1",
+      "text": "DESCRIÇÃO",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|QTD#1",
+      "text": "QTD",
+      "page": 1,
+      "dx": -0.55,
+      "dy": 0
+    },
+    {
+      "k": "p1|UNITÁRIO#1",
+      "text": "UNITÁRIO",
+      "page": 1,
+      "dx": -0.07,
+      "dy": 0
+    },
+    {
+      "k": "p1|TOTAL#1",
+      "text": "TOTAL",
+      "page": 1,
+      "dx": 0.15,
+      "dy": 0
+    },
+    {
+      "k": "p1|Café#1",
+      "text": "Café",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|Espresso#1",
+      "text": "Espresso",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Duplo#1",
+      "text": "Duplo",
+      "page": 1,
+      "dx": -0.07,
+      "dy": 0
+    },
+    {
+      "k": "p1|2#1",
+      "text": "2",
+      "page": 1,
+      "dx": -0.55,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#1",
+      "text": "R$",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 0
+    },
+    {
+      "k": "p1|9,50#1",
+      "text": "9,50",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#2",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|19,00#1",
+      "text": "19,00",
+      "page": 1,
+      "dx": 0.12,
+      "dy": 0
+    },
+    {
+      "k": "p1|SKU#1",
+      "text": "SKU",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|CAF-ESP-002#1",
+      "text": "CAF-ESP-002",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Pão#1",
+      "text": "Pão",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|na#1",
+      "text": "na",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Chapa#1",
+      "text": "Chapa",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p1|com#1",
+      "text": "com",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 0
+    },
+    {
+      "k": "p1|Manteiga#1",
+      "text": "Manteiga",
+      "page": 1,
+      "dx": -0.06,
+      "dy": 0
+    },
+    {
+      "k": "p1|1#1",
+      "text": "1",
+      "page": 1,
+      "dx": -0.55,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#3",
+      "text": "R$",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 0
+    },
+    {
+      "k": "p1|7,00#1",
+      "text": "7,00",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#4",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.12,
+      "dy": 0
+    },
+    {
+      "k": "p1|7,00#2",
+      "text": "7,00",
+      "page": 1,
+      "dx": 0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|SKU#2",
+      "text": "SKU",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|PAD-PCH-014#1",
+      "text": "PAD-PCH-014",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Croissant#1",
+      "text": "Croissant",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|de#1",
+      "text": "de",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 0
+    },
+    {
+      "k": "p1|Amêndoas#1",
+      "text": "Amêndoas",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 0
+    },
+    {
+      "k": "p1|3#1",
+      "text": "3",
+      "page": 1,
+      "dx": -0.55,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#5",
+      "text": "R$",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|12,00#1",
+      "text": "12,00",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#6",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|36,00#1",
+      "text": "36,00",
+      "page": 1,
+      "dx": 0.12,
+      "dy": 0
+    },
+    {
+      "k": "p1|SKU#3",
+      "text": "SKU",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|PAD-CRO-008#1",
+      "text": "PAD-CRO-008",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Suco#1",
+      "text": "Suco",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|Natural#1",
+      "text": "Natural",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|de#2",
+      "text": "de",
+      "page": 1,
+      "dx": -0.08,
+      "dy": 0
+    },
+    {
+      "k": "p1|Laranja#1",
+      "text": "Laranja",
+      "page": 1,
+      "dx": -0.07,
+      "dy": 0
+    },
+    {
+      "k": "p1|1#2",
+      "text": "1",
+      "page": 1,
+      "dx": -0.55,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#7",
+      "text": "R$",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p1|11,50#1",
+      "text": "11,50",
+      "page": 1,
+      "dx": -0.09,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#8",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|11,50#2",
+      "text": "11,50",
+      "page": 1,
+      "dx": 0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|300ml#1",
+      "text": "300ml",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|SKU#4",
+      "text": "SKU",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|BEB-SUC-021#1",
+      "text": "BEB-SUC-021",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|Subtotal#1",
+      "text": "Subtotal",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#9",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.15,
+      "dy": 0
+    },
+    {
+      "k": "p1|73,50#1",
+      "text": "73,50",
+      "page": 1,
+      "dx": 0.15,
+      "dy": 0
+    },
+    {
+      "k": "p1|Desconto#1",
+      "text": "Desconto",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|-#1",
+      "text": "-",
+      "page": 1,
+      "dx": 0.16,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#10",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.16,
+      "dy": 0
+    },
+    {
+      "k": "p1|5,00#1",
+      "text": "5,00",
+      "page": 1,
+      "dx": 0.15,
+      "dy": 0
+    },
+    {
+      "k": "p1|Total#1",
+      "text": "Total",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|pago#1",
+      "text": "pago",
+      "page": 1,
+      "dx": -0.13,
+      "dy": 0
+    },
+    {
+      "k": "p1|R$#11",
+      "text": "R$",
+      "page": 1,
+      "dx": 0.16,
+      "dy": 0
+    },
+    {
+      "k": "p1|68,50#1",
+      "text": "68,50",
+      "page": 1,
+      "dx": 0.15,
+      "dy": 0
+    },
+    {
+      "k": "p1|PAGAMENTO#1",
+      "text": "PAGAMENTO",
+      "page": 1,
+      "dx": 0.2,
+      "dy": 0
+    },
+    {
+      "k": "p1|Forma#1",
+      "text": "Forma",
+      "page": 1,
+      "dx": 0.2,
+      "dy": 0
+    },
+    {
+      "k": "p1|de#3",
+      "text": "de",
+      "page": 1,
+      "dx": 0.23,
+      "dy": 0
+    },
+    {
+      "k": "p1|pagamento#1",
+      "text": "pagamento",
+      "page": 1,
+      "dx": 0.24,
+      "dy": 0
+    },
+    {
+      "k": "p1|Cartão#1",
+      "text": "Cartão",
+      "page": 1,
+      "dx": -0.06,
+      "dy": 0
+    },
+    {
+      "k": "p1|de#4",
+      "text": "de",
+      "page": 1,
+      "dx": -0.03,
+      "dy": 0
+    },
+    {
+      "k": "p1|crédito#1",
+      "text": "crédito",
+      "page": 1,
+      "dx": -0.01,
+      "dy": 0
+    },
+    {
+      "k": "p1|Bandeira#1",
+      "text": "Bandeira",
+      "page": 1,
+      "dx": 0.2,
+      "dy": 0
+    },
+    {
+      "k": "p1|/#1",
+      "text": "/",
+      "page": 1,
+      "dx": 0.23,
+      "dy": 0
+    },
+    {
+      "k": "p1|detalhe#1",
+      "text": "detalhe",
+      "page": 1,
+      "dx": 0.24,
+      "dy": 0
+    },
+    {
+      "k": "p1|Aurora#2",
+      "text": "Aurora",
+      "page": 1,
+      "dx": -0.07,
+      "dy": 0
+    },
+    {
+      "k": "p1|Card#1",
+      "text": "Card",
+      "page": 1,
+      "dx": -0.04,
+      "dy": 0
+    },
+    {
+      "k": "p1|••••#1",
+      "text": "••••",
+      "page": 1,
+      "dx": -0.02,
+      "dy": 0
+    },
+    {
+      "k": "p1|4242#1",
+      "text": "4242",
+      "page": 1,
+      "dx": -0.01,
+      "dy": 0
+    },
+    {
+      "k": "p1|Autorização#1",
+      "text": "Autorização",
+      "page": 1,
+      "dx": 0.2,
+      "dy": 0
+    },
+    {
+      "k": "p1|AUTH-7F3A9C21#1",
+      "text": "AUTH-7F3A9C21",
+      "page": 1,
+      "dx": -0.05,
+      "dy": 0
+    },
+    {
+      "k": "p1|Situação#1",
+      "text": "Situação",
+      "page": 1,
+      "dx": 0.2,
+      "dy": 0
+    },
+    {
+      "k": "p1|Pago#1",
+      "text": "Pago",
+      "page": 1,
+      "dx": -0.01,
+      "dy": 0
+    },
+    {
+      "k": "p1|Página#1",
+      "text": "Página",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p1|1#3",
+      "text": "1",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p1|de#5",
+      "text": "de",
+      "page": 1,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p1|2#2",
+      "text": "2",
+      "page": 1,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p2|Obrigado#1",
+      "text": "Obrigado",
+      "page": 2,
+      "dx": 0.22,
+      "dy": 0
+    },
+    {
+      "k": "p2|pela#1",
+      "text": "pela",
+      "page": 2,
+      "dx": 0.29,
+      "dy": 0
+    },
+    {
+      "k": "p2|sua#1",
+      "text": "sua",
+      "page": 2,
+      "dx": 0.31,
+      "dy": 0
+    },
+    {
+      "k": "p2|compra!#1",
+      "text": "compra!",
+      "page": 2,
+      "dx": 0.33,
+      "dy": 0
+    },
+    {
+      "k": "p2|Volte#1",
+      "text": "Volte",
+      "page": 2,
+      "dx": 0.32,
+      "dy": 0
+    },
+    {
+      "k": "p2|sempre#1",
+      "text": "sempre",
+      "page": 2,
+      "dx": 0.31,
+      "dy": 0
+    },
+    {
+      "k": "p2|—#1",
+      "text": "—",
+      "page": 2,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p2|seu#1",
+      "text": "seu",
+      "page": 2,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p2|próximo#1",
+      "text": "próximo",
+      "page": 2,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p2|café#1",
+      "text": "café",
+      "page": 2,
+      "dx": 0.29,
+      "dy": 0
+    },
+    {
+      "k": "p2|especial#1",
+      "text": "especial",
+      "page": 2,
+      "dx": 0.29,
+      "dy": 0
+    },
+    {
+      "k": "p2|já#1",
+      "text": "já",
+      "page": 2,
+      "dx": 0.27,
+      "dy": 0
+    },
+    {
+      "k": "p2|está#1",
+      "text": "está",
+      "page": 2,
+      "dx": 0.27,
+      "dy": 0
+    },
+    {
+      "k": "p2|esperando#1",
+      "text": "esperando",
+      "page": 2,
+      "dx": 0.27,
+      "dy": 0
+    },
+    {
+      "k": "p2|por#1",
+      "text": "por",
+      "page": 2,
+      "dx": 0.25,
+      "dy": 0
+    },
+    {
+      "k": "p2|você.#1",
+      "text": "você.",
+      "page": 2,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p2|Este#1",
+      "text": "Este",
+      "page": 2,
+      "dx": 0.14,
+      "dy": 0
+    },
+    {
+      "k": "p2|recibo#1",
+      "text": "recibo",
+      "page": 2,
+      "dx": 0.16,
+      "dy": 0
+    },
+    {
+      "k": "p2|é#1",
+      "text": "é",
+      "page": 2,
+      "dx": 0.19,
+      "dy": 0
+    },
+    {
+      "k": "p2|um#1",
+      "text": "um",
+      "page": 2,
+      "dx": 0.19,
+      "dy": 0
+    },
+    {
+      "k": "p2|comprovante#1",
+      "text": "comprovante",
+      "page": 2,
+      "dx": 0.21,
+      "dy": 0
+    },
+    {
+      "k": "p2|simplificado#1",
+      "text": "simplificado",
+      "page": 2,
+      "dx": 0.26,
+      "dy": 0
+    },
+    {
+      "k": "p2|e#1",
+      "text": "e",
+      "page": 2,
+      "dx": 0.3,
+      "dy": 0
+    },
+    {
+      "k": "p2|não#1",
+      "text": "não",
+      "page": 2,
+      "dx": 0.31,
+      "dy": 0
+    },
+    {
+      "k": "p2|substitui#1",
+      "text": "substitui",
+      "page": 2,
+      "dx": 0.32,
+      "dy": 0
+    },
+    {
+      "k": "p2|documento#1",
+      "text": "documento",
+      "page": 2,
+      "dx": 0.36,
+      "dy": 0
+    },
+    {
+      "k": "p2|fiscal.#1",
+      "text": "fiscal.",
+      "page": 2,
+      "dx": 0.4,
+      "dy": 0
+    },
+    {
+      "k": "p2|Cafeteria#1",
+      "text": "Cafeteria",
+      "page": 2,
+      "dx": 0.19,
+      "dy": 0
+    },
+    {
+      "k": "p2|Aurora#1",
+      "text": "Aurora",
+      "page": 2,
+      "dx": 0.22,
+      "dy": 0
+    },
+    {
+      "k": "p2|Ltda#1",
+      "text": "Ltda",
+      "page": 2,
+      "dx": 0.25,
+      "dy": 0
+    },
+    {
+      "k": "p2|·#1",
+      "text": "·",
+      "page": 2,
+      "dx": 0.27,
+      "dy": 0
+    },
+    {
+      "k": "p2|www.cafeteria-aurora.example#1",
+      "text": "www.cafeteria-aurora.example",
+      "page": 2,
+      "dx": 0.28,
+      "dy": 0
+    },
+    {
+      "k": "p2|Página#1",
+      "text": "Página",
+      "page": 2,
+      "dx": -0.11,
+      "dy": 0
+    },
+    {
+      "k": "p2|2#1",
+      "text": "2",
+      "page": 2,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p2|de#1",
+      "text": "de",
+      "page": 2,
+      "dx": -0.1,
+      "dy": 0
+    },
+    {
+      "k": "p2|2#2",
+      "text": "2",
+      "page": 2,
+      "dx": -0.11,
+      "dy": 0
+    }
+  ],
+  "unpairedChrome": [],
+  "unpairedVellora": [],
+  "offPage": {
+    "vellora": [],
+    "chrome": []
+  }
+}

@@ -1,0 +1,6488 @@
+{
+  "schema": "vellora-layout-diff/pdf-probe/2",
+  "semantics": 2,
+  "settings": {
+    "semantics": 2,
+    "extractor": "pymupdf rawdict character origins (fidelity/oracles/py/words.py)",
+    "x": "pen origin x of the word's first glyph (pt, page top-left origin)",
+    "y": "baseline = origin y of the word's first glyph (pt, page top-left origin)",
+    "text": "NFC, U+FB00-U+FB06 ligatures expanded, case-sensitive; words split at whitespace and span boundaries",
+    "pairing": "same page, same text: maximum-cardinality minimum-total-distance assignment (Hungarian); Euclidean distance on (x, baseline); a pair farther than maxDistancePt is unpaired",
+    "maxDistancePt": 36,
+    "key": "Chrome word: p<page>|<text>#<n>, n = rank among the same-text Chrome words of the page by (baseline, x)"
+  },
+  "reference": {
+    "chromeWordsSha256": "eb6de0d593ad06bf1e8a20becba58f6bc6e42d8e9a046b201fb1b21ebb37b23e"
+  },
+  "pages": {
+    "vellora": 2,
+    "chrome": 1
+  },
+  "words": {
+    "vellora": 630,
+    "chrome": 630,
+    "paired": 290,
+    "unpairedVellora": 340,
+    "unpairedChrome": 340
+  },
+  "pairs": [
+    {
+      "k": "p1|RECEBEMOS#1",
+      "text": "RECEBEMOS",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|DE#1",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.37,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|DISTRIBUIDORA#1",
+      "text": "DISTRIBUIDORA",
+      "page": 1,
+      "dx": 0.38,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|EXEMPLO#1",
+      "text": "EXEMPLO",
+      "page": 1,
+      "dx": 0.42,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|DE#2",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.45,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|COMPONENTES#1",
+      "text": "COMPONENTES",
+      "page": 1,
+      "dx": 0.46,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|LTDA.#1",
+      "text": "LTDA.",
+      "page": 1,
+      "dx": 0.51,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|OS#1",
+      "text": "OS",
+      "page": 1,
+      "dx": 0.52,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|PRODUTOS#1",
+      "text": "PRODUTOS",
+      "page": 1,
+      "dx": 0.53,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|E/OU#1",
+      "text": "E/OU",
+      "page": 1,
+      "dx": 0.56,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|SERVIÇOS#1",
+      "text": "SERVIÇOS",
+      "page": 1,
+      "dx": 0.58,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|CONSTANTES#1",
+      "text": "CONSTANTES",
+      "page": 1,
+      "dx": 0.6,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|DA#1",
+      "text": "DA",
+      "page": 1,
+      "dx": 0.64,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|NOTA#1",
+      "text": "NOTA",
+      "page": 1,
+      "dx": 0.65,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|FISCAL#1",
+      "text": "FISCAL",
+      "page": 1,
+      "dx": 0.67,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|ELETRÔNICA#1",
+      "text": "ELETRÔNICA",
+      "page": 1,
+      "dx": 0.69,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|INDICADA#1",
+      "text": "INDICADA",
+      "page": 1,
+      "dx": 0.73,
+      "dy": -3.84
+    },
+    {
+      "k": "p1|DATA#1",
+      "text": "DATA",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -3.06
+    },
+    {
+      "k": "p1|DE#3",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.34,
+      "dy": -3.06
+    },
+    {
+      "k": "p1|RECEBIMENTO#1",
+      "text": "RECEBIMENTO",
+      "page": 1,
+      "dx": 0.35,
+      "dy": -3.06
+    },
+    {
+      "k": "p1|Distribuidora#1",
+      "text": "Distribuidora",
+      "page": 1,
+      "dx": 6.43,
+      "dy": -2.27
+    },
+    {
+      "k": "p1|Exemplo#1",
+      "text": "Exemplo",
+      "page": 1,
+      "dx": 6.51,
+      "dy": -2.27
+    },
+    {
+      "k": "p1|de#1",
+      "text": "de",
+      "page": 1,
+      "dx": 6.56,
+      "dy": -2.27
+    },
+    {
+      "k": "p1|DANFE#1",
+      "text": "DANFE",
+      "page": 1,
+      "dx": -29.11,
+      "dy": -2.27
+    },
+    {
+      "k": "p1|—#1",
+      "text": "—",
+      "page": 1,
+      "dx": -10.59,
+      "dy": 20.25
+    },
+    {
+      "k": "p1|AUXILIAR#1",
+      "text": "AUXILIAR",
+      "page": 1,
+      "dx": -28.84,
+      "dy": -9.75
+    },
+    {
+      "k": "p1|DA#2",
+      "text": "DA",
+      "page": 1,
+      "dx": -28.78,
+      "dy": -9.75
+    },
+    {
+      "k": "p1|Distrito#1",
+      "text": "Distrito",
+      "page": 1,
+      "dx": -27.1,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|Industrial#1",
+      "text": "Industrial",
+      "page": 1,
+      "dx": -27.05,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|—#2",
+      "text": "—",
+      "page": 1,
+      "dx": 0.13,
+      "dy": -0.74
+    },
+    {
+      "k": "p1|Campinas#1",
+      "text": "Campinas",
+      "page": 1,
+      "dx": -26.98,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|/#1",
+      "text": "/",
+      "page": 1,
+      "dx": -26.92,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|SP#1",
+      "text": "SP",
+      "page": 1,
+      "dx": -26.91,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|CEP#1",
+      "text": "CEP",
+      "page": 1,
+      "dx": -26.88,
+      "dy": 9.76
+    },
+    {
+      "k": "p1|NOTA#2",
+      "text": "NOTA",
+      "page": 1,
+      "dx": 24.16,
+      "dy": -17.99
+    },
+    {
+      "k": "p1|FISCAL#2",
+      "text": "FISCAL",
+      "page": 1,
+      "dx": 24.2,
+      "dy": -17.99
+    },
+    {
+      "k": "p1|ELETRÔNICA#2",
+      "text": "ELETRÔNICA",
+      "page": 1,
+      "dx": -29.11,
+      "dy": -17.23
+    },
+    {
+      "k": "p1|CHAVE#1",
+      "text": "CHAVE",
+      "page": 1,
+      "dx": 32.73,
+      "dy": -2.23
+    },
+    {
+      "k": "p1|DE#4",
+      "text": "DE",
+      "page": 1,
+      "dx": 32.75,
+      "dy": -2.23
+    },
+    {
+      "k": "p1|ACESSO#1",
+      "text": "ACESSO",
+      "page": 1,
+      "dx": 32.76,
+      "dy": -2.23
+    },
+    {
+      "k": "p1|3526#1",
+      "text": "3526",
+      "page": 1,
+      "dx": 28.91,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|1012#1",
+      "text": "1012",
+      "page": 1,
+      "dx": 28.94,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|3456#1",
+      "text": "3456",
+      "page": 1,
+      "dx": 28.96,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|7800#1",
+      "text": "7800",
+      "page": 1,
+      "dx": 28.99,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|0195#1",
+      "text": "0195",
+      "page": 1,
+      "dx": 29.02,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|5500#1",
+      "text": "5500",
+      "page": 1,
+      "dx": 29.04,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|1000#1",
+      "text": "1000",
+      "page": 1,
+      "dx": 29.07,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|0123#1",
+      "text": "0123",
+      "page": 1,
+      "dx": 29.09,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|4517#1",
+      "text": "4517",
+      "page": 1,
+      "dx": 29.12,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|0524#1",
+      "text": "0524",
+      "page": 1,
+      "dx": 29.14,
+      "dy": -2.97
+    },
+    {
+      "k": "p1|Nº#2",
+      "text": "Nº",
+      "page": 1,
+      "dx": -29.11,
+      "dy": -18.7
+    },
+    {
+      "k": "p1|000.012.345#2",
+      "text": "000.012.345",
+      "page": 1,
+      "dx": -29.1,
+      "dy": -18.7
+    },
+    {
+      "k": "p1|Consulta#1",
+      "text": "Consulta",
+      "page": 1,
+      "dx": 33.54,
+      "dy": -2.2
+    },
+    {
+      "k": "p1|de#2",
+      "text": "de",
+      "page": 1,
+      "dx": 33.59,
+      "dy": -2.2
+    },
+    {
+      "k": "p1|autenticidade#1",
+      "text": "autenticidade",
+      "page": 1,
+      "dx": 33.61,
+      "dy": -2.2
+    },
+    {
+      "k": "p1|portal#1",
+      "text": "portal",
+      "page": 1,
+      "dx": 33.71,
+      "dy": -2.2
+    },
+    {
+      "k": "p1|nacional#1",
+      "text": "nacional",
+      "page": 1,
+      "dx": 33.75,
+      "dy": -2.2
+    },
+    {
+      "k": "p1|SÉRIE#2",
+      "text": "SÉRIE",
+      "page": 1,
+      "dx": -29.11,
+      "dy": -18.69
+    },
+    {
+      "k": "p1|001#2",
+      "text": "001",
+      "page": 1,
+      "dx": -29.07,
+      "dy": -18.69
+    },
+    {
+      "k": "p1|no#2",
+      "text": "no",
+      "page": 1,
+      "dx": -4.76,
+      "dy": -12.69
+    },
+    {
+      "k": "p1|FOLHA#1",
+      "text": "FOLHA",
+      "page": 1,
+      "dx": -29.11,
+      "dy": -18.67
+    },
+    {
+      "k": "p1|1/1#1",
+      "text": "1/1",
+      "page": 1,
+      "dx": -29.06,
+      "dy": -18.67
+    },
+    {
+      "k": "p1|NATUREZA#1",
+      "text": "NATUREZA",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -1.41
+    },
+    {
+      "k": "p1|DA#3",
+      "text": "DA",
+      "page": 1,
+      "dx": 0.36,
+      "dy": -1.41
+    },
+    {
+      "k": "p1|OPERAÇÃO#1",
+      "text": "OPERAÇÃO",
+      "page": 1,
+      "dx": 0.37,
+      "dy": -1.41
+    },
+    {
+      "k": "p1|DE#5",
+      "text": "DE",
+      "page": 1,
+      "dx": -10.21,
+      "dy": -1.41
+    },
+    {
+      "k": "p1|VENDA#1",
+      "text": "VENDA",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|DE#7",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.37,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|MERCADORIA#1",
+      "text": "MERCADORIA",
+      "page": 1,
+      "dx": 0.39,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|ADQUIRIDA#1",
+      "text": "ADQUIRIDA",
+      "page": 1,
+      "dx": 0.47,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|DE#8",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.54,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|TERCEIROS#1",
+      "text": "TERCEIROS",
+      "page": 1,
+      "dx": 0.56,
+      "dy": -2.15
+    },
+    {
+      "k": "p1|INSCRIÇÃO#1",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|ESTADUAL#1",
+      "text": "ESTADUAL",
+      "page": 1,
+      "dx": 0.36,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|INSCRIÇÃO#2",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "dx": -0.17,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|ESTADUAL#2",
+      "text": "ESTADUAL",
+      "page": 1,
+      "dx": -0.14,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|DO#2",
+      "text": "DO",
+      "page": 1,
+      "dx": -0.11,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|SUBST.#1",
+      "text": "SUBST.",
+      "page": 1,
+      "dx": -0.1,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|TRIB.#1",
+      "text": "TRIB.",
+      "page": 1,
+      "dx": -0.08,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|CNPJ#1",
+      "text": "CNPJ",
+      "page": 1,
+      "dx": -0.67,
+      "dy": -0.63
+    },
+    {
+      "k": "p1|110.042.490.114#1",
+      "text": "110.042.490.114",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -1.37
+    },
+    {
+      "k": "p1|12.345.678/0001-95#1",
+      "text": "12.345.678/0001-95",
+      "page": 1,
+      "dx": -0.67,
+      "dy": -1.37
+    },
+    {
+      "k": "p1|DESTINATÁRIO/REMETENTE#1",
+      "text": "DESTINATÁRIO/REMETENTE",
+      "page": 1,
+      "dx": 0.34,
+      "dy": 0.15
+    },
+    {
+      "k": "p1|NOME/RAZÃO#1",
+      "text": "NOME/RAZÃO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|SOCIAL#1",
+      "text": "SOCIAL",
+      "page": 1,
+      "dx": 0.37,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|CNPJ/CPF#1",
+      "text": "CNPJ/CPF",
+      "page": 1,
+      "dx": -16.41,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|DATA#2",
+      "text": "DATA",
+      "page": 1,
+      "dx": -1.26,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|DA#4",
+      "text": "DA",
+      "page": 1,
+      "dx": -1.25,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|EMISSÃO#1",
+      "text": "EMISSÃO",
+      "page": 1,
+      "dx": -1.24,
+      "dy": 0.16
+    },
+    {
+      "k": "p1|Comércio#1",
+      "text": "Comércio",
+      "page": 1,
+      "dx": 0.33,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|Fictício#1",
+      "text": "Fictício",
+      "page": 1,
+      "dx": 0.39,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|de#3",
+      "text": "de",
+      "page": 1,
+      "dx": 0.44,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|Eletrônicos#1",
+      "text": "Eletrônicos",
+      "page": 1,
+      "dx": 0.46,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|São#1",
+      "text": "São",
+      "page": 1,
+      "dx": 0.53,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|João#1",
+      "text": "João",
+      "page": 1,
+      "dx": 0.55,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|Ltda.#2",
+      "text": "Ltda.",
+      "page": 1,
+      "dx": 0.57,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|98.765.432/0001-98#1",
+      "text": "98.765.432/0001-98",
+      "page": 1,
+      "dx": -16.41,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|15/10/2026#2",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": -1.26,
+      "dy": -0.58
+    },
+    {
+      "k": "p1|ENDEREÇO#1",
+      "text": "ENDEREÇO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 0.93
+    },
+    {
+      "k": "p1|CEP#2",
+      "text": "CEP",
+      "page": 1,
+      "dx": -8.98,
+      "dy": 0.93
+    },
+    {
+      "k": "p1|DATA#3",
+      "text": "DATA",
+      "page": 1,
+      "dx": -1.26,
+      "dy": 0.93
+    },
+    {
+      "k": "p1|DA#5",
+      "text": "DA",
+      "page": 1,
+      "dx": -1.25,
+      "dy": 0.93
+    },
+    {
+      "k": "p1|SAÍDA#2",
+      "text": "SAÍDA",
+      "page": 1,
+      "dx": -1.24,
+      "dy": 0.93
+    },
+    {
+      "k": "p1|Avenida#1",
+      "text": "Avenida",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|das#1",
+      "text": "das",
+      "page": 1,
+      "dx": 0.38,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|Nações#1",
+      "text": "Nações",
+      "page": 1,
+      "dx": 0.4,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|Unidas,#1",
+      "text": "Unidas,",
+      "page": 1,
+      "dx": 0.44,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|12901#1",
+      "text": "12901",
+      "page": 1,
+      "dx": 0.48,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|04578-000#1",
+      "text": "04578-000",
+      "page": 1,
+      "dx": -8.98,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|15/10/2026#3",
+      "text": "15/10/2026",
+      "page": 1,
+      "dx": -1.26,
+      "dy": 0.19
+    },
+    {
+      "k": "p1|MUNICÍPIO#1",
+      "text": "MUNICÍPIO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|INSCRIÇÃO#3",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "dx": -16.41,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|ESTADUAL#3",
+      "text": "ESTADUAL",
+      "page": 1,
+      "dx": -16.38,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|HORA#1",
+      "text": "HORA",
+      "page": 1,
+      "dx": -1.26,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|DA#6",
+      "text": "DA",
+      "page": 1,
+      "dx": -1.25,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|SAÍDA#3",
+      "text": "SAÍDA",
+      "page": 1,
+      "dx": -1.24,
+      "dy": 0.95
+    },
+    {
+      "k": "p1|São#2",
+      "text": "São",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 0.97
+    },
+    {
+      "k": "p1|Paulo#1",
+      "text": "Paulo",
+      "page": 1,
+      "dx": 0.35,
+      "dy": 0.97
+    },
+    {
+      "k": "p1|407.112.348.110#1",
+      "text": "407.112.348.110",
+      "page": 1,
+      "dx": -16.41,
+      "dy": 0.97
+    },
+    {
+      "k": "p1|14:00:00#1",
+      "text": "14:00:00",
+      "page": 1,
+      "dx": -1.26,
+      "dy": 0.97
+    },
+    {
+      "k": "p1|FATURA/DUPLICATAS#1",
+      "text": "FATURA/DUPLICATAS",
+      "page": 1,
+      "dx": 0.34,
+      "dy": 2.48
+    },
+    {
+      "k": "p1|DUPLICATA#1",
+      "text": "DUPLICATA",
+      "page": 1,
+      "dx": 1.08,
+      "dy": 2.49
+    },
+    {
+      "k": "p1|—#4",
+      "text": "—",
+      "page": 1,
+      "dx": 1.11,
+      "dy": 2.49
+    },
+    {
+      "k": "p1|VENCIMENTO#1",
+      "text": "VENCIMENTO",
+      "page": 1,
+      "dx": 1.12,
+      "dy": 2.49
+    },
+    {
+      "k": "p1|—#5",
+      "text": "—",
+      "page": 1,
+      "dx": 1.16,
+      "dy": 2.49
+    },
+    {
+      "k": "p1|VALOR#1",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 1.17,
+      "dy": 2.49
+    },
+    {
+      "k": "p1|001#3",
+      "text": "001",
+      "page": 1,
+      "dx": -1.92,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#6",
+      "text": "—",
+      "page": 1,
+      "dx": -1.9,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|14/11/2026#1",
+      "text": "14/11/2026",
+      "page": 1,
+      "dx": -1.88,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#7",
+      "text": "—",
+      "page": 1,
+      "dx": -1.82,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|R$#1",
+      "text": "R$",
+      "page": 1,
+      "dx": -1.8,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|7.402,96#1",
+      "text": "7.402,96",
+      "page": 1,
+      "dx": -1.78,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|002#1",
+      "text": "002",
+      "page": 1,
+      "dx": -1.34,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#8",
+      "text": "—",
+      "page": 1,
+      "dx": -1.32,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|14/12/2026#1",
+      "text": "14/12/2026",
+      "page": 1,
+      "dx": -1.3,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#9",
+      "text": "—",
+      "page": 1,
+      "dx": -1.24,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|R$#2",
+      "text": "R$",
+      "page": 1,
+      "dx": -1.22,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|7.185,22#1",
+      "text": "7.185,22",
+      "page": 1,
+      "dx": -1.2,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|003#1",
+      "text": "003",
+      "page": 1,
+      "dx": -1.13,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#10",
+      "text": "—",
+      "page": 1,
+      "dx": -1.11,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|13/01/2027#1",
+      "text": "13/01/2027",
+      "page": 1,
+      "dx": -1.09,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|—#11",
+      "text": "—",
+      "page": 1,
+      "dx": -1.03,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|R$#3",
+      "text": "R$",
+      "page": 1,
+      "dx": -1.01,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|7.185,22#2",
+      "text": "7.185,22",
+      "page": 1,
+      "dx": -0.99,
+      "dy": -6.5
+    },
+    {
+      "k": "p1|CÁLCULO#1",
+      "text": "CÁLCULO",
+      "page": 1,
+      "dx": 0.34,
+      "dy": 3.27
+    },
+    {
+      "k": "p1|DO#3",
+      "text": "DO",
+      "page": 1,
+      "dx": 0.37,
+      "dy": 3.27
+    },
+    {
+      "k": "p1|IMPOSTO#1",
+      "text": "IMPOSTO",
+      "page": 1,
+      "dx": 0.38,
+      "dy": 3.27
+    },
+    {
+      "k": "p1|BASE#1",
+      "text": "BASE",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DE#9",
+      "text": "DE",
+      "page": 1,
+      "dx": 0.35,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|CÁLCULO#2",
+      "text": "CÁLCULO",
+      "page": 1,
+      "dx": 0.35,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DO#4",
+      "text": "DO",
+      "page": 1,
+      "dx": 0.39,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ICMS#1",
+      "text": "ICMS",
+      "page": 1,
+      "dx": 0.4,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|VALOR#2",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 1.62,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DO#5",
+      "text": "DO",
+      "page": 1,
+      "dx": 1.64,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ICMS#2",
+      "text": "ICMS",
+      "page": 1,
+      "dx": 1.65,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|BASE#2",
+      "text": "BASE",
+      "page": 1,
+      "dx": 2.91,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DE#10",
+      "text": "DE",
+      "page": 1,
+      "dx": 2.93,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|CÁLCULO#3",
+      "text": "CÁLCULO",
+      "page": 1,
+      "dx": 2.94,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DO#6",
+      "text": "DO",
+      "page": 1,
+      "dx": 2.97,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ICMS#3",
+      "text": "ICMS",
+      "page": 1,
+      "dx": 2.98,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ST#1",
+      "text": "ST",
+      "page": 1,
+      "dx": 2.99,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|VALOR#3",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 4.2,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DO#7",
+      "text": "DO",
+      "page": 1,
+      "dx": 4.22,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ICMS#4",
+      "text": "ICMS",
+      "page": 1,
+      "dx": 4.23,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|ST#2",
+      "text": "ST",
+      "page": 1,
+      "dx": 4.25,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|VALOR#4",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 5.49,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|TOTAL#1",
+      "text": "TOTAL",
+      "page": 1,
+      "dx": 5.51,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|DOS#1",
+      "text": "DOS",
+      "page": 1,
+      "dx": 5.53,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|PRODUTOS#2",
+      "text": "PRODUTOS",
+      "page": 1,
+      "dx": 5.54,
+      "dy": 3.28
+    },
+    {
+      "k": "p1|21.773,40#1",
+      "text": "21.773,40",
+      "page": 1,
+      "dx": 12.03,
+      "dy": 3.29
+    },
+    {
+      "k": "p1|0,00#1",
+      "text": "0,00",
+      "page": 1,
+      "dx": 14.64,
+      "dy": 3.29
+    },
+    {
+      "k": "p1|0,00#2",
+      "text": "0,00",
+      "page": 1,
+      "dx": 15.93,
+      "dy": 3.29
+    },
+    {
+      "k": "p1|21.773,40#2",
+      "text": "21.773,40",
+      "page": 1,
+      "dx": 11.53,
+      "dy": 3.29
+    },
+    {
+      "k": "p1|VALOR#5",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DO#8",
+      "text": "DO",
+      "page": 1,
+      "dx": 0.35,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|FRETE#1",
+      "text": "FRETE",
+      "page": 1,
+      "dx": 0.36,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|VALOR#6",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 3.76,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DO#9",
+      "text": "DO",
+      "page": 1,
+      "dx": 3.78,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|SEGURO#1",
+      "text": "SEGURO",
+      "page": 1,
+      "dx": 3.79,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DESCONTO#1",
+      "text": "DESCONTO",
+      "page": 1,
+      "dx": 7.19,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|OUTRAS#1",
+      "text": "OUTRAS",
+      "page": 1,
+      "dx": 10.62,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DESP.#1",
+      "text": "DESP.",
+      "page": 1,
+      "dx": 10.65,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|ACESSÓRIAS#1",
+      "text": "ACESSÓRIAS",
+      "page": 1,
+      "dx": 10.66,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|VALOR#7",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 14.06,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DO#10",
+      "text": "DO",
+      "page": 1,
+      "dx": 14.08,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|IPI#1",
+      "text": "IPI",
+      "page": 1,
+      "dx": 14.09,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|VALOR#8",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 17.49,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|TOTAL#2",
+      "text": "TOTAL",
+      "page": 1,
+      "dx": 17.51,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|DA#7",
+      "text": "DA",
+      "page": 1,
+      "dx": 17.53,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|NOTA#3",
+      "text": "NOTA",
+      "page": 1,
+      "dx": 17.54,
+      "dy": 4.06
+    },
+    {
+      "k": "p1|0,00#3",
+      "text": "0,00",
+      "page": 1,
+      "dx": -4.68,
+      "dy": 4.07
+    },
+    {
+      "k": "p1|0,00#4",
+      "text": "0,00",
+      "page": 1,
+      "dx": -1.25,
+      "dy": 4.07
+    },
+    {
+      "k": "p1|0,00#7",
+      "text": "0,00",
+      "page": 1,
+      "dx": -2.29,
+      "dy": 4.07
+    },
+    {
+      "k": "p1|21.773,40#3",
+      "text": "21.773,40",
+      "page": 1,
+      "dx": -7.36,
+      "dy": 4.07
+    },
+    {
+      "k": "p1|TRANSPORTADOR/VOLUMES#1",
+      "text": "TRANSPORTADOR/VOLUMES",
+      "page": 1,
+      "dx": 0.34,
+      "dy": 4.83
+    },
+    {
+      "k": "p1|TRANSPORTADOS#1",
+      "text": "TRANSPORTADOS",
+      "page": 1,
+      "dx": 0.42,
+      "dy": 4.83
+    },
+    {
+      "k": "p1|NOME/RAZÃO#2",
+      "text": "NOME/RAZÃO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 4.84
+    },
+    {
+      "k": "p1|SOCIAL#2",
+      "text": "SOCIAL",
+      "page": 1,
+      "dx": 0.37,
+      "dy": 4.84
+    },
+    {
+      "k": "p1|CNPJ/CPF#2",
+      "text": "CNPJ/CPF",
+      "page": 1,
+      "dx": -5.84,
+      "dy": 4.84
+    },
+    {
+      "k": "p1|Transportes#1",
+      "text": "Transportes",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 4.85
+    },
+    {
+      "k": "p1|Exemplares#1",
+      "text": "Exemplares",
+      "page": 1,
+      "dx": 0.39,
+      "dy": 4.85
+    },
+    {
+      "k": "p1|S.A.#1",
+      "text": "S.A.",
+      "page": 1,
+      "dx": 0.47,
+      "dy": 4.85
+    },
+    {
+      "k": "p1|44.555.666/0001-81#1",
+      "text": "44.555.666/0001-81",
+      "page": 1,
+      "dx": -5.84,
+      "dy": 4.85
+    },
+    {
+      "k": "p1|ENDEREÇO#2",
+      "text": "ENDEREÇO",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 5.62
+    },
+    {
+      "k": "p1|INSCRIÇÃO#4",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "dx": -5.84,
+      "dy": 5.62
+    },
+    {
+      "k": "p1|ESTADUAL#4",
+      "text": "ESTADUAL",
+      "page": 1,
+      "dx": -5.81,
+      "dy": 5.62
+    },
+    {
+      "k": "p1|Rodovia#1",
+      "text": "Rodovia",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 4.88
+    },
+    {
+      "k": "p1|Anhanguera,#1",
+      "text": "Anhanguera,",
+      "page": 1,
+      "dx": 0.38,
+      "dy": 4.88
+    },
+    {
+      "k": "p1|km#1",
+      "text": "km",
+      "page": 1,
+      "dx": 0.45,
+      "dy": 4.88
+    },
+    {
+      "k": "p1|98#1",
+      "text": "98",
+      "page": 1,
+      "dx": 0.47,
+      "dy": 4.88
+    },
+    {
+      "k": "p1|244.556.677.118#1",
+      "text": "244.556.677.118",
+      "page": 1,
+      "dx": -5.84,
+      "dy": 4.88
+    },
+    {
+      "k": "p1|QUANTIDADE#1",
+      "text": "QUANTIDADE",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 6.39
+    },
+    {
+      "k": "p1|ESPÉCIE#1",
+      "text": "ESPÉCIE",
+      "page": 1,
+      "dx": -24.23,
+      "dy": 6.39
+    },
+    {
+      "k": "p1|PESO#2",
+      "text": "PESO",
+      "page": 1,
+      "dx": 34.16,
+      "dy": 6.39
+    },
+    {
+      "k": "p1|LÍQUIDO#1",
+      "text": "LÍQUIDO",
+      "page": 1,
+      "dx": 34.18,
+      "dy": 6.39
+    },
+    {
+      "k": "p1|6#1",
+      "text": "6",
+      "page": 1,
+      "dx": 0.33,
+      "dy": 5.65
+    },
+    {
+      "k": "p1|CAIXA#1",
+      "text": "CAIXA",
+      "page": 1,
+      "dx": -24.23,
+      "dy": 5.65
+    },
+    {
+      "k": "p1|48,600#1",
+      "text": "48,600",
+      "page": 1,
+      "dx": -21.69,
+      "dy": 5.65
+    },
+    {
+      "k": "p1|45,100#1",
+      "text": "45,100",
+      "page": 1,
+      "dx": -8.02,
+      "dy": 5.65
+    },
+    {
+      "k": "p1|DADOS#1",
+      "text": "DADOS",
+      "page": 1,
+      "dx": 0.34,
+      "dy": 7.92
+    },
+    {
+      "k": "p1|DOS#2",
+      "text": "DOS",
+      "page": 1,
+      "dx": 0.36,
+      "dy": 7.92
+    },
+    {
+      "k": "p1|PRODUTOS/SERVIÇOS#1",
+      "text": "PRODUTOS/SERVIÇOS",
+      "page": 1,
+      "dx": 0.37,
+      "dy": 7.92
+    },
+    {
+      "k": "p1|CÓDIGO#2",
+      "text": "CÓDIGO",
+      "page": 1,
+      "dx": -0.51,
+      "dy": 10.93
+    },
+    {
+      "k": "p1|ALÍQ.#1",
+      "text": "ALÍQ.",
+      "page": 1,
+      "dx": 1.93,
+      "dy": 10.93
+    },
+    {
+      "k": "p1|DESCRIÇÃO#1",
+      "text": "DESCRIÇÃO",
+      "page": 1,
+      "dx": -31.74,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|DO#12",
+      "text": "DO",
+      "page": 1,
+      "dx": -31.7,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|PRODUTO/SERVIÇO#1",
+      "text": "PRODUTO/SERVIÇO",
+      "page": 1,
+      "dx": -31.68,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|VALOR#9",
+      "text": "VALOR",
+      "page": 1,
+      "dx": -9.86,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|VALOR#10",
+      "text": "VALOR",
+      "page": 1,
+      "dx": 33.48,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|ICMS#5",
+      "text": "ICMS",
+      "page": 1,
+      "dx": -12.36,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|VALOR#11",
+      "text": "VALOR",
+      "page": 1,
+      "dx": -10.97,
+      "dy": 7.93
+    },
+    {
+      "k": "p1|PRODUTO#1",
+      "text": "PRODUTO",
+      "page": 1,
+      "dx": 24.49,
+      "dy": 4.94
+    },
+    {
+      "k": "p1|ICMS#7",
+      "text": "ICMS",
+      "page": 1,
+      "dx": -22.34,
+      "dy": 4.94
+    },
+    {
+      "k": "p1|IPI#3",
+      "text": "IPI",
+      "page": 1,
+      "dx": -8.73,
+      "dy": 4.94
+    },
+    {
+      "k": "p1|CMP-0001#1",
+      "text": "CMP-0001",
+      "page": 1,
+      "dx": 0.71,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|Placa-mãe#1",
+      "text": "Placa-mãe",
+      "page": 1,
+      "dx": -3.45,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|micro-ATX#1",
+      "text": "micro-ATX",
+      "page": 1,
+      "dx": -3.39,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|com#1",
+      "text": "com",
+      "page": 1,
+      "dx": -3.33,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|chipset#1",
+      "text": "chipset",
+      "page": 1,
+      "dx": -3.31,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|3.599,60#1",
+      "text": "3.599,60",
+      "page": 1,
+      "dx": -6.51,
+      "dy": 7.2
+    },
+    {
+      "k": "p1|CMP-0002#1",
+      "text": "CMP-0002",
+      "page": 1,
+      "dx": 0.71,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|Memória#1",
+      "text": "Memória",
+      "page": 1,
+      "dx": -3.45,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|DDR5#2",
+      "text": "DDR5",
+      "page": 1,
+      "dx": 6.9,
+      "dy": 3.46
+    },
+    {
+      "k": "p1|16#1",
+      "text": "16",
+      "page": 1,
+      "dx": -3.37,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|GB#1",
+      "text": "GB",
+      "page": 1,
+      "dx": -3.35,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|5600#1",
+      "text": "5600",
+      "page": 1,
+      "dx": -3.34,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|MT/s#1",
+      "text": "MT/s",
+      "page": 1,
+      "dx": -3.31,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|2.636,00#1",
+      "text": "2.636,00",
+      "page": 1,
+      "dx": -6.51,
+      "dy": 16.96
+    },
+    {
+      "k": "p1|18,00#2",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -4.04
+    },
+    {
+      "k": "p1|0,00#11",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -4.04
+    },
+    {
+      "k": "p1|CMP-0003#1",
+      "text": "CMP-0003",
+      "page": 1,
+      "dx": 0.71,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|SSD#1",
+      "text": "SSD",
+      "page": 1,
+      "dx": -3.45,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|NVMe#1",
+      "text": "NVMe",
+      "page": 1,
+      "dx": -3.43,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|1#4",
+      "text": "1",
+      "page": 1,
+      "dx": -3.39,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|TB#1",
+      "text": "TB",
+      "page": 1,
+      "dx": -3.38,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|PCIe#1",
+      "text": "PCIe",
+      "page": 1,
+      "dx": -3.37,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|4.0#1",
+      "text": "4.0",
+      "page": 1,
+      "dx": -3.34,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|2.514,00#1",
+      "text": "2.514,00",
+      "page": 1,
+      "dx": -6.51,
+      "dy": 18.47
+    },
+    {
+      "k": "p1|CMP-0004#1",
+      "text": "CMP-0004",
+      "page": 1,
+      "dx": 0.71,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|Fonte#1",
+      "text": "Fonte",
+      "page": 1,
+      "dx": -3.45,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|de#4",
+      "text": "de",
+      "page": 1,
+      "dx": -3.42,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|alimentação#1",
+      "text": "alimentação",
+      "page": 1,
+      "dx": -3.4,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|650#1",
+      "text": "650",
+      "page": 1,
+      "dx": -3.33,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|W#1",
+      "text": "W",
+      "page": 1,
+      "dx": -3.31,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|80#1",
+      "text": "80",
+      "page": 1,
+      "dx": -3.3,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|Plus#1",
+      "text": "Plus",
+      "page": 1,
+      "dx": -3.28,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|1.559,60#1",
+      "text": "1.559,60",
+      "page": 1,
+      "dx": -6.51,
+      "dy": 20.73
+    },
+    {
+      "k": "p1|18,00#4",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -5.52
+    },
+    {
+      "k": "p1|0,00#15",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -5.52
+    },
+    {
+      "k": "p1|CMP-0005#1",
+      "text": "CMP-0005",
+      "page": 1,
+      "dx": 0.71,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|Gabinete#1",
+      "text": "Gabinete",
+      "page": 1,
+      "dx": -3.45,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|mid-tower#1",
+      "text": "mid-tower",
+      "page": 1,
+      "dx": -3.4,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|painel#1",
+      "text": "painel",
+      "page": 1,
+      "dx": -3.32,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|lateral#1",
+      "text": "lateral",
+      "page": 1,
+      "dx": -3.28,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|1.100,00#1",
+      "text": "1.100,00",
+      "page": 1,
+      "dx": -6.51,
+      "dy": 31.24
+    },
+    {
+      "k": "p1|18,00#5",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -3.26
+    },
+    {
+      "k": "p1|0,00#17",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -3.26
+    },
+    {
+      "k": "p1|de#6",
+      "text": "de",
+      "page": 1,
+      "dx": -18.77,
+      "dy": 27.5
+    },
+    {
+      "k": "p1|18,00#6",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -1
+    },
+    {
+      "k": "p1|0,00#19",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -1
+    },
+    {
+      "k": "p1|18,00#8",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -1.72
+    },
+    {
+      "k": "p1|0,00#23",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -1.72
+    },
+    {
+      "k": "p1|com#3",
+      "text": "com",
+      "page": 1,
+      "dx": -14.33,
+      "dy": -12.96
+    },
+    {
+      "k": "p1|18,00#10",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": -3.2
+    },
+    {
+      "k": "p1|0,00#27",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": -3.2
+    },
+    {
+      "k": "p1|18,00#11",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": 5.81
+    },
+    {
+      "k": "p1|0,00#29",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": 5.81
+    },
+    {
+      "k": "p1|0,00#30",
+      "text": "0,00",
+      "page": 1,
+      "dx": 30.41,
+      "dy": 8.82
+    },
+    {
+      "k": "p1|18,00#12",
+      "text": "18,00",
+      "page": 1,
+      "dx": -23.25,
+      "dy": 8.82
+    },
+    {
+      "k": "p1|0,00#31",
+      "text": "0,00",
+      "page": 1,
+      "dx": -14.89,
+      "dy": 29.82
+    }
+  ],
+  "unpairedChrome": [
+    {
+      "k": "p1|NF-e#1",
+      "text": "NF-e",
+      "page": 1,
+      "x": 511.25,
+      "y": 23.99
+    },
+    {
+      "k": "p1|AO#1",
+      "text": "AO",
+      "page": 1,
+      "x": 9.76,
+      "y": 24.74
+    },
+    {
+      "k": "p1|LADO#1",
+      "text": "LADO",
+      "page": 1,
+      "x": 19.91,
+      "y": 24.74
+    },
+    {
+      "k": "p1|Nº#1",
+      "text": "Nº",
+      "page": 1,
+      "x": 492.43,
+      "y": 34.48
+    },
+    {
+      "k": "p1|000.012.345#1",
+      "text": "000.012.345",
+      "page": 1,
+      "x": 505.43,
+      "y": 34.48
+    },
+    {
+      "k": "p1|IDENTIFICAÇÃO#1",
+      "text": "IDENTIFICAÇÃO",
+      "page": 1,
+      "x": 125.85,
+      "y": 42.72
+    },
+    {
+      "k": "p1|E#1",
+      "text": "E",
+      "page": 1,
+      "x": 173.63,
+      "y": 42.72
+    },
+    {
+      "k": "p1|ASSINATURA#1",
+      "text": "ASSINATURA",
+      "page": 1,
+      "x": 178.46,
+      "y": 42.72
+    },
+    {
+      "k": "p1|DO#1",
+      "text": "DO",
+      "page": 1,
+      "x": 216.93,
+      "y": 42.72
+    },
+    {
+      "k": "p1|RECEBEDOR#1",
+      "text": "RECEBEDOR",
+      "page": 1,
+      "x": 227.09,
+      "y": 42.72
+    },
+    {
+      "k": "p1|SÉRIE#1",
+      "text": "SÉRIE",
+      "page": 1,
+      "x": 500.17,
+      "y": 44.22
+    },
+    {
+      "k": "p1|001#1",
+      "text": "001",
+      "page": 1,
+      "x": 532.64,
+      "y": 44.22
+    },
+    {
+      "k": "p1|Componentes#1",
+      "text": "Componentes",
+      "page": 1,
+      "x": 166.52,
+      "y": 84.68
+    },
+    {
+      "k": "p1|Ltda.#1",
+      "text": "Ltda.",
+      "page": 1,
+      "x": 239.44,
+      "y": 84.68
+    },
+    {
+      "k": "p1|DOCUMENTO#1",
+      "text": "DOCUMENTO",
+      "page": 1,
+      "x": 300.8,
+      "y": 94.42
+    },
+    {
+      "k": "p1|Rua#1",
+      "text": "Rua",
+      "page": 1,
+      "x": 92.23,
+      "y": 98.16
+    },
+    {
+      "k": "p1|dos#1",
+      "text": "dos",
+      "page": 1,
+      "x": 108.43,
+      "y": 98.16
+    },
+    {
+      "k": "p1|Testes,#1",
+      "text": "Testes,",
+      "page": 1,
+      "x": 121.83,
+      "y": 98.16
+    },
+    {
+      "k": "p1|1234#1",
+      "text": "1234",
+      "page": 1,
+      "x": 146.38,
+      "y": 98.16
+    },
+    {
+      "k": "p1|Galpão#1",
+      "text": "Galpão",
+      "page": 1,
+      "x": 174.34,
+      "y": 98.16
+    },
+    {
+      "k": "p1|3#1",
+      "text": "3",
+      "page": 1,
+      "x": 201.19,
+      "y": 98.16
+    },
+    {
+      "k": "p1|—#3",
+      "text": "—",
+      "page": 1,
+      "x": 180.65,
+      "y": 108.65
+    },
+    {
+      "k": "p1|13069-000#1",
+      "text": "13069-000",
+      "page": 1,
+      "x": 208.17,
+      "y": 108.65
+    },
+    {
+      "k": "p1|Fone:#1",
+      "text": "Fone:",
+      "page": 1,
+      "x": 112.99,
+      "y": 118.39
+    },
+    {
+      "k": "p1|(19)#1",
+      "text": "(19)",
+      "page": 1,
+      "x": 134.5,
+      "y": 118.39
+    },
+    {
+      "k": "p1|3555-0100#1",
+      "text": "3555-0100",
+      "page": 1,
+      "x": 149.81,
+      "y": 118.39
+    },
+    {
+      "k": "p1|0#1",
+      "text": "0",
+      "page": 1,
+      "x": 292.92,
+      "y": 130.38
+    },
+    {
+      "k": "p1|-#1",
+      "text": "-",
+      "page": 1,
+      "x": 298.91,
+      "y": 130.38
+    },
+    {
+      "k": "p1|ENTRADA#1",
+      "text": "ENTRADA",
+      "page": 1,
+      "x": 303.57,
+      "y": 130.38
+    },
+    {
+      "k": "p1|3180#1",
+      "text": "3180",
+      "page": 1,
+      "x": 561.92,
+      "y": 131.88
+    },
+    {
+      "k": "p1|1#1",
+      "text": "1",
+      "page": 1,
+      "x": 349.17,
+      "y": 134.87
+    },
+    {
+      "k": "p1|1#2",
+      "text": "1",
+      "page": 1,
+      "x": 292.92,
+      "y": 138.62
+    },
+    {
+      "k": "p1|-#2",
+      "text": "-",
+      "page": 1,
+      "x": 298.91,
+      "y": 138.62
+    },
+    {
+      "k": "p1|SAÍDA#1",
+      "text": "SAÍDA",
+      "page": 1,
+      "x": 303.57,
+      "y": 138.62
+    },
+    {
+      "k": "p1|no#1",
+      "text": "no",
+      "page": 1,
+      "x": 474.21,
+      "y": 155.1
+    },
+    {
+      "k": "p1|da#1",
+      "text": "da",
+      "page": 1,
+      "x": 548.81,
+      "y": 155.1
+    },
+    {
+      "k": "p1|NF-e#2",
+      "text": "NF-e",
+      "page": 1,
+      "x": 560.74,
+      "y": 155.1
+    },
+    {
+      "k": "p1|www.nfe.fazenda.gov.br/portal#1",
+      "text": "www.nfe.fazenda.gov.br/portal",
+      "page": 1,
+      "x": 374.19,
+      "y": 165.59
+    },
+    {
+      "k": "p1|ou#1",
+      "text": "ou",
+      "page": 1,
+      "x": 500.18,
+      "y": 165.59
+    },
+    {
+      "k": "p1|site#1",
+      "text": "site",
+      "page": 1,
+      "x": 525.15,
+      "y": 165.59
+    },
+    {
+      "k": "p1|da#2",
+      "text": "da",
+      "page": 1,
+      "x": 541.51,
+      "y": 165.59
+    },
+    {
+      "k": "p1|Sefaz#1",
+      "text": "Sefaz",
+      "page": 1,
+      "x": 553.44,
+      "y": 165.59
+    },
+    {
+      "k": "p1|Autorizadora#1",
+      "text": "Autorizadora",
+      "page": 1,
+      "x": 448.56,
+      "y": 176.83
+    },
+    {
+      "k": "p1|PROTOCOLO#1",
+      "text": "PROTOCOLO",
+      "page": 1,
+      "x": 364.85,
+      "y": 192.56
+    },
+    {
+      "k": "p1|AUTORIZAÇÃO#1",
+      "text": "AUTORIZAÇÃO",
+      "page": 1,
+      "x": 411.36,
+      "y": 192.56
+    },
+    {
+      "k": "p1|DE#6",
+      "text": "DE",
+      "page": 1,
+      "x": 456.03,
+      "y": 192.56
+    },
+    {
+      "k": "p1|USO#1",
+      "text": "USO",
+      "page": 1,
+      "x": 465.52,
+      "y": 192.56
+    },
+    {
+      "k": "p1|135260000123456#1",
+      "text": "135260000123456",
+      "page": 1,
+      "x": 394.45,
+      "y": 203.8
+    },
+    {
+      "k": "p1|15/10/2026#1",
+      "text": "15/10/2026",
+      "page": 1,
+      "x": 471.85,
+      "y": 203.8
+    },
+    {
+      "k": "p1|10:25:02#1",
+      "text": "10:25:02",
+      "page": 1,
+      "x": 519.85,
+      "y": 203.8
+    },
+    {
+      "k": "p1|BAIRRO/DISTRITO#1",
+      "text": "BAIRRO/DISTRITO",
+      "page": 1,
+      "x": 297.45,
+      "y": 277.98
+    },
+    {
+      "k": "p1|Brooklin#1",
+      "text": "Brooklin",
+      "page": 1,
+      "x": 297.45,
+      "y": 289.21
+    },
+    {
+      "k": "p1|Paulista#1",
+      "text": "Paulista",
+      "page": 1,
+      "x": 335.46,
+      "y": 289.21
+    },
+    {
+      "k": "p1|FONE/FAX#1",
+      "text": "FONE/FAX",
+      "page": 1,
+      "x": 211.09,
+      "y": 302.7
+    },
+    {
+      "k": "p1|UF#1",
+      "text": "UF",
+      "page": 1,
+      "x": 326.05,
+      "y": 302.7
+    },
+    {
+      "k": "p1|(11)#1",
+      "text": "(11)",
+      "page": 1,
+      "x": 211.09,
+      "y": 313.19
+    },
+    {
+      "k": "p1|3555-0199#1",
+      "text": "3555-0199",
+      "page": 1,
+      "x": 229.86,
+      "y": 313.19
+    },
+    {
+      "k": "p1|SP#2",
+      "text": "SP",
+      "page": 1,
+      "x": 326.05,
+      "y": 313.19
+    },
+    {
+      "k": "p1|3.919,21#1",
+      "text": "3.919,21",
+      "page": 1,
+      "x": 199.45,
+      "y": 386.62
+    },
+    {
+      "k": "p1|0,00#5",
+      "text": "0,00",
+      "page": 1,
+      "x": 267.34,
+      "y": 411.34
+    },
+    {
+      "k": "p1|0,00#6",
+      "text": "0,00",
+      "page": 1,
+      "x": 360.78,
+      "y": 411.34
+    },
+    {
+      "k": "p1|FRETE#2",
+      "text": "FRETE",
+      "page": 1,
+      "x": 265.19,
+      "y": 437.56
+    },
+    {
+      "k": "p1|POR#1",
+      "text": "POR",
+      "page": 1,
+      "x": 285,
+      "y": 437.56
+    },
+    {
+      "k": "p1|CONTA#1",
+      "text": "CONTA",
+      "page": 1,
+      "x": 298.16,
+      "y": 437.56
+    },
+    {
+      "k": "p1|CÓDIGO#1",
+      "text": "CÓDIGO",
+      "page": 1,
+      "x": 344.18,
+      "y": 437.56
+    },
+    {
+      "k": "p1|ANTT#1",
+      "text": "ANTT",
+      "page": 1,
+      "x": 368.66,
+      "y": 437.56
+    },
+    {
+      "k": "p1|PLACA#1",
+      "text": "PLACA",
+      "page": 1,
+      "x": 394.58,
+      "y": 437.56
+    },
+    {
+      "k": "p1|DO#11",
+      "text": "DO",
+      "page": 1,
+      "x": 415.4,
+      "y": 437.56
+    },
+    {
+      "k": "p1|VEÍCULO#1",
+      "text": "VEÍCULO",
+      "page": 1,
+      "x": 425.45,
+      "y": 437.56
+    },
+    {
+      "k": "p1|UF#2",
+      "text": "UF",
+      "page": 1,
+      "x": 459.41,
+      "y": 437.56
+    },
+    {
+      "k": "p1|0#2",
+      "text": "0",
+      "page": 1,
+      "x": 265.19,
+      "y": 448.05
+    },
+    {
+      "k": "p1|–#1",
+      "text": "–",
+      "page": 1,
+      "x": 272.68,
+      "y": 448.05
+    },
+    {
+      "k": "p1|Remetente#1",
+      "text": "Remetente",
+      "page": 1,
+      "x": 280.17,
+      "y": 448.05
+    },
+    {
+      "k": "p1|ABC1D23#1",
+      "text": "ABC1D23",
+      "page": 1,
+      "x": 394.58,
+      "y": 448.05
+    },
+    {
+      "k": "p1|SP#3",
+      "text": "SP",
+      "page": 1,
+      "x": 459.41,
+      "y": 448.05
+    },
+    {
+      "k": "p1|MUNICÍPIO#2",
+      "text": "MUNICÍPIO",
+      "page": 1,
+      "x": 265.19,
+      "y": 461.54
+    },
+    {
+      "k": "p1|UF#3",
+      "text": "UF",
+      "page": 1,
+      "x": 459.41,
+      "y": 461.54
+    },
+    {
+      "k": "p1|Campinas#2",
+      "text": "Campinas",
+      "page": 1,
+      "x": 265.19,
+      "y": 472.78
+    },
+    {
+      "k": "p1|SP#4",
+      "text": "SP",
+      "page": 1,
+      "x": 459.41,
+      "y": 472.78
+    },
+    {
+      "k": "p1|MARCA#1",
+      "text": "MARCA",
+      "page": 1,
+      "x": 178.8,
+      "y": 485.51
+    },
+    {
+      "k": "p1|NUMERAÇÃO#1",
+      "text": "NUMERAÇÃO",
+      "page": 1,
+      "x": 265.19,
+      "y": 485.51
+    },
+    {
+      "k": "p1|PESO#1",
+      "text": "PESO",
+      "page": 1,
+      "x": 401.93,
+      "y": 485.51
+    },
+    {
+      "k": "p1|BRUTO#1",
+      "text": "BRUTO",
+      "page": 1,
+      "x": 418.09,
+      "y": 485.51
+    },
+    {
+      "k": "p1|EXEMPLO#2",
+      "text": "EXEMPLO",
+      "page": 1,
+      "x": 178.8,
+      "y": 496.75
+    },
+    {
+      "k": "p1|1#3",
+      "text": "1",
+      "page": 1,
+      "x": 265.19,
+      "y": 496.75
+    },
+    {
+      "k": "p1|A#1",
+      "text": "A",
+      "page": 1,
+      "x": 272.13,
+      "y": 496.75
+    },
+    {
+      "k": "p1|6#2",
+      "text": "6",
+      "page": 1,
+      "x": 281.29,
+      "y": 496.75
+    },
+    {
+      "k": "p1|ALÍQ.#2",
+      "text": "ALÍQ.",
+      "page": 1,
+      "x": 569.36,
+      "y": 522.23
+    },
+    {
+      "k": "p1|NCM/SH#1",
+      "text": "NCM/SH",
+      "page": 1,
+      "x": 226.32,
+      "y": 525.22
+    },
+    {
+      "k": "p1|CST#1",
+      "text": "CST",
+      "page": 1,
+      "x": 258.71,
+      "y": 525.22
+    },
+    {
+      "k": "p1|CFOP#1",
+      "text": "CFOP",
+      "page": 1,
+      "x": 278.11,
+      "y": 525.22
+    },
+    {
+      "k": "p1|UN#1",
+      "text": "UN",
+      "page": 1,
+      "x": 300.83,
+      "y": 525.22
+    },
+    {
+      "k": "p1|QUANT.#1",
+      "text": "QUANT.",
+      "page": 1,
+      "x": 321.6,
+      "y": 525.22
+    },
+    {
+      "k": "p1|UNIT.#1",
+      "text": "UNIT.",
+      "page": 1,
+      "x": 372.67,
+      "y": 525.22
+    },
+    {
+      "k": "p1|TOTAL#3",
+      "text": "TOTAL",
+      "page": 1,
+      "x": 411.99,
+      "y": 525.22
+    },
+    {
+      "k": "p1|B.CÁLC.#1",
+      "text": "B.CÁLC.",
+      "page": 1,
+      "x": 435.52,
+      "y": 525.22
+    },
+    {
+      "k": "p1|ICMS#6",
+      "text": "ICMS",
+      "page": 1,
+      "x": 496.17,
+      "y": 525.22
+    },
+    {
+      "k": "p1|VALOR#12",
+      "text": "VALOR",
+      "page": 1,
+      "x": 513.92,
+      "y": 525.22
+    },
+    {
+      "k": "p1|IPI#2",
+      "text": "IPI",
+      "page": 1,
+      "x": 533.5,
+      "y": 525.22
+    },
+    {
+      "k": "p1|B760,#1",
+      "text": "B760,",
+      "page": 1,
+      "x": 147.27,
+      "y": 537.96
+    },
+    {
+      "k": "p1|4#1",
+      "text": "4",
+      "page": 1,
+      "x": 164.57,
+      "y": 537.96
+    },
+    {
+      "k": "p1|slots#1",
+      "text": "slots",
+      "page": 1,
+      "x": 169.44,
+      "y": 537.96
+    },
+    {
+      "k": "p1|DDR5#1",
+      "text": "DDR5",
+      "page": 1,
+      "x": 182.96,
+      "y": 537.96
+    },
+    {
+      "k": "p1|84733041#1",
+      "text": "84733041",
+      "page": 1,
+      "x": 223.87,
+      "y": 537.96
+    },
+    {
+      "k": "p1|000#1",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 537.96
+    },
+    {
+      "k": "p1|5102#1",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 537.96
+    },
+    {
+      "k": "p1|UN#2",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 537.96
+    },
+    {
+      "k": "p1|4,0000#1",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 537.96
+    },
+    {
+      "k": "p1|899,90#1",
+      "text": "899,90",
+      "page": 1,
+      "x": 370.4,
+      "y": 537.96
+    },
+    {
+      "k": "p1|3.599,60#2",
+      "text": "3.599,60",
+      "page": 1,
+      "x": 450.48,
+      "y": 537.96
+    },
+    {
+      "k": "p1|647,93#1",
+      "text": "647,93",
+      "page": 1,
+      "x": 492.15,
+      "y": 537.96
+    },
+    {
+      "k": "p1|0,00#8",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 537.96
+    },
+    {
+      "k": "p1|18,00#1",
+      "text": "18,00",
+      "page": 1,
+      "x": 549.18,
+      "y": 537.96
+    },
+    {
+      "k": "p1|0,00#9",
+      "text": "0,00",
+      "page": 1,
+      "x": 575.09,
+      "y": 537.96
+    },
+    {
+      "k": "p1|84733042#1",
+      "text": "84733042",
+      "page": 1,
+      "x": 223.87,
+      "y": 549.2
+    },
+    {
+      "k": "p1|000#2",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 549.2
+    },
+    {
+      "k": "p1|5102#2",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 549.2
+    },
+    {
+      "k": "p1|UN#3",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 549.2
+    },
+    {
+      "k": "p1|8,0000#1",
+      "text": "8,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 549.2
+    },
+    {
+      "k": "p1|329,50#1",
+      "text": "329,50",
+      "page": 1,
+      "x": 370.4,
+      "y": 549.2
+    },
+    {
+      "k": "p1|2.636,00#2",
+      "text": "2.636,00",
+      "page": 1,
+      "x": 450.48,
+      "y": 549.2
+    },
+    {
+      "k": "p1|474,48#1",
+      "text": "474,48",
+      "page": 1,
+      "x": 492.15,
+      "y": 549.2
+    },
+    {
+      "k": "p1|0,00#10",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 549.2
+    },
+    {
+      "k": "p1|84717012#1",
+      "text": "84717012",
+      "page": 1,
+      "x": 223.87,
+      "y": 560.44
+    },
+    {
+      "k": "p1|000#3",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 560.44
+    },
+    {
+      "k": "p1|5102#3",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 560.44
+    },
+    {
+      "k": "p1|UN#4",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 560.44
+    },
+    {
+      "k": "p1|6,0000#1",
+      "text": "6,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 560.44
+    },
+    {
+      "k": "p1|419,00#1",
+      "text": "419,00",
+      "page": 1,
+      "x": 370.4,
+      "y": 560.44
+    },
+    {
+      "k": "p1|2.514,00#2",
+      "text": "2.514,00",
+      "page": 1,
+      "x": 450.48,
+      "y": 560.44
+    },
+    {
+      "k": "p1|452,52#1",
+      "text": "452,52",
+      "page": 1,
+      "x": 492.15,
+      "y": 560.44
+    },
+    {
+      "k": "p1|0,00#12",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 560.44
+    },
+    {
+      "k": "p1|18,00#3",
+      "text": "18,00",
+      "page": 1,
+      "x": 549.18,
+      "y": 560.44
+    },
+    {
+      "k": "p1|0,00#13",
+      "text": "0,00",
+      "page": 1,
+      "x": 575.09,
+      "y": 560.44
+    },
+    {
+      "k": "p1|Bronze#1",
+      "text": "Bronze",
+      "page": 1,
+      "x": 151.19,
+      "y": 571.67
+    },
+    {
+      "k": "p1|85044021#1",
+      "text": "85044021",
+      "page": 1,
+      "x": 223.87,
+      "y": 571.67
+    },
+    {
+      "k": "p1|000#4",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 571.67
+    },
+    {
+      "k": "p1|5102#4",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 571.67
+    },
+    {
+      "k": "p1|UN#5",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 571.67
+    },
+    {
+      "k": "p1|4,0000#2",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 571.67
+    },
+    {
+      "k": "p1|389,90#1",
+      "text": "389,90",
+      "page": 1,
+      "x": 370.4,
+      "y": 571.67
+    },
+    {
+      "k": "p1|1.559,60#2",
+      "text": "1.559,60",
+      "page": 1,
+      "x": 450.48,
+      "y": 571.67
+    },
+    {
+      "k": "p1|280,73#1",
+      "text": "280,73",
+      "page": 1,
+      "x": 492.15,
+      "y": 571.67
+    },
+    {
+      "k": "p1|0,00#14",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 571.67
+    },
+    {
+      "k": "p1|com#2",
+      "text": "com",
+      "page": 1,
+      "x": 107.99,
+      "y": 582.16
+    },
+    {
+      "k": "p1|de#5",
+      "text": "de",
+      "page": 1,
+      "x": 156.09,
+      "y": 582.16
+    },
+    {
+      "k": "p1|vidro#1",
+      "text": "vidro",
+      "page": 1,
+      "x": 163.84,
+      "y": 582.16
+    },
+    {
+      "k": "p1|temperado#1",
+      "text": "temperado",
+      "page": 1,
+      "x": 179.16,
+      "y": 582.16
+    },
+    {
+      "k": "p1|84733099#1",
+      "text": "84733099",
+      "page": 1,
+      "x": 223.87,
+      "y": 582.16
+    },
+    {
+      "k": "p1|000#5",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 582.16
+    },
+    {
+      "k": "p1|5102#5",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 582.16
+    },
+    {
+      "k": "p1|UN#6",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 582.16
+    },
+    {
+      "k": "p1|4,0000#3",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 582.16
+    },
+    {
+      "k": "p1|275,00#1",
+      "text": "275,00",
+      "page": 1,
+      "x": 370.4,
+      "y": 582.16
+    },
+    {
+      "k": "p1|1.100,00#2",
+      "text": "1.100,00",
+      "page": 1,
+      "x": 450.48,
+      "y": 582.16
+    },
+    {
+      "k": "p1|198,00#1",
+      "text": "198,00",
+      "page": 1,
+      "x": 492.15,
+      "y": 582.16
+    },
+    {
+      "k": "p1|0,00#16",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 582.16
+    },
+    {
+      "k": "p1|CMP-0006#1",
+      "text": "CMP-0006",
+      "page": 1,
+      "x": 8.62,
+      "y": 593.4
+    },
+    {
+      "k": "p1|Cabo#1",
+      "text": "Cabo",
+      "page": 1,
+      "x": 54.3,
+      "y": 593.4
+    },
+    {
+      "k": "p1|força#1",
+      "text": "força",
+      "page": 1,
+      "x": 77.37,
+      "y": 593.4
+    },
+    {
+      "k": "p1|tripolar#1",
+      "text": "tripolar",
+      "page": 1,
+      "x": 92.31,
+      "y": 593.4
+    },
+    {
+      "k": "p1|NBR#1",
+      "text": "NBR",
+      "page": 1,
+      "x": 113.03,
+      "y": 593.4
+    },
+    {
+      "k": "p1|14136,#1",
+      "text": "14136,",
+      "page": 1,
+      "x": 128,
+      "y": 593.4
+    },
+    {
+      "k": "p1|1,8#1",
+      "text": "1,8",
+      "page": 1,
+      "x": 147.46,
+      "y": 593.4
+    },
+    {
+      "k": "p1|m#1",
+      "text": "m",
+      "page": 1,
+      "x": 157.19,
+      "y": 593.4
+    },
+    {
+      "k": "p1|85444200#1",
+      "text": "85444200",
+      "page": 1,
+      "x": 223.87,
+      "y": 593.4
+    },
+    {
+      "k": "p1|000#6",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 593.4
+    },
+    {
+      "k": "p1|5102#6",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 593.4
+    },
+    {
+      "k": "p1|UN#7",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 593.4
+    },
+    {
+      "k": "p1|20,0000#1",
+      "text": "20,0000",
+      "page": 1,
+      "x": 327.51,
+      "y": 593.4
+    },
+    {
+      "k": "p1|18,90#1",
+      "text": "18,90",
+      "page": 1,
+      "x": 373.64,
+      "y": 593.4
+    },
+    {
+      "k": "p1|378,00#1",
+      "text": "378,00",
+      "page": 1,
+      "x": 412.87,
+      "y": 593.4
+    },
+    {
+      "k": "p1|378,00#2",
+      "text": "378,00",
+      "page": 1,
+      "x": 455.34,
+      "y": 593.4
+    },
+    {
+      "k": "p1|68,04#1",
+      "text": "68,04",
+      "page": 1,
+      "x": 495.39,
+      "y": 593.4
+    },
+    {
+      "k": "p1|0,00#18",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 593.4
+    },
+    {
+      "k": "p1|CMP-0007#1",
+      "text": "CMP-0007",
+      "page": 1,
+      "x": 8.62,
+      "y": 604.64
+    },
+    {
+      "k": "p1|Pasta#1",
+      "text": "Pasta",
+      "page": 1,
+      "x": 54.3,
+      "y": 604.64
+    },
+    {
+      "k": "p1|térmica#1",
+      "text": "térmica",
+      "page": 1,
+      "x": 69.62,
+      "y": 604.64
+    },
+    {
+      "k": "p1|de#7",
+      "text": "de",
+      "page": 1,
+      "x": 90.7,
+      "y": 604.64
+    },
+    {
+      "k": "p1|prata,#1",
+      "text": "prata,",
+      "page": 1,
+      "x": 98.44,
+      "y": 604.64
+    },
+    {
+      "k": "p1|seringa#1",
+      "text": "seringa",
+      "page": 1,
+      "x": 114.65,
+      "y": 604.64
+    },
+    {
+      "k": "p1|4#2",
+      "text": "4",
+      "page": 1,
+      "x": 135.01,
+      "y": 604.64
+    },
+    {
+      "k": "p1|g#1",
+      "text": "g",
+      "page": 1,
+      "x": 139.88,
+      "y": 604.64
+    },
+    {
+      "k": "p1|34039900#1",
+      "text": "34039900",
+      "page": 1,
+      "x": 223.87,
+      "y": 604.64
+    },
+    {
+      "k": "p1|000#7",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 604.64
+    },
+    {
+      "k": "p1|5102#7",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 604.64
+    },
+    {
+      "k": "p1|UN#8",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 604.64
+    },
+    {
+      "k": "p1|10,0000#1",
+      "text": "10,0000",
+      "page": 1,
+      "x": 327.51,
+      "y": 604.64
+    },
+    {
+      "k": "p1|24,50#1",
+      "text": "24,50",
+      "page": 1,
+      "x": 373.64,
+      "y": 604.64
+    },
+    {
+      "k": "p1|245,00#1",
+      "text": "245,00",
+      "page": 1,
+      "x": 412.87,
+      "y": 604.64
+    },
+    {
+      "k": "p1|245,00#2",
+      "text": "245,00",
+      "page": 1,
+      "x": 455.34,
+      "y": 604.64
+    },
+    {
+      "k": "p1|44,10#1",
+      "text": "44,10",
+      "page": 1,
+      "x": 495.39,
+      "y": 604.64
+    },
+    {
+      "k": "p1|0,00#20",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 604.64
+    },
+    {
+      "k": "p1|18,00#7",
+      "text": "18,00",
+      "page": 1,
+      "x": 549.18,
+      "y": 604.64
+    },
+    {
+      "k": "p1|0,00#21",
+      "text": "0,00",
+      "page": 1,
+      "x": 575.09,
+      "y": 604.64
+    },
+    {
+      "k": "p1|CMP-0008#1",
+      "text": "CMP-0008",
+      "page": 1,
+      "x": 8.62,
+      "y": 615.13
+    },
+    {
+      "k": "p1|Processador#1",
+      "text": "Processador",
+      "page": 1,
+      "x": 54.3,
+      "y": 615.13
+    },
+    {
+      "k": "p1|6#3",
+      "text": "6",
+      "page": 1,
+      "x": 87.28,
+      "y": 615.13
+    },
+    {
+      "k": "p1|núcleos#1",
+      "text": "núcleos",
+      "page": 1,
+      "x": 92.14,
+      "y": 615.13
+    },
+    {
+      "k": "p1|12#1",
+      "text": "12",
+      "page": 1,
+      "x": 113.59,
+      "y": 615.13
+    },
+    {
+      "k": "p1|threads,#1",
+      "text": "threads,",
+      "page": 1,
+      "x": 121.7,
+      "y": 615.13
+    },
+    {
+      "k": "p1|soquete#1",
+      "text": "soquete",
+      "page": 1,
+      "x": 143.68,
+      "y": 615.13
+    },
+    {
+      "k": "p1|LGA1700#1",
+      "text": "LGA1700",
+      "page": 1,
+      "x": 165.12,
+      "y": 615.13
+    },
+    {
+      "k": "p1|85423190#1",
+      "text": "85423190",
+      "page": 1,
+      "x": 223.87,
+      "y": 615.13
+    },
+    {
+      "k": "p1|000#8",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 615.13
+    },
+    {
+      "k": "p1|5102#8",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 615.13
+    },
+    {
+      "k": "p1|UN#9",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 615.13
+    },
+    {
+      "k": "p1|4,0000#4",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 615.13
+    },
+    {
+      "k": "p1|1.129,00#1",
+      "text": "1.129,00",
+      "page": 1,
+      "x": 365.54,
+      "y": 615.13
+    },
+    {
+      "k": "p1|4.516,00#1",
+      "text": "4.516,00",
+      "page": 1,
+      "x": 408.01,
+      "y": 615.13
+    },
+    {
+      "k": "p1|4.516,00#2",
+      "text": "4.516,00",
+      "page": 1,
+      "x": 450.48,
+      "y": 615.13
+    },
+    {
+      "k": "p1|812,88#1",
+      "text": "812,88",
+      "page": 1,
+      "x": 492.15,
+      "y": 615.13
+    },
+    {
+      "k": "p1|0,00#22",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 615.13
+    },
+    {
+      "k": "p1|CMP-0009#1",
+      "text": "CMP-0009",
+      "page": 1,
+      "x": 8.62,
+      "y": 626.37
+    },
+    {
+      "k": "p1|Cooler#1",
+      "text": "Cooler",
+      "page": 1,
+      "x": 54.3,
+      "y": 626.37
+    },
+    {
+      "k": "p1|para#1",
+      "text": "para",
+      "page": 1,
+      "x": 73.58,
+      "y": 626.37
+    },
+    {
+      "k": "p1|processador#1",
+      "text": "processador",
+      "page": 1,
+      "x": 86.37,
+      "y": 626.37
+    },
+    {
+      "k": "p1|dissipador#1",
+      "text": "dissipador",
+      "page": 1,
+      "x": 131.77,
+      "y": 626.37
+    },
+    {
+      "k": "p1|em#1",
+      "text": "em",
+      "page": 1,
+      "x": 160.07,
+      "y": 626.37
+    },
+    {
+      "k": "p1|alumínio#1",
+      "text": "alumínio",
+      "page": 1,
+      "x": 169.62,
+      "y": 626.37
+    },
+    {
+      "k": "p1|84145990#1",
+      "text": "84145990",
+      "page": 1,
+      "x": 223.87,
+      "y": 626.37
+    },
+    {
+      "k": "p1|000#9",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 626.37
+    },
+    {
+      "k": "p1|5102#9",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 626.37
+    },
+    {
+      "k": "p1|UN#10",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 626.37
+    },
+    {
+      "k": "p1|4,0000#5",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 626.37
+    },
+    {
+      "k": "p1|149,90#1",
+      "text": "149,90",
+      "page": 1,
+      "x": 370.4,
+      "y": 626.37
+    },
+    {
+      "k": "p1|599,60#1",
+      "text": "599,60",
+      "page": 1,
+      "x": 412.87,
+      "y": 626.37
+    },
+    {
+      "k": "p1|599,60#2",
+      "text": "599,60",
+      "page": 1,
+      "x": 455.34,
+      "y": 626.37
+    },
+    {
+      "k": "p1|107,93#1",
+      "text": "107,93",
+      "page": 1,
+      "x": 492.15,
+      "y": 626.37
+    },
+    {
+      "k": "p1|0,00#24",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 626.37
+    },
+    {
+      "k": "p1|18,00#9",
+      "text": "18,00",
+      "page": 1,
+      "x": 549.18,
+      "y": 626.37
+    },
+    {
+      "k": "p1|0,00#25",
+      "text": "0,00",
+      "page": 1,
+      "x": 575.09,
+      "y": 626.37
+    },
+    {
+      "k": "p1|CMP-0010#1",
+      "text": "CMP-0010",
+      "page": 1,
+      "x": 8.62,
+      "y": 637.61
+    },
+    {
+      "k": "p1|Teclado#1",
+      "text": "Teclado",
+      "page": 1,
+      "x": 54.3,
+      "y": 637.61
+    },
+    {
+      "k": "p1|ABNT2#1",
+      "text": "ABNT2",
+      "page": 1,
+      "x": 76.01,
+      "y": 637.61
+    },
+    {
+      "k": "p1|com#4",
+      "text": "com",
+      "page": 1,
+      "x": 98.54,
+      "y": 637.61
+    },
+    {
+      "k": "p1|fio,#1",
+      "text": "fio,",
+      "page": 1,
+      "x": 111.33,
+      "y": 637.61
+    },
+    {
+      "k": "p1|USB#1",
+      "text": "USB",
+      "page": 1,
+      "x": 121.78,
+      "y": 637.61
+    },
+    {
+      "k": "p1|84716052#1",
+      "text": "84716052",
+      "page": 1,
+      "x": 223.87,
+      "y": 637.61
+    },
+    {
+      "k": "p1|000#10",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 637.61
+    },
+    {
+      "k": "p1|5102#10",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 637.61
+    },
+    {
+      "k": "p1|UN#11",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 637.61
+    },
+    {
+      "k": "p1|12,0000#1",
+      "text": "12,0000",
+      "page": 1,
+      "x": 327.51,
+      "y": 637.61
+    },
+    {
+      "k": "p1|89,90#1",
+      "text": "89,90",
+      "page": 1,
+      "x": 373.64,
+      "y": 637.61
+    },
+    {
+      "k": "p1|1.078,80#1",
+      "text": "1.078,80",
+      "page": 1,
+      "x": 408.01,
+      "y": 637.61
+    },
+    {
+      "k": "p1|1.078,80#2",
+      "text": "1.078,80",
+      "page": 1,
+      "x": 450.48,
+      "y": 637.61
+    },
+    {
+      "k": "p1|194,18#1",
+      "text": "194,18",
+      "page": 1,
+      "x": 492.15,
+      "y": 637.61
+    },
+    {
+      "k": "p1|0,00#26",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 637.61
+    },
+    {
+      "k": "p1|CMP-0011#1",
+      "text": "CMP-0011",
+      "page": 1,
+      "x": 8.62,
+      "y": 648.85
+    },
+    {
+      "k": "p1|Mouse#1",
+      "text": "Mouse",
+      "page": 1,
+      "x": 54.3,
+      "y": 648.85
+    },
+    {
+      "k": "p1|óptico#1",
+      "text": "óptico",
+      "page": 1,
+      "x": 73.59,
+      "y": 648.85
+    },
+    {
+      "k": "p1|1600#1",
+      "text": "1600",
+      "page": 1,
+      "x": 91.43,
+      "y": 648.85
+    },
+    {
+      "k": "p1|dpi,#1",
+      "text": "dpi,",
+      "page": 1,
+      "x": 106.03,
+      "y": 648.85
+    },
+    {
+      "k": "p1|USB#2",
+      "text": "USB",
+      "page": 1,
+      "x": 117.56,
+      "y": 648.85
+    },
+    {
+      "k": "p1|84716053#1",
+      "text": "84716053",
+      "page": 1,
+      "x": 223.87,
+      "y": 648.85
+    },
+    {
+      "k": "p1|000#11",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 648.85
+    },
+    {
+      "k": "p1|5102#11",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 648.85
+    },
+    {
+      "k": "p1|UN#12",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 648.85
+    },
+    {
+      "k": "p1|12,0000#2",
+      "text": "12,0000",
+      "page": 1,
+      "x": 327.51,
+      "y": 648.85
+    },
+    {
+      "k": "p1|45,90#1",
+      "text": "45,90",
+      "page": 1,
+      "x": 373.64,
+      "y": 648.85
+    },
+    {
+      "k": "p1|550,80#1",
+      "text": "550,80",
+      "page": 1,
+      "x": 412.87,
+      "y": 648.85
+    },
+    {
+      "k": "p1|550,80#2",
+      "text": "550,80",
+      "page": 1,
+      "x": 455.34,
+      "y": 648.85
+    },
+    {
+      "k": "p1|99,14#1",
+      "text": "99,14",
+      "page": 1,
+      "x": 495.39,
+      "y": 648.85
+    },
+    {
+      "k": "p1|0,00#28",
+      "text": "0,00",
+      "page": 1,
+      "x": 529.78,
+      "y": 648.85
+    },
+    {
+      "k": "p1|CMP-0012#1",
+      "text": "CMP-0012",
+      "page": 1,
+      "x": 8.62,
+      "y": 659.33
+    },
+    {
+      "k": "p1|Monitor#1",
+      "text": "Monitor",
+      "page": 1,
+      "x": 54.3,
+      "y": 659.33
+    },
+    {
+      "k": "p1|LED#1",
+      "text": "LED",
+      "page": 1,
+      "x": 77.19,
+      "y": 659.33
+    },
+    {
+      "k": "p1|23,8\"#1",
+      "text": "23,8\"",
+      "page": 1,
+      "x": 91.43,
+      "y": 659.33
+    },
+    {
+      "k": "p1|Full#1",
+      "text": "Full",
+      "page": 1,
+      "x": 107.05,
+      "y": 659.33
+    },
+    {
+      "k": "p1|HD,#1",
+      "text": "HD,",
+      "page": 1,
+      "x": 119.13,
+      "y": 659.33
+    },
+    {
+      "k": "p1|entrada#1",
+      "text": "entrada",
+      "page": 1,
+      "x": 131.75,
+      "y": 659.33
+    },
+    {
+      "k": "p1|HDMI#1",
+      "text": "HDMI",
+      "page": 1,
+      "x": 152.46,
+      "y": 659.33
+    },
+    {
+      "k": "p1|85285200#1",
+      "text": "85285200",
+      "page": 1,
+      "x": 223.87,
+      "y": 659.33
+    },
+    {
+      "k": "p1|000#12",
+      "text": "000",
+      "page": 1,
+      "x": 258.88,
+      "y": 659.33
+    },
+    {
+      "k": "p1|5102#12",
+      "text": "5102",
+      "page": 1,
+      "x": 278.5,
+      "y": 659.33
+    },
+    {
+      "k": "p1|UN#13",
+      "text": "UN",
+      "page": 1,
+      "x": 300.12,
+      "y": 659.33
+    },
+    {
+      "k": "p1|4,0000#6",
+      "text": "4,0000",
+      "page": 1,
+      "x": 330.76,
+      "y": 659.33
+    },
+    {
+      "k": "p1|749,00#1",
+      "text": "749,00",
+      "page": 1,
+      "x": 370.4,
+      "y": 659.33
+    },
+    {
+      "k": "p1|2.996,00#1",
+      "text": "2.996,00",
+      "page": 1,
+      "x": 408.01,
+      "y": 659.33
+    },
+    {
+      "k": "p1|2.996,00#2",
+      "text": "2.996,00",
+      "page": 1,
+      "x": 450.48,
+      "y": 659.33
+    },
+    {
+      "k": "p1|539,28#1",
+      "text": "539,28",
+      "page": 1,
+      "x": 492.15,
+      "y": 659.33
+    },
+    {
+      "k": "p1|CÁLCULO#4",
+      "text": "CÁLCULO",
+      "page": 1,
+      "x": 6.75,
+      "y": 704.29
+    },
+    {
+      "k": "p1|DO#13",
+      "text": "DO",
+      "page": 1,
+      "x": 38.22,
+      "y": 704.29
+    },
+    {
+      "k": "p1|ISSQN#1",
+      "text": "ISSQN",
+      "page": 1,
+      "x": 48.71,
+      "y": 704.29
+    },
+    {
+      "k": "p1|INSCRIÇÃO#5",
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "x": 9.76,
+      "y": 714.78
+    },
+    {
+      "k": "p1|MUNICIPAL#1",
+      "text": "MUNICIPAL",
+      "page": 1,
+      "x": 43.56,
+      "y": 714.78
+    },
+    {
+      "k": "p1|VALOR#13",
+      "text": "VALOR",
+      "page": 1,
+      "x": 153.61,
+      "y": 714.78
+    },
+    {
+      "k": "p1|TOTAL#4",
+      "text": "TOTAL",
+      "page": 1,
+      "x": 174.87,
+      "y": 714.78
+    },
+    {
+      "k": "p1|DOS#3",
+      "text": "DOS",
+      "page": 1,
+      "x": 195.2,
+      "y": 714.78
+    },
+    {
+      "k": "p1|SERVIÇOS#2",
+      "text": "SERVIÇOS",
+      "page": 1,
+      "x": 208.69,
+      "y": 714.78
+    },
+    {
+      "k": "p1|BASE#3",
+      "text": "BASE",
+      "page": 1,
+      "x": 297.46,
+      "y": 714.78
+    },
+    {
+      "k": "p1|DE#11",
+      "text": "DE",
+      "page": 1,
+      "x": 314.28,
+      "y": 714.78
+    },
+    {
+      "k": "p1|CÁLCULO#5",
+      "text": "CÁLCULO",
+      "page": 1,
+      "x": 323.77,
+      "y": 714.78
+    },
+    {
+      "k": "p1|DO#14",
+      "text": "DO",
+      "page": 1,
+      "x": 353.57,
+      "y": 714.78
+    },
+    {
+      "k": "p1|ISSQN#2",
+      "text": "ISSQN",
+      "page": 1,
+      "x": 363.73,
+      "y": 714.78
+    },
+    {
+      "k": "p1|VALOR#14",
+      "text": "VALOR",
+      "page": 1,
+      "x": 441.32,
+      "y": 714.78
+    },
+    {
+      "k": "p1|DO#15",
+      "text": "DO",
+      "page": 1,
+      "x": 462.69,
+      "y": 714.78
+    },
+    {
+      "k": "p1|ISSQN#3",
+      "text": "ISSQN",
+      "page": 1,
+      "x": 472.84,
+      "y": 714.78
+    },
+    {
+      "k": "p1|DADOS#2",
+      "text": "DADOS",
+      "page": 1,
+      "x": 6.75,
+      "y": 741
+    },
+    {
+      "k": "p1|ADICIONAIS#1",
+      "text": "ADICIONAIS",
+      "page": 1,
+      "x": 28.9,
+      "y": 741
+    },
+    {
+      "k": "p1|INFORMAÇÕES#1",
+      "text": "INFORMAÇÕES",
+      "page": 1,
+      "x": 9.76,
+      "y": 751.49
+    },
+    {
+      "k": "p1|COMPLEMENTARES#1",
+      "text": "COMPLEMENTARES",
+      "page": 1,
+      "x": 54.22,
+      "y": 751.49
+    },
+    {
+      "k": "p1|RESERVADO#1",
+      "text": "RESERVADO",
+      "page": 1,
+      "x": 376.46,
+      "y": 751.49
+    },
+    {
+      "k": "p1|AO#2",
+      "text": "AO",
+      "page": 1,
+      "x": 412.34,
+      "y": 751.49
+    },
+    {
+      "k": "p1|FISCO#1",
+      "text": "FISCO",
+      "page": 1,
+      "x": 422.49,
+      "y": 751.49
+    },
+    {
+      "k": "p1|SEM#1",
+      "text": "SEM",
+      "page": 1,
+      "x": 9.76,
+      "y": 758.98
+    },
+    {
+      "k": "p1|VALOR#15",
+      "text": "VALOR",
+      "page": 1,
+      "x": 25.75,
+      "y": 758.98
+    },
+    {
+      "k": "p1|FISCAL#3",
+      "text": "FISCAL",
+      "page": 1,
+      "x": 50.68,
+      "y": 758.98
+    },
+    {
+      "k": "p1|—#12",
+      "text": "—",
+      "page": 1,
+      "x": 76.25,
+      "y": 758.98
+    },
+    {
+      "k": "p1|NF-e#3",
+      "text": "NF-e",
+      "page": 1,
+      "x": 84.99,
+      "y": 758.98
+    },
+    {
+      "k": "p1|emitida#1",
+      "text": "emitida",
+      "page": 1,
+      "x": 101.1,
+      "y": 758.98
+    },
+    {
+      "k": "p1|em#2",
+      "text": "em",
+      "page": 1,
+      "x": 123.81,
+      "y": 758.98
+    },
+    {
+      "k": "p1|ambiente#1",
+      "text": "ambiente",
+      "page": 1,
+      "x": 134.1,
+      "y": 758.98
+    },
+    {
+      "k": "p1|de#8",
+      "text": "de",
+      "page": 1,
+      "x": 161.47,
+      "y": 758.98
+    },
+    {
+      "k": "p1|homologação#1",
+      "text": "homologação",
+      "page": 1,
+      "x": 169.81,
+      "y": 758.98
+    },
+    {
+      "k": "p1|(fixture#1",
+      "text": "(fixture",
+      "page": 1,
+      "x": 209.22,
+      "y": 758.98
+    },
+    {
+      "k": "p1|sintética#1",
+      "text": "sintética",
+      "page": 1,
+      "x": 231.93,
+      "y": 758.98
+    },
+    {
+      "k": "p1|do#1",
+      "text": "do",
+      "page": 1,
+      "x": 256.96,
+      "y": 758.98
+    },
+    {
+      "k": "p1|vellora,#1",
+      "text": "vellora,",
+      "page": 1,
+      "x": 265.7,
+      "y": 758.98
+    },
+    {
+      "k": "p1|fidelity/corpus).#1",
+      "text": "fidelity/corpus).",
+      "page": 1,
+      "x": 288.61,
+      "y": 758.98
+    },
+    {
+      "k": "p1|Pedido#1",
+      "text": "Pedido",
+      "page": 1,
+      "x": 9.76,
+      "y": 767.97
+    },
+    {
+      "k": "p1|de#9",
+      "text": "de",
+      "page": 1,
+      "x": 30.92,
+      "y": 767.97
+    },
+    {
+      "k": "p1|compra#1",
+      "text": "compra",
+      "page": 1,
+      "x": 39.27,
+      "y": 767.97
+    },
+    {
+      "k": "p1|nº#1",
+      "text": "nº",
+      "page": 1,
+      "x": 61.98,
+      "y": 767.97
+    },
+    {
+      "k": "p1|PC-2026-0815.#1",
+      "text": "PC-2026-0815.",
+      "page": 1,
+      "x": 69.39,
+      "y": 767.97
+    },
+    {
+      "k": "p1|Entrega#1",
+      "text": "Entrega",
+      "page": 1,
+      "x": 114.05,
+      "y": 767.97
+    },
+    {
+      "k": "p1|no#3",
+      "text": "no",
+      "page": 1,
+      "x": 137.53,
+      "y": 767.97
+    },
+    {
+      "k": "p1|horário#1",
+      "text": "horário",
+      "page": 1,
+      "x": 146.27,
+      "y": 767.97
+    },
+    {
+      "k": "p1|comercial.#1",
+      "text": "comercial.",
+      "page": 1,
+      "x": 168.2,
+      "y": 767.97
+    },
+    {
+      "k": "p1|Valor#1",
+      "text": "Valor",
+      "page": 1,
+      "x": 9.76,
+      "y": 776.96
+    },
+    {
+      "k": "p1|aproximado#1",
+      "text": "aproximado",
+      "page": 1,
+      "x": 26.65,
+      "y": 776.96
+    },
+    {
+      "k": "p1|dos#2",
+      "text": "dos",
+      "page": 1,
+      "x": 61.78,
+      "y": 776.96
+    },
+    {
+      "k": "p1|tributos:#1",
+      "text": "tributos:",
+      "page": 1,
+      "x": 73.24,
+      "y": 776.96
+    },
+    {
+      "k": "p1|R$#4",
+      "text": "R$",
+      "page": 1,
+      "x": 98.29,
+      "y": 776.96
+    },
+    {
+      "k": "p1|4.203,37#1",
+      "text": "4.203,37",
+      "page": 1,
+      "x": 108.2,
+      "y": 776.96
+    },
+    {
+      "k": "p1|(Fonte:#1",
+      "text": "(Fonte:",
+      "page": 1,
+      "x": 134.41,
+      "y": 776.96
+    },
+    {
+      "k": "p1|IBPT)#1",
+      "text": "IBPT)",
+      "page": 1,
+      "x": 156.35,
+      "y": 776.96
+    },
+    {
+      "k": "p1|—#13",
+      "text": "—",
+      "page": 1,
+      "x": 175.57,
+      "y": 776.96
+    },
+    {
+      "k": "p1|valor#1",
+      "text": "valor",
+      "page": 1,
+      "x": 184.31,
+      "y": 776.96
+    },
+    {
+      "k": "p1|fictício.#1",
+      "text": "fictício.",
+      "page": 1,
+      "x": 200.42,
+      "y": 776.96
+    }
+  ],
+  "unpairedVellora": [
+    {
+      "text": "AO",
+      "page": 1,
+      "x": 454.76,
+      "y": 14.91
+    },
+    {
+      "text": "LADO",
+      "page": 1,
+      "x": 464.92,
+      "y": 14.91
+    },
+    {
+      "text": "NF-e",
+      "page": 1,
+      "x": 416.8,
+      "y": 20.16
+    },
+    {
+      "text": "Nº",
+      "page": 1,
+      "x": 397.95,
+      "y": 30.66
+    },
+    {
+      "text": "000.012.345",
+      "page": 1,
+      "x": 410.97,
+      "y": 30.66
+    },
+    {
+      "text": "IDENTIFICAÇÃO",
+      "page": 1,
+      "x": 203.84,
+      "y": 39.66
+    },
+    {
+      "text": "E",
+      "page": 1,
+      "x": 251.66,
+      "y": 39.66
+    },
+    {
+      "text": "ASSINATURA",
+      "page": 1,
+      "x": 256.5,
+      "y": 39.66
+    },
+    {
+      "text": "DO",
+      "page": 1,
+      "x": 295,
+      "y": 39.66
+    },
+    {
+      "text": "RECEBEDOR",
+      "page": 1,
+      "x": 305.16,
+      "y": 39.66
+    },
+    {
+      "text": "SÉRIE",
+      "page": 1,
+      "x": 405.7,
+      "y": 40.41
+    },
+    {
+      "text": "001",
+      "page": 1,
+      "x": 438.21,
+      "y": 40.41
+    },
+    {
+      "text": "DOCUMENTO",
+      "page": 1,
+      "x": 218.82,
+      "y": 92.91
+    },
+    {
+      "text": "Componentes",
+      "page": 1,
+      "x": 53.08,
+      "y": 94.41
+    },
+    {
+      "text": "Ltda.",
+      "page": 1,
+      "x": 126.08,
+      "y": 94.41
+    },
+    {
+      "text": "Rua",
+      "page": 1,
+      "x": 46.85,
+      "y": 107.91
+    },
+    {
+      "text": "dos",
+      "page": 1,
+      "x": 63.08,
+      "y": 107.91
+    },
+    {
+      "text": "Testes,",
+      "page": 1,
+      "x": 76.49,
+      "y": 107.91
+    },
+    {
+      "text": "1234",
+      "page": 1,
+      "x": 101.09,
+      "y": 107.91
+    },
+    {
+      "text": "Galpão",
+      "page": 1,
+      "x": 129.09,
+      "y": 107.91
+    },
+    {
+      "text": "3",
+      "page": 1,
+      "x": 155.98,
+      "y": 107.91
+    },
+    {
+      "text": "0",
+      "page": 1,
+      "x": 203.84,
+      "y": 111.66
+    },
+    {
+      "text": "-",
+      "page": 1,
+      "x": 209.84,
+      "y": 111.66
+    },
+    {
+      "text": "ENTRADA",
+      "page": 1,
+      "x": 214.5,
+      "y": 111.66
+    },
+    {
+      "text": "1",
+      "page": 1,
+      "x": 260.13,
+      "y": 116.16
+    },
+    {
+      "text": "—",
+      "page": 1,
+      "x": 91.97,
+      "y": 118.41
+    },
+    {
+      "text": "1",
+      "page": 1,
+      "x": 203.84,
+      "y": 119.91
+    },
+    {
+      "text": "-",
+      "page": 1,
+      "x": 209.84,
+      "y": 119.91
+    },
+    {
+      "text": "SAÍDA",
+      "page": 1,
+      "x": 214.5,
+      "y": 119.91
+    },
+    {
+      "text": "13069-000",
+      "page": 1,
+      "x": 86.09,
+      "y": 128.16
+    },
+    {
+      "text": "3",
+      "page": 1,
+      "x": 591.09,
+      "y": 128.91
+    },
+    {
+      "text": "Fone:",
+      "page": 1,
+      "x": 67.65,
+      "y": 137.91
+    },
+    {
+      "text": "(19)",
+      "page": 1,
+      "x": 89.2,
+      "y": 137.91
+    },
+    {
+      "text": "3555-0100",
+      "page": 1,
+      "x": 104.53,
+      "y": 137.91
+    },
+    {
+      "text": "da",
+      "page": 1,
+      "x": 405.51,
+      "y": 164.16
+    },
+    {
+      "text": "NF-e",
+      "page": 1,
+      "x": 417.45,
+      "y": 164.16
+    },
+    {
+      "text": "www.nfe.fazenda.gov.br/portal",
+      "page": 1,
+      "x": 440.5,
+      "y": 164.16
+    },
+    {
+      "text": "ou",
+      "page": 1,
+      "x": 566.67,
+      "y": 164.16
+    },
+    {
+      "text": "no",
+      "page": 1,
+      "x": 432.22,
+      "y": 174.66
+    },
+    {
+      "text": "site",
+      "page": 1,
+      "x": 444.72,
+      "y": 174.66
+    },
+    {
+      "text": "da",
+      "page": 1,
+      "x": 461.11,
+      "y": 174.66
+    },
+    {
+      "text": "Sefaz",
+      "page": 1,
+      "x": 473.05,
+      "y": 174.66
+    },
+    {
+      "text": "Autorizadora",
+      "page": 1,
+      "x": 497.21,
+      "y": 174.66
+    },
+    {
+      "text": "PROTOCOLO",
+      "page": 1,
+      "x": 300.71,
+      "y": 191.16
+    },
+    {
+      "text": "DE",
+      "page": 1,
+      "x": 338.1,
+      "y": 191.16
+    },
+    {
+      "text": "AUTORIZAÇÃO",
+      "page": 1,
+      "x": 347.27,
+      "y": 191.16
+    },
+    {
+      "text": "USO",
+      "page": 1,
+      "x": 401.49,
+      "y": 191.16
+    },
+    {
+      "text": "135260000123456",
+      "page": 1,
+      "x": 300.78,
+      "y": 201.66
+    },
+    {
+      "text": "15/10/2026",
+      "page": 1,
+      "x": 378.28,
+      "y": 201.66
+    },
+    {
+      "text": "10:25:02",
+      "page": 1,
+      "x": 426.34,
+      "y": 201.66
+    },
+    {
+      "text": "BAIRRO/DISTRITO",
+      "page": 1,
+      "x": 176.16,
+      "y": 278.91
+    },
+    {
+      "text": "Brooklin",
+      "page": 1,
+      "x": 176.16,
+      "y": 289.41
+    },
+    {
+      "text": "Paulista",
+      "page": 1,
+      "x": 214.22,
+      "y": 289.41
+    },
+    {
+      "text": "FONE/FAX",
+      "page": 1,
+      "x": 93.12,
+      "y": 303.66
+    },
+    {
+      "text": "UF",
+      "page": 1,
+      "x": 259.19,
+      "y": 303.66
+    },
+    {
+      "text": "(11)",
+      "page": 1,
+      "x": 93.12,
+      "y": 314.16
+    },
+    {
+      "text": "3555-0199",
+      "page": 1,
+      "x": 111.91,
+      "y": 314.16
+    },
+    {
+      "text": "SP",
+      "page": 1,
+      "x": 259.19,
+      "y": 314.16
+    },
+    {
+      "text": "3.919,21",
+      "page": 1,
+      "x": 151.99,
+      "y": 389.91
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 224.49,
+      "y": 415.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 463.28,
+      "y": 415.41
+    },
+    {
+      "text": "FRETE",
+      "page": 1,
+      "x": 184.46,
+      "y": 442.41
+    },
+    {
+      "text": "POR",
+      "page": 1,
+      "x": 204.3,
+      "y": 442.41
+    },
+    {
+      "text": "CONTA",
+      "page": 1,
+      "x": 217.47,
+      "y": 442.41
+    },
+    {
+      "text": "CÓDIGO",
+      "page": 1,
+      "x": 242.59,
+      "y": 442.41
+    },
+    {
+      "text": "ANTT",
+      "page": 1,
+      "x": 267.08,
+      "y": 442.41
+    },
+    {
+      "text": "PLACA",
+      "page": 1,
+      "x": 300.71,
+      "y": 442.41
+    },
+    {
+      "text": "DO",
+      "page": 1,
+      "x": 321.55,
+      "y": 442.41
+    },
+    {
+      "text": "VEÍCULO",
+      "page": 1,
+      "x": 331.6,
+      "y": 442.41
+    },
+    {
+      "text": "UF",
+      "page": 1,
+      "x": 416.96,
+      "y": 442.41
+    },
+    {
+      "text": "0",
+      "page": 1,
+      "x": 184.46,
+      "y": 452.91
+    },
+    {
+      "text": "–",
+      "page": 1,
+      "x": 191.96,
+      "y": 452.91
+    },
+    {
+      "text": "Remetente",
+      "page": 1,
+      "x": 199.46,
+      "y": 452.91
+    },
+    {
+      "text": "ABC1D23",
+      "page": 1,
+      "x": 300.71,
+      "y": 452.91
+    },
+    {
+      "text": "SP",
+      "page": 1,
+      "x": 416.96,
+      "y": 452.91
+    },
+    {
+      "text": "MUNICÍPIO",
+      "page": 1,
+      "x": 184.46,
+      "y": 467.16
+    },
+    {
+      "text": "UF",
+      "page": 1,
+      "x": 416.96,
+      "y": 467.16
+    },
+    {
+      "text": "Campinas",
+      "page": 1,
+      "x": 184.46,
+      "y": 477.66
+    },
+    {
+      "text": "SP",
+      "page": 1,
+      "x": 416.96,
+      "y": 477.66
+    },
+    {
+      "text": "MARCA",
+      "page": 1,
+      "x": 126.34,
+      "y": 491.91
+    },
+    {
+      "text": "NUMERAÇÃO",
+      "page": 1,
+      "x": 184.46,
+      "y": 491.91
+    },
+    {
+      "text": "PESO",
+      "page": 1,
+      "x": 358.84,
+      "y": 491.91
+    },
+    {
+      "text": "BRUTO",
+      "page": 1,
+      "x": 375.01,
+      "y": 491.91
+    },
+    {
+      "text": "EXEMPLO",
+      "page": 1,
+      "x": 126.34,
+      "y": 502.41
+    },
+    {
+      "text": "1",
+      "page": 1,
+      "x": 184.46,
+      "y": 502.41
+    },
+    {
+      "text": "A",
+      "page": 1,
+      "x": 191.41,
+      "y": 502.41
+    },
+    {
+      "text": "6",
+      "page": 1,
+      "x": 200.58,
+      "y": 502.41
+    },
+    {
+      "text": "NCM/SH",
+      "page": 1,
+      "x": 94.2,
+      "y": 533.16
+    },
+    {
+      "text": "CST",
+      "page": 1,
+      "x": 133.35,
+      "y": 533.16
+    },
+    {
+      "text": "CFOP",
+      "page": 1,
+      "x": 174.9,
+      "y": 533.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 217.08,
+      "y": 533.16
+    },
+    {
+      "text": "QUANT.",
+      "page": 1,
+      "x": 258.46,
+      "y": 533.16
+    },
+    {
+      "text": "VALOR",
+      "page": 1,
+      "x": 303.36,
+      "y": 533.16
+    },
+    {
+      "text": "UNIT.",
+      "page": 1,
+      "x": 322.96,
+      "y": 533.16
+    },
+    {
+      "text": "TOTAL",
+      "page": 1,
+      "x": 362.74,
+      "y": 533.16
+    },
+    {
+      "text": "B.CÁLC.",
+      "page": 1,
+      "x": 385.29,
+      "y": 533.16
+    },
+    {
+      "text": "ICMS",
+      "page": 1,
+      "x": 407.75,
+      "y": 533.16
+    },
+    {
+      "text": "IPI",
+      "page": 1,
+      "x": 485.23,
+      "y": 533.16
+    },
+    {
+      "text": "ALÍQ.",
+      "page": 1,
+      "x": 509.01,
+      "y": 533.16
+    },
+    {
+      "text": "84733041",
+      "page": 1,
+      "x": 91.75,
+      "y": 545.16
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 545.16
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 545.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 545.16
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 545.16
+    },
+    {
+      "text": "899,90",
+      "page": 1,
+      "x": 323.34,
+      "y": 545.16
+    },
+    {
+      "text": "3.599,60",
+      "page": 1,
+      "x": 359.98,
+      "y": 545.16
+    },
+    {
+      "text": "647,93",
+      "page": 1,
+      "x": 443.39,
+      "y": 545.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 545.16
+    },
+    {
+      "text": "B760,",
+      "page": 1,
+      "x": 50.85,
+      "y": 552.66
+    },
+    {
+      "text": "4",
+      "page": 1,
+      "x": 68.19,
+      "y": 552.66
+    },
+    {
+      "text": "slots",
+      "page": 1,
+      "x": 73.07,
+      "y": 552.66
+    },
+    {
+      "text": "DDR5",
+      "page": 1,
+      "x": 76.31,
+      "y": 566.16
+    },
+    {
+      "text": "84733042",
+      "page": 1,
+      "x": 91.75,
+      "y": 566.16
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 566.16
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 566.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 566.16
+    },
+    {
+      "text": "8,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 566.16
+    },
+    {
+      "text": "329,50",
+      "page": 1,
+      "x": 323.34,
+      "y": 566.16
+    },
+    {
+      "text": "2.636,00",
+      "page": 1,
+      "x": 359.98,
+      "y": 566.16
+    },
+    {
+      "text": "474,48",
+      "page": 1,
+      "x": 443.39,
+      "y": 566.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 566.16
+    },
+    {
+      "text": "84717012",
+      "page": 1,
+      "x": 91.75,
+      "y": 578.91
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 578.91
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 578.91
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 578.91
+    },
+    {
+      "text": "6,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 578.91
+    },
+    {
+      "text": "419,00",
+      "page": 1,
+      "x": 323.34,
+      "y": 578.91
+    },
+    {
+      "text": "2.514,00",
+      "page": 1,
+      "x": 359.98,
+      "y": 578.91
+    },
+    {
+      "text": "452,52",
+      "page": 1,
+      "x": 443.39,
+      "y": 578.91
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 578.91
+    },
+    {
+      "text": "85044021",
+      "page": 1,
+      "x": 91.75,
+      "y": 592.41
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 592.41
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 592.41
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 592.41
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 592.41
+    },
+    {
+      "text": "389,90",
+      "page": 1,
+      "x": 323.34,
+      "y": 592.41
+    },
+    {
+      "text": "1.559,60",
+      "page": 1,
+      "x": 359.98,
+      "y": 592.41
+    },
+    {
+      "text": "280,73",
+      "page": 1,
+      "x": 443.39,
+      "y": 592.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 592.41
+    },
+    {
+      "text": "Bronze",
+      "page": 1,
+      "x": 50.85,
+      "y": 599.91
+    },
+    {
+      "text": "84733099",
+      "page": 1,
+      "x": 91.75,
+      "y": 613.41
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 613.41
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 613.41
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 613.41
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 613.41
+    },
+    {
+      "text": "275,00",
+      "page": 1,
+      "x": 323.34,
+      "y": 613.41
+    },
+    {
+      "text": "1.100,00",
+      "page": 1,
+      "x": 359.98,
+      "y": 613.41
+    },
+    {
+      "text": "198,00",
+      "page": 1,
+      "x": 443.39,
+      "y": 613.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 613.41
+    },
+    {
+      "text": "vidro",
+      "page": 1,
+      "x": 58.62,
+      "y": 620.91
+    },
+    {
+      "text": "temperado",
+      "page": 1,
+      "x": 73.96,
+      "y": 620.91
+    },
+    {
+      "text": "CMP-0006",
+      "page": 1,
+      "x": 9.34,
+      "y": 634.41
+    },
+    {
+      "text": "Cabo",
+      "page": 1,
+      "x": 50.85,
+      "y": 634.41
+    },
+    {
+      "text": "de",
+      "page": 1,
+      "x": 66.2,
+      "y": 634.41
+    },
+    {
+      "text": "força",
+      "page": 1,
+      "x": 73.96,
+      "y": 634.41
+    },
+    {
+      "text": "tripolar",
+      "page": 1,
+      "x": 88.94,
+      "y": 634.41
+    },
+    {
+      "text": "85444200",
+      "page": 1,
+      "x": 91.75,
+      "y": 634.41
+    },
+    {
+      "text": "NBR",
+      "page": 1,
+      "x": 109.7,
+      "y": 634.41
+    },
+    {
+      "text": "14136,",
+      "page": 1,
+      "x": 124.69,
+      "y": 634.41
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 634.41
+    },
+    {
+      "text": "1,8",
+      "page": 1,
+      "x": 144.19,
+      "y": 634.41
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 634.41
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 634.41
+    },
+    {
+      "text": "20,0000",
+      "page": 1,
+      "x": 258.32,
+      "y": 634.41
+    },
+    {
+      "text": "18,90",
+      "page": 1,
+      "x": 326.59,
+      "y": 634.41
+    },
+    {
+      "text": "378,00",
+      "page": 1,
+      "x": 364.85,
+      "y": 634.41
+    },
+    {
+      "text": "378,00",
+      "page": 1,
+      "x": 406.37,
+      "y": 634.41
+    },
+    {
+      "text": "68,04",
+      "page": 1,
+      "x": 446.64,
+      "y": 634.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 634.41
+    },
+    {
+      "text": "m",
+      "page": 1,
+      "x": 50.85,
+      "y": 641.91
+    },
+    {
+      "text": "CMP-0007",
+      "page": 1,
+      "x": 9.34,
+      "y": 654.66
+    },
+    {
+      "text": "Pasta",
+      "page": 1,
+      "x": 50.85,
+      "y": 654.66
+    },
+    {
+      "text": "térmica",
+      "page": 1,
+      "x": 66.2,
+      "y": 654.66
+    },
+    {
+      "text": "de",
+      "page": 1,
+      "x": 87.32,
+      "y": 654.66
+    },
+    {
+      "text": "34039900",
+      "page": 1,
+      "x": 91.75,
+      "y": 654.66
+    },
+    {
+      "text": "prata,",
+      "page": 1,
+      "x": 95.08,
+      "y": 654.66
+    },
+    {
+      "text": "seringa",
+      "page": 1,
+      "x": 111.32,
+      "y": 654.66
+    },
+    {
+      "text": "4",
+      "page": 1,
+      "x": 131.72,
+      "y": 654.66
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 654.66
+    },
+    {
+      "text": "g",
+      "page": 1,
+      "x": 136.6,
+      "y": 654.66
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 654.66
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 654.66
+    },
+    {
+      "text": "10,0000",
+      "page": 1,
+      "x": 258.32,
+      "y": 654.66
+    },
+    {
+      "text": "24,50",
+      "page": 1,
+      "x": 326.59,
+      "y": 654.66
+    },
+    {
+      "text": "245,00",
+      "page": 1,
+      "x": 364.85,
+      "y": 654.66
+    },
+    {
+      "text": "245,00",
+      "page": 1,
+      "x": 406.37,
+      "y": 654.66
+    },
+    {
+      "text": "44,10",
+      "page": 1,
+      "x": 446.64,
+      "y": 654.66
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 654.66
+    },
+    {
+      "text": "CMP-0008",
+      "page": 1,
+      "x": 9.34,
+      "y": 668.16
+    },
+    {
+      "text": "Processador",
+      "page": 1,
+      "x": 50.85,
+      "y": 668.16
+    },
+    {
+      "text": "6",
+      "page": 1,
+      "x": 83.89,
+      "y": 668.16
+    },
+    {
+      "text": "núcleos",
+      "page": 1,
+      "x": 88.76,
+      "y": 668.16
+    },
+    {
+      "text": "85423190",
+      "page": 1,
+      "x": 91.75,
+      "y": 668.16
+    },
+    {
+      "text": "12",
+      "page": 1,
+      "x": 110.25,
+      "y": 668.16
+    },
+    {
+      "text": "threads,",
+      "page": 1,
+      "x": 118.37,
+      "y": 668.16
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 668.16
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 668.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 668.16
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 668.16
+    },
+    {
+      "text": "1.129,00",
+      "page": 1,
+      "x": 318.46,
+      "y": 668.16
+    },
+    {
+      "text": "4.516,00",
+      "page": 1,
+      "x": 359.98,
+      "y": 668.16
+    },
+    {
+      "text": "4.516,00",
+      "page": 1,
+      "x": 401.5,
+      "y": 668.16
+    },
+    {
+      "text": "812,88",
+      "page": 1,
+      "x": 443.39,
+      "y": 668.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 668.16
+    },
+    {
+      "text": "soquete",
+      "page": 1,
+      "x": 50.85,
+      "y": 675.66
+    },
+    {
+      "text": "LGA1700",
+      "page": 1,
+      "x": 72.34,
+      "y": 675.66
+    },
+    {
+      "text": "CMP-0009",
+      "page": 1,
+      "x": 9.34,
+      "y": 689.16
+    },
+    {
+      "text": "Cooler",
+      "page": 1,
+      "x": 50.85,
+      "y": 689.16
+    },
+    {
+      "text": "para",
+      "page": 1,
+      "x": 70.17,
+      "y": 689.16
+    },
+    {
+      "text": "processador",
+      "page": 1,
+      "x": 82.98,
+      "y": 689.16
+    },
+    {
+      "text": "84145990",
+      "page": 1,
+      "x": 91.75,
+      "y": 689.16
+    },
+    {
+      "text": "com",
+      "page": 1,
+      "x": 115.65,
+      "y": 689.16
+    },
+    {
+      "text": "dissipador",
+      "page": 1,
+      "x": 128.47,
+      "y": 689.16
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 689.16
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 689.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 689.16
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 689.16
+    },
+    {
+      "text": "149,90",
+      "page": 1,
+      "x": 323.34,
+      "y": 689.16
+    },
+    {
+      "text": "599,60",
+      "page": 1,
+      "x": 364.85,
+      "y": 689.16
+    },
+    {
+      "text": "599,60",
+      "page": 1,
+      "x": 406.37,
+      "y": 689.16
+    },
+    {
+      "text": "107,93",
+      "page": 1,
+      "x": 443.39,
+      "y": 689.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 689.16
+    },
+    {
+      "text": "18,00",
+      "page": 1,
+      "x": 525.93,
+      "y": 689.16
+    },
+    {
+      "text": "em",
+      "page": 1,
+      "x": 50.85,
+      "y": 696.66
+    },
+    {
+      "text": "alumínio",
+      "page": 1,
+      "x": 60.42,
+      "y": 696.66
+    },
+    {
+      "text": "CMP-0010",
+      "page": 1,
+      "x": 9.34,
+      "y": 710.16
+    },
+    {
+      "text": "Teclado",
+      "page": 1,
+      "x": 50.85,
+      "y": 710.16
+    },
+    {
+      "text": "ABNT2",
+      "page": 1,
+      "x": 72.6,
+      "y": 710.16
+    },
+    {
+      "text": "84716052",
+      "page": 1,
+      "x": 91.75,
+      "y": 710.16
+    },
+    {
+      "text": "com",
+      "page": 1,
+      "x": 95.17,
+      "y": 710.16
+    },
+    {
+      "text": "fio,",
+      "page": 1,
+      "x": 107.99,
+      "y": 710.16
+    },
+    {
+      "text": "USB",
+      "page": 1,
+      "x": 118.46,
+      "y": 710.16
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 710.16
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 710.16
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 710.16
+    },
+    {
+      "text": "12,0000",
+      "page": 1,
+      "x": 258.32,
+      "y": 710.16
+    },
+    {
+      "text": "89,90",
+      "page": 1,
+      "x": 326.59,
+      "y": 710.16
+    },
+    {
+      "text": "1.078,80",
+      "page": 1,
+      "x": 359.98,
+      "y": 710.16
+    },
+    {
+      "text": "1.078,80",
+      "page": 1,
+      "x": 401.5,
+      "y": 710.16
+    },
+    {
+      "text": "194,18",
+      "page": 1,
+      "x": 443.39,
+      "y": 710.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 710.16
+    },
+    {
+      "text": "18,00",
+      "page": 1,
+      "x": 525.93,
+      "y": 710.16
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 560.19,
+      "y": 710.16
+    },
+    {
+      "text": "CMP-0011",
+      "page": 1,
+      "x": 9.34,
+      "y": 722.91
+    },
+    {
+      "text": "Mouse",
+      "page": 1,
+      "x": 50.85,
+      "y": 722.91
+    },
+    {
+      "text": "óptico",
+      "page": 1,
+      "x": 70.17,
+      "y": 722.91
+    },
+    {
+      "text": "1600",
+      "page": 1,
+      "x": 88.05,
+      "y": 722.91
+    },
+    {
+      "text": "84716053",
+      "page": 1,
+      "x": 91.75,
+      "y": 722.91
+    },
+    {
+      "text": "dpi,",
+      "page": 1,
+      "x": 102.67,
+      "y": 722.91
+    },
+    {
+      "text": "USB",
+      "page": 1,
+      "x": 114.23,
+      "y": 722.91
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 722.91
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 722.91
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 722.91
+    },
+    {
+      "text": "12,0000",
+      "page": 1,
+      "x": 258.32,
+      "y": 722.91
+    },
+    {
+      "text": "45,90",
+      "page": 1,
+      "x": 326.59,
+      "y": 722.91
+    },
+    {
+      "text": "550,80",
+      "page": 1,
+      "x": 364.85,
+      "y": 722.91
+    },
+    {
+      "text": "550,80",
+      "page": 1,
+      "x": 406.37,
+      "y": 722.91
+    },
+    {
+      "text": "99,14",
+      "page": 1,
+      "x": 446.64,
+      "y": 722.91
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 722.91
+    },
+    {
+      "text": "18,00",
+      "page": 1,
+      "x": 525.93,
+      "y": 722.91
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 560.19,
+      "y": 722.91
+    },
+    {
+      "text": "CMP-0012",
+      "page": 1,
+      "x": 9.34,
+      "y": 736.41
+    },
+    {
+      "text": "Monitor",
+      "page": 1,
+      "x": 50.85,
+      "y": 736.41
+    },
+    {
+      "text": "LED",
+      "page": 1,
+      "x": 73.79,
+      "y": 736.41
+    },
+    {
+      "text": "23,8\"",
+      "page": 1,
+      "x": 88.05,
+      "y": 736.41
+    },
+    {
+      "text": "85285200",
+      "page": 1,
+      "x": 91.75,
+      "y": 736.41
+    },
+    {
+      "text": "Full",
+      "page": 1,
+      "x": 103.7,
+      "y": 736.41
+    },
+    {
+      "text": "HD,",
+      "page": 1,
+      "x": 115.8,
+      "y": 736.41
+    },
+    {
+      "text": "entrada",
+      "page": 1,
+      "x": 128.44,
+      "y": 736.41
+    },
+    {
+      "text": "000",
+      "page": 1,
+      "x": 133.51,
+      "y": 736.41
+    },
+    {
+      "text": "5102",
+      "page": 1,
+      "x": 175.28,
+      "y": 736.41
+    },
+    {
+      "text": "UN",
+      "page": 1,
+      "x": 216.36,
+      "y": 736.41
+    },
+    {
+      "text": "4,0000",
+      "page": 1,
+      "x": 261.57,
+      "y": 736.41
+    },
+    {
+      "text": "749,00",
+      "page": 1,
+      "x": 323.34,
+      "y": 736.41
+    },
+    {
+      "text": "2.996,00",
+      "page": 1,
+      "x": 359.98,
+      "y": 736.41
+    },
+    {
+      "text": "2.996,00",
+      "page": 1,
+      "x": 401.5,
+      "y": 736.41
+    },
+    {
+      "text": "539,28",
+      "page": 1,
+      "x": 443.39,
+      "y": 736.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 480.91,
+      "y": 736.41
+    },
+    {
+      "text": "18,00",
+      "page": 1,
+      "x": 525.93,
+      "y": 736.41
+    },
+    {
+      "text": "0,00",
+      "page": 1,
+      "x": 560.19,
+      "y": 736.41
+    },
+    {
+      "text": "HDMI",
+      "page": 1,
+      "x": 50.85,
+      "y": 743.91
+    },
+    {
+      "text": "CÁLCULO",
+      "page": 1,
+      "x": 7.09,
+      "y": 757.41
+    },
+    {
+      "text": "DO",
+      "page": 1,
+      "x": 38.59,
+      "y": 757.41
+    },
+    {
+      "text": "ISSQN",
+      "page": 1,
+      "x": 49.09,
+      "y": 757.41
+    },
+    {
+      "text": "INSCRIÇÃO",
+      "page": 1,
+      "x": 10.09,
+      "y": 767.91
+    },
+    {
+      "text": "MUNICIPAL",
+      "page": 1,
+      "x": 43.92,
+      "y": 767.91
+    },
+    {
+      "text": "VALOR",
+      "page": 1,
+      "x": 155.4,
+      "y": 767.91
+    },
+    {
+      "text": "TOTAL",
+      "page": 1,
+      "x": 176.68,
+      "y": 767.91
+    },
+    {
+      "text": "DOS",
+      "page": 1,
+      "x": 197.03,
+      "y": 767.91
+    },
+    {
+      "text": "SERVIÇOS",
+      "page": 1,
+      "x": 210.53,
+      "y": 767.91
+    },
+    {
+      "text": "BASE",
+      "page": 1,
+      "x": 300.71,
+      "y": 767.91
+    },
+    {
+      "text": "DE",
+      "page": 1,
+      "x": 317.55,
+      "y": 767.91
+    },
+    {
+      "text": "CÁLCULO",
+      "page": 1,
+      "x": 327.05,
+      "y": 767.91
+    },
+    {
+      "text": "DO",
+      "page": 1,
+      "x": 356.88,
+      "y": 767.91
+    },
+    {
+      "text": "ISSQN",
+      "page": 1,
+      "x": 367.04,
+      "y": 767.91
+    },
+    {
+      "text": "VALOR",
+      "page": 1,
+      "x": 446.02,
+      "y": 767.91
+    },
+    {
+      "text": "DO",
+      "page": 1,
+      "x": 467.42,
+      "y": 767.91
+    },
+    {
+      "text": "ISSQN",
+      "page": 1,
+      "x": 477.58,
+      "y": 767.91
+    },
+    {
+      "text": "DADOS",
+      "page": 1,
+      "x": 7.09,
+      "y": 794.91
+    },
+    {
+      "text": "ADICIONAIS",
+      "page": 1,
+      "x": 29.26,
+      "y": 794.91
+    },
+    {
+      "text": "INFORMAÇÕES",
+      "page": 2,
+      "x": 10.09,
+      "y": 14.91
+    },
+    {
+      "text": "COMPLEMENTARES",
+      "page": 2,
+      "x": 54.59,
+      "y": 14.91
+    },
+    {
+      "text": "RESERVADO",
+      "page": 2,
+      "x": 300.71,
+      "y": 14.91
+    },
+    {
+      "text": "AO",
+      "page": 2,
+      "x": 336.63,
+      "y": 14.91
+    },
+    {
+      "text": "FISCO",
+      "page": 2,
+      "x": 346.79,
+      "y": 14.91
+    },
+    {
+      "text": "SEM",
+      "page": 2,
+      "x": 10.09,
+      "y": 22.41
+    },
+    {
+      "text": "VALOR",
+      "page": 2,
+      "x": 26.1,
+      "y": 22.41
+    },
+    {
+      "text": "FISCAL",
+      "page": 2,
+      "x": 51.06,
+      "y": 22.41
+    },
+    {
+      "text": "—",
+      "page": 2,
+      "x": 76.66,
+      "y": 22.41
+    },
+    {
+      "text": "NF-e",
+      "page": 2,
+      "x": 85.41,
+      "y": 22.41
+    },
+    {
+      "text": "emitida",
+      "page": 2,
+      "x": 101.55,
+      "y": 22.41
+    },
+    {
+      "text": "em",
+      "page": 2,
+      "x": 124.3,
+      "y": 22.41
+    },
+    {
+      "text": "ambiente",
+      "page": 2,
+      "x": 134.6,
+      "y": 22.41
+    },
+    {
+      "text": "de",
+      "page": 2,
+      "x": 162.01,
+      "y": 22.41
+    },
+    {
+      "text": "homologação",
+      "page": 2,
+      "x": 170.37,
+      "y": 22.41
+    },
+    {
+      "text": "(fixture",
+      "page": 2,
+      "x": 209.84,
+      "y": 22.41
+    },
+    {
+      "text": "sintética",
+      "page": 2,
+      "x": 232.58,
+      "y": 22.41
+    },
+    {
+      "text": "do",
+      "page": 2,
+      "x": 257.66,
+      "y": 22.41
+    },
+    {
+      "text": "vellora,",
+      "page": 2,
+      "x": 266.41,
+      "y": 22.41
+    },
+    {
+      "text": "fidelity/corpus).",
+      "page": 2,
+      "x": 289.35,
+      "y": 22.41
+    },
+    {
+      "text": "Pedido",
+      "page": 2,
+      "x": 10.09,
+      "y": 31.41
+    },
+    {
+      "text": "de",
+      "page": 2,
+      "x": 31.28,
+      "y": 31.41
+    },
+    {
+      "text": "compra",
+      "page": 2,
+      "x": 39.64,
+      "y": 31.41
+    },
+    {
+      "text": "nº",
+      "page": 2,
+      "x": 62.38,
+      "y": 31.41
+    },
+    {
+      "text": "PC-2026-0815.",
+      "page": 2,
+      "x": 69.8,
+      "y": 31.41
+    },
+    {
+      "text": "Entrega",
+      "page": 2,
+      "x": 114.53,
+      "y": 31.41
+    },
+    {
+      "text": "no",
+      "page": 2,
+      "x": 138.05,
+      "y": 31.41
+    },
+    {
+      "text": "horário",
+      "page": 2,
+      "x": 146.8,
+      "y": 31.41
+    },
+    {
+      "text": "comercial.",
+      "page": 2,
+      "x": 168.76,
+      "y": 31.41
+    },
+    {
+      "text": "Valor",
+      "page": 2,
+      "x": 10.09,
+      "y": 40.41
+    },
+    {
+      "text": "aproximado",
+      "page": 2,
+      "x": 27,
+      "y": 40.41
+    },
+    {
+      "text": "dos",
+      "page": 2,
+      "x": 62.19,
+      "y": 40.41
+    },
+    {
+      "text": "tributos:",
+      "page": 2,
+      "x": 73.66,
+      "y": 40.41
+    },
+    {
+      "text": "R$",
+      "page": 2,
+      "x": 98.75,
+      "y": 40.41
+    },
+    {
+      "text": "4.203,37",
+      "page": 2,
+      "x": 108.67,
+      "y": 40.41
+    },
+    {
+      "text": "(Fonte:",
+      "page": 2,
+      "x": 134.92,
+      "y": 40.41
+    },
+    {
+      "text": "IBPT)",
+      "page": 2,
+      "x": 156.89,
+      "y": 40.41
+    },
+    {
+      "text": "—",
+      "page": 2,
+      "x": 176.14,
+      "y": 40.41
+    },
+    {
+      "text": "valor",
+      "page": 2,
+      "x": 184.89,
+      "y": 40.41
+    },
+    {
+      "text": "fictício.",
+      "page": 2,
+      "x": 201.03,
+      "y": 40.41
+    }
+  ],
+  "offPage": {
+    "vellora": [],
+    "chrome": []
+  }
+}

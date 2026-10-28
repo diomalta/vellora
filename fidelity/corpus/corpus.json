@@ -1,0 +1,397 @@
+{
+  "_comment": "Corpus manifest consumed by fidelity/corpus/render-corpus.mjs. Criterion IDs are defined (with sources and tolerance labels) in fidelity/ACCEPTANCE.md. Text entries starting with '@' are data.json paths; { text, match: 'loose' } ignores whitespace (tokens that wrap inside narrow boxes); { text, count: n } requires n case-insensitive occurrences (pinned to the templated HTML by test/fixtures.test.mjs). Font rules are word-bounded anchors that must occur exactly `count` (default 1) times, optionally inside a region measured from the same PDF (regionFrom: belowBarcode); judge: 'last' judges only the last occurrence in reading order. categories judge every glyph of a data-moc category of the template. Geometry is in mm, page coordinates (origin top-left).",
+  "fixtures": [
+    {
+      "id": "boleto-febraban",
+      "class": "boleto",
+      "variants": [
+        { "data": "data.json", "label": "spec geometry (103 mm)" },
+        {
+          "data": "data.px-grid.json",
+          "label": "DIAGNOSTIC px-grid geometry (107.16 mm)",
+          "diagnostic": true,
+          "overrides": { "BOL-G1": { "target": 107.1563 } }
+        }
+      ],
+      "expectedPages": 1,
+      "barcode": {
+        "format": "ITF",
+        "expected": "@expected.barcodeDigits",
+        "validator": "boleto",
+        "geometry": {
+          "x0_mm": 10,
+          "y_center_mm": 279,
+          "height_mm": 13,
+          "cut_search_mm": [180, 192]
+        }
+      },
+      "requiredText": [
+        { "text": "@linhaDigitavel.formatada", "count": 2 },
+        { "text": "@banco.codigoCompensacao", "count": 2 },
+        { "text": "@beneficiario.nome", "count": 2 },
+        { "text": "@beneficiario.cnpj", "count": 2 },
+        { "text": "@beneficiario.enderecoLinha", "count": 2 },
+        { "text": "@pagador.nome", "count": 2 },
+        { "text": "@pagador.cpf", "count": 2 },
+        { "text": "@titulo.vencimento", "count": 2 },
+        { "text": "@titulo.valor", "count": 2 },
+        { "text": "@titulo.nossoNumero", "count": 2 },
+        { "text": "@beneficiario.agenciaCodigo", "count": 2 },
+        { "text": "Recibo do Pagador", "count": 2 },
+        { "text": "Ficha de Compensação", "count": 2 },
+        "Autenticação Mecânica - Ficha de Compensação",
+        "Local de pagamento",
+        "Instruções (Texto de Responsabilidade do Beneficiário)"
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          {
+            "id": "BOL-T1",
+            "text": "@banco.codigoCompensacao",
+            "count": 2,
+            "judge": "last",
+            "min_pt": 20.6,
+            "bold": true
+          },
+          {
+            "id": "BOL-T2",
+            "text": "@linhaDigitavel.campos.0",
+            "count": 2,
+            "judge": "last",
+            "min_pt": 14.42,
+            "max_pt": 16.48
+          },
+          {
+            "id": "BOL-T3",
+            "text": "Ficha de Compensação",
+            "regionFrom": "belowBarcode",
+            "whole_line": true,
+            "max_pt": 8.24
+          }
+        ]
+      },
+      "criteria": [
+        { "id": "BOL-P1", "check": "pages" },
+        { "id": "BOL-X1", "check": "text" },
+        { "id": "BOL-X2", "check": "textAgree" },
+        { "id": "BOL-B1", "check": "barcodeDecode" },
+        { "id": "BOL-B2", "check": "linhaConsistent" },
+        {
+          "id": "BOL-G1",
+          "check": "geometry",
+          "path": "measured.length_mm",
+          "target": 103,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G2",
+          "check": "geometry",
+          "path": "measured.height_mm",
+          "target": 13,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G3",
+          "check": "geometry",
+          "path": "ficha_relative_mm.barcode_start_from_ficha_left",
+          "target": 5,
+          "tol": 0.3
+        },
+        {
+          "id": "BOL-G4",
+          "check": "geometry",
+          "path": "ficha_relative_mm.barcode_centre_above_ficha_bottom",
+          "target": 12,
+          "tol": 0.5
+        },
+        { "id": "BOL-G5", "check": "geometry", "path": "edge_error_mm.max", "max": 0.05 },
+        {
+          "id": "BOL-G6",
+          "check": "geometry",
+          "path": "ficha_relative_mm.ficha_top",
+          "target": 186,
+          "tol": 0.5
+        },
+        { "id": "BOL-T1", "check": "fontRule" },
+        { "id": "BOL-T2", "check": "fontRule" },
+        { "id": "BOL-T3", "check": "fontRule" },
+        { "id": "BOL-R1", "check": "refPos", "rules": ["BOL-T1", "BOL-T2", "BOL-T3"], "tol": 1.0 },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "danfe",
+      "class": "danfe",
+      "variants": [{ "data": "data.json", "label": "retrato, folhas soltas, laser" }],
+      "expectedPages": 1,
+      "barcode": {
+        "format": "Code128",
+        "expected": "@expected.chaveDigits",
+        "validator": "nfe",
+        "geometry": { "x0_mm": 131.06, "y_center_mm": 32.8, "height_mm": 10 }
+      },
+      "requiredText": [
+        "DANFE",
+        "DOCUMENTO AUXILIAR DA NOTA FISCAL ELETRÔNICA",
+        "@chave.formatada",
+        { "text": "@nf.numero", "count": 2 },
+        { "text": "@emitente.razaoSocial", "count": 2 },
+        "@emitente.cnpj",
+        "@destinatario.razaoSocial",
+        "@destinatario.cnpj",
+        { "text": "@imposto.vNF", "count": 3 },
+        "@imposto.vIcms",
+        "@nf.protocolo",
+        "SEM VALOR FISCAL",
+        "PROTOCOLO DE AUTORIZAÇÃO DE USO",
+        "FOLHA 1/1",
+        "CÓDIGO PRODUTO",
+        "DESCRIÇÃO DO PRODUTO/SERVIÇO",
+        "NCM/SH",
+        "CST",
+        "CFOP",
+        { "text": "UN", "count": 18 },
+        "QUANT.",
+        "VALOR UNIT.",
+        { "text": "VALOR TOTAL", "count": 4 },
+        "B.CÁLC. ICMS",
+        "VALOR ICMS",
+        "ALÍQ. ICMS"
+      ],
+      "fontRules": {
+        "page": 1,
+        "families": ["LiberationSerif", "LiberationMono", "TimesNewRoman", "CourierNew"],
+        "floor_pt": 5,
+        "rules": [
+          {
+            "id": "DANFE-L1a",
+            "text": "DESTINATÁRIO/REMETENTE",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 83.0, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1b",
+            "text": "FATURA/DUPLICATAS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 112.1, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1c",
+            "text": "TRANSPORTADOR/VOLUMES TRANSPORTADOS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 146.0, "tol_mm": 3 }
+          },
+          {
+            "id": "DANFE-L1d",
+            "text": "DADOS DOS PRODUTOS/SERVIÇOS",
+            "min_pt": 0,
+            "pos": { "x_mm": 2.5, "top_mm": 175.7, "tol_mm": 3 }
+          },
+          { "id": "DANFE-A1", "text": "DANFE" },
+          { "id": "DANFE-A2", "text": "@chave.formatada" },
+          { "id": "DANFE-A3", "text": "@emitente.razaoSocial" },
+          { "id": "DANFE-A4", "text": "SEM VALOR FISCAL" },
+          { "id": "DANFE-A5", "text": "@destinatario.razaoSocial" }
+        ],
+        "categories": [
+          { "id": "DANFE-F1", "moc": "3.7.1", "min_pt": 5, "bold": true, "caps": true },
+          { "id": "DANFE-F2", "moc": "3.7.2", "min_pt": 5, "caps": true },
+          { "id": "DANFE-F3", "moc": "3.7.3", "min_pt": 6, "caps": true },
+          { "id": "DANFE-F4a", "moc": "3.7.4-danfe", "min_pt": 12, "bold": true, "caps": true },
+          { "id": "DANFE-F4b", "moc": "3.7.4-ident", "min_pt": 10, "bold": true, "caps": true },
+          { "id": "DANFE-F4c", "moc": "3.7.4-doc", "min_pt": 8, "caps": true },
+          { "id": "DANFE-F5", "moc": "3.7.5", "min_pt": 8.5, "bold": true },
+          { "id": "DANFE-F6a", "moc": "3.7.6-razao", "min_pt": 12, "bold": true },
+          { "id": "DANFE-F6b", "moc": "3.7.6-dados", "min_pt": 8, "bold": true },
+          { "id": "DANFE-F7", "moc": "3.7.7", "min_pt": 6 },
+          { "id": "DANFE-F8", "moc": "3.7.8", "min_pt": 6 },
+          { "id": "DANFE-F9", "moc": "3.7.9", "min_pt": 10 }
+        ]
+      },
+      "criteria": [
+        { "id": "DANFE-P1", "check": "pages" },
+        { "id": "DANFE-X1", "check": "text" },
+        { "id": "DANFE-X2", "check": "textAgree" },
+        { "id": "DANFE-B1", "check": "barcodeDecode" },
+        { "id": "DANFE-B2", "check": "geometry", "path": "measured.length_mm", "min": 60 },
+        {
+          "id": "DANFE-B3",
+          "check": "geometry",
+          "path": "measured.height_mm",
+          "min": 8,
+          "max": 14.8
+        },
+        { "id": "DANFE-B4", "check": "geometry", "path": "measured.quiet_left_mm", "min": 2.65 },
+        { "id": "DANFE-B5", "check": "geometry", "path": "measured.quiet_right_mm", "min": 2.65 },
+        { "id": "DANFE-M1", "check": "margins", "min": 2, "max": 8 },
+        { "id": "DANFE-F0", "check": "fontFamily" },
+        { "id": "DANFE-F1", "check": "fontCategory" },
+        { "id": "DANFE-F2", "check": "fontCategory" },
+        { "id": "DANFE-F3", "check": "fontCategory" },
+        { "id": "DANFE-F4a", "check": "fontCategory" },
+        { "id": "DANFE-F4b", "check": "fontCategory" },
+        { "id": "DANFE-F4c", "check": "fontCategory" },
+        { "id": "DANFE-F5", "check": "fontCategory" },
+        { "id": "DANFE-F6a", "check": "fontCategory" },
+        { "id": "DANFE-F6b", "check": "fontCategory" },
+        { "id": "DANFE-F7", "check": "fontCategory" },
+        { "id": "DANFE-F8", "check": "fontCategory" },
+        { "id": "DANFE-F9", "check": "fontCategory" },
+        { "id": "DANFE-F10", "check": "fontFloor" },
+        { "id": "DANFE-F11", "check": "fontCoverage" },
+        { "id": "DANFE-L1a", "check": "fontRule" },
+        { "id": "DANFE-L1b", "check": "fontRule" },
+        { "id": "DANFE-L1c", "check": "fontRule" },
+        { "id": "DANFE-L1d", "check": "fontRule" },
+        {
+          "id": "DANFE-R1",
+          "check": "refPos",
+          "rules": [
+            "DANFE-L1a",
+            "DANFE-L1b",
+            "DANFE-L1c",
+            "DANFE-L1d",
+            "DANFE-A1",
+            "DANFE-A2",
+            "DANFE-A3",
+            "DANFE-A4",
+            "DANFE-A5"
+          ],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "text-stress-ptbr",
+      "class": "text",
+      "variants": [{ "data": "data.json", "label": "self-authored text stress" }],
+      "expectedPages": null,
+      "requiredText": [
+        "À noite, vovô Kowalsky vê o ímã cair no pé do pinguim queixoso e vovó põe açúcar no chá de tâmaras do jabuti feliz.",
+        {
+          "text": "fiscal final fluxo afinidade eficiência office waffle suffix affluent shuffle firefly flâmula",
+          "count": 2
+        },
+        { "text": "Pneumoultramicroscopicossilicovulcanoconiótico", "match": "loose" },
+        { "text": "inconstitucionalissimamente", "match": "loose" },
+        { "text": "NFe35261012345678000195550010000123451705243180", "match": "loose" },
+        "−1.234,56 (U+2212)",
+        { "text": "@totais.saldoFinal", "count": 4 },
+        "@totais.debitos",
+        "Lançamentos de dezembro de 2026",
+        "Fim do documento."
+      ],
+      "moneyColumns": { "page": 2, "headers": ["Débito (R$)", "Crédito (R$)", "Saldo (R$)"] },
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "TXT-S1", "text": "1. Acentuação e pontuação", "min_pt": 0 },
+          { "id": "TXT-S2", "text": "2. Ligaduras e pesos misturados", "min_pt": 0 },
+          { "id": "TXT-S3", "text": "3. Palavras longas e tokens sem quebra", "min_pt": 0 },
+          { "id": "TXT-S4", "text": "4. Resumo", "min_pt": 0 },
+          { "id": "TXT-S5", "text": "5. Extrato detalhado", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "TXT-X1", "check": "text" },
+        { "id": "TXT-X2", "check": "textAgree" },
+        { "id": "TXT-A1", "check": "moneyAlign", "max": 0.3 },
+        { "id": "TXT-P1", "check": "pagesVsReference" },
+        {
+          "id": "TXT-R1",
+          "check": "refPos",
+          "rules": ["TXT-S1", "TXT-S2", "TXT-S3", "TXT-S4", "TXT-S5"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "oss-sparksuite-invoice",
+      "class": "invoice",
+      "variants": [
+        { "data": "data.json", "label": "sparksuite simple-html-invoice-template (MIT)" }
+      ],
+      "expectedPages": 1,
+      "expectedImages": 1,
+      "requiredText": [
+        "Invoice #: 123",
+        "Sparksuite, Inc.",
+        "Acme Corp.",
+        "Website design",
+        "$300.00",
+        "Total: $385.00"
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "INV-S1", "text": "Invoice #: 123", "min_pt": 0 },
+          { "id": "INV-S2", "text": "Payment Method", "min_pt": 0 },
+          { "id": "INV-S3", "text": "Website design", "min_pt": 0 },
+          { "id": "INV-S4", "text": "Total: $385.00", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "INV-P1", "check": "pages" },
+        { "id": "INV-P2", "check": "pagesVsReference" },
+        { "id": "INV-X1", "check": "text" },
+        { "id": "INV-X2", "check": "textAgree" },
+        { "id": "INV-I1", "check": "images" },
+        {
+          "id": "INV-R1",
+          "check": "refPos",
+          "rules": ["INV-S1", "INV-S2", "INV-S3", "INV-S4"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    },
+    {
+      "id": "oss-postmark-receipt",
+      "class": "receipt",
+      "variants": [{ "data": "data.json", "label": "Postmark receipt (MIT)" }],
+      "expectedPages": null,
+      "requiredText": [
+        "Hi Maria Exemplo,",
+        "#RCPT-2026-000417",
+        "Additional seats × 3",
+        "−$10.00",
+        "$81.00",
+        { "text": "[Product Name]", "count": 3 }
+      ],
+      "fontRules": {
+        "page": 1,
+        "rules": [
+          { "id": "RCP-S1", "text": "Hi Maria Exemplo,", "min_pt": 0 },
+          { "id": "RCP-S2", "text": "10% off your next purchase!", "min_pt": 0 },
+          { "id": "RCP-S3", "text": "#RCPT-2026-000417", "min_pt": 0 },
+          { "id": "RCP-S4", "text": "Credit applied from referral", "min_pt": 0 }
+        ]
+      },
+      "criteria": [
+        { "id": "INV-P2", "check": "pagesVsReference" },
+        { "id": "INV-X1", "check": "text" },
+        { "id": "INV-X2", "check": "textAgree" },
+        {
+          "id": "INV-R1",
+          "check": "refPos",
+          "rules": ["RCP-S1", "RCP-S2", "RCP-S3", "RCP-S4"],
+          "tol": 1.0
+        },
+        { "id": "DET-1", "check": "deterministic" },
+        { "id": "DET-2", "check": "determinismEnv" },
+        { "id": "PDF-S1", "check": "pdfStrict" }
+      ]
+    }
+  ]
+}

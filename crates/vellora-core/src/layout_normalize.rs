@@ -6,513 +6,81 @@
 
 use crate::blitz_engine::{LaidOutBox, VisualRect};
 
-const PAINTED_TABLE_CELL_TEXT_RAISE_PX: f64 = 2.0;
+// `normalize_painted_table_cell_text_baselines` (a constant 2 px raise of the text of painted
+// table rows, a corpus compensator for raw Blitz's collapsed-row drift) was retired in Phase C
+// step 02 together with that drift: `blitz_engine::compensate_collapsed_borders` lays collapsed
+// tables out at Chrome's row pitch, and the raise then put those rows' text 2 px above Chrome's
+// (`tests/text_baseline.rs`).
 
-pub(crate) fn normalize_vertical_margin_collapse(boxes: &mut [LaidOutBox]) {
-    if boxes.is_empty() {
-        return;
-    }
-    let end = boxes.len();
-    normalize_vertical_margin_collapse_in_range(boxes, 0, end);
-}
-
-fn normalize_vertical_margin_collapse_in_range(
-    boxes: &mut [LaidOutBox],
-    parent_idx: usize,
-    end: usize,
-) {
-    let child_depth = boxes[parent_idx].depth + 1;
-    let mut previous_child: Option<usize> = None;
-    let mut cumulative_shift = 0.0;
-    let mut i = parent_idx + 1;
-
-    while i < end {
-        if boxes[i].depth != child_depth {
-            i += 1;
-            continue;
-        }
-
-        if let Some(prev) = previous_child {
-            cumulative_shift += sibling_margin_collapse_amount(&boxes[prev], &boxes[i]);
-        }
-        if cumulative_shift > 0.0 {
-            shift_subtree_y(boxes, i, -cumulative_shift);
-        }
-
-        let child_end = subtree_end_by_depth(boxes, i).min(end);
-        normalize_vertical_margin_collapse_in_range(boxes, i, child_end);
-        previous_child = Some(i);
-        i = child_end;
-    }
-}
-
-fn sibling_margin_collapse_amount(previous: &LaidOutBox, current: &LaidOutBox) -> f64 {
-    if !is_margin_collapsible_block(previous) || !is_margin_collapsible_block(current) {
-        return 0.0;
-    }
-    let bottom = previous.margin_bottom.max(0.0);
-    let top = current.margin_top.max(0.0);
-    if bottom <= 0.0 || top <= 0.0 {
-        return 0.0;
-    }
-    bottom.min(top)
-}
-
-fn is_margin_collapsible_block(b: &LaidOutBox) -> bool {
-    matches!(
-        b.tag.as_deref(),
-        Some(
-            "address"
-                | "article"
-                | "aside"
-                | "blockquote"
-                | "div"
-                | "footer"
-                | "h1"
-                | "h2"
-                | "h3"
-                | "h4"
-                | "h5"
-                | "h6"
-                | "header"
-                | "main"
-                | "p"
-                | "section"
-        )
-    )
-}
-
-fn shift_subtree_y(boxes: &mut [LaidOutBox], root_idx: usize, dy: f64) {
-    if dy == 0.0 {
-        return;
-    }
-    let end = subtree_end_by_depth(boxes, root_idx);
-    shift_range_y(boxes, root_idx, end, dy);
-}
-
-fn shift_range_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
-    if dy == 0.0 || start >= end {
-        return;
-    }
-    for b in &mut boxes[start..end] {
-        b.y += dy;
-        for rect in &mut b.visual_rects {
-            rect.y += dy;
-        }
-        for border in &mut b.rounded_borders {
-            border.y += dy;
-        }
-        for run in &mut b.text_runs {
-            run.origin_y += dy;
-        }
-        for image in &mut b.image_runs {
-            image.y += dy;
-        }
-    }
-}
-
-fn shift_range_x(boxes: &mut [LaidOutBox], start: usize, end: usize, dx: f64) {
-    if dx == 0.0 || start >= end {
-        return;
-    }
-    for b in &mut boxes[start..end] {
-        b.x += dx;
-        for rect in &mut b.visual_rects {
-            rect.x += dx;
-        }
-        for border in &mut b.rounded_borders {
-            border.x += dx;
-        }
-        for run in &mut b.text_runs {
-            run.origin_x += dx;
-        }
-        for image in &mut b.image_runs {
-            image.x += dx;
-        }
-    }
-}
-
-pub(crate) fn normalize_collapsed_table_medium_border_insets(boxes: &mut [LaidOutBox]) {
-    for i in 0..boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_border_collapse {
-            let end = subtree_end_by_depth(boxes, i);
-            normalize_collapsed_table_medium_border_inset(boxes, i, end);
-        }
-    }
-}
-
-fn normalize_collapsed_table_medium_border_inset(
-    boxes: &mut [LaidOutBox],
-    table_idx: usize,
-    end: usize,
-) {
-    if table_has_visible_edge_border(&boxes[table_idx]) {
-        return;
-    }
-
-    let table_depth = boxes[table_idx].depth;
-    let table_y = boxes[table_idx].y;
-    let table_bottom = boxes[table_idx].y + boxes[table_idx].height;
-    let mut cells_top = f64::INFINITY;
-    let mut cells_bottom = f64::NEG_INFINITY;
-    let mut i = table_idx + 1;
-
-    while i < end {
-        match boxes[i].tag.as_deref() {
-            Some("table") if boxes[i].depth > table_depth => {
-                i = subtree_end_by_depth(boxes, i).min(end);
-            }
-            Some("td" | "th") => {
-                cells_top = cells_top.min(boxes[i].y);
-                cells_bottom = cells_bottom.max(boxes[i].y + boxes[i].height);
-                i += 1;
-            }
-            _ => i += 1,
-        }
-    }
-
-    if !cells_top.is_finite() || !cells_bottom.is_finite() {
-        return;
-    }
-
-    let top_inset = cells_top - table_y;
-    let bottom_inset = table_bottom - cells_bottom;
-    if !is_fake_medium_border_inset(top_inset) || !is_fake_medium_border_inset(bottom_inset) {
-        return;
-    }
-
-    let removed = top_inset + bottom_inset;
-    shift_range_y(boxes, table_idx + 1, end, -top_inset);
-    shrink_box_block_end(&mut boxes[table_idx], removed);
-
-    let parent_end = containing_subtree_end(boxes, table_idx);
-    shift_range_y(boxes, end, parent_end, -removed);
-}
-
-/// Horizontal twin of [`normalize_collapsed_table_medium_border_insets`]: Blitz
-/// also insets a borderless collapsed table's cell content ~3px on each *inline*
-/// edge (a synthetic "medium" border). The vertical pass only strips the block
-/// edges; this expands the cell band back out to the table's inline box so left-
-/// aligned text reaches the left edge and right-aligned text reaches the right
-/// edge, matching Chromium. Must run before the column-distribution passes.
-pub(crate) fn normalize_collapsed_table_medium_border_insets_x(boxes: &mut [LaidOutBox]) {
-    for i in 0..boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_border_collapse {
-            let end = subtree_end_by_depth(boxes, i);
-            normalize_collapsed_table_medium_border_inset_x(boxes, i, end);
-        }
-    }
-}
-
-fn normalize_collapsed_table_medium_border_inset_x(
-    boxes: &mut [LaidOutBox],
-    table_idx: usize,
-    end: usize,
-) {
-    if table_has_visible_edge_border(&boxes[table_idx]) || boxes[table_idx].table_layout_fixed {
-        return;
-    }
-
-    let table_depth = boxes[table_idx].depth;
-    let table_x = boxes[table_idx].x;
-    let table_right = boxes[table_idx].x + boxes[table_idx].width;
-
-    let mut cells: Vec<usize> = Vec::new();
-    let mut cells_left = f64::INFINITY;
-    let mut cells_right = f64::NEG_INFINITY;
-    let mut column_count = 0usize;
-    let mut any_percent_hint = false;
-    let mut i = table_idx + 1;
-    while i < end {
-        match boxes[i].tag.as_deref() {
-            Some("table") if boxes[i].depth > table_depth => {
-                i = subtree_end_by_depth(boxes, i).min(end);
-            }
-            Some("tr") => {
-                let row_end = subtree_end_by_depth(boxes, i).min(end);
-                let cell_depth = boxes[i].depth + 1;
-                let row_cells: Vec<usize> = (i + 1..row_end)
-                    .filter(|&j| {
-                        boxes[j].depth == cell_depth
-                            && matches!(boxes[j].tag.as_deref(), Some("td" | "th"))
-                    })
-                    .collect();
-                let mut row_columns = 0usize;
-                for &j in &row_cells {
-                    cells.push(j);
-                    cells_left = cells_left.min(boxes[j].x);
-                    cells_right = cells_right.max(boxes[j].x + boxes[j].width);
-                    row_columns += boxes[j].colspan;
-                    any_percent_hint |= boxes[j].width_pct_hint.is_some();
-                }
-                column_count = column_count.max(row_columns);
-                i = row_end;
-            }
-            _ => i += 1,
-        }
-    }
-
-    // Percent-width tables are re-flowed by `normalize_table_percent_widths`,
-    // which sets explicit column widths from the source; leave their geometry to
-    // that pass.
-    if any_percent_hint {
-        return;
-    }
-
-    if !cells_left.is_finite() || !cells_right.is_finite() {
-        return;
-    }
-    let left_inset = cells_left - table_x;
-    let right_inset = table_right - cells_right;
-    if !is_fake_medium_border_inset(left_inset) || !is_fake_medium_border_inset(right_inset) {
-        return;
-    }
-
-    if column_count >= 3 {
-        // Auto/compact tables are re-flowed by `normalize_auto_table_compact_columns`,
-        // whose cursor anchors at the inset `row_left`, shifting *every* column
-        // right by the inset. A pure left translation removes that uniform shift
-        // without touching column widths — a stretch would change them and amplify
-        // the compact distribution mismatch (measured: PRECO/TOTAL drift right).
-        shift_range_x(boxes, table_idx + 1, end, -left_inset);
-        return;
-    }
-
-    let band = cells_right - cells_left;
-    if !band.is_finite() || band <= 0.0 {
-        return;
-    }
-    // Simple tables (e.g. the 2-column header) are squeezed *symmetrically* (left
-    // edge pushed in, right edge pulled in); expand the cell band
-    // [cells_left, cells_right] to fill the table inline box [table_x, table_right].
-    let scale = (table_right - table_x) / band;
-
-    // Each cell subtree is disjoint, so per-cell transforms are order-independent;
-    // capture each cell's pre-transform geometry from immutable inputs.
-    for &idx in &cells {
-        let old_x = boxes[idx].x;
-        let old_width = boxes[idx].width;
-        let new_x = table_x + (old_x - cells_left) * scale;
-        let new_width = old_width * scale;
-        let right_aligned = boxes[idx].text_align_right;
-        adjust_subtree_inline_geometry(boxes, idx, new_x, new_width);
-        if right_aligned {
-            // `adjust_subtree_inline_geometry` shifts text by the left-edge delta;
-            // right-aligned text must track the right edge, so add the width delta.
-            let dw = new_width - old_width;
-            let cell_end = subtree_end_by_depth(boxes, idx);
-            for b in &mut boxes[idx..cell_end] {
-                for run in &mut b.text_runs {
-                    run.origin_x += dw;
-                }
-            }
-        }
-    }
-}
-
-fn table_has_visible_edge_border(table: &LaidOutBox) -> bool {
-    table
-        .rounded_borders
-        .iter()
-        .any(|border| border.stroke_width > 0.0)
-        || table.visual_rects.iter().any(|rect| {
-            let table_bottom = table.y + table.height;
-            let rect_bottom = rect.y + rect.height;
-            let spans_inline_edge =
-                (rect.x - table.x).abs() <= 0.5 && (rect.width - table.width).abs() <= 0.5;
-            let is_edge_stroke = rect.height > 0.0
-                && rect.height <= 6.0
-                && ((rect.y - table.y).abs() <= 0.5 || (rect_bottom - table_bottom).abs() <= 0.5);
-            spans_inline_edge && is_edge_stroke
-        })
-}
-
-fn is_fake_medium_border_inset(value: f64) -> bool {
-    (2.0..=4.5).contains(&value)
-}
-
-fn shrink_box_block_end(b: &mut LaidOutBox, amount: f64) {
-    if amount <= 0.0 {
-        return;
-    }
-    let old_height = b.height;
-    b.height = (b.height - amount).max(0.0);
-    for rect in &mut b.visual_rects {
-        if (rect.y - b.y).abs() <= 0.5 && (rect.height - old_height).abs() <= 0.5 {
-            rect.height = b.height;
-        }
-    }
-    for border in &mut b.rounded_borders {
-        if (border.y - b.y).abs() <= 0.5 && (border.height - old_height).abs() <= 0.5 {
-            border.height = b.height;
-        }
-    }
-}
-
-pub(crate) fn normalize_painted_table_cell_text_baselines(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("tr") {
-            let row_end = subtree_end_by_depth(boxes, i);
-            let cell_depth = boxes[i].depth + 1;
-            let cells: Vec<usize> = (i + 1..row_end)
-                .filter(|idx| {
-                    boxes[*idx].depth == cell_depth
-                        && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
-                })
-                .collect();
-            if cells
-                .iter()
-                .any(|idx| table_cell_has_own_paint(&boxes[*idx]))
-            {
-                for idx in cells {
-                    let cell_end = subtree_end_by_depth(boxes, idx).min(row_end);
-                    shift_text_runs_y(boxes, idx, cell_end, -PAINTED_TABLE_CELL_TEXT_RAISE_PX);
-                }
-            }
-            i = row_end;
-        } else {
-            i += 1;
-        }
-    }
-}
-
-fn table_cell_has_own_paint(cell: &LaidOutBox) -> bool {
-    !cell.visual_rects.is_empty() || !cell.rounded_borders.is_empty()
-}
-
-fn shift_text_runs_y(boxes: &mut [LaidOutBox], start: usize, end: usize, dy: f64) {
-    if dy == 0.0 || start >= end {
-        return;
-    }
-    for b in &mut boxes[start..end] {
-        for run in &mut b.text_runs {
-            run.origin_y += dy;
-        }
-    }
-}
-
-pub(crate) fn normalize_fixed_table_widths(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") && boxes[i].table_layout_fixed {
-            let end = subtree_end_by_depth(boxes, i);
-            normalize_fixed_table_widths_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
-        }
-    }
-}
-
-fn normalize_fixed_table_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
-    let table_depth = boxes[table_idx].depth;
-    let table_x = boxes[table_idx].x;
-    let table_width = boxes[table_idx].width;
-    if !table_width.is_finite() || table_width <= 0.0 {
-        return;
-    }
-
-    let mut rows: Vec<Vec<usize>> = Vec::new();
-    let mut column_count = 0usize;
-    let mut i = table_idx + 1;
-    while i < end {
-        match boxes[i].tag.as_deref() {
-            Some("table") if boxes[i].depth > table_depth => {
-                i = subtree_end_by_depth(boxes, i).min(end);
-            }
-            Some("tr") => {
-                let row_end = subtree_end_by_depth(boxes, i).min(end);
-                let cell_depth = boxes[i].depth + 1;
-                let cells: Vec<usize> = (i + 1..row_end)
-                    .filter(|idx| {
-                        boxes[*idx].depth == cell_depth
-                            && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
-                    })
-                    .collect();
-                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
-                column_count = column_count.max(row_columns);
-                rows.push(cells);
-                i = row_end;
-            }
-            _ => i += 1,
-        }
-    }
-
-    if column_count < 2 {
-        return;
-    }
-
-    let track_width = table_width / column_count as f64;
-    // Per-column occupancy: how many further rows a rowspan from above keeps the
-    // column filled. Without this the column cursor resets to 0 every row, so a
-    // single-cell continuation row under a `rowspan` lands back in column 0 and
-    // overlaps the spanning cell instead of skipping to the first free column.
-    let mut occupancy = vec![0usize; column_count];
-    for cells in rows {
-        let mut column = 0usize;
-        for idx in cells {
-            while column < column_count && occupancy[column] > 0 {
-                column += 1;
-            }
-            if column >= column_count {
-                break;
-            }
-            let span = boxes[idx].colspan.min(column_count - column).max(1);
-            let rows_spanned = boxes[idx].rowspan.max(1);
-            let target_x = table_x + track_width * column as f64;
-            let target_width = track_width * span as f64;
-            adjust_subtree_inline_geometry(boxes, idx, target_x, target_width);
-            if rows_spanned > 1 {
-                for slot in occupancy.iter_mut().skip(column).take(span) {
-                    *slot = (*slot).max(rows_spanned);
-                }
-            }
-            column += span;
-        }
-        // Consume one row of every active rowspan now that this row is placed.
-        for slot in occupancy.iter_mut() {
-            *slot = slot.saturating_sub(1);
-        }
-    }
-}
-
+/// Give `width: <percentage>` cells of auto-layout tables their share of the row.
+/// Blitz 0.3.0-beta.4 drops a percentage cell width to `auto` unless the table
+/// uses the fixed layout, where it resolves the percentage itself (blitz-dom
+/// `layout/table.rs`, `collect_table_cells` / `percent_track`) the way Chrome
+/// does; so `table-layout: fixed` tables are left alone (port step 03; Chrome
+/// probe in `tests/layout_fidelity.rs`).
+///
+/// Every table is visited, nested ones included, outer before inner (document order); each
+/// visit adjusts only that table's own rows. Until port step 10-spark the loop jumped past a
+/// table's subtree, so a table nested in another one was never adjusted: every table of
+/// `oss-postmark-receipt` (one layout table holds the document) kept Blitz's widths.
 pub(crate) fn normalize_table_percent_widths(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
-        if boxes[i].tag.as_deref() == Some("table") {
-            let end = subtree_end_by_depth(boxes, i);
-            normalize_table_percent_widths_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
-        }
-    }
-}
-
-pub(crate) fn normalize_auto_table_compact_columns(boxes: &mut [LaidOutBox]) {
-    let mut i = 0;
-    while i < boxes.len() {
+    for i in 0..boxes.len() {
         if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
             let end = subtree_end_by_depth(boxes, i);
-            normalize_auto_table_compact_columns_in_range(boxes, i, end);
-            i = end;
-        } else {
-            i += 1;
+            normalize_table_percent_widths_in_range(boxes, i, end);
         }
     }
 }
 
-fn normalize_auto_table_compact_columns_in_range(
-    boxes: &mut [LaidOutBox],
-    table_idx: usize,
-    end: usize,
-) {
+/// Hand an auto-layout table's spare width to its columns in proportion to their max-content
+/// widths, as Chrome does, instead of Blitz's equal share per column.
+///
+/// BLITZ BUG COMPENSATION (Phase C step 03, 2026-10-27; delete when Blitz fixes it, see below).
+/// Blitz 0.3.0-beta.4 lays a `table-layout: auto` table out as a CSS grid whose every column
+/// track is `auto` (blitz-dom 0.3.0-beta.4 `src/layout/table.rs` 249-255: percentage columns
+/// become `auto`; 293-297: `remaining_column` is `auto` unless the layout is fixed), and Taffy
+/// 0.15.0's "stretch auto tracks" step then splits the free space EQUALLY between auto tracks
+/// (taffy 0.15.0 `src/compute/grid/track_sizing.rs` 1415-1442, `extra_space_per_auto_track =
+/// free_space / num_auto_tracks`). Browsers distribute a table's excess width over its auto
+/// columns in proportion to their max-content widths (CSS Tables 3 "distributing excess width
+/// to columns"; Chrome's `TableLayoutAlgorithmAuto` / LayoutNG table column distribution).
+/// Repro (Chrome for Testing 155.0.8059.85, local macOS, 2026-10-27; `fidelity/gate/snapshots/
+/// 2026-10-27/c03/pinc/`): the invoice items table (`width: 100%`, 673 px, four auto columns) has
+/// max-content widths 267.922 / 53.328 / 104.172 / 95.297 px (the same table with `width:
+/// max-content`); Chrome lays it out at 346.266 / 68.922 / 134.625 / 123.188 = each times
+/// 673 / 520.719; raw Blitz at 306 / 92 / 142 / 133 = each plus ~38 px (152.3 / 4). The canary
+/// `raw_blitz_tests::blitz_still_shares_auto_table_excess_width_equally` asserts Blitz's
+/// numbers and fails when Blitz distributes like Chrome.
+///
+/// Scope: only when every column is wider than its max-content width in Blitz's layout (the
+/// excess case: no cell wraps a line, so moving and resizing the laid-out cells is exact) and
+/// every cell's max-content width is known ([`LaidOutBox::max_content_width`]: no specified
+/// widths, no nested tables, no inline boxes); every row has one cell per column; no colspan,
+/// no percentage width (that is [`normalize_table_percent_widths`]); not `table-layout: fixed`.
+/// The gaps between cells (`border-spacing`) are kept.
+///
+/// Until this step this pass was a heuristic (`compact_columns`: right-aligned columns at 1.25 x
+/// their text width, the rest scaled), which put the invoice's QTD. column 6 px right of Chrome
+/// at the 673 px layout width (24 px right of raw Blitz's -17.9). The layer keeps its historical
+/// name `auto_table_compact_columns` (fidelity tooling keys on it).
+///
+/// WHEN BLITZ FIXES IT: delete this pass (and its `LAYOUT_NORMALIZE_PASSES` entry),
+/// `LaidOutBox::max_content_width` with `blitz_engine::cell_max_content_width` /
+/// `block_max_content_width`, and the canary; keep `tests/layout_fidelity.rs`'s Chrome-number
+/// table tests, which must then pass on Blitz's own layout.
+pub(crate) fn normalize_auto_table_compact_columns(boxes: &mut [LaidOutBox]) {
+    for i in 0..boxes.len() {
+        if boxes[i].tag.as_deref() == Some("table") && !boxes[i].table_layout_fixed {
+            let end = subtree_end_by_depth(boxes, i);
+            distribute_auto_table_excess(boxes, i, end);
+        }
+    }
+}
+
+fn distribute_auto_table_excess(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
     let table_depth = boxes[table_idx].depth;
     let mut rows: Vec<Vec<usize>> = Vec::new();
-    let mut column_count = 0usize;
     let mut i = table_idx + 1;
-
     while i < end {
         match boxes[i].tag.as_deref() {
             Some("table") if boxes[i].depth > table_depth => {
@@ -521,138 +89,79 @@ fn normalize_auto_table_compact_columns_in_range(
             Some("tr") => {
                 let row_end = subtree_end_by_depth(boxes, i).min(end);
                 let cell_depth = boxes[i].depth + 1;
-                let cells: Vec<usize> = (i + 1..row_end)
+                let mut cells: Vec<usize> = (i + 1..row_end)
                     .filter(|idx| {
                         boxes[*idx].depth == cell_depth
                             && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
                     })
                     .collect();
-                let row_columns = cells.iter().map(|idx| boxes[*idx].colspan).sum();
-                column_count = column_count.max(row_columns);
+                cells.sort_by(|a, b| boxes[*a].x.total_cmp(&boxes[*b].x));
                 rows.push(cells);
                 i = row_end;
             }
             _ => i += 1,
         }
     }
-
-    if column_count < 3
-        || rows.is_empty()
-        || rows
-            .iter()
-            .flatten()
-            .any(|idx| boxes[*idx].colspan != 1 || boxes[*idx].width_pct_hint.is_some())
+    let Some(columns) = rows.first().map(Vec::len) else {
+        return;
+    };
+    if columns < 2
+        || rows.iter().any(|row| row.len() != columns)
+        || rows.iter().flatten().any(|idx| {
+            let b = &boxes[*idx];
+            b.colspan != 1 || b.width_pct_hint.is_some() || b.max_content_width.is_none()
+        })
     {
         return;
     }
-
-    let mut row_left = f64::INFINITY;
-    let mut row_right = f64::NEG_INFINITY;
-    for row in &rows {
-        if row.len() != column_count {
-            return;
-        }
-        for &idx in row {
-            row_left = row_left.min(boxes[idx].x);
-            row_right = row_right.max(boxes[idx].x + boxes[idx].width);
-        }
-    }
-    let row_width = row_right - row_left;
-    if !row_width.is_finite() || row_width <= 0.0 {
+    // Column geometry from the first row; every row must agree (one grid).
+    let first = &rows[0];
+    let lefts: Vec<f64> = first.iter().map(|idx| boxes[*idx].x).collect();
+    let widths: Vec<f64> = first.iter().map(|idx| boxes[*idx].width).collect();
+    if rows.iter().any(|row| {
+        row.iter().enumerate().any(|(c, idx)| {
+            (boxes[*idx].x - lefts[c]).abs() > 0.5 || (boxes[*idx].width - widths[c]).abs() > 0.5
+        })
+    }) {
         return;
     }
-
-    let mut compact = vec![false; column_count];
-    let mut min_widths = vec![0.0; column_count];
-    let mut current_widths = vec![0.0; column_count];
+    let mut max_content = vec![0.0_f64; columns];
     for row in &rows {
-        for (column, &idx) in row.iter().enumerate() {
-            current_widths[column] = f64::max(current_widths[column], boxes[idx].width);
-            compact[column] |= boxes[idx].text_align_right;
-            min_widths[column] = f64::max(min_widths[column], intrinsic_cell_width(&boxes[idx]));
+        for (c, idx) in row.iter().enumerate() {
+            max_content[c] = max_content[c].max(boxes[*idx].max_content_width.unwrap_or(0.0));
         }
     }
-
-    let compact_count = compact.iter().filter(|&&is_compact| is_compact).count();
-    if compact_count == 0 || compact_count == column_count {
+    // The excess case only: Blitz gave every column at least its max-content width.
+    if (0..columns).any(|c| widths[c] + 0.5 < max_content[c]) {
         return;
     }
-
-    let mut target_widths = current_widths.clone();
-    let mut compact_total = 0.0;
-    let compact_floor = row_width / (column_count as f64 * 2.0);
-    for column in 0..column_count {
-        if compact[column] {
-            let target = (min_widths[column] * 1.25)
-                .max(compact_floor)
-                .min(current_widths[column])
-                .max(min_widths[column]);
-            target_widths[column] = target;
-            compact_total += target;
-        }
+    let total_max: f64 = max_content.iter().sum();
+    let total_width: f64 = widths.iter().sum();
+    let excess = total_width - total_max;
+    // Taffy rounds each column to whole px and the max-content widths are unrounded, so up to
+    // 0.5 px per column of "excess" is rounding, not spare width: a shrink-to-fit table
+    // (`width: auto`) has none (WPT css/css-tables/baseline-empty-cell-001.html moved its
+    // inner border by 1 px when the threshold was 0.5 px for the whole table).
+    if total_max <= 0.0 || excess <= 0.5 * columns as f64 + 0.5 {
+        return;
     }
-
-    let flexible_columns: Vec<usize> = (0..column_count)
-        .filter(|column| !compact[*column])
+    let targets: Vec<f64> = max_content
+        .iter()
+        .map(|m| m + excess * m / total_max)
         .collect();
-    let flexible_total = row_width - compact_total;
-    if flexible_total <= 0.0 || flexible_columns.is_empty() {
-        return;
-    }
-    let current_flexible_total: f64 = flexible_columns
-        .iter()
-        .map(|column| current_widths[*column])
-        .sum();
-    for &column in &flexible_columns {
-        target_widths[column] = if current_flexible_total > 0.0 {
-            flexible_total * (current_widths[column] / current_flexible_total)
-        } else {
-            flexible_total / flexible_columns.len() as f64
-        };
-    }
-
+    let gaps: Vec<f64> = (1..columns)
+        .map(|c| lefts[c] - (lefts[c - 1] + widths[c - 1]))
+        .collect();
     for row in rows {
-        let mut cursor = row_left;
-        for (column, idx) in row.into_iter().enumerate() {
-            adjust_subtree_inline_geometry(boxes, idx, cursor, target_widths[column]);
-            cursor += target_widths[column];
+        let mut cursor = lefts[0];
+        for (c, idx) in row.into_iter().enumerate() {
+            if c > 0 {
+                cursor += gaps[c - 1];
+            }
+            adjust_subtree_inline_geometry(boxes, idx, cursor, targets[c]);
+            cursor += targets[c];
         }
     }
-}
-
-fn intrinsic_cell_width(cell: &LaidOutBox) -> f64 {
-    let text_width = cell
-        .text_runs
-        .iter()
-        .map(text_run_width)
-        .fold(0.0_f64, f64::max);
-    if text_width <= 0.0 {
-        return cell.width;
-    }
-
-    let left_gap = cell
-        .text_runs
-        .iter()
-        .map(|run| run.origin_x - cell.x)
-        .filter(|gap| gap.is_finite() && *gap >= 0.0)
-        .fold(f64::INFINITY, f64::min);
-    let right_gap = cell
-        .text_runs
-        .iter()
-        .map(|run| cell.x + cell.width - (run.origin_x + text_run_width(run)))
-        .filter(|gap| gap.is_finite() && *gap >= 0.0)
-        .fold(f64::INFINITY, f64::min);
-    let padding = if cell.text_align_right {
-        right_gap
-    } else {
-        left_gap
-    };
-    let padding = if padding.is_finite() { padding } else { 0.0 };
-    text_width + padding * 2.0
-}
-
-fn text_run_width(run: &crate::blitz_engine::TextRun) -> f64 {
-    run.glyphs.iter().map(|glyph| glyph.advance as f64).sum()
 }
 
 fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
@@ -703,7 +212,11 @@ fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
         .filter_map(|idx| boxes[*idx].width_pct_hint)
         .map(|pct| row_width * pct)
         .sum();
-    if explicit_width >= row_width {
+    // Percentages that over-subscribe the row are left to Blitz. Exactly 100% is not
+    // over-subscribed (port step 10-spark): `oss-postmark-receipt`'s `width="80%"` /
+    // `width="20%"` rows are Chrome's 384 / 96 px, and the `>=` this replaced left them at
+    // Blitz's 401 / 79 px (its "Total" label 17.5 px right of Chrome).
+    if explicit_width > row_width + 0.01 {
         return;
     }
 
@@ -732,6 +245,18 @@ fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
     }
 }
 
+/// Move the cell at `root_idx` to `target_x` and give it `target_width`: the cell
+/// and its subtree translate by the left-edge change `dx`, and only the cell's
+/// own box (and its full-width / right-edge paint) takes the width change `dw`.
+///
+/// The cell's own text is not re-laid out, so its lines move the way a browser's
+/// lines would in the resized cell: by `dx` plus the share of `dw` its computed
+/// `text-align` gives them (left 0, center dw/2, right dw; CSS Text 3 §6.1). A
+/// right-aligned value thus keeps ending at the cell's content edge (Chrome
+/// 155.0.8059.85 probes in `tests/layout_fidelity.rs`, port step 03). Moving it
+/// by `dx` alone, as before, slid it off that edge by `dw` (invoice price
+/// columns +13.6 px vs Chrome at port step 02). Descendant boxes keep their
+/// width, so their own text moves by `dx` only.
 fn adjust_subtree_inline_geometry(
     boxes: &mut [LaidOutBox],
     root_idx: usize,
@@ -745,16 +270,35 @@ fn adjust_subtree_inline_geometry(
     let end = subtree_end_by_depth(boxes, root_idx);
 
     for (offset, b) in boxes[root_idx..end].iter_mut().enumerate() {
-        let is_root = offset == 0;
-        adjust_visual_inline_geometry(&mut b.visual_rects, old_x, old_width, dx, dw);
+        // A descendant exactly as wide as the cell (same left edge and width: an auto-width
+        // block with no inline inset, e.g. postmark's `<td width="80%"><p>Total</p></td>`)
+        // resizes with it, as the browser's would; a narrower one keeps its width.
+        let is_root = offset == 0
+            || ((b.x - old_x).abs() < 0.5
+                && (b.width - old_width).abs() < 0.5
+                && b.image_runs.is_empty()
+                && !matches!(b.tag.as_deref(), Some("table" | "img")));
+        adjust_visual_inline_geometry(
+            &mut b.visual_rects,
+            old_x,
+            old_width,
+            dx,
+            dw,
+            b.table_border_collapse,
+        );
         for border in &mut b.rounded_borders {
             border.x += dx;
             if is_root {
                 border.width = (border.width + dw).max(0.0);
             }
         }
+        let text_dx = if is_root {
+            dx + b.text_align.shift_for_width_change(dw)
+        } else {
+            dx
+        };
         for run in &mut b.text_runs {
-            run.origin_x += dx;
+            run.origin_x += text_dx;
         }
         for image in &mut b.image_runs {
             image.x += dx;
@@ -769,17 +313,30 @@ fn adjust_subtree_inline_geometry(
     }
 }
 
+/// Move (and, for a rect spanning the box, resize) a box's visual rects with its new inline
+/// geometry. `collapsed`: the box is a part of a `border-collapse: collapse` table, whose
+/// cells paint their edges centred on the box edges (`blitz_engine::compensate_collapsed_borders`):
+/// a rect straddling the box's left / right edge counts as on that edge.
 fn adjust_visual_inline_geometry(
     rects: &mut [VisualRect],
     old_x: f64,
     old_width: f64,
     dx: f64,
     dw: f64,
+    collapsed: bool,
 ) {
     let old_right = old_x + old_width;
     for rect in rects {
-        let is_full_width = (rect.x - old_x).abs() < 0.5 && (rect.width - old_width).abs() < 0.5;
-        let is_right_edge = (rect.x + rect.width - old_right).abs() < 0.5;
+        let rect_right = rect.x + rect.width;
+        let straddles = |edge: f64| collapsed && rect.x < edge && rect_right > edge;
+        let on_left = (rect.x - old_x).abs() < 0.5 || straddles(old_x);
+        let on_right = (rect_right - old_right).abs() < 0.5 || straddles(old_right);
+        let is_full_width = if collapsed {
+            on_left && on_right
+        } else {
+            (rect.x - old_x).abs() < 0.5 && (rect.width - old_width).abs() < 0.5
+        };
+        let is_right_edge = on_right;
         rect.x += dx;
         if is_full_width {
             rect.width = (rect.width + dw).max(0.0);
@@ -787,14 +344,6 @@ fn adjust_visual_inline_geometry(
             rect.x += dw;
         }
     }
-}
-
-fn containing_subtree_end(boxes: &[LaidOutBox], start: usize) -> usize {
-    let depth = boxes[start].depth;
-    let Some(parent_idx) = (0..start).rev().find(|idx| boxes[*idx].depth + 1 == depth) else {
-        return boxes.len();
-    };
-    subtree_end_by_depth(boxes, parent_idx)
 }
 
 fn subtree_end_by_depth(boxes: &[LaidOutBox], start: usize) -> usize {

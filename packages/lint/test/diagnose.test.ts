@@ -152,10 +152,13 @@ describe("Every finding links to the compatibility table", () => {
 });
 
 describe("Detected violation rules", () => {
-  test("inline svg is flagged with rule inline-svg, autoFixable", () => {
+  test("inline svg is flagged with rule inline-svg, autoFixable, as a warning", () => {
     const html = "<!DOCTYPE html><html><body><svg><rect/></svg></body></html>";
     const f = diagnose(html).findings.find((x) => x.rule === "inline-svg");
     expect(f?.autoFixable).toBe(true);
+    // The native renderer draws inline SVG (Phase C step 06): the codemod is optional, never an
+    // out-of-subset error.
+    expect(f?.severity).toBe("warning");
   });
 
   test("flex/grid inside a td is flagged with rule flex-grid-in-td, autoFixable", () => {

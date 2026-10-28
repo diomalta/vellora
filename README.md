@@ -56,7 +56,7 @@ const pdf = await renderPdf(html, data, {
 });
 ```
 
-## What Ships In 0.1.0
+## What Ships In 0.2.0
 
 | Area | Status |
 |---|---|
@@ -82,7 +82,16 @@ Supported or documented today:
 - custom TTF/OTF font bytes via the `fonts` option
 - PDF/A-2b archival output
 - partial flexbox behavior; prefer tables for reliable document layout
-- dev-time fixes for common issues such as inline SVG and grid/flex inside table cells
+- dev-time fixes for common issues such as grid/flex inside table cells, and rasterizing inline SVG when a raster image is wanted
+
+Not released yet (the released package is vellora@0.2.0):
+
+- inline `<svg>` drawn natively as PDF vector content, with `<text>` set in the bundled or
+  supplied fonts, never host fonts (the native addon is larger for it; see
+  [.changeset/inline-svg-native.md](./.changeset/inline-svg-native.md))
+- `float` layout, multi-column layout (`columns`, `column-count`, `column-width`, forced column
+  breaks), ruby annotations, table captions and anonymous table boxes, each with the gaps listed
+  in COMPATIBILITY.md
 
 Unsupported on the native path:
 
@@ -94,18 +103,29 @@ Unsupported on the native path:
 
 The generated source of truth is [COMPATIBILITY.md](./COMPATIBILITY.md).
 
+## Measured fidelity
+
+How close the native PDF lands to Chrome's print-to-PDF output for the same HTML, measured word by
+word on the repo's document fixtures. Before is the published package; after is a branch that is
+not released.
+
+<!-- fidelity-evidence:readme -->
+> **This run passes the strict merge gate (verdict PASS, --contract). The branch is not merged or released yet:** it is to be merged in vellora vX.Y.Z (placeholder; the release sets the version). INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs. The released package is vellora@0.2.0.
+
+![DANFE (NF-e invoice), page 1, side by side: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Synthetic document data.](./docs/assets/fidelity/danfe-p1.jpg)
+
+<sub>DANFE (NF-e invoice), page 1. Left to right: Chrome for Testing 155.0.8059.85 (reference), vellora 0.2.0 (published), vellora (unreleased branch). Median word-position error 17.68 mm → 0.21 mm; words within 1 mm 8.9% → 100.0%; pages 2 → 1 (Chrome: 1). Synthetic data.</sub>
+
+Measured against Chrome for Testing 155.0.8059.85 headless print-to-PDF on 9 document fixtures, comparing the position of every word in each PDF:
+
+- **8 of 9 fixtures** have every word within 1 mm of its position in Chrome for Testing 155.0.8059.85's PDF (share of word positions within 1 mm = 100%). vellora 0.2.0 (published): 0 of 9.
+- **0.21 mm or less** median word-position error on every one of the 9 fixtures (largest: danfe). vellora 0.2.0 (published): up to 106.22 mm (text-stress-ptbr).
+- **9 of 9 fixtures** print the same number of pages as Chrome. vellora 0.2.0 (published): 6 of 9.
+
+Method, the full table with the losses, and how to reproduce it: [Measured fidelity](https://diomalta.github.io/vellora/guide/fidelity#measured-fidelity). Raw values: [manifest.json](./docs/assets/fidelity/manifest.json).
+<!-- /fidelity-evidence:readme -->
+
 ## Evidence
-
-Visual evidence is generated from the repo fixtures against the optional Chromium engine:
-[report](./docs/assets/visual-evidence/index.html),
-[manifest](./docs/assets/visual-evidence/manifest.json).
-
-<p align="center">
-  <img src="./docs/assets/visual-evidence/png/vellora/invoice-1.png" alt="Invoice page 1 rendered by Vellora native" width="260">
-  <img src="./docs/assets/visual-evidence/png/diff/invoice-page-1.png" alt="Invoice page 1 pixel diff between Vellora native and Vellora Chromium" width="260">
-  <br>
-  <sub>Invoice fixture: native render and native-vs-Chromium diff.</sub>
-</p>
 
 Resource numbers come from
 [Resource Benchmarks run 28302742627](https://github.com/diomalta/vellora/actions/runs/28302742627)

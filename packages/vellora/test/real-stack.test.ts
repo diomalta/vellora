@@ -71,6 +71,30 @@ describe("renderPdf over the real @vellora/native stack", () => {
     });
   });
 
+  // Inline SVG (Phase C step 06): strict mode passes the HTML byte-unchanged and the native core
+  // draws the SVG as vector content, so the PDF grows by the SVG's drawing; an SVG image source
+  // that is not a data: URL rejects with a located image:unresolved instead of being read.
+  test("strict renders inline SVG natively and rejects a non-data: SVG image source", async () => {
+    const page = (body: string) =>
+      `<!DOCTYPE html><html><head><style>@page{size:A4;margin:10mm}</style></head><body>${body}</body></html>`;
+    const svg = '<svg width="80" height="40"><circle cx="20" cy="20" r="15" fill="#2b5fbf"/></svg>';
+    const opts = realStack({ metadata: { creationDate: "2026-10-28T00:00:00.000Z" } });
+    const withSvg = await renderPdf(page(svg), {}, opts as never);
+    const without = await renderPdf(
+      page('<div style="width:80px;height:40px"></div>'),
+      {},
+      opts as never,
+    );
+    expect(withSvg.length).toBeGreaterThan(without.length);
+    await expect(
+      renderPdf(
+        page('<svg width="8" height="8"><image href="/etc/hosts"/></svg>'),
+        {},
+        opts as never,
+      ),
+    ).rejects.toMatchObject({ feature: "image:unresolved", line: expect.any(Number) });
+  });
+
   // A document naming a family the bundled context does NOT provide ("DejaVu Sans Mono"). Supplying
   // that face via `fonts` must change the rendered bytes — proving the TS→napi→core thread actually
   // registers the caller's face (not just forwards it inertly, as the mock does).

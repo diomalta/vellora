@@ -1,0 +1,979 @@
+{
+  "schema": "vellora-fidelity/site-evidence/1",
+  "status": "PASS",
+  "statusReason": "gate report verdict PASS (--contract)",
+  "released": false,
+  "release": {
+    "version": null,
+    "placeholder": "vX.Y.Z"
+  },
+  "authority": "INDICATIVE: local macOS measurement. The authoritative run is pinned Linux CI, which is not wired yet; these numbers will be regenerated from it when it runs.",
+  "reference": {
+    "renderer": "Google Chrome for Testing 155.0.8059.85",
+    "mode": "headless print-to-PDF (fidelity/lib/chrome-reference.mjs)"
+  },
+  "before": {
+    "label": "vellora 0.2.0 (published)",
+    "npm": "vellora@0.2.0",
+    "tag": "v0.2.0",
+    "commit": "5810062cd8a30d3721d3ffbf17c08bf01e4dc364",
+    "blitz": "0.3.0-alpha.5 line, git 2003ba5",
+    "measured": "2026-10-27T22:36:58.971Z",
+    "command": "node fidelity/oracles/doc-aggregate-pin.mjs --engine /tmp/vellora-pin-v0.2.0 --engine-commit 5810062cd8a30d3721d3ffbf17c08bf01e4dc364 --engine-blitz 2003ba5fc2d8931da9213ef26a813b0d24c83ca6 --run ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5 --pdf-out ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --noise-run ~/Repositories/vellora-fidelity-runs/run-all-10-repro-20261027T130144Z"
+  },
+  "after": {
+    "label": "vellora (unreleased branch)",
+    "branch": "phasec/07-tip",
+    "commit": "aa4125931fd60c30faba8b1f9b988ebef76daa48",
+    "blitz": "0.3.0-beta.4, crates.io",
+    "measured": "2026-10-28T11:07:50Z",
+    "runId": "20261028T110750Z",
+    "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/11-phase-c --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --step 16-phase-c-07-tip --out fidelity/results/run-all/c07-tip"
+  },
+  "environment": {
+    "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+    "cpu": "Apple M5 Pro",
+    "node": "v22.23.2",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "pymupdf": "1.28.2",
+    "poppler": "pdftoppm version 26.06.0"
+  },
+  "method": {
+    "extractor": "fidelity/oracles/py/words.py (PyMuPDF rawdict: pen origin x, baseline y)",
+    "textKey": "NFC, ligatures U+FB00-FB06 folded, whitespace removed",
+    "coordinates": "document y = baseline + sum of the heights of the previous pages",
+    "pairing": "k-th occurrence of a text key in reading order (page, baseline, x) <-> k-th in Chrome's",
+    "quantiles": "nearest rank over paired words (ceil(q*n)-th smallest)",
+    "within1mmPct": "share of ALL Chrome words whose paired vellora word is within 1 mm (unpaired words count as misses)",
+    "rounding": "mm 0.01, percentages 0.1",
+    "extractorVersion": "pymupdf 1.28.2",
+    "medianMm": "median distance (mm) between each paired word's position in the vellora PDF and in Chrome's PDF",
+    "pages": "page count of each PDF; equal to Chrome is the target",
+    "oracle": "fidelity/oracles/doc-aggregate.mjs (lib/doc-aggregate.mjs)"
+  },
+  "gate": {
+    "verdict": "PASS",
+    "date": "2026-10-28T11:19:27.811Z",
+    "contract": true,
+    "command": "node fidelity/gate/run.mjs --baseline fidelity/baselines/port/11-phase-c --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --head fidelity/baselines/port/00-start --pin fidelity/baselines/pin --layout-from ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --debt fidelity/baselines/port/DEBT.json --step 16-phase-c-07-tip --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --doc-aggregate ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/doc-aggregate/summary.json --contract --out ~/Repositories/vellora-fidelity-runs/c07-tip/regate-contract",
+    "counts": {
+      "gating": 0,
+      "pinA": 5,
+      "pinB": 1,
+      "pinC": 0,
+      "regression": 0,
+      "pinCGating": 0,
+      "contractPages": 0,
+      "contractPagesFailing": 0,
+      "docRegressions": 0,
+      "headGating": 0,
+      "flaggedPassLost": 0
+    },
+    "conditions": [
+      {
+        "id": 1,
+        "what": "pin view (--main): no item worse than the published package unless the gate classifies it (class a: the old pass was false; class b: carried in the debt ledger)",
+        "met": true,
+        "count": 0,
+        "items": [],
+        "classA": [
+          "wpt|css/CSS2/floats/float-nowrap-8.html",
+          "wpt|css/css-page/page-name-flex-001-print.html",
+          "wpt|css/css-page/page-name-flex-002-print.html",
+          "wpt|css/css-page/page-name-flex-004-print.html",
+          "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html"
+        ],
+        "classB": ["wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"],
+        "classBOutcomes": {
+          "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html": {
+            "after": "pass",
+            "rawOutcome": "fail",
+            "flag": "ink-displaced-vs-chrome"
+          }
+        },
+        "declared": [
+          "wpt|css/css-page/layers-003-print.html",
+          "wpt|css/css-page/layers-004-print.html",
+          "wpt|css/css-page/page-margin-007-print.html",
+          "wpt|css/css-page/page-size-004-print.html",
+          "wpt|css/css-page/page-size-005-print.html",
+          "wpt|css/css-page/page-size-009-print.html",
+          "wpt|css/css-page/pseudo-first-margin-001-print.html",
+          "wpt|css/css-page/pseudo-first-margin-002-print.html",
+          "wpt|css/css-page/pseudo-first-margin-003-print.html",
+          "wpt|css/css-page/pseudo-first-margin-004-print.html"
+        ]
+      },
+      {
+        "id": 2,
+        "what": "every fixture's median error and share within 1 mm at least as good as the published package's",
+        "met": true,
+        "count": 0,
+        "items": []
+      },
+      {
+        "id": 3,
+        "what": "every fixture's page count equal to Chrome's",
+        "met": true,
+        "count": 0,
+        "items": []
+      },
+      {
+        "id": 4,
+        "what": "step-to-step ratchet: no regression against the previous gated step, and the head view (against the chain's first step) passes",
+        "met": true,
+        "count": 0,
+        "items": [],
+        "head": {
+          "verdict": "PASS",
+          "gating": 0,
+          "items": [],
+          "debt": ["wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"],
+          "accepted": [
+            "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+            "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+            "wpt|css/css-page/page-name-flex-001-print.html",
+            "wpt|css/css-page/page-name-flex-002-print.html",
+            "wpt|css/css-page/page-name-flex-004-print.html"
+          ]
+        }
+      }
+    ]
+  },
+  "paint": {
+    "what": "Vector paint read from each PDF (PyMuPDF get_drawings and text spans): dashed/dotted border segments, text-decoration underlines, and whether the page canvas colour matches Chrome's. Report-only: no gate rule reads it",
+    "reportOnly": true,
+    "method": "fidelity/oracles/py/paint.py (PyMuPDF get_drawings + text spans; docstring)",
+    "tool": "pymupdf 1.28.2",
+    "after": {
+      "command": "node fidelity/oracles/paint-probe.mjs --run <repo>/fidelity/results/run-all/c07-tip --label run-all",
+      "fixtures": {
+        "invoice": {
+          "pages": 3,
+          "chromePages": 3,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "receipt": {
+          "pages": 2,
+          "chromePages": 2,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "boleto": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 135,
+            "vellora": 135
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "boleto-febraban": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 152,
+            "vellora": 152
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "danfe": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 2052,
+            "vellora": 2111
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "notification": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "text-stress-ptbr": {
+          "pages": 7,
+          "chromePages": 7,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "oss-postmark-receipt": {
+          "pages": 2,
+          "chromePages": 2,
+          "dashSegments": {
+            "chrome": 136,
+            "vellora": 136
+          },
+          "underlines": {
+            "chrome": 5,
+            "vellora": 5
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "oss-sparksuite-invoice": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        }
+      }
+    },
+    "before": {
+      "command": "node fidelity/oracles/paint-probe.mjs --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --subject ~/Repositories/vellora-fidelity-runs/doc-aggregate-20261027/pin-pdfs-v0.2.0 --label pin-v0.2.0 --out ~/Repositories/vellora-fidelity-runs/docs-c07/paint-probe-pin-v0.2.0.json",
+      "fixtures": {
+        "invoice": {
+          "pages": 3,
+          "chromePages": 3,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "receipt": {
+          "pages": 2,
+          "chromePages": 2,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "boleto": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 135,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": ["dashes-missing"]
+        },
+        "boleto-febraban": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 152,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": ["dashes-missing"]
+        },
+        "danfe": {
+          "pages": 2,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 2052,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": ["dashes-missing"]
+        },
+        "notification": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "text-stress-ptbr": {
+          "pages": 8,
+          "chromePages": 7,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        },
+        "oss-postmark-receipt": {
+          "pages": 1,
+          "chromePages": 2,
+          "dashSegments": {
+            "chrome": 136,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 5,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [1, 2],
+          "flags": ["canvas", "dashes-missing", "underlines-missing"]
+        },
+        "oss-sparksuite-invoice": {
+          "pages": 1,
+          "chromePages": 1,
+          "dashSegments": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "underlines": {
+            "chrome": 0,
+            "vellora": 0
+          },
+          "canvasMismatchPages": [],
+          "flags": []
+        }
+      }
+    }
+  },
+  "fixtures": [
+    {
+      "id": "invoice",
+      "name": "Invoice",
+      "short": "Invoice",
+      "origin": "vellora fixture, synthetic data",
+      "chromeWords": 541,
+      "chromePages": 3,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 3,
+        "chromePages": 3,
+        "pageDelta": 0,
+        "chromeWords": 541,
+        "subjectWords": 541,
+        "pairedWords": 541,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 1.46,
+        "p90Mm": 1.73,
+        "within1mmPct": 36,
+        "samePagePct": 100
+      },
+      "after": {
+        "pages": 3,
+        "chromePages": 3,
+        "pageDelta": 0,
+        "chromeWords": 541,
+        "subjectWords": 541,
+        "pairedWords": 541,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.1,
+        "p90Mm": 0.28,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "receipt",
+      "name": "Receipt",
+      "short": "Receipt",
+      "origin": "vellora fixture, synthetic data",
+      "chromeWords": 151,
+      "chromePages": 2,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 2,
+        "chromePages": 2,
+        "pageDelta": 0,
+        "chromeWords": 151,
+        "subjectWords": 151,
+        "pairedWords": 151,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 5.18,
+        "p90Mm": 77,
+        "within1mmPct": 7.9,
+        "samePagePct": 88.1
+      },
+      "after": {
+        "pages": 2,
+        "chromePages": 2,
+        "pageDelta": 0,
+        "chromeWords": 151,
+        "subjectWords": 151,
+        "pairedWords": 151,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.05,
+        "p90Mm": 0.11,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "boleto",
+      "name": "Boleto (bank slip)",
+      "short": "Boleto",
+      "origin": "vellora fixture, synthetic data",
+      "chromeWords": 297,
+      "chromePages": 1,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 297,
+        "subjectWords": 297,
+        "pairedWords": 297,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 1.77,
+        "p90Mm": 14.09,
+        "within1mmPct": 32,
+        "samePagePct": 100
+      },
+      "after": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 297,
+        "subjectWords": 297,
+        "pairedWords": 297,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.12,
+        "p90Mm": 0.2,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "boleto-febraban",
+      "name": "Boleto, FEBRABAN layout",
+      "short": "Boleto FEBRABAN",
+      "origin": "vellora corpus fixture, synthetic data",
+      "chromeWords": 315,
+      "chromePages": 1,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 315,
+        "subjectWords": 309,
+        "pairedWords": 307,
+        "missingWords": 8,
+        "extraWords": 2,
+        "medianMm": 80.7,
+        "p90Mm": 82.32,
+        "within1mmPct": 15.6,
+        "samePagePct": 97.5
+      },
+      "after": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 315,
+        "subjectWords": 315,
+        "pairedWords": 315,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.08,
+        "p90Mm": 0.28,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "danfe",
+      "name": "DANFE (NF-e invoice)",
+      "short": "DANFE",
+      "origin": "vellora corpus fixture, synthetic data",
+      "chromeWords": 630,
+      "chromePages": 1,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 2,
+        "chromePages": 1,
+        "pageDelta": 1,
+        "chromeWords": 630,
+        "subjectWords": 630,
+        "pairedWords": 629,
+        "missingWords": 1,
+        "extraWords": 1,
+        "medianMm": 17.68,
+        "p90Mm": 37.17,
+        "within1mmPct": 8.9,
+        "samePagePct": 93.5
+      },
+      "after": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 630,
+        "subjectWords": 630,
+        "pairedWords": 630,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.21,
+        "p90Mm": 0.27,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "notification",
+      "name": "Notification letter",
+      "short": "Notification",
+      "origin": "vellora fixture, synthetic data",
+      "chromeWords": 248,
+      "chromePages": 1,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 248,
+        "subjectWords": 244,
+        "pairedWords": 244,
+        "missingWords": 4,
+        "extraWords": 0,
+        "medianMm": 0.41,
+        "p90Mm": 1.02,
+        "within1mmPct": 86.7,
+        "samePagePct": 98.4
+      },
+      "after": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 248,
+        "subjectWords": 248,
+        "pairedWords": 248,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.01,
+        "p90Mm": 0.09,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "text-stress-ptbr",
+      "name": "Long pt-BR text (stress)",
+      "short": "Long pt-BR text",
+      "origin": "vellora corpus fixture, synthetic text",
+      "chromeWords": 1833,
+      "chromePages": 7,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 8,
+        "chromePages": 7,
+        "pageDelta": 1,
+        "chromeWords": 1833,
+        "subjectWords": 1846,
+        "pairedWords": 1826,
+        "missingWords": 7,
+        "extraWords": 20,
+        "medianMm": 106.22,
+        "p90Mm": 221.05,
+        "within1mmPct": 1.4,
+        "samePagePct": 54.8
+      },
+      "after": {
+        "pages": 7,
+        "chromePages": 7,
+        "pageDelta": 0,
+        "chromeWords": 1833,
+        "subjectWords": 1833,
+        "pairedWords": 1833,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0.02,
+        "p90Mm": 0.27,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    },
+    {
+      "id": "oss-postmark-receipt",
+      "name": "Postmark receipt (OSS template)",
+      "short": "Postmark receipt (OSS)",
+      "origin": "adapted OSS template",
+      "attribution": {
+        "upstream": "ActiveCampaign/postmark-templates",
+        "url": "https://github.com/ActiveCampaign/postmark-templates",
+        "commit": "fa73527acb4eb59cf673a54572d213e908f1515c",
+        "license": "MIT",
+        "copyright": "Copyright (c) 2015 Wildbit",
+        "notice": "fixtures/oss-postmark-receipt/NOTICE.md"
+      },
+      "chromeWords": 180,
+      "chromePages": 2,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 1,
+        "chromePages": 2,
+        "pageDelta": -1,
+        "chromeWords": 180,
+        "subjectWords": 141,
+        "pairedWords": 141,
+        "missingWords": 39,
+        "extraWords": 0,
+        "medianMm": 0.66,
+        "p90Mm": 18.19,
+        "within1mmPct": 40,
+        "samePagePct": 76.7
+      },
+      "after": {
+        "pages": 2,
+        "chromePages": 2,
+        "pageDelta": 0,
+        "chromeWords": 180,
+        "subjectWords": 178,
+        "pairedWords": 178,
+        "missingWords": 2,
+        "extraWords": 0,
+        "medianMm": 0.13,
+        "p90Mm": 0.14,
+        "within1mmPct": 97.2,
+        "samePagePct": 98.9
+      }
+    },
+    {
+      "id": "oss-sparksuite-invoice",
+      "name": "Sparksuite simple invoice (OSS template)",
+      "short": "Sparksuite invoice (OSS)",
+      "origin": "adapted OSS template",
+      "attribution": {
+        "upstream": "sparksuite/simple-html-invoice-template",
+        "url": "https://github.com/sparksuite/simple-html-invoice-template",
+        "commit": "7d74fe34c862b7712f1a23a3f12147a4a8bd53e1",
+        "license": "MIT",
+        "copyright": "Copyright (c) 2021 Sparksuite",
+        "notice": "fixtures/oss-sparksuite-invoice/NOTICE.md"
+      },
+      "chromeWords": 46,
+      "chromePages": 1,
+      "sameChromeGeometry": true,
+      "sameNativeHtml": true,
+      "before": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 46,
+        "subjectWords": 46,
+        "pairedWords": 46,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 9.87,
+        "p90Mm": 10.95,
+        "within1mmPct": 0,
+        "samePagePct": 100
+      },
+      "after": {
+        "pages": 1,
+        "chromePages": 1,
+        "pageDelta": 0,
+        "chromeWords": 46,
+        "subjectWords": 46,
+        "pairedWords": 46,
+        "missingWords": 0,
+        "extraWords": 0,
+        "medianMm": 0,
+        "p90Mm": 0,
+        "within1mmPct": 100,
+        "samePagePct": 100
+      }
+    }
+  ],
+  "wpt": {
+    "what": "WPT reftests passed through the vellora pipeline, printed to PDF and compared with the reference page: coverage of the CSS test subset the harness runs, not a document-quality score",
+    "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+    "before": {
+      "label": "Blitz 0.3.0-alpha.5 engine of vellora 0.2.0 (baseline commit with layout instrumentation)",
+      "commit": "2c66544f4c2a7bf44df6f25831a56ccf50d00e82",
+      "engine": "blitz-2003ba5fc2d8",
+      "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "date": "2026-10-21T05:41:54Z",
+      "chrome": "Google Chrome 155.0.8059.85",
+      "totals": {
+        "reftests": 8047,
+        "pass": 2578,
+        "passClean": 1988,
+        "passBlank": 45,
+        "fail": 4552,
+        "unsupported": 869,
+        "error": 2,
+        "skip": 1,
+        "passRate": 32.04,
+        "passRateEvaluated": 35.93,
+        "passRateClean": 24.7
+      }
+    },
+    "after": {
+      "label": "vellora (unreleased branch)",
+      "commit": "aa4125931fd60c30faba8b1f9b988ebef76daa48",
+      "engine": "blitz-0.3.0-beta.4",
+      "wptCommit": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+      "date": "2026-10-28T11:07:50Z",
+      "chrome": "Google Chrome for Testing 155.0.8059.85",
+      "totals": {
+        "reftests": 8047,
+        "pass": 4553,
+        "passClean": 4028,
+        "passBlank": 8,
+        "fail": 2608,
+        "unsupported": 877,
+        "error": 0,
+        "skip": 1,
+        "passRate": 56.58,
+        "passRateEvaluated": 63.51,
+        "passRateClean": 50.06
+      }
+    },
+    "chrome": {
+      "label": "Chrome/155.0.8059.85 through the same harness",
+      "note": "Chrome's outcomes were reused from an earlier run with the same WPT commit and comparison settings (--chrome-from)",
+      "totals": {
+        "reftests": 8046,
+        "pass": 7258,
+        "passClean": 7258,
+        "fail": 784,
+        "unsupported": 0,
+        "error": 2,
+        "skip": 0,
+        "passRate": 90.21,
+        "passRateEvaluated": 90.23,
+        "passRateClean": 90.21
+      }
+    }
+  },
+  "images": [
+    {
+      "fixture": "invoice",
+      "page": 1,
+      "file": "invoice-p1.jpg"
+    },
+    {
+      "fixture": "receipt",
+      "page": 1,
+      "file": "receipt-p1.jpg"
+    },
+    {
+      "fixture": "boleto",
+      "page": 1,
+      "file": "boleto-p1.jpg"
+    },
+    {
+      "fixture": "boleto-febraban",
+      "page": 1,
+      "file": "boleto-febraban-p1.jpg"
+    },
+    {
+      "fixture": "danfe",
+      "page": 1,
+      "file": "danfe-p1.jpg"
+    },
+    {
+      "fixture": "danfe",
+      "page": 2,
+      "file": "danfe-p2.jpg"
+    },
+    {
+      "fixture": "notification",
+      "page": 1,
+      "file": "notification-p1.jpg"
+    },
+    {
+      "fixture": "text-stress-ptbr",
+      "page": 1,
+      "file": "text-stress-ptbr-p1.jpg"
+    },
+    {
+      "fixture": "text-stress-ptbr",
+      "page": 8,
+      "file": "text-stress-ptbr-p8.jpg"
+    },
+    {
+      "fixture": "oss-postmark-receipt",
+      "page": 1,
+      "file": "oss-postmark-receipt-p1.jpg"
+    },
+    {
+      "fixture": "oss-postmark-receipt",
+      "page": 2,
+      "file": "oss-postmark-receipt-p2.jpg"
+    },
+    {
+      "fixture": "oss-sparksuite-invoice",
+      "page": 1,
+      "file": "oss-sparksuite-invoice-p1.jpg"
+    }
+  ],
+  "files": {
+    "metrics": {
+      "path": "~/Repositories/vellora-fidelity-runs/docs-c07/visual-compare/metrics.json",
+      "sha256": "9ab8ef631b36ea2ecfbf837c71ff532ab31e649042aeef8d2e8a98db71ec4a27"
+    },
+    "pinDoc": {
+      "path": "<repo>/fidelity/baselines/pin/doc-aggregate.json",
+      "sha256": "b35a80852fa904cb5609b98c6cb63fc3dfc1edd10007ea502411a7fa65d865b3"
+    },
+    "runSummary": {
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/summary.json",
+      "sha256": "b0591a8a2e5bc825dd60cb8ff7dfceb9f3e7b11f4ce610f97be75bc0c04826c3"
+    },
+    "runDocAggregate": {
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/doc-aggregate/summary.json",
+      "sha256": "22095e76f935efd801bf6fa1aa472eeb57e76b160e8416737d45972c9654844d"
+    },
+    "wptBefore": {
+      "path": "<repo>/fidelity/baselines/pin/wpt/by-directory.json",
+      "sha256": "4b2fb04959c2f1c2caed33ffbe3fc94610b21ffcd9f2d801a8f3212b12c65317"
+    },
+    "wptRun": {
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/wpt/summary.json",
+      "sha256": "d0551535d3f7486a7d48616ecc1ce30ad5412e866ce039f64be94d86ee7857f2"
+    },
+    "gate": {
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/gate-contract/gate-report.json",
+      "sha256": "c1abfd73932e09bb92c09dc6039cab9a51458a913b2adab5b138539117c9ebf0"
+    },
+    "paint": {
+      "path": "~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/paint-probe/summary.json",
+      "sha256": "7a7e0ba57bbd1ad8e31e2f6fcf8a559ded7a6e688d06d1b363a35b8f1055809c"
+    },
+    "paintBefore": {
+      "path": "<repo>/fidelity/gate/snapshots/2026-10-28/c07-docs/paint-probe-pin-v0.2.0.json",
+      "sha256": "1090586897d54b9a21241150f464f6694e448527b73a6b6a47dcdd630ba50197"
+    },
+    "images": {
+      "invoice-p1.jpg": "fabb67d979b333debafec5d25ad656228d210ecd99f1b66725089ebf6b59c297",
+      "receipt-p1.jpg": "441fda1729de2ed22aeb09f14287c0886e68eb48f1b3509d3b5fdcd37398176e",
+      "boleto-p1.jpg": "df5ba798ae4ce9158b1323aee9e028ed2427af2a754a20f58c8deebf0c03e6ed",
+      "boleto-febraban-p1.jpg": "81a929f795ff4aee5bb5f3bc7f2e61fbee03c170484eca782518f2f1360e8b81",
+      "danfe-p1.jpg": "3818c23e27c1777fcb5bcc7d1bf718944571ee82509bc6a6fb0235f3de0f338d",
+      "danfe-p2.jpg": "6b198a3d65b1c34a00b4d63ed5728de747a50087d5f05e7338141e9e2fa1bd90",
+      "notification-p1.jpg": "6eee70e9662051ebc056c4cded360656cec1905ee032e7effd5e5f79319997d6",
+      "text-stress-ptbr-p1.jpg": "27d0f715c7e76c5196b31f3bda8b79d4b23ce4a80ff254a65c3ea80b69ebecea",
+      "text-stress-ptbr-p8.jpg": "60efdbe88655f92fafa2be262eba72a6ede7d8936e72508c452544e345f851ca",
+      "oss-postmark-receipt-p1.jpg": "d754e4f2a61cebdd249de06e97c9838bc82d3d40193c8375c0b84047cb09a122",
+      "oss-postmark-receipt-p2.jpg": "94e7cb0afdd12b8d6924bcafe8da74cfb2157ba4922e40cb4ce0f317d51d4b68",
+      "oss-sparksuite-invoice-p1.jpg": "1475710ae250950195ecfaeebc9f213da47c6d3248d960cb3b25e95849ed5763"
+    },
+    "og": {
+      "path": "<repo>/docs/public/fidelity/og.jpg",
+      "sha256": "ef82f1c42e6110b2b90c334aeb50bc85d11077e5bdec0e3966dddc64a432adb2"
+    }
+  },
+  "commands": {
+    "images": "node fidelity/report/visual-compare.mjs --run <RUN> --pin-pdfs <doc-aggregate-pin.mjs --pdf-out dir> --out <compare dir> (pdftoppm -r 55), composed by fidelity/report/py/compose.py",
+    "regenerate": "node fidelity/report/build-site-evidence.mjs --compare ~/Repositories/vellora-fidelity-runs/docs-c07/visual-compare --run ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259 --gate ~/Repositories/vellora-fidelity-runs/run-all-c07-tip-20261028T110750Z-blitz-0.3.0-beta.4-vellora-aa41259/gate-contract/gate-report.json --paint-before <repo>/fidelity/gate/snapshots/2026-10-28/c07-docs/paint-probe-pin-v0.2.0.json --pin-key pin --new-key c07 --update-docs"
+  },
+  "headline": {
+    "fixtures": 9,
+    "allWordsWithin1mm": {
+      "what": "fixtures where 100% of Chrome's words have a vellora counterpart within 1 mm",
+      "before": 0,
+      "after": 8
+    },
+    "worstMedianMm": {
+      "what": "largest per-fixture median word-position error vs Chrome, in mm",
+      "before": {
+        "value": 106.22,
+        "fixture": "text-stress-ptbr"
+      },
+      "after": {
+        "value": 0.21,
+        "fixture": "danfe"
+      }
+    },
+    "pagesEqualChrome": {
+      "what": "fixtures whose page count equals Chrome's",
+      "before": 6,
+      "after": 9
+    }
+  }
+}

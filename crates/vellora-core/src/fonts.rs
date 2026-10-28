@@ -6,7 +6,15 @@
 //! any system library or font requirement (no `libfontconfig`), so it runs on
 //! slim / Alpine (musl) / Lambda images out of the box. Custom user-supplied
 //! fonts (the planned `fonts` option) will register into this same context;
-//! host/system fonts are intentionally never consulted.
+//! host/system fonts are intentionally never consulted, neither for anything
+//! vellora draws nor for layout. Inline `<svg>` included: Blitz's own usvg parse
+//! of an `<svg>` (blitz-dom 0.3.0-beta.4 `util.rs` `FONT_DB`, the `svg` feature)
+//! would load the host font list and size a `viewBox`-less SVG from its text, so
+//! the render path never lets it run (`blitz_engine::hide_svgs_from_blitz`: Blitz
+//! gets a content-free, font-free size-only tree) and vellora paints the SVG from
+//! its own parse (`crate::svg`) with these bundled faces and the caller's fonts.
+//! Only the raw-Blitz render (fidelity tooling, never the render path) keeps
+//! Blitz's parse.
 
 use parley::fontique::{Blob, Collection, CollectionOptions, FamilyId, GenericFamily, SourceCache};
 use parley::FontContext;
@@ -32,6 +40,21 @@ const LIBERATION_MONO: &[u8] = include_bytes!("fonts/LiberationMono-Regular.ttf"
 const LIBERATION_MONO_BOLD: &[u8] = include_bytes!("fonts/LiberationMono-Bold.ttf");
 const DEJAVU_SANS: &[u8] = include_bytes!("fonts/DejaVuSans.ttf");
 const DEJAVU_SANS_BOLD: &[u8] = include_bytes!("fonts/DejaVuSans-Bold.ttf");
+
+/// The bundled faces, in the order [`build_font_context`] registers them (Liberation Sans, DejaVu
+/// Sans, Liberation Serif, Liberation Mono; regular then bold). The inline-SVG font database
+/// ([`crate::svg::font_db`]) loads exactly these, then the caller's faces, so SVG `<text>` sees
+/// the same fonts as HTML text and never a host font.
+pub(crate) const BUNDLED_FACES: [&[u8]; 8] = [
+    LIBERATION_SANS,
+    LIBERATION_SANS_BOLD,
+    DEJAVU_SANS,
+    DEJAVU_SANS_BOLD,
+    LIBERATION_SERIF,
+    LIBERATION_SERIF_BOLD,
+    LIBERATION_MONO,
+    LIBERATION_MONO_BOLD,
+];
 
 /// Sans-like CSS generic families resolve to the bundled sans stack.
 const SANS_GENERIC_FAMILIES: &[GenericFamily] = &[
@@ -148,6 +171,30 @@ pub fn first_unparseable_font(custom: &[Vec<u8>]) -> Option<usize> {
             .register_fonts(Blob::new(Arc::new(bytes.clone()) as _), None)
             .is_empty()
     })
+}
+
+/// File name of the bundled face whose bytes `data` are, if any (debug layout
+/// dump only: labels which face each shaped run used, e.g. to flag DejaVu
+/// fallback hits that have no Chromium counterpart). Bundled blobs are
+/// registered straight from these statics, so pointer identity matches first;
+/// a byte comparison covers copies.
+pub(crate) fn bundled_face_name(data: &[u8]) -> Option<&'static str> {
+    const FACES: &[(&str, &[u8])] = &[
+        ("LiberationSans-Regular.ttf", LIBERATION_SANS),
+        ("LiberationSans-Bold.ttf", LIBERATION_SANS_BOLD),
+        ("LiberationSerif-Regular.ttf", LIBERATION_SERIF),
+        ("LiberationSerif-Bold.ttf", LIBERATION_SERIF_BOLD),
+        ("LiberationMono-Regular.ttf", LIBERATION_MONO),
+        ("LiberationMono-Bold.ttf", LIBERATION_MONO_BOLD),
+        ("DejaVuSans.ttf", DEJAVU_SANS),
+        ("DejaVuSans-Bold.ttf", DEJAVU_SANS_BOLD),
+        ("blitz-bullet-font.otf", blitz_dom::BULLET_FONT),
+    ];
+    FACES
+        .iter()
+        .find(|(_, face)| std::ptr::eq(face.as_ptr(), data.as_ptr()) && face.len() == data.len())
+        .or_else(|| FACES.iter().find(|(_, face)| *face == data))
+        .map(|(name, _)| *name)
 }
 
 fn register_family(

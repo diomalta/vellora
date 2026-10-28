@@ -1,0 +1,2022 @@
+{
+  "date": "2026-10-28T11:07:50Z",
+  "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/11-phase-c --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --step 16-phase-c-07-tip --out fidelity/results/run-all/c07-tip",
+  "baseline": {
+    "dir": "fidelity/baselines/port/11-phase-c",
+    "schema": "vellora-fidelity/baseline/2",
+    "provenance": {
+      "runId": "20261028T084519Z",
+      "date": "Wed Oct 28 08:45:19 UTC 2026",
+      "dateIso": "2026-10-28T08:45:19Z",
+      "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/10-integration --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c06/accepted.json --step 15-phase-c-06-tip --out fidelity/results/run-all/c06-tip",
+      "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+      "cpu": "Apple M5 Pro",
+      "node": "v22.23.2",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "chrome": "Google Chrome for Testing 155.0.8059.85",
+      "poppler": "pdftoppm version 26.06.0",
+      "python": "Python 3.12.13",
+      "toolsImage": "vellora-fidelity-tools:baseline-beta4 sha256:c405e06c653aa6de2e0c63fd6a87e1cd8e076f80e27086994f1b0a6156a63653",
+      "verapdfImage": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+      "git": {
+        "head": "7e6b028c543423875b8b9ea9f2b26a399401f9b2",
+        "branch": "phasec/06-tip",
+        "dirtyEntries": 0
+      },
+      "blitz": {
+        "version": "0.3.0-beta.4",
+        "source": "registry+https://github.com/rust-lang/crates.io-index"
+      },
+      "addon": [
+        {
+          "file": "vellora.darwin-arm64.node",
+          "sha256": "1595fca49feea066cc0a91e941e6d69f3b59c030880caa5620cf447bba226939"
+        }
+      ],
+      "wpt": {
+        "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+        "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+      }
+    },
+    "integrity": {
+      "ok": true,
+      "checked": 65,
+      "problems": []
+    }
+  },
+  "run": {
+    "dir": "fidelity/results/run-all/c07-tip",
+    "schema": "vellora-fidelity/run-all/1",
+    "provenance": {
+      "runId": "20261028T110750Z",
+      "date": "Wed Oct 28 11:07:50 UTC 2026",
+      "dateIso": "2026-10-28T11:07:50Z",
+      "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/11-phase-c --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --step 16-phase-c-07-tip --out fidelity/results/run-all/c07-tip",
+      "environment": {
+        "date": "Wed Oct 28 11:07:50 UTC 2026",
+        "dateIso": "2026-10-28T11:07:50Z",
+        "os": "darwin 27.0.0 arm64 (macOS 27.0.1)",
+        "cpu": "Apple M5 Pro",
+        "cpuCount": 18,
+        "node": "v22.23.2",
+        "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+        "chrome": {
+          "path": "<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+          "version": "Google Chrome for Testing 155.0.8059.85"
+        },
+        "poppler": {
+          "pdftoppm": "pdftoppm version 26.06.0",
+          "pdftotext": "pdftotext version 26.06.0",
+          "pdftocairo": "pdftocairo version 26.06.0",
+          "pdfinfo": "pdfinfo version 26.06.0",
+          "pdffonts": "pdffonts version 26.06.0",
+          "pdfimages": "pdfimages version 26.06.0"
+        },
+        "python": {
+          "interpreter": "Python 3.12.13",
+          "packages": {
+            "cffi": "2.1.1",
+            "charset-normalizer": "3.5.2",
+            "cryptography": "50.0.2",
+            "pdfminer-six": "20260107",
+            "pillow": "12.3.0",
+            "pycparser": "3.11",
+            "pymupdf": "1.28.2",
+            "zxing-cpp": "3.1.1",
+            "pypdf": "6.21.1",
+            "fonttools": "4.67.0"
+          }
+        },
+        "docker": {
+          "server": "29.8.2",
+          "toolsImage": {
+            "image": "vellora-fidelity-tools:baseline-beta4",
+            "present": true,
+            "id": "sha256:c405e06c653aa6de2e0c63fd6a87e1cd8e076f80e27086994f1b0a6156a63653",
+            "architecture": "arm64"
+          },
+          "verapdfImage": {
+            "image": "verapdf/cli:v1.30.3@sha256:d565095c67a083e693aebf7d1a15784007370571053fc1aa5b502665b9a78f9c",
+            "present": true,
+            "id": "sha256:45b2f7cdf9d26e46ee1c26c78b7e0ca3172f325a164483c40558335a1b5dda8f",
+            "architecture": "amd64"
+          }
+        },
+        "git": {
+          "head": "aa4125931fd60c30faba8b1f9b988ebef76daa48",
+          "branch": "phasec/07-tip",
+          "dirtyEntries": 0
+        },
+        "blitz": {
+          "version": "0.3.0-beta.4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        },
+        "addon": [
+          {
+            "file": "vellora.darwin-arm64.node",
+            "sha256": "959bb5ebcf419e30e90a473da5cc4169de7e606ddcc3ed6950ac327f759bd572"
+          }
+        ],
+        "wpt": {
+          "pinned": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba",
+          "cacheHead": "9d8aceec0ddc7ffe46d8f5f3f42d27a0163d6cba"
+        },
+        "command": "node fidelity/run-all.mjs --gate --main --contract --raw --chrome '<repo>/fidelity/.cache/chrome/chrome/mac_arm-155.0.8059.85/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' --baseline fidelity/baselines/port/11-phase-c --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --tools-image vellora-fidelity-tools:baseline-beta4 --accept fidelity/gate/snapshots/2026-10-28/c07/accepted.json --step 16-phase-c-07-tip --out fidelity/results/run-all/c07-tip",
+        "authority": "INDICATIVE (local macOS run; the pinned Linux CI run with Chrome for Testing is authoritative and is a DESIGN TARGET, not wired)"
+      }
+    }
+  },
+  "acceptFile": "fidelity/gate/snapshots/2026-10-28/c07/accepted.json",
+  "debtFile": "fidelity/baselines/port/DEBT.json",
+  "debtBase": null,
+  "ledgerBase": "base pointer fidelity/baselines/port/DEBT-BASE.json -> fidelity/gate/snapshots/2026-10-28/c06/DEBT-c06-tip.json (sha256 c932107e7fd7, step 15-phase-c-06-tip) (fidelity/baselines/port/DEBT.json absent at merge-base a8b126d8a133 (HEAD, main))",
+  "step": "16-phase-c-07-tip",
+  "layoutFrom": "fidelity/results/run-all/c07-tip",
+  "docAggregateFile": null,
+  "contract": true,
+  "schema": "vellora-fidelity/gate-report/1",
+  "verdict": "PASS",
+  "refusals": [],
+  "counts": {
+    "improvement": 8,
+    "gating": 0,
+    "headGating": 0,
+    "debt": 1,
+    "flaggedPassLost": 0,
+    "unchanged": 18392,
+    "withinTolerance": 0,
+    "withinToleranceBetter": 0,
+    "missingTokensNotComparable": 0,
+    "pinA": 5,
+    "pinB": 1,
+    "pinC": 0,
+    "docRegressions": 0,
+    "contractPagesFailing": 0
+  },
+  "byGroup": {
+    "wpt css/CSS2/floats": {
+      "improvement": 3
+    },
+    "wpt css/CSS2/linebox": {
+      "improvement": 1
+    },
+    "wpt css/CSS2/visudet": {
+      "improvement": 1
+    },
+    "wpt css/css-break": {
+      "improvement": 2
+    },
+    "wpt css/css-text": {
+      "improvement": 1
+    }
+  },
+  "wptPerSuite": {
+    "css/CSS2/abspos": {
+      "cleanBefore": 6,
+      "cleanAfter": 6,
+      "passBefore": 6,
+      "passAfter": 6
+    },
+    "css/CSS2/backgrounds": {
+      "cleanBefore": 69,
+      "cleanAfter": 69,
+      "passBefore": 174,
+      "passAfter": 174
+    },
+    "css/CSS2/borders": {
+      "cleanBefore": 415,
+      "cleanAfter": 415,
+      "passBefore": 424,
+      "passAfter": 424
+    },
+    "css/CSS2/box-display": {
+      "cleanBefore": 67,
+      "cleanAfter": 67,
+      "passBefore": 67,
+      "passAfter": 67
+    },
+    "css/CSS2/box": {
+      "cleanBefore": 0,
+      "cleanAfter": 0,
+      "passBefore": 4,
+      "passAfter": 4
+    },
+    "css/CSS2/colors": {
+      "cleanBefore": 10,
+      "cleanAfter": 10,
+      "passBefore": 10,
+      "passAfter": 10
+    },
+    "css/CSS2/floats-clear": {
+      "cleanBefore": 147,
+      "cleanAfter": 147,
+      "passBefore": 161,
+      "passAfter": 161
+    },
+    "css/CSS2/floats": {
+      "cleanBefore": 58,
+      "cleanAfter": 61,
+      "passBefore": 62,
+      "passAfter": 65
+    },
+    "css/CSS2/fonts": {
+      "cleanBefore": 138,
+      "cleanAfter": 138,
+      "passBefore": 138,
+      "passAfter": 138
+    },
+    "css/CSS2/generated-content": {
+      "cleanBefore": 83,
+      "cleanAfter": 83,
+      "passBefore": 86,
+      "passAfter": 86
+    },
+    "css/CSS2/linebox": {
+      "cleanBefore": 157,
+      "cleanAfter": 158,
+      "passBefore": 160,
+      "passAfter": 161
+    },
+    "css/CSS2/lists": {
+      "cleanBefore": 40,
+      "cleanAfter": 40,
+      "passBefore": 67,
+      "passAfter": 67
+    },
+    "css/CSS2/margin-padding-clear": {
+      "cleanBefore": 633,
+      "cleanAfter": 633,
+      "passBefore": 652,
+      "passAfter": 652
+    },
+    "css/CSS2/normal-flow": {
+      "cleanBefore": 442,
+      "cleanAfter": 442,
+      "passBefore": 458,
+      "passAfter": 458
+    },
+    "css/CSS2/pagination": {
+      "cleanBefore": 39,
+      "cleanAfter": 39,
+      "passBefore": 39,
+      "passAfter": 39
+    },
+    "css/CSS2/positioning": {
+      "cleanBefore": 395,
+      "cleanAfter": 395,
+      "passBefore": 397,
+      "passAfter": 397
+    },
+    "css/CSS2/tables": {
+      "cleanBefore": 113,
+      "cleanAfter": 113,
+      "passBefore": 121,
+      "passAfter": 121
+    },
+    "css/CSS2/text": {
+      "cleanBefore": 254,
+      "cleanAfter": 254,
+      "passBefore": 262,
+      "passAfter": 262
+    },
+    "css/CSS2/visudet": {
+      "cleanBefore": 10,
+      "cleanAfter": 11,
+      "passBefore": 15,
+      "passAfter": 16
+    },
+    "css/CSS2/visufx": {
+      "cleanBefore": 2,
+      "cleanAfter": 2,
+      "passBefore": 2,
+      "passAfter": 2
+    },
+    "css/CSS2/visuren": {
+      "cleanBefore": 10,
+      "cleanAfter": 10,
+      "passBefore": 10,
+      "passAfter": 10
+    },
+    "css/css-break": {
+      "cleanBefore": 371,
+      "cleanAfter": 372,
+      "passBefore": 395,
+      "passAfter": 397
+    },
+    "css/css-page": {
+      "cleanBefore": 80,
+      "cleanAfter": 80,
+      "passBefore": 90,
+      "passAfter": 90
+    },
+    "css/css-tables": {
+      "cleanBefore": 63,
+      "cleanAfter": 63,
+      "passBefore": 70,
+      "passAfter": 70
+    },
+    "css/css-text": {
+      "cleanBefore": 419,
+      "cleanAfter": 420,
+      "passBefore": 675,
+      "passAfter": 676
+    }
+  },
+  "items": [
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-003.xht",
+      "test": "css/CSS2/floats/floats-placement-vertical-003.xht",
+      "suite": "css/CSS2/floats",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/CSS2/floats",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/floats-placement-vertical-004.xht",
+      "test": "css/CSS2/floats/floats-placement-vertical-004.xht",
+      "suite": "css/CSS2/floats",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/CSS2/floats",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/zero-width-floats.html",
+      "test": "css/CSS2/floats/zero-width-floats.html",
+      "suite": "css/CSS2/floats",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/CSS2/floats",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html",
+      "test": "css/CSS2/linebox/baseline-block-with-overflow-001.html",
+      "suite": "css/CSS2/linebox",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/CSS2/linebox",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/CSS2/visudet/inline-block-baseline-011.xht",
+      "test": "css/CSS2/visudet/inline-block-baseline-011.xht",
+      "suite": "css/CSS2/visudet",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/CSS2/visudet",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-break/break-at-end-container-edge-003.html",
+      "test": "css/css-break/break-at-end-container-edge-003.html",
+      "suite": "css/css-break",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/css-break",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+      "test": "css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+      "suite": "css/css-break",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass[ink-displaced-vs-chrome] (flagged)",
+      "group": "wpt css/css-break",
+      "check": "wpt"
+    },
+    {
+      "key": "wpt|css/css-text/white-space/pre-wrap-float-001.html",
+      "test": "css/css-text/white-space/pre-wrap-float-001.html",
+      "suite": "css/css-text",
+      "before": "fail",
+      "after": "pass",
+      "rawOutcome": "fail",
+      "class": "improvement",
+      "gating": false,
+      "detail": "fail -> pass (clean)",
+      "group": "wpt css/css-text",
+      "check": "wpt"
+    }
+  ],
+  "unusedAcceptances": [
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "The OLD pair was an oracle artefact: Chrome's PDF draws the masthead \"[Product Name]\" twice, the text (#1, #A8AAAF, baseline 57.75 pt) and its `text-shadow: 0 1px 0 white` copy (#2, #FFFFFF, baseline 58.50 pt, 1 px = 0.75 pt lower); vellora draws no text-shadow, so it has one instance. At 09 that instance (baseline 61.35 pt) paired with the white shadow copy #2; at 10-spark the cellspacing/cellpadding hints put it at 57.60 pt and it pairs with the text #1 (dy -0.15 pt, newly measured). No text was lost.",
+      "evidence": "PyMuPDF rawdict of ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/chrome.pdf: span '[Product Name]' at (253.453, 58.5) color 0xffffff and at (253.453, 57.75) color 0xa8aaaf; vellora.pdf: one span at (252.55, 57.596) color 0xa8aaaf; fixtures/oss-postmark-receipt/index.html .email-masthead_name { text-shadow: 0 1px 0 white }; the same run's pdf-probe pairs p1|[Product#1 at dx -0.90 dy -0.15 (2026-10-22, darwin arm64, Chrome 155.0.8059.85, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md). Re-checked 2026-10-27 on the c03 build (phasec/03-table-frag c7b86fd, layout-diff label it2, PyMuPDF 1.28.2 rawdict, Chrome for Testing 155.0.8059.85, darwin arm64, INDICATIVE): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' now on page 2 in both (vellora 46.346 pt, Chrome 46.5 pt): the layout table is fragmented.",
+      "carriedFrom": "10-integration (fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json); 12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)"
+    },
+    {
+      "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+      "after": "unpaired",
+      "class": "a",
+      "reason": "Same word as [Product#2: the second half of the masthead \"[Product Name]\", whose Chrome #2 instance is the white text-shadow copy (baseline 58.50 pt). vellora's single instance now pairs with the text #1 (p1|Name]#1, dx -0.90 dy -0.15 pt, newly measured).",
+      "evidence": "As for pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing (same spans, same run). Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md). Re-checked 2026-10-27 on the c03 build (phasec/03-table-frag c7b86fd, layout-diff label it2, PyMuPDF 1.28.2 rawdict, Chrome for Testing 155.0.8059.85, darwin arm64, INDICATIVE): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' now on page 2 in both (vellora 46.346 pt, Chrome 46.5 pt): the layout table is fragmented.",
+      "carriedFrom": "10-integration (fidelity/gate/snapshots/2026-10-27/10-debt/accepted.json); 12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)"
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/float-page-break-inside-avoid-1-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference table-page-break-inside-avoid-print-ref.html (`<p style=\"page-break-after:always\">`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [2, 2], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 2]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/row-page-break-inside-avoid-2-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference rowgroup-page-break-inside-avoid-5-print-ref.html (`thead { page-break-after:always }`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/rowgroup-page-break-inside-avoid-2-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference table-page-break-inside-avoid-print-ref.html (`<p style=\"page-break-after:always\">`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [2, 2], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 2]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/rowgroup-page-break-inside-avoid-3-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference table-page-break-inside-avoid-print-ref.html (`<p style=\"page-break-after:always\">`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [2, 2], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 2]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/table-page-break-inside-avoid-1-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference table-page-break-inside-avoid-print-ref.html (`<p style=\"page-break-after:always\">`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [2, 2], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 2]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/CSS2/pagination/table-page-break-inside-avoid-2-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 2 page(s) and matched, while Chrome prints 3 pages for both. Before Phase C step 03 a fragment taller than a page was moved whole onto its own page and bled past it, which happened to look like the reference's forced break. Now the test prints Chrome's 3 pages (the oversize `break-inside: avoid` table/row starts a fresh page and is cut there); the reference table-page-break-inside-avoid-2-print-ref.html (`<div style=\"page-break-after: always\">`) relies on `page-break-after`, which vellora does not implement (COMPATIBILITY.md), so it still prints 2 pages (1 for row-...-2) and the two differ. Next step: break-after.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c02-tip-20261027T233913Z-blitz-0.3.0-beta.4-vellora-4b7bcd8/wpt/results.json (c02-tip, 4b7bcd8, 2026-10-27): outcome pass, comparisons pageCounts [2, 2], chrome.comparisons pageCounts [3, 3]. (2) c03 pre-gate WPT run (fidelity/results/c03/wpt3, phasec/03-table-frag c7b86fd, 2026-10-27, local macOS, INDICATIVE): outcome fail, pageCounts [3, 2]. (3) Chrome for Testing 155.0.8059.85 print of the test (fidelity/lib/chrome-reference.mjs, PyMuPDF words + fills): 3 pages, p1 '1', p2 '2'/'3' squares, p3 a 2 px sliver; vellora's c03 test render: the same 3 pages and words (p2 '2' at 40 pt, '3' at 112 pt in both for table-page-break-inside-avoid-1). Pinned in crates/vellora-core/tests/pagination_slicing.rs.",
+      "carriedFrom": "12-table-frag (fidelity/gate/snapshots/2026-10-27/c03/frag/accepted.json); 12-phase-c-03 (fidelity/gate/snapshots/2026-10-28/c03/accepted.json)",
+      "note": "Carried from 12-phase-c-03. Expected UNUSED at this step: break-after (phasec/04-frag) makes the test and reference print Chrome's 3 pages, and the merged build passes it (full WPT --raw pre-run ~/Repositories/vellora-fidelity-runs/c04-tip-iter/w2, phasec/04-tip a0b81a6, 2026-10-28, local macOS, INDICATIVE: outcome pass, pageCounts [3, 3])."
+    },
+    {
+      "key": "wpt|css/css-page/page-name-flex-001-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 1 for the reference (Chrome pageCounts [4, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 4 page(s) (Chrome 4) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [4, 1], chrome pageCounts [4, 1].",
+      "carriedFrom": "13-phase-c-04 (c04/accepted.json; first written by 13-c04-frag); reason corrected in 14-phase-c-05"
+    },
+    {
+      "key": "wpt|css/css-page/page-name-flex-002-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 3 page(s) for the test and 1 for the reference (Chrome pageCounts [3, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 3) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [3, 1].",
+      "carriedFrom": "13-phase-c-04 (c04/accepted.json; first written by 13-c04-frag); reason corrected in 14-phase-c-05"
+    },
+    {
+      "key": "wpt|css/css-page/page-name-flex-004-print.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 2 for the reference (Chrome pageCounts [4, 2]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 4) and the reference 1 (Chrome 2). This is still a real gap: vellora [3, 1] vs Chrome [4, 2] (the remaining difference is not part of this acceptance; the acceptance binds only the outcome `fail`). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [4, 2].",
+      "carriedFrom": "13-phase-c-04 (c04/accepted.json; first written by 13-c04-frag); reason corrected in 14-phase-c-05"
+    },
+    {
+      "key": "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "pass -> fail vs the pin (shipped main). The OLD pass was false: the published engine drops a U+3000 IDEOGRAPHIC SPACE that starts a line, whatever `hanging-punctuation` says (U+3000 is not collapsible white space, CSS Text 3 §4.1), so the down arrow sat at the reference's x without anything hanging; removing the property from the test does not change the pin's render. Neither engine supports the property: `hanging-punctuation` is absent from Stylo 0.18.0 (the pin's) and 0.22.0 (beta.4's), so the declaration is dropped in both. A 1 em ideographic space that does not hang is what the spec gives without the property, and Chrome 155 (which does not implement hanging-punctuation) renders exactly that and fails the test too. The tip lays out U+3000 with its 40 px advance and the arrow 40 px to the right, like Chrome. Accepted as class a by orchestrator decision (a), 2026-10-28; the pin behaviour was UNVERIFIED by the step-4 verifier and is CONFIRMED by Phase C step 05 (evidence 5, 6).",
+      "evidence": "(1) grep -rli 'hanging-punctuation|hanging_punctuation' over the cargo registry sources stylo-0.18.0 and stylo-0.22.0: no match (2026-10-28). (2) PyMuPDF 1.28.2 rawdict (vellora-fidelity-runs/c04-text-iter/tools/chars.py, PDFs in c04-text-iter/hp/, rendered by c04-text-iter/tools/hp.sh, 2026-10-28, local macOS): pin build (git archive of main 5810062, Blitz rev 2003ba5, Parley 0.10) test: no U+3000 char, U+2193 at x 51.35 pt; pin reference: U+2193 at x 51.35 pt (equal: the old pass); tip (phasec/04-text) test: U+3000 at x 51.00 pt, U+2193 at x 81.00 pt (+30 pt = 40 px = 1 em of the 40 px font); tip reference: U+2193 at 51.00 pt. (3) run-all-c03-tip-20261028T013052Z wpt/results.json: chrome.outcome fail for this test (Chrome for Testing 155.0.8059.85), rawOutcome fail. Chrome's own glyph positions for this test were not extracted (UNVERIFIED that Chrome places the arrow exactly 40 px right). (4) Without any hanging-punctuation (c04-text-iter/tools/hp2.sh and hp3.sh, same date): `<div style=\"font-size:40px\">a&#x3000;b</div>` pin: a 51.35, U+3000 64.67, b 94.67 pt (mid-line it keeps its 30 pt advance); `<div style=\"font-size:40px\">&#x3000;b</div>` pin: no U+3000, b at 51.35 pt (dropped at the line start); tip: U+3000 at 51.00, b at 81.00 pt. (5) Phase C step 05 re-confirmation (2026-10-28, local macOS darwin arm64, Node v22.23.2, INDICATIVE): published engine v0.2.0 = 5810062 built from a git archive export with a fresh target/ (~/Repositories/vellora-fidelity-runs/c05-probe/pin-src); c05-probe/scripts/render-variants.mjs (renderPdf strict, 800x600 px page, margin 0) of the WPT test, of the test with `hanging-punctuation: first;` deleted (inputs/hp-test-noprop.html) and of the reference; PyMuPDF 1.28.2 rawdict (c05-probe/scripts/chars.py): pin test, pin test-without-the-property and pin reference all emit NO U+3000 glyph and put U+2193 at x0 6.00 pt; tip (phasec/04-verify 3545ce4) test and test-without-the-property: U+3000 at 6.00-13.50 pt, U+2193 at 36.00 pt; tip reference U+2193 at 6.00 pt. (6) Chrome for Testing 155.0.8059.85 through fidelity/wpt/run.mjs --chrome --keep-pdf (c05-probe/wpt-pin/chrome-artifacts/css/css-text/hanging-punctuation/hanging-punctuation-first-002.html/lhs.pdf): U+3000 at x0 6.00-36.00 pt, U+2193 at x0 36.00 pt (1 em right of the reference's 6.00 pt), chrome outcome fail (totalPixels 265); same outcome in run-all-c04-tip-20261028T034745Z wpt/results.json (chrome.outcome fail).",
+      "carriedFrom": "13-phase-c-04-text (c04-text/accepted-proposed-hanging-punctuation.json, PROPOSED, not used by c04); entered by 14-phase-c-05 per orchestrator decision (a)"
+    },
+    {
+      "key": "wpt|css/CSS2/floats/float-nowrap-8.html",
+      "after": "fail",
+      "class": "a",
+      "label": "wpt-false-pass",
+      "reason": "Pin view only: pass at the pin (published v0.2.0, 5810062), fail on this branch. NOT a ratchet regression: the test FAILED at port/10-integration (fidelity/baselines/port/10-integration/wpt/expectations-blitz-0.3.0-beta.4.json: \"fail\"; its run 20261023T004510Z, copy run-all-10-tip-..., outcome fail, rawOutcome fail) and at the head port/00-start (\"fail\"); it passed only at the c04 tip, which is not a baseline. (1) Chrome itself fails the test: Chrome 155 keeps the float on the line when the text before it fits beside it ('Some ' + a 5ch float in a 10ch line), while the reference float-nowrap-1 has it below the line (Gecko's rule). vellora now follows Chrome (orchestrator decision (b), product target = Chrome) and fails it the same way: maxDifference 255 / 1169 px vs Chrome's 255 / 1159 px, ink bbox [8,8,277,46] vs Chrome's [9,8,278,46]. (2) The OLD pin pass was false: Blitz's floats cargo feature was off at the pin, and the pin build renders the test, its reference float-nowrap-1.html AND float-nowrap-1-notref.html (the reference float-nowrap-1 must DIFFER from) byte-identically, the blue box drawn over the start of the line in all three, so the pin could not place the float at all.",
+      "evidence": "(1) ~/Repositories/vellora-fidelity-runs/c05-float-rule/w1/results.json (node fidelity/wpt/run.mjs --raw --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --expectations none, phasec/05-float-rule working tree on 3545ce4, run 20261028T042800Z, 2026-10-28, local macOS, INDICATIVE): outcome fail, comparisons [== float-nowrap-1.html: maxDifference 255, totalPixels 1169, pageCounts [1,1]], rawOutcome pass (raw Blitz keeps the float at the line's top in test and reference alike); chrome.outcome fail, comparisons [maxDifference 255, totalPixels 1159, pageCounts [1,1]], Chrome for Testing 155.0.8059.85. Outcome and pixel changes vs the c04 run (20261028T034745Z) over all 8047 tests: exactly float-nowrap-7 and float-nowrap-8 (c05-float-rule/w1-vs-c04.txt). (2) Chrome 155 DOM geometry of the test (c05-float-rule/tools/chrome_floats.mjs, repro n8.html = the test's markup, print media): float at (48.17, 0) in the div, 'Some' at x 0 and 'text that ov…' at x 48.17 on the same line; float-nowrap-1 markup (n1.html): float at (48.17, 20), below the line (c05-float-rule/chrome-155.jsonl). (3) ~/Repositories/vellora-fidelity-runs/c05-float-rule/pin-check (tools/pin_check.sh: the pin core build c04-floats-iter/pin-src, whose crates/vellora-core/src/blitz_engine.rs has the same sha256 as 5810062's, Blitz git 2003ba5, floats feature off): float-nowrap-8.pdf, float-nowrap-1.pdf and float-nowrap-1-notref.pdf all sha256 4b0c1ddc54a615ed…, their 96 dpi PNGs all 326d1022ab1fe0ec…. (4) port/10-integration and port/00-start expectations: \"fail\" for this test; the 10-tip run: outcome fail (maxDifference 255, 3045 px), rawOutcome fail."
+    }
+  ],
+  "unusedDeclarations": [],
+  "tolerances": {
+    "position-mm": {
+      "tol": 0.1,
+      "resolution": 0.01,
+      "unit": "mm",
+      "label": "DESIGN TARGET",
+      "why": "word/anchor position error vs a reference (REF-W max/p95, REF-R worst anchor, DANFE-L1, LET-1). 0.1 mm (0.28 pt, 0.38 CSS px) is 10x the 0.01 mm the values are reported with and below one CSS px (0.26 mm), the smallest step a px-snapping layout can move; the measurement is deterministic for one build and one reference (CONFIRMED: equal inputs gave equal values in the Phase A repeat run)."
+    },
+    "geometry-excess-mm": {
+      "tol": 0.05,
+      "resolution": 0.001,
+      "unit": "mm",
+      "label": "DESIGN TARGET",
+      "why": "distance OUTSIDE a specification window (BOL-G*, DANFE-B*, DANFE-M1, TXT-A1). Inside the window the spec admits any value, so only the excess is ratcheted; 0.05 mm is about one 600 dpi raster pixel (0.042 mm), the measurement quantum of measure_bars.py / the page ink box."
+    },
+    "font-excess-pt": {
+      "tol": 0.05,
+      "resolution": 0.01,
+      "unit": "pt",
+      "label": "SPEC-derived tolerance unit",
+      "why": "font-size excess outside a window; 0.05 pt is the tolerance ACCEPTANCE.md already applies to every font-size criterion (BOL-T*, DANFE-F*)."
+    },
+    "count": {
+      "tol": 0,
+      "resolution": 0,
+      "unit": "count",
+      "label": "DESIGN TARGET",
+      "why": "integer counts from deterministic tools (required strings found, extractor missing/extra tokens, segments/glyphs attributed, decoded symbols): any loss is a real change of the document."
+    },
+    "page-delta": {
+      "tol": 0,
+      "resolution": 0,
+      "unit": "pages",
+      "label": "DESIGN TARGET",
+      "why": "|vellora pages - reference pages|: a page break moving is never noise."
+    },
+    "pdf-probe-pt": {
+      "tol": 1,
+      "resolution": 0.01,
+      "unit": "pt",
+      "label": "DESIGN TARGET",
+      "why": "per-word |dx| / |dy| of vellora's PDF vs Chrome's PDF (pdf-probe semantics 2: PyMuPDF pen origin and baseline, same-page position pairs keyed by the Chrome word). 1 pt (0.35 mm) is an order of magnitude below the Phase A regressions it must catch (invoice price column +9 pt, notification signature -14 pt) and above the 0.01 pt rounding of the probe and sub-px snapping differences. The per-fixture unpaired-word counts use the count class."
+    }
+  },
+  "head": {
+    "baseline": "fidelity/baselines/port/00-start",
+    "refusals": [],
+    "verdict": "PASS",
+    "counts": {
+      "debt": 1,
+      "declared": 10,
+      "accepted": 5,
+      "gating": 0,
+      "improvement": 4570,
+      "withinTolerance": 1163,
+      "flaggedPassLost": 40
+    },
+    "items": [
+      {
+        "key": "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+        "test": "css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+        "suite": "css/css-break",
+        "before": "pass",
+        "after": "pass",
+        "rawOutcome": "fail",
+        "class": "debt",
+        "gating": false,
+        "detail": "DEBT-10-wpt-1 (class b, owner blitz:wpt-raw-fail, closes at -): pass -> pass[ink-displaced-vs-chrome] (clean pass became suspect: vellora lost/moved Chrome's ink)",
+        "group": "wpt css/css-break",
+        "check": "wpt",
+        "headClass": "regression",
+        "debt": "DEBT-10-wpt-1"
+      },
+      {
+        "key": "wpt|css/css-page/layers-003-print.html",
+        "test": "css/css-page/layers-003-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/layers-004-print.html",
+        "test": "css/css-page/layers-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-margin-007-print.html",
+        "test": "css/css-page/page-margin-007-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-001-print.html",
+        "test": "css/css-page/page-name-flex-001-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 1 for the reference (Chrome pageCounts [4, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 4 page(s) (Chrome 4) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [4, 1], chrome pageCounts [4, 1].",
+          "label": "wpt-false-pass"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-002-print.html",
+        "test": "css/css-page/page-name-flex-002-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 3 page(s) for the test and 1 for the reference (Chrome pageCounts [3, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 3) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [3, 1].",
+          "label": "wpt-false-pass"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-004-print.html",
+        "test": "css/css-page/page-name-flex-004-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 2 for the reference (Chrome pageCounts [4, 2]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 4) and the reference 1 (Chrome 2). This is still a real gap: vellora [3, 1] vs Chrome [4, 2] (the remaining difference is not part of this acceptance; the acceptance binds only the outcome `fail`). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [4, 2].",
+          "label": "wpt-false-pass"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-size-004-print.html",
+        "test": "css/css-page/page-size-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-size-005-print.html",
+        "test": "css/css-page/page-size-005-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/page-size-009-print.html",
+        "test": "css/css-page/page-size-009-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-001-print.html",
+        "test": "css/css-page/pseudo-first-margin-001-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-002-print.html",
+        "test": "css/css-page/pseudo-first-margin-002-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-003-print.html",
+        "test": "css/css-page/pseudo-first-margin-003-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-004-print.html",
+        "test": "css/css-page/pseudo-first-margin-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        }
+      },
+      {
+        "group": "pdf-probe",
+        "check": "pdf-probe",
+        "key": "pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing",
+        "class": "accepted",
+        "gating": false,
+        "before": "dx -0.9 dy -0.15",
+        "after": "unpaired",
+        "detail": "Chrome's \"[Product\" (page 1) lost its vellora counterpart: missing, on another page, or more than 36 pt away",
+        "acceptedAs": {
+          "reason": "The OLD pair was an oracle artefact: Chrome's PDF draws the masthead \"[Product Name]\" twice, the text (#1, #A8AAAF, baseline 57.75 pt) and its `text-shadow: 0 1px 0 white` copy (#2, #FFFFFF, baseline 58.50 pt, 1 px = 0.75 pt lower); vellora draws no text-shadow, so it has one instance. At 09 that instance (baseline 61.35 pt) paired with the white shadow copy #2; at 10-spark the cellspacing/cellpadding hints put it at 57.60 pt and it pairs with the text #1 (dy -0.15 pt, newly measured). No text was lost.",
+          "evidence": "PyMuPDF rawdict of ~/.cache/vellora-fidelity/run-all-10-spark-20261023T002146Z/layout-diff/oss-postmark-receipt/run-all/chrome.pdf: span '[Product Name]' at (253.453, 58.5) color 0xffffff and at (253.453, 57.75) color 0xa8aaaf; vellora.pdf: one span at (252.55, 57.596) color 0xa8aaaf; fixtures/oss-postmark-receipt/index.html .email-masthead_name { text-shadow: 0 1px 0 white }; the same run's pdf-probe pairs p1|[Product#1 at dx -0.90 dy -0.15 (2026-10-22, darwin arm64, Chrome 155.0.8059.85, INDICATIVE) Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md). Re-checked 2026-10-27 on the c03 build (phasec/03-table-frag c7b86fd, layout-diff label it2, PyMuPDF 1.28.2 rawdict, Chrome for Testing 155.0.8059.85, darwin arm64, INDICATIVE): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' now on page 2 in both (vellora 46.346 pt, Chrome 46.5 pt): the layout table is fragmented.",
+          "label": null
+        }
+      },
+      {
+        "group": "pdf-probe",
+        "check": "pdf-probe",
+        "key": "pdf-probe|oss-postmark-receipt|p1|Name]#2|pairing",
+        "class": "accepted",
+        "gating": false,
+        "before": "dx -0.9 dy -0.15",
+        "after": "unpaired",
+        "detail": "Chrome's \"Name]\" (page 1) lost its vellora counterpart: missing, on another page, or more than 36 pt away",
+        "acceptedAs": {
+          "reason": "Same word as [Product#2: the second half of the masthead \"[Product Name]\", whose Chrome #2 instance is the white text-shadow copy (baseline 58.50 pt). vellora's single instance now pairs with the text #1 (p1|Name]#1, dx -0.90 dy -0.15 pt, newly measured).",
+          "evidence": "As for pdf-probe|oss-postmark-receipt|p1|[Product#2|pairing (same spans, same run). Re-checked 2026-10-27 on the 10-tip run copy (~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/layout-diff/oss-postmark-receipt/run-all/, PyMuPDF 1.28.2 rawdict, fidelity/.venv): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' vellora p1 baseline 815.846 pt on an 841.92 pt page, Chrome p2 46.5 pt. The ~/.cache run copy cited above is gone (loss event, ~/Repositories/vellora-fidelity-runs/INTEGRATION-TODO.md). Re-checked 2026-10-27 on the c03 build (phasec/03-table-frag c7b86fd, layout-diff label it2, PyMuPDF 1.28.2 rawdict, Chrome for Testing 155.0.8059.85, darwin arm64, INDICATIVE): chrome.pdf p1 '[Product Name]' at (253.453, 58.5) #ffffff and (253.453, 57.75) #a8aaaf; vellora.pdf p1 one '[Product Name]' at (252.55, 57.596) #a8aaaf; 'Download as PDF' now on page 2 in both (vellora 46.346 pt, Chrome 46.5 pt): the layout table is fragmented.",
+          "label": null
+        }
+      }
+    ],
+    "unusedEntries": ["DEBT-10-wpt-2"],
+    "acceptancesCounted": 13,
+    "acceptancesIgnored": 0,
+    "declarationsCarried": 1
+  },
+  "ledger": {
+    "schema": "vellora-fidelity/debt/2",
+    "entries": 2,
+    "problems": [],
+    "transitionChecked": true,
+    "base": "base pointer fidelity/baselines/port/DEBT-BASE.json -> fidelity/gate/snapshots/2026-10-28/c06/DEBT-c06-tip.json (sha256 c932107e7fd7, step 15-phase-c-06-tip) (fidelity/baselines/port/DEBT.json absent at merge-base a8b126d8a133 (HEAD, main))",
+    "passes": ["auto_table_compact_columns", "table_percent_widths"]
+  },
+  "docAggregate": {
+    "tolerance": {
+      "medianMm": 0.01,
+      "within1mmPct": 0.1,
+      "missingWords": 0
+    },
+    "main": true,
+    "contract": true,
+    "refusals": [],
+    "notes": [],
+    "items": [],
+    "table": [
+      {
+        "fixture": "invoice",
+        "pin": {
+          "pages": 3,
+          "chromePages": 3,
+          "pageDelta": 0,
+          "chromeWords": 541,
+          "subjectWords": 541,
+          "pairedWords": 541,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 1.46,
+          "p90Mm": 1.73,
+          "within1mmPct": 36,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "99c85b4aaa8aa295329af1be85576ff5eacdec2f4702d959256677973da31fd7",
+            "chromePdfSha256": "b795041d7c10c3125ed2d7158f0ca75dc2f19ef4a721475a21cc633cbdfa03dd",
+            "chromeGeometrySha256": "95a0682f63626c04ac80d971e7c75f32fb617625df9d5195b38ea0373cf4a9dd",
+            "subjectGeometrySha256": "42ac0011a509ff0143c9c9024d71ee910985dffd78f0c908c333a8a08888d771",
+            "subjectPdfSha256": "b9df68f25dec88fc789937d8e10673f22a8db769745e3e4b8e3742e1eb50e454"
+          }
+        },
+        "run": {
+          "pages": 3,
+          "chromePages": 3,
+          "pageDelta": 0,
+          "chromeWords": 541,
+          "subjectWords": 541,
+          "pairedWords": 541,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.1,
+          "p90Mm": 0.28,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "99c85b4aaa8aa295329af1be85576ff5eacdec2f4702d959256677973da31fd7",
+            "chromePdfSha256": "67ba8806e5b555132800f7afe2d463f552c3e97658471c1038e3663687d694e8",
+            "chromeGeometrySha256": "95a0682f63626c04ac80d971e7c75f32fb617625df9d5195b38ea0373cf4a9dd",
+            "subjectGeometrySha256": "2c324054952da40602c8c8e580fc2116d4fba4b081dc7e93436dfc6eb1236cce",
+            "subjectPdfSha256": "307ef0cdab846725b8b1bb813b69d508d2d2f8157b3bd826cfb16908d75e9f38"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "receipt",
+        "pin": {
+          "pages": 2,
+          "chromePages": 2,
+          "pageDelta": 0,
+          "chromeWords": 151,
+          "subjectWords": 151,
+          "pairedWords": 151,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 5.18,
+          "p90Mm": 77,
+          "within1mmPct": 7.9,
+          "samePagePct": 88.1,
+          "inputs": {
+            "nativeHtmlSha256": "8a9d9e7bc3c09124f0459cf0553c9227e3e6a76ddc1d4286837d5af03dcb490c",
+            "chromePdfSha256": "aa90a67f6548b16fc2289f8d915b71fd9d42f2d11527ab56e98c026bdc32753a",
+            "chromeGeometrySha256": "666b7d3d742cf860a5e99318147f286b99de4e7a2239f3eebe594deb5442892e",
+            "subjectGeometrySha256": "92c114adde12c0770618fe619b29f5384522b1ecd2a9898334bfdac6694b11c0",
+            "subjectPdfSha256": "a1a1787ca3591a51ac9ce9a5b7bbab2a7630adf4f3bd8f1b40d2675eb0d6d761"
+          }
+        },
+        "run": {
+          "pages": 2,
+          "chromePages": 2,
+          "pageDelta": 0,
+          "chromeWords": 151,
+          "subjectWords": 151,
+          "pairedWords": 151,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.05,
+          "p90Mm": 0.11,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "8a9d9e7bc3c09124f0459cf0553c9227e3e6a76ddc1d4286837d5af03dcb490c",
+            "chromePdfSha256": "01697f8d3813cc679fd2866cfbcefa4449fca2da9df2008cff78d1c6e7f984c1",
+            "chromeGeometrySha256": "666b7d3d742cf860a5e99318147f286b99de4e7a2239f3eebe594deb5442892e",
+            "subjectGeometrySha256": "e951515180a75724e3a6a8d2dd656331bf23bfb27fa0ac3451d2af9de6c2d044",
+            "subjectPdfSha256": "f0bab7dfbd22e70cbe6bf260e048aa99b02c657149d2604a21dc868b157c53d7"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "boleto",
+        "pin": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 297,
+          "subjectWords": 297,
+          "pairedWords": 297,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 1.77,
+          "p90Mm": 14.09,
+          "within1mmPct": 32,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "6cc266116374eef1605168eff6243861a6d9eeefcce521176060530f83929b10",
+            "chromePdfSha256": "f16e18ba236984148eed2fc407a5fba36a1dfc48900ce0dba9c543309681092b",
+            "chromeGeometrySha256": "8a1fecaf9a1cd57bdb5e20e1c3a3484d4d81e78aa09ec8fe90a2fb0675c357de",
+            "subjectGeometrySha256": "1b0e856bb199b9d8a9e3f7abcd8d298a84d592d2005a355d82e30b30d82bdc74",
+            "subjectPdfSha256": "a46be81b6010e92f0069ba5def5ca7d541a2c5f766070cac9749aa582b5314c6"
+          }
+        },
+        "run": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 297,
+          "subjectWords": 297,
+          "pairedWords": 297,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.12,
+          "p90Mm": 0.2,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "6cc266116374eef1605168eff6243861a6d9eeefcce521176060530f83929b10",
+            "chromePdfSha256": "b63fa5192f70ae93ca7740284bea935ce48cca965c2df21368f7e25f44cce392",
+            "chromeGeometrySha256": "8a1fecaf9a1cd57bdb5e20e1c3a3484d4d81e78aa09ec8fe90a2fb0675c357de",
+            "subjectGeometrySha256": "2fe018459cb2c23c084f7efa1ca11ab4b4af106b6b71c4a1cc8dd1d3d180d856",
+            "subjectPdfSha256": "b1de8aede74a4550ad56437febbe78a7f84c38cda5f80cabf073ff88daef58e7"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "notification",
+        "pin": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 248,
+          "subjectWords": 244,
+          "pairedWords": 244,
+          "missingWords": 4,
+          "extraWords": 0,
+          "medianMm": 0.41,
+          "p90Mm": 1.02,
+          "within1mmPct": 86.7,
+          "samePagePct": 98.4,
+          "inputs": {
+            "nativeHtmlSha256": "e644692f09436522fa91a407ff6c3e4128be01ce23d2e62e7e6eff2591b85047",
+            "chromePdfSha256": "efea847e521419f5b78f96a96449727dee3bb9bd6b2d5cc81721423f8ae21db1",
+            "chromeGeometrySha256": "a2faaf9415b88cd21bd868269aac656edc36eabeea214c60fefbdb8c06e34bb9",
+            "subjectGeometrySha256": "4e1e4ee076a1ae06ae450f70bebaf047aa1b1b698756fcc8c04a970e0524567c",
+            "subjectPdfSha256": "b228240a94bea71ad288b3e9e04fc6ff1267c43b8cdf5033833142bee14cb24e"
+          }
+        },
+        "run": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 248,
+          "subjectWords": 248,
+          "pairedWords": 248,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.01,
+          "p90Mm": 0.09,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "e644692f09436522fa91a407ff6c3e4128be01ce23d2e62e7e6eff2591b85047",
+            "chromePdfSha256": "b44e735393b298cd7124c1c3791799ce52b727fc6d3f14e1b8663c57c8ce6474",
+            "chromeGeometrySha256": "a2faaf9415b88cd21bd868269aac656edc36eabeea214c60fefbdb8c06e34bb9",
+            "subjectGeometrySha256": "5e4990e57f6a0abbfb7cd25181fbc118b7655fc3cf2ad3eb3d556b309d35f1c1",
+            "subjectPdfSha256": "4488af3fb1fb78ef91e546a790b1f1eb5e743f91d3988ebc5cc5408771edd2f0"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "boleto-febraban",
+        "pin": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 315,
+          "subjectWords": 309,
+          "pairedWords": 307,
+          "missingWords": 8,
+          "extraWords": 2,
+          "medianMm": 80.7,
+          "p90Mm": 82.32,
+          "within1mmPct": 15.6,
+          "samePagePct": 97.5,
+          "inputs": {
+            "nativeHtmlSha256": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+            "chromePdfSha256": "63b9b546af222cb2e412b98e37969b1decf22f207e45bd455e0a25819bf3fddb",
+            "chromeGeometrySha256": "953f68e0b80021f74bf2994d347e974667c71277387b01d7101c54a18d122fc8",
+            "subjectGeometrySha256": "daf131b772deec7d3d99106576d6b1ccdd0faabcfa6be22f0ec778f93421a313",
+            "subjectPdfSha256": "745e98547dd03640e67ac5c904f645e4db8b2c69ca3445e253c679070e8aae44"
+          }
+        },
+        "run": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 315,
+          "subjectWords": 315,
+          "pairedWords": 315,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.08,
+          "p90Mm": 0.28,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "c84edb2e4abfba7d36a5ca0747ed70088f973c3c1660428a429ec82f215272a5",
+            "chromePdfSha256": "68fdec2d2fc25905425b42dda37d4d66cb0a8a0ae41890b9de3be02f53e17f53",
+            "chromeGeometrySha256": "953f68e0b80021f74bf2994d347e974667c71277387b01d7101c54a18d122fc8",
+            "subjectGeometrySha256": "2b63a4e62d03ead49f084ebc4da3e384d0ec42da5a846322bfc07dd3ab426ffc",
+            "subjectPdfSha256": "ecab8a7a2e139cba9fc3d532a6a0ba8e76383cfe016550008614259d4f205dc2"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "danfe",
+        "pin": {
+          "pages": 2,
+          "chromePages": 1,
+          "pageDelta": 1,
+          "chromeWords": 630,
+          "subjectWords": 630,
+          "pairedWords": 629,
+          "missingWords": 1,
+          "extraWords": 1,
+          "medianMm": 17.68,
+          "p90Mm": 37.17,
+          "within1mmPct": 8.9,
+          "samePagePct": 93.5,
+          "inputs": {
+            "nativeHtmlSha256": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+            "chromePdfSha256": "5830b0301e596669b2537fd066ef79a1313ba286b2c244cdc18c415b6d843a47",
+            "chromeGeometrySha256": "cc43b0e137b354ff60747702c9ea2dceb71af7623c87941bbe3d4ee03169913f",
+            "subjectGeometrySha256": "a3742d3671f36a8b2eda78b6bf1fc508a2b0b2c35403431670bea6737721f204",
+            "subjectPdfSha256": "0024d7579d64417d90375c91d013e4d2e897872bcd8ce7b439732dfcc9dda793"
+          }
+        },
+        "run": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 630,
+          "subjectWords": 630,
+          "pairedWords": 630,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.21,
+          "p90Mm": 0.27,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "7dd59dc729e425050c94291d188c7e0d9c82f468d87df6d45d08fc280a2ab1f0",
+            "chromePdfSha256": "9fea4d8d8a0a3acc371eb698bdc830c5429978cad9902784d8595578f7765dd1",
+            "chromeGeometrySha256": "cc43b0e137b354ff60747702c9ea2dceb71af7623c87941bbe3d4ee03169913f",
+            "subjectGeometrySha256": "a4a1986fac5c51f37307c83dee854210831fe1689f8000f6de1d6e8be180c95b",
+            "subjectPdfSha256": "e664bf4c86928674f3b2ee4ab811f3263256db2093951bf031b5b92589b3e0cd"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "text-stress-ptbr",
+        "pin": {
+          "pages": 8,
+          "chromePages": 7,
+          "pageDelta": 1,
+          "chromeWords": 1833,
+          "subjectWords": 1846,
+          "pairedWords": 1826,
+          "missingWords": 7,
+          "extraWords": 20,
+          "medianMm": 106.22,
+          "p90Mm": 221.05,
+          "within1mmPct": 1.4,
+          "samePagePct": 54.8,
+          "inputs": {
+            "nativeHtmlSha256": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+            "chromePdfSha256": "fce6df2361a1d96cd018caa0b3183f9df95c7a2cae9011dba2a05a25e35b8a5c",
+            "chromeGeometrySha256": "d9ff5696f55358f85013834217c6f3a934167a0c8fbc29d070b6ec8c8a837626",
+            "subjectGeometrySha256": "bbdbd1edb31554914d8a63d809d711034ea4beebb7a64fd8c4f1cea90649a1b0",
+            "subjectPdfSha256": "dffff0d7cf6d2bb3eb9e1bb1da7b2756a8b83e2a112e03da072207f2c2f0a70d"
+          }
+        },
+        "run": {
+          "pages": 7,
+          "chromePages": 7,
+          "pageDelta": 0,
+          "chromeWords": 1833,
+          "subjectWords": 1833,
+          "pairedWords": 1833,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0.02,
+          "p90Mm": 0.27,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "0717298a6000ede03e3d208ecf245e6e91174d440c9378ab2f4ba85498f3663e",
+            "chromePdfSha256": "dc867227a24eb8d76f40957431f6f2b8951f940b7afb21a9effafe5ba4f4a993",
+            "chromeGeometrySha256": "d9ff5696f55358f85013834217c6f3a934167a0c8fbc29d070b6ec8c8a837626",
+            "subjectGeometrySha256": "525107499fa6ed9b0b267bb5bac390b05ae3291bde5c6eadd4c72801f17a7df4",
+            "subjectPdfSha256": "f8df5945be030abb23d9cec156ddf60ce954eae14ca235ba0eaf6d6d5d4c69c0"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "oss-sparksuite-invoice",
+        "pin": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 46,
+          "subjectWords": 46,
+          "pairedWords": 46,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 9.87,
+          "p90Mm": 10.95,
+          "within1mmPct": 0,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "65b49111fd915bc67eb9f9bc7f73f0ca61464bcc823067853bfb74b19e57c4b0",
+            "chromePdfSha256": "6ce1cc746c93d5e616dd77eca60b38f9b3961554957e97b0c86969f4bbcce4c0",
+            "chromeGeometrySha256": "5b4e3deeba557fb63acc4b4b82b2ebb2647a16769b6fd887655c0ffb66d9661c",
+            "subjectGeometrySha256": "1579e24338064ee2cabe6f6705ee647d819c54df93e04957090b8d928bda7af0",
+            "subjectPdfSha256": "80216de8d000f94a88186dac716d3c0b806afa87a89fc9c7b55a9aa4a967df83"
+          }
+        },
+        "run": {
+          "pages": 1,
+          "chromePages": 1,
+          "pageDelta": 0,
+          "chromeWords": 46,
+          "subjectWords": 46,
+          "pairedWords": 46,
+          "missingWords": 0,
+          "extraWords": 0,
+          "medianMm": 0,
+          "p90Mm": 0,
+          "within1mmPct": 100,
+          "samePagePct": 100,
+          "inputs": {
+            "nativeHtmlSha256": "65b49111fd915bc67eb9f9bc7f73f0ca61464bcc823067853bfb74b19e57c4b0",
+            "chromePdfSha256": "bfb2731d47a9987581aff07b796368afbe0251ca1a5a228ef8c682deacf29589",
+            "chromeGeometrySha256": "5b4e3deeba557fb63acc4b4b82b2ebb2647a16769b6fd887655c0ffb66d9661c",
+            "subjectGeometrySha256": "b1e0788e64da307267cfa8102b5ddf07d4433d2659bd65ae9113b9072a3a2b47",
+            "subjectPdfSha256": "94627d3437965fb7ee0128165e565b0d5925024634f89e53dc3eee0f6de7be01"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      },
+      {
+        "fixture": "oss-postmark-receipt",
+        "pin": {
+          "pages": 1,
+          "chromePages": 2,
+          "pageDelta": -1,
+          "chromeWords": 180,
+          "subjectWords": 141,
+          "pairedWords": 141,
+          "missingWords": 39,
+          "extraWords": 0,
+          "medianMm": 0.66,
+          "p90Mm": 18.19,
+          "within1mmPct": 40,
+          "samePagePct": 76.7,
+          "inputs": {
+            "nativeHtmlSha256": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+            "chromePdfSha256": "e1e20e653f7e06edb43433dca639536af58430e9b299798c97bcf2dc783e021f",
+            "chromeGeometrySha256": "9bbf00c54cd4fcb226d99d3bcd9ffccd391b56fa33dafb83730ba3607d72df19",
+            "subjectGeometrySha256": "bd26e9092203cc7777ba6fb8ec5e9c50bf41116022e0423b0442d5f559dd054a",
+            "subjectPdfSha256": "ae88d57eb9cbee920a78050c9d47aed7470cf89df8069cdd9fa9e9c94a0ef15d"
+          }
+        },
+        "run": {
+          "pages": 2,
+          "chromePages": 2,
+          "pageDelta": 0,
+          "chromeWords": 180,
+          "subjectWords": 178,
+          "pairedWords": 178,
+          "missingWords": 2,
+          "extraWords": 0,
+          "medianMm": 0.13,
+          "p90Mm": 0.14,
+          "within1mmPct": 97.2,
+          "samePagePct": 98.9,
+          "inputs": {
+            "nativeHtmlSha256": "1c410cf0810e9d9f1c0dd4da056ec6644f9f8f85b7ac1f68df46c3b1c56b91ed",
+            "chromePdfSha256": "afd7019d707500da9db3c813742046519a41d9b8f33fa59cc316b11ef52cb2df",
+            "chromeGeometrySha256": "9bbf00c54cd4fcb226d99d3bcd9ffccd391b56fa33dafb83730ba3607d72df19",
+            "subjectGeometrySha256": "4c2754e3214faa20fcba87df90539bae7fba4605a87723d351481d41800062ae",
+            "subjectPdfSha256": "6e92042f44afd07475fb56117e79ff839a28136d5654533a27e5b3db8e457cdb"
+          }
+        },
+        "comparable": true,
+        "worse": []
+      }
+    ],
+    "status": "measured",
+    "contractPages": [
+      {
+        "fixture": "invoice",
+        "pages": 3,
+        "chromePages": 3,
+        "ok": true
+      },
+      {
+        "fixture": "receipt",
+        "pages": 2,
+        "chromePages": 2,
+        "ok": true
+      },
+      {
+        "fixture": "boleto",
+        "pages": 1,
+        "chromePages": 1,
+        "ok": true
+      },
+      {
+        "fixture": "notification",
+        "pages": 1,
+        "chromePages": 1,
+        "ok": true
+      },
+      {
+        "fixture": "boleto-febraban",
+        "pages": 1,
+        "chromePages": 1,
+        "ok": true
+      },
+      {
+        "fixture": "danfe",
+        "pages": 1,
+        "chromePages": 1,
+        "ok": true
+      },
+      {
+        "fixture": "text-stress-ptbr",
+        "pages": 7,
+        "chromePages": 7,
+        "ok": true
+      },
+      {
+        "fixture": "oss-sparksuite-invoice",
+        "pages": 1,
+        "chromePages": 1,
+        "ok": true
+      },
+      {
+        "fixture": "oss-postmark-receipt",
+        "pages": 2,
+        "chromePages": 2,
+        "ok": true
+      }
+    ],
+    "counts": {
+      "regressions": 0,
+      "missing": 0,
+      "contractPagesFailing": 0,
+      "gating": 0
+    },
+    "condition2": "PASS",
+    "condition3": "PASS",
+    "verdict": "PASS"
+  },
+  "gateCanaries": [
+    {
+      "oracle": "gate",
+      "canary": "head ratchet: |dy| +0.6 pt per step over two steps",
+      "mustReport": "real word boleto p1|RECIBO#1: vs previous link within-tolerance (listed, not gating); vs head regression; no DEBT entry -> head-regression",
+      "observed": "previous within-tolerance; head regression; ledger head-regression",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "WPT fail -> unsupported (new strict-gate rejection)",
+      "mustReport": "real test css/CSS2/abspos/abspos-containing-block-initial-004a.xht: gating rejection; declared with its feature -> declared",
+      "observed": "undeclared rejection/true; declared declared/false",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "verdict row -> strict gate rejected",
+      "mustReport": "real row invoice PDF-Q1 oracles:qpdf: gating rejection with its feature",
+      "observed": "rejection:canary:planted-rejection",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "verdict row measured -> NOT-RUN",
+      "mustReport": "real row invoice PDF-Q1 oracles:qpdf: gating regression",
+      "observed": "regression",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "WPT flagged pass lost",
+      "mustReport": "real flagged pass css/CSS2/backgrounds/background-attachment-009.xht: reported, not gating, counts.flaggedPassLost 1",
+      "observed": "reported/false; flaggedPassLost 1; verdict PASS",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rules i/ii: uncovered, within ceiling, beyond ceiling",
+      "mustReport": "no entry -> head-regression (gates); ceiling = value -> debt (not gating); ceiling below value -> debt-exceeded (gates)",
+      "observed": "head-regression/true; debt/false; debt-exceeded/true",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule v: compensator pass deleted",
+      "mustReport": "entry names a pass absent from the run's passes (auto_table_compact_columns, table_percent_widths) -> debt-regate (gates)",
+      "observed": "debt-regate/true",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iii: ceiling raised, entry added, entry dropped early",
+      "mustReport": "each transition reports a problem; removal at closesAt (control) reports none",
+      "observed": "raised 2, grown 4, dropped 1, closed-at-closesAt 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iii: a still-failing key removed",
+      "mustReport": "a key whose head item still gates, removed as fixed or at its closesAt -> problem (never removed, only its ceiling lowered)",
+      "observed": "as fixed 1, at closesAt 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iii: a fixed key removed with evidence",
+      "mustReport": "closed[] fixed: true + runId + headComparison and no gating head item -> none; without runId, without headComparison, or without the run's head comparison -> problem",
+      "observed": "with evidence 0; no runId 1, no headComparison 1, no head comparison 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iii: an id reused",
+      "mustReport": "an id the base has naming another key -> problem; an id the base closed -> problem; a closed key back in the ledger -> problem; closed[] losing a base record -> problem; a fresh id (control) -> no id problem",
+      "observed": "fresh 0; reused 1, closed id 1, re-entered 1, history 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iv: vellora-owned entry without a retirement step",
+      "mustReport": "a problem naming closesAt",
+      "observed": "CANARY-1: owner vellora:pagination is vellora's: closesAt must name a retirement step (NN-name)",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule vi: displaced words not collapsed",
+      "mustReport": "two entries on one page-count criterion -> problem; a per-word entry inside a page scope -> problem; a page-1 word next to a scope from page 2 (control) -> none",
+      "observed": "twice 2, per-word 1, control 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "relaxed (b): |run| > |N0|, unnamed compensator, no owner",
+      "mustReport": "each reports a problem; a valid entry (control) reports none",
+      "observed": "good 0, worse 2, unnamed 1, no owner 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "layer-vector: word mapping misaligned by three fragments",
+      "mustReport": "position check share within 3 px: control >= 0.95, misaligned < 0.5 (a shift by one fragment reads 0.55 on this fixture: neighbouring lines share x; the check catches shifts of two or more)",
+      "observed": "control 1, misaligned 0.233",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "layer-vector: planted +3 px pass step",
+      "mustReport": "the planted pass (table_percent_widths) appears as a non-zero vellora step of the word; the unplanted word (control) has none",
+      "observed": "planted [table_percent_widths, run], control []",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "pdf-probe: a word crosses Chrome (I1)",
+      "mustReport": "real word boleto p1|RECIBO#1: dy 0.35 -> -1.15 pt regression (gates); 0.9 -> -0.9 within-tolerance, withinToleranceBetter 0; control 3 -> 1.5 improvement",
+      "observed": "through regression/true; flip within-tolerance, better 0; control improvement",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule iii without --debt-base (I2)",
+      "mustReport": "base = DEBT.json at the merge base; a raised ceiling -> problem; no merge-base -> refusal; no ledger there -> first population",
+      "observed": "problems 2; no merge-base refused; absent first population",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "GATE-D7: new ledger key tied to the measured value (I3)",
+      "mustReport": "real word boleto p1|RECIBO#1: ceiling 99 -> problem; layerVector.run != measured -> problem; measured != the run's value -> problem; exact entry (control) -> none",
+      "observed": "exact 0; ceiling 99 1; vector 1; measured 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "declared rejection carried to the head comparison (I4)",
+      "mustReport": "real test css/CSS2/abspos/abspos-containing-block-initial-004a.xht rejected and declared at link 01: vs head 00 at link 02 -> declared; a declaration outside (head, current] (control) -> rejection",
+      "observed": "carried declared/false; control rejection/true",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "EXT-2 missing-token set: one token swapped for another",
+      "mustReport": "real row invoice EXT-2 pdftotext: [CanaryA, CanaryB] -> [CanaryA, CanaryC] (same count) -> CanaryC gates; unchanged list (control) -> nothing",
+      "observed": "swapped [CanaryC]; control 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "pdf-probe: a word moved below the page (off-page)",
+      "mustReport": "real word boleto p1|RECIBO#1 section: an unpaired vellora word drawn at y 900 pt (outside the page) -> pdf-probe|boleto|off-page|CanaryOff gates; the same off-page word on both sides (control) -> nothing",
+      "observed": "moved regression/true; control 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "WPT pass -> fail route (GATE-A3)",
+      "mustReport": "real clean pass css/CSS2/abspos/between-float-and-text.html -> fail: raw Blitz fails the same way -> b; raw passes -> c; no raw outcome -> c; old page count != Chrome's -> a; a DEBT key with the run's rawOutcome passes GATE-D7, one with another does not",
+      "observed": "routes {\"b\":\"b\",\"c1\":\"c\",\"c2\":\"c\",\"a\":\"a\"}; D7 ok 0, D7 wrong rawOutcome 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule vi': listed page scope on an unchanged page metric (rule i, 2026-10-27)",
+      "mustReport": "page delta 1 (= head): listed p2 word -> debt; page-1 word -> head-regression; page delta 1 -> 2 -> metric and word debt-exceeded; page delta 0 -> listed word head-regression; D7: exact entry none, head 1 / run 2 a problem, ceiling 2 a problem; ledger shape none",
+      "observed": "p2 debt/false; p1 head-regression/true; 1->2 word debt-exceeded/true metric debt-exceeded/true; 0 head-regression/true; D7 ok 0, moved 3, slack 1; shape 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DEBT rule vi': a listed page scope binds no moved page metric and no page-1 word",
+      "mustReport": "page metric a head item (1 -> 2) entered with measured = ceiling = 2 -> a problem; fromPage 1 listing the page-1 word -> a ledger problem; exact entry -> none",
+      "observed": "moved metric 1; fromPage 1 1; exact D7 0, shape 0",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "rule (ii): shared run tolerance on a DANFE-L1 position-mm vector",
+      "mustReport": "DANFE-L1d as measured (P -> run +0.626 px) -> none; +0.6 px layout step unnamed -> problem; named -> problem (|P| > |N0| + 0.5); +1.5 px P -> run with run named -> problem (|run| > |N0| + 1.333)",
+      "observed": "control 0; layout unnamed 2, named 1; P->run +1.5 1",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-1 median word distance worse than the published engine",
+      "mustReport": "real row invoice: +0.01 mm (= tolerance) passes; +0.02 mm gates under --main; +1 mm without --main is listed, not gating",
+      "observed": "at tolerance gating []; over [doc-aggregate|invoice|medianMm]; no --main listed true gating false",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-1 share of words within 1 mm below the published engine",
+      "mustReport": "real row invoice: -0.1 pp passes; -0.2 pp gates under --main",
+      "observed": "at tolerance gating []; over [doc-aggregate|invoice|within1mmPct]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-1 one more missing word than the published engine",
+      "mustReport": "real row invoice: missingWords +1 gates under --main",
+      "observed": "gating [doc-aggregate|invoice|missingWords]",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-3 a fixture (or the whole aggregate) absent from the run",
+      "mustReport": "real row invoice: the fixture removed gates; no run aggregate refuses under --main",
+      "observed": "removed gating [doc-aggregate|invoice]; no aggregate REFUSED",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-2 the pin scored on another input, Chrome geometry or above its noise",
+      "mustReport": "real row invoice: native.html sha changed, Chrome geometry sha changed, pin noise 2x the median tolerance: each REFUSED under --main",
+      "observed": "html REFUSED; geometry REFUSED; noise REFUSED",
+      "caught": true,
+      "ran": true
+    },
+    {
+      "oracle": "gate",
+      "canary": "DOC-4 page count differs from Chrome's (contract condition 3)",
+      "mustReport": "real row invoice: pages = Chrome + 1 is reported (not gating) under --main, gating under --contract",
+      "observed": "--main listed true gating false condition3 FAIL; --contract gating [doc-aggregate|invoice|pages]",
+      "caught": true,
+      "ran": true
+    }
+  ],
+  "pin": {
+    "baseline": "fidelity/baselines/pin",
+    "counts": {
+      "a": 5,
+      "b": 1,
+      "c": 0,
+      "declared": 10
+    },
+    "mainMerge": "OK",
+    "items": [
+      {
+        "key": "wpt|css/CSS2/floats/float-nowrap-8.html",
+        "test": "css/CSS2/floats/float-nowrap-8.html",
+        "suite": "css/CSS2/floats",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/CSS2/floats",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "Pin view only: pass at the pin (published v0.2.0, 5810062), fail on this branch. NOT a ratchet regression: the test FAILED at port/10-integration (fidelity/baselines/port/10-integration/wpt/expectations-blitz-0.3.0-beta.4.json: \"fail\"; its run 20261023T004510Z, copy run-all-10-tip-..., outcome fail, rawOutcome fail) and at the head port/00-start (\"fail\"); it passed only at the c04 tip, which is not a baseline. (1) Chrome itself fails the test: Chrome 155 keeps the float on the line when the text before it fits beside it ('Some ' + a 5ch float in a 10ch line), while the reference float-nowrap-1 has it below the line (Gecko's rule). vellora now follows Chrome (orchestrator decision (b), product target = Chrome) and fails it the same way: maxDifference 255 / 1169 px vs Chrome's 255 / 1159 px, ink bbox [8,8,277,46] vs Chrome's [9,8,278,46]. (2) The OLD pin pass was false: Blitz's floats cargo feature was off at the pin, and the pin build renders the test, its reference float-nowrap-1.html AND float-nowrap-1-notref.html (the reference float-nowrap-1 must DIFFER from) byte-identically, the blue box drawn over the start of the line in all three, so the pin could not place the float at all.",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/c05-float-rule/w1/results.json (node fidelity/wpt/run.mjs --raw --chrome-from ~/Repositories/vellora-fidelity-runs/run-all-10-tip-20261023T004536Z-blitz-0.3.0-beta.4-vellora-a293cf5/wpt/results.json --expectations none, phasec/05-float-rule working tree on 3545ce4, run 20261028T042800Z, 2026-10-28, local macOS, INDICATIVE): outcome fail, comparisons [== float-nowrap-1.html: maxDifference 255, totalPixels 1169, pageCounts [1,1]], rawOutcome pass (raw Blitz keeps the float at the line's top in test and reference alike); chrome.outcome fail, comparisons [maxDifference 255, totalPixels 1159, pageCounts [1,1]], Chrome for Testing 155.0.8059.85. Outcome and pixel changes vs the c04 run (20261028T034745Z) over all 8047 tests: exactly float-nowrap-7 and float-nowrap-8 (c05-float-rule/w1-vs-c04.txt). (2) Chrome 155 DOM geometry of the test (c05-float-rule/tools/chrome_floats.mjs, repro n8.html = the test's markup, print media): float at (48.17, 0) in the div, 'Some' at x 0 and 'text that ov…' at x 48.17 on the same line; float-nowrap-1 markup (n1.html): float at (48.17, 20), below the line (c05-float-rule/chrome-155.jsonl). (3) ~/Repositories/vellora-fidelity-runs/c05-float-rule/pin-check (tools/pin_check.sh: the pin core build c04-floats-iter/pin-src, whose crates/vellora-core/src/blitz_engine.rs has the same sha256 as 5810062's, Blitz git 2003ba5, floats feature off): float-nowrap-8.pdf, float-nowrap-1.pdf and float-nowrap-1-notref.pdf all sha256 4b0c1ddc54a615ed…, their 96 dpi PNGs all 326d1022ab1fe0ec…. (4) port/10-integration and port/00-start expectations: \"fail\" for this test; the 10-tip run: outcome fail (maxDifference 255, 3045 px), rawOutcome fail.",
+          "label": "wpt-false-pass"
+        },
+        "pinClass": "a"
+      },
+      {
+        "key": "wpt|css/css-page/layers-003-print.html",
+        "test": "css/css-page/layers-003-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/layers-004-print.html",
+        "test": "css/css-page/layers-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/page-margin-007-print.html",
+        "test": "css/css-page/page-margin-007-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-001-print.html",
+        "test": "css/css-page/page-name-flex-001-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 1 for the reference (Chrome pageCounts [4, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 4 page(s) (Chrome 4) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [4, 1], chrome pageCounts [4, 1].",
+          "label": "wpt-false-pass"
+        },
+        "pinClass": "a"
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-002-print.html",
+        "test": "css/css-page/page-name-flex-002-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 3 page(s) for the test and 1 for the reference (Chrome pageCounts [3, 1]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 3) and the reference 1 (Chrome 1). vellora now matches Chrome's page count on both sides. Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [3, 1]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [3, 1].",
+          "label": "wpt-false-pass"
+        },
+        "pinClass": "a"
+      },
+      {
+        "key": "wpt|css/css-page/page-name-flex-004-print.html",
+        "test": "css/css-page/page-name-flex-004-print.html",
+        "suite": "css/css-page",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "pass",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail. The OLD pass was false by page count (GATE-A3 (a)): vellora's old test and reference each printed 1 page and matched, while Chrome prints 4 page(s) for the test and 2 for the reference (Chrome pageCounts [4, 2]). The test forces its page breaks with named pages (`page: <name>` on flex items, CSS Page 3 §4.1), which vellora ignored until Phase C step 04. vellora now breaks at each change of page name: the test prints 3 page(s) (Chrome 4) and the reference 1 (Chrome 2). This is still a real gap: vellora [3, 1] vs Chrome [4, 2] (the remaining difference is not part of this acceptance; the acceptance binds only the outcome `fail`). Chrome fails this test itself (chrome outcome fail): its test and reference page counts differ. Reason text corrected in Phase C step 05 (step-4 verify finding 5: it said \"Chrome prints N pages for both\", contradicting its own evidence).",
+          "evidence": "(1) ~/Repositories/vellora-fidelity-runs/run-all-c03-tip-20261028T013052Z-blitz-0.3.0-beta.4-vellora-25c3f85/wpt/results.json (runId 20261028T013052Z, c03-tip 25c3f85, 2026-10-28): outcome pass, comparisons pageCounts [1, 1], chrome.comparisons pageCounts [4, 2]. (2) ~/Repositories/vellora-fidelity-runs/c04-frag-iter/full-4/results.json (full default WPT run, --raw, --chrome-from the 10-tip run, phasec/04-frag with named-page breaks (the commit after 9553fce), 2026-10-28, Chrome for Testing 155.0.8059.85, local macOS, INDICATIVE): outcome fail, pageCounts [3, 1], chrome pageCounts [4, 2].",
+          "label": "wpt-false-pass"
+        },
+        "pinClass": "a"
+      },
+      {
+        "key": "wpt|css/css-page/page-size-004-print.html",
+        "test": "css/css-page/page-size-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/page-size-005-print.html",
+        "test": "css/css-page/page-size-005-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/page-size-009-print.html",
+        "test": "css/css-page/page-size-009-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-001-print.html",
+        "test": "css/css-page/pseudo-first-margin-001-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-002-print.html",
+        "test": "css/css-page/pseudo-first-margin-002-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-003-print.html",
+        "test": "css/css-page/pseudo-first-margin-003-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-page/pseudo-first-margin-004-print.html",
+        "test": "css/css-page/pseudo-first-margin-004-print.html",
+        "suite": "css/css-page",
+        "before": "fail",
+        "after": "unsupported",
+        "rawOutcome": "unsupported",
+        "class": "declared",
+        "gating": false,
+        "feature": "css:page-varying-width",
+        "cleanPassLost": false,
+        "detail": "fail -> unsupported (new strict-gate rejection: css:page-varying-width)",
+        "group": "wpt css/css-page",
+        "check": "wpt",
+        "declaredAs": {
+          "feature": "css:page-varying-width",
+          "reason": "step 06 rejects :first/:left/:right @page rules that give pages different content widths (the core gate's css:page-varying-width; vellora lays every page out at one width): 10 WPT tests that rendered and failed at step 05 are unsupported from step 06 on",
+          "evidence": "the test list is the gating rejection set of port/06-page-rules vs port/05-walk-rewrite (fidelity/gate/test/committed-canary.test.mjs STEP06_REJECTED) and of the head view at 09 (fidelity/gate/snapshots/2026-10-22/ledger-09/gate-report-09-vs-08-head-00-start.json.gz, head items of class rejection, before fail, after unsupported); CONFIRMED 2026-10-22 that the step-07 run copy's wpt/results.json records cause.feature css:page-varying-width for exactly these 10 tests (~/.cache/vellora-fidelity/run-all-07-media-print-20261021T162148Z); baselines/port/README.md 06-page-rules"
+        },
+        "pinClass": "declared"
+      },
+      {
+        "key": "wpt|css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+        "test": "css/css-text/hanging-punctuation/hanging-punctuation-first-002.html",
+        "suite": "css/css-text",
+        "before": "pass",
+        "after": "fail",
+        "rawOutcome": "fail",
+        "class": "accepted",
+        "gating": false,
+        "detail": "pass -> fail (clean pass lost)",
+        "group": "wpt css/css-text",
+        "check": "wpt",
+        "acceptedAs": {
+          "reason": "pass -> fail vs the pin (shipped main). The OLD pass was false: the published engine drops a U+3000 IDEOGRAPHIC SPACE that starts a line, whatever `hanging-punctuation` says (U+3000 is not collapsible white space, CSS Text 3 §4.1), so the down arrow sat at the reference's x without anything hanging; removing the property from the test does not change the pin's render. Neither engine supports the property: `hanging-punctuation` is absent from Stylo 0.18.0 (the pin's) and 0.22.0 (beta.4's), so the declaration is dropped in both. A 1 em ideographic space that does not hang is what the spec gives without the property, and Chrome 155 (which does not implement hanging-punctuation) renders exactly that and fails the test too. The tip lays out U+3000 with its 40 px advance and the arrow 40 px to the right, like Chrome. Accepted as class a by orchestrator decision (a), 2026-10-28; the pin behaviour was UNVERIFIED by the step-4 verifier and is CONFIRMED by Phase C step 05 (evidence 5, 6).",
+          "evidence": "(1) grep -rli 'hanging-punctuation|hanging_punctuation' over the cargo registry sources stylo-0.18.0 and stylo-0.22.0: no match (2026-10-28). (2) PyMuPDF 1.28.2 rawdict (vellora-fidelity-runs/c04-text-iter/tools/chars.py, PDFs in c04-text-iter/hp/, rendered by c04-text-iter/tools/hp.sh, 2026-10-28, local macOS): pin build (git archive of main 5810062, Blitz rev 2003ba5, Parley 0.10) test: no U+3000 char, U+2193 at x 51.35 pt; pin reference: U+2193 at x 51.35 pt (equal: the old pass); tip (phasec/04-text) test: U+3000 at x 51.00 pt, U+2193 at x 81.00 pt (+30 pt = 40 px = 1 em of the 40 px font); tip reference: U+2193 at 51.00 pt. (3) run-all-c03-tip-20261028T013052Z wpt/results.json: chrome.outcome fail for this test (Chrome for Testing 155.0.8059.85), rawOutcome fail. Chrome's own glyph positions for this test were not extracted (UNVERIFIED that Chrome places the arrow exactly 40 px right). (4) Without any hanging-punctuation (c04-text-iter/tools/hp2.sh and hp3.sh, same date): `<div style=\"font-size:40px\">a&#x3000;b</div>` pin: a 51.35, U+3000 64.67, b 94.67 pt (mid-line it keeps its 30 pt advance); `<div style=\"font-size:40px\">&#x3000;b</div>` pin: no U+3000, b at 51.35 pt (dropped at the line start); tip: U+3000 at 51.00, b at 81.00 pt. (5) Phase C step 05 re-confirmation (2026-10-28, local macOS darwin arm64, Node v22.23.2, INDICATIVE): published engine v0.2.0 = 5810062 built from a git archive export with a fresh target/ (~/Repositories/vellora-fidelity-runs/c05-probe/pin-src); c05-probe/scripts/render-variants.mjs (renderPdf strict, 800x600 px page, margin 0) of the WPT test, of the test with `hanging-punctuation: first;` deleted (inputs/hp-test-noprop.html) and of the reference; PyMuPDF 1.28.2 rawdict (c05-probe/scripts/chars.py): pin test, pin test-without-the-property and pin reference all emit NO U+3000 glyph and put U+2193 at x0 6.00 pt; tip (phasec/04-verify 3545ce4) test and test-without-the-property: U+3000 at 6.00-13.50 pt, U+2193 at 36.00 pt; tip reference U+2193 at 6.00 pt. (6) Chrome for Testing 155.0.8059.85 through fidelity/wpt/run.mjs --chrome --keep-pdf (c05-probe/wpt-pin/chrome-artifacts/css/css-text/hanging-punctuation/hanging-punctuation-first-002.html/lhs.pdf): U+3000 at x0 6.00-36.00 pt, U+2193 at x0 36.00 pt (1 em right of the reference's 6.00 pt), chrome outcome fail (totalPixels 265); same outcome in run-all-c04-tip-20261028T034745Z wpt/results.json (chrome.outcome fail).",
+          "label": "wpt-false-pass"
+        },
+        "pinClass": "a"
+      },
+      {
+        "key": "wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+        "test": "css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html",
+        "suite": "css/css-break",
+        "before": "pass",
+        "after": "pass",
+        "rawOutcome": "fail",
+        "class": "debt",
+        "gating": false,
+        "detail": "DEBT-10-wpt-1 (class b, owner blitz:wpt-raw-fail, closes at -): pass -> pass[ink-displaced-vs-chrome] (clean pass became suspect: vellora lost/moved Chrome's ink)",
+        "group": "wpt css/css-break",
+        "check": "wpt",
+        "headClass": "regression",
+        "debt": "DEBT-10-wpt-1",
+        "pinClass": "b"
+      }
+    ],
+    "refusals": [],
+    "main": true
+  }
+}

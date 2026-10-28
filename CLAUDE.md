@@ -61,7 +61,7 @@ Run from the repo root. Node 22 (`.nvmrc`), Rust pinned to 1.96.0 (`rust-toolcha
 | All tests (Rust + TS) | `npm test` |
 | Rust tests only | `npm run test:rust` (`cargo test`) |
 | TS tests only | `npm run test:ts` (`vitest run`) |
-| Lint (clippy `-D warnings` + `cargo fmt --check` + `biome check`) | `npm run lint` |
+| Lint (clippy `-D warnings` + `cargo fmt --check` + `biome check` + `compat:check`, COMPATIBILITY.md == its generator) | `npm run lint` |
 | Format (biome + `cargo fmt`) | `npm run format` |
 | Remove all build output | `npm run clean` |
 
@@ -105,8 +105,11 @@ Dependency direction: `cli` → `vellora` → {`@vellora/native`, `@vellora/lint
 engine selection (`native`, `chromium`, or `auto` policy) → `orchestrate` (strict gate) →
 `NativeBridge.render` → PDF `Uint8Array`.
 
-**Rust core** (`crates/vellora-core/src/lib.rs::render`): `validate_css` (cheap byte scan) →
-`validate_nesting_depth` (stack-overflow guard, SEC-1) → font validation →
+**Rust core** (`crates/vellora-core/src/lib.rs::render`): `validate_css` (no HTML parse: byte scans
+of the `<style>`/`style=` CSS for denied features, plus `page_css`'s `@page` sheet walk for
+`css:page-varying-width`) → `validate_nesting_depth` (stack-overflow guard, SEC-1: an html5ever
+parse that stops once an element is inserted deeper than 512, then an explicit-stack depth walk) →
+font validation →
 `page_css::parse_page_box` → `blitz_engine::validate_then_lay_out` (**one** Blitz parse shared by
 the element gate *and* layout, with caller-supplied images/fonts) → unresolved-image rejection →
 `pagination::paginate` (page breaks, repeated `<thead>`, `counter(pages)`) → `pdf::emit` (krilla).
@@ -134,10 +137,16 @@ Swap it with `setNativeBridge(...)` or per-call via the internal `_bridge` optio
 - **Strict-by-default never mutates.** `strict: true` (default) passes templated HTML to the bridge
   byte-unchanged and **must never even import `@vellora/lint`**. Only `strict: false` lazily imports it
   and runs fixers first. `@vellora/lint` is dev-time/CI tooling, never on the render path.
-- **All Blitz contact goes through `crates/vellora-core/src/blitz_engine.rs`.** Blitz is pinned to a git
-  rev (pre-alpha, churns); funneling keeps an upstream break to one file. Don't import Blitz elsewhere.
+- **All Blitz contact goes through `crates/vellora-core/src/blitz_engine.rs`.** Blitz is pinned to the
+  exact crates.io pre-release `=0.3.0-beta.4` (`blitz-dom`, `blitz-html`, `blitz-traits`; it was a git
+  rev before); it is pre-1.0 and churns, and funneling keeps an upstream break to one file. Don't import Blitz elsewhere.
 - **`panic = "unwind"` in the workspace `[profile.release]` is mandatory** (it's workspace-wide, not
   per-member). The napi panic-to-rejection contract depends on it. Cargo.toml says so explicitly.
+- **No recursion and no super-linear cost on user input before the depth gate.** A stack overflow
+  is not a panic: it aborts the whole Node process. `validate_css`, `page_css`, `break_css`,
+  `css_scan` and the depth gate's parse use explicit stacks and single passes;
+  `crates/vellora-core/tests/deep_input.rs` (200 000-deep blocks/elements on a 256 KiB stack,
+  linear-growth checks) and `packages/native/test/deep-input.test.ts` guard it.
 - **The located-diagnostic contract `{ feature, line, col, hint }`** crosses the napi boundary as error
   properties and becomes `VelloraUnsupportedError`. The `feature` taxonomy (`element:<tag>`,
   `css:<feature>`) must be identical whether a construct is rejected by the Rust core gate or mapped from

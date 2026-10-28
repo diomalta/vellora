@@ -19,24 +19,12 @@ use krilla::page::PageSettings;
 use krilla::paint::{Fill, Stroke};
 use krilla::text::{Font, GlyphId, KrillaGlyph};
 use krilla::{Document, SerializeSettings};
+use krilla_svg::{SurfaceExt as _, SvgSettings};
 
 use crate::blitz_engine::{ImageFormat, ImageRun, TextRun};
 
 /// px -> pt scale (layout px @96dpi -> PDF pt @72dpi).
 const PX_TO_PT: f64 = 0.75;
-
-/// Parley exposes the line baseline used for layout. When the bundled faces are
-/// rasterized (Poppler) vs Chromium's print rasterizer, bulk text sits ~3pt
-/// lower; raise it by a CONSTANT amount. The residual is constant in pt, NOT
-/// proportional to font size — a size-proportional fudge (the former `0.30em`)
-/// over-raised large headings. 4.0px = 3.0pt keeps 10pt body unchanged.
-const TEXT_BASELINE_COMPENSATION_PX: f64 = 4.0;
-
-/// Raise a layout baseline (CSS px) by the constant compensation. `font_size_px`
-/// is accepted to document that the correction is deliberately size-independent.
-fn compensated_baseline_y(origin_y_px: f64, _font_size_px: f64) -> f64 {
-    origin_y_px - TEXT_BASELINE_COMPENSATION_PX
-}
 
 /// Map a layout Y (CSS px, top-left origin) to a krilla surface Y (pt).
 ///
@@ -68,22 +56,15 @@ pub struct PdfPage {
     pub images: Vec<ImageRun>,
     /// Positioned text runs, page-local px (baseline origin).
     pub text_runs: Vec<TextRun>,
-    /// Running header/footer strings shaped by krilla itself (correct glyphs +
-    /// ToUnicode for the per-page page-number label).
+    /// Running headers/footers (`@top-center` / `@bottom-center` margin boxes).
     pub margin_texts: Vec<MarginText>,
 }
 
-/// A running header/footer string to be shaped+drawn by krilla's `draw_text`.
+/// A running header/footer: its resolved string and the glyph runs Blitz shaped it into
+/// (`blitz_engine::lay_out_margin_texts`), page-local px, drawn like body text.
 pub struct MarginText {
     pub text: String,
-    /// Baseline origin in page-local CSS px (top-left origin).
-    pub origin_x: f64,
-    pub origin_y: f64,
-    pub font_size: f32,
-    /// Raw font bytes + face index reused from a body run.
-    pub font_data: std::sync::Arc<Vec<u8>>,
-    pub font_index: u32,
-    pub color: [u8; 3],
+    pub runs: Vec<TextRun>,
 }
 
 /// A solid-filled rectangle (used for backgrounds / header bands).
@@ -93,6 +74,14 @@ pub struct FilledRect {
     pub width: f64,
     pub height: f64,
     pub color: [u8; 3],
+    /// Painting-order layer (`blitz_engine::paint_tier`): rects are drawn in list order, which
+    /// `pagination::merge_adjacent_rects` sorts by tier first.
+    pub tier: u8,
+    /// In the positioned tier, the tree order of the positioned box that paints it
+    /// (`blitz_engine::paint_stack`); `0` otherwise. Approximate after the rect merge:
+    /// `pagination::merge_adjacent_rects` may join touching same-colour rects of two positioned
+    /// boxes, and the merged rect keeps the first one's number.
+    pub stack: u32,
 }
 
 /// A rounded rectangle outline drawn with a PDF stroke.
@@ -176,27 +165,55 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
         let mut krilla_page = document.start_page_with(settings);
         let mut surface = krilla_page.surface();
 
-        // Background rects first (painted under text).
-        for r in &page.rects {
-            draw_rect(&mut surface, r);
-        }
-
-        for image in &page.images {
-            draw_image_run(&mut surface, image)?;
+        // Background rects first (painted under text), each image right after the rects of its
+        // painting-order layer ([`paint_key`]): over the in-flow blocks and floats, under the
+        // positioned boxes; in the positioned layer, over the earlier positioned boxes in tree
+        // order and under the later ones. With no positioned rect on the page every image comes
+        // after every rect, as before.
+        for item in paint_sequence(page) {
+            match item {
+                PaintItem::Rect(i) => draw_rect(&mut surface, &page.rects[i]),
+                PaintItem::Image(i) => draw_image_run(&mut surface, &page.images[i])?,
+            }
         }
 
         for s in &page.rounded_strokes {
             draw_rounded_stroke(&mut surface, s);
         }
 
-        for run in &page.text_runs {
+        // The runs' `text-decoration` lines: underlines and overlines under the glyphs,
+        // line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
+        let runs = || {
+            page.text_runs
+                .iter()
+                .chain(page.margin_texts.iter().flat_map(|mt| mt.runs.iter()))
+        };
+        for r in decoration_rects(runs(), false) {
+            draw_rect(&mut surface, &r);
+        }
+
+        let mut at = 0;
+        while at < page.text_runs.len() {
+            let end = contiguous_run_end(&page.text_runs, at);
+            if end == at + 1 {
+                draw_text_run(&mut surface, &page.text_runs[at], &mut font_cache)?;
+            } else {
+                let mut merged = page.text_runs[at].clone();
+                for run in &page.text_runs[at + 1..end] {
+                    merged.glyphs.extend(run.glyphs.iter().cloned());
+                }
+                draw_text_run(&mut surface, &merged, &mut font_cache)?;
+            }
+            at = end;
+        }
+
+        // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
+        for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
             draw_text_run(&mut surface, run, &mut font_cache)?;
         }
 
-        // Running header/footer: let krilla shape the per-page label so its
-        // glyphs + ToUnicode are correct for the exact (varying) string.
-        for mt in &page.margin_texts {
-            draw_margin_text(&mut surface, mt, &mut font_cache)?;
+        for r in decoration_rects(runs(), true) {
+            draw_rect(&mut surface, &r);
         }
 
         surface.finish();
@@ -272,6 +289,69 @@ fn cached_font(
         Font::new(bytes.into(), index).ok_or_else(|| format!("krilla could not load {ctx}"))?;
     cache.insert(key, font.clone());
     Ok(font)
+}
+
+/// Painting-order key of a rect or an image (`image`): the in-flow blocks and floats
+/// (`(0, 0)`), then the images of those layers (`(1, 0)`), then each positioned box in tree
+/// order (`(2, stack)`, `blitz_engine::paint_stack`). CSS 2.2 Appendix E steps 4-8, coarsened
+/// like `blitz_engine::paint_tier`: in-flow text still paints after every rect.
+fn paint_key(tier: u8, stack: u32, image: bool) -> (u8, u32) {
+    if tier == crate::blitz_engine::PAINT_TIER_POSITIONED {
+        (2, stack)
+    } else {
+        (u8::from(image), 0)
+    }
+}
+
+fn image_key(image: &ImageRun) -> (u8, u32) {
+    paint_key(image.tier, image.stack, true)
+}
+
+/// One background rect or image of a page, by index into [`PdfPage::rects`] / [`PdfPage::images`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PaintItem {
+    Rect(usize),
+    Image(usize),
+}
+
+/// The order [`emit`] draws a page's rects and images in: the rects in list order (their
+/// painting order, `pagination::paint_ordered_rects`; within the positioned tier that is
+/// position order, not tree order), each image right after the LAST rect whose [`paint_key`]
+/// is at most its own (so its own box's background and every earlier layer stay under it),
+/// images at one spot in list order. An image therefore goes under the positioned boxes that
+/// follow it in tree order unless a rect of its own or an earlier layer comes after theirs in
+/// the list. With no positioned rect on the page every image follows every rect, as before
+/// Phase C step 06.
+pub fn paint_sequence(page: &PdfPage) -> Vec<PaintItem> {
+    let keys: Vec<(u8, u32)> = page
+        .rects
+        .iter()
+        .map(|r| paint_key(r.tier, r.stack, false))
+        .collect();
+    // (rects drawn before the image, image index), stably sorted.
+    let mut images: Vec<(usize, usize)> = page
+        .images
+        .iter()
+        .enumerate()
+        .map(|(i, image)| {
+            let key = image_key(image);
+            let after = keys.iter().rposition(|k| *k <= key).map_or(0, |at| at + 1);
+            (after, i)
+        })
+        .collect();
+    images.sort_by_key(|&(after, _)| after);
+    let mut out = Vec::with_capacity(keys.len() + images.len());
+    let mut next = 0;
+    for i in 0..=keys.len() {
+        while next < images.len() && images[next].0 == i {
+            out.push(PaintItem::Image(images[next].1));
+            next += 1;
+        }
+        if i < keys.len() {
+            out.push(PaintItem::Rect(i));
+        }
+    }
+    out
 }
 
 fn draw_rect(surface: &mut krilla::surface::Surface, r: &FilledRect) {
@@ -370,20 +450,32 @@ fn draw_image_run(surface: &mut krilla::surface::Surface, run: &ImageRun) -> Res
         return Ok(());
     }
 
-    let bytes: Vec<u8> = (*run.data).clone();
-    let image = match run.format {
-        ImageFormat::Png => Image::from_png(bytes.into(), false),
-        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
-        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
-        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
-    }
-    .map_err(|e| format!("could not decode embedded image: {e}"))?;
     let size = Size::from_wh(
         (run.width * PX_TO_PT) as f32,
         (run.height * PX_TO_PT) as f32,
     )
     .ok_or_else(|| "invalid image size".to_string())?;
     let transform = Transform::from_translate(content_x_pt(run.x), content_y_pt(run.y));
+    // An inline <svg>: its usvg tree, sized to the run's box in CSS px, drawn as PDF vector
+    // content scaled to the box in pt and clipped to it (krilla-svg `draw_svg` clips to the tree
+    // size: the outer SVG's `overflow: hidden` of the UA sheet).
+    if run.format == ImageFormat::Svg {
+        if let Some(tree) = &run.svg {
+            surface.push_transform(&transform);
+            surface.draw_svg(tree, size, SvgSettings::default());
+            surface.pop();
+        }
+        return Ok(());
+    }
+    let bytes: Vec<u8> = (*run.data).clone();
+    let image = match run.format {
+        ImageFormat::Png => Image::from_png(bytes.into(), false),
+        ImageFormat::Jpeg => Image::from_jpeg(bytes.into(), false),
+        ImageFormat::Gif => Image::from_gif(bytes.into(), false),
+        ImageFormat::Webp => Image::from_webp(bytes.into(), false),
+        ImageFormat::Svg => unreachable!("handled above"),
+    }
+    .map_err(|e| format!("could not decode embedded image: {e}"))?;
     surface.push_transform(&transform);
     surface.draw_image(image, size);
     surface.pop();
@@ -417,6 +509,82 @@ fn rounded_rect_path(x0: f64, y0: f64, x1: f64, y1: f64, rx: f64, ry: f64) -> Op
     pb.finish()
 }
 
+/// Two runs continue each other when the second starts where the first's advances end.
+const RUN_CONTINUATION_EPSILON_PX: f64 = 1e-3;
+
+/// The end of the stretch of `runs` from `start` that one text object can draw: each next run
+/// continues the previous one exactly (same source string, face, size and colour, same baseline,
+/// its origin where the previous run's advances end). Parley ends a glyph run at every inline
+/// box, so text that a float (or another inline box of zero advance) interrupts reaches the
+/// emitter as two runs; drawn as two text objects, the second restarts at a rounded `Tm` origin
+/// and Poppler rasterizes its glyphs a fraction of a pixel off the single-object drawing of the
+/// same text (WPT css/CSS2/floats/floats-placement-vertical-001a.xht: `Hello` + `Kitty` vs the
+/// reference's `HelloKitty`, 4 pixels differ by up to 3/255; float-nowrap-8.html: 4 pixels, up
+/// to 84/255). One text object for the stretch draws the glyphs where they were already
+/// positioned, so the page's text does not move.
+fn contiguous_run_end(runs: &[TextRun], start: usize) -> usize {
+    let mut end = start + 1;
+    while let (Some(prev), Some(next)) = (runs.get(end - 1), runs.get(end)) {
+        let prev_end = prev.origin_x
+            + prev
+                .glyphs
+                .iter()
+                .map(|g| f64::from(g.advance))
+                .sum::<f64>();
+        let continues = Arc::ptr_eq(&prev.text, &next.text)
+            && Arc::ptr_eq(&prev.font_data, &next.font_data)
+            && prev.font_index == next.font_index
+            && prev.font_size == next.font_size
+            && prev.color == next.color
+            && prev.origin_y == next.origin_y
+            && !next.glyphs.is_empty()
+            && (next.origin_x - prev_end).abs() < RUN_CONTINUATION_EPSILON_PX;
+        if !continues {
+            break;
+        }
+        end += 1;
+    }
+    end
+}
+
+/// The `text-decoration` lines ([`TextRun::decorations`]) of `runs` with `over_text` as given,
+/// as page rects, in run order. A line continued by the next run of the same line (same colour,
+/// top and height, the next starting within 0.5 px of its end) is one rect: two abutting rects
+/// leave an anti-aliasing seam between them in a rasterizer.
+fn decoration_rects<'a>(
+    runs: impl Iterator<Item = &'a TextRun>,
+    over_text: bool,
+) -> Vec<FilledRect> {
+    let mut out: Vec<FilledRect> = Vec::new();
+    for run in runs {
+        for d in run.decorations.iter().filter(|d| d.over_text == over_text) {
+            if !(d.width > 0.0 && d.height > 0.0) {
+                continue;
+            }
+            let rect = FilledRect {
+                x: run.origin_x + d.x,
+                y: run.origin_y + d.top,
+                width: d.width,
+                height: d.height,
+                color: d.color,
+                tier: 0,
+                stack: 0,
+            };
+            if let Some(prev) = out.last_mut().filter(|p| {
+                p.color == rect.color
+                    && (p.y - rect.y).abs() < 1e-6
+                    && (p.height - rect.height).abs() < 1e-6
+                    && (rect.x - (p.x + p.width)).abs() <= 0.5
+            }) {
+                prev.width = rect.x + rect.width - prev.x;
+                continue;
+            }
+            out.push(rect);
+        }
+    }
+    out
+}
+
 fn draw_text_run(
     surface: &mut krilla::surface::Surface,
     run: &TextRun,
@@ -430,84 +598,82 @@ fn draw_text_run(
 
     let font_size = run.font_size;
 
-    // Build krilla glyphs. Parley gives px advances/offsets at this font size;
-    // krilla's KrillaGlyph expects them normalized by font size (it multiplies
-    // back by size internally), per its constructor contract.
-    let glyphs: Vec<KrillaGlyph> = run
-        .glyphs
-        .iter()
-        .map(|g| {
-            KrillaGlyph::new(
-                GlyphId::new(g.id),
-                g.advance / font_size,
-                g.x_offset / font_size,
-                g.y_offset / font_size,
-                0.0,
-                g.text_start..g.text_end,
-                None,
-            )
-        })
-        .collect();
-
-    // Baseline origin in krilla's top-left space (px->pt, no flip).
-    let baseline_y = compensated_baseline_y(run.origin_y, run.font_size as f64);
-    let start = Point::from_xy(content_x_pt(run.origin_x), content_y_pt(baseline_y));
-
     set_solid_fill(surface, run.color);
 
-    surface.draw_glyphs(
-        start,
-        &glyphs,
-        font,
-        &run.text,
-        font_size * PX_TO_PT as f32,
-        false,
-    );
+    // A preserved tab is a shift to the next tab stop, never a glyph (CSS Text 3 §4.2 "Tab
+    // Character Size": it is rendered as a horizontal shift; Chrome 155 paints nothing for it).
+    // Parley shapes U+0009 like any character, and no bundled face maps it, so the run carries
+    // the face's `.notdef` (glyph 0, a box in the Liberation faces) for it. The run is drawn in
+    // segments around its tab glyphs: each tab keeps its advance (the next segment starts after
+    // it) and draws nothing. Only U+0009 clusters: a genuinely unmapped character keeps its
+    // `.notdef`, as Chrome paints tofu for it. Parley 0.12 also gives a tab one space advance
+    // whatever `tab-size` says; that width is not corrected here
+    // (`tests/text_probes.rs` `preserved_tab_paints_no_glyph`).
+    let mut pen_px = 0.0f64;
+    let mut segment_start_px = 0.0f64;
+    let mut segment: Vec<KrillaGlyph> = Vec::new();
+    for g in &run.glyphs {
+        if run.text.get(g.text_start..g.text_end) == Some("\t") {
+            draw_glyph_segment(surface, run, font.clone(), segment_start_px, &segment);
+            segment.clear();
+            pen_px += f64::from(g.advance);
+            segment_start_px = pen_px;
+            continue;
+        }
+        // Parley gives px advances/offsets at this font size; krilla's KrillaGlyph expects
+        // them normalized by font size (it multiplies back by size internally), per its
+        // constructor contract.
+        segment.push(KrillaGlyph::new(
+            GlyphId::new(g.id),
+            g.advance / font_size,
+            g.x_offset / font_size,
+            g.y_offset / font_size,
+            0.0,
+            g.text_start..g.text_end,
+            None,
+        ));
+        pen_px += f64::from(g.advance);
+    }
+    draw_glyph_segment(surface, run, font, segment_start_px, &segment);
 
     Ok(())
 }
 
-fn draw_margin_text(
+/// Draw `glyphs` of `run` starting `offset_px` after the run's origin.
+fn draw_glyph_segment(
     surface: &mut krilla::surface::Surface,
-    mt: &MarginText,
-    font_cache: &mut HashMap<(usize, u32), Font>,
-) -> Result<(), String> {
-    let font = cached_font(font_cache, &mt.font_data, mt.font_index, "margin font")?;
-
-    let start = Point::from_xy(content_x_pt(mt.origin_x), content_y_pt(mt.origin_y));
-    set_solid_fill(surface, mt.color);
-    // krilla shapes the string against the font (correct glyph IDs + ToUnicode).
-    surface.draw_text(
-        start,
-        font,
-        mt.font_size * PX_TO_PT as f32,
-        &mt.text,
-        false,
-        krilla::text::TextDirection::Auto,
+    run: &TextRun,
+    font: Font,
+    offset_px: f64,
+    glyphs: &[KrillaGlyph],
+) {
+    if glyphs.is_empty() {
+        return;
+    }
+    // Baseline origin in krilla's top-left space (px->pt, no flip). `origin_y` is
+    // the Parley line baseline placed exactly as Blitz's own painter places it
+    // (content box + `block_offset` + `GlyphRun::baseline()`,
+    // `blitz_engine::read_text_runs`), which is where Chrome puts it, so it is
+    // drawn as is. Port step 04 removed the former constant 4 px raise
+    // (`TEXT_BASELINE_COMPENSATION_PX`): it drew every glyph 3 pt above Chrome's
+    // print baseline (`tests/text_baseline.rs`).
+    let start = Point::from_xy(
+        content_x_pt(run.origin_x + offset_px),
+        content_y_pt(run.origin_y),
     );
-    Ok(())
+    surface.draw_glyphs(
+        start,
+        glyphs,
+        font,
+        &run.text,
+        run.font_size * PX_TO_PT as f32,
+        false,
+    );
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{compensated_baseline_y, content_y_pt, PX_TO_PT, TEXT_BASELINE_COMPENSATION_PX};
-
-    // Regression for d9cb15a: the baseline compensation must be a CONSTANT raise,
-    // not proportional to font size. The size-proportional 0.30em form over-raised
-    // large text (e.g. an 18pt title lifted 5.4pt), doubling the heading vs Chromium.
-    #[test]
-    fn baseline_compensation_is_constant_not_size_proportional() {
-        let small = 100.0 - compensated_baseline_y(100.0, 10.0);
-        let large = 100.0 - compensated_baseline_y(100.0, 30.0);
-        assert!(
-            (small - large).abs() < 1e-9,
-            "baseline raise must not depend on font size, got small={small}, large={large}"
-        );
-        assert!(
-            (small - TEXT_BASELINE_COMPENSATION_PX).abs() < 1e-9,
-            "raise must equal the constant compensation, got {small}"
-        );
-    }
+    use super::{content_y_pt, PX_TO_PT};
 
     // Regression for the upside-down render: krilla's surface is top-left origin, so
     // content near the TOP of the document must map to a SMALLER surface y than
@@ -526,5 +692,61 @@ mod tests {
             (top - (95.0 * PX_TO_PT) as f32).abs() < 1e-3,
             "y must be origin_y * PX_TO_PT, got {top}"
         );
+    }
+
+    /// Runs that continue each other exactly are drawn as one text object; any break in the
+    /// source string, colour, baseline or pen position ends the stretch.
+    #[test]
+    fn only_exact_continuations_share_a_text_object() {
+        use super::contiguous_run_end;
+        use crate::blitz_engine::{Glyph, TextRun};
+        use std::sync::Arc;
+        let text = Arc::new("HelloKitty".to_string());
+        let face = Arc::new(vec![0u8; 4]);
+        let run = |x: f64, start: usize| TextRun {
+            text: text.clone(),
+            font_data: face.clone(),
+            font_index: 0,
+            font_size: 12.0,
+            origin_x: x,
+            origin_y: 20.0,
+            line_above: 10.0,
+            line_below: 4.0,
+            glyphs: (start..start + 5)
+                .map(|i| Glyph {
+                    id: i as u32,
+                    advance: 5.5,
+                    x_offset: 0.0,
+                    y_offset: 0.0,
+                    text_start: i,
+                    text_end: i + 1,
+                })
+                .collect(),
+            color: [0, 0, 0],
+            decorations: Vec::new(),
+        };
+        let hello = run(10.0, 0);
+        let kitty = run(10.0 + 27.5, 5);
+        assert_eq!(contiguous_run_end(&[hello.clone(), kitty.clone()], 0), 2);
+        let gap = TextRun {
+            origin_x: kitty.origin_x + 0.01,
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), gap], 0), 1);
+        let red = TextRun {
+            color: [255, 0, 0],
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), red], 0), 1);
+        let lower = TextRun {
+            origin_y: 21.0,
+            ..kitty.clone()
+        };
+        assert_eq!(contiguous_run_end(&[hello.clone(), lower], 0), 1);
+        let other_text = TextRun {
+            text: Arc::new("HelloKitty".to_string()),
+            ..kitty
+        };
+        assert_eq!(contiguous_run_end(&[hello, other_text], 0), 1);
     }
 }

@@ -1,0 +1,27 @@
+{
+  "name": "@vellora/fidelity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fidelity oracles for the native renderer: WPT reftests, layout-tree diff, external PDF/text/barcode oracles. NOT published and NOT a root workspace member, so browser/Python tooling never enters a published package's dependency graph.",
+  "scripts": {
+    "all": "node run-all.mjs",
+    "layout-diff": "node layout-diff/run.mjs",
+    "layout-diff:compare": "node layout-diff/compare.mjs",
+    "layout-diff:pdf-probe": "node layout-diff/pdf-probe.mjs",
+    "test": "npm run test:gate && npm run test:combine && npm run test:layout-diff && npm run test:wpt && npm run test:oracles && npm run test:corpus && npm run test:report",
+    "test:gate": "node --test \"gate/test/*.test.mjs\"",
+    "gate": "node gate/run.mjs",
+    "gate:write-baseline": "node gate/write-baseline.mjs",
+    "test:combine": "node --test \"combine/test/*.test.mjs\"",
+    "test:layout-diff": "node --test \"layout-diff/test/*.test.mjs\"",
+    "test:wpt": "node --test \"wpt/test/*.test.mjs\"",
+    "test:oracles": "node --test \"oracles/test/*.test.mjs\"",
+    "test:corpus": "node --test \"corpus/test/*.test.mjs\"",
+    "test:report": "node --test \"report/test/*.test.mjs\"",
+    "site-evidence": "node report/build-site-evidence.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.15.0"
+  }
+}
