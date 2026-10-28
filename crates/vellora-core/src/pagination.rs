@@ -2069,12 +2069,23 @@ fn find_cut(
 /// `keep_empty`: keep a continuation that paints nothing (a column of a multi-column container,
 /// whose empty boxes still take room in the balancing; a page that would print nothing is not
 /// made).
+///
+/// `truncate`: the px right below the cut that the continuation drops (a margin truncated at an
+/// unforced column break, [`leading_margin_at`]); `0.0` for pages and forced breaks. It is
+/// always `0.0` when `tail_from` is set (a break taken in flow order is forced).
+///
+/// `tail_from`: a forced break taken in flow order ([`forced_in_flow_order`]): box `tail_from`
+/// and every box after it in document order (none of them is an ancestor of it) go whole to the
+/// continuation, wherever they lie, even above the cut (a negative margin after the forced break
+/// is preserved there, CSS Fragmentation 3 §5.2); the boxes before it, its ancestors included,
+/// are split at `cut` as without it. `None` for pages.
 fn split_fragment(
     frag: &Fragment,
     cut: f64,
     end: f64,
     keep_empty: bool,
     truncate: f64,
+    tail_from: Option<usize>,
 ) -> (Fragment, Option<Fragment>) {
     let parent = parents(&frag.boxes);
     let n = frag.boxes.len();
@@ -2104,6 +2115,10 @@ fn split_fragment(
         nb
     };
     for (i, b) in frag.boxes.iter().enumerate() {
+        if tail_from.is_some_and(|t| i >= t) {
+            rest[i] = Some(reposition(std::slice::from_ref(b), 0.0, shift).remove(0));
+            continue;
+        }
         let mut a = bare(b);
         let mut c = bare(b);
         for run in &b.text_runs {
@@ -2342,7 +2357,7 @@ fn slice_oversize(
     if cut <= frag.top + CUT_EPSILON_PX {
         return SliceOutcome::Whole;
     }
-    match split_fragment(frag, cut, end, false, 0.0) {
+    match split_fragment(frag, cut, end, false, 0.0, None) {
         (head, Some(rest)) => SliceOutcome::Cut(Box::new(head), Box::new(rest)),
         (_, None) => SliceOutcome::Whole,
     }
@@ -2413,38 +2428,69 @@ pub(crate) fn fragment_columns(
     };
     let column_height = column_height.max(0.0);
     let mut pieces = Vec::new();
+    // The boxes whose forced break has been taken or lies behind: every box of an earlier
+    // column (its first fragment is there) and the line a forced break started a column with
+    // (lookup only, DET-1).
+    let mut taken: HashSet<usize> = HashSet::new();
     loop {
         let start = frag.top;
         let end = start + column_height;
-        let forced_inside = frag.boxes.iter().skip(1).any(|b| {
-            (b.break_before_page || b.break_before_column)
-                && b.y > start + CUT_EPSILON_PX
-                && b.y < frag.bottom
-        });
+        let in_flow_order = forced_in_flow_order(&frag.boxes, start, end, &taken);
+        let forced_inside = in_flow_order.is_some()
+            || frag.boxes.iter().skip(1).any(|b| {
+                (b.break_before_page || b.break_before_column)
+                    && b.y > start + CUT_EPSILON_PX
+                    && b.y < frag.bottom
+            });
         let fits = frag.bottom <= end + CUT_EPSILON_PX && !forced_inside;
         if fits || pieces.len() + 1 >= MAX_COLUMNS {
             break;
         }
         let items = column_items(&frag.boxes, column_height);
         // A forced break (`break-before: column` or `page`) in this column ends it there,
-        // whatever lies above it. Otherwise the slicer's latest break point; when none keeps
+        // whatever lies above it: the first one below the column top, or one taken in flow order
+        // ([`forced_in_flow_order`]), whichever comes first in the flow; after one taken in flow
+        // order the continuation starts with the forced box's flex line ([`line_start`]) and
+        // everything after it in document order. Otherwise the slicer's latest break point; when none keeps
         // orphans and widows they are relaxed (Chrome 155 balances seven one-line `<br>` lines
         // of four columns 2-2-2-1); when there is none at all, monolithic content that starts
         // the column stays in it whole, overflowing it (Chrome 155: a 100 px `contain: size`
         // box in a 60 px column, WPT css/css-break/monolithic-overflow-002.tentative), and
         // anything else is cut at the column end.
-        let forced = frag
+        let below_top = frag
             .boxes
             .iter()
+            .enumerate()
             .skip(1)
-            .filter(|b| {
+            .filter(|(_, b)| {
                 (b.break_before_page || b.break_before_column)
                     && b.y > start + CUT_EPSILON_PX
                     && b.y <= end + CUT_EPSILON_PX
             })
-            .map(|b| b.y)
-            .reduce(f64::min);
+            .map(|(i, b)| (b.y, i))
+            .reduce(|a, b| if b.0 < a.0 { b } else { a });
+        let forced = match (below_top, in_flow_order) {
+            (Some(a), Some(b)) => Some(if b.0 < a.0 || (b.0 == a.0 && b.1 < a.1) {
+                b
+            } else {
+                a
+            }),
+            (a, b) => a.or(b),
+        };
+        // A break taken in flow order may start the next column at the same flow y (each such
+        // break moves at least one box with content out of this column: no endless loop).
+        let flow_order_cut = in_flow_order.is_some() && forced == in_flow_order;
+        // Only a break taken in flow order moves what follows it in document order whole: a
+        // break below the column top is a cut by flow y, as before, which is what keeps the
+        // other lines of a multi-line column flex container (parallel flows beside the forced
+        // item) where they are (WPT css/css-break/flexbox/multi-line-column-flex-fragmentation-
+        // 029/032 and multi-line-row-flex-fragmentation-044 lose their pass when every forced
+        // break moves its followers whole: measured 2026-10-28, step 06).
+        let tail_from = forced
+            .filter(|_| flow_order_cut)
+            .map(|(_, i)| line_start(&frag.boxes, i));
         let cut = forced
+            .map(|(at, _)| at)
             .or_else(|| find_cut(&frag.boxes, &items, start, end, true, true))
             .or_else(|| find_cut(&frag.boxes, &items, start, end, true, false))
             .or_else(|| {
@@ -2455,18 +2501,24 @@ pub(crate) fn fragment_columns(
                     .reduce(f64::max)
             })
             .unwrap_or(end);
-        if cut <= start + CUT_EPSILON_PX {
+        if cut <= start + CUT_EPSILON_PX && !flow_order_cut {
             break;
         }
+        if let Some((_, i)) = forced {
+            let line = line_start(&frag.boxes, i);
+            taken.extend(frag.boxes[line..=i].iter().map(|b| b.node_id));
+        }
         // An unforced break truncates the margin that adjoins it, through the empty boxes that
-        // start the next column (CSS Fragmentation 3 §5.2; see [`leading_margin_at`]).
-        let truncate = if forced.is_some_and(|f| (f - cut).abs() <= CUT_EPSILON_PX) {
+        // start the next column (CSS Fragmentation 3 §5.2; see [`leading_margin_at`]). A forced
+        // break keeps it (and one taken in flow order moves its followers whole, `tail_from`).
+        let truncate = if forced.is_some_and(|(f, _)| (f - cut).abs() <= CUT_EPSILON_PX) {
             0.0
         } else {
             leading_margin_at(&frag.boxes, &items, cut)
         };
-        match split_fragment(&frag, cut, end, true, truncate) {
+        match split_fragment(&frag, cut, end, true, truncate, tail_from) {
             (head, Some(rest)) => {
+                taken.extend(head.boxes.iter().map(|b| b.node_id));
                 pieces.push(ColumnPiece {
                     boxes: head.boxes,
                     flow_top: start,
@@ -2525,6 +2577,97 @@ fn leading_margin_at(boxes: &[LaidOutBox], items: &[SliceItem], cut: f64) -> f64
     }
 }
 
+/// Whether boxes `a` and `b` sit side by side: they overlap in the block direction (by more
+/// than half a px) and not in the inline direction (two items of one row flex line, a cell and
+/// its neighbour).
+fn beside(a: &LaidOutBox, b: &LaidOutBox) -> bool {
+    const EPS: f64 = 0.5;
+    a.y < b.y + b.height - EPS
+        && b.y < a.y + a.height - EPS
+        && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
+}
+
+/// The first box of box `i`'s row flex line: the run of `i`'s preceding siblings that sit beside
+/// it or beside each other ([`beside`]), else `i`. A forced break on any item of a row flex
+/// line applies before the line (CSS Flexible Box Layout 1 §10, "Fragmenting Flex Layout": a
+/// break-before on an item is propagated to its flex line), so the column that follows the
+/// break starts with the whole line.
+fn line_start(boxes: &[LaidOutBox], i: usize) -> usize {
+    let depth = boxes[i].depth;
+    let mut first = i;
+    let mut j = i;
+    while j > 1 {
+        j -= 1;
+        if boxes[j].depth < depth {
+            break;
+        }
+        if boxes[j].depth > depth {
+            continue;
+        }
+        if (first..=i).any(|m| boxes[m].depth == depth && beside(&boxes[j], &boxes[m])) {
+            first = j;
+        } else {
+            break;
+        }
+    }
+    first
+}
+
+/// A forced column break (`break-before: column` or `page`) taken in flow order: on a box whose
+/// border box does not start below the column's top `start` (so a cut by flow y alone would
+/// keep it in this column), but that comes in document order after other content of this column
+/// that starts above the break. The break position is the top of its flex line
+/// ([`line_start`]) with a negative top margin taken back out (the line's top; never above
+/// `start`), and must be at most `end`. Returns `(position, box index)` of the first such break
+/// in the flow, the earliest position winning. A box in `taken` has had its break (a box of an
+/// earlier column, or one whose break started this column).
+///
+/// Chrome 155 (2026-10-28, Chrome for Testing 155.0.8059.85; WPT css/css-break/flexbox/
+/// multi-line-row-flex-fragmentation-045, `tests/multicol.rs`
+/// `forced_breaks_at_one_flow_y_each_start_a_column`): five `margin-top: -100px` 100 px items,
+/// each on a 0 px tall flex line of its own and each `break-before: column`, take one column
+/// each, every item 100 px above its column's top: all five lines start at the same flow y, so
+/// only their order separates them. The margin after a forced break is kept (CSS Fragmentation
+/// 3 §5.2); a positive one is still dropped at a break taken below the column top (the cut is
+/// the border-box top, the pre-step-06 behaviour, not re-measured).
+fn forced_in_flow_order(
+    boxes: &[LaidOutBox],
+    start: f64,
+    end: f64,
+    taken: &HashSet<usize>,
+) -> Option<(f64, usize)> {
+    let mut best: Option<(f64, usize)> = None;
+    for i in 1..boxes.len() {
+        let b = &boxes[i];
+        if !(b.break_before_page || b.break_before_column)
+            || b.y > start + CUT_EPSILON_PX
+            || taken.contains(&b.node_id)
+        {
+            continue;
+        }
+        let line = line_start(boxes, i);
+        let at = (line..=i)
+            .filter(|&m| boxes[m].depth == b.depth)
+            .map(|m| boxes[m].y - boxes[m].margin_top.min(0.0))
+            .fold(f64::INFINITY, f64::min)
+            .max(start);
+        if at > end + CUT_EPSILON_PX || best.is_some_and(|(p, _)| p <= at) {
+            continue;
+        }
+        // Content before the line in document order (not an ancestor of it) that starts above
+        // the break: what stays in this column.
+        let content_before = (1..line).any(|k| {
+            subtree_end(boxes, k) <= line
+                && (boxes[k].height > 0.0 || paints(&boxes[k]))
+                && boxes[k].y < at - CUT_EPSILON_PX
+        });
+        if content_before {
+            best = Some((at, i));
+        }
+    }
+    best
+}
+
 /// `boxes` (depth-ordered, the first one its root) cut at flow y `cut` with
 /// [`split_fragment`]'s slice of the boxes it goes through: the part above the cut, and the part
 /// from the cut down (`None` when nothing of it paints there). For the absolutely positioned
@@ -2549,7 +2692,7 @@ pub(crate) fn split_boxes_at(
         members: Vec::new(),
         slices: 0,
     };
-    let (head, rest) = split_fragment(&frag, cut, cut, false, 0.0);
+    let (head, rest) = split_fragment(&frag, cut, cut, false, 0.0, None);
     (head.boxes, rest.map(|r| r.boxes))
 }
 
@@ -2572,12 +2715,6 @@ fn line_limits(b: &LaidOutBox) -> (usize, usize) {
 fn column_items(boxes: &[LaidOutBox], column_height: f64) -> Vec<SliceItem> {
     let mut items = slice_items(boxes, column_height);
     let parent = parents(boxes);
-    let beside = |a: &LaidOutBox, b: &LaidOutBox| {
-        const EPS: f64 = 0.5;
-        a.y < b.y + b.height - EPS
-            && b.y < a.y + a.height - EPS
-            && (b.x >= a.x + a.width - EPS || b.x + b.width <= a.x + EPS)
-    };
     let in_parallel_flow = |i: usize| {
         let mut a = Some(i);
         while let Some(j) = a {
