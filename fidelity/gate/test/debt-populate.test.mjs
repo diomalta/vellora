@@ -54,6 +54,9 @@ const LEDGER_C03_REBUILD = join(SNAP_C03_TIP, "DEBT-c03-ledger-rebuild.json");
 const SNAP_C04_TIP = resolve(here, "..", "snapshots", "2026-10-28", "c04");
 // The c03 tip shrink (3 entries / 7 keys), frozen when the c04 tip shrank DEBT.json.
 const LEDGER_C03_TIP = join(SNAP_C04_TIP, "DEBT-c03-tip.json");
+// The c04 tip shrink as carried unchanged by the c05 and c06 tips (2 entries / 5 keys), frozen when
+// the c07 tip shrank DEBT.json (byte-identical to DEBT.json as committed by the c06 tip).
+const LEDGER_C06_TIP = resolve(here, "..", "snapshots", "2026-10-28", "c06", "DEBT-c06-tip.json");
 const BASELINES = resolve(here, "..", "..", "baselines");
 
 // The boleto barcode digit of the 10-tip run (layer-vector geometry mapping): N0 28.531 px, P -3.
@@ -310,7 +313,7 @@ test("the c03 tip ledger (frozen at c04): 3 entries, 7 WPT keys, rule iii vs the
 // inline-formatting-context-001 (DEBT-10-wpt-3) now pass (Blitz's floats feature) and leave as
 // fixed with head class "none"; the other 5 keys still gate against port/00-start.
 test("the committed ledger (c04 tip shrink): 2 entries, 5 WPT keys, rule iii vs the frozen 10-integration ledger", () => {
-  const ledger = loadDebt(DEBT_FILE);
+  const ledger = loadDebt(LEDGER_C06_TIP);
   const prev = loadDebt(LEDGER_C03_TIP);
   const base = loadDebt(LEDGER_10);
   assert.deepEqual(ledgerProblems(ledger), []);
@@ -353,7 +356,7 @@ test("the committed ledger (c04 tip shrink): 2 entries, 5 WPT keys, rule iii vs 
 // key leaves and only the note grows. The c04 ledger is not frozen again: its entries and closed[]
 // are exactly the ones this test and the c04 test above pin.
 test("the committed ledger (c05 tip shrink): unchanged 2 entries / 5 keys, every key still debt in the c05 contract re-gate", () => {
-  const ledger = loadDebt(DEBT_FILE);
+  const ledger = loadDebt(LEDGER_C06_TIP);
   const prev = loadDebt(LEDGER_C03_TIP);
   const base = loadDebt(LEDGER_10);
   assert.deepEqual(ledgerProblems(ledger), []);
@@ -388,7 +391,7 @@ test("the committed ledger (c05 tip shrink): unchanged 2 entries / 5 keys, every
 });
 
 test("the committed ledger (c06 tip shrink): unchanged 2 entries / 5 keys, every key still debt in the c06 contract re-gate", () => {
-  const ledger = loadDebt(DEBT_FILE);
+  const ledger = loadDebt(LEDGER_C06_TIP);
   const prev = loadDebt(LEDGER_C03_TIP);
   const base = loadDebt(LEDGER_10);
   assert.deepEqual(ledgerProblems(ledger), []);
@@ -423,6 +426,73 @@ test("the committed ledger (c06 tip shrink): unchanged 2 entries / 5 keys, every
   );
   assert.deepEqual(
     transitionProblems(base, ledger, { step: "15-phase-c-06-tip", headItems: head }),
+    [],
+  );
+});
+
+// Phase C 07 tip (2026-10-28): DEBT.json shrunk from run 20261028T110750Z (phasec/07-tip, step
+// 16-phase-c-07-tip, shrink-ledger.mjs --label). The pin-b fixes make four keys pass with a clean
+// head comparison, so they leave as fixed (rule iii) and DEBT-10-wpt-2 empties;
+// flex-fragmented-with-float-descendant-001 passes but is ink-flagged (a clean pass at 00-start
+// became suspect), still a head debt item, and stays.
+test("the committed ledger (c07 tip shrink): 1 entry / 1 key, 4 keys closed as fixed, rule iii vs the frozen c06 ledger", () => {
+  const ledger = loadDebt(DEBT_FILE);
+  const prev = loadDebt(LEDGER_C06_TIP);
+  assert.deepEqual(ledgerProblems(ledger), []);
+  assert.deepEqual(
+    ledger.entries.map((e) => [e.id, e.keys.map((k) => k.key)]),
+    [
+      [
+        "DEBT-10-wpt-1",
+        ["wpt|css/css-break/flexbox/flex-fragmented-with-float-descendant-001.html"],
+      ],
+    ],
+  );
+  const report = JSON.parse(
+    gunzipSync(
+      readFileSync(
+        resolve(
+          here,
+          "..",
+          "snapshots",
+          "2026-10-28",
+          "c07",
+          "gate-report-c07-tip-contract.json.gz",
+        ),
+      ),
+    ).toString(),
+  );
+  assert.equal(report.step, "16-phase-c-07-tip");
+  assert.equal(report.verdict, "PASS");
+  assert.equal(report.counts.pinC, 0);
+  assert.equal(report.counts.pinB, 1);
+  const head = new Map(report.head.items.map((i) => [i.key, i]));
+  for (const e of ledger.entries) {
+    for (const k of e.keys) assert.equal(head.get(k.key)?.class, "debt", k.key);
+  }
+  assert.deepEqual(ledger.closed.slice(0, prev.closed.length), prev.closed);
+  const added = ledger.closed.slice(prev.closed.length);
+  assert.deepEqual(
+    added.map((c) => [c.id, c.key, c.headComparison.class]),
+    [
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/floats/floats-placement-vertical-003.xht", "none"],
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/floats/floats-placement-vertical-004.xht", "none"],
+      ["DEBT-10-wpt-1", "wpt|css/CSS2/linebox/baseline-block-with-overflow-001.html", "none"],
+      ["DEBT-10-wpt-2", "wpt|css/CSS2/floats/zero-width-floats.html", "none"],
+    ],
+  );
+  for (const c of added) {
+    assert.equal(c.fixed, true, c.key);
+    assert.equal(c.runId, "20261028T110750Z", c.key);
+    assert.equal(c.step, "16-phase-c-07-tip", c.key);
+    assert.equal(head.get(c.key)?.gating ?? false, false, c.key);
+  }
+  assert.match(
+    ledger.note,
+    /Phase C 07 tip .*\(step 16-phase-c-07-tip\) from run 20261028T110750Z/,
+  );
+  assert.deepEqual(
+    transitionProblems(prev, ledger, { step: "16-phase-c-07-tip", headItems: head }),
     [],
   );
 });
