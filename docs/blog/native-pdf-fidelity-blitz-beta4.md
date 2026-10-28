@@ -117,10 +117,12 @@ canaries. Where engines disagree about a float on a no-wrap line, vellora follow
 None of the nine document fixtures uses a float, so their numbers do not change because of this.
 WPT does change. Some of the published package's float "passes" were false: the test and its
 reference page lost their floats the same way and matched by accident. The merge gate classifies
-such a pass as an artefact (class a) only when there is evidence for it. Not every lost pass is
-an artefact. A few float and line-box tests that the published package passed fail on the branch,
-and raw Blitz fails them the same way. They are recorded in the debt ledger, not fixed, and the
-gate lists them by name under "What is not done".
+such a pass as an artefact (class a) only when there is evidence for it.
+
+Not every lost pass is an artefact. A few float and line-box tests that the published package
+passed were lost earlier, with the move to Blitz 0.3.0-beta.4, before the float feature was
+turned on. Raw Blitz 0.3.0-beta.4 fails them the same way. They are recorded in the debt ledger,
+not fixed, and the gate lists them by name under "What is not done".
 
 ## What word positions cannot see
 
