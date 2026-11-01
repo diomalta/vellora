@@ -9,8 +9,15 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, test } from "vitest";
-import { __forcePanicForTest, coreName, render } from "../src/node";
+import { beforeAll, describe, expect, test } from "vitest";
+// Imported in `beforeAll`, not statically: the engine module imports the wasm-bindgen glue
+// (`../wasm/vellora.js`), which exists only after `npm run build:wasm`, and a failed static
+// import fails the whole file before `describe.skipIf` can skip it.
+type Engine = typeof import("../src/node");
+let engine: Engine;
+const render: Engine["render"] = (...args) => engine.render(...args);
+const coreName: Engine["coreName"] = () => engine.coreName();
+const __forcePanicForTest: Engine["__forcePanicForTest"] = () => engine.__forcePanicForTest();
 
 const PKG_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 const ROOT = join(PKG_DIR, "..", "..");
@@ -28,6 +35,12 @@ const encoder = new TextEncoder();
 const HEAD = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><style>@page { size: A4; margin: 16mm; }</style></head>`;
 const doc = (body: string) => encoder.encode(`${HEAD}<body>${body}</body></html>`);
 const isPdf = (b: Uint8Array) => new TextDecoder().decode(b.subarray(0, 5)) === "%PDF-";
+
+beforeAll(async () => {
+  if (built) {
+    engine = await import("../src/node");
+  }
+});
 
 describe.skipIf(!built && !required)("@vellora/wasm", () => {
   test("the WebAssembly module is built", () => {
