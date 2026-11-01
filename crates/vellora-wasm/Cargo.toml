@@ -1,0 +1,23 @@
+[package]
+name = "vellora-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# WebAssembly binding over `vellora-core` for runtimes that cannot load a native `.node` addon:
+# Cloudflare Workers (workerd), Vercel Edge, Deno Deploy, browsers. Built for
+# `wasm32-unknown-unknown` with the `wasm-release` profile (workspace Cargo.toml) and post-processed
+# by `wasm-bindgen --target web`; see `packages/wasm/scripts/build.mjs`. Same single entry point as
+# `vellora-napi`: `render(html, opts) -> Uint8Array`, same located-diagnostic error contract.
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+vellora-core = { path = "../vellora-core" }
+# Pinned to the exact version Cargo.lock already resolves for the graph (web-time -> wasm-bindgen),
+# because the `wasm-bindgen` CLI that post-processes the module must match this crate's version
+# byte-for-byte (`packages/wasm/scripts/build.mjs` checks it).
+wasm-bindgen = "=0.2.125"
+js-sys = "=0.3.102"

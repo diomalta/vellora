@@ -10,6 +10,7 @@
  * identical inputs are byte-identical.
  */
 import type { Report, RuleId } from "@vellora/lint";
+import { loadLint } from "#runtime";
 import {
   VelloraError,
   VelloraInputError,
@@ -226,7 +227,7 @@ export function resolveOptions(opts: RenderOptions = {}): BridgeRenderOptions {
  * taxonomy.
  */
 async function applyFixers(html: string): Promise<string> {
-  const lint = await import("@vellora/lint");
+  const lint = await loadLint();
   const fix = (
     lint as {
       fix?: (

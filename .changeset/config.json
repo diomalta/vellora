@@ -3,7 +3,14 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [
-    ["vellora", "@vellora/native", "@vellora/lint", "@vellora/cli", "@vellora/engine-chromium"]
+    [
+      "vellora",
+      "@vellora/native",
+      "@vellora/lint",
+      "@vellora/cli",
+      "@vellora/engine-chromium",
+      "@vellora/wasm"
+    ]
   ],
   "linked": [],
   "access": "public",

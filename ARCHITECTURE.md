@@ -71,8 +71,10 @@ promise is narrow on purpose:
 |---|---|---|---|---|
 | `vellora-core` | Rust | no (crate) | Drive Blitz headless → paginate → emit PDF via krilla. Strict-validation gate. The hard, valuable part. | Blitz, krilla, resvg |
 | `vellora-napi` | Rust | no | napi-rs bindings around `vellora-core`; builds the `.node` addon. | vellora-core, napi |
+| `vellora-wasm` | Rust | no | wasm-bindgen binding around `vellora-core` for `wasm32-unknown-unknown`; same `render(html, opts)` and error properties as `vellora-napi`. | vellora-core, wasm-bindgen |
 | `@vellora/native` | prebuilt binaries | yes | Per-platform `.node` addons via `optionalDependencies`; tiny loader. No build tools for consumers. | — |
-| `vellora` | TS | yes | Public API + templating engine. Orchestrates validation → native render. | @vellora/native, (@vellora/lint for best-effort) |
+| `@vellora/wasm` | WebAssembly | yes | The engine as one `.wasm` for runtimes without native addons (Cloudflare Workers). Single-threaded; same PDF bytes as the native addon. | — |
+| `vellora` | TS | yes | Public API + templating engine. Orchestrates validation → native render. Its `#runtime` import picks the engine per runtime (`@vellora/native` on Node.js, `@vellora/wasm` on `workerd`). | @vellora/native, (@vellora/lint for best-effort), (@vellora/wasm on Workers) |
 | `@vellora/lint` | TS | yes | **Dev-time** diagnose + fix (codemod). parse5 DOM + the fix rules. | parse5, @resvg/resvg-js |
 | `@vellora/cli` | TS | yes | `render` / `lint` / `fix` commands for dev + CI. | vellora, @vellora/lint |
 | `@vellora/engine-chromium` | TS | yes | Optional Chromium/Chrome bridge implementing the same `NativeBridge` contract. | vellora |

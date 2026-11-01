@@ -58,6 +58,7 @@ Run from the repo root. Node 22 (`.nvmrc`), Rust pinned to 1.96.0 (`rust-toolcha
 | Full build (Rust → addon → TS, in this order) | `npm run build` |
 | Build TS only | `npm run build:ts` |
 | Build the native `.node` addon only | `npm -w @vellora/native run build:addon` |
+| Build the WebAssembly engine (`@vellora/wasm`; needs `wasm-bindgen-cli` at the Cargo.lock version) | `npm run build:wasm` |
 | All tests (Rust + TS) | `npm test` |
 | Rust tests only | `npm run test:rust` (`cargo test`) |
 | TS tests only | `npm run test:ts` (`vitest run`) |
@@ -84,8 +85,10 @@ Run the end-to-end example after a build: `node examples/render-invoice.ts` (Nod
 ```
 crates/vellora-core   Rust: the engine. Blitz layout → our pagination → krilla PDF. The hard part.
 crates/vellora-napi   Rust: cdylib napi-rs binding around vellora-core (async, thread-safe).
+crates/vellora-wasm   Rust: wasm-bindgen binding around vellora-core (wasm32, single-threaded).
 packages/vellora      TS, published: public API (renderPdf), templating, strict orchestration.
 packages/native       TS, published: loads the per-platform .node; exposes async render().
+packages/wasm         TS, published: the WebAssembly engine (Cloudflare Workers); same render().
 packages/lint         TS, published: DEV-TIME diagnose()/fix() codemods (parse5 + resvg).
 packages/cli          TS, published: vellora render/lint/fix.
 packages/engine-chromium TS, published: optional Chromium/Chrome bridge for explicit fidelity mode.
@@ -96,7 +99,11 @@ openspec/             Spec-driven change workflow — see "How changes are made"
 
 Dependency direction: `cli` → `vellora` → {`@vellora/native`, `@vellora/lint`, optional
 `@vellora/engine-chromium`}; `@vellora/native` loads the `.node` from `vellora-napi` →
-`vellora-core`.
+`vellora-core`. On Cloudflare Workers, `vellora`'s `#runtime` subpath import (package.json
+`imports`, `workerd` condition → `src/runtime.workerd.ts`) loads `@vellora/wasm` (`vellora-wasm` →
+`vellora-core`) instead, and rejects `strict: false` / `engine: "chromium"`. Keep `runtime.ts` and
+`runtime.workerd.ts` exporting the same functions; `packages/vellora/test/workerd-bundle.test.ts`
+fails if anything native reaches the Worker graph.
 
 ## Architecture
 
@@ -140,6 +147,11 @@ Swap it with `setNativeBridge(...)` or per-call via the internal `_bridge` optio
 - **All Blitz contact goes through `crates/vellora-core/src/blitz_engine.rs`.** Blitz is pinned to the
   exact crates.io pre-release `=0.3.0-beta.4` (`blitz-dom`, `blitz-html`, `blitz-traits`; it was a git
   rev before); it is pre-1.0 and churns, and funneling keeps an upstream break to one file. Don't import Blitz elsewhere.
+- **The WebAssembly build uses its own `[profile.wasm-release]` (`panic = "abort"`)**; never change
+  `release` for it. On wasm32 a panic traps: `crates/vellora-wasm` records the message in its panic
+  hook and `packages/wasm/src/engine.ts` rejects with `render panicked: …` and re-creates the
+  instance. `packages/wasm/test/render.test.ts` also requires byte-identical PDFs between the
+  WebAssembly and native engines for every fixture.
 - **`panic = "unwind"` in the workspace `[profile.release]` is mandatory** (it's workspace-wide, not
   per-member). The napi panic-to-rejection contract depends on it. Cargo.toml says so explicitly.
 - **No recursion and no super-linear cost on user input before the depth gate.** A stack overflow

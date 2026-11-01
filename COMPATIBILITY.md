@@ -128,6 +128,23 @@ strict gate as `css:page-margin-box`. The native renderer draws only
 | `@right-middle` (css:page-margin-box) | Unsupported | Rejected by the strict gate. Not drawn by the native renderer. |
 | `@right-bottom` (css:page-margin-box) | Unsupported | Rejected by the strict gate. Not drawn by the native renderer. |
 
+## WebAssembly build (`@vellora/wasm`)
+
+On Cloudflare Workers (`workerd`), `import { renderPdf } from "vellora"` renders
+with `@vellora/wasm`, the same Rust core compiled to WebAssembly, instead of the
+native addon. The subset above is the same: the strict gate, the layout and the PDF
+writer are the same code, and the repository's tests check that both engines produce
+byte-identical PDFs for every fixture. The differences are in the runtime around it:
+
+| Area | Native (`@vellora/native`, Node.js) | WebAssembly (`@vellora/wasm`) |
+|---|---|---|
+| Threads | Renders on the libuv thread pool; `renderPdfBatch` runs renders in parallel. | Single-threaded: a render runs on the calling thread and blocks it until the PDF is done; concurrent renders run one after another. |
+| `strict: false` | Runs the `@vellora/lint` fixers first. | Not available on Workers (the fixers use a native addon, resvg): rejects with `VelloraInputError`. Run `vellora fix` at build time and render with `strict: true`. |
+| `engine: "chromium"` / `"auto"` | Available with `@vellora/engine-chromium`; `"auto"` reads a policy file. | Not available on Workers: `"chromium"` rejects with `VelloraInputError`, and `"auto"` needs a policy file from the filesystem. Use the default engine. |
+| Rust panic | Caught (`panic = "unwind"`); the promise rejects with `render panicked: …`. | Traps the instance (`panic = "abort"` on wasm32); the promise rejects with the same `render panicked: …` message and the instance is re-created for the next render. |
+| Size | Native addon per platform. | One `.wasm` for every platform, about 14.3 MiB (5.3 MiB gzip, the size Workers checks against its limit), fonts included: within the Workers Paid limit (10 MB), above the Free limit (3 MB). |
+| Runtime | Node.js 20+ on macOS and Linux glibc. | Cloudflare Workers (`wrangler dev` with `nodejs_compat`) through `vellora`; Node.js through `@vellora/wasm` (CI tests). Browsers load `@vellora/wasm` directly (`default` export condition; checked by hand in Chromium, not in CI), but not the `vellora` package, which imports Node built-ins. On a browser's main thread a panic leaves the engine unusable until the page reloads (re-creating the instance synchronously is refused there); a Web Worker does not have that limit. Other edge runtimes (Vercel Edge, Deno Deploy) are untested. |
+
 ## Nesting depth limit
 
 The strict gate rejects documents whose element nesting exceeds

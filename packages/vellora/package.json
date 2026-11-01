@@ -40,6 +40,13 @@
       "default": "./dist/index.js"
     }
   },
+  "imports": {
+    "#runtime": {
+      "types": "./dist/runtime.d.ts",
+      "workerd": "./dist/runtime.workerd.js",
+      "default": "./dist/runtime.js"
+    }
+  },
   "sideEffects": false,
   "engines": {
     "node": ">=20"
@@ -51,6 +58,14 @@
   "dependencies": {
     "@vellora/lint": "0.1.0-alpha.0",
     "@vellora/native": "0.1.0-alpha.0"
+  },
+  "peerDependencies": {
+    "@vellora/wasm": "0.1.0-alpha.0"
+  },
+  "peerDependenciesMeta": {
+    "@vellora/wasm": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@vellora/test-harness": "*",

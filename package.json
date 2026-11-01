@@ -9,7 +9,8 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "cargo build --release && npm -w @vellora/native run build:addon && npm run build:ts",
-    "build:ts": "npm -w @vellora/lint run build && npm -w @vellora/native run build && npm -w @vellora/test-harness run build && npm -w vellora run build && npm -w @vellora/engine-chromium run build && npm -w @vellora/cli run build",
+    "build:ts": "npm -w @vellora/lint run build && npm -w @vellora/native run build && npm -w @vellora/test-harness run build && npm -w @vellora/wasm run build && npm -w vellora run build && npm -w @vellora/engine-chromium run build && npm -w @vellora/cli run build",
+    "build:wasm": "npm -w @vellora/wasm run build:wasm",
     "test": "npm run test:rust && npm run test:ts",
     "test:rust": "cargo test",
     "test:ts": "vitest run",
@@ -18,7 +19,7 @@
     "lint:ts": "biome check .",
     "supply-chain:install-scripts": "node scripts/check-install-scripts.mjs",
     "format": "biome format --write . && cargo fmt",
-    "clean": "rm -rf target packages/*/dist && rm -f packages/native/*.node packages/native/index.d.ts packages/native/index.js",
+    "clean": "rm -rf target packages/*/dist && rm -f packages/native/*.node packages/native/index.d.ts packages/native/index.js packages/wasm/wasm/vellora.js packages/wasm/wasm/vellora_bg.wasm packages/wasm/wasm/vellora_bg.wasm.d.ts",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "example": "tsx examples/render-invoice.ts",

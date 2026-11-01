@@ -9,6 +9,8 @@
       "**/*.node",
       "packages/native/index.d.ts",
       "packages/native/index.js",
+      "packages/wasm/wasm",
+      "examples/cloudflare-worker/.wrangler",
       "openspec",
       "fixtures",
       "benchmarks/results/visual-fidelity",
