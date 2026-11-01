@@ -1,6 +1,6 @@
 # Cloudflare Workers
 
-> Next release: `@vellora/wasm` is not on npm yet. Build it from the repository to try it today.
+> Since vellora 0.4.0.
 
 Workers can't load a native Node addon, so vellora ships its engine a second way: compiled to
 WebAssembly, as `@vellora/wasm`. Your code doesn't change. On `workerd`, `vellora` picks the
