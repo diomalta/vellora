@@ -1,0 +1,19 @@
+# vellora on Cloudflare Workers — see README.md.
+name = "vellora-invoice"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+# vellora's TypeScript layer imports a few `node:` built-ins (stream types, fs for the optional
+# fidelity policy file, crypto in the test mock); `nodejs_compat` provides them on workerd.
+compatibility_flags = ["nodejs_compat"]
+
+# The example renders the repository's invoice fixture: its template is imported as text and its
+# logo as bytes. (`.wasm` needs no rule: Wrangler bundles it as a compiled WebAssembly.Module.)
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.png"]
+fallthrough = true

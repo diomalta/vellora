@@ -1,0 +1,4 @@
+# wasm-bindgen output of `npm run build:wasm`. The type declarations are tracked so the package
+# type-checks without a Rust build; a rebuild that changes them shows up in `git diff`.
+/wasm/*
+!/wasm/vellora.d.ts

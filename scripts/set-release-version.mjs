@@ -34,7 +34,7 @@ if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
 // The fixed-group workspace packages always share one version; the per-platform prebuilt addon
 // packages (not workspaces; published by napi) track it too.
 const FILES = [
-  ...["vellora", "native", "cli", "lint", "engine-chromium"].map(
+  ...["vellora", "native", "wasm", "cli", "lint", "engine-chromium"].map(
     (p) => `packages/${p}/package.json`,
   ),
   ...readdirSync(join(ROOT, "packages/native/npm")).map(

@@ -1,0 +1,58 @@
+{
+  "name": "@vellora/wasm",
+  "version": "0.1.0-alpha.0",
+  "description": "WebAssembly build of the vellora HTML-to-PDF engine, for Cloudflare Workers and other runtimes that cannot load a native addon. Used automatically by the vellora package on workerd.",
+  "keywords": [
+    "html-to-pdf",
+    "pdf",
+    "pdf-generation",
+    "invoice",
+    "wasm",
+    "webassembly",
+    "cloudflare-workers",
+    "workerd",
+    "edge",
+    "no-puppeteer",
+    "no-chromium"
+  ],
+  "homepage": "https://diomalta.github.io/vellora/",
+  "bugs": "https://github.com/diomalta/vellora/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diomalta/vellora.git",
+    "directory": "packages/wasm"
+  },
+  "license": "MIT",
+  "author": "Diego Malta <diohmalta@gmail.com>",
+  "type": "module",
+  "main": "dist/node.js",
+  "types": "dist/node.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/node.d.ts",
+      "workerd": "./dist/workerd.js",
+      "node": "./dist/node.js",
+      "default": "./dist/web.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "wasm/vellora.js",
+    "wasm/vellora.d.ts",
+    "wasm/vellora_bg.wasm",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "LICENSE-DejaVu.txt",
+    "LICENSE-Liberation.txt"
+  ],
+  "scripts": {
+    "build:wasm": "node scripts/build.mjs",
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

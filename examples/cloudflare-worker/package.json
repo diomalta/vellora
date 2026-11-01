@@ -1,0 +1,18 @@
+{
+  "name": "vellora-example-cloudflare-worker",
+  "private": true,
+  "type": "module",
+  "description": "Render the example invoice to PDF inside a Cloudflare Worker with vellora's WebAssembly engine.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "size": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@vellora/wasm": "file:../../packages/wasm",
+    "vellora": "file:../../packages/vellora"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  }
+}

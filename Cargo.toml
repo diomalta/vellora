@@ -3,7 +3,7 @@
 # arrive with the full render path landing.
 [workspace]
 resolver = "2"
-members = ["crates/vellora-core", "crates/vellora-napi"]
+members = ["crates/vellora-core", "crates/vellora-napi", "crates/vellora-wasm"]
 
 [workspace.package]
 version = "0.0.0"
@@ -16,3 +16,17 @@ publish = false
 # contract depends on unwinding across the FFI boundary (precondition).
 [profile.release]
 panic = "unwind"
+
+# WebAssembly build of `crates/vellora-wasm` (Cloudflare Workers, edge runtimes, browsers). A
+# custom profile, so it never changes `release` (and its mandatory `panic = "unwind"`, above):
+# `wasm32-unknown-unknown`'s prebuilt std is `panic = "abort"`, so the wasm binding cannot unwind
+# anyway and turns a panic into a trap + instance reset instead (see crates/vellora-wasm/src/lib.rs).
+# Size settings target the Workers bundle limit (3 MB Free / 10 MB Paid, compressed); the measured
+# size and speed trade-off of `opt-level` is recorded in packages/wasm/README.md.
+[profile.wasm-release]
+inherits = "release"
+panic = "abort"
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

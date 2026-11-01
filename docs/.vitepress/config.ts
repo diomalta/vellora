@@ -158,6 +158,7 @@ const docsSidebar = [
       { text: "Logos & images", link: "/guide/images" },
       { text: "Fonts", link: "/guide/fonts" },
       { text: "Serve PDFs over HTTP", link: "/guide/streaming" },
+      { text: "Cloudflare Workers", link: "/guide/cloudflare-workers" },
       { text: "Bulk rendering", link: "/guide/concurrency" },
       { text: "PDF/A archiving", link: "/guide/pdfa" },
       { text: "When you need Chrome", link: "/guide/chromium-engine" },

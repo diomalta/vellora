@@ -33,6 +33,11 @@ npm install vellora
 Prebuilt for macOS (arm64, x64) and Linux with glibc (x64, arm64), on Node.js 20 or later. No
 Rust, Python, Chromium or system fonts needed. No Windows or Alpine/musl builds.
 
+**Cloudflare Workers** (next release, not on npm yet): add `@vellora/wasm`, the same engine built to
+WebAssembly. `import { renderPdf } from "vellora"` picks it on `workerd`, with the same PDF bytes as
+on Node.js. See [examples/cloudflare-worker](./examples/cloudflare-worker) and the
+[differences](./COMPATIBILITY.md#webassembly-build-vellorawasm).
+
 ## Your first PDF
 
 ```js
@@ -213,6 +218,7 @@ in [ARCHITECTURE.md](./ARCHITECTURE.md).
 |---|---|
 | `vellora` | Public API (`renderPdf`, `renderPdfBatch`, `renderPdfToStream`), templating, orchestration |
 | `@vellora/native` | The prebuilt native renderer for your platform. Installed for you. |
+| `@vellora/wasm` | The same renderer built to WebAssembly, for Cloudflare Workers (next release) |
 | `@vellora/lint` | Dev-time `diagnose()` and `fix()`; never on the strict render path |
 | `@vellora/cli` | `vellora render`, `lint`, `fix`, `doctor` and `fidelity` |
 | `@vellora/engine-chromium` | Optional browser engine using a host-supplied Chrome/Chromium |

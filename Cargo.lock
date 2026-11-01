@@ -2946,6 +2946,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vellora-wasm"
+version = "0.0.0"
+dependencies = [
+ "js-sys",
+ "vellora-core",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -57,6 +57,44 @@ jobs:
           path: packages/native/*.node
           if-no-files-found: error
 
+  # 1b) Build the WebAssembly engine (@vellora/wasm): one module for every platform.
+  build-wasm:
+    name: build (wasm32)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      - name: Provision Rust toolchain (wasm32 target from rust-toolchain.toml)
+        run: rustup show
+      - run: npm ci --ignore-scripts
+      - name: Check dependency install scripts
+        run: npm run supply-chain:install-scripts
+      - name: Install wasm-bindgen CLI (the version in Cargo.lock)
+        run: |
+          version=$(awk '/^name = "wasm-bindgen"$/ { getline; gsub(/"/, "", $3); print $3 }' Cargo.lock)
+          cargo install wasm-bindgen-cli --version "$version" --locked
+      - name: Build the WebAssembly engine
+        run: npm run build:wasm
+      - name: Render a PDF with the WebAssembly engine
+        run: |
+          npm -w @vellora/wasm run build
+          node -e "import('@vellora/wasm').then(async (m) => {
+            const pdf = await m.render(new TextEncoder().encode('<p>ok</p>'));
+            if (Buffer.from(pdf.slice(0,5)).toString() !== '%PDF-') { console.error('not a PDF'); process.exit(1); }
+            console.log('wasm render OK');
+          }).catch((e) => { console.error(e); process.exit(1); })"
+      - name: Upload the WebAssembly engine
+        uses: actions/upload-artifact@v7
+        with:
+          name: wasm
+          path: |
+            packages/wasm/wasm/vellora.js
+            packages/wasm/wasm/vellora.d.ts
+            packages/wasm/wasm/vellora_bg.wasm
+          if-no-files-found: error
+
   # 2) Prove a clean install loads the prebuilt addon with NO Rust toolchain/compiler.
   verify:
     name: verify clean install (${{ matrix.tag }})
@@ -98,7 +136,7 @@ jobs:
   # 3) Version + publish with provenance — gated on every build & verify job passing.
   release:
     name: version + publish
-    needs: [build, verify]
+    needs: [build, build-wasm, verify]
     runs-on: ubuntu-24.04
     env:
       # npm 11 requires an explicit dist-tag for prerelease versions. Keep alpha releases on
@@ -122,6 +160,10 @@ jobs:
           pattern: bindings-*
           merge-multiple: true
           path: packages/native/
+      - uses: actions/download-artifact@v8
+        with:
+          name: wasm
+          path: packages/wasm/wasm/
       - name: Move prebuilds into npm/* platform packages
         run: npm -w @vellora/native exec -- napi artifacts --output-dir . --npm-dir npm
       - name: Bundle license notices alongside each platform binary
@@ -129,7 +171,7 @@ jobs:
         # embeds bundled fonts — so the attribution must travel in the same tarball (their files
         # arrays list these). The canonical copies live in packages/native/.
         run: |
-          for d in packages/native/npm/*/; do
+          for d in packages/native/npm/*/ packages/wasm/; do
             cp packages/native/THIRD-PARTY-NOTICES.md packages/native/LICENSE-DejaVu.txt packages/native/LICENSE-Liberation.txt "$d"
           done
       - name: Set every published package to the release tag version
@@ -146,7 +188,7 @@ jobs:
         # auth). napi pre-publish --dry-run validates the per-platform package prep.
         run: |
           npm -w @vellora/native exec -- napi pre-publish -t npm --dry-run
-          npm publish --dry-run --tag "$NPM_DIST_TAG" --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli --workspace @vellora/engine-chromium
+          npm publish --dry-run --tag "$NPM_DIST_TAG" --workspace vellora --workspace @vellora/native --workspace @vellora/lint --workspace @vellora/cli --workspace @vellora/engine-chromium --workspace @vellora/wasm
       - name: Publish to npm with provenance
         if: ${{ github.event_name == 'release' }}
         # Provenance comes from NPM_CONFIG_PROVENANCE (below). Publish each package explicitly so a
@@ -175,6 +217,7 @@ jobs:
 
           workspaces=(
             "@vellora/native"
+            "@vellora/wasm"
             "@vellora/lint"
             "vellora"
             "@vellora/engine-chromium"
@@ -200,7 +243,7 @@ jobs:
         # false-negatives on a freshly published package that isn't queryable yet.
         run: |
           version="${GITHUB_REF_NAME#v}"
-          for pkg in vellora @vellora/native @vellora/lint @vellora/cli @vellora/engine-chromium; do
+          for pkg in vellora @vellora/native @vellora/wasm @vellora/lint @vellora/cli @vellora/engine-chromium; do
             echo "Checking provenance attestation for $pkg@$version ..."
             for attempt in $(seq 1 20); do
               if npm view "$pkg@$version" dist.attestations --json 2>/dev/null | grep -q provenance; then

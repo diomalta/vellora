@@ -40,5 +40,24 @@ jobs:
       - name: Build (cargo workspace + native addon + TypeScript)
         run: npm run build
 
+      # The WebAssembly engine (@vellora/wasm, issue #63) is platform-independent: build and test
+      # it once, on Linux. The CLI must match the wasm-bindgen version in Cargo.lock.
+      - name: Install wasm-bindgen CLI
+        if: runner.os == 'Linux'
+        run: |
+          version=$(awk '/^name = "wasm-bindgen"$/ { getline; gsub(/"/, "", $3); print $3 }' Cargo.lock)
+          cargo install wasm-bindgen-cli --version "$version" --locked
+
+      - name: Build the WebAssembly engine
+        if: runner.os == 'Linux'
+        run: npm run build:wasm
+
+      - name: Check the tracked wasm-bindgen type declarations are current
+        if: runner.os == 'Linux'
+        run: git diff --exit-code packages/wasm/wasm/vellora.d.ts
+
       - name: Test (cargo + TypeScript incl. in-process addon load)
+        # On Linux the WebAssembly suite is required (it is skipped where the module is not built).
+        env:
+          VELLORA_WASM_TESTS: ${{ runner.os == 'Linux' && '1' || '' }}
         run: npm test

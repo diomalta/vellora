@@ -1,25 +1,20 @@
 /**
- * Real native bridge: adapts `@vellora/native` (the prebuilt napi-rs addon) to the `NativeBridge`
- * contract the orchestration calls. This is the production default; the mock backs unit tests.
+ * Real engine bridge: adapts the runtime's engine to the `NativeBridge` contract the orchestration
+ * calls. This is the production default; the mock backs unit tests.
  *
- * The addon is imported lazily on first render, so importing `vellora` never loads the native `.node`
- * until a real render happens (tests that inject their own bridge never trigger it).
+ * The engine comes from `#runtime`: `@vellora/native` (the prebuilt napi-rs addon) on Node.js, and
+ * `@vellora/wasm` (the WebAssembly build of the same Rust core) on Cloudflare Workers. Both expose
+ * the same `render(html, opts)` with the same options and error properties, so this adapter is
+ * shared. The engine is imported lazily on first render, so importing `vellora` never loads it until
+ * a real render happens (tests that inject their own bridge never trigger it).
  */
+import { loadEngine } from "#runtime";
 import { VelloraInputError } from "./errors.js";
+import type { EngineModule } from "./runtime.js";
 import type { BridgeRenderOptions, NativeBridge } from "./types.js";
 
-/** The async render surface exposed by `@vellora/native`. */
-type AddonRender = (
-  html: Uint8Array,
-  opts?: {
-    title?: string;
-    creationDate?: [number, number, number];
-    images?: Record<string, Uint8Array>;
-    baseUrl?: string;
-    fonts?: Uint8Array[];
-    pdfa?: "PDF/A-2b";
-  },
-) => Promise<Uint8Array>;
+/** The async render surface exposed by `@vellora/native` and `@vellora/wasm`. */
+type AddonRender = EngineModule["render"];
 
 /**
  * Map the orchestration's ISO-8601 creation date to the addon's `[year, month, day]` (UTC).
@@ -45,8 +40,7 @@ export class NativeAddonBridge implements NativeBridge {
 
   private async load(): Promise<AddonRender> {
     if (!this.renderFn) {
-      const native = (await import("@vellora/native")) as { render: AddonRender };
-      this.renderFn = native.render;
+      this.renderFn = (await loadEngine()).render;
     }
     return this.renderFn;
   }

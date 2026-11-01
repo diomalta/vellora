@@ -1,8 +1,11 @@
 # Releasing vellora
 
-vellora publishes five workspace packages — `vellora`, `@vellora/native`, `@vellora/lint`,
-`@vellora/cli`, `@vellora/engine-chromium` — as a **fixed** version group (they always share one
-version), plus the per-platform prebuilt addon packages under `packages/native/npm/*`.
+vellora publishes six workspace packages — `vellora`, `@vellora/native`, `@vellora/wasm`,
+`@vellora/lint`, `@vellora/cli`, `@vellora/engine-chromium` — as a **fixed** version group (they
+always share one version), plus the per-platform prebuilt addon packages under
+`packages/native/npm/*`. `@vellora/wasm` carries one WebAssembly module for every platform, built
+by the `build-wasm` release job (`npm run build:wasm`, with the `wasm-bindgen` CLI at the version in
+`Cargo.lock`).
 
 Releases are tag-driven. Publishing runs from [`.github/workflows/release.yml`](.github/workflows/release.yml)
 with **npm provenance** after a GitHub Release is published. The release tag is the single source
@@ -77,7 +80,7 @@ Emulated builds are slower; prefer a native arm64 runner when available.
    ```bash
    gh release create v0.1.1 --title "v0.1.1" --notes-file <notes.md>
    ```
-6. The publish step is **gated** on all `build` and `verify` jobs passing. It moves the prebuilt
+6. The publish step is **gated** on all `build`, `build-wasm` and `verify` jobs passing. It moves the prebuilt
    `.node` files into `npm/*`, sets every published package to the release tag version, runs a
    publish dry-run with the explicit `latest` npm dist-tag, publishes with provenance, and verifies
    provenance attestations.
@@ -100,7 +103,7 @@ To roll back a bad release:
 1. **Deprecate** the bad version with a message pointing at the fix:
    ```bash
    npm deprecate vellora@<bad-version> "Broken release — upgrade to <good-version>."
-   # repeat for @vellora/native, @vellora/lint, @vellora/cli, @vellora/engine-chromium,
+   # repeat for @vellora/native, @vellora/wasm, @vellora/lint, @vellora/cli, @vellora/engine-chromium,
    # and the affected @vellora/native-* prebuilds
    ```
 2. **Publish a superseding patch** (new changeset → new version) with the correction.

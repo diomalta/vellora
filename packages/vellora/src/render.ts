@@ -7,6 +7,7 @@
  * mock without changing these signatures.
  */
 import type { Writable } from "node:stream";
+import { loadChromium } from "#runtime";
 import { VelloraError, VelloraInputError } from "./errors.js";
 import { DEFAULT_FIDELITY_POLICY_PATH, loadRenderEnginePolicy } from "./fidelity-policy.js";
 import { normalizeInput } from "./input.js";
@@ -23,13 +24,6 @@ import type {
   RenderEnginePolicy,
   RenderOptions,
 } from "./types.js";
-
-type DynamicImport = (specifier: string) => Promise<unknown>;
-
-const importOptionalPackage = new Function(
-  "specifier",
-  "return import(specifier)",
-) as DynamicImport;
 
 /**
  * Internal: the active native bridge. The production default is the real `@vellora/native` addon
@@ -79,8 +73,11 @@ async function loadChromiumBridge(opts: InternalRenderOptions): Promise<NativeBr
   }
   let mod: unknown;
   try {
-    mod = await importOptionalPackage("@vellora/engine-chromium");
+    mod = await loadChromium();
   } catch (cause) {
+    if (cause instanceof VelloraInputError) {
+      throw cause; // the runtime has no Chromium engine at all (Cloudflare Workers)
+    }
     throw new VelloraInputError(
       'engine: "chromium" requires installing optional package @vellora/engine-chromium.',
       { cause },
