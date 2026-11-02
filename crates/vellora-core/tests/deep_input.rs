@@ -465,26 +465,30 @@ fn nested_tables(n: usize) -> String {
 /// the gate, on every document, `text-wrap: balance` or not.
 #[test]
 fn nested_tables_render_in_time_linear_in_the_nesting_depth() {
-    let render = |n: usize| {
-        let html = nested_tables(n);
-        let started = Instant::now();
-        let result = vellora_core::render(html.as_bytes(), &RenderOptions::default());
-        (result, started.elapsed())
-    };
-    // The deepest nest the gate accepts (`MAX_NESTING_DEPTH` = 192, four elements a level).
-    let (result, elapsed) = render(47);
-    match result {
-        Ok(pdf) => assert!(pdf.starts_with(b"%PDF-")),
-        Err(VelloraError::Unsupported(d)) => assert_eq!(d.feature, "max-nesting-depth", "{d:?}"),
-        Err(other) => panic!("{other:?}"),
+    let render =
+        |n: usize| vellora_core::render(nested_tables(n).as_bytes(), &RenderOptions::default());
+    // The deepest nest the gate accepts (`MAX_NESTING_DEPTH` = 192, four elements a level). The
+    // render runs on its own thread so a regression fails here at the deadline instead of
+    // hanging the test run (the walk it guards never returned).
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let html = nested_tables(47);
+        let _ = tx.send(vellora_core::render(
+            html.as_bytes(),
+            &RenderOptions::default(),
+        ));
+    });
+    match rx.recv_timeout(Duration::from_secs(10)) {
+        Ok(Ok(pdf)) => assert!(pdf.starts_with(b"%PDF-")),
+        Ok(Err(VelloraError::Unsupported(d))) => {
+            assert_eq!(d.feature, "max-nesting-depth", "{d:?}")
+        }
+        Ok(Err(other)) => panic!("{other:?}"),
+        Err(_) => panic!("47 nested tables did not render within 10 s"),
     }
-    assert!(
-        elapsed < Duration::from_secs(10),
-        "47 nested tables: {elapsed:?}"
-    );
     // The doubling made 24 levels ~4 000x slower than 12; linear work is ~2x (plus Blitz).
-    let t_small = min_of_three(|| assert!(render(12).0.is_ok()));
-    let t_large = min_of_three(|| assert!(render(24).0.is_ok()));
+    let t_small = min_of_three(|| assert!(render(12).is_ok()));
+    let t_large = min_of_three(|| assert!(render(24).is_ok()));
     assert!(
         t_large < t_small * 9 + Duration::from_millis(50),
         "nested tables: 12 -> {t_small:?}, 24 -> {t_large:?}"
