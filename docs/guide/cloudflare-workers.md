@@ -50,9 +50,48 @@ on Node.js for the same input. The repository's tests check that for every fixtu
   (`benchmarks/wasm-vs-native.mjs`, sample invoice, Node.js 22, one Linux machine), the warm median
   was 31.8 ms for WebAssembly against 17.1 ms native, and the first render in a fresh process
   243 ms against 30 ms (compiling the module). Measure on your own templates.
+- **A slow first render per isolate.** See [Warming up](#warming-up) below.
 - **No `strict: false`, no Chrome.** The fixers behind `strict: false` use a native addon, and there
   is no browser on Workers: both reject with `VelloraInputError`. Run `vellora fix` on your
   templates at build time instead.
+
+## Warming up
+
+The first render in a new isolate also compiles the engine: V8 compiles each WebAssembly function
+the first time it runs. `@vellora/wasm` exports `warmup()`, which renders a small built-in document
+once so that code is compiled before your first real render. It moves the cost, it doesn't remove
+it, so call it where nobody is waiting, at the top level of your Worker module:
+
+```ts
+import { warmup } from "@vellora/wasm";
+import { renderPdf } from "vellora";
+
+await warmup(); // runs when the isolate starts
+
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const pdf = await renderPdf(template, data);
+    return new Response(pdf, { headers: { "content-type": "application/pdf" } });
+  },
+};
+```
+
+`vellora` and your import of `@vellora/wasm` share one engine in the bundle, so the warm-up applies
+to `renderPdf`. Rendering one of your own templates at the top level works too and covers your code
+paths exactly.
+
+What we measured, and what we haven't yet:
+
+- **Local `wrangler dev`** (workerd, not Cloudflare's edge; `examples/cloudflare-worker`, 4–5
+  restarts): the first request took 190–336 ms without a warm-up and 70–100 ms when `warmup()` had
+  run in an earlier request; warm requests took about 40–45 ms. With a top-level `await warmup()`
+  the first request took 153–158 ms (2 restarts), which suggests `wrangler dev` starts the isolate
+  with the first request, so the warm-up ran inside it. We haven't confirmed that.
+- **Cloudflare's edge: not measured yet.** We don't know yet whether the platform starts isolates
+  before the first request reaches them, or how close `warmup()` (about 100–200 ms of CPU on our
+  machine) comes to the Workers startup CPU limit. Deploy `examples/cloudflare-worker` with and
+  without the warm-up and compare the first request of a fresh isolate with the next ones before
+  relying on it.
 
 Details: the "WebAssembly build" section of the
 [compatibility matrix](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).

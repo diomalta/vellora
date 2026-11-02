@@ -10,4 +10,4 @@ export type { RenderOpts, VelloraWasm, WasmSource } from "./engine.js";
 
 const api = createVelloraWasm(() => wasmModule);
 
-export const { init, render, coreName, __forcePanicForTest } = api;
+export const { init, warmup, render, coreName, __forcePanicForTest } = api;

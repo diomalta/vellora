@@ -10,6 +10,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
+import { WARMUP_HTML, WARMUP_PNG } from "../src/warmup";
 // Imported in `beforeAll`, not statically: the engine module imports the wasm-bindgen glue
 // (`../wasm/vellora.js`), which exists only after `npm run build:wasm`, and a failed static
 // import fails the whole file before `describe.skipIf` can skip it.
@@ -18,6 +19,7 @@ let engine: Engine;
 const render: Engine["render"] = (...args) => engine.render(...args);
 const coreName: Engine["coreName"] = () => engine.coreName();
 const __forcePanicForTest: Engine["__forcePanicForTest"] = () => engine.__forcePanicForTest();
+const warmup: Engine["warmup"] = (...args) => engine.warmup(...args);
 
 const PKG_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 const ROOT = join(PKG_DIR, "..", "..");
@@ -82,6 +84,15 @@ describe.skipIf(!built && !required)("@vellora/wasm", () => {
     await expect(render(doc("<p>x</p>"), bad)).rejects.toThrow(/must be a Uint8Array/);
   });
 
+  test("warmup() resolves, is idempotent, and leaves later renders unchanged", async () => {
+    const opts = { creationDate: [2024, 1, 1] as [number, number, number] };
+    const before = await render(doc("<h1>Warm</h1><p>up</p>"), opts);
+    await warmup();
+    await Promise.all([warmup(), warmup()]);
+    const after = await render(doc("<h1>Warm</h1><p>up</p>"), opts);
+    expect(Buffer.compare(before, after)).toBe(0);
+  });
+
   test("a Rust panic rejects with the napi wording and the next render still works", async () => {
     const before = await render(doc("<p>after panic</p>"), { creationDate: [2024, 1, 1] });
     for (let i = 0; i < 2; i++) {
@@ -127,6 +138,15 @@ const nativeBuilt = readdirSync(join(ROOT, "packages", "native")).some(
 );
 
 describe.skipIf(!built || !nativeBuilt)("WebAssembly ↔ native parity", () => {
+  test("the warmup() document is inside the subset and renders byte-identical on both", async () => {
+    const native = await import("@vellora/native");
+    const html = encoder.encode(WARMUP_HTML);
+    const opts = { images: { "warmup.png": WARMUP_PNG } };
+    const viaNative = await native.render(html, opts);
+    expect(isPdf(viaNative)).toBe(true);
+    expect(Buffer.compare(await render(html, opts), viaNative)).toBe(0);
+  });
+
   test.each(fixtures())(
     "$name renders byte-identical to the native addon",
     async ({ dir }) => {

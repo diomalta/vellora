@@ -16,4 +16,4 @@ const api = createVelloraWasm(async () => {
   return response.arrayBuffer();
 });
 
-export const { init, render, coreName, __forcePanicForTest } = api;
+export const { init, warmup, render, coreName, __forcePanicForTest } = api;

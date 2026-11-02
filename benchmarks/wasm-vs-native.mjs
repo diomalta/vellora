@@ -9,6 +9,11 @@
  *   - cold start: a FRESH Node process imports the engine and renders once; the sample is the time
  *     from just before the import to the first PDF (Node's own boot is excluded: it is the same for
  *     both). The WebAssembly sample includes reading, compiling and instantiating the module.
+ *   - first render after a boot warm-up (engines exporting `warmup()`, i.e. WebAssembly; issue
+ *     #66): a fresh process imports the engine and awaits `warmup()` (timed separately, from just
+ *     before the import: the
+ *     one-off startup cost), then the sample is the first render of the invoice, i.e. what the
+ *     first request pays when the application warms the engine up at startup.
  *   - warm: one process, BENCH_WARMUP_RUNS discarded, then BENCH_WARM_RUNS sequential renders;
  *     median / p95 via lib/stats.mjs.
  *   - output bytes, and whether both engines produced byte-identical PDFs.
@@ -38,7 +43,7 @@ const ENGINES = {
 
 // The child: import one engine, render the (pre-templated) invoice, report timings as JSON.
 const CHILD = `
-const [enginePath, inputPath, warmRuns, warmupRuns] = process.argv.slice(1);
+const [enginePath, inputPath, warmRuns, warmupRuns, bootWarmup] = process.argv.slice(1);
 const { readFileSync } = await import("node:fs");
 const input = JSON.parse(readFileSync(inputPath, "utf8"));
 const html = new TextEncoder().encode(input.html);
@@ -46,18 +51,24 @@ const opts = { title: "benchmark-invoice", creationDate: [2026, 1, 1], images: O
   Object.entries(input.images).map(([k, v]) => [k, new Uint8Array(Buffer.from(v, "base64"))])) };
 const t0 = performance.now();
 const engine = await import(enginePath);
+let bootWarmupMs;
+if (bootWarmup === "1") {
+  await engine.warmup();
+  bootWarmupMs = performance.now() - t0;
+}
+const t1 = performance.now();
 const first = await engine.render(html, opts);
-const coldMs = performance.now() - t0;
+const coldMs = performance.now() - (bootWarmup === "1" ? t1 : t0);
 const warm = [];
 for (let i = 0; i < Number(warmupRuns) + Number(warmRuns); i++) {
   const t = performance.now();
   await engine.render(html, opts);
   if (i >= Number(warmupRuns)) warm.push(performance.now() - t);
 }
-process.stdout.write(JSON.stringify({ coldMs, warm, pdf: Buffer.from(first).toString("base64") }));
+process.stdout.write(JSON.stringify({ coldMs, bootWarmupMs, warm, pdf: Buffer.from(first).toString("base64") }));
 `;
 
-function runChild(engine, inputPath, warmRuns, warmupRuns) {
+function runChild(engine, inputPath, warmRuns, warmupRuns, bootWarmup = false) {
   const child = spawnSync(
     process.execPath,
     [
@@ -68,6 +79,7 @@ function runChild(engine, inputPath, warmRuns, warmupRuns) {
       inputPath,
       String(warmRuns),
       String(warmupRuns),
+      bootWarmup ? "1" : "0",
     ],
     { encoding: "utf8", maxBuffer: 64 << 20 },
   );
@@ -119,8 +131,21 @@ for (const engine of Object.keys(ENGINES)) {
     pdfs[engine] = r.pdf;
   }
   const warm = runChild(engine, inputPath, WARM_RUNS, WARMUP_RUNS);
+  let afterBootWarmup;
+  if (engine === "wasm") {
+    const first = [];
+    const boot = [];
+    for (let i = 0; i < COLD_RUNS; i++) {
+      const r = runChild(engine, inputPath, 0, 0, true);
+      first.push(r.coldMs);
+      boot.push(r.bootWarmupMs);
+      if (r.pdf !== pdfs[engine]) throw new Error("warmup() changed the PDF of the next render");
+    }
+    afterBootWarmup = { bootWarmup: summarize(boot), firstRender: summarize(first) };
+  }
   results[engine] = {
     cold: summarize(cold),
+    ...(afterBootWarmup ? { afterBootWarmup } : {}),
     warm: summarize(warm.warm),
     pdfBytes: Buffer.from(pdfs[engine], "base64").length,
   };
@@ -163,6 +188,12 @@ for (const engine of Object.keys(ENGINES)) {
   const r = results[engine];
   console.log(
     `| ${engine} | ${ms(r.cold.medianMs)} / ${ms(r.cold.p95Ms)} | ${ms(r.warm.medianMs)} / ${ms(r.warm.p95Ms)} | ${r.pdfBytes} |`,
+  );
+}
+const boot = results.wasm.afterBootWarmup;
+if (boot) {
+  console.log(
+    `| wasm, after \`warmup()\` at boot | ${ms(boot.firstRender.medianMs)} / ${ms(boot.firstRender.p95Ms)} (boot warm-up ${ms(boot.bootWarmup.medianMs)}) | — | — |`,
   );
 }
 if (results.workerd) {

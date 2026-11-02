@@ -21,6 +21,7 @@
  * therefore run one after another; they never share state.
  */
 import initGlue, * as glue from "../wasm/vellora.js";
+import { WARMUP_HTML, WARMUP_PNG } from "./warmup.js";
 
 /** Render options. Identical to `@vellora/native`'s `RenderOpts`. */
 export interface RenderOpts {
@@ -48,6 +49,13 @@ export interface VelloraWasm {
    * asset URL); without it the runtime entry's default location is used. Idempotent.
    */
   init(source?: WasmSource | Promise<WasmSource>): Promise<void>;
+  /**
+   * `init(source)`, then render a small built-in document once and discard the PDF, so the code a
+   * typical render runs is compiled before the first real render. Call it at startup, outside a
+   * request: it moves most of the first render's extra cost (V8 compiling the module's functions
+   * on first use) out of the request path. Optional and idempotent: only the first call renders.
+   */
+  warmup(source?: WasmSource | Promise<WasmSource>): Promise<void>;
   /** Render document HTML bytes (UTF-8 content, never a path) to PDF bytes. */
   render(html: Uint8Array, opts?: RenderOpts): Promise<Uint8Array>;
   /** Smoke export: the linked core crate's name (`"vellora-core"`). */
@@ -55,6 +63,9 @@ export interface VelloraWasm {
   /** Test-only: forces a Rust panic to prove panic-to-rejection and instance reset. Not public API. */
   __forcePanicForTest(): Promise<void>;
 }
+
+const encoder = new TextEncoder();
+const WARMUP_OPTS = { images: { "warmup.png": WARMUP_PNG } };
 
 /** Was this error raised by the WebAssembly machine itself (trap / host stack overflow)? */
 function isTrap(error: unknown): boolean {
@@ -66,6 +77,7 @@ export function createVelloraWasm(
   defaultSource: () => WasmSource | Promise<WasmSource>,
 ): VelloraWasm {
   let ready: Promise<void> | undefined;
+  let warmed: Promise<void> | undefined;
   /** Set when a trapped instance could not be re-created; every later call rejects with it. */
   let broken: Error | undefined;
 
@@ -122,8 +134,23 @@ export function createVelloraWasm(
     }
   }
 
+  function warmup(source?: WasmSource | Promise<WasmSource>): Promise<void> {
+    if (!warmed) {
+      warmed = (async () => {
+        await init(source);
+        call(() => glue.render(encoder.encode(WARMUP_HTML), WARMUP_OPTS));
+      })();
+      // A failed load can be retried, as with `init`.
+      warmed.catch(() => {
+        warmed = undefined;
+      });
+    }
+    return warmed;
+  }
+
   return {
     init,
+    warmup,
     async render(html, opts) {
       await init();
       return call(() => glue.render(html, opts));
