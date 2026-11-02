@@ -4465,10 +4465,11 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
         stack.extend(node.children.iter().rev().copied());
     }
     for table in tables {
-        let Some((grid, cell_ids, rtl)) = collapsed_table_grid(doc, table) else {
+        let Some((grid, cell_ids, rtl, header_rows)) = collapsed_table_grid(doc, table) else {
             continue;
         };
-        let resolved = crate::collapsed_borders::resolve(&grid);
+        let mut resolved = crate::collapsed_borders::resolve(&grid);
+        crate::collapsed_borders::paint_header_bottom(&mut resolved, &grid, header_rows);
         if !resolved.any_border {
             continue;
         }
@@ -4810,12 +4811,18 @@ fn collect_table_part(doc: &BaseDocument, id: NodeId, state: &mut GridCollect) -
 /// `build_table_context` / `collect_table_cells`: header groups first, footer groups last,
 /// `display: none` and absolutely positioned parts skipped, `display: contents` transparent),
 /// with the computed borders of the table, its row groups, rows and cells, plus the cells'
-/// node ids in grid order. `None` (the table is left as Blitz lays it out) for a structure
+/// node ids in grid order, whether the table is RTL, and how many grid rows its header groups
+/// hold (they come first). `None` (the table is left as Blitz lays it out) for a structure
 /// outside that model: a cell outside any row, or no cell at all.
 fn collapsed_table_grid(
     doc: &BaseDocument,
     table: NodeId,
-) -> Option<(crate::collapsed_borders::TableGrid, Vec<NodeId>, bool)> {
+) -> Option<(
+    crate::collapsed_borders::TableGrid,
+    Vec<NodeId>,
+    bool,
+    usize,
+)> {
     use style::computed_values::direction::T as Direction;
     use style::values::specified::box_::DisplayInside;
     let node = doc.get_node(table)?;
@@ -4839,11 +4846,15 @@ fn collapsed_table_grid(
         ids: Vec::new(),
         cursor: TableColumnCursor::default(),
     };
+    let mut header_rows = 0;
     for order in 0..3 {
         for &child in &node.children {
             if group_order(child) == order {
                 collect_table_part(doc, child, &mut state)?;
             }
+        }
+        if order == 0 {
+            header_rows = state.rows.len();
         }
     }
     if state.cells.is_empty() {
@@ -4873,7 +4884,7 @@ fn collapsed_table_grid(
     for cell in &mut grid.cells {
         cell.sides = logical(cell.sides);
     }
-    Some((grid, state.ids, rtl))
+    Some((grid, state.ids, rtl, header_rows))
 }
 
 fn walk_for_denied(
