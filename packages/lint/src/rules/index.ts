@@ -11,6 +11,8 @@ import { inlineSvgRule } from "./inline-svg.js";
 import { invalidMarkupRule } from "./invalid-markup.js";
 import { pageMarginBoxRule } from "./page-margin-box.js";
 import { scriptElementRule } from "./script-element.js";
+import { unsupportedCssRule } from "./unsupported-css.js";
+import { unsupportedElementRule } from "./unsupported-element.js";
 
 export const RULES: Rule[] = [
   inlineSvgRule,
@@ -20,4 +22,6 @@ export const RULES: Rule[] = [
   scriptElementRule,
   cssAnimationRule,
   pageMarginBoxRule,
+  unsupportedElementRule,
+  unsupportedCssRule,
 ];

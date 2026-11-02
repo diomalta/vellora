@@ -12,7 +12,9 @@ export type RuleId =
   | "invalid-markup"
   | "script-element"
   | "css-animation"
-  | "page-margin-box";
+  | "page-margin-box"
+  | "unsupported-element"
+  | "unsupported-css";
 
 export type Severity = "error" | "warning";
 
@@ -40,6 +42,12 @@ export interface Finding {
   snippet: string;
   /** Stable URL/anchor into the compatibility table for this rule. */
   compatLink: string;
+  /**
+   * The strict core gate's `feature` id for this construct (`element:<tag>`, `css:<feature>`), present
+   * exactly when a strict `renderPdf` rejects it with a `VelloraUnsupportedError` carrying the same
+   * `feature`. Absent on findings the gate accepts (e.g. `inline-svg`, `display:flex` in a cell).
+   */
+  feature?: string;
   /** True on a `fix()` report when this finding was repaired by a codemod. */
   applied?: boolean;
 }

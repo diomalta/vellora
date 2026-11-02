@@ -17,7 +17,7 @@ export const scriptElementRule: Rule = {
     const detections: Detection[] = [];
     walkElements(doc.document, (element) => {
       if (tagName(element) === "script") {
-        detections.push({ element, suggestedFix: SUGGESTED_FIX });
+        detections.push({ element, suggestedFix: SUGGESTED_FIX, feature: "element:script" });
       }
     });
     return detections;

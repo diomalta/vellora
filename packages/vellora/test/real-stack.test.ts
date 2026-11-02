@@ -10,9 +10,17 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compareGolden, fixtureFont, fixtureImages, resolveById } from "@vellora/test-harness";
+import { diagnose } from "@vellora/lint";
+import {
+  acceptedGateProbes,
+  compareGolden,
+  fixtureFont,
+  fixtureImages,
+  rejectedGateProbes,
+  resolveById,
+} from "@vellora/test-harness";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { NativeAddonBridge, renderPdf } from "../src/index";
+import { NativeAddonBridge, VelloraUnsupportedError, renderPdf } from "../src/index";
 
 // The invoice fixture carries `<img src="assets/logo.png">`; supply its bytes so the strict gate
 // resolves the image instead of rejecting it. Image source resolution is exercised end-to-end here.
@@ -170,4 +178,29 @@ describe("golden harness over a real rendered PDF", () => {
     expect(cmp.pass).toBe(false);
     expect(cmp.diff).toMatch(/offset|size/);
   });
+});
+
+// Issue #60: the probes `packages/lint/test/core-gate-sync.test.ts` lints, through the REAL gate. A
+// rejected probe must fail with exactly the feature lint reports for it, and an accepted probe must
+// render, so lint and the strict render agree on both sides of each rule.
+describe("lint and the real strict gate agree", () => {
+  test.each(rejectedGateProbes().map((p) => [p.name, p] as const))(
+    "rejects %s with the feature lint reports",
+    async (_name, probe) => {
+      const error = await renderPdf(probe.html, {}, realStack() as never).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(VelloraUnsupportedError);
+      expect((error as VelloraUnsupportedError).feature).toBe(probe.feature);
+      const features = diagnose(probe.html).findings.map((f) => f.feature);
+      expect(features).toContain((error as VelloraUnsupportedError).feature);
+    },
+  );
+
+  test.each(acceptedGateProbes().map((p) => [p.name, p] as const))(
+    "renders %s, which lint reports no gate feature for",
+    async (_name, probe) => {
+      const pdf = await renderPdf(probe.html, {}, realStack() as never);
+      expect(latin1(pdf).startsWith("%PDF-")).toBe(true);
+      expect(diagnose(probe.html).findings.filter((f) => f.feature)).toEqual([]);
+    },
+  );
 });
