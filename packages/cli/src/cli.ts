@@ -125,7 +125,7 @@ function printHumanReport(report: Report): string {
   return `${report.findings.length} lint finding(s):\n${report.findings
     .map(
       (finding) =>
-        `- ${finding.severity} ${finding.rule} at ${finding.location.line}:${finding.location.col} (${finding.autoFixable ? "auto-fixable" : "manual"}): ${finding.suggestedFix}`,
+        `- ${finding.severity} ${finding.rule}${finding.feature ? ` (${finding.feature})` : ""} at ${finding.location.line}:${finding.location.col} (${finding.autoFixable ? "auto-fixable" : "manual"}): ${finding.suggestedFix}`,
     )
     .join("\n")}\n`;
 }
