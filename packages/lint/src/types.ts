@@ -12,7 +12,8 @@ export type RuleId =
   | "invalid-markup"
   | "script-element"
   | "css-animation"
-  | "page-margin-box";
+  | "page-margin-box"
+  | "external-stylesheet";
 
 export type Severity = "error" | "warning";
 

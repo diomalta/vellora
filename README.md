@@ -53,7 +53,8 @@ writeFileSync("receipt.pdf", pdf);
 (`{{ value }}`, `{% if %}`, `{% for %}`, and `currency`, `number` and `date` helpers), so a literal
 `{{` or `{%` in pre-rendered HTML is read as template syntax. Put CSS in a `<style>` tag or
 `style=""`: vellora loads nothing from the network, so `<link rel="stylesheet">` and `@import` are
-ignored, and images and fonts are passed in as bytes.
+rejected with the line and column (`css:external-stylesheet`), and images and fonts are passed in as
+bytes.
 
 ## Why not just use Puppeteer?
 

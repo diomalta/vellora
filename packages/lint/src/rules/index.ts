@@ -5,6 +5,7 @@
  */
 import type { Rule } from "../engine.js";
 import { cssAnimationRule } from "./css-animation.js";
+import { externalStylesheetRule } from "./external-stylesheet.js";
 import { flexGridInTdRule } from "./flex-grid-in-td.js";
 import { imgDimensionAttrsRule } from "./img-dimension-attrs.js";
 import { inlineSvgRule } from "./inline-svg.js";
@@ -20,4 +21,5 @@ export const RULES: Rule[] = [
   scriptElementRule,
   cssAnimationRule,
   pageMarginBoxRule,
+  externalStylesheetRule,
 ];

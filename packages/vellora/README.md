@@ -90,7 +90,8 @@ The page size and margins come from your CSS (`@page`). Templating is built in:
 pre-rendered HTML is read as template syntax.
 
 Put your CSS in a `<style>` tag or `style=""`. vellora loads nothing from the network:
-`<link rel="stylesheet">` and `@import` are ignored, and images and fonts are passed in as bytes
+`<link rel="stylesheet">` and `@import` are rejected with the line and column (`css:external-stylesheet`),
+and images and fonts are passed in as bytes
 (see `images` and `fonts` below).
 
 ## What you get
