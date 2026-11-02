@@ -79,7 +79,7 @@ async function replaceFile(path: string, data: string | Uint8Array): Promise<voi
 
 function usage(): string {
   return `Usage:
-  vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]
+  vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--no-template] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]
   vellora lint <input|-> [--json]
   vellora fix <input|-> [--write] [--json]
   vellora doctor <input|-> [--out dir] [--json] [--reference chromium] [--reference-pdf file] [--subject native|chromium] [--pixel-diff] [--pixel-budget ratio] [--template-id id] [--policy file]
@@ -104,7 +104,7 @@ Exit codes:
 function commandUsage(command: string): string {
   switch (command) {
     case "render":
-      return "Usage: vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]\n";
+      return "Usage: vellora render <input|-> --out <file> [--data data.json] [--title title] [--creation-date iso] [--no-strict] [--no-template] [--engine native|chromium|auto] [--template-id id] [--policy file] [--base-url url] [--image key=path] [--font path]\n";
     case "lint":
       return "Usage: vellora lint <input|-> [--json]\n";
     case "fix":
@@ -140,6 +140,7 @@ async function handleRender(args: string[], io: CliIo, deps: CliDeps): Promise<E
       title: { type: "string" },
       "creation-date": { type: "string" },
       "no-strict": { type: "boolean" },
+      "no-template": { type: "boolean" },
       engine: { type: "string" },
       "template-id": { type: "string" },
       policy: { type: "string" },

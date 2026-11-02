@@ -46,7 +46,8 @@ Arbitrary web pages are out of scope. For templates that need these, the optiona
 
 Things to know:
 
-- Templating always runs, so a literal {{ or {% in pre-rendered HTML is read as template syntax.
+- Templating runs by default. For pre-rendered HTML pass { template: false } (CLI: --no-template) so a
+  literal {{ or {% stays as text, or wrap the part in {% raw %}...{% endraw %}.
 - vellora loads nothing from the network. Put CSS in a <style> tag or style=""; <link
   rel="stylesheet"> and @import are ignored. Images and fonts are passed in as bytes.
 - Prebuilt for macOS arm64/x64 and Linux glibc x64/arm64. No Windows or Alpine/musl builds.

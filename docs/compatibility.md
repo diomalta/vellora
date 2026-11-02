@@ -102,7 +102,7 @@ const pdf = await renderPdf(html, {}, {
 | A remote image URL | Fetch it yourself and pass the bytes in `images`, keyed by that URL. |
 | `@font-face` with a URL | Pass the font file's bytes in `fonts` and use the family name inside the file. |
 | A CDN stylesheet (Tailwind, Bootstrap) | Inline the built CSS in a `<style>` tag. |
-| HTML already rendered by another engine, with literal <code v-pre>{{</code> or `{%` in it | vellora's templating always runs, so that text is read as template syntax. There is no escape tag today; remove or replace those characters before rendering. |
+| HTML already rendered by another engine, with literal <code v-pre>{{</code> or `{%` in it | Pass `{ template: false }` (CLI: `--no-template`) so the HTML goes to the renderer untouched, or wrap that text in <code v-pre>{% raw %}…{% endraw %}</code>. Without either, it is read as template syntax. |
 | A header or footer in a corner slot (`@top-left`, `@bottom-right`, …) | Move it to `@top-center` or `@bottom-center`. |
 | Something that really needs a browser | Send that one template to Chrome with the [optional Chromium engine](/guide/chromium-engine). Keep the rest native. |
 

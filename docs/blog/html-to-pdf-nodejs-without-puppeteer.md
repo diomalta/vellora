@@ -191,7 +191,7 @@ that fails loudly.
 
 <FitCheck
   :works="['Invoices, receipts, statements and letters built from HTML you control', 'Tables whose header repeats on every page', 'Page size, margins, and Page X of Y headers and footers', 'Images and fonts passed in as bytes', 'The same bundled fonts on every machine', 'Same input, same PDF bytes', 'PDF/A-2b for archiving']"
-  :limits="['CSS must live in a <style> tag or style attribute: <link> stylesheets and @import are ignored', 'Literal {{ or {% in your HTML is read as template syntax', 'Flexbox works in part; tables are the reliable layout', 'Prebuilt for macOS and glibc Linux (Debian, Ubuntu, node:22-slim)']"
+  :limits="['CSS must live in a <style> tag or style attribute: <link> stylesheets and @import are ignored', 'Flexbox works in part; tables are the reliable layout', 'Prebuilt for macOS and glibc Linux (Debian, Ubuntu, node:22-slim)']"
   :unsupported="['JavaScript in the page', 'CSS grid and transforms (rejected with line and column)', 'Loading anything from the network', 'Windows and Alpine/musl']"
 />
 

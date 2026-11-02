@@ -126,6 +126,25 @@ async function selectBridge(opts: InternalRenderOptions): Promise<NativeBridge> 
   return opts._bridge ?? getDefaultBridge();
 }
 
+/** Apply templating unless the caller opted out with `template: false`. */
+function applyTemplate(content: string, data: RenderData | undefined, opts: RenderOptions): string {
+  const template = opts.template;
+  if (template !== undefined && typeof template !== "boolean") {
+    throw new VelloraInputError(
+      `template must be a boolean; received ${JSON.stringify(template)}.`,
+    );
+  }
+  if (template === false) {
+    if (data !== undefined) {
+      throw new VelloraInputError(
+        "data was passed with template: false, so it would be ignored. Drop the data, or remove template: false to apply it.",
+      );
+    }
+    return content;
+  }
+  return renderTemplate(content, data);
+}
+
 /** Run the shared pipeline: normalize → template → orchestrate, resolving to PDF bytes. */
 async function pipeline(
   html: HtmlInput,
@@ -133,7 +152,7 @@ async function pipeline(
   opts: InternalRenderOptions,
 ): Promise<Uint8Array> {
   const content = await normalizeInput(html);
-  const templated = renderTemplate(content, data);
+  const templated = applyTemplate(content, data, opts);
   const bridge = await selectBridge(opts);
   return orchestrate(templated, opts, bridge);
 }
@@ -143,7 +162,8 @@ async function pipeline(
  *
  * @param html document **content** (string | Uint8Array | Readable), never a file path.
  * @param data optional templating data.
- * @param opts optional render options (`strict` defaults to `true`).
+ * @param opts optional render options (`strict` defaults to `true`; `template: false` skips
+ *   templating for HTML that is already rendered).
  */
 export function renderPdf(
   html: HtmlInput,

@@ -305,3 +305,50 @@ describe("renderPdfToStream", () => {
     expect(text.trimEnd().endsWith("%%EOF")).toBe(true);
   });
 });
+
+describe("template: false (pre-rendered HTML)", () => {
+  const PRE_RENDERED = "<p>Price {{x}}</p><p>50% {% off</p>";
+
+  test("passes the HTML to the bridge byte-unchanged", async () => {
+    const bridge = new MockNativeBridge();
+    await renderPdf(PRE_RENDERED, undefined, { template: false, ...withBridge(bridge) });
+    expect(bridge.calls[0]?.html).toBe(PRE_RENDERED);
+  });
+
+  test("the default still runs templating", async () => {
+    const bridge = new MockNativeBridge();
+    await renderPdf("<p>Price {{x}}</p>", undefined, withBridge(bridge));
+    expect(bridge.calls[0]?.html).toBe("<p>Price </p>");
+  });
+
+  test("template: true behaves like the default", async () => {
+    const bridge = new MockNativeBridge();
+    await renderPdf(SAFE_HTML, { name: "Ada" }, { template: true, ...withBridge(bridge) });
+    expect(bridge.calls[0]?.html).toBe("<p>Ada</p>");
+  });
+
+  test("rejects data passed with template: false instead of ignoring it", async () => {
+    await expect(renderPdf(SAFE_HTML, { name: "Ada" }, { template: false })).rejects.toBeInstanceOf(
+      VelloraInputError,
+    );
+  });
+
+  test("rejects a non-boolean template option", async () => {
+    await expect(
+      renderPdf(SAFE_HTML, undefined, { template: "no" as unknown as boolean }),
+    ).rejects.toBeInstanceOf(VelloraInputError);
+  });
+
+  test("applies to batch and stream renders", async () => {
+    const bridge = new MockNativeBridge();
+    await renderPdfBatch([
+      { html: PRE_RENDERED, opts: { template: false, ...withBridge(bridge) } },
+    ]);
+    const { writable } = collector();
+    await renderPdfToStream(PRE_RENDERED, writable, undefined, {
+      template: false,
+      ...withBridge(bridge),
+    });
+    expect(bridge.calls.map((c) => c.html)).toEqual([PRE_RENDERED, PRE_RENDERED]);
+  });
+});

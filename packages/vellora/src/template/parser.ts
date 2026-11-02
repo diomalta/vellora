@@ -121,6 +121,12 @@ export function parse(tokens: Token[]): Node[] {
       });
       continue;
     }
+    if (tag === "endraw") {
+      throw new VelloraTemplateError(
+        "Unexpected {% endraw %} without an open {% raw %}.",
+        token.pos,
+      );
+    }
     throw new VelloraTemplateError(`Unknown template tag: {% ${tag} %}.`, token.pos);
   }
 

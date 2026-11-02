@@ -89,6 +89,13 @@ export interface RenderOptions {
   chromium?: ChromiumEngineOptions;
   /** Strict-by-default: validate, never mutate. `false` runs `@vellora/lint` fixers first. */
   strict?: boolean;
+  /**
+   * Run vellora's built-in templating on the input. Omitted => `true`. `false` passes the HTML to
+   * the renderer untouched, so a literal `{{` or `{%` in HTML already rendered by another engine
+   * (Handlebars, React, …) stays as text. Passing `data` together with `template: false` rejects
+   * with `VelloraInputError`, since that data would otherwise be silently ignored.
+   */
+  template?: boolean;
   /** Emit an archival PDF using the named PDF/A profile. Currently only `PDF/A-2b` is supported. */
   pdfa?: PdfAProfile;
   /** Document metadata (title, creation date). */

@@ -86,8 +86,9 @@ writeFileSync("invoice.pdf", pdf); // pdf is a Uint8Array
 
 The page size and margins come from your CSS (`@page`). Templating is built in:
 `{{ value }}` with dotted paths, `{% for %}`, `{% if %}`, and the `currency`, `number` and
-`date` helpers. Every value is HTML-escaped. Templating always runs, so a literal `{{` or `{%` in
-pre-rendered HTML is read as template syntax.
+`date` helpers. Every value is HTML-escaped. For HTML already rendered by another engine,
+pass `{ template: false }` so a literal `{{` or `{%` stays as text, or wrap that part in
+`{% raw %}…{% endraw %}`.
 
 Put your CSS in a `<style>` tag or `style=""`. vellora loads nothing from the network:
 `<link rel="stylesheet">` and `@import` are ignored, and images and fonts are passed in as bytes
