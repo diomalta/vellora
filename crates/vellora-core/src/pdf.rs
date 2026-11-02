@@ -58,6 +58,9 @@ pub struct PdfPage {
     pub text_runs: Vec<TextRun>,
     /// Running headers/footers (`@top-center` / `@bottom-center` margin boxes).
     pub margin_texts: Vec<MarginText>,
+    /// Outlines (`outline`), page-local px: drawn last, over the text (CSS 2.2 Appendix E
+    /// step 10).
+    pub outlines: Vec<FilledRect>,
 }
 
 /// A running header/footer: its resolved string and the glyph runs Blitz shaped it into
@@ -214,6 +217,11 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
 
         for r in decoration_rects(runs(), true) {
             draw_rect(&mut surface, &r);
+        }
+
+        // Outlines last, over everything else (CSS 2.2 Appendix E step 10).
+        for r in &page.outlines {
+            draw_rect(&mut surface, r);
         }
 
         surface.finish();
