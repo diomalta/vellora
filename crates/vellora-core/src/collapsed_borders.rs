@@ -219,6 +219,29 @@ impl ResolvedCell {
     }
 }
 
+/// Lets the cells of the header row groups (the first `header_rows` grid rows) also paint the
+/// edge between the header and the body, which [`resolve`] gives to the body cells below it.
+///
+/// Pagination repeats the `<thead>` boxes at the top of each page the table continues on; the
+/// row under a repeated header is not the one the edge was resolved against, so without this
+/// the repeated header came without its bottom border (issue #62). Chrome paints both: the
+/// repeated header's bottom edge as resolved against the first body row, and the continuing
+/// row's own top edge over it (Playwright Chromium 153.0.8010.12, 2026-11-02, a 2 px red
+/// `thead th` bottom over 1 px blue `tbody td` bottoms: page 2 is red at y 44-45, blue at 45;
+/// INDICATIVE, `tests/pagination_gaps.rs` `a_repeated_collapsed_header_keeps_its_bottom_border`).
+/// On the table's first page the edge is then painted twice, by both cells, over the same line.
+pub(crate) fn paint_header_bottom(resolved: &mut Resolved, grid: &TableGrid, header_rows: usize) {
+    if header_rows == 0 || header_rows >= grid.rows {
+        return;
+    }
+    for (cell, grid_cell) in resolved.cells.iter_mut().zip(&grid.cells) {
+        let end = (grid_cell.row + grid_cell.rowspan.max(1)).min(grid.rows);
+        if grid_cell.row < header_rows && end == header_rows {
+            cell.paints[BOTTOM] = true;
+        }
+    }
+}
+
 /// The share of a `width` px edge taken by the box below / to the right of its grid line.
 pub(crate) fn lower_share(width: f64) -> f64 {
     (width / 2.0).floor()

@@ -745,3 +745,73 @@ fn a_tfoot_written_first_does_not_leave_the_page() {
     at(&p, "Foot");
     at(&p, "Body1");
 }
+
+#[test]
+fn a_repeated_collapsed_header_keeps_its_bottom_border() {
+    // Issue #62. A `border-collapse: collapse` table whose `<thead>` cells have a 2 px bottom
+    // border and whose body cells have a 1 px one. The resolved 2 px edge between the header
+    // and the first body row is painted by that body row's cells (each grid line is painted
+    // once), so the repeated header on page 2 used to come without it.
+    //
+    // Chrome (Playwright Chromium 153.0.8010.12, linux, 2026-11-02, `page.pdf` rasterised at
+    // 384 dpi; INDICATIVE, not the CfT 155 reference): page 1 paints the 2 px red edge at
+    // y 44-46; page 2 paints the repeated header's 2 px red edge at the same place and the
+    // continuing row's own 1 px blue top edge over its lower half (y 45-46).
+    const RED: [u8; 3] = [255, 0, 0];
+    const BLUE: [u8; 3] = [0, 0, 255];
+    let body: String = (1..=20)
+        .map(|i| format!("<tr><td>R{i:02}</td><td>{i}</td></tr>"))
+        .collect();
+    let p = paginate(&doc(
+        &format!(
+            "{SMALL_PAGE} {BASE} table {{ width: 100%; border-collapse: collapse; }} \
+             thead th {{ text-align: left; padding: 4px; border-bottom: 2px solid #ff0000; }} \
+             tbody td {{ padding: 4px; border-bottom: 1px solid #0000ff; }}"
+        ),
+        &format!(
+            "<table><thead><tr><th>Item</th><th>Qty</th></tr></thead><tbody>{body}</tbody>\
+             </table>"
+        ),
+    ));
+    assert!(p.report.page_count >= 2);
+    assert!(p.report.thead_repeated[1], "the header repeats on page 2");
+    // The red edges of a page: (top, bottom) of each rect, deduplicated.
+    let red = |page: usize| -> Vec<(f64, f64)> {
+        let mut spans: Vec<(f64, f64)> = p.pages[page]
+            .rects
+            .iter()
+            .filter(|r| r.color == RED)
+            .map(|r| (r.y, r.y + r.height))
+            .collect();
+        spans.dedup_by(|a, b| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6);
+        spans
+    };
+    let (first, second) = (red(0), red(1));
+    assert!(!first.is_empty(), "page 1 paints the header's bottom edge");
+    assert!(!second.is_empty(), "page 2's repeated header paints it too");
+    // At the same place under the header on both pages (the header starts each page at the
+    // content-box top), 2 px wide.
+    for (a, b) in first.iter().zip(&second) {
+        assert_px(b.0, a.0, "edge top");
+        assert_px(b.1, a.1, "edge bottom");
+        assert_px(b.1 - b.0, 2.0, "edge width");
+    }
+    // The continuing row paints its own 1 px top edge over the header's, as in Chrome.
+    let (top, bottom) = second[0];
+    let red_index = p.pages[1]
+        .rects
+        .iter()
+        .position(|r| r.color == RED)
+        .unwrap();
+    let blue_over = p.pages[1].rects.iter().enumerate().any(|(i, r)| {
+        i > red_index
+            && r.color == BLUE
+            && r.y >= top - 1e-6
+            && r.y + r.height <= bottom + 1e-6
+            && (r.height - 1.0).abs() < 1e-6
+    });
+    assert!(
+        blue_over,
+        "the row's 1 px top edge is painted over the header's"
+    );
+}
