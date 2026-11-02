@@ -25,7 +25,8 @@ vellora render templates/invoice.html \
   --out out/invoice.pdf
 ```
 
-`--data` fills the template's `{{ placeholders }}` and loops. `--out` is required so PDF bytes never
+`--data` fills the template's `{{ placeholders }}` and loops. For HTML that is already rendered,
+`--no-template` skips templating so a literal `{{` or `{%` stays as text. `--out` is required so PDF bytes never
 end up in your terminal. Use `-` as the input to read HTML from stdin:
 
 ```bash

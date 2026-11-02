@@ -129,17 +129,20 @@ builds.
 
 ### 2. Bring your HTML
 
-Pass the HTML string as you build it today. Put CSS in a `<style>` tag, and watch for literal
-<code v-pre>{{</code> or `{%` in HTML you already rendered.
+Pass the HTML string as you build it today, with `{ template: false }` if it is already rendered.
+Put CSS in a `<style>` tag.
 
 <details>
 <summary>Why those two</summary>
 
-**Templating always runs.** vellora has built-in templating (<code v-pre>{{ name }}</code>,
-`{% for %}`, `{% if %}`), and it runs on every render, with or without data. A literal
-<code v-pre>{{ x }}</code> left in your HTML becomes empty text, and a stray `{%` throws a
-`VelloraTemplateError` with the line and column. There is no escape tag today. You can also move
-your data into vellora's templating and stop building the HTML string yourself.
+**Templating runs by default.** vellora has built-in templating (<code v-pre>{{ name }}</code>,
+`{% for %}`, `{% if %}`), and it runs on every render unless you turn it off, with or without data.
+A literal <code v-pre>{{ x }}</code> left in your HTML becomes empty text, and a stray `{%` throws a
+`VelloraTemplateError` with the line and column. For HTML you already rendered, pass
+`renderPdf(html, undefined, { template: false })` (CLI: `--no-template`) and the HTML goes to the
+renderer untouched. To keep templating but protect one part, wrap it in
+<code v-pre>{% raw %}…{% endraw %}</code>. You can also move your data into vellora's templating
+and stop building the HTML string yourself.
 
 **External stylesheets are not loaded.** vellora loads nothing from the network. A
 `<link rel="stylesheet">` or `@import url(...)` stops the render with a `VelloraUnsupportedError`

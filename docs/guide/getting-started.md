@@ -95,10 +95,11 @@ The error also carries `feature`, `line`, `col` and `hint` as properties, so you
 send them back from an API.
 
 ::: tip Already have HTML from another template engine?
-Pass it as-is. Templating always runs, though, so any literal <code v-pre>{{</code> or
-<code v-pre>{%</code> left in your HTML is read as vellora template syntax. An unknown
-<code v-pre>{{ value }}</code> renders as empty text, and a stray <code v-pre>{%</code> throws a
-`VelloraTemplateError` with its line and column.
+Pass it with `{ template: false }`: `renderPdf(html, undefined, { template: false })`. vellora then
+skips its own templating, so any literal <code v-pre>{{</code> or <code v-pre>{%</code> in your HTML
+stays as text. Without it, an unknown <code v-pre>{{ value }}</code> renders as empty text and a
+stray <code v-pre>{%</code> throws a `VelloraTemplateError` with its line and column. To keep
+templating and protect just one part, wrap it in <code v-pre>{% raw %}…{% endraw %}</code>.
 :::
 
 <details>
