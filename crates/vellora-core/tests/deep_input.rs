@@ -465,26 +465,31 @@ fn nested_tables(n: usize) -> String {
 /// the gate, on every document, `text-wrap: balance` or not.
 #[test]
 fn nested_tables_render_in_time_linear_in_the_nesting_depth() {
-    let render =
-        |n: usize| vellora_core::render(nested_tables(n).as_bytes(), &RenderOptions::default());
-    // The deepest nest the gate accepts (`MAX_NESTING_DEPTH` = 192, four elements a level). The
-    // render runs on its own thread so a regression fails here at the deadline instead of
-    // hanging the test run (the walk it guards never returned).
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || {
-        let html = nested_tables(47);
-        let _ = tx.send(vellora_core::render(
-            html.as_bytes(),
-            &RenderOptions::default(),
-        ));
-    });
-    match rx.recv_timeout(Duration::from_secs(10)) {
-        Ok(Ok(pdf)) => assert!(pdf.starts_with(b"%PDF-")),
-        Ok(Err(VelloraError::Unsupported(d))) => {
-            assert_eq!(d.feature, "max-nesting-depth", "{d:?}")
-        }
-        Ok(Err(other)) => panic!("{other:?}"),
-        Err(_) => panic!("47 nested tables did not render within 10 s"),
+    // Every render runs on the 8 MiB stack the napi binding runs on (Blitz's layout recursion
+    // over 47 tables overflows a 2 MiB test thread in a debug build), and on its own thread so
+    // a regression fails here at the deadline instead of hanging the test run (the walk this
+    // guards never returned).
+    const NAPI_STACK: usize = 8 * 1024 * 1024;
+    let render = |n: usize| {
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::Builder::new()
+            .stack_size(NAPI_STACK)
+            .spawn(move || {
+                let html = nested_tables(n);
+                let _ = tx.send(vellora_core::render(
+                    html.as_bytes(),
+                    &RenderOptions::default(),
+                ));
+            })
+            .expect("spawn");
+        rx.recv_timeout(Duration::from_secs(10))
+            .unwrap_or_else(|_| panic!("{n} nested tables did not render within 10 s"))
+    };
+    // The deepest nest the gate accepts (`MAX_NESTING_DEPTH` = 192, four elements a level).
+    match render(47) {
+        Ok(pdf) => assert!(pdf.starts_with(b"%PDF-")),
+        Err(VelloraError::Unsupported(d)) => assert_eq!(d.feature, "max-nesting-depth", "{d:?}"),
+        Err(other) => panic!("{other:?}"),
     }
     // The doubling made 24 levels ~4 000x slower than 12; linear work is ~2x (plus Blitz).
     let t_small = min_of_three(|| assert!(render(12).is_ok()));
