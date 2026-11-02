@@ -87,6 +87,9 @@ export async function buildRenderInputs(
   const opts: RenderOptions = {
     strict: !bool(values["no-strict"]),
   };
+  if (bool(values["no-template"])) {
+    opts.template = false;
+  }
   const engine = parseEngine(asString(values.engine));
   if (engine !== undefined) {
     opts.engine = engine;

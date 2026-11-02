@@ -230,3 +230,58 @@ describe("templating runs before render and never executes data", () => {
     expect(renderTemplate("{{ x.y }}", { x: { y: "ok" } })).toBe("ok");
   });
 });
+
+describe("{% raw %} blocks", () => {
+  test("emits literal {{ and {% inside the block verbatim", () => {
+    expect(
+      renderTemplate("<p>{% raw %}Price {{x}} and 50% {% off{% endraw %} {{ name }}</p>", {
+        name: "Ada",
+        x: "IGNORED",
+      }),
+    ).toBe("<p>Price {{x}} and 50% {% off Ada</p>");
+  });
+
+  test("accepts whitespace variants of the tags and spans lines", () => {
+    expect(renderTemplate("{%raw%}\n{{ a }}\n{%   endraw   %}", { a: "x" })).toBe("\n{{ a }}\n");
+  });
+
+  test("works inside a loop body", () => {
+    expect(
+      renderTemplate("{% for i in items %}{{ i }}{% raw %}{{i}}{% endraw %}{% endfor %}", {
+        items: [1, 2],
+      }),
+    ).toBe("1{{i}}2{{i}}");
+  });
+
+  test("an empty raw block renders nothing", () => {
+    expect(renderTemplate("a{% raw %}{% endraw %}b")).toBe("ab");
+  });
+
+  test("raw blocks do not nest: the first endraw closes the block", () => {
+    expect(renderTemplate("{% raw %}{% raw %}x{% endraw %}")).toBe("{% raw %}x");
+  });
+
+  test("an unterminated raw block rejects at the opening tag", () => {
+    try {
+      renderTemplate("<p>\n  {% raw %}{{ x }}</p>");
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(VelloraTemplateError);
+      expect((err as VelloraTemplateError).message).toContain("{% raw %}");
+      expect(err).toMatchObject({ line: 2, col: 3 });
+    }
+  });
+
+  test("a stray endraw rejects with a located error", () => {
+    expect(() => renderTemplate("x {% endraw %}")).toThrow(/without an open \{% raw %\}/);
+  });
+
+  test("positions after a multi-line raw block stay accurate", () => {
+    try {
+      renderTemplate("{% raw %}\n\n{{{% endraw %}\n  {% bogus %}");
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toMatchObject({ line: 4, col: 3 });
+    }
+  });
+});
