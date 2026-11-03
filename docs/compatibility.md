@@ -29,7 +29,7 @@ When a template uses something outside that, it doesn't guess. It stops and tell
   :unsupported="[
     'JavaScript: script tags are rejected, the page never runs',
     'CSS grid, transform, animation, transition and filter',
-    'External stylesheets (link rel=stylesheet, @import): skipped without an error',
+    'External stylesheets (link rel=stylesheet, @import): rejected with the line and column',
     'Remote images and @font-face URLs: nothing is fetched',
     'Forms, iframes, canvas, video and audio',
     'Windows and Alpine Linux',
@@ -70,7 +70,8 @@ vellora loads nothing from the network or the disk on its own. Everything the PD
 HTML string or in the render options:
 
 - **CSS** goes in a `<style>` tag or a `style=""` attribute. A `<link rel="stylesheet">` or
-  `@import url(...)` is skipped, with no error, so the PDF comes out unstyled.
+  `@import url(...)` is rejected as `css:external-stylesheet`, with the line and column, instead of
+  printing the PDF unstyled.
 - **Images** are `data:` URLs, or bytes you pass in the `images` option, keyed by the `src` in your
   HTML. See [Logos & images](/guide/images).
 - **Fonts** are bytes you pass in the `fonts` option, used by the family name inside the font file.

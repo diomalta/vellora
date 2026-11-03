@@ -55,7 +55,8 @@ is already rendered by another engine, pass `{ template: false }` so a literal `
 text (`renderPdf(html, undefined, { template: false })`), or wrap just that part in
 `{% raw %}…{% endraw %}`. Put CSS in a `<style>` tag or
 `style=""`: vellora loads nothing from the network, so `<link rel="stylesheet">` and `@import` are
-ignored, and images and fonts are passed in as bytes.
+rejected with the line and column (`css:external-stylesheet`), and images and fonts are passed in as
+bytes.
 
 ## Why not just use Puppeteer?
 

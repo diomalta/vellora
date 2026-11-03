@@ -55,6 +55,9 @@ const deniedProps = extractPairArray(src, "DENIED_CSS_PROPERTIES");
 // map to the same feature; dedupe by feature for the table.
 const deniedTokensRaw = extractPairArray(src, "DENIED_CSS_TOKENS");
 const deniedMarginBoxes = extractPairArray(src, "DENIED_PAGE_MARGIN_BOXES");
+const deniedExternalSheets = extractPairArray(src, "DENIED_EXTERNAL_STYLESHEETS").map(
+  ([needle, feature]) => [needle.replace(/\\"/g, '"'), feature],
+);
 const maxNesting = extractConstUsize(src, "MAX_NESTING_DEPTH");
 
 // Only features `@vellora/lint.fix()` rewrites wherever they appear are
@@ -140,6 +143,12 @@ const marginBoxRows = deniedMarginBoxes.map(([name, feature]) => ({
   feature: `\`${name}\` (${feature})`,
   status: statusFor(feature),
   note: "Rejected by the strict gate. Not drawn by the native renderer.",
+}));
+
+const externalSheetRows = deniedExternalSheets.map(([needle, feature]) => ({
+  feature: `\`${needle}\` (${feature})`,
+  status: statusFor(feature),
+  note: "Rejected by the strict gate: the style sheet is never loaded. Inline the CSS in a `<style>` tag. `@vellora/lint` reports it as `external-stylesheet`.",
 }));
 
 // Curated allowed/best-effort and dev-time-fixable entries that are NOT on a
@@ -366,6 +375,16 @@ strict gate as \`css:page-margin-box\`. The native renderer draws only
 \`engine: "chromium"\`.
 
 ${table(marginBoxRows)}
+
+## External style sheets
+
+These are in \`DENIED_EXTERNAL_STYLESHEETS\` and are rejected by the strict gate as
+\`css:external-stylesheet\`. vellora loads nothing from the network or the
+filesystem, so their CSS would never be applied. A \`<link>\` is rejected when its
+\`rel\` lists \`stylesheet\`; other \`<link>\` elements (icons, preloads) are accepted
+and have no effect.
+
+${table(externalSheetRows)}
 
 ## WebAssembly build (\`@vellora/wasm\`)
 

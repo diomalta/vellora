@@ -145,8 +145,8 @@ renderer untouched. To keep templating but protect one part, wrap it in
 and stop building the HTML string yourself.
 
 **External stylesheets are not loaded.** vellora loads nothing from the network. A
-`<link rel="stylesheet">` or `@import url(...)` is skipped without an error, so the PDF comes out
-unstyled. Put the CSS in a `<style>` tag or a `style=""` attribute; for Tailwind or Bootstrap,
+`<link rel="stylesheet">` or `@import url(...)` stops the render with a `VelloraUnsupportedError`
+(`css:external-stylesheet`) and its line and column, instead of printing the PDF unstyled. Put the CSS in a `<style>` tag or a `style=""` attribute; for Tailwind or Bootstrap,
 inline the built CSS file. Images and fonts are passed in as bytes; see
 [Logos & images](/guide/images) and [Fonts](/guide/fonts).
 

@@ -578,3 +578,83 @@ fn margin_box_name_inside_a_url_passes_the_gate() {
     </style></head><body><p style="background:url(a@top-left.png)">hi</p></body></html>"#;
     validate(html).expect("an @ inside a url is not a margin-box at-rule");
 }
+
+fn external_stylesheet(html: &str) -> vellora_core::validation::Diagnostic {
+    match validate(html) {
+        Err(VelloraError::Unsupported(d)) => {
+            assert_eq!(d.feature, "css:external-stylesheet", "{html}");
+            assert!(
+                d.hint.contains("inline the CSS in a <style> tag"),
+                "hint: {}",
+                d.hint
+            );
+            d
+        }
+        other => panic!("{html} must be rejected, got {other:?}"),
+    }
+}
+
+#[test]
+fn link_stylesheet_is_rejected_with_its_location() {
+    let html = "<!DOCTYPE html><html><head>\n  <link rel=\"icon\" href=\"a.png\">\n  <link rel=\"stylesheet\" href=\"https://example.com/x.css\">\n</head><body><p>hi</p></body></html>";
+    let d = external_stylesheet(html);
+    assert_eq!(d.line, Some(3), "points at the second <link>, not the icon");
+    assert_eq!(d.col, Some(3));
+}
+
+#[test]
+fn link_rel_is_a_case_insensitive_token_set() {
+    external_stylesheet(
+        r#"<html><head><link rel="Alternate  STYLESHEET" href="x.css"></head><body></body></html>"#,
+    );
+    external_stylesheet(
+        r#"<html><head><LINK REL=stylesheet href="x.css"></head><body></body></html>"#,
+    );
+}
+
+#[test]
+fn non_stylesheet_links_pass_the_gate() {
+    for rel in ["icon", "preload", "stylesheets", "my-stylesheet", ""] {
+        let html = format!(
+            r#"<!DOCTYPE html><html><head><link rel="{rel}" href="x"></head><body><p>hi</p></body></html>"#
+        );
+        validate(&html).unwrap_or_else(|e| panic!("<link rel={rel:?}> must pass, got {e:?}"));
+    }
+}
+
+#[test]
+fn css_import_is_rejected_with_its_location() {
+    let html = "<!DOCTYPE html><html><head><style>\nbody { color: red; }\n  @import url(\"https://example.com/x.css\");\n</style></head><body><p>hi</p></body></html>";
+    let d = external_stylesheet(html);
+    assert_eq!(d.line, Some(3));
+    assert_eq!(d.col, Some(3));
+}
+
+#[test]
+fn every_import_spelling_is_rejected() {
+    for rule in [
+        r#"@import "x.css";"#,
+        "@import 'x.css';",
+        "@import url(x.css);",
+        "@IMPORT url(x.css) print;",
+        "@import/**/url(x.css);",
+        "p{}@import url(x.css);",
+    ] {
+        external_stylesheet(&format!(
+            "<html><head><style>{rule}</style></head><body></body></html>"
+        ));
+    }
+}
+
+#[test]
+fn import_that_is_not_an_at_rule_passes_the_gate() {
+    for css in [
+        r#"p::before { content: "@import url(x.css)"; }"#,
+        "/* @import url(x.css); */ p { color: red; }",
+        "p { background: url(a@import.png); }",
+        "@importance { }",
+    ] {
+        let html = format!("<html><head><style>{css}</style></head><body><p>hi</p></body></html>");
+        validate(&html).unwrap_or_else(|e| panic!("{css} must pass, got {e:?}"));
+    }
+}

@@ -30,6 +30,8 @@ export interface CoreGateLists {
   deniedCssProperties: [string, string][];
   deniedCssTokens: [string, string][];
   deniedPageMarginBoxes: [string, string][];
+  /** `<link rel="stylesheet">` / `@import` (issue #59), needles unescaped. */
+  deniedExternalStylesheets: [string, string][];
   /** Every `"<namespace>:<feature>"` literal (and `element:<tag>`) the gate can emit. */
   features: string[];
 }
@@ -84,6 +86,9 @@ export function coreGateLists(src: string = validationSource()): CoreGateLists {
     deniedCssProperties: pairArray(src, "DENIED_CSS_PROPERTIES"),
     deniedCssTokens: pairArray(src, "DENIED_CSS_TOKENS"),
     deniedPageMarginBoxes: pairArray(src, "DENIED_PAGE_MARGIN_BOXES"),
+    deniedExternalStylesheets: pairArray(src, "DENIED_EXTERNAL_STYLESHEETS").map(
+      ([needle, feature]) => [needle.replace(/\\"/g, '"'), feature],
+    ),
     features: [...features].sort(),
   };
 }
@@ -157,6 +162,21 @@ export function rejectedGateProbes(lists: CoreGateLists = coreGateLists()): Gate
       feature,
     });
   }
+  for (const [needle, feature] of lists.deniedExternalStylesheets) {
+    probes.push(
+      needle.startsWith("@")
+        ? {
+            name: `${needle} in <style>`,
+            html: page(`<style>${needle} url("https://example.com/x.css");</style>`, "<p>x</p>"),
+            feature,
+          }
+        : {
+            name: needle,
+            html: page(needle.replace(">", ' href="https://example.com/x.css">'), "<p>x</p>"),
+            feature,
+          },
+    );
+  }
   return probes;
 }
 
@@ -206,6 +226,17 @@ export function acceptedGateProbes(): GateProbe[] {
       html: page(
         "<style>.i { background: url(icons@bottom-right.png) }</style>",
         '<p class="i">x</p>',
+      ),
+    },
+    {
+      name: '<link rel="icon">',
+      html: page('<link rel="icon" href="a.png">', "<p>x</p>"),
+    },
+    {
+      name: "@import inside a string or a comment, and @importance",
+      html: page(
+        '<style>p::before { content: "@import url(x.css)" } /* @import url(y.css); */ @importance {}</style>',
+        "<p>x</p>",
       ),
     },
   ];

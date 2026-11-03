@@ -857,3 +857,21 @@ fn render_rejects_an_undrawn_page_margin_box_instead_of_dropping_it() {
         other => panic!("expected Unsupported, got {other:?}"),
     }
 }
+
+#[test]
+fn render_rejects_an_external_stylesheet_instead_of_ignoring_it() {
+    // Issue #59: vellora loads nothing, so both used to render unstyled with no error.
+    for html in [
+        &br#"<!DOCTYPE html><html><head><link rel="stylesheet" href="https://example.com/x.css"></head><body><p>hi</p></body></html>"#[..],
+        &br#"<!DOCTYPE html><html><head><style>@import url("https://example.com/x.css");</style></head><body><p>hi</p></body></html>"#[..],
+    ] {
+        let err = render(html, &opts()).expect_err("an unloaded style sheet must not vanish silently");
+        match err {
+            vellora_core::VelloraError::Unsupported(d) => {
+                assert_eq!(d.feature, "css:external-stylesheet");
+                assert!(d.hint.contains("<style>"), "hint says to inline the CSS: {}", d.hint);
+            }
+            other => panic!("expected Unsupported, got {other:?}"),
+        }
+    }
+}

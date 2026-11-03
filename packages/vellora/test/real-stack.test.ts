@@ -79,6 +79,29 @@ describe("renderPdf over the real @vellora/native stack", () => {
     });
   });
 
+  // Issue #59: vellora loads nothing, so an external style sheet used to render unstyled with no
+  // error. Strict and best-effort both reject it, with the same feature; strict
+  // locates it.
+  test("<link rel=stylesheet> and @import reject as css:external-stylesheet in both modes", async () => {
+    const link =
+      '<!DOCTYPE html><html><head>\n<link rel="stylesheet" href="https://example.com/x.css"></head><body><p>hi</p></body></html>';
+    const imp =
+      '<!DOCTYPE html><html><head><style>\n@import url("https://example.com/x.css");</style></head><body><p>hi</p></body></html>';
+    for (const html of [link, imp]) {
+      for (const strict of [true, false]) {
+        await expect(renderPdf(html, {}, realStack({ strict }) as never)).rejects.toMatchObject({
+          name: "VelloraUnsupportedError",
+          feature: "css:external-stylesheet",
+          // Best-effort reports no location: the lint finding is in the fixed document's
+          // coordinates (`orchestrate.ts` `runBestEffort`).
+          line: strict ? 2 : null,
+          col: strict ? 1 : null,
+          hint: expect.stringContaining("<style>"),
+        });
+      }
+    }
+  });
+
   // Inline SVG (Phase C step 06): strict mode passes the HTML byte-unchanged and the native core
   // draws the SVG as vector content, so the PDF grows by the SVG's drawing; an SVG image source
   // that is not a data: URL rejects with a located image:unresolved instead of being read.

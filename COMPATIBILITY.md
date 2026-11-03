@@ -141,6 +141,19 @@ strict gate as `css:page-margin-box`. The native renderer draws only
 | `@right-middle` (css:page-margin-box) | Unsupported | Rejected by the strict gate. Not drawn by the native renderer. |
 | `@right-bottom` (css:page-margin-box) | Unsupported | Rejected by the strict gate. Not drawn by the native renderer. |
 
+## External style sheets
+
+These are in `DENIED_EXTERNAL_STYLESHEETS` and are rejected by the strict gate as
+`css:external-stylesheet`. vellora loads nothing from the network or the
+filesystem, so their CSS would never be applied. A `<link>` is rejected when its
+`rel` lists `stylesheet`; other `<link>` elements (icons, preloads) are accepted
+and have no effect.
+
+| Feature | Status | Notes |
+|---|---|---|
+| `<link rel="stylesheet">` (css:external-stylesheet) | Unsupported | Rejected by the strict gate: the style sheet is never loaded. Inline the CSS in a `<style>` tag. `@vellora/lint` reports it as `external-stylesheet`. |
+| `@import` (css:external-stylesheet) | Unsupported | Rejected by the strict gate: the style sheet is never loaded. Inline the CSS in a `<style>` tag. `@vellora/lint` reports it as `external-stylesheet`. |
+
 ## WebAssembly build (`@vellora/wasm`)
 
 On Cloudflare Workers (`workerd`), `import { renderPdf } from "vellora"` renders
