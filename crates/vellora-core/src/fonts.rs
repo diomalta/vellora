@@ -27,6 +27,15 @@ use std::sync::Arc;
 /// prose/legal documents. Liberation Mono gives CSS `monospace` a real fixed
 /// width face for codes, barcodes, and tabular identifiers.
 ///
+/// Each Liberation family is bundled complete (regular, bold, italic, bold italic) so
+/// `font-style: italic` / `oblique`, `<em>` and `<i>` select a real slanted face, as Chrome's
+/// print path does (Helvetica-Oblique / Times-Italic in its PDF), instead of the upright one
+/// (issue #74). Without the bold italic face, CSS font matching (style before weight, CSS Fonts 4
+/// §5.2) would pick the regular-weight italic for `<b><i>` and drop the bold. The italic files are
+/// the upstream liberation-fonts 2.1.5 release TTFs (the same release as the bundled Liberation
+/// Sans regular and bold, byte for byte); the Serif and Mono regular/bold stay at 2.00.1. DejaVu
+/// Sans stays regular/bold only: a glyph it fills in is drawn upright.
+///
 /// Licenses:
 /// - Liberation Sans: `fonts/LICENSE-Liberation.txt` (SIL Open Font License).
 /// - Liberation Serif: `fonts/LICENSE-Liberation.txt` (SIL Open Font License).
@@ -34,26 +43,62 @@ use std::sync::Arc;
 /// - DejaVu Sans: `fonts/LICENSE-DejaVu.txt` (Bitstream Vera / Arev terms).
 const LIBERATION_SANS: &[u8] = include_bytes!("fonts/LiberationSans-Regular.ttf");
 const LIBERATION_SANS_BOLD: &[u8] = include_bytes!("fonts/LiberationSans-Bold.ttf");
+const LIBERATION_SANS_ITALIC: &[u8] = include_bytes!("fonts/LiberationSans-Italic.ttf");
+const LIBERATION_SANS_BOLD_ITALIC: &[u8] = include_bytes!("fonts/LiberationSans-BoldItalic.ttf");
 const LIBERATION_SERIF: &[u8] = include_bytes!("fonts/LiberationSerif-Regular.ttf");
 const LIBERATION_SERIF_BOLD: &[u8] = include_bytes!("fonts/LiberationSerif-Bold.ttf");
+const LIBERATION_SERIF_ITALIC: &[u8] = include_bytes!("fonts/LiberationSerif-Italic.ttf");
+const LIBERATION_SERIF_BOLD_ITALIC: &[u8] = include_bytes!("fonts/LiberationSerif-BoldItalic.ttf");
 const LIBERATION_MONO: &[u8] = include_bytes!("fonts/LiberationMono-Regular.ttf");
 const LIBERATION_MONO_BOLD: &[u8] = include_bytes!("fonts/LiberationMono-Bold.ttf");
+const LIBERATION_MONO_ITALIC: &[u8] = include_bytes!("fonts/LiberationMono-Italic.ttf");
+const LIBERATION_MONO_BOLD_ITALIC: &[u8] = include_bytes!("fonts/LiberationMono-BoldItalic.ttf");
 const DEJAVU_SANS: &[u8] = include_bytes!("fonts/DejaVuSans.ttf");
 const DEJAVU_SANS_BOLD: &[u8] = include_bytes!("fonts/DejaVuSans-Bold.ttf");
 
-/// The bundled faces, in the order [`build_font_context`] registers them (Liberation Sans, DejaVu
-/// Sans, Liberation Serif, Liberation Mono; regular then bold). The inline-SVG font database
-/// ([`crate::svg::font_db`]) loads exactly these, then the caller's faces, so SVG `<text>` sees
-/// the same fonts as HTML text and never a host font.
-pub(crate) const BUNDLED_FACES: [&[u8]; 8] = [
+/// Liberation Sans faces, in registration order (regular, bold, italic, bold italic).
+const LIBERATION_SANS_FACES: &[&[u8]] = &[
     LIBERATION_SANS,
     LIBERATION_SANS_BOLD,
+    LIBERATION_SANS_ITALIC,
+    LIBERATION_SANS_BOLD_ITALIC,
+];
+/// DejaVu Sans faces (fallback glyph coverage; no italic is bundled).
+const DEJAVU_SANS_FACES: &[&[u8]] = &[DEJAVU_SANS, DEJAVU_SANS_BOLD];
+/// Liberation Serif faces, in registration order (regular, bold, italic, bold italic).
+const LIBERATION_SERIF_FACES: &[&[u8]] = &[
+    LIBERATION_SERIF,
+    LIBERATION_SERIF_BOLD,
+    LIBERATION_SERIF_ITALIC,
+    LIBERATION_SERIF_BOLD_ITALIC,
+];
+/// Liberation Mono faces, in registration order (regular, bold, italic, bold italic).
+const LIBERATION_MONO_FACES: &[&[u8]] = &[
+    LIBERATION_MONO,
+    LIBERATION_MONO_BOLD,
+    LIBERATION_MONO_ITALIC,
+    LIBERATION_MONO_BOLD_ITALIC,
+];
+
+/// The bundled faces, in the order [`build_font_context`] registers them (Liberation Sans, DejaVu
+/// Sans, Liberation Serif, Liberation Mono; each family regular, bold, then its italics). The
+/// inline-SVG font database ([`crate::svg::font_db`]) loads exactly these, then the caller's
+/// faces, so SVG `<text>` sees the same fonts as HTML text and never a host font.
+pub(crate) const BUNDLED_FACES: [&[u8]; 14] = [
+    LIBERATION_SANS,
+    LIBERATION_SANS_BOLD,
+    LIBERATION_SANS_ITALIC,
+    LIBERATION_SANS_BOLD_ITALIC,
     DEJAVU_SANS,
     DEJAVU_SANS_BOLD,
     LIBERATION_SERIF,
     LIBERATION_SERIF_BOLD,
+    LIBERATION_SERIF_ITALIC,
+    LIBERATION_SERIF_BOLD_ITALIC,
     LIBERATION_MONO,
     LIBERATION_MONO_BOLD,
+    LIBERATION_MONO_ITALIC,
+    LIBERATION_MONO_BOLD_ITALIC,
 ];
 
 /// Sans-like CSS generic families resolve to the bundled sans stack.
@@ -93,33 +138,17 @@ pub fn build_font_context(custom: &[Vec<u8>]) -> FontContext {
     });
 
     let mut sans_family_ids = Vec::new();
-    register_family(
-        &mut collection,
-        &mut sans_family_ids,
-        LIBERATION_SANS,
-        LIBERATION_SANS_BOLD,
-    );
-    register_family(
-        &mut collection,
-        &mut sans_family_ids,
-        DEJAVU_SANS,
-        DEJAVU_SANS_BOLD,
-    );
+    register_family(&mut collection, &mut sans_family_ids, LIBERATION_SANS_FACES);
+    register_family(&mut collection, &mut sans_family_ids, DEJAVU_SANS_FACES);
     let mut serif_family_ids = Vec::new();
     register_family(
         &mut collection,
         &mut serif_family_ids,
-        LIBERATION_SERIF,
-        LIBERATION_SERIF_BOLD,
+        LIBERATION_SERIF_FACES,
     );
     serif_family_ids.extend(sans_family_ids.iter().copied());
     let mut mono_family_ids = Vec::new();
-    register_family(
-        &mut collection,
-        &mut mono_family_ids,
-        LIBERATION_MONO,
-        LIBERATION_MONO_BOLD,
-    );
+    register_family(&mut collection, &mut mono_family_ids, LIBERATION_MONO_FACES);
     mono_family_ids.extend(sans_family_ids.iter().copied());
 
     // List markers (e.g. `<ul>` bullets) draw from Blitz's bullet font. Supplying
@@ -182,10 +211,19 @@ pub(crate) fn bundled_face_name(data: &[u8]) -> Option<&'static str> {
     const FACES: &[(&str, &[u8])] = &[
         ("LiberationSans-Regular.ttf", LIBERATION_SANS),
         ("LiberationSans-Bold.ttf", LIBERATION_SANS_BOLD),
+        ("LiberationSans-Italic.ttf", LIBERATION_SANS_ITALIC),
+        ("LiberationSans-BoldItalic.ttf", LIBERATION_SANS_BOLD_ITALIC),
         ("LiberationSerif-Regular.ttf", LIBERATION_SERIF),
         ("LiberationSerif-Bold.ttf", LIBERATION_SERIF_BOLD),
+        ("LiberationSerif-Italic.ttf", LIBERATION_SERIF_ITALIC),
+        (
+            "LiberationSerif-BoldItalic.ttf",
+            LIBERATION_SERIF_BOLD_ITALIC,
+        ),
         ("LiberationMono-Regular.ttf", LIBERATION_MONO),
         ("LiberationMono-Bold.ttf", LIBERATION_MONO_BOLD),
+        ("LiberationMono-Italic.ttf", LIBERATION_MONO_ITALIC),
+        ("LiberationMono-BoldItalic.ttf", LIBERATION_MONO_BOLD_ITALIC),
         ("DejaVuSans.ttf", DEJAVU_SANS),
         ("DejaVuSans-Bold.ttf", DEJAVU_SANS_BOLD),
         ("blitz-bullet-font.otf", blitz_dom::BULLET_FONT),
@@ -200,14 +238,12 @@ pub(crate) fn bundled_face_name(data: &[u8]) -> Option<&'static str> {
 fn register_family(
     collection: &mut Collection,
     family_ids: &mut Vec<FamilyId>,
-    regular: &'static [u8],
-    bold: &'static [u8],
+    faces: &[&'static [u8]],
 ) {
-    for (id, _) in collection.register_fonts(Blob::new(Arc::new(regular) as _), None) {
-        push_family_id(family_ids, id);
-    }
-    for (id, _) in collection.register_fonts(Blob::new(Arc::new(bold) as _), None) {
-        push_family_id(family_ids, id);
+    for &face in faces {
+        for (id, _) in collection.register_fonts(Blob::new(Arc::new(face) as _), None) {
+            push_family_id(family_ids, id);
+        }
     }
 }
 

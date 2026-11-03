@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { FONT_ALIASES as SHARED } from "../../lib/chrome-reference.mjs";
+import { baselineKey } from "../lib/chrome-snapshot.mjs";
 import { repoRoot } from "../lib/fixture-html.mjs";
 import { FONT_ALIASES, chromeFontFor } from "../lib/fonts.mjs";
 
@@ -22,6 +23,8 @@ test("layout-diff uses the shared alias table, a superset of benchmarks/visual-f
       assert.ok(ours, `benchmark family ${family} missing`);
       assert.equal(ours.regular, bench.regular);
       assert.equal(ours.bold, bench.bold);
+      assert.equal(ours.italic, bench.italic);
+      assert.equal(ours.boldItalic, bench.boldItalic);
     }
   }
 });
@@ -30,10 +33,37 @@ test("bundled faces map to the Chrome family/weight that reaches the same file",
   assert.deepEqual(chromeFontFor("LiberationSans-Bold.ttf"), {
     family: "Liberation Sans",
     weight: 700,
+    style: "normal",
   });
   assert.deepEqual(chromeFontFor("LiberationSerif-Regular.ttf"), {
     family: "Liberation Serif",
     weight: 400,
+    style: "normal",
+  });
+  assert.deepEqual(chromeFontFor("LiberationSans-Italic.ttf"), {
+    family: "Liberation Sans",
+    weight: 400,
+    style: "italic",
+  });
+  assert.deepEqual(chromeFontFor("LiberationMono-BoldItalic.ttf"), {
+    family: "Liberation Mono",
+    weight: 700,
+    style: "italic",
   });
   assert.equal(chromeFontFor("DejaVuSans.ttf"), null);
+});
+
+test("an italic baseline spec gets its own key; upright keys keep their recorded format", () => {
+  assert.equal(
+    baselineKey({ family: "Liberation Sans", weight: 400, size: 12 }),
+    "Liberation Sans|400|12",
+  );
+  assert.equal(
+    baselineKey({ family: "Liberation Sans", weight: 400, style: "normal", size: 12 }),
+    "Liberation Sans|400|12",
+  );
+  assert.equal(
+    baselineKey({ family: "Liberation Sans", weight: 700, style: "italic", size: 12 }),
+    "Liberation Sans|700|italic|12",
+  );
 });

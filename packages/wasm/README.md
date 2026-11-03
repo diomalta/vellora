@@ -70,7 +70,13 @@ Measured on 2026-11-01 with `npm run build:wasm` (Rust 1.96.0, wasm-bindgen 0.2.
 Timings: Node.js 22.23.4, Linux, Intel Xeon 2.80 GHz ×4, 20 renders after 5 warm-ups; indicative,
 single run. `wasm-opt` is not used: it shrinks the raw file but not the gzip size Workers checks.
 
-About 1.9 MB of the gzip size is the eight embedded font files. Fitting the Workers Free limit
+The table predates the italic faces. Bundling the six Liberation italic and bold italic files
+(issue #74) grew the shipped build, measured on 2026-11-03 the same way (`npm run build:wasm`, Rust
+1.96.0, wasm-bindgen 0.2.125, `opt-level = "s"`), from 14.3 MiB raw / 5.3 MiB gzip -9 (`main`,
+rebuilt the same day) to **16.4 MiB raw / 6.4 MiB gzip -9**: +2.0 MiB raw / +1.1 MiB gzip, the
+size of the six font files themselves. The other rows and the timings were not re-measured.
+
+About 3.1 MB of the gzip size is the fourteen embedded font files. Fitting the Workers Free limit
 (3 MB) would need both the fonts and the engine code to shrink; that is not done yet.
 
 ## Build from source

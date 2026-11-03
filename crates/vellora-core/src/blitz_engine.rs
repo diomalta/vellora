@@ -3376,6 +3376,18 @@ fn collapsed_row_lines(doc: &BaseDocument, collapsed: &mut CollapsedBorders) {
 /// raw Blitz lays the `padding: 1mm` repro out at Chrome's 17.53125, and the
 /// `layout_unit_snapping_*` tests there.
 fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
+    restyle_each_element(doc, snap_computed_lengths);
+}
+
+/// Replace every element's computed style (primary and eager pseudo-elements) with `edit`'s
+/// copy of it, after the cascade and before layout; `None` keeps a style as it is. Style
+/// sharing is kept: a computed style shared by many elements is edited once (memo keyed by the
+/// `Arc` address, holding the old `Arc` so the address cannot be reused; lookup only, never
+/// iterated: DET-1).
+fn restyle_each_element(
+    doc: &mut BaseDocument,
+    edit: impl Fn(&style::properties::ComputedValues) -> Option<style::properties::ComputedValues>,
+) {
     use style::servo_arc::Arc;
     type Memo = std::collections::HashMap<
         *const style::properties::ComputedValues,
@@ -3385,11 +3397,11 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
         ),
     >;
     let mut memo: Memo = std::collections::HashMap::new();
-    let mut snapped = |old: &Arc<style::properties::ComputedValues>| {
+    let mut edited = |old: &Arc<style::properties::ComputedValues>| {
         let entry = memo
             .entry(&**old as *const style::properties::ComputedValues)
             .or_insert_with(|| {
-                let new = snap_computed_lengths(old).map(Arc::new);
+                let new = edit(old).map(Arc::new);
                 (old.clone(), new)
             });
         entry.1.clone()
@@ -3414,7 +3426,7 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
             continue;
         };
         if let Some(primary) = element.styles.primary.as_mut() {
-            if let Some(new) = snapped(primary) {
+            if let Some(new) = edited(primary) {
                 *primary = new;
             }
         }
@@ -3427,12 +3439,65 @@ fn snap_lengths_to_layout_unit(doc: &mut BaseDocument) {
             .filter_map(|(i, style)| style.as_ref().map(|s| (i, s.clone())))
             .collect();
         for (i, old) in pseudos {
-            if let Some(new) = snapped(&old) {
+            if let Some(new) = edited(&old) {
                 let pseudo = style::selector_parser::PseudoElement::from_eager_index(i);
                 element.styles.pseudos.set(&pseudo, new);
             }
         }
     }
+}
+
+/// The smallest `font-style: oblique <angle>` that Chrome draws with a family's italic face
+/// (measured, see [`match_oblique_like_chrome`]).
+const CHROME_OBLIQUE_ITALIC_MIN_DEG: f32 = 14.0;
+
+/// FONT MATCHING COMPENSATION (fontique 0.12.0 under blitz-dom 0.3.0-beta.4): `font-style:
+/// oblique` draws with the upright face although the family has an italic one (issue #74).
+///
+/// - Chrome 153 (headless `page.pdf`, the bundled Liberation Sans regular, bold, italic and bold
+///   italic loaded as `@font-face` with `font-style: normal` / `italic`; 2026-11-03): `oblique`
+///   and `oblique 14deg` to `oblique 90deg` draw with the italic face; `oblique 13.9deg` and
+///   below, `0deg` and every negative angle draw with the regular face, unsheared (text matrix
+///   `1 0 0 -1`, no skew).
+/// - Blitz: an oblique computed style becomes `parley::FontStyle::Oblique(angle)`
+///   (`stylo_to_parley.rs` `font_style`); fontique's CSS matching (`matching.rs` 154-260) finds no
+///   oblique face, and with `synthesize_style` on (`collection/query.rs` `load_bucket` passes
+///   `true`) it picks the NORMAL face and asks for a synthetic skew (`font.rs` `synthesis`).
+///   vellora's PDF emitter draws no synthesis, so every oblique angle draws upright.
+///
+/// What is changed, per element (and its eager pseudo-elements), on the computed style after the
+/// cascade and before layout: an oblique `font-style` of at least 14deg becomes `italic`, any
+/// other oblique angle becomes `normal`; `normal` and `italic` are left as they are. Only the
+/// face choice is Chrome's: a family without an italic face (DejaVu Sans fallback glyphs, a
+/// caller font passed without its italic file) still draws upright, where Chrome synthesizes a
+/// slant.
+///
+/// WHEN THIS GOES, DELETE: this function, `oblique_as_chrome_matches_it`,
+/// `CHROME_OBLIQUE_ITALIC_MIN_DEG`, its call in [`resolve_and_walk`], and the canary
+/// `blitz_still_draws_oblique_upright` (`src/raw_blitz_tests.rs`), which fails as soon as raw
+/// Blitz draws `font-style: oblique` with the italic face.
+fn match_oblique_like_chrome(doc: &mut BaseDocument) {
+    restyle_each_element(doc, oblique_as_chrome_matches_it);
+}
+
+/// A copy of `values` with an oblique `font-style` replaced by the style Chrome matches it to
+/// ([`match_oblique_like_chrome`]), or `None` when it is `normal` or `italic`.
+fn oblique_as_chrome_matches_it(
+    values: &style::properties::ComputedValues,
+) -> Option<style::properties::ComputedValues> {
+    use style::values::computed::font::FontStyle;
+    let current = values.get_font().font_style;
+    if current == FontStyle::NORMAL || current == FontStyle::ITALIC {
+        return None;
+    }
+    let matched = if current.oblique_degrees() >= CHROME_OBLIQUE_ITALIC_MIN_DEG {
+        FontStyle::ITALIC
+    } else {
+        FontStyle::NORMAL
+    };
+    let mut out = values.clone();
+    out.mutate_font().set_font_style(matched);
+    Some(out)
 }
 
 /// Chromium's cap on the lines it balances (MDN `text-wrap` "balance": "six or less for
@@ -5167,7 +5232,8 @@ fn resolve_and_walk<O: LayoutObserver>(
     // style the document, edit, then `resolve` (whose own style pass then has nothing to
     // restyle) lays it out. Off in the raw-Blitz render.
     // Before it, Chrome's LayoutUnit quantisation of computed lengths (`snap_lengths_to_layout_unit`,
-    // so `cell_height_as_minimum` copies a snapped height). Both off in the raw-Blitz render.
+    // so `cell_height_as_minimum` copies a snapped height), then Chrome's face choice for an
+    // oblique `font-style` (`match_oblique_like_chrome`). All off in the raw-Blitz render.
     // The selector-derived sets are matched on the source DOM, before
     // `build_anonymous_table_objects` adds its anonymous nodes (they match no rule) and moves
     // children under them; the raw-Blitz render matches them after layout, below.
@@ -5180,6 +5246,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         }
         early_matches = Some(matches);
         snap_lengths_to_layout_unit(&mut doc);
+        match_oblique_like_chrome(&mut doc);
         size_svgs_like_chrome(&mut doc);
         hide_table_column_pseudos(&mut doc);
         ruby_containers_atomic(&mut doc, &ruby_pairs);
