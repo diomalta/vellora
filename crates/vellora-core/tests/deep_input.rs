@@ -450,3 +450,52 @@ fn the_render_path_renders_or_locates_every_generated_non_ascii_sheet() {
         }
     }
 }
+
+/// `n` nested tables, `<table><tr><td>` per level (issue #65).
+fn nested_tables(n: usize) -> String {
+    format!(
+        "<!DOCTYPE html><html><body>{}x</body></html>",
+        "<table><tr><td>".repeat(n)
+    )
+}
+
+/// Issue #65: `balance_text_wrap` reached each table subtree through both the DOM `children`
+/// and the anonymous table boxes' `layout_children`, so every nesting level doubled its walk
+/// (24 tables took 4.3 s; 47, the most the depth gate accepts, never finished). It runs after
+/// the gate, on every document, `text-wrap: balance` or not.
+#[test]
+fn nested_tables_render_in_time_linear_in_the_nesting_depth() {
+    // Every render runs on the 8 MiB stack the napi binding runs on (Blitz's layout recursion
+    // over 47 tables overflows a 2 MiB test thread in a debug build), and on its own thread so
+    // a regression fails here at the deadline instead of hanging the test run (the walk this
+    // guards never returned).
+    const NAPI_STACK: usize = 8 * 1024 * 1024;
+    let render = |n: usize| {
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::Builder::new()
+            .stack_size(NAPI_STACK)
+            .spawn(move || {
+                let html = nested_tables(n);
+                let _ = tx.send(vellora_core::render(
+                    html.as_bytes(),
+                    &RenderOptions::default(),
+                ));
+            })
+            .expect("spawn");
+        rx.recv_timeout(Duration::from_secs(10))
+            .unwrap_or_else(|_| panic!("{n} nested tables did not render within 10 s"))
+    };
+    // The deepest nest the gate accepts (`MAX_NESTING_DEPTH` = 192, four elements a level).
+    match render(47) {
+        Ok(pdf) => assert!(pdf.starts_with(b"%PDF-")),
+        Err(VelloraError::Unsupported(d)) => assert_eq!(d.feature, "max-nesting-depth", "{d:?}"),
+        Err(other) => panic!("{other:?}"),
+    }
+    // The doubling made 24 levels ~4 000x slower than 12; linear work is ~2x (plus Blitz).
+    let t_small = min_of_three(|| assert!(render(12).is_ok()));
+    let t_large = min_of_three(|| assert!(render(24).is_ok()));
+    assert!(
+        t_large < t_small * 9 + Duration::from_millis(50),
+        "nested tables: 12 -> {t_small:?}, 24 -> {t_large:?}"
+    );
+}

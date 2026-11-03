@@ -3482,8 +3482,21 @@ fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRul
     let unbalance = matched_nodes(base, &unbalance);
     let mut roots = Vec::new();
     let mut has_float = false;
+    // A table subtree is reachable through both its DOM parent (`children`) and the anonymous
+    // table boxes' `layout_children`, so without this every nesting level doubled the walk
+    // (issue #65: 47 nested tables never finished). `on` is monotone in `inherited` (an override
+    // ignores it), so a visit with `inherited = false` after any visit of the same node finds
+    // nothing new: each node is walked at most twice, first with `false`, then with `true`.
+    let mut visited: std::collections::HashMap<NodeId, bool> = std::collections::HashMap::new();
+    let mut in_roots: std::collections::HashSet<NodeId> = std::collections::HashSet::new();
     let mut stack = vec![(base.root_element().id, false)];
     while let Some((id, inherited)) = stack.pop() {
+        match visited.get(&id) {
+            Some(&seen) if seen || !inherited => continue,
+            _ => {
+                visited.insert(id, inherited);
+            }
+        }
         let Some(node) = base.get_node(id) else {
             continue;
         };
@@ -3498,7 +3511,7 @@ fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRul
             (false, true) | (true, true) => false,
             (false, false) => inherited,
         });
-        if on && node.flags.is_inline_root() {
+        if on && node.flags.is_inline_root() && in_roots.insert(id) {
             roots.push(id);
         }
         let layout_children: Vec<NodeId> = node
