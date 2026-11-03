@@ -2928,6 +2928,7 @@ dependencies = [
  "lopdf",
  "parley",
  "pdf-extract",
+ "skrifa 0.44.0",
  "stylo",
  "stylo_traits",
  "url",

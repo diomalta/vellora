@@ -6116,7 +6116,7 @@ fn push_box(
         - layout.padding.top as f64
         - layout.padding.bottom as f64)
         .max(0.0);
-    let text_runs = read_text_runs(
+    let mut text_runs = read_text_runs(
         base,
         node,
         content_x,
@@ -6124,6 +6124,14 @@ fn push_box(
         sink.face_cache,
         sink.reader_compensations,
     );
+    text_runs.extend(read_outside_marker_runs(
+        base,
+        node,
+        abs_x,
+        abs_y,
+        sink.face_cache,
+        sink.reader_compensations,
+    ));
     let (mut visual_rects, rounded_borders) = read_visuals(
         node,
         abs_x,
@@ -7766,6 +7774,231 @@ fn read_text_runs(
     }
 
     runs
+}
+
+/// Glyph runs of a `list-style-position: outside` marker (issue #73), with the list item's
+/// border-box origin `abs_x`/`abs_y`.
+///
+/// Blitz 0.3.0-beta.4 lays an inside marker out as text of the item's own inline layout (read by
+/// [`read_text_runs`]), but shapes an outside marker into a SEPARATE Parley layout,
+/// `ElementData::list_item_data` = `ListItemLayoutPosition::Outside` (blitz-dom `layout/list.rs`
+/// `node_list_item_child`), which only its own painter draws (blitz-paint 0.3.0-beta.4
+/// `render.rs` `draw_marker`). Before this reader the walk never read it, so every `<ul>`/`<ol>`
+/// item with the default `outside` position lost its bullet or number.
+///
+/// Placement follows `draw_marker`, measured against Chrome 153 print-to-PDF (Liberation Sans
+/// 12pt, `pdftotext -bbox`): the marker's inline end, its trailing space included, abuts the
+/// item's BORDER-box start, so the item's own padding and border do not move it (`1. ` ends at
+/// x 40 px with and without
+/// `padding-left: 20px; border-left: 4px`); a char marker keeps `draw_marker`'s 8 px gap (its
+/// string markers already end with a space, `1. `). With `direction: rtl` Chrome puts the marker
+/// past the border-box END (right) instead; Blitz shapes the marker layout left-to-right, so a
+/// string marker keeps its ltr glyph order there (`1.` where Chrome shows `.1`).
+///
+/// The marker's baseline is the item's first line box baseline. `draw_marker` only reads the
+/// item's OWN inline layout and otherwise draws the marker at the content-box top; Chrome 153
+/// aligns it with the first line of the first in-flow descendant (`<li><p style="padding-top:
+/// 10px">` puts `1.` on the paragraph's baseline), which [`first_line_baseline`] finds. The
+/// raw-Blitz render (`compensate == false`) keeps `draw_marker`'s rule.
+fn read_outside_marker_runs(
+    base: &BaseDocument,
+    node: &blitz_dom::Node,
+    abs_x: f64,
+    abs_y: f64,
+    face_cache: &mut std::collections::HashMap<u64, std::sync::Arc<Vec<u8>>>,
+    compensate: bool,
+) -> Vec<TextRun> {
+    use blitz_dom::node::{ListItemLayout, ListItemLayoutPosition, Marker};
+    if !node_has_layout_data(node) {
+        return Vec::new();
+    }
+    let Some(ListItemLayout {
+        marker,
+        position: ListItemLayoutPosition::Outside(layout),
+    }) = node
+        .data
+        .downcast_element()
+        .and_then(|el| el.list_item_data.as_deref())
+    else {
+        return Vec::new();
+    };
+    let Some(marker_first_line) = layout.lines().next() else {
+        return Vec::new();
+    };
+    let marker_baseline = f64::from(marker_first_line.metrics().baseline);
+
+    let item = node.final_layout();
+    let content_top = f64::from(item.border.top + item.padding.top);
+    let item_baseline = if compensate {
+        first_line_baseline(base, node)
+    } else {
+        node.data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+            .and_then(|text| {
+                let line = text.layout.lines().next()?;
+                Some(content_top + f64::from(text.block_offset + line.metrics().baseline))
+            })
+    };
+    let baseline_y = abs_y + item_baseline.unwrap_or(content_top + marker_baseline);
+
+    let (text, gap) = match marker {
+        Marker::Char(c) => (c.to_string(), 8.0),
+        Marker::String(s) => (s.clone(), 0.0),
+    };
+    let rtl = node
+        .primary_styles()
+        .is_some_and(|s| s.clone_direction() == style::computed_values::direction::T::Rtl);
+    // BLITZ GAP: a string marker ends with a space (`1. `, blitz-dom `layout/list.rs`
+    // `marker_for_style`), but Blitz shapes it with white space collapsing on, so Parley drops
+    // that trailing space (the `1. ` layout holds the 2 glyphs of `1.`, advance 13.34 px at
+    // 16 px Liberation Sans) and `draw_marker` lets `1.` touch the border box. Chrome 153 keeps
+    // the space: `1.` ends one space (4.45 px) before the content. Its advance is measured in
+    // the marker's own font ([`dropped_tail_advance`]).
+    let covered_end = layout
+        .lines()
+        .flat_map(|line| line.items().collect::<Vec<_>>())
+        .filter_map(|item| match item {
+            parley::PositionedLayoutItem::GlyphRun(g) => {
+                Some(g.run().text_range().end.min(text.len()))
+            }
+            parley::PositionedLayoutItem::InlineBox(_) => None,
+        })
+        .max()
+        .unwrap_or(0);
+    let tail = dropped_tail_advance(layout, text.get(covered_end..).unwrap_or(""));
+    let advance = layout
+        .lines()
+        .map(|line| f64::from(line.metrics().advance))
+        .fold(0.0, f64::max)
+        + tail;
+    let left = if rtl {
+        abs_x + f64::from(item.size.width) + gap + tail
+    } else {
+        abs_x - advance - gap
+    };
+
+    let source = std::sync::Arc::new(text);
+    let mut runs = Vec::new();
+    for line in layout.lines() {
+        let line_metrics = line.metrics();
+        let mut consumed_by_run = std::collections::HashMap::new();
+        for item in line.items() {
+            let parley::PositionedLayoutItem::GlyphRun(glyph_run) = item else {
+                continue;
+            };
+            let run = glyph_run.run();
+            let font = run.font();
+            let font_data = face_cache
+                .entry(font.data.id())
+                .or_insert_with(|| std::sync::Arc::new(font.data.as_ref().to_vec()))
+                .clone();
+            let glyphs = take_run_glyphs(&glyph_run, &mut consumed_by_run);
+            if glyphs.is_empty() {
+                continue;
+            }
+            runs.push(TextRun {
+                text: source.clone(),
+                font_data,
+                font_index: font.index,
+                font_size: run.font_size(),
+                origin_x: left + f64::from(glyph_run.offset()),
+                origin_y: baseline_y + f64::from(glyph_run.baseline()) - marker_baseline,
+                line_above: (glyph_run.baseline() - line_metrics.block_min_coord).max(0.0) as f64,
+                line_below: (line_metrics.block_max_coord - glyph_run.baseline()).max(0.0) as f64,
+                glyphs,
+                color: brush_color(base, glyph_run.style().brush.id),
+                // Chrome does not draw an item's `text-decoration` through its outside marker.
+                decorations: Vec::new(),
+            });
+        }
+    }
+    runs
+}
+
+/// The advance (CSS px) of `tail`, the white space Parley dropped from the end of an outside
+/// list marker ([`read_outside_marker_runs`]), in the font and size of the marker's last glyph
+/// run: read from that face's `cmap` and `hmtx` with skrifa (the version Parley shapes with).
+/// `0` when there is no such run or the face does not map a character.
+fn dropped_tail_advance(layout: &parley::Layout<blitz_dom::node::TextBrush>, tail: &str) -> f64 {
+    use skrifa::MetadataProvider as _;
+    if tail.is_empty() {
+        return 0.0;
+    }
+    let Some(run) = layout
+        .lines()
+        .flat_map(|line| line.runs().collect::<Vec<_>>())
+        .last()
+    else {
+        return 0.0;
+    };
+    let font = run.font();
+    let Ok(face) = skrifa::FontRef::from_index(font.data.as_ref(), font.index) else {
+        return 0.0;
+    };
+    let charmap = face.charmap();
+    let metrics = face.glyph_metrics(
+        skrifa::instance::Size::new(run.font_size()),
+        skrifa::instance::LocationRef::default(),
+    );
+    tail.chars()
+        .filter_map(|c| metrics.advance_width(charmap.map(c)?))
+        .map(f64::from)
+        .sum()
+}
+
+/// The baseline of the first line box inside `node` (px below its border-box top), the line an
+/// outside list marker sits on ([`read_outside_marker_runs`]): `node`'s own inline layout, else
+/// the first in-flow descendant in layout order that has a line (floats and absolutely
+/// positioned boxes do not count, an empty inline formatting context has no line box). `None`
+/// when there is none. An explicit stack, linear in the subtree.
+fn first_line_baseline(base: &BaseDocument, node: &blitz_dom::Node) -> Option<f64> {
+    let mut stack: Vec<(NodeId, f64)> = vec![(node.id, 0.0)];
+    while let Some((id, top)) = stack.pop() {
+        let Some(current) = base.get_node(id).filter(|n| node_has_layout_data(n)) else {
+            continue;
+        };
+        let layout = current.final_layout();
+        if let Some(text) = current
+            .data
+            .downcast_element()
+            .and_then(|el| el.inline_layout_data.as_ref())
+        {
+            if text.text.is_empty() && text.layout.inline_boxes().len() == 0 {
+                continue;
+            }
+            if let Some(line) = text.layout.lines().next() {
+                return Some(
+                    top + f64::from(
+                        layout.border.top
+                            + layout.padding.top
+                            + text.block_offset
+                            + line.metrics().baseline,
+                    ),
+                );
+            }
+            continue;
+        }
+        let children: Vec<NodeId> = current
+            .layout_children
+            .borrow()
+            .as_ref()
+            .map(|c| c.iter().copied().collect())
+            .unwrap_or_default();
+        for &child_id in children.iter().rev() {
+            let Some(child) = base.get_node(child_id).filter(|n| node_has_layout_data(n)) else {
+                continue;
+            };
+            let in_flow = child.primary_styles().is_none_or(|s| {
+                !s.clone_position().is_absolutely_positioned()
+                    && matches!(s.clone_float(), style::computed_values::float::T::None)
+            });
+            if in_flow {
+                stack.push((child_id, top + f64::from(child.final_layout().location.y)));
+            }
+        }
+    }
+    None
 }
 
 /// BLITZ BUG COMPENSATION (parley 0.12.0, Blitz 0.3.0-beta.4's text engine): in a right-to-left
