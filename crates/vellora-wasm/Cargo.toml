@@ -25,3 +25,12 @@ vellora-core = { path = "../vellora-core" }
 # byte-for-byte (`packages/wasm/scripts/build.mjs` checks it).
 wasm-bindgen = "=0.2.125"
 js-sys = "=0.3.102"
+
+# ryu (pdf-writer's formatter for every non-integer number in the PDF) with its `small` feature
+# (issue #66): it computes the powers of five it multiplies by instead of embedding the full
+# table. Same multipliers (ryu's `tests/d2s_table_test.rs` checks every computed entry against the
+# table), so the same digits: the 28 fixture and probe renders stayed byte-identical to the native
+# addon and the module lost 9 147 B. wasm32 only, so the native addon keeps the table (resolver 2
+# does not unify features across non-matching targets). `"1"` leaves the version to Cargo.lock.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+ryu = { version = "1", features = ["small"] }
