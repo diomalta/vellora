@@ -71,6 +71,11 @@ style = { package = "stylo", version = "=0.22.0" }
 cssparser = "=0.38.0"
 style_traits = { package = "stylo_traits", version = "=0.22.0" }
 
+# Parley's font reader, pinned to the exact version blitz-dom 0.3.0-beta.4 and parley_engine
+# 0.12.0 resolve (Cargo.lock 0.44.0, so no crate is added): `blitz_engine::dropped_tail_advance`
+# reads the advance of the space Blitz drops from an outside list marker (`1. `, issue #73).
+skrifa = { version = "=0.44.0", default-features = false, features = ["std"] }
+
 # --- krilla: paginated display list -> PDF ---
 krilla = "0.8.2"
 # Inline `<svg>` painting (Phase C step 06, `src/svg.rs`): krilla-svg draws a usvg tree as PDF
