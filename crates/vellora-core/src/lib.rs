@@ -160,6 +160,23 @@ fn render_as(
     emit(&paginated, opts)
 }
 
+/// Test tooling ONLY, never the render path: [`render`]'s validation, layout and pagination,
+/// stopping before the PDF emit, so tests can read the pages' display list (rects, outlines,
+/// text runs) of exactly what `render` would print. Not a stable API.
+#[doc(hidden)]
+pub fn debug_paginate(
+    html_bytes: &[u8],
+    opts: &RenderOptions,
+) -> Result<pagination::Paginated, VelloraError> {
+    let (laid_out, page_box) = validate_and_lay_out(
+        html_bytes,
+        opts,
+        blitz_engine::DocumentSyntax::Html,
+        &mut blitz_engine::NoObserver,
+    )?;
+    Ok(pagination::paginate(&laid_out, &page_box))
+}
+
 /// Step 5 of [`render`]: the paginated display list to PDF bytes (krilla).
 fn emit(paginated: &pagination::Paginated, opts: &RenderOptions) -> Result<Vec<u8>, VelloraError> {
     let meta = DocMeta {
@@ -279,6 +296,48 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     // 1b + 3) Single parse shared by the element gate AND layout (cost
     // model): parse once, walk the parsed tree for out-of-subset elements
     // BEFORE layout, then resolve + read the layout tree from that same parse.
+    // A multi-column container whose content crosses the end of its page is laid out again in
+    // rows of columns, one per page, from where the paginator puts it (issue #52,
+    // `multicol::PageRows`). A container's rows depend only on what precedes it, so once the
+    // containers before it are settled, the next relayout settles it too: at most one relayout
+    // per container, plus the one that confirms the hints (most documents settle after one,
+    // since the paginator's cut of the one-row layout ends a container near where its rows
+    // end). A document with no container across a page end is laid out once, exactly as before.
+    let mut paging = multicol::PagingHints::new();
+    let mut laid_out = lay_out_once(html, opts, &page_box, syntax, &paging, observer)?;
+    let relayouts = laid_out.multicols.len() + 1;
+    for _ in 0..relayouts {
+        let next = pagination::multicol_pages(&laid_out, &page_box);
+        if same_paging(&next, &paging) {
+            break;
+        }
+        paging = next;
+        observer.restart();
+        laid_out = lay_out_once(html, opts, &page_box, syntax, &paging, observer)?;
+    }
+    Ok((laid_out, page_box))
+}
+
+/// Whether two sets of page rows place every container alike (to 1/64 px).
+fn same_paging(a: &multicol::PagingHints, b: &multicol::PagingHints) -> bool {
+    a.len() == b.len()
+        && a.iter().all(|(id, rows)| {
+            b.get(id).is_some_and(|other| {
+                (rows.first - other.first).abs() <= 1.0 / 64.0 && rows.next == other.next
+            })
+        })
+}
+
+/// One layout of [`validate_and_lay_out`] (the element gate, then Blitz layout with `paging`),
+/// and the unresolved-image reject.
+fn lay_out_once<O: blitz_engine::LayoutObserver>(
+    html: &str,
+    opts: &RenderOptions,
+    page_box: &page_css::PageBox,
+    syntax: blitz_engine::DocumentSyntax,
+    paging: &multicol::PagingHints,
+    observer: &mut O,
+) -> Result<blitz_engine::LaidOutDoc, VelloraError> {
     let laid_out = blitz_engine::validate_then_lay_out_observed(
         html,
         validation::denied_elements(),
@@ -290,6 +349,7 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
         opts.base_url.as_deref(),
         &opts.fonts,
         syntax,
+        paging,
         observer,
     )
     .map_err(|rejection| {
@@ -311,7 +371,7 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
         )));
     }
 
-    Ok((laid_out, page_box))
+    Ok(laid_out)
 }
 
 /// Returns the crate name. Retained from the initial scaffold so existing

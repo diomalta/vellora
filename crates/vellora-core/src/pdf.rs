@@ -58,6 +58,9 @@ pub struct PdfPage {
     pub text_runs: Vec<TextRun>,
     /// Running headers/footers (`@top-center` / `@bottom-center` margin boxes).
     pub margin_texts: Vec<MarginText>,
+    /// Outlines (`outline`), page-local px: drawn last, over the text (CSS 2.2 Appendix E
+    /// step 10).
+    pub outlines: Vec<FilledRect>,
 }
 
 /// A running header/footer: its resolved string and the glyph runs Blitz shaped it into
@@ -183,12 +186,18 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
 
         // The runs' `text-decoration` lines: underlines and overlines under the glyphs,
         // line-throughs over them (CSS Text Decoration 3 §2.1 painting order).
-        let runs = || {
-            page.text_runs
-                .iter()
-                .chain(page.margin_texts.iter().flat_map(|mt| mt.runs.iter()))
+        let margin_runs = || page.margin_texts.iter().flat_map(|mt| mt.runs.iter());
+        let runs = || page.text_runs.iter().chain(margin_runs());
+        // On a page with outlines the margin text's underlines and overlines wait until after
+        // them (below), so an outline does not cover them either; without outlines every run's
+        // are drawn here, together, as before.
+        let split_margin = !page.outlines.is_empty();
+        let under = if split_margin {
+            decoration_rects(page.text_runs.iter(), false)
+        } else {
+            decoration_rects(runs(), false)
         };
-        for r in decoration_rects(runs(), false) {
+        for r in under {
             draw_rect(&mut surface, &r);
         }
 
@@ -205,6 +214,20 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
                 draw_text_run(&mut surface, &merged, &mut font_cache)?;
             }
             at = end;
+        }
+
+        // Outlines after the page's content (CSS 2.2 Appendix E step 10), under the page-margin
+        // boxes, which paint over the page content (CSS Paged Media 3): an outline reaching
+        // into a page margin does not cover the running header or footer. Line-throughs are
+        // drawn below, after the margin text, so a body line-through paints over an outline it
+        // crosses (Chrome draws the outline last; not modelled).
+        for r in &page.outlines {
+            draw_rect(&mut surface, r);
+        }
+        if split_margin {
+            for r in decoration_rects(margin_runs(), false) {
+                draw_rect(&mut surface, &r);
+            }
         }
 
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).

@@ -26,6 +26,7 @@ fn one_page_from(html: &str) -> Vec<u8> {
         images: Vec::new(),
         text_runs,
         margin_texts: Vec::new(),
+        outlines: Vec::new(),
     };
     let meta = DocMeta {
         title: Some("Spike B".to_string()),

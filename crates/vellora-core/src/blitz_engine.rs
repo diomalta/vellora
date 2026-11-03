@@ -140,6 +140,73 @@ pub struct LaidOutBox {
     pub rounded_borders: Vec<RoundedBorder>,
     /// Raster images owned by this node.
     pub image_runs: Vec<ImageRun>,
+    /// The box's `outline` ([`Outline`]), painted around each of its fragments when the page is
+    /// lowered to a display list, after the page's text (`pagination::lower_to_display_list`).
+    pub outline: Option<Outline>,
+}
+
+/// A box's `outline` (CSS Basic User Interface 4 §5): a line `width` px wide drawn outside the
+/// border box, `offset` px from it (negative: inside), in `color`. It takes no room and paints
+/// over the content (CSS 2.2 Appendix E step 10: outlines last).
+///
+/// Its rects are computed from the geometry the box has when a page is lowered to a display list
+/// ([`Outline::rects`]), not when the box is laid out: a box broken across pages or columns gets
+/// an outline around each fragment (CSS Basic UI 4 §5.1, "the outline may be drawn ... around
+/// each fragment"; Chrome 155 draws one rectangle per box fragment, as `box-decoration-break:
+/// clone` borders).
+///
+/// Not a Blitz bug: vellora never links blitz-paint and paints from its own display list, which
+/// had no outline before this (issue #52). An ancestor that clips its overflow (`overflow-y`
+/// other than `visible`) clips the outline to its border box (`pagination::lower_to_display_list`;
+/// Chrome 153: WPT css/css-ui/outline-023, css/css-break/ink-overflow-002), though vellora clips
+/// no other overflow. Not modelled: `border-radius` (Chrome rounds the outline with the border's
+/// corners; vellora draws it square), `outline-style: auto` (Chrome's focus ring; not painted),
+/// `double` / `groove` / `ridge` / `inset` / `outset` (solid, as
+/// borders are, [`crate::border_pattern`]), and the outline of a non-atomic inline box (no box of
+/// its own in the walk).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Outline {
+    pub width: f64,
+    pub offset: f64,
+    /// sRGB color (r,g,b) 0..=255, alpha composited over white.
+    pub color: [u8; 3],
+    pub(crate) style: crate::border_pattern::LineStyle,
+}
+
+impl Outline {
+    /// The filled rects `(x, y, width, height)` that paint this outline around the border box
+    /// `(x, y, width, height)`: four sides of the rectangle grown by `offset + width` on every
+    /// side, each side along its full length (corners included, as border sides are), dashed or
+    /// dotted as a border side ([`crate::border_pattern::side_rects`]). None for an empty box
+    /// (Chrome paints no outline around an empty rect) or when a negative offset leaves no
+    /// rectangle.
+    pub fn rects(&self, x: f64, y: f64, width: f64, height: f64) -> Vec<(f64, f64, f64, f64)> {
+        let w = self.width;
+        if !(w > 0.0 && width > 0.0 && height > 0.0) {
+            return Vec::new();
+        }
+        let grow = self.offset + w;
+        let (ox, oy) = (x - grow, y - grow);
+        let (ow, oh) = (width + 2.0 * grow, height + 2.0 * grow);
+        if !(ow > 0.0 && oh > 0.0) {
+            return Vec::new();
+        }
+        // The sides of a rectangle narrower than twice the line: what is left is filled.
+        let side_w = w.min(ow / 2.0);
+        let side_h = w.min(oh / 2.0);
+        let sides = [
+            ((ox, oy, ow, side_h), true, side_h),
+            ((ox + ow - side_w, oy, side_w, oh), false, side_w),
+            ((ox, oy + oh - side_h, ow, side_h), true, side_h),
+            ((ox, oy, side_w, oh), false, side_w),
+        ];
+        sides
+            .into_iter()
+            .flat_map(|(rect, horizontal, thickness)| {
+                crate::border_pattern::side_rects(self.style, thickness, rect, horizontal)
+            })
+            .collect()
+    }
 }
 
 /// Physical inline-axis alignment of a box's line boxes, from its computed
@@ -311,6 +378,9 @@ pub struct LaidOutDoc {
     /// no canvas and no `@page` background either (Chrome 155, WPT
     /// css/css-page/root-element-display-none-print.html, `@page { background: hotpink }`).
     pub root_rendered: bool,
+    /// Where the content of every multi-column container laid out in columns is, for the
+    /// paginator to find which ones cross a page end ([`crate::pagination::multicol_pages`]).
+    pub multicols: Vec<crate::multicol::MulticolExtent>,
 }
 
 /// The page context of a laid-out document (CSS Paged Media 3: "The page context inherits from
@@ -2961,6 +3031,7 @@ fn lay_out_multicol(
     doc: &mut BaseDocument,
     column_fill: &std::collections::HashMap<NodeId, bool>,
     lines: &LineRules,
+    paging: &crate::multicol::PagingHints,
 ) -> Vec<MulticolNode> {
     use style::values::computed::{Length, LengthPercentage, MaxSize, Size};
     let px = |v: f64| {
@@ -3057,7 +3128,7 @@ fn lay_out_multicol(
         .filter(|mc| mc.auto_height)
         .filter_map(|mc| {
             let subtree = walk_subtree(doc, mc.id);
-            let spec = multicol_spec(doc, mc, &subtree, lines)?;
+            let spec = multicol_spec(doc, mc, &subtree, lines, paging)?;
             Some((
                 mc.id,
                 crate::multicol::balanced_height(&subtree, &spec, mc.fill_auto),
@@ -3216,6 +3287,7 @@ fn multicol_spec(
     mc: &MulticolNode,
     boxes: &[LaidOutBox],
     lines: &LineRules,
+    paging: &crate::multicol::PagingHints,
 ) -> Option<crate::multicol::Multicol> {
     let node = doc.get_node(mc.id)?;
     let layout = *node.final_layout();
@@ -3283,6 +3355,7 @@ fn multicol_spec(
         positioned_cb,
         orphans_widows,
         unrounded_x,
+        pages: paging.get(&raw).cloned(),
     })
 }
 
@@ -5036,6 +5109,7 @@ pub fn lay_out(html: &str) -> LaidOutDoc {
         &[],
         &breaks,
         font_ctx,
+        &crate::multicol::PagingHints::new(),
         &mut NoObserver,
     )
 }
@@ -5067,6 +5141,7 @@ pub fn validate_then_lay_out(
         base_url,
         fonts,
         DocumentSyntax::Html,
+        &crate::multicol::PagingHints::new(),
         &mut NoObserver,
     )
 }
@@ -5086,6 +5161,7 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
     base_url: Option<&str>,
     fonts: &[Vec<u8>],
     syntax: DocumentSyntax,
+    paging: &crate::multicol::PagingHints,
     observer: &mut O,
 ) -> Result<LaidOutDoc, GateRejection> {
     let breaks = crate::break_css::parse_break_rules(html);
@@ -5115,6 +5191,7 @@ pub(crate) fn validate_then_lay_out_observed<O: LayoutObserver>(
         fonts,
         &breaks,
         font_ctx,
+        paging,
         observer,
     ))
 }
@@ -5160,6 +5237,10 @@ pub(crate) trait LayoutObserver {
     }
     /// After each named pass of [`LAYOUT_NORMALIZE_PASSES`].
     fn after_pass(&mut self, _name: &'static str, _boxes: &[LaidOutBox]) {}
+    /// The document is laid out again (a multi-column container broken across pages,
+    /// `crate::validate_and_lay_out`): forget what the previous layout recorded, so only the
+    /// final one is observed.
+    fn restart(&mut self) {}
 }
 
 /// The production observer: observes nothing.
@@ -5204,6 +5285,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     fonts: &[Vec<u8>],
     breaks: &crate::break_css::BreakRules,
     font_ctx: parley::FontContext,
+    paging: &crate::multicol::PagingHints,
     observer: &mut O,
 ) -> LaidOutDoc {
     let (viewport, viewport_px) = layout_viewport(content_width_px, content_height_px);
@@ -5274,7 +5356,7 @@ fn resolve_and_walk<O: LayoutObserver>(
     let (multicols, line_rules) = match early_matches.as_mut() {
         Some(matches) => {
             let lines = std::mem::take(&mut matches.line_rules);
-            let found = lay_out_multicol(&mut doc, &matches.column_fill, &lines);
+            let found = lay_out_multicol(&mut doc, &matches.column_fill, &lines, paging);
             (found, lines)
         }
         None => (Vec::new(), LineRules::default()),
@@ -5394,12 +5476,13 @@ fn resolve_and_walk<O: LayoutObserver>(
     crate::break_css::resolve_break_after(&mut boxes);
     crate::break_css::resolve_column_break_after(&mut boxes);
     // The columns of every multi-column container (`lay_out_multicol` laid them out as one).
+    let mut multicol_extents = Vec::new();
     if !multicols.is_empty() {
         let specs: Vec<crate::multicol::Multicol> = multicols
             .iter()
-            .filter_map(|mc| multicol_spec(base, mc, &boxes, &line_rules))
+            .filter_map(|mc| multicol_spec(base, mc, &boxes, &line_rules, paging))
             .collect();
-        crate::multicol::apply(&mut boxes, &specs);
+        multicol_extents = crate::multicol::apply(&mut boxes, &specs);
     }
     crate::break_css::resolve_named_page_breaks(&mut boxes);
     observer.after_walk(&BlitzSnapshot { base }, &boxes, viewport_px);
@@ -5434,6 +5517,7 @@ fn resolve_and_walk<O: LayoutObserver>(
         page_context: page_context_of(base, font_ctx),
         canvas_background: canvas.map(|(_, color)| color),
         root_rendered: root_rendered(base),
+        multicols: multicol_extents,
     }
 }
 
@@ -6248,7 +6332,37 @@ fn push_box(
         visual_rects,
         rounded_borders,
         image_runs,
+        outline: read_outline(node),
     });
+}
+
+/// The computed `outline` of `node` ([`Outline`]); `None` for `outline-style: none` or a zero
+/// width or a transparent color.
+fn read_outline(node: &blitz_dom::Node) -> Option<Outline> {
+    use style::values::specified::outline::OutlineStyle;
+    let styles = node.primary_styles()?;
+    let outline = styles.get_outline();
+    let style = match outline.outline_style {
+        // Chrome paints `auto` as its focus ring, around the box and its descendants' overflow
+        // (WPT css/css-ui/outline-with-padding-001); a solid line around the border box failed
+        // that test and outline-auto-width-001, which no outline passed. Not painted.
+        OutlineStyle::Auto => return None,
+        OutlineStyle::BorderStyle(s) if s.none_or_hidden() => return None,
+        OutlineStyle::BorderStyle(s) => line_style(s),
+    };
+    let width = outline.outline_width.0.to_f64_px();
+    if width <= 0.0 {
+        return None;
+    }
+    let color = outline
+        .outline_color
+        .resolve_to_absolute(&styles.clone_color());
+    Some(Outline {
+        width,
+        offset: outline.outline_offset.to_f64_px(),
+        color: absolute_color_to_srgb(color)?,
+        style,
+    })
 }
 
 /// Whether `node` carries Blitz layout data (element, anonymous block, or the

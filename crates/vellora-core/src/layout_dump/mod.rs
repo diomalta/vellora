@@ -320,6 +320,13 @@ pub struct DumpCapture {
 }
 
 impl LayoutObserver for DumpCapture {
+    fn restart(&mut self) {
+        *self = DumpCapture {
+            source_html: self.source_html,
+            ..DumpCapture::default()
+        };
+    }
+
     fn after_walk(
         &mut self,
         blitz: &BlitzSnapshot<'_>,

@@ -282,6 +282,121 @@ pub fn paginate_traced(
     // Each page's own `@page` box (`:first`, `:left`/`:right` rules may give pages different
     // heights and margins; the content width is the same on every page, see
     // `page_css::varying_width_rule`).
+    let PageSlices {
+        mut geometry,
+        page_slices,
+        thead_repeated,
+        oversize_hit,
+    } = break_into_pages(doc, page_box, trace.as_deref_mut());
+
+    let total = page_slices.len();
+    if let Some(t) = trace {
+        t.page_count = total;
+    }
+
+    // Phase two: build PdfPages, resolving running header/footer counters now
+    // that the total page count is known.
+    let page_boxes: Vec<PageBox> = (0..total).map(|i| geometry.page(i).clone()).collect();
+    let mut margin_texts = build_margin_texts(doc, &page_boxes);
+    let mut pages = Vec::with_capacity(total);
+    let mut footers = Vec::with_capacity(total);
+    for (i, slice) in page_slices.into_iter().enumerate() {
+        let page = &page_boxes[i];
+        // Chromium's whole-px content origin (`PageBox::content_origin`).
+        let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
+        let (mut rects, rounded_strokes, images, text_runs, outlines) =
+            lower_to_display_list(slice, origin_x, origin_y);
+        paint_canvas(&mut rects, page, doc);
+
+        // Keep `report.footers` in lock-step with what is actually emitted: a
+        // footer string is only recorded when its `MarginText` was produced.
+        let page_margin_texts = std::mem::take(&mut margin_texts[i]);
+        let footer_text = page_margin_texts
+            .iter()
+            .find(|(which, _)| *which == MarginBox::BottomCenter)
+            .map(|(_, mt)| mt.text.clone())
+            .unwrap_or_default();
+        footers.push(footer_text);
+
+        pages.push(PdfPage {
+            width_px: page.width,
+            height_px: page.height,
+            rects,
+            rounded_strokes,
+            images,
+            text_runs,
+            margin_texts: page_margin_texts.into_iter().map(|(_, mt)| mt).collect(),
+            outlines,
+        });
+    }
+
+    Paginated {
+        report: PaginationReport {
+            page_count: total,
+            footers,
+            thead_repeated,
+            oversize_hit,
+        },
+        pages,
+    }
+}
+
+/// How many pages after its first a multi-column container broken across pages gets the height
+/// of ([`crate::multicol::PageRows::next`]); past them the last two alternate.
+const MULTICOL_PAGES_AHEAD: usize = 64;
+
+/// The page rows of every multi-column container of `doc` whose content crosses the end of the
+/// page it starts on, as `doc` paginates (issue #52, [`crate::multicol::PageRows`]): its
+/// content-box top on that page gives the room of its first row, the pages after it the others.
+/// A container already laid out in rows keeps them, from where it now starts. Empty when no
+/// container crosses a page end (the document is not laid out again).
+pub(crate) fn multicol_pages(doc: &LaidOutDoc, page_box: &PageBox) -> crate::multicol::PagingHints {
+    let mut hints = crate::multicol::PagingHints::new();
+    if doc.multicols.is_empty() {
+        return hints;
+    }
+    let PageSlices {
+        mut geometry,
+        page_slices,
+        ..
+    } = break_into_pages(doc, page_box, None);
+    for mc in &doc.multicols {
+        let Some((page, y)) = page_slices.iter().enumerate().find_map(|(i, slice)| {
+            slice
+                .iter()
+                .find(|b| b.node_id == mc.node_id)
+                .map(|b| (i, b.y))
+        }) else {
+            continue;
+        };
+        let top = y + mc.content_offset;
+        let room = geometry.page(page).content_height() - top;
+        let crosses = mc.content_height > room + CUT_EPSILON_PX;
+        if !(crosses || mc.paged) || room <= CUT_EPSILON_PX {
+            continue;
+        }
+        let next = (1..=MULTICOL_PAGES_AHEAD)
+            .map(|k| geometry.page(page + k).content_height())
+            .collect();
+        hints.insert(mc.node_id, crate::multicol::PageRows { first: room, next });
+    }
+    hints
+}
+
+/// Phase one of [`paginate_traced`]: the document's boxes broken into page slices (page-local
+/// y, from the content-box top of each page), with each page's geometry.
+struct PageSlices<'a> {
+    geometry: PageGeometry<'a>,
+    page_slices: Vec<Vec<LaidOutBox>>,
+    thead_repeated: Vec<bool>,
+    oversize_hit: bool,
+}
+
+fn break_into_pages<'a>(
+    doc: &LaidOutDoc,
+    page_box: &'a PageBox,
+    mut trace: Option<&mut PaginationTrace>,
+) -> PageSlices<'a> {
     let mut geometry = PageGeometry::new(page_box, doc.page_context.rtl);
 
     let fragments = build_fragments(doc);
@@ -689,54 +804,11 @@ pub fn paginate_traced(
         thead_repeated.push(false);
     }
 
-    let total = page_slices.len();
-    if let Some(t) = trace {
-        t.page_count = total;
-    }
-
-    // Phase two: build PdfPages, resolving running header/footer counters now
-    // that the total page count is known.
-    let page_boxes: Vec<PageBox> = (0..total).map(|i| geometry.page(i).clone()).collect();
-    let mut margin_texts = build_margin_texts(doc, &page_boxes);
-    let mut pages = Vec::with_capacity(total);
-    let mut footers = Vec::with_capacity(total);
-    for (i, slice) in page_slices.into_iter().enumerate() {
-        let page = &page_boxes[i];
-        // Chromium's whole-px content origin (`PageBox::content_origin`).
-        let (origin_x, origin_y) = page.content_origin(doc.page_context.rtl);
-        let (mut rects, rounded_strokes, images, text_runs) =
-            lower_to_display_list(slice, origin_x, origin_y);
-        paint_canvas(&mut rects, page, doc);
-
-        // Keep `report.footers` in lock-step with what is actually emitted: a
-        // footer string is only recorded when its `MarginText` was produced.
-        let page_margin_texts = std::mem::take(&mut margin_texts[i]);
-        let footer_text = page_margin_texts
-            .iter()
-            .find(|(which, _)| *which == MarginBox::BottomCenter)
-            .map(|(_, mt)| mt.text.clone())
-            .unwrap_or_default();
-        footers.push(footer_text);
-
-        pages.push(PdfPage {
-            width_px: page.width,
-            height_px: page.height,
-            rects,
-            rounded_strokes,
-            images,
-            text_runs,
-            margin_texts: page_margin_texts.into_iter().map(|(_, mt)| mt).collect(),
-        });
-    }
-
-    Paginated {
-        report: PaginationReport {
-            page_count: total,
-            footers,
-            thead_repeated,
-            oversize_hit,
-        },
-        pages,
+    PageSlices {
+        geometry,
+        page_slices,
+        thead_repeated,
+        oversize_hit,
     }
 }
 
@@ -916,6 +988,8 @@ pub fn paginate_flat(doc: &LaidOutDoc, page_box: &PageBox) -> Paginated {
             images,
             text_runs,
             margin_texts: Vec::new(),
+            // The raw render paints what Blitz's boxes carry and no vellora layer: no outline.
+            outlines: Vec::new(),
         });
     }
     Paginated {
@@ -1092,7 +1166,13 @@ fn build_fragments(doc: &LaidOutDoc) -> Vec<Fragment> {
         let is_items_table = b.tag.as_deref() == Some("table")
             && subtree.iter().any(|x| x.tag.as_deref() == Some("thead"));
 
-        let splittable = is_items_table || should_flatten_transparent_wrapper(b, subtree);
+        // A multi-column container is one block fragment, painted or not: its columns sit side
+        // by side at the same flow y, which a fragment per child would take out of order, and
+        // the paginator's cut between its rows of columns (one per page, issue #52) is a cut
+        // inside one fragment.
+        let multicol = doc.multicols.iter().any(|m| m.node_id == b.node_id);
+        let splittable =
+            is_items_table || (!multicol && should_flatten_transparent_wrapper(b, subtree));
         let mut parts = Vec::new();
         if is_items_table {
             // A thead fragment + one fragment per tbody <tr> (or per
@@ -1411,6 +1491,7 @@ fn boxes_have_renderables(boxes: &[LaidOutBox]) -> bool {
         !b.text_runs.is_empty()
             || !b.visual_rects.is_empty()
             || !b.rounded_borders.is_empty()
+            || b.outline.is_some()
             || b.tag
                 .as_deref()
                 .is_some_and(|tag| is_renderable_flow_tag(tag) && b.width > 0.0 && b.height > 0.0)
@@ -1434,7 +1515,13 @@ fn should_flatten_transparent_wrapper(root: &LaidOutBox, subtree: &[LaidOutBox])
     if !root.text_runs.is_empty()
         || !root.visual_rects.is_empty()
         || !root.rounded_borders.is_empty()
+        || root.outline.is_some()
     {
+        return false;
+    }
+    // A box that clips its overflow stays with its subtree when an outline inside it needs it
+    // as the clip ([`outline_clips`]).
+    if root.clips_overflow && subtree.iter().skip(1).any(|b| b.outline.is_some()) {
         return false;
     }
     let child_depth = root.depth + 1;
@@ -2192,6 +2279,8 @@ fn split_fragment(
                         let mut anc = bare(&frag.boxes[p]);
                         anc.y = anc.y.max(cut);
                         anc.height = 0.0;
+                        // A structural stand-in, not a fragment of the box: no outline.
+                        anc.outline = None;
                         part[p] = Some(anc);
                     }
                 }
@@ -2414,6 +2503,19 @@ pub(crate) fn fragment_columns(
     top: f64,
     column_height: f64,
 ) -> Vec<ColumnPiece> {
+    let column_height = column_height.max(0.0);
+    fragment_columns_by(boxes, top, &|_| column_height)
+}
+
+/// [`fragment_columns`] with a height per column: column `k` (0-based, in fill order) is
+/// `height_of(k)` tall. A multi-column container broken across pages has rows of columns as tall
+/// as the room each page leaves ([`crate::multicol`], issue #52); every column of one row has
+/// the row's height. A column's cut depends only on its own height and the columns before it.
+pub(crate) fn fragment_columns_by(
+    boxes: Vec<LaidOutBox>,
+    top: f64,
+    height_of: &dyn Fn(usize) -> f64,
+) -> Vec<ColumnPiece> {
     let bottom = boxes.iter().map(|b| b.y + b.height).fold(top, f64::max);
     let mut frag = Fragment {
         boxes,
@@ -2427,13 +2529,13 @@ pub(crate) fn fragment_columns(
         members: Vec::new(),
         slices: 0,
     };
-    let column_height = column_height.max(0.0);
     let mut pieces = Vec::new();
     // The boxes whose forced break has been taken or lies behind: every box of an earlier
     // column (its first fragment is there) and the line a forced break started a column with
     // (lookup only, DET-1).
     let mut taken: HashSet<usize> = HashSet::new();
     loop {
+        let column_height = height_of(pieces.len()).max(0.0);
         let start = frag.top;
         let end = start + column_height;
         let in_flow_order = forced_in_flow_order(&frag.boxes, start, end, &taken);
@@ -2912,20 +3014,63 @@ fn snap_baseline_to_page_px(y: f64) -> f64 {
     y.round()
 }
 
-/// Lower a page's positioned boxes into a krilla display list: background fills
-/// for boxes that declare a non-white background (header band etc.) and the
-/// already-positioned text runs. X is offset by the left margin; the page-local
-/// Y already starts at content top, so we add the top margin.
-fn lower_to_display_list(
-    boxes: Vec<LaidOutBox>,
-    margin_l: f64,
-    margin_t: f64,
-) -> (
+/// `(x, y, width, height)`, px.
+type Rect = (f64, f64, f64, f64);
+
+/// Per box of a page slice, the intersection of the border boxes of its ancestors that clip
+/// their overflow (`clips_overflow`), or `None` when none does: the clip of its outline (an
+/// outline is ink overflow, CSS Basic UI 4 §5; Chrome clips it with the overflow, WPT
+/// css/css-ui/outline-023). `boxes` is depth-ordered (each box's ancestors come before it).
+fn outline_clips(boxes: &[LaidOutBox]) -> Vec<Option<Rect>> {
+    // The open ancestors: (depth, the clip their descendants get).
+    let mut stack: Vec<(usize, Option<Rect>)> = Vec::new();
+    let mut out = Vec::with_capacity(boxes.len());
+    for b in boxes {
+        while stack.last().is_some_and(|&(depth, _)| depth >= b.depth) {
+            stack.pop();
+        }
+        let inherited = stack.last().and_then(|&(_, clip)| clip);
+        out.push(inherited);
+        let own = if b.clips_overflow {
+            let border_box = (b.x, b.y, b.width, b.height);
+            Some(match inherited {
+                Some(clip) => clip_rect(border_box, Some(clip)).unwrap_or((b.x, b.y, 0.0, 0.0)),
+                None => border_box,
+            })
+        } else {
+            inherited
+        };
+        stack.push((b.depth, own));
+    }
+    out
+}
+
+/// `rect` cut to `clip` (`None`: no clip), or `None` when nothing of it is left.
+fn clip_rect(rect: Rect, clip: Option<Rect>) -> Option<Rect> {
+    let Some((cx, cy, cw, ch)) = clip else {
+        return Some(rect);
+    };
+    let (x, y, w, h) = rect;
+    let (x0, y0) = (x.max(cx), y.max(cy));
+    let (x1, y1) = ((x + w).min(cx + cw), (y + h).min(cy + ch));
+    (x1 > x0 && y1 > y0).then_some((x0, y0, x1 - x0, y1 - y0))
+}
+
+/// A page's display list ([`lower_to_display_list`]): rects, rounded strokes, images, text runs
+/// and outlines.
+type DisplayList = (
     Vec<FilledRect>,
     Vec<RoundedStroke>,
     Vec<ImageRun>,
     Vec<crate::blitz_engine::TextRun>,
-) {
+    Vec<FilledRect>,
+);
+
+/// Lower a page's positioned boxes into a krilla display list: background fills
+/// for boxes that declare a non-white background (header band etc.) and the
+/// already-positioned text runs. X is offset by the left margin; the page-local
+/// Y already starts at content top, so we add the top margin.
+fn lower_to_display_list(boxes: Vec<LaidOutBox>, margin_l: f64, margin_t: f64) -> DisplayList {
     // `boxes` are already owned (deep-cloned by `reposition`); move the runs out
     // and shift their origins in place rather than cloning each one again.
     let mut rects = Vec::new();
@@ -2933,8 +3078,29 @@ fn lower_to_display_list(
     let mut rounded_strokes = Vec::new();
     let mut images = Vec::new();
     let mut runs = Vec::new();
+    let mut outlines = Vec::new();
     let atomic = in_atomic_inline(&boxes);
-    for (b, atomic) in boxes.into_iter().zip(atomic) {
+    let clips = outline_clips(&boxes);
+    for ((b, atomic), clip) in boxes.into_iter().zip(atomic).zip(clips) {
+        // The outline of this fragment of the box: around its border box as it is on this
+        // page (a box cut by a page or column break was sliced to its part here), clipped by
+        // the ancestors that clip their overflow.
+        if let Some(outline) = b.outline {
+            for rect in outline.rects(b.x, b.y, b.width, b.height) {
+                let Some((x, y, width, height)) = clip_rect(rect, clip) else {
+                    continue;
+                };
+                outlines.push(FilledRect {
+                    x: x + margin_l,
+                    y: y + margin_t,
+                    width,
+                    height,
+                    color: outline.color,
+                    tier: 0,
+                    stack: 0,
+                });
+            }
+        }
         let rects = if atomic {
             &mut atomic_rects
         } else {
@@ -2979,6 +3145,7 @@ fn lower_to_display_list(
         rounded_strokes,
         images,
         runs,
+        outlines,
     )
 }
 
