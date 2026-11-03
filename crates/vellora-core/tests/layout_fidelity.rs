@@ -865,6 +865,149 @@ fn percent_width_pass_leaves_fixed_tables_to_blitz() {
     }
 }
 
+// Issue #75. A `width: 50%` on body cells only (`.desc`, no width on the matching `<th>`) has
+// to size the whole column: the header row shares the body's column edges. Chrome for Testing
+// (Playwright Chromium, print-free layout at viewport 657 px = the A4 content width at 18 mm
+// margins, bundled Liberation fonts, 2026-11-03): every row's cells are x 0 / 328.5 / 386.75 /
+// 506.73, w 328.5 / 58.25 / 119.98 / 150.27; "Qty." and "145" are both centred on 357.63, "Unit
+// price" and "R$ 149,00" both end at 500.73. vellora lays the page out 658 px wide, so the
+// widths are compared within 1.5 px. Before the fix the header kept Blitz's auto widths (211 /
+// 117 / 156 / 174) while the body took 329 / 86 / 115 / 128: "Qty." centred 77 px left of
+// "145".
+const PERCENT_BODY_ONLY_HEAD: &str = r#"<thead><tr><th>Description</th><th class="qty">Qty.</th><th class="num">Unit price</th><th class="num">Subtotal</th></tr></thead>"#;
+const PERCENT_BODY_ONLY_ROWS: &str = r#"<tr><td class="desc">Guests · Full price</td><td class="qty">145</td><td class="num">R$ 149,00</td><td class="num">R$ 21.605,00</td></tr>
+    <tr><td class="desc">Grill master</td><td class="qty">2</td><td class="num">R$ 350,00</td><td class="num">R$ 700,00</td></tr>"#;
+
+fn percent_body_only_html(extra_css: &str) -> String {
+    format!(
+        r#"<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+    @page {{ size: A4; margin: 18mm; }}
+    body {{ margin: 0; font-family: "Liberation Sans"; font-size: 10pt; }}
+    table.items {{ width: 100%; border-collapse: collapse; }}
+    table.items th {{ font-size: 8pt; text-transform: uppercase; padding: 0 6px 6px; border-bottom: 2px solid #000; text-align: left; }}
+    table.items td {{ padding: 6px; border-bottom: 1px solid #ccc; }}
+    table.items .num {{ text-align: right; }}
+    table.items .qty {{ text-align: center; }}
+    table.items .desc {{ font-weight: bold; width: 50%; }}
+    {extra_css}
+</style></head><body>
+    <table class="items">{PERCENT_BODY_ONLY_HEAD}<tbody>{PERCENT_BODY_ONLY_ROWS}</tbody></table>
+</body></html>"#
+    )
+}
+
+fn table_rows(laid: &blitz_engine::LaidOutDoc) -> Vec<Vec<(f64, f64)>> {
+    let mut rows: Vec<Vec<(f64, f64)>> = Vec::new();
+    for b in &laid.boxes {
+        match b.tag.as_deref() {
+            Some("tr") => rows.push(Vec::new()),
+            Some("td" | "th") => rows
+                .last_mut()
+                .expect("cell inside a row")
+                .push((b.x, b.width)),
+            _ => {}
+        }
+    }
+    rows
+}
+
+fn assert_rows_match(rows: &[Vec<(f64, f64)>], chrome: &[(f64, f64)]) {
+    assert_eq!(rows.len(), 3, "expected a header row and two body rows");
+    for row in rows {
+        assert_eq!(row.len(), chrome.len(), "row {row:?}");
+        for ((x, w), (cx, cw)) in row.iter().zip(chrome) {
+            assert!(
+                (x - rows[0][0].0 - cx).abs() <= 1.5 && (w - cw).abs() <= 1.5,
+                "every row should take Chrome's columns {chrome:?}, got {rows:?}"
+            );
+        }
+        for ((x, w), (hx, hw)) in row.iter().zip(&rows[0]) {
+            assert!(
+                (x - hx).abs() <= 0.01 && (w - hw).abs() <= 0.01,
+                "header and body rows must share column edges, got {rows:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn percent_width_on_body_cells_sizes_the_header_row_too() {
+    let (laid, _pb) = lay_out_for_render(&percent_body_only_html(""));
+    assert_rows_match(
+        &table_rows(&laid),
+        &[
+            (0.0, 328.5),
+            (328.5, 58.25),
+            (386.75, 119.98),
+            (506.73, 150.27),
+        ],
+    );
+
+    let centre = |needle: &str| {
+        let run = text_run_containing(&laid, needle);
+        run.origin_x + run_width(run) / 2.0
+    };
+    let right = |needle: &str| {
+        let run = text_run_containing(&laid, needle);
+        run.origin_x + run_width(run)
+    };
+    let (qty_head, qty_body) = (centre("QTY."), centre("145"));
+    assert!(
+        (qty_head - qty_body).abs() <= 1.0 && (qty_head - 357.63).abs() <= 1.5,
+        "\"Qty.\" and \"145\" should share Chrome's centre 357.63, got {qty_head} / {qty_body}"
+    );
+    let (unit_head, unit_body) = (right("UNIT PRICE"), right("R$ 149,00"));
+    assert!(
+        (unit_head - unit_body).abs() <= 1.0 && (unit_head - 500.73).abs() <= 1.5,
+        "\"Unit price\" and \"R$ 149,00\" should end at Chrome's 500.73, got {unit_head} / {unit_body}"
+    );
+}
+
+// Same Chrome probe, one body row's `.desc` cell only: the percentage still sizes the column for
+// every row (Chrome: identical numbers to the issue table).
+#[test]
+fn percent_width_on_one_body_cell_sizes_its_whole_column() {
+    let html = percent_body_only_html("").replacen(
+        r#"<td class="desc">Grill master"#,
+        r#"<td>Grill master"#,
+        1,
+    );
+    let (laid, _pb) = lay_out_for_render(&html);
+    assert_rows_match(
+        &table_rows(&laid),
+        &[
+            (0.0, 328.5),
+            (328.5, 58.25),
+            (386.75, 119.98),
+            (506.73, 150.27),
+        ],
+    );
+}
+
+// Same Chrome probe with `border-collapse: separate; border-spacing: 4px`: the gaps stay, and
+// the percentage resolves against the table width minus all five spacings, (657 - 20) / 2 =
+// 318.5 px. Cells x 4 / 326.5 / 386.97 / 507.31, w 318.5 / 56.47 / 116.34 / 145.69.
+#[test]
+fn percent_column_keeps_border_spacing_out_of_its_base() {
+    let (laid, _pb) = lay_out_for_render(&percent_body_only_html(
+        "table.items { border-collapse: separate; border-spacing: 4px; }",
+    ));
+    let rows = table_rows(&laid);
+    assert!(
+        (rows[0][0].0 - 4.0).abs() <= 0.5,
+        "first column starts after the spacing, got {rows:?}"
+    );
+    assert_rows_match(
+        &rows,
+        &[
+            (0.0, 318.5),
+            (322.5, 56.47),
+            (382.97, 116.34),
+            (503.31, 145.69),
+        ],
+    );
+}
+
 // Chrome 155.0.8059.85 (print media, viewport 657 px, 2026-10-21; probe
 // `fixed_colspans` in fidelity/baselines/port/03-table-passes/attachments/
 // chrome-probes-table-passes.json) gives the four fixed tracks 99.75 px border
