@@ -40,11 +40,11 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __forcePanicForTest: () => void;
     readonly coreName: (a: number) => void;
     readonly render: (a: number, b: number, c: number, d: number) => void;
     readonly start: () => void;
     readonly takePanicMessage: (a: number) => void;
-    readonly __forcePanicForTest: () => void;
     readonly Servo_NumericType_MatchesAngle: (a: number) => number;
     readonly Servo_NumericType_MatchesLength: (a: number) => number;
     readonly Servo_NumericType_MatchesLengthPercentage: (a: number) => number;

@@ -111,11 +111,14 @@ fn get(obj: &JsValue, key: &str) -> Result<JsValue, JsValue> {
     Reflect::get(obj, &JsValue::from_str(key))
 }
 
-fn bytes(value: &JsValue, what: &str) -> Result<Vec<u8>, JsValue> {
+/// `value`'s bytes, or the `<what> must be a Uint8Array` error. `what` names the option and is
+/// built only on that error path: formatting it for every entry (`images[{key:?}]`, a `Debug`
+/// format of the key) ran on each successful render too (issue #66).
+fn bytes(value: &JsValue, what: impl FnOnce() -> String) -> Result<Vec<u8>, JsValue> {
     value
         .dyn_ref::<Uint8Array>()
         .map(Uint8Array::to_vec)
-        .ok_or_else(|| JsError::new(&format!("{what} must be a Uint8Array")).into())
+        .ok_or_else(|| JsError::new(&format!("{} must be a Uint8Array", what())).into())
 }
 
 /// Map the JS options object to `vellora_core::RenderOptions`, with exactly the napi binding's
@@ -158,7 +161,7 @@ fn to_render_options(opts: &JsValue) -> Result<RenderOptions, JsValue> {
         for entry in entries.iter() {
             let pair = Array::from(&entry);
             let key = pair.get(0).as_string().unwrap_or_default();
-            let value = bytes(&pair.get(1), &format!("images[{key:?}]"))?;
+            let value = bytes(&pair.get(1), || format!("images[{key:?}]"))?;
             images.insert(key, value);
         }
     }
@@ -167,7 +170,7 @@ fn to_render_options(opts: &JsValue) -> Result<RenderOptions, JsValue> {
     let fonts_value = get(opts, "fonts")?;
     if Array::is_array(&fonts_value) {
         for (i, face) in Array::from(&fonts_value).iter().enumerate() {
-            fonts.push(bytes(&face, &format!("fonts[{i}]"))?);
+            fonts.push(bytes(&face, || format!("fonts[{i}]"))?);
         }
     }
 

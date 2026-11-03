@@ -35,15 +35,16 @@ curl http://localhost:8787/strict   # an out-of-subset input → the located err
 
 ## Size
 
-`npm run size` runs `wrangler deploy --dry-run`. Measured on 2026-11-01 (wrangler 4.151.1, this
+`npm run size` runs `wrangler deploy --dry-run`. Measured on 2026-11-03 (wrangler 4.151.1, this
 commit's engine):
 
 ```
-Total Upload: 14751.90 KiB / gzip: 5432.70 KiB
+Total Upload: 15336.59 KiB / gzip: 6285.87 KiB
 ```
 
-That fits the Workers **Paid** limit (10 MB compressed) and not the **Free** one (3 MB). Most of it
-is the engine; about 1.9 MB of the gzip size is the bundled fonts (see `packages/wasm/README.md`).
+Workers counts only the uncompressed upload, up to 64 MiB on both Free and Paid (there is no
+compressed limit since 2026-09-04), so this fits either plan. Most of it is the engine; 5.8 MB of
+it is the bundled fonts (see `packages/wasm/README.md`, "Size").
 
 ## What differs from Node.js
 

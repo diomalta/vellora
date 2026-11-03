@@ -5,9 +5,9 @@
 //   rustup target add wasm32-unknown-unknown
 //   cargo install wasm-bindgen-cli --version <the wasm-bindgen version in Cargo.lock> --locked
 //
-// `wasm-opt` is deliberately NOT run: measured on the invoice fixture it shrank the raw module
-// (15.0 → 13.5 MB) but made the gzip size the Workers limit is checked against slightly LARGER
-// (5.48 → 5.56 MB) and the warm render slower — see packages/wasm/README.md, "Size".
+// `wasm-opt` is deliberately NOT run: every binaryen level measured (-O1 … -Oz, binaryen 132, before
+// the LTO fix) made the first render and the warm p95 slower, and none shrank the gzip size; see
+// packages/wasm/README.md, "Size".
 import { execFileSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";

@@ -2951,6 +2951,7 @@ name = "vellora-wasm"
 version = "0.0.0"
 dependencies = [
  "js-sys",
+ "ryu",
  "vellora-core",
  "wasm-bindgen",
 ]

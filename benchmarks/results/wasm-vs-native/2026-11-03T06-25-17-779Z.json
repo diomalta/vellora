@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-03T06:25:17.779Z",
+  "command": "node benchmarks/wasm-vs-native.mjs",
+  "fixture": "invoice",
+  "runs": {
+    "cold": 15,
+    "warm": 50,
+    "warmup": 5
+  },
+  "env": {
+    "node": "v22.23.4",
+    "platform": "linux 6.18.44-fc-v230",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+    "cpus": 4,
+    "gitSha": "4100378"
+  },
+  "wasmModule": {
+    "rawBytes": 15599810,
+    "gzipBytes": 6403445
+  },
+  "identicalPdf": true,
+  "results": {
+    "native": {
+      "cold": {
+        "count": 15,
+        "medianMs": 38.056452,
+        "p95Ms": 46.644819,
+        "minMs_notHeadline": 35.267977,
+        "maxMs": 46.644819
+      },
+      "warm": {
+        "count": 50,
+        "medianMs": 22.088664999999992,
+        "p95Ms": 33.49136900000008,
+        "minMs_notHeadline": 19.492196000000007,
+        "maxMs": 54.0399739999998
+      },
+      "pdfBytes": 44797
+    },
+    "wasm": {
+      "cold": {
+        "count": 15,
+        "medianMs": 324.85294,
+        "p95Ms": 402.006942,
+        "minMs_notHeadline": 287.777113,
+        "maxMs": 402.006942
+      },
+      "warm": {
+        "count": 50,
+        "medianMs": 27.246339000000035,
+        "p95Ms": 43.69394599999998,
+        "minMs_notHeadline": 23.972288000000162,
+        "maxMs": 44.812605000000076
+      },
+      "pdfBytes": 44797
+    }
+  }
+}
