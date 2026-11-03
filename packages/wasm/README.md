@@ -57,27 +57,49 @@ The full list is in the "WebAssembly build" section of
 
 ## Size
 
-Measured on 2026-11-01 with `npm run build:wasm` (Rust 1.96.0, wasm-bindgen 0.2.125, profile
-`wasm-release`):
+Cloudflare Workers limits the **uncompressed** bundle to 64 MiB on both Free and Paid; there has
+been no compressed limit since 2026-09-04 ([Workers limits](https://developers.cloudflare.com/workers/platform/limits/),
+read 2026-11-03). This module fits on both plans with room to spare. What its size still costs is
+time: the module is read, compiled and instantiated on every cold start.
 
-| Build | Raw | gzip -9 | Warm render, invoice (median) |
-|---|---|---|---|
-| `opt-level = "s"` (shipped) | 14.3 MiB | 5.2 MiB | 36.5 ms |
-| `opt-level = 3` | 15.6 MiB | 5.7 MiB | 37.6 ms |
-| `opt-level = "z"` | 12.8 MiB | 4.7 MiB | 48.6 ms |
-| `"s"` + `wasm-opt -Oz` (binaryen 132) | 12.9 MiB | 5.3 MiB | 44.2 ms |
+Measured on 2026-11-03 with `npm run build:wasm` (Rust 1.96.0, wasm-bindgen 0.2.125, profile
+`wasm-release`, `opt-level = "s"`, fat LTO) and `benchmarks/wasm-vs-native.mjs` (invoice, Node.js
+22.23.4, Linux, Intel Xeon ×4, 15 fresh processes for the cold start, 50 warm renders):
 
-Timings: Node.js 22.23.4, Linux, Intel Xeon 2.80 GHz ×4, 20 renders after 5 warm-ups; indicative,
-single run. `wasm-opt` is not used: it shrinks the raw file but not the gzip size Workers checks.
+| | Raw | gzip -9 | Warm render (median) | Cold start (median) |
+|---|---|---|---|---|
+| Before issue #66 (LTO silently off) | 16.4 MiB | 6.4 MiB | 39.7–42.0 ms | 324–336 ms |
+| Shipped | **14.9 MiB** | 6.1 MiB | **25.1–27.7 ms** | 325–342 ms |
 
-The table predates the italic faces. Bundling the six Liberation italic and bold italic files
-(issue #74) grew the shipped build, measured on 2026-11-03 the same way (`npm run build:wasm`, Rust
-1.96.0, wasm-bindgen 0.2.125, `opt-level = "s"`), from 14.3 MiB raw / 5.3 MiB gzip -9 (`main`,
-rebuilt the same day) to **16.4 MiB raw / 6.4 MiB gzip -9**: +2.0 MiB raw / +1.1 MiB gzip, the
-size of the six font files themselves. The other rows and the timings were not re-measured.
+PDFs are byte-identical to the native addon in both. Until issue #66 the profile's `lto = true`
+did nothing: cargo turns LTO off for a library whose crate types include `rlib`, and
+`crates/vellora-wasm` listed one. `ryu`'s `small` feature on wasm32 saves another 9 KB.
 
-About 3.1 MB of the gzip size is the fourteen embedded font files. Fitting the Workers Free limit
-(3 MB) would need both the fonts and the engine code to shrink; that is not done yet.
+Measured and **not** shipped (same harness, PDFs compared on every fixture plus SVG, font, script
+and image probes):
+
+| Lever | Raw saving | Why not |
+|---|---|---|
+| Fonts stored brotli-compressed, decoded in the engine (measured before the LTO fix) | −3.6 MB (−1.0 MB gzip) | First render 45–180 ms slower (decoding) |
+| Unify the font stack (krilla/subsetter on skrifa 0.44) | −318 KB | Needs vendored crates; read-fonts 0.41 bug fixes change a few malformed fonts' PDFs |
+| Blitz's usvg without `<text>` (never runs: Blitz only sizes SVGs) | −596 KB | Needs a vendored blitz-dom; no measurable speed gain |
+| Unify usvg on 0.48 | −1.1 MB | Changes nested `<svg transform>` output (a usvg 0.48 fix) |
+| `opt-level = "z"` for crates a typical document never runs | −284 KB | Not faster; slower for SVG-heavy documents |
+| `wasm-opt` (binaryen 132, `-O1` … `-Oz`; measured before the LTO fix) | up to −1.5 MB | Slower first render and warm p95 |
+
+The cold start is V8 compiling code, not the module's size: on a fresh isolate V8 compiles each
+function on first call, and the invoice's first render compiles about 2.3 MiB of code (Stylo,
+vellora's layout, Blitz, krilla, html5ever, Taffy, harfrust) out of 8.1 MiB. One-time Rust
+initialisation is about 7 ms. Cutting code that never runs makes the file smaller but does not
+make that first render faster. Measure it with:
+
+```bash
+cargo build -p vellora-wasm --target wasm32-unknown-unknown --profile wasm-profiling
+node packages/wasm/scripts/code-size.mjs                         # code per crate
+node packages/wasm/scripts/code-size.mjs --first-render invoice  # what the first render compiles
+```
+
+About 3.1 MB of the gzip size (5.8 MB raw) is the fourteen embedded font files.
 
 ## Build from source
 
