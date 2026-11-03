@@ -91,8 +91,8 @@ export interface RenderOptions {
   strict?: boolean;
   /**
    * Run vellora's built-in templating on the input. Omitted => `true`. `false` passes the HTML to
-   * the renderer untouched, so a literal `{{` or `{%` in HTML already rendered by another engine
-   * (Handlebars, React, …) stays as text. Passing `data` together with `template: false` rejects
+   * the renderer untouched, so literal template delimiters (a double opening brace, or `{%`) in
+   * HTML already rendered by another engine (Handlebars, React, …) stay as text. Passing `data` together with `template: false` rejects
    * with `VelloraInputError`, since that data would otherwise be silently ignored.
    */
   template?: boolean;
