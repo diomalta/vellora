@@ -4918,7 +4918,7 @@ fn walk_for_denied(
         let tag = el.name.local.to_string().to_ascii_lowercase();
         let n = counts.entry(tag.clone()).or_insert(0);
         *n += 1;
-        if denied.iter().any(|d| *d == tag) {
+        if denied.iter().any(|d| *d == tag) || (tag == "link" && is_stylesheet_link(node)) {
             *found = Some(DeniedElement {
                 tag,
                 occurrence: *n,
@@ -4934,6 +4934,18 @@ fn walk_for_denied(
             return;
         }
     }
+}
+
+/// A `<link>` whose `rel` lists the `stylesheet` keyword (HTML §4.6.7: `rel` is a set of
+/// space-separated, ASCII case-insensitive tokens). The renderer never loads it: Blitz's default
+/// net provider fetches nothing, so the sheet was dropped with no diagnostic (issue #59). The gate
+/// rejects it as `css:external-stylesheet` ([`crate::validation`]); any other `<link>` (an icon, a
+/// preload) has no effect on a PDF and stays accepted.
+fn is_stylesheet_link(node: &blitz_dom::Node) -> bool {
+    node.attr(blitz_dom::local_name!("rel")).is_some_and(|rel| {
+        rel.split_ascii_whitespace()
+            .any(|token| token.eq_ignore_ascii_case("stylesheet"))
+    })
 }
 
 /// Parse + style + layout + text in one call. Owns and drops the `!Send`

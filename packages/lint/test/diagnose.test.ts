@@ -254,3 +254,60 @@ describe("Undrawn @page margin boxes are reported", () => {
     expect(rulesOf(result.report.findings)).toContain("page-margin-box");
   });
 });
+
+describe("External style sheets are reported", () => {
+  test("<link rel=stylesheet> is a non-fixable error anchored to the <link>", () => {
+    const html =
+      '<!DOCTYPE html><html><head>\n  <link rel="icon" href="a.png">\n  <link rel="stylesheet" href="https://example.com/x.css">\n</head><body><p>hi</p></body></html>';
+    const report = diagnose(html);
+    expect(report.conformant).toBe(false);
+    expect(report.findings).toHaveLength(1);
+    expect(report.findings[0]).toMatchObject({
+      rule: "external-stylesheet",
+      severity: "error",
+      autoFixable: false,
+      location: { line: 3, col: 3 },
+      compatLink: COMPAT_LINKS["external-stylesheet"],
+    });
+    expect(report.findings[0]?.snippet).toContain("https://example.com/x.css");
+    expect(report.findings[0]?.suggestedFix).toContain("<style>");
+  });
+
+  test("rel is a case-insensitive token set", () => {
+    const html =
+      '<!DOCTYPE html><html><head><link rel="alternate STYLESHEET" href="x.css"></head><body></body></html>';
+    expect(rulesOf(diagnose(html).findings)).toEqual(["external-stylesheet"]);
+  });
+
+  test("@import is reported on its <style> element", () => {
+    for (const rule of [
+      '@import url("https://example.com/x.css");',
+      "@IMPORT 'x.css' print;",
+      "p{}@import url(x.css);",
+    ]) {
+      const html = `<!DOCTYPE html><html><head><style>${rule}</style></head><body><p>hi</p></body></html>`;
+      const report = diagnose(html);
+      expect(report.findings, rule).toHaveLength(1);
+      expect(report.findings[0]).toMatchObject({ rule: "external-stylesheet", snippet: "@import" });
+    }
+  });
+
+  test("other <link>s and @import outside an at-rule stay conformant", () => {
+    for (const html of [
+      '<!DOCTYPE html><html><head><link rel="icon" href="a.png"><link rel="stylesheets" href="x"></head><body></body></html>',
+      '<!DOCTYPE html><html><head><style>p::before { content: "@import url(x.css)"; }</style></head><body></body></html>',
+      "<!DOCTYPE html><html><head><style>/* @import url(x.css); */ .i { background: url(a@import.png); } @importance {}</style></head><body></body></html>",
+      "<!DOCTYPE html><html><head></head><body><p>Use @import in your CSS.</p></body></html>",
+    ]) {
+      expect(diagnose(html).conformant, html).toBe(true);
+    }
+  });
+
+  test("fix leaves the <link> in place and keeps reporting it", () => {
+    const html =
+      '<!DOCTYPE html><html><head><link rel="stylesheet" href="x.css"></head><body><p>hi</p></body></html>';
+    const result = fix(html);
+    expect(result.html).toContain('<link rel="stylesheet" href="x.css">');
+    expect(rulesOf(result.report.findings)).toContain("external-stylesheet");
+  });
+});

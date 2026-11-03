@@ -176,8 +176,8 @@ vellora is built for documents whose HTML you control, not for printing arbitrar
 />
 
 Most things outside that list stop the render with the line and column, instead of handing you a
-broken PDF. One exception: `<link>` stylesheets and `@import` are skipped without an error, so put
-your CSS in a `<style>` tag.
+broken PDF. That includes `<link>` stylesheets and `@import`: vellora never loads them, so put your
+CSS in a `<style>` tag.
 
 ```text
 VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 11: this CSS feature is outside vellora's document subset; run `vellora fix`

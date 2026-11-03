@@ -17,6 +17,7 @@ export const COMPAT_LINKS: Record<RuleId, string> = {
   "page-margin-box": `${COMPAT_BASE}#page-margin-box`,
   "unsupported-element": `${COMPAT_BASE}#unsupported-element`,
   "unsupported-css": `${COMPAT_BASE}#unsupported-css`,
+  "external-stylesheet": `${COMPAT_BASE}#external-stylesheet`,
 };
 
 export function compatLink(rule: RuleId): string {

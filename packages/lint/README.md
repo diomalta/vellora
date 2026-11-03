@@ -113,7 +113,8 @@ without it (an inline SVG, `display:flex` in a cell) renders.
 The linter reports every element and CSS feature the strict render rejects: `<script>`
 (`script-element`), animation (`css-animation`), undrawn `@page` margin boxes (`page-margin-box`),
 the other denied elements (`unsupported-element`) and `transform`, `transition`, `filter`,
-`backdrop-filter`, `perspective` and `display: grid` (`unsupported-css`). It cannot see rejections
+`backdrop-filter`, `perspective` and `display: grid` (`unsupported-css`), and
+`<link rel="stylesheet">` / `@import`, which vellora never loads (`external-stylesheet`). It cannot see rejections
 that depend on render options (`images`, `fonts`), on the `@page` cascade
 (`css:page-varying-width`) or on the engine's nesting limit, so a strict `renderPdf` per template in
 CI is still the final check. The full list is in

@@ -14,7 +14,8 @@ export type RuleId =
   | "css-animation"
   | "page-margin-box"
   | "unsupported-element"
-  | "unsupported-css";
+  | "unsupported-css"
+  | "external-stylesheet";
 
 export type Severity = "error" | "warning";
 
