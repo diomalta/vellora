@@ -162,8 +162,11 @@ Swap it with `setNativeBridge(...)` or per-call via the internal `_bridge` optio
 - **The located-diagnostic contract `{ feature, line, col, hint }`** crosses the napi boundary as error
   properties and becomes `VelloraUnsupportedError`. The `feature` taxonomy (`element:<tag>`,
   `css:<feature>`) must be identical whether a construct is rejected by the Rust core gate or mapped from
-  a lint rule via `RULE_ID_TO_CORE_FEATURE` (`packages/vellora/src/orchestrate.ts`). Adding an
-  out-of-subset rule means updating **both** the core gate and that map so they agree.
+  a lint finding (`Finding.feature`, falling back to `RULE_ID_TO_CORE_FEATURE` in
+  `packages/vellora/src/orchestrate.ts`). Lint keeps a copy of the gate's denylists and CSS scan in
+  `packages/lint/src/gate.ts`; adding an out-of-subset construct means updating **both** the core gate
+  and lint. `packages/lint/test/core-gate-sync.test.ts` fails when `validation.rs` gains a list entry
+  or feature lint does not report, and `real-stack.test.ts` checks the same probes against the real gate.
 
 ## Testing model
 

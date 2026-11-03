@@ -48,6 +48,7 @@ export const pageMarginBoxRule: Rule = {
           location: startLocation(element),
           snippet: match[0].trim().replace(/^[{};]/, ""),
           suggestedFix: SUGGESTED_FIX,
+          feature: "css:page-margin-box",
         });
       }
     });

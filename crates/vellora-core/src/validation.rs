@@ -140,6 +140,23 @@ const DENIED_PAGE_MARGIN_BOXES: &[(&str, &str)] = &[
     ("@right-bottom", "css:page-margin-box"),
 ];
 
+/// External style sheets the renderer never loads (issue #59). vellora fetches nothing, so a
+/// `<link rel="stylesheet">` or an `@import` rule used to render with its CSS silently missing.
+/// Both are rejected as one feature, `css:external-stylesheet`: `@import` by the CSS scan below
+/// (only where an at-rule can start), `<link rel~="stylesheet">` by the element walk
+/// (`blitz_engine::is_stylesheet_link`). `@vellora/lint`'s `external-stylesheet` rule maps to the
+/// same feature (`RULE_ID_TO_CORE_FEATURE`).
+const DENIED_EXTERNAL_STYLESHEETS: &[(&str, &str)] = &[
+    ("<link rel=\"stylesheet\">", "css:external-stylesheet"),
+    ("@import", "css:external-stylesheet"),
+];
+
+/// Feature id of a style sheet loaded from outside the document (the one in
+/// `DENIED_EXTERNAL_STYLESHEETS`; literal there so `scripts/gen-compatibility.mjs` can read it).
+const EXTERNAL_STYLESHEET: &str = "css:external-stylesheet";
+const EXTERNAL_STYLESHEET_HINT: &str = "vellora never loads external CSS, so this style sheet \
+    would not be applied; inline the CSS in a <style> tag";
+
 /// The HTML element denylist (subset complement). Exposed so the render path can
 /// validate against the SAME parse it uses for layout (cost model).
 pub fn denied_elements() -> &'static [&'static str] {
@@ -265,6 +282,15 @@ pub fn font_diagnostic(index: usize) -> Diagnostic {
 /// A denied element found by the engine walk: its tag + DOM document order.
 fn diag_for_element(found: &blitz_engine::DeniedElement, html: &str) -> Diagnostic {
     let (line, col) = locate_tag(html, &found.tag, found.occurrence, found.dom_total);
+    // The only `<link>` the walk reports is a `rel="stylesheet"` one (`DENIED_EXTERNAL_STYLESHEETS`).
+    if found.tag == "link" {
+        return Diagnostic {
+            feature: EXTERNAL_STYLESHEET.to_string(),
+            line,
+            col,
+            hint: EXTERNAL_STYLESHEET_HINT.to_string(),
+        };
+    }
     Diagnostic {
         feature: format!("element:{}", found.tag),
         line,
@@ -347,6 +373,17 @@ fn scan_css(html: &str) -> Option<Diagnostic> {
             }
         }
 
+        // `@import`, only where an at-rule can start and as the whole at-rule name
+        // (`@importx` is another at-rule; `url(a@import.css)` is not one).
+        for (token, feature) in DENIED_EXTERNAL_STYLESHEETS {
+            if !token.starts_with('@') {
+                continue; // `<link>`: the element walk's, not the CSS scan's
+            }
+            if let Some(idx) = find_at_rule(&lower, token) {
+                consider(&mut best, region.offset + idx, feature);
+            }
+        }
+
         // `display` declaring `grid` with arbitrary whitespace around the colon
         // (e.g. `display : grid`) is the same violation as `display:grid`; catch
         // it via a normalized check the literal token list would otherwise miss.
@@ -365,6 +402,8 @@ fn scan_css(html: &str) -> Option<Diagnostic> {
     let (line, col) = offset_to_line_col(html, idx);
     let hint = if feature == PAGE_VARYING_WIDTH {
         PAGE_VARYING_WIDTH_HINT.to_string()
+    } else if feature == EXTERNAL_STYLESHEET {
+        EXTERNAL_STYLESHEET_HINT.to_string()
     } else {
         format!("this CSS feature is {FIX_HINT}")
     };
@@ -514,6 +553,30 @@ fn utf8_len(b: u8) -> usize {
     } else {
         4
     }
+}
+
+/// Offset of the first `name` (an `@`-prefixed, lowercase at-rule name) that starts an at-rule:
+/// at the region start or after `{`, `}`, `;` or whitespace, and not followed by an identifier
+/// character. Input is already lowercased with comments and string interiors blanked.
+fn find_at_rule(lower: &str, name: &str) -> Option<usize> {
+    let bytes = lower.as_bytes();
+    let mut start = 0;
+    while let Some(rel) = lower[start..].find(name) {
+        let idx = start + rel;
+        let at_rule_start = idx == 0
+            || matches!(
+                bytes[idx - 1],
+                b'{' | b'}' | b';' | b' ' | b'\t' | b'\n' | b'\r' | 0x0c
+            );
+        let ends_name = bytes.get(idx + name.len()).is_none_or(|b| {
+            !(b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'\\') || *b >= 0x80)
+        });
+        if at_rule_start && ends_name {
+            return Some(idx);
+        }
+        start = idx + name.len();
+    }
+    None
 }
 
 /// Find a `display` declaration whose value is `grid`, tolerating arbitrary

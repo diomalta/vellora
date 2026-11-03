@@ -3555,8 +3555,21 @@ fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRul
     let unbalance = matched_nodes(base, &unbalance);
     let mut roots = Vec::new();
     let mut has_float = false;
+    // A table subtree is reachable through both its DOM parent (`children`) and the anonymous
+    // table boxes' `layout_children`, so without this every nesting level doubled the walk
+    // (issue #65: 47 nested tables never finished). `on` is monotone in `inherited` (an override
+    // ignores it), so a visit with `inherited = false` after any visit of the same node finds
+    // nothing new: each node is walked at most twice, first with `false`, then with `true`.
+    let mut visited: std::collections::HashMap<NodeId, bool> = std::collections::HashMap::new();
+    let mut in_roots: std::collections::HashSet<NodeId> = std::collections::HashSet::new();
     let mut stack = vec![(base.root_element().id, false)];
     while let Some((id, inherited)) = stack.pop() {
+        match visited.get(&id) {
+            Some(&seen) if seen || !inherited => continue,
+            _ => {
+                visited.insert(id, inherited);
+            }
+        }
         let Some(node) = base.get_node(id) else {
             continue;
         };
@@ -3571,7 +3584,7 @@ fn balance_text_wrap(doc: &mut BaseDocument, breaks: &crate::break_css::BreakRul
             (false, true) | (true, true) => false,
             (false, false) => inherited,
         });
-        if on && node.flags.is_inline_root() {
+        if on && node.flags.is_inline_root() && in_roots.insert(id) {
             roots.push(id);
         }
         let layout_children: Vec<NodeId> = node
@@ -4538,10 +4551,11 @@ fn compensate_collapsed_borders(doc: &mut BaseDocument) -> CollapsedBorders {
         stack.extend(node.children.iter().rev().copied());
     }
     for table in tables {
-        let Some((grid, cell_ids, rtl)) = collapsed_table_grid(doc, table) else {
+        let Some((grid, cell_ids, rtl, header_rows)) = collapsed_table_grid(doc, table) else {
             continue;
         };
-        let resolved = crate::collapsed_borders::resolve(&grid);
+        let mut resolved = crate::collapsed_borders::resolve(&grid);
+        crate::collapsed_borders::paint_header_bottom(&mut resolved, &grid, header_rows);
         if !resolved.any_border {
             continue;
         }
@@ -4883,12 +4897,18 @@ fn collect_table_part(doc: &BaseDocument, id: NodeId, state: &mut GridCollect) -
 /// `build_table_context` / `collect_table_cells`: header groups first, footer groups last,
 /// `display: none` and absolutely positioned parts skipped, `display: contents` transparent),
 /// with the computed borders of the table, its row groups, rows and cells, plus the cells'
-/// node ids in grid order. `None` (the table is left as Blitz lays it out) for a structure
+/// node ids in grid order, whether the table is RTL, and how many grid rows its header groups
+/// hold (they come first). `None` (the table is left as Blitz lays it out) for a structure
 /// outside that model: a cell outside any row, or no cell at all.
 fn collapsed_table_grid(
     doc: &BaseDocument,
     table: NodeId,
-) -> Option<(crate::collapsed_borders::TableGrid, Vec<NodeId>, bool)> {
+) -> Option<(
+    crate::collapsed_borders::TableGrid,
+    Vec<NodeId>,
+    bool,
+    usize,
+)> {
     use style::computed_values::direction::T as Direction;
     use style::values::specified::box_::DisplayInside;
     let node = doc.get_node(table)?;
@@ -4912,11 +4932,15 @@ fn collapsed_table_grid(
         ids: Vec::new(),
         cursor: TableColumnCursor::default(),
     };
+    let mut header_rows = 0;
     for order in 0..3 {
         for &child in &node.children {
             if group_order(child) == order {
                 collect_table_part(doc, child, &mut state)?;
             }
+        }
+        if order == 0 {
+            header_rows = state.rows.len();
         }
     }
     if state.cells.is_empty() {
@@ -4946,7 +4970,7 @@ fn collapsed_table_grid(
     for cell in &mut grid.cells {
         cell.sides = logical(cell.sides);
     }
-    Some((grid, state.ids, rtl))
+    Some((grid, state.ids, rtl, header_rows))
 }
 
 fn walk_for_denied(
@@ -4967,7 +4991,7 @@ fn walk_for_denied(
         let tag = el.name.local.to_string().to_ascii_lowercase();
         let n = counts.entry(tag.clone()).or_insert(0);
         *n += 1;
-        if denied.iter().any(|d| *d == tag) {
+        if denied.iter().any(|d| *d == tag) || (tag == "link" && is_stylesheet_link(node)) {
             *found = Some(DeniedElement {
                 tag,
                 occurrence: *n,
@@ -4983,6 +5007,18 @@ fn walk_for_denied(
             return;
         }
     }
+}
+
+/// A `<link>` whose `rel` lists the `stylesheet` keyword (HTML §4.6.7: `rel` is a set of
+/// space-separated, ASCII case-insensitive tokens). The renderer never loads it: Blitz's default
+/// net provider fetches nothing, so the sheet was dropped with no diagnostic (issue #59). The gate
+/// rejects it as `css:external-stylesheet` ([`crate::validation`]); any other `<link>` (an icon, a
+/// preload) has no effect on a PDF and stays accepted.
+fn is_stylesheet_link(node: &blitz_dom::Node) -> bool {
+    node.attr(blitz_dom::local_name!("rel")).is_some_and(|rel| {
+        rel.split_ascii_whitespace()
+            .any(|token| token.eq_ignore_ascii_case("stylesheet"))
+    })
 }
 
 /// Parse + style + layout + text in one call. Owns and drops the `!Send`

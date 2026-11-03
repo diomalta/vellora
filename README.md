@@ -49,11 +49,14 @@ const pdf = await renderPdf(html, { name: "Ada", total: 42 });
 writeFileSync("receipt.pdf", pdf);
 ```
 
-`renderPdf` returns the PDF as a `Uint8Array`. Your HTML is always treated as a template
-(`{{ value }}`, `{% if %}`, `{% for %}`, and `currency`, `number` and `date` helpers), so a literal
-`{{` or `{%` in pre-rendered HTML is read as template syntax. Put CSS in a `<style>` tag or
+`renderPdf` returns the PDF as a `Uint8Array`. By default your HTML is treated as a template
+(`{{ value }}`, `{% if %}`, `{% for %}`, and `currency`, `number` and `date` helpers). If the HTML
+is already rendered by another engine, pass `{ template: false }` so a literal `{{` or `{%` stays as
+text (`renderPdf(html, undefined, { template: false })`), or wrap just that part in
+`{% raw %}…{% endraw %}`. Put CSS in a `<style>` tag or
 `style=""`: vellora loads nothing from the network, so `<link rel="stylesheet">` and `@import` are
-ignored, and images and fonts are passed in as bytes.
+rejected with the line and column (`css:external-stylesheet`), and images and fonts are passed in as
+bytes.
 
 ## Why not just use Puppeteer?
 

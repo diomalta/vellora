@@ -93,8 +93,8 @@ CMD ["node", "server.js"]
 
 Nothing to launch, keep alive or close. vellora also has built-in templating, so you can pass data
 as a second argument instead of building the HTML yourself. One thing to know when you switch:
-because that templating always runs, a literal <code v-pre>{{</code> or `{%` in HTML you already
-rendered is read as template syntax.
+HTML you already rendered elsewhere should be passed with `{ template: false }`, so a literal
+<code v-pre>{{</code> or `{%` in it stays as text.
 
 ## Sound familiar?
 
@@ -176,8 +176,8 @@ vellora is built for documents whose HTML you control, not for printing arbitrar
 />
 
 Most things outside that list stop the render with the line and column, instead of handing you a
-broken PDF. One exception: `<link>` stylesheets and `@import` are skipped without an error, so put
-your CSS in a `<style>` tag.
+broken PDF. That includes `<link>` stylesheets and `@import`: vellora never loads them, so put your
+CSS in a `<style>` tag.
 
 ```text
 VelloraUnsupportedError: Unsupported construct "css:transform" at line 1, column 11: this CSS feature is outside vellora's document subset; run `vellora fix`

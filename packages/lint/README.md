@@ -90,12 +90,17 @@ interface Finding {
   suggestedFix: string; // for humans
   snippet: string; // the offending source
   compatLink: string; // where the rule is documented
+  feature?: string; // the strict render's rejection id, e.g. "css:transform"
   applied?: boolean; // set by fix()
 }
 ```
 
 People read `suggestedFix` and `snippet`. Scripts, CI and AI agents should rely on `rule`,
-`severity`, `autoFixable`, `location` and `compatLink`.
+`severity`, `autoFixable`, `location`, `compatLink` and `feature`.
+
+`feature` is set exactly when a strict `renderPdf` rejects the construct, and it is the same id the
+`VelloraUnsupportedError` carries (`element:canvas`, `css:transform`, `css:grid`, …). A finding
+without it (an inline SVG, `display:flex` in a cell) renders.
 
 ## How it relates to rendering
 
@@ -105,9 +110,15 @@ People read `suggestedFix` and `snippet`. Scripts, CI and AI agents should rely 
 - `renderPdf(html, data, { strict: false })` loads this package and applies `fix()` before
   rendering, for when you'd rather get a PDF than an error.
 
-The linter covers the rules that have a fix or a useful warning. The renderer's own check is the
-final word: some constructs, such as CSS `transform`, are only rejected at render time. The full
-list is in [COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).
+The linter reports every element and CSS feature the strict render rejects: `<script>`
+(`script-element`), animation (`css-animation`), undrawn `@page` margin boxes (`page-margin-box`),
+the other denied elements (`unsupported-element`) and `transform`, `transition`, `filter`,
+`backdrop-filter`, `perspective` and `display: grid` (`unsupported-css`), and
+`<link rel="stylesheet">` / `@import`, which vellora never loads (`external-stylesheet`). It cannot see rejections
+that depend on render options (`images`, `fonts`), on the `@page` cascade
+(`css:page-varying-width`) or on the engine's nesting limit, so a strict `renderPdf` per template in
+CI is still the final check. The full list is in
+[COMPATIBILITY.md](https://github.com/diomalta/vellora/blob/main/COMPATIBILITY.md).
 
 ## License
 

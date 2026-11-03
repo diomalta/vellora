@@ -32,6 +32,12 @@ import type {
  * surfaced via best-effort lint or via the strict/core gate. The `{ feature, line, col, hint }`
  * shape is a single contract; consumers/CI key on `feature`, so the two paths must not
  * diverge.
+ *
+ * A lint finding now carries the gate's `feature` itself (`Finding.feature`, which also tells
+ * `@keyframes` → `css:keyframes` from `animation` → `css:animation`, and names the tag for
+ * `unsupported-element`); this map is the fallback for a finding without one. Keep both in step with
+ * `crates/vellora-core/src/validation.rs` — `packages/lint/test/core-gate-sync.test.ts` checks the
+ * lint side.
  */
 const RULE_ID_TO_CORE_FEATURE: Record<RuleId, string> = {
   "script-element": "element:script",
@@ -41,9 +47,13 @@ const RULE_ID_TO_CORE_FEATURE: Record<RuleId, string> = {
   "inline-svg": "element:svg",
   "css-animation": "css:animation",
   "page-margin-box": "css:page-margin-box",
+  "external-stylesheet": "css:external-stylesheet",
   "flex-grid-in-td": "css:grid",
   "img-dimension-attrs": "css:img-dimensions",
   "invalid-markup": "html:invalid-markup",
+  // Always carry `Finding.feature` (`element:<tag>` / `css:<feature>`); the rule id is the fallback.
+  "unsupported-element": "unsupported-element",
+  "unsupported-css": "unsupported-css",
 };
 
 /**
@@ -263,7 +273,7 @@ async function applyFixers(html: string): Promise<string> {
   const unfixable = result.report.findings.find((f) => f.severity === "error" && !f.applied);
   if (unfixable) {
     throw new VelloraUnsupportedError({
-      feature: RULE_ID_TO_CORE_FEATURE[unfixable.rule] ?? unfixable.rule,
+      feature: unfixable.feature ?? RULE_ID_TO_CORE_FEATURE[unfixable.rule] ?? unfixable.rule,
       line: null,
       col: null,
       hint: unfixable.suggestedFix,

@@ -29,7 +29,7 @@ When a template uses something outside that, it doesn't guess. It stops and tell
   :unsupported="[
     'JavaScript: script tags are rejected, the page never runs',
     'CSS grid, transform, animation, transition and filter',
-    'External stylesheets (link rel=stylesheet, @import): skipped without an error',
+    'External stylesheets (link rel=stylesheet, @import): rejected with the line and column',
     'Remote images and @font-face URLs: nothing is fetched',
     'Forms, iframes, canvas, video and audio',
     'Windows and Alpine Linux',
@@ -70,7 +70,8 @@ vellora loads nothing from the network or the disk on its own. Everything the PD
 HTML string or in the render options:
 
 - **CSS** goes in a `<style>` tag or a `style=""` attribute. A `<link rel="stylesheet">` or
-  `@import url(...)` is skipped, with no error, so the PDF comes out unstyled.
+  `@import url(...)` is rejected as `css:external-stylesheet`, with the line and column, instead of
+  printing the PDF unstyled.
 - **Images** are `data:` URLs, or bytes you pass in the `images` option, keyed by the `src` in your
   HTML. See [Logos & images](/guide/images).
 - **Fonts** are bytes you pass in the `fonts` option, used by the family name inside the font file.
@@ -102,7 +103,7 @@ const pdf = await renderPdf(html, {}, {
 | A remote image URL | Fetch it yourself and pass the bytes in `images`, keyed by that URL. |
 | `@font-face` with a URL | Pass the font file's bytes in `fonts` and use the family name inside the file. |
 | A CDN stylesheet (Tailwind, Bootstrap) | Inline the built CSS in a `<style>` tag. |
-| HTML already rendered by another engine, with literal <code v-pre>{{</code> or `{%` in it | vellora's templating always runs, so that text is read as template syntax. There is no escape tag today; remove or replace those characters before rendering. |
+| HTML already rendered by another engine, with literal <code v-pre>{{</code> or `{%` in it | Pass `{ template: false }` (CLI: `--no-template`) so the HTML goes to the renderer untouched, or wrap that text in <code v-pre>{% raw %}…{% endraw %}</code>. Without either, it is read as template syntax. |
 | A header or footer in a corner slot (`@top-left`, `@bottom-right`, …) | Move it to `@top-center` or `@bottom-center`. |
 | Something that really needs a browser | Send that one template to Chrome with the [optional Chromium engine](/guide/chromium-engine). Keep the rest native. |
 

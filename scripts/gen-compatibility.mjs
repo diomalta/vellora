@@ -55,13 +55,25 @@ const deniedProps = extractPairArray(src, "DENIED_CSS_PROPERTIES");
 // map to the same feature; dedupe by feature for the table.
 const deniedTokensRaw = extractPairArray(src, "DENIED_CSS_TOKENS");
 const deniedMarginBoxes = extractPairArray(src, "DENIED_PAGE_MARGIN_BOXES");
+const deniedExternalSheets = extractPairArray(src, "DENIED_EXTERNAL_STYLESHEETS").map(
+  ([needle, feature]) => [needle.replace(/\\"/g, '"'), feature],
+);
 const maxNesting = extractConstUsize(src, "MAX_NESTING_DEPTH");
 
-// Only features with a real `@vellora/lint.fix()` rule are Dev-time-fixable;
-// everything else denied is plain Unsupported.
-const FIX_RULES = {
-  "css:grid": "flex/grid-in-td",
+// Only features `@vellora/lint.fix()` rewrites wherever they appear are
+// Dev-time-fixable; everything else denied is plain Unsupported. (`display:grid`
+// is fixed only on a `<td>`, by `flex-grid-in-td`, so it stays Unsupported; see
+// FEATURE_NOTES.)
+const FIX_RULES = {};
+
+// Extra notes for a denied feature, appended to its row.
+const FEATURE_NOTES = {
+  "css:grid":
+    "`@vellora/lint.fix()` rule `flex-grid-in-td` rewrites it into a nested table on a `<td>` only; elsewhere, use a table or block layout.",
 };
+
+const withFeatureNote = (feature, note) =>
+  FEATURE_NOTES[feature] ? `${note} ${FEATURE_NOTES[feature]}` : note;
 
 // Why each denied element is out of subset (caveat shown in the table).
 const ELEMENT_REASON = {
@@ -123,7 +135,7 @@ for (const [token, feature] of deniedTokensRaw) {
   const note =
     status === "Dev-time-fixable"
       ? `Auto-fixable via \`@vellora/lint.fix()\` rule \`${FIX_RULES[feature]}\`; the CLI \`vellora fix\` wraps the same rule.`
-      : "Rejected by the strict gate.";
+      : withFeatureNote(feature, "Rejected by the strict gate.");
   tokenRows.push({ feature: `\`${token}\` (${feature})`, status, note });
 }
 
@@ -131,6 +143,12 @@ const marginBoxRows = deniedMarginBoxes.map(([name, feature]) => ({
   feature: `\`${name}\` (${feature})`,
   status: statusFor(feature),
   note: "Rejected by the strict gate. Not drawn by the native renderer.",
+}));
+
+const externalSheetRows = deniedExternalSheets.map(([needle, feature]) => ({
+  feature: `\`${needle}\` (${feature})`,
+  status: statusFor(feature),
+  note: "Rejected by the strict gate: the style sheet is never loaded. Inline the CSS in a `<style>` tag. `@vellora/lint` reports it as `external-stylesheet`.",
 }));
 
 // Curated allowed/best-effort and dev-time-fixable entries that are NOT on a
@@ -249,7 +267,7 @@ const allowedRows = [
   {
     feature: "`display: flex`",
     status: "Partial",
-    note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex/grid-in-td`) can convert common table-cell cases.",
+    note: "Not on a denylist, so the gate accepts it, but it is not a full flexbox implementation. Prefer tables for reliable layout; `@vellora/lint.fix()` (`flex-grid-in-td`) can convert common table-cell cases.",
   },
   {
     feature:
@@ -311,6 +329,18 @@ is produced (unless you opt into runtime fixing with \`{ strict: false }\`).
   transform it automatically (the applicable rule is named in the Notes column).
   The \`vellora fix\` CLI wraps the same library rule.
 
+## Checking templates ahead of time
+
+\`vellora lint\` (\`@vellora/lint\`'s \`diagnose()\`) reports every element,
+property, token and margin box listed below with the same \`feature\` id the
+strict gate rejects it with (\`Finding.feature\`), as a non-auto-fixable
+\`error\`. A test keeps lint's copy of these lists equal to \`validation.rs\`.
+Lint does not see four rejections: \`css:page-varying-width\` (computed from
+the \`@page\` cascade), \`max-nesting-depth\` (measured on the engine's own
+parse; lint only guards a much deeper limit), and \`image:unresolved\` and
+\`font:invalid\` (they depend on the \`images\` and \`fonts\` render options). To
+catch those too, render each template with a strict \`renderPdf\` in CI.
+
 ## Allowed and best-effort features
 
 These are not on any denylist, so the strict gate accepts them.
@@ -345,6 +375,16 @@ strict gate as \`css:page-margin-box\`. The native renderer draws only
 \`engine: "chromium"\`.
 
 ${table(marginBoxRows)}
+
+## External style sheets
+
+These are in \`DENIED_EXTERNAL_STYLESHEETS\` and are rejected by the strict gate as
+\`css:external-stylesheet\`. vellora loads nothing from the network or the
+filesystem, so their CSS would never be applied. A \`<link>\` is rejected when its
+\`rel\` lists \`stylesheet\`; other \`<link>\` elements (icons, preloads) are accepted
+and have no effect.
+
+${table(externalSheetRows)}
 
 ## WebAssembly build (\`@vellora/wasm\`)
 

@@ -284,6 +284,22 @@ describe("render command", () => {
     });
   });
 
+  test("--no-template forwards template: false", async () => {
+    const h = harness({ "template.html": "<p>{{x}}</p>" });
+    let optsSeen: unknown;
+    h.deps.renderPdf = async (_html, _data, opts) => {
+      optsSeen = opts;
+      return new TextEncoder().encode("%PDF-RAW");
+    };
+    const code = await runCli(
+      ["render", "template.html", "--out", "out.pdf", "--no-template"],
+      h.io,
+      h.deps,
+    );
+    expect(code).toBe(EXIT_CODES.success);
+    expect(optsSeen).toMatchObject({ template: false });
+  });
+
   test("forwards engine and fidelity routing options", async () => {
     const h = harness({ "template.html": "<p>x</p>" });
     let optsSeen: unknown;
