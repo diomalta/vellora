@@ -210,6 +210,15 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
             at = end;
         }
 
+        // Outlines after the page's content (CSS 2.2 Appendix E step 10), under the page-margin
+        // boxes, which paint over the page content (CSS Paged Media 3): an outline reaching
+        // into a page margin does not cover the running header or footer. Line-throughs are
+        // drawn below, after the margin text, so a body line-through paints over an outline it
+        // crosses (Chrome draws the outline last; not modelled).
+        for r in &page.outlines {
+            draw_rect(&mut surface, r);
+        }
+
         // Running headers/footers, shaped by Blitz like body text (glyphs + ToUnicode).
         for run in page.margin_texts.iter().flat_map(|mt| mt.runs.iter()) {
             draw_text_run(&mut surface, run, &mut font_cache)?;
@@ -217,11 +226,6 @@ pub fn emit(pages: &[PdfPage], meta: &DocMeta) -> Result<Vec<u8>, PdfEmitError> 
 
         for r in decoration_rects(runs(), true) {
             draw_rect(&mut surface, &r);
-        }
-
-        // Outlines last, over everything else (CSS 2.2 Appendix E step 10).
-        for r in &page.outlines {
-            draw_rect(&mut surface, r);
         }
 
         surface.finish();

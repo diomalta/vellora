@@ -223,3 +223,47 @@ fn lines_of_text_continue_in_the_columns_of_the_next_page() {
         assert!(seen.contains(&want), "{want:?} not in {seen:?}");
     }
 }
+
+#[test]
+fn several_containers_broken_across_pages_each_start_where_the_one_before_ends() {
+    // Five containers of 13 blocks of 50 px (650 px) in a row, each crossing a page end: the
+    // rows of each depend on where the one before it ends, so the relayouts settle one
+    // container at a time. Every block (`break-inside: avoid`) is printed whole on one page: none
+    // is cut by a page end, which a stale row height would do.
+    let mut html = String::from(PAGE);
+    for c in 0..5 {
+        // A 30 px spacer first, so the rooms are no multiple of a block and each container's
+        // paged height differs from its one-row balanced height.
+        html.push_str("<div style=\"height: 30px\"></div><div class=\"mc\">");
+        for i in 0..13 {
+            let k = c * 13 + i;
+            html.push_str(&format!(
+                "<div style=\"height: 50px; break-inside: avoid; background: rgb({}, 0, {})\"></div>",
+                10 + k,
+                200 - k
+            ));
+        }
+        html.push_str("</div>");
+    }
+    let paginated = debug_paginate(html.as_bytes(), &RenderOptions::default()).expect("renders");
+    for k in 0..65 {
+        let color = [10 + k as u8, 0, 200 - k as u8];
+        let found: Vec<(usize, f64, f64)> = paginated
+            .pages
+            .iter()
+            .enumerate()
+            .flat_map(|(p, page)| {
+                page.rects
+                    .iter()
+                    .filter(move |r| r.color == color)
+                    .map(move |r| (p, r.y, r.height))
+            })
+            .collect();
+        assert_eq!(found.len(), 1, "block {k} printed in one piece: {found:?}");
+        let (_, y, h) = found[0];
+        assert!(
+            approx(h, 50.0) && y >= -0.01 && y + h <= 300.01,
+            "block {k}: {found:?}"
+        );
+    }
+}

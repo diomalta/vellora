@@ -298,12 +298,15 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     // BEFORE layout, then resolve + read the layout tree from that same parse.
     // A multi-column container whose content crosses the end of its page is laid out again in
     // rows of columns, one per page, from where the paginator puts it (issue #52,
-    // `multicol::PageRows`). Each layout but the first moves only the containers that cross a
-    // page end, and a container's rows only depend on what precedes it, so the hints settle in
-    // one or two relayouts; a document that has none is laid out once, exactly as before.
+    // `multicol::PageRows`). A container's rows depend only on what precedes it, so once the
+    // containers before it are settled, the next relayout settles it too: at most one relayout
+    // per container, plus the one that confirms the hints (most documents settle after one,
+    // since the paginator's cut of the one-row layout ends a container near where its rows
+    // end). A document with no container across a page end is laid out once, exactly as before.
     let mut paging = multicol::PagingHints::new();
     let mut laid_out = lay_out_once(html, opts, &page_box, syntax, &paging, observer)?;
-    for _ in 0..MULTICOL_RELAYOUTS {
+    let relayouts = laid_out.multicols.len() + 1;
+    for _ in 0..relayouts {
         let next = pagination::multicol_pages(&laid_out, &page_box);
         if same_paging(&next, &paging) {
             break;
@@ -314,10 +317,6 @@ fn validate_and_lay_out<O: blitz_engine::LayoutObserver>(
     }
     Ok((laid_out, page_box))
 }
-
-/// At most this many relayouts for multi-column containers broken across pages
-/// ([`validate_and_lay_out`]); past them the last layout stands.
-const MULTICOL_RELAYOUTS: usize = 3;
 
 /// Whether two sets of page rows place every container alike (to 1/64 px).
 fn same_paging(a: &multicol::PagingHints, b: &multicol::PagingHints) -> bool {
