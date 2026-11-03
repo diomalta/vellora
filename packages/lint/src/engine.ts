@@ -16,6 +16,8 @@ export interface Detection {
   location?: { line: number; col: number };
   /** Override the snippet (used when the faithful fragment is not the element's serialization). */
   snippet?: string;
+  /** The core gate `feature` this detection maps to, when the strict render rejects it. */
+  feature?: string;
 }
 
 export interface Rule {
@@ -32,7 +34,7 @@ export interface Rule {
 export function toFinding(rule: Rule, detection: Detection, source: string): Finding {
   const location = detection.location ?? startLocation(detection.element);
   const snippet = detection.snippet ?? snippetFor(detection.element, source);
-  return {
+  const finding: Finding = {
     rule: rule.id,
     severity: rule.severity,
     autoFixable: rule.autoFixable,
@@ -41,6 +43,10 @@ export function toFinding(rule: Rule, detection: Detection, source: string): Fin
     snippet,
     compatLink: compatLink(rule.id),
   };
+  if (detection.feature !== undefined) {
+    finding.feature = detection.feature;
+  }
+  return finding;
 }
 
 /**

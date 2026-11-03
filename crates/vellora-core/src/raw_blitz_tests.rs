@@ -2093,3 +2093,28 @@ fn a_first_line_that_does_not_fit_goes_below_the_float() {
     assert_ne!(fixed, FIRST_LINE_BESIDE_FULL_FLOAT);
     assert_eq!(at(&product_layout(&fixed)).1, beside.1);
 }
+
+/// `text-wrap: balance` text inside nested tables gets the lines it gets outside them (issue
+/// #65): each inline root is balanced once, however many paths reach it, so a table cell's
+/// lines do not depend on how deep its table is nested.
+#[test]
+fn balance_text_wrap_in_nested_tables_balances_like_outside_them() {
+    let text = "aa bbb c dddd ee f ggg hh iiii j kk lll m nnnn oo";
+    let doc = |width: usize, tables: usize| {
+        format!(
+            "<!DOCTYPE html><html><head><style>table, td {{ border-spacing: 0; padding: 0 }} \
+             p {{ font: 10px 'Liberation Mono'; text-wrap: balance; width: {width}ch; margin: 0 }}\
+             </style></head><body>{}<p>{text}</p></body></html>",
+            "<table><tr><td>".repeat(tables)
+        )
+    };
+    for width in 6..21 {
+        let outside = line_texts(&product_layout(&doc(width, 0)));
+        assert!(outside.len() >= 2, "{width}ch: {outside:?}");
+        assert_eq!(
+            line_texts(&product_layout(&doc(width, 3))),
+            outside,
+            "{width}ch"
+        );
+    }
+}

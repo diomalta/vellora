@@ -31,7 +31,8 @@ function flexOrGridDisplay(style: string): boolean {
   return parseStyle(style).some(isFlexGridDisplay);
 }
 
-function isFlexGridTd(element: Element): boolean {
+/** A `<td>` whose inline `style` this rule rewrites (`display:flex` or `display:grid`). */
+export function isFlexGridTd(element: Element): boolean {
   if (tagName(element) !== "td") {
     return false;
   }
@@ -50,7 +51,15 @@ export const flexGridInTdRule: Rule = {
     const detections: Detection[] = [];
     walkElements(doc.document, (element) => {
       if (isFlexGridTd(element)) {
-        detections.push({ element, suggestedFix: SUGGESTED_FIX });
+        // The strict gate rejects `display:grid` (css:grid); `display:flex` renders.
+        const grid = parseStyle(getAttr(element, "style") ?? "").some(
+          (d) => d.property === "display" && d.value === "grid",
+        );
+        detections.push(
+          grid
+            ? { element, suggestedFix: SUGGESTED_FIX, feature: "css:grid" }
+            : { element, suggestedFix: SUGGESTED_FIX },
+        );
       }
     });
     return detections;

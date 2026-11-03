@@ -34,6 +34,9 @@ function isStylesheetLink(element: Element): boolean {
   return (rel ?? "").split(/[\t\n\f\r ]+/).some((t) => t.toLowerCase() === "stylesheet");
 }
 
+/** The strict gate's feature for both constructs (`DENIED_EXTERNAL_STYLESHEETS`). */
+const EXTERNAL_STYLESHEET = "css:external-stylesheet";
+
 const SUGGESTED_FIX =
   "Inline the CSS in a <style> tag. vellora never loads external style sheets (no network, no filesystem), so this CSS would not be applied; the strict render gate rejects it. There is no automatic fix.";
 
@@ -46,13 +49,14 @@ export const externalStylesheetRule: Rule = {
     walkElements(doc.document, (element) => {
       const tag = tagName(element);
       if (tag === "link" && isStylesheetLink(element)) {
-        detections.push({ element, suggestedFix: SUGGESTED_FIX });
+        detections.push({ element, suggestedFix: SUGGESTED_FIX, feature: EXTERNAL_STYLESHEET });
       } else if (tag === "style" && IMPORT_RULE.test(stripCommentsAndStrings(styleText(element)))) {
         detections.push({
           element,
           location: startLocation(element),
           snippet: "@import",
           suggestedFix: SUGGESTED_FIX,
+          feature: EXTERNAL_STYLESHEET,
         });
       }
     });

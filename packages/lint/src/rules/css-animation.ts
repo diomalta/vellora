@@ -1,27 +1,16 @@
 /**
  * `css-animation` diagnostic: `@keyframes` and the `animation` property are dynamic CSS outside the
- * static PDF subset (nothing animates in a print document). There is no deterministic codemod — we
- * cannot guess the intended static appearance — so this is reported with `autoFixable: false` and
- * never rewritten. The finding is anchored to the offending `<style>` element for a stable location.
+ * static PDF subset (nothing animates in a print document). The strict gate rejects them as
+ * `css:keyframes` / `css:animation`; the finding carries the feature of the region's first match,
+ * found with the gate's own scan (`gate.ts`) in `<style>` bodies and `style` attributes. One finding
+ * per CSS region. There is no deterministic codemod — we cannot guess the intended static
+ * appearance — so this is reported with `autoFixable: false` and never rewritten.
  */
-import { type Element, startLocation, tagName, textValue, walkElements } from "../dom.js";
+import { cssRegions } from "../css-regions.js";
 import type { Detection, Rule } from "../engine.js";
+import { scanCss } from "../gate.js";
 
-/** `@keyframes ...` or an `animation`/`animation-*` declaration anywhere in the stylesheet text. */
-const ANIMATION_PATTERN = /@keyframes\b|(^|[;{\s])animation(-[a-z-]+)?\s*:/m;
-
-/** Drop HTML-comment spans so a `@keyframes` mentioned in a comment is not flagged as real CSS. */
-function stripComments(css: string): string {
-  return css.replace(/<!--[\s\S]*?-->/g, "");
-}
-
-function styleText(element: Element): string {
-  let text = "";
-  for (const child of element.childNodes) {
-    text += textValue(child);
-  }
-  return text;
-}
+const ANIMATION_FEATURES: ReadonlySet<string> = new Set(["css:animation", "css:keyframes"]);
 
 const SUGGESTED_FIX =
   "Remove @keyframes and the animation property. Animation has no meaning in a static PDF; use a static style for the printed state. There is no automatic fix.";
@@ -32,19 +21,18 @@ export const cssAnimationRule: Rule = {
   autoFixable: false,
   detect(doc): Detection[] {
     const detections: Detection[] = [];
-    walkElements(doc.document, (element) => {
-      if (tagName(element) !== "style") {
-        return;
-      }
-      if (ANIMATION_PATTERN.test(stripComments(styleText(element)))) {
+    for (const region of cssRegions(doc)) {
+      const hit = scanCss(region.text).find((h) => ANIMATION_FEATURES.has(h.feature));
+      if (hit) {
         detections.push({
-          element,
-          location: startLocation(element),
+          element: region.element,
+          location: region.locate(hit.index),
           snippet: "@keyframes / animation",
           suggestedFix: SUGGESTED_FIX,
+          feature: hit.feature,
         });
       }
-    });
+    }
     return detections;
   },
 };
