@@ -30,3 +30,9 @@ opt-level = "s"
 lto = true
 codegen-units = 1
 strip = true
+
+# `wasm-release` with the `name` section kept, for `packages/wasm/scripts/code-size.mjs` (code per
+# crate, issue #66). Same code as `wasm-release` (only symbol stripping differs); never shipped.
+[profile.wasm-profiling]
+inherits = "wasm-release"
+strip = false
