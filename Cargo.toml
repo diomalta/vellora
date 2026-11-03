@@ -21,8 +21,10 @@ panic = "unwind"
 # custom profile, so it never changes `release` (and its mandatory `panic = "unwind"`, above):
 # `wasm32-unknown-unknown`'s prebuilt std is `panic = "abort"`, so the wasm binding cannot unwind
 # anyway and turns a panic into a trap + instance reset instead (see crates/vellora-wasm/src/lib.rs).
-# Size settings target the Workers bundle limit (3 MB Free / 10 MB Paid, compressed); the measured
-# size and speed trade-off of `opt-level` is recorded in packages/wasm/README.md.
+# Workers limits the uncompressed bundle (64 MiB, Free and Paid; there is no compressed limit since
+# 2026-09-04), and code size drives compile time and the cold start, so these settings favour a
+# small module that stays fast; the measured trade-off of `opt-level` is in packages/wasm/README.md.
+# `lto = true` takes effect only because vellora-wasm is a `cdylib` alone (see its Cargo.toml).
 [profile.wasm-release]
 inherits = "release"
 panic = "abort"
