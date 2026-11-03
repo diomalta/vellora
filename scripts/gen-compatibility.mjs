@@ -260,7 +260,7 @@ const allowedRows = [
   {
     feature: "`outline` (`outline-style`, `outline-width`, `outline-color`, `outline-offset`)",
     status: "Partial",
-    note: "Painted outside the border box (or inside it with a negative `outline-offset`), over the content, and around each fragment of a box broken across pages or columns. Takes no room. `dashed` and `dotted` are painted as border sides are. Not implemented: rounded outlines (`border-radius` is ignored: the outline is square), the `auto` style (painted solid), `double` / `groove` / `ridge` / `inset` / `outset` (painted solid, as borders are), and outlines of inline elements such as `<span>` or `<a>`.",
+    note: "Painted outside the border box (or inside it with a negative `outline-offset`), over the content, and around each fragment of a box broken across pages or columns. Takes no room. An ancestor with `overflow` other than `visible` clips it. `dashed` and `dotted` are painted as border sides are. Not implemented: rounded outlines (`border-radius` is ignored: the outline is square), the `auto` style (not painted; Chrome draws its focus ring), the `outline-offset: inset` keyword, `double` / `groove` / `ridge` / `inset` / `outset` (painted solid, as borders are), and outlines of inline elements such as `<span>` or `<a>`.",
   },
   {
     feature: "Ruby annotations (`<ruby>`, `<rt>`, `<rb>`, `<rp>`)",

@@ -139,3 +139,27 @@ fn a_box_broken_across_pages_gets_an_outline_around_each_fragment() {
     assert!(approx(first, (18.0, -2.0, 104.0, 304.0)), "{first:?}");
     assert!(approx(second, (18.0, -2.0, 104.0, 254.0)), "{second:?}");
 }
+
+#[test]
+fn an_overflow_clipping_ancestor_clips_the_outline() {
+    // WPT css/css-ui/outline-023: the outline of a child that overflows an `overflow: hidden`
+    // box is cut at that box's border box.
+    let html = format!(
+        "{PAGE}<div style=\"overflow: hidden; width: 100px; height: 100px\">\
+         <div style=\"width: 110px; height: 110px; margin: -5px; outline: 3px solid blue\">\
+         </div></div>"
+    );
+    let rects = outlines(&pages(&html)[0]);
+    for r in &rects {
+        assert!(
+            r.0 >= -0.01 && r.1 >= -0.01 && r.0 + r.2 <= 100.01 && r.1 + r.3 <= 100.01,
+            "{r:?}"
+        );
+    }
+}
+
+#[test]
+fn outline_style_auto_is_not_painted() {
+    let html = format!("{PAGE}<div style=\"width: 100px; height: 50px; outline: auto\"></div>");
+    assert!(outlines(&pages(&html)[0]).is_empty());
+}

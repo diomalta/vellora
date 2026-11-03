@@ -1519,6 +1519,11 @@ fn should_flatten_transparent_wrapper(root: &LaidOutBox, subtree: &[LaidOutBox])
     {
         return false;
     }
+    // A box that clips its overflow stays with its subtree when an outline inside it needs it
+    // as the clip ([`outline_clips`]).
+    if root.clips_overflow && subtree.iter().skip(1).any(|b| b.outline.is_some()) {
+        return false;
+    }
     let child_depth = root.depth + 1;
     subtree.iter().skip(1).any(|b| {
         b.depth == child_depth
@@ -3009,6 +3014,48 @@ fn snap_baseline_to_page_px(y: f64) -> f64 {
     y.round()
 }
 
+/// `(x, y, width, height)`, px.
+type Rect = (f64, f64, f64, f64);
+
+/// Per box of a page slice, the intersection of the border boxes of its ancestors that clip
+/// their overflow (`clips_overflow`), or `None` when none does: the clip of its outline (an
+/// outline is ink overflow, CSS Basic UI 4 §5; Chrome clips it with the overflow, WPT
+/// css/css-ui/outline-023). `boxes` is depth-ordered (each box's ancestors come before it).
+fn outline_clips(boxes: &[LaidOutBox]) -> Vec<Option<Rect>> {
+    // The open ancestors: (depth, the clip their descendants get).
+    let mut stack: Vec<(usize, Option<Rect>)> = Vec::new();
+    let mut out = Vec::with_capacity(boxes.len());
+    for b in boxes {
+        while stack.last().is_some_and(|&(depth, _)| depth >= b.depth) {
+            stack.pop();
+        }
+        let inherited = stack.last().and_then(|&(_, clip)| clip);
+        out.push(inherited);
+        let own = if b.clips_overflow {
+            let border_box = (b.x, b.y, b.width, b.height);
+            Some(match inherited {
+                Some(clip) => clip_rect(border_box, Some(clip)).unwrap_or((b.x, b.y, 0.0, 0.0)),
+                None => border_box,
+            })
+        } else {
+            inherited
+        };
+        stack.push((b.depth, own));
+    }
+    out
+}
+
+/// `rect` cut to `clip` (`None`: no clip), or `None` when nothing of it is left.
+fn clip_rect(rect: Rect, clip: Option<Rect>) -> Option<Rect> {
+    let Some((cx, cy, cw, ch)) = clip else {
+        return Some(rect);
+    };
+    let (x, y, w, h) = rect;
+    let (x0, y0) = (x.max(cx), y.max(cy));
+    let (x1, y1) = ((x + w).min(cx + cw), (y + h).min(cy + ch));
+    (x1 > x0 && y1 > y0).then_some((x0, y0, x1 - x0, y1 - y0))
+}
+
 /// A page's display list ([`lower_to_display_list`]): rects, rounded strokes, images, text runs
 /// and outlines.
 type DisplayList = (
@@ -3033,11 +3080,16 @@ fn lower_to_display_list(boxes: Vec<LaidOutBox>, margin_l: f64, margin_t: f64) -
     let mut runs = Vec::new();
     let mut outlines = Vec::new();
     let atomic = in_atomic_inline(&boxes);
-    for (b, atomic) in boxes.into_iter().zip(atomic) {
+    let clips = outline_clips(&boxes);
+    for ((b, atomic), clip) in boxes.into_iter().zip(atomic).zip(clips) {
         // The outline of this fragment of the box: around its border box as it is on this
-        // page (a box cut by a page or column break was sliced to its part here).
+        // page (a box cut by a page or column break was sliced to its part here), clipped by
+        // the ancestors that clip their overflow.
         if let Some(outline) = b.outline {
-            for (x, y, width, height) in outline.rects(b.x, b.y, b.width, b.height) {
+            for rect in outline.rects(b.x, b.y, b.width, b.height) {
+                let Some((x, y, width, height)) = clip_rect(rect, clip) else {
+                    continue;
+                };
                 outlines.push(FilledRect {
                     x: x + margin_l,
                     y: y + margin_t,

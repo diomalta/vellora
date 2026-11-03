@@ -156,9 +156,12 @@ pub struct LaidOutBox {
 /// clone` borders).
 ///
 /// Not a Blitz bug: vellora never links blitz-paint and paints from its own display list, which
-/// had no outline before this (issue #52). Not modelled: `border-radius` (Chrome rounds the
-/// outline with the border's corners; vellora draws it square), `outline-style: auto` (Chrome's
-/// focus-ring look; drawn solid), `double` / `groove` / `ridge` / `inset` / `outset` (solid, as
+/// had no outline before this (issue #52). An ancestor that clips its overflow (`overflow-y`
+/// other than `visible`) clips the outline to its border box (`pagination::lower_to_display_list`;
+/// Chrome 153: WPT css/css-ui/outline-023, css/css-break/ink-overflow-002), though vellora clips
+/// no other overflow. Not modelled: `border-radius` (Chrome rounds the outline with the border's
+/// corners; vellora draws it square), `outline-style: auto` (Chrome's focus ring; not painted),
+/// `double` / `groove` / `ridge` / `inset` / `outset` (solid, as
 /// borders are, [`crate::border_pattern`]), and the outline of a non-atomic inline box (no box of
 /// its own in the walk).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -6229,7 +6232,10 @@ fn read_outline(node: &blitz_dom::Node) -> Option<Outline> {
     let styles = node.primary_styles()?;
     let outline = styles.get_outline();
     let style = match outline.outline_style {
-        OutlineStyle::Auto => crate::border_pattern::LineStyle::Solid,
+        // Chrome paints `auto` as its focus ring, around the box and its descendants' overflow
+        // (WPT css/css-ui/outline-with-padding-001); a solid line around the border box failed
+        // that test and outline-auto-width-001, which no outline passed. Not painted.
+        OutlineStyle::Auto => return None,
         OutlineStyle::BorderStyle(s) if s.none_or_hidden() => return None,
         OutlineStyle::BorderStyle(s) => line_style(s),
     };
