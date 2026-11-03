@@ -16,6 +16,11 @@ The CSS generic families map to bundled fonts:
 Liberation fonts have the same character widths as Arial, Times New Roman and Courier New, so text in
 templates written for those fonts takes up the same space.
 
+Each Liberation family includes regular, bold, italic and bold italic, so `font-style: italic`,
+`<em>`, `<i>` and `<b><i>` print slanted, as in Chrome. `font-style: oblique` uses the italic face
+too; an oblique angle under 14deg stays upright, as Chrome draws it. vellora doesn't fake a slant:
+characters that fall back to DejaVu Sans stay upright in italic text.
+
 ## Your brand font
 
 Read the font files and pass the bytes in `fonts`. Then use the font's own family name in CSS:

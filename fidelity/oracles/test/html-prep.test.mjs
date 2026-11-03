@@ -22,11 +22,19 @@ test("the shared FONT_ALIASES is a superset of benchmarks/visual-fidelity.mjs (r
     const quoted = [...entry.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     const files = quoted.filter((q) => q.endsWith(".ttf"));
     const families = quoted.filter((q) => !q.endsWith(".ttf"));
-    assert.equal(files.length, 2, `benchmark alias without regular+bold: ${entry}`);
+    assert.equal(
+      files.length,
+      4,
+      `benchmark alias without regular+bold+italic+boldItalic: ${entry}`,
+    );
     for (const family of families) {
       const ours = FONT_ALIASES.find((a) => a.families.includes(family));
       assert.ok(ours, `benchmark family "${family}" missing from the shared table`);
-      assert.deepEqual([ours.regular, ours.bold], files, `"${family}" maps to other files`);
+      assert.deepEqual(
+        [ours.regular, ours.bold, ours.italic, ours.boldItalic],
+        files,
+        `"${family}" maps to other files`,
+      );
     }
   }
   assert.ok(
@@ -36,6 +44,8 @@ test("the shared FONT_ALIASES is a superset of benchmarks/visual-fidelity.mjs (r
   for (const alias of FONT_ALIASES) {
     assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.regular)));
     assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.bold)));
+    assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.italic)));
+    assert.ok(existsSync(join(BUNDLED_FONT_DIR, alias.boldItalic)));
   }
 });
 

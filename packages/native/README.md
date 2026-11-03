@@ -43,8 +43,9 @@ external so the platform binary ships with your app.
 
 ## Fonts included
 
-The addon embeds **Liberation Sans** (regular and bold, metric-compatible with Arial) as the default
-font and **DejaVu Sans** for wider character coverage. Text renders the same on every machine, with
+The addon embeds **Liberation Sans**, **Liberation Serif** and **Liberation Mono** (regular, bold,
+italic and bold italic; metric-compatible with Arial, Times New Roman and Courier New), with Liberation
+Sans as the default font, and **DejaVu Sans** for wider character coverage. Text renders the same on every machine, with
 no system fonts or `fontconfig`. You can add your own fonts through vellora's `fonts` option.
 Font licenses are in [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
 

@@ -36,16 +36,22 @@ export const FONT_ALIASES = Object.freeze([
     ],
     regular: "LiberationSans-Regular.ttf",
     bold: "LiberationSans-Bold.ttf",
+    italic: "LiberationSans-Italic.ttf",
+    boldItalic: "LiberationSans-BoldItalic.ttf",
   },
   {
     families: ["Liberation Serif", "Georgia", "Times New Roman"],
     regular: "LiberationSerif-Regular.ttf",
     bold: "LiberationSerif-Bold.ttf",
+    italic: "LiberationSerif-Italic.ttf",
+    boldItalic: "LiberationSerif-BoldItalic.ttf",
   },
   {
     families: ["Vellora Mono", "Liberation Mono", "Menlo", "Consolas", "Courier New"],
     regular: "LiberationMono-Regular.ttf",
     bold: "LiberationMono-Bold.ttf",
+    italic: "LiberationMono-Italic.ttf",
+    boldItalic: "LiberationMono-BoldItalic.ttf",
   },
 ]);
 
@@ -73,15 +79,13 @@ export function bundledFontFaceCss(fontDir = BUNDLED_FONT_DIR) {
     `data:font/ttf;base64,${readFileSync(join(fontDir, file)).toString("base64")}`;
   const rules = [];
   for (const alias of FONT_ALIASES) {
-    const regular = url(alias.regular);
-    const bold = url(alias.bold);
+    const faces = aliasFaces(alias).map((face) => ({ ...face, src: url(face.file) }));
     for (const family of alias.families) {
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${regular}) format("truetype"); font-weight: 400; font-style: normal; }`,
-      );
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${bold}) format("truetype"); font-weight: 700; font-style: normal; }`,
-      );
+      for (const face of faces) {
+        rules.push(
+          `@font-face { font-family: ${JSON.stringify(family)}; src: url(${face.src}) format("truetype"); font-weight: ${face.weight}; font-style: ${face.style}; }`,
+        );
+      }
     }
   }
   const css = rules.join("\n");
@@ -89,11 +93,29 @@ export function bundledFontFaceCss(fontDir = BUNDLED_FONT_DIR) {
   return css;
 }
 
-/** The alias (families + weight) that reaches a bundled face file, or null (DejaVu, bullets). */
+/**
+ * The four faces of an alias (file, weight, style), in vellora's registration order
+ * (crates/vellora-core/src/fonts.rs): regular, bold, italic, bold italic. Without the italic
+ * faces Chrome would synthesize an oblique from the regular file while vellora draws the bundled
+ * italic one (issue #74), so the reference would not shape with the same files.
+ */
+export function aliasFaces(alias) {
+  return [
+    { file: alias.regular, weight: 400, style: "normal" },
+    { file: alias.bold, weight: 700, style: "normal" },
+    { file: alias.italic, weight: 400, style: "italic" },
+    { file: alias.boldItalic, weight: 700, style: "italic" },
+  ];
+}
+
+/**
+ * The alias (families + weight + style) that reaches a bundled face file, or null (DejaVu,
+ * bullets).
+ */
 export function aliasFor(face) {
   for (const alias of FONT_ALIASES) {
-    if (face === alias.regular) return { families: alias.families, weight: 400 };
-    if (face === alias.bold) return { families: alias.families, weight: 700 };
+    const hit = aliasFaces(alias).find((f) => f.file === face);
+    if (hit) return { families: alias.families, weight: hit.weight, style: hit.style };
   }
   return null;
 }

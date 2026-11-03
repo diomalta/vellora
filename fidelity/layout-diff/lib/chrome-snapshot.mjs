@@ -107,7 +107,7 @@ export async function platformFonts(cdp) {
 }
 
 /**
- * Measure Chrome's text-box-top -> baseline offset per (family, weight, size): one probe line per
+ * Measure Chrome's text-box-top -> baseline offset per (family, weight, style, size): one probe line per
  * spec, holding the text and an empty zero-size inline-block whose bottom edge sits ON the
  * baseline (CSS 2.2 §10.8.1: an inline-block without in-flow line boxes has its baseline at its
  * bottom margin edge). Lets the matcher compare vellora baselines with Chrome baselines instead
@@ -119,7 +119,7 @@ export async function measureBaselines(browser, fontFaceCss, specs) {
   const rows = specs
     .map(
       (s, i) =>
-        `<div id="p${i}" style="font-family:'${s.family}';font-weight:${s.weight};font-size:${s.size}px">Hxg<span style="display:inline-block;width:0;height:0"></span></div>`,
+        `<div id="p${i}" style="font-family:'${s.family}';font-weight:${s.weight};font-style:${s.style ?? "normal"};font-size:${s.size}px">Hxg<span style="display:inline-block;width:0;height:0"></span></div>`,
     )
     .join("\n");
   const html = `<!DOCTYPE html><html><head><style>${fontFaceCss}
@@ -147,8 +147,11 @@ body{margin:0} div{white-space:nowrap;line-height:normal}</style></head><body>${
   }
 }
 
-export function baselineKey({ family, weight, size }) {
-  return `${family}|${weight}|${Math.round(size * 1000) / 1000}`;
+/** Key of a baseline spec; an upright face keeps the `family|weight|size` key recorded before
+ * the italic faces were bundled (issue #74), a slanted one adds its style after the weight. */
+export function baselineKey({ family, weight, style = "normal", size }) {
+  const slant = style === "normal" ? "" : `|${style}`;
+  return `${family}|${weight}${slant}|${Math.round(size * 1000) / 1000}`;
 }
 
 /**

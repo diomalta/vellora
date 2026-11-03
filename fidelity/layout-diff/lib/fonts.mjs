@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   FONT_ALIASES,
+  aliasFaces,
   aliasFor,
   bundledFontFaceCss as sharedFontFaceCss,
 } from "../../lib/chrome-reference.mjs";
@@ -21,7 +22,11 @@ export { FONT_ALIASES };
 export function chromeFontFor(face) {
   const alias = aliasFor(face);
   if (!alias) return null;
-  return { family: alias.families.find((f) => f.startsWith("Liberation")), weight: alias.weight };
+  return {
+    family: alias.families.find((f) => f.startsWith("Liberation")),
+    weight: alias.weight,
+    style: alias.style,
+  };
 }
 
 /**
@@ -45,7 +50,7 @@ export function bundledFontFaceCss(repoRoot) {
 /** sha256 of every bundled font file, recorded in each result's environment block. */
 export function bundledFontHashes(repoRoot) {
   const out = {};
-  const files = new Set(FONT_ALIASES.flatMap((alias) => [alias.regular, alias.bold]));
+  const files = new Set(FONT_ALIASES.flatMap((alias) => aliasFaces(alias).map((f) => f.file)));
   for (const file of [...files].sort()) {
     const bytes = readFileSync(join(bundledFontDir(repoRoot), file));
     out[file] = createHash("sha256").update(bytes).digest("hex");

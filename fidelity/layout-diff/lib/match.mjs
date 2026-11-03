@@ -208,7 +208,7 @@ export function chromeTree(records, { includeInline = false } = {}) {
   return { elements, roots: elements.filter((e) => !e.parentEl), byRecord, textNodes, records };
 }
 
-/** Distinct (Chrome family, weight, size) specs needed to calibrate baselines for these runs. */
+/** Distinct (Chrome family, weight, style, size) specs needed to calibrate baselines for these runs. */
 export function baselineSpecs(runs) {
   const specs = new Map();
   for (const run of runs) {

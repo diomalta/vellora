@@ -5,15 +5,17 @@ text renders deterministically and with no system font dependency (no `libfontco
 no host-installed fonts) — which is what lets it run on supported slim Linux glibc
 and AWS Lambda images out of the box. Alpine/musl prebuilds are not published yet.
 
-## Liberation Sans (Regular and Bold)
+## Liberation Sans, Liberation Serif, Liberation Mono (Regular, Bold, Italic, Bold Italic)
 
-- Source: https://github.com/liberationfonts/liberation-fonts
+- Source: https://github.com/liberationfonts/liberation-fonts (Sans: release 2.1.5;
+  Serif and Mono: 2.00.1 regular and bold, 2.1.5 italic and bold italic).
 - Copyright: Liberation Fonts contributors.
 - License: SIL Open Font License, Version 1.1. The full text is in
   [`LICENSE-Liberation.txt`](./LICENSE-Liberation.txt).
 - Note: Liberation Sans is used as the primary bundled sans-serif face because it
   targets layout compatibility with Arial, which is a common browser-resolved
-  font for invoice templates.
+  font for invoice templates. Liberation Serif (Times New Roman metrics) backs
+  `serif` and Liberation Mono (Courier New metrics) backs `monospace`.
 
 ## DejaVu Sans (Regular and Bold)
 

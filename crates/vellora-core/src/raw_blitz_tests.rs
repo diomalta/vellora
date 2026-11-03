@@ -2093,3 +2093,36 @@ fn a_first_line_that_does_not_fit_goes_below_the_float() {
     assert_ne!(fixed, FIRST_LINE_BESIDE_FULL_FLOAT);
     assert_eq!(at(&product_layout(&fixed)).1, beside.1);
 }
+
+/// The bundled face file of every text run of a layout, in run order.
+fn faces_of(doc: &LaidOutDoc) -> Vec<&'static str> {
+    doc.boxes
+        .iter()
+        .flat_map(|b| &b.text_runs)
+        .map(|run| crate::fonts::bundled_face_name(&run.font_data).unwrap_or("?"))
+        .collect()
+}
+
+/// CANARY of `blitz_engine::match_oblique_like_chrome`: raw Blitz still draws `font-style:
+/// oblique` with the upright Liberation Sans (fontique matches the regular face and asks for a
+/// synthetic skew that vellora does not draw), where Chrome 153 and the product render use the
+/// italic face. When this fails, Blitz or fontique now matches the italic face itself: delete the
+/// compensation.
+#[test]
+fn blitz_still_draws_oblique_upright() {
+    let html = r#"<!DOCTYPE html><html><head><style>@page { size: A4; margin: 10mm; }
+        body { margin: 0; font: 16px sans-serif; }</style></head>
+        <body><p style="font-style: oblique">oblique</p><p><i>italic</i></p></body></html>"#;
+    let raw = faces_of(&raw_layout(html).0);
+    assert_eq!(
+        raw,
+        ["LiberationSans-Regular.ttf", "LiberationSans-Italic.ttf"],
+        "raw Blitz"
+    );
+    let product = faces_of(&product_layout(html));
+    assert_eq!(
+        product,
+        ["LiberationSans-Italic.ttf", "LiberationSans-Italic.ttf"],
+        "product"
+    );
+}

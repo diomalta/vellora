@@ -17,8 +17,8 @@ import { aliasFamiliesFor } from "./fonts.mjs";
 const check = (id, klass, status, detail) => ({ id, class: klass, status, detail });
 
 /** Fonts Chromium loaded, as `${family} ${weight} ${style}` strings (captureSnapshot probes). */
-function loadedFace(loaded, families, weight) {
-  return loaded.some((entry) => families.some((f) => entry.startsWith(`${f} ${weight} `)));
+function loadedFace(loaded, families, weight, style = "normal") {
+  return loaded.some((entry) => families.some((f) => entry === `${f} ${weight} ${style}`));
 }
 
 const HEAD = "html>head:nth-child(1)";
@@ -95,7 +95,9 @@ export function runChecks({
     if (alias) needed.set(`${run.face}`, alias);
   }
   const loaded = probes.fonts ?? [];
-  const notLoaded = [...needed].filter(([, a]) => !loadedFace(loaded, a.families, a.weight));
+  const notLoaded = [...needed].filter(
+    ([, a]) => !loadedFace(loaded, a.families, a.weight, a.style),
+  );
   out.push(
     check(
       "bundled_fonts_loaded",

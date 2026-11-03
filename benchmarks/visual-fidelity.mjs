@@ -20,16 +20,22 @@ const FONT_ALIASES = [
     families: ["Vellora Sans", "Inter", "Helvetica Neue", "Arial", "Liberation Sans"],
     regular: "LiberationSans-Regular.ttf",
     bold: "LiberationSans-Bold.ttf",
+    italic: "LiberationSans-Italic.ttf",
+    boldItalic: "LiberationSans-BoldItalic.ttf",
   },
   {
     families: ["Liberation Serif", "Georgia", "Times New Roman"],
     regular: "LiberationSerif-Regular.ttf",
     bold: "LiberationSerif-Bold.ttf",
+    italic: "LiberationSerif-Italic.ttf",
+    boldItalic: "LiberationSerif-BoldItalic.ttf",
   },
   {
     families: ["Vellora Mono", "Liberation Mono", "Menlo", "Consolas", "Courier New"],
     regular: "LiberationMono-Regular.ttf",
     bold: "LiberationMono-Bold.ttf",
+    italic: "LiberationMono-Italic.ttf",
+    boldItalic: "LiberationMono-BoldItalic.ttf",
   },
 ];
 
@@ -232,15 +238,18 @@ function fontDataUrl(fileName) {
 function bundledFontFaceCss() {
   const rules = [];
   for (const alias of FONT_ALIASES) {
-    const regular = fontDataUrl(alias.regular);
-    const bold = fontDataUrl(alias.bold);
+    const faces = [
+      { src: fontDataUrl(alias.regular), weight: 400, style: "normal" },
+      { src: fontDataUrl(alias.bold), weight: 700, style: "normal" },
+      { src: fontDataUrl(alias.italic), weight: 400, style: "italic" },
+      { src: fontDataUrl(alias.boldItalic), weight: 700, style: "italic" },
+    ];
     for (const family of alias.families) {
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${regular}) format("truetype"); font-weight: 400; font-style: normal; }`,
-      );
-      rules.push(
-        `@font-face { font-family: ${JSON.stringify(family)}; src: url(${bold}) format("truetype"); font-weight: 700; font-style: normal; }`,
-      );
+      for (const face of faces) {
+        rules.push(
+          `@font-face { font-family: ${JSON.stringify(family)}; src: url(${face.src}) format("truetype"); font-weight: ${face.weight}; font-style: ${face.style}; }`,
+        );
+      }
     }
   }
   return rules.join("\n");
