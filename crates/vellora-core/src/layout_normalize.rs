@@ -166,6 +166,7 @@ fn distribute_auto_table_excess(boxes: &mut [LaidOutBox], table_idx: usize, end:
 
 fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: usize, end: usize) {
     let table_depth = boxes[table_idx].depth;
+    let mut rows: Vec<Vec<usize>> = Vec::new();
     let mut i = table_idx + 1;
     while i < end {
         match boxes[i].tag.as_deref() {
@@ -181,12 +182,147 @@ fn normalize_table_percent_widths_in_range(boxes: &mut [LaidOutBox], table_idx: 
                             && matches!(boxes[*idx].tag.as_deref(), Some("td" | "th"))
                     })
                     .collect();
-                normalize_row_percent_widths(boxes, &cells);
+                rows.push(cells);
                 i = row_end;
             }
             _ => i += 1,
         }
     }
+    if !rows
+        .iter()
+        .flatten()
+        .any(|idx| boxes[*idx].width_pct_hint.is_some())
+    {
+        return;
+    }
+    if normalize_column_percent_widths(boxes, &rows) {
+        return;
+    }
+    for cells in &rows {
+        normalize_row_percent_widths(boxes, cells);
+    }
+}
+
+/// The column form of [`normalize_table_percent_widths`]: a percentage `width` on any
+/// single-column cell sizes that cell's whole COLUMN, so every row of the table (the
+/// `<thead>` row included) gets the same column edges. CSS 2.2 §17.5.2.2 step 1 / CSS Tables 3
+/// "column percentage": a column's percentage is the largest percentage of its cells.
+///
+/// Issue #75: the row form only resized rows holding a percentage cell, so a `width: 50%`
+/// set on body cells alone (`td.desc`, no width on the `<th>`) left the header row on Blitz's
+/// auto widths and its labels drifted off their columns. Chrome for Testing (Playwright
+/// Chromium, viewport 657 px, bundled Liberation fonts, 2026-11-03; repro of the issue in
+/// `tests/layout_fidelity.rs` `percent_width_on_body_cells_sizes_the_header_row_too`): header
+/// and body cells share x 0 / 328.5 / 386.75 / 506.73 and widths 328.5 / 58.25 / 119.98 /
+/// 150.27 px.
+///
+/// The column grid is Blitz's own (a table is a CSS grid there, so the cells of one column
+/// share their left edge; blitz-dom 0.3.0-beta.4 `layout/table.rs` `build_table_context`).
+/// A percentage resolves against the sum of the column widths, so `border-spacing` gaps are
+/// kept and excluded from the base (Chrome, same probe with `border-collapse: separate;
+/// border-spacing: 4px`: the 50 % column is (657 - 5 * 4) / 2 = 318.5 px wide). The width left
+/// over goes to the other columns in proportion to their max-content widths when those are
+/// known and fit (CSS Tables 3 "distributing excess width to columns"; the probe's 58.25 /
+/// 119.98 / 150.27 is 328.5 px split as 35.7 : 73.5 : 92.0, the columns' max-content widths),
+/// else in proportion to Blitz's widths, as the row form does.
+///
+/// Returns `false`, changing nothing, when the grid cannot be read this way: a percentage on a
+/// cell spanning several columns, or a column no single-column cell sits in. The caller then
+/// falls back to the row form.
+fn normalize_column_percent_widths(boxes: &mut [LaidOutBox], rows: &[Vec<usize>]) -> bool {
+    let cells: Vec<usize> = rows.iter().flatten().copied().collect();
+    if cells
+        .iter()
+        .any(|idx| boxes[*idx].colspan > 1 && boxes[*idx].width_pct_hint.is_some())
+    {
+        return false;
+    }
+    // Column lines: the distinct left edges of the cells.
+    let mut lefts: Vec<f64> = cells.iter().map(|idx| boxes[*idx].x).collect();
+    lefts.sort_by(f64::total_cmp);
+    lefts.dedup_by(|b, a| (*b - *a).abs() < 0.5);
+    let columns = lefts.len();
+    if columns < 2 {
+        return false;
+    }
+    let column_of = |x: f64| lefts.iter().position(|l| (x - l).abs() < 0.5);
+
+    let mut rights: Vec<Option<f64>> = vec![None; columns];
+    let mut percents: Vec<Option<f64>> = vec![None; columns];
+    // `Some(None)`: a cell of the column has no known max-content width.
+    let mut max_content: Vec<Option<f64>> = vec![Some(0.0); columns];
+    for &idx in &cells {
+        let b = &boxes[idx];
+        let Some(c) = column_of(b.x) else {
+            return false;
+        };
+        if b.colspan > 1 {
+            continue;
+        }
+        let right = b.x + b.width;
+        rights[c] = Some(rights[c].map_or(right, |r: f64| r.min(right)));
+        if let Some(pct) = b.width_pct_hint {
+            percents[c] = Some(percents[c].map_or(pct, |p: f64| p.max(pct)));
+        }
+        max_content[c] = match (max_content[c], b.max_content_width) {
+            (Some(m), Some(w)) => Some(m.max(w)),
+            _ => None,
+        };
+    }
+    let Some(rights) = rights.into_iter().collect::<Option<Vec<f64>>>() else {
+        return false;
+    };
+    let widths: Vec<f64> = (0..columns).map(|c| rights[c] - lefts[c]).collect();
+    if widths.iter().any(|w| *w <= 0.0) || (1..columns).any(|c| lefts[c] + 0.5 < rights[c - 1]) {
+        return false;
+    }
+    let base: f64 = widths.iter().sum();
+    let explicit: f64 = percents.iter().flatten().map(|pct| base * pct).sum();
+    // Percentages that over-subscribe the table are left to Blitz, as in the row form.
+    if explicit > base + 0.01 {
+        return true;
+    }
+
+    let flexible: Vec<usize> = (0..columns).filter(|c| percents[*c].is_none()).collect();
+    let flexible_width = base - explicit;
+    let known_max: Option<Vec<f64>> = flexible.iter().map(|c| max_content[*c]).collect();
+    let weights: Vec<f64> = match known_max {
+        Some(m) if m.iter().sum::<f64>() > 0.0 && m.iter().sum::<f64>() <= flexible_width => m,
+        _ => flexible.iter().map(|c| widths[*c]).collect(),
+    };
+    let weight_sum: f64 = weights.iter().sum();
+    let mut targets: Vec<f64> = widths.clone();
+    for (c, pct) in percents.iter().enumerate() {
+        if let Some(pct) = pct {
+            targets[c] = base * pct;
+        }
+    }
+    for (k, &c) in flexible.iter().enumerate() {
+        targets[c] = if weight_sum > 0.0 {
+            flexible_width * weights[k] / weight_sum
+        } else {
+            flexible_width / flexible.len() as f64
+        };
+    }
+
+    let mut new_lefts = Vec::with_capacity(columns);
+    let mut cursor = lefts[0];
+    for c in 0..columns {
+        if c > 0 {
+            cursor += lefts[c] - rights[c - 1];
+        }
+        new_lefts.push(cursor);
+        cursor += targets[c].max(0.0);
+    }
+    for &idx in &cells {
+        let Some(c) = column_of(boxes[idx].x) else {
+            continue;
+        };
+        let last = (c + boxes[idx].colspan.max(1) - 1).min(columns - 1);
+        let width = new_lefts[last] + targets[last].max(0.0) - new_lefts[c];
+        adjust_subtree_inline_geometry(boxes, idx, new_lefts[c], width.max(0.0));
+    }
+    true
 }
 
 fn normalize_row_percent_widths(boxes: &mut [LaidOutBox], cells: &[usize]) {
